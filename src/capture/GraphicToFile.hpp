@@ -282,6 +282,7 @@ public:
     void send_save_state_chunk()
     {
         StaticOutStream<4096> payload;
+/*
         // RDPOrderCommon common;
         payload.out_uint8(this->common.order);
         payload.out_uint16_le(this->common.clip.x);
@@ -463,6 +464,8 @@ public:
             payload.out_sint16_le(this->multiscrblt.deltaEncodedRectangles[i].width);
             payload.out_sint16_le(this->multiscrblt.deltaEncodedRectangles[i].height);
         }
+*/
+        this->ssc.send(payload);
 
         //------------------------------ missing variable length ---------------
 

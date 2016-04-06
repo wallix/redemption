@@ -59,6 +59,8 @@
 #include "utils/cast.hpp"
 #include "utils/png.hpp"
 
+#include "capture/utils/save_state_chunk.hpp"
+
 struct FileToGraphic
 {
     enum {
@@ -78,21 +80,23 @@ public:
     Rect screen_rect;
 
     // Internal state of orders
-    RDPOrderCommon     common;
-    RDPDestBlt         destblt;
-    RDPMultiDstBlt     multidstblt;
-    RDPMultiOpaqueRect multiopaquerect;
-    RDP::RDPMultiPatBlt     multipatblt;
-    RDP::RDPMultiScrBlt     multiscrblt;
-    RDPPatBlt          patblt;
-    RDPScrBlt          scrblt;
-    RDPOpaqueRect      opaquerect;
-    RDPMemBlt          memblt;
-    RDPMem3Blt         mem3blt;
-    RDPLineTo          lineto;
-    RDPGlyphIndex      glyphindex;
-    RDPPolyline        polyline;
-    RDPEllipseSC       ellipseSC;
+//    RDPOrderCommon     common;
+//    RDPDestBlt         destblt;
+//    RDPMultiDstBlt     multidstblt;
+//    RDPMultiOpaqueRect multiopaquerect;
+//    RDP::RDPMultiPatBlt     multipatblt;
+//    RDP::RDPMultiScrBlt     multiscrblt;
+//    RDPPatBlt          patblt;
+//    RDPScrBlt          scrblt;
+//    RDPOpaqueRect      opaquerect;
+//    RDPMemBlt          memblt;
+//    RDPMem3Blt         mem3blt;
+//    RDPLineTo          lineto;
+//    RDPGlyphIndex      glyphindex;
+//    RDPPolyline        polyline;
+//    RDPEllipseSC       ellipseSC;
+
+    SaveStateChunk ssc;
 
     BmpCache     * bmp_cache;
     PointerCache   ptr_cache;
@@ -139,12 +143,12 @@ public:
     uint32_t max_order_count;
     uint32_t verbose;
 
-    bool mem3blt_support;
-    bool polyline_support;
-    bool multidstblt_support;
-    bool multiopaquerect_support;
-    bool multipatblt_support;
-    bool multiscrblt_support;
+//    bool mem3blt_support;
+//    bool polyline_support;
+//    bool multidstblt_support;
+//    bool multiopaquerect_support;
+//    bool multipatblt_support;
+//    bool multiscrblt_support;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -208,22 +212,22 @@ public:
         , compression_wrapper(*trans, CompressionTransportBase::Algorithm::None)
         , trans_source(trans)
         , trans(trans)
-        , common(RDP::PATBLT, Rect(0, 0, 1, 1))
-        , destblt(Rect(), 0)
-        , multidstblt()
-        , multiopaquerect()
-        , multipatblt()
-        , multiscrblt()
-        , patblt(Rect(), 0, 0, 0, RDPBrush())
-        , scrblt(Rect(), 0, 0, 0)
-        , opaquerect(Rect(), 0)
-        , memblt(0, Rect(), 0, 0, 0, 0)
-        , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                    , reinterpret_cast<const uint8_t *>(""))
-        , polyline()
-        , ellipseSC()
+//        , common(RDP::PATBLT, Rect(0, 0, 1, 1))
+//        , destblt(Rect(), 0)
+//        , multidstblt()
+//        , multiopaquerect()
+//        , multipatblt()
+//        , multiscrblt()
+//        , patblt(Rect(), 0, 0, 0, RDPBrush())
+//        , scrblt(Rect(), 0, 0, 0)
+//        , opaquerect(Rect(), 0)
+//        , memblt(0, Rect(), 0, 0, 0, 0)
+//        , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
+//        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
+//        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
+//                    , reinterpret_cast<const uint8_t *>(""))
+//        , polyline()
+//        , ellipseSC()
         , bmp_cache(nullptr)
         // variables used to read batch of orders "chunks"
         , chunk_size(0)
@@ -242,12 +246,12 @@ public:
         , end_capture(end_capture)
         , max_order_count(0)
         , verbose(verbose)
-        , mem3blt_support(false)
-        , polyline_support(false)
-        , multidstblt_support(false)
-        , multiopaquerect_support(false)
-        , multipatblt_support(false)
-        , multiscrblt_support(false)
+//        , mem3blt_support(false)
+//        , polyline_support(false)
+//        , multidstblt_support(false)
+//        , multiopaquerect_support(false)
+//        , multipatblt_support(false)
+//        , multiscrblt_support(false)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -455,121 +459,121 @@ public:
                 this->stream.in_skip_bytes(next_order - this->stream.get_current());
             }
             else if (class_ == RDP::STANDARD) {
-                RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
-                const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
-                switch (this->common.order) {
+                RDPPrimaryOrderHeader header = this->ssc.common.receive(this->stream, control);
+                const Rect & clip = (control & RDP::BOUNDS)?this->ssc.common.clip:this->screen_rect;
+                switch (this->ssc.common.order) {
                 case RDP::GLYPHINDEX:
                     this->statistics.GlyphIndex++;
-                    this->glyphindex.receive(this->stream, header);
+                    this->ssc.glyphindex.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->glyphindex, clip, &this->gly_cache);
+                        this->consumers[i].graphic_device->draw(this->ssc.glyphindex, clip, &this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
                     this->statistics.DstBlt++;
-                    this->destblt.receive(this->stream, header);
+                    this->ssc.destblt.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->destblt.log(LOG_INFO, clip);
+                        this->ssc.destblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->destblt, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.destblt, clip);
                     }
                     break;
                 case RDP::MULTIDSTBLT:
                     this->statistics.MultiDstBlt++;
-                    this->multidstblt.receive(this->stream, header);
+                    this->ssc.multidstblt.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->multidstblt.log(LOG_INFO, clip);
+                        this->ssc.multidstblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multidstblt, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.multidstblt, clip);
                     }
                     break;
                 case RDP::MULTIOPAQUERECT:
                     this->statistics.MultiOpaqueRect++;
-                    this->multiopaquerect.receive(this->stream, header);
+                    this->ssc.multiopaquerect.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->multiopaquerect.log(LOG_INFO, clip);
+                        this->ssc.multiopaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multiopaquerect, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.multiopaquerect, clip);
                     }
                     break;
                 case RDP::MULTIPATBLT:
                     this->statistics.MultiPatBlt++;
-                    this->multipatblt.receive(this->stream, header);
+                    this->ssc.multipatblt.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->multipatblt.log(LOG_INFO, clip);
+                        this->ssc.multipatblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multipatblt, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.multipatblt, clip);
                     }
                     break;
                 case RDP::MULTISCRBLT:
                     this->statistics.MultiScrBlt++;
-                    this->multiscrblt.receive(this->stream, header);
+                    this->ssc.multiscrblt.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->multiscrblt.log(LOG_INFO, clip);
+                        this->ssc.multiscrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->multiscrblt, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.multiscrblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
                     this->statistics.PatBlt++;
-                    this->patblt.receive(this->stream, header);
+                    this->ssc.patblt.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->patblt.log(LOG_INFO, clip);
+                        this->ssc.patblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->patblt, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.patblt, clip);
                     }
                     break;
                 case RDP::SCREENBLT:
                     this->statistics.ScrBlt++;
-                    this->scrblt.receive(this->stream, header);
+                    this->ssc.scrblt.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->scrblt.log(LOG_INFO, clip);
+                        this->ssc.scrblt.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->scrblt, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
                     this->statistics.LineTo++;
-                    this->lineto.receive(this->stream, header);
+                    this->ssc.lineto.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->lineto.log(LOG_INFO, clip);
+                        this->ssc.lineto.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->lineto, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.lineto, clip);
                     }
                     break;
                 case RDP::RECT:
                     this->statistics.OpaqueRect++;
-                    this->opaquerect.receive(this->stream, header);
+                    this->ssc.opaquerect.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->opaquerect.log(LOG_INFO, clip);
+                        this->ssc.opaquerect.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->consumers[i].graphic_device->draw(this->opaquerect, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.opaquerect, clip);
                     }
                     break;
                 case RDP::MEMBLT:
                     {
                         this->statistics.MemBlt++;
-                        this->memblt.receive(this->stream, header);
+                        this->ssc.memblt.receive(this->stream, header);
                         if (this->verbose > 32){
-                            this->memblt.log(LOG_INFO, clip);
+                            this->ssc.memblt.log(LOG_INFO, clip);
                         }
-                        const Bitmap & bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
+                        const Bitmap & bmp = this->bmp_cache->get(this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                         if (!bmp.is_valid()){
-                            LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
+                            LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                             throw Error(ERR_WRM);
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers; i++){
-                                this->consumers[i].graphic_device->draw(this->memblt, clip, bmp);
+                                this->consumers[i].graphic_device->draw(this->ssc.memblt, clip, bmp);
                             }
                         }
                     }
@@ -577,45 +581,45 @@ public:
                 case RDP::MEM3BLT:
                     {
                         this->statistics.Mem3Blt++;
-                        this->mem3blt.receive(this->stream, header);
+                        this->ssc.mem3blt.receive(this->stream, header);
                         if (this->verbose > 32){
-                            this->mem3blt.log(LOG_INFO, clip);
+                            this->ssc.mem3blt.log(LOG_INFO, clip);
                         }
-                        const Bitmap & bmp = this->bmp_cache->get(this->mem3blt.cache_id, this->mem3blt.cache_idx);
+                        const Bitmap & bmp = this->bmp_cache->get(this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
                         if (!bmp.is_valid()){
-                            LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)", this->mem3blt.cache_id, this->mem3blt.cache_idx);
+                            LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)", this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
                             throw Error(ERR_WRM);
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers; i++){
-                                this->consumers[i].graphic_device->draw(this->mem3blt, clip, bmp);
+                                this->consumers[i].graphic_device->draw(this->ssc.mem3blt, clip, bmp);
                             }
                         }
                     }
                     break;
                 case RDP::POLYLINE:
                     this->statistics.Polyline++;
-                    this->polyline.receive(this->stream, header);
+                    this->ssc.polyline.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->polyline.log(LOG_INFO, clip);
+                        this->ssc.polyline.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->polyline, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.polyline, clip);
                     }
                     break;
                 case RDP::ELLIPSESC:
                     this->statistics.EllipseSC++;
-                    this->ellipseSC.receive(this->stream, header);
+                    this->ssc.ellipseSC.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->ellipseSC.log(LOG_INFO, clip);
+                        this->ssc.ellipseSC.log(LOG_INFO, clip);
                     }
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i].graphic_device->draw(this->ellipseSC, clip);
+                        this->consumers[i].graphic_device->draw(this->ssc.ellipseSC, clip);
                     }
                     break;
                 default:
                     /* error unknown order */
-                    LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
+                    LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->ssc.common.order);
                     throw Error(ERR_WRM);
                 }
             }
@@ -726,12 +730,12 @@ public:
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk");
             {
                 this->info_version                   = this->stream.in_uint16_le();
-                this->mem3blt_support                = (this->info_version > 1);
-                this->polyline_support               = (this->info_version > 2);
-                this->multidstblt_support            = (this->info_version > 3);
-                this->multiopaquerect_support        = (this->info_version > 3);
-                this->multipatblt_support            = (this->info_version > 3);
-                this->multiscrblt_support            = (this->info_version > 3);
+//                this->mem3blt_support                = (this->info_version > 1);
+//                this->polyline_support               = (this->info_version > 2);
+//                this->multidstblt_support            = (this->info_version > 3);
+//                this->multiopaquerect_support        = (this->info_version > 3);
+//                this->multipatblt_support            = (this->info_version > 3);
+//                this->multiscrblt_support            = (this->info_version > 3);
                 this->info_width                     = this->stream.in_uint16_le();
                 this->info_height                    = this->stream.in_uint16_le();
                 this->info_bpp                       = this->stream.in_uint16_le();
@@ -810,6 +814,8 @@ public:
             }
             break;
             case SAVE_STATE:
+                this->ssc.recv(this->stream, this->info_version);
+/*
                 // RDPOrderCommon common;
                 this->common.order = this->stream.in_uint8();
                 this->common.clip.x = this->stream.in_uint16_le();
@@ -903,7 +909,7 @@ public:
                 this->lineto.pen.color = this->stream.in_uint32_le();
 
                 // RDPGlyphIndex glyphindex;
-                this->glyphindex.cache_id  = this->stream.in_uint8();
+                this->ssc.glyphindex.cache_id  = this->stream.in_uint8();
                 this->glyphindex.fl_accel  = this->stream.in_sint16_le();
                 this->glyphindex.ui_charinc  = this->stream.in_sint16_le();
                 this->glyphindex.f_op_redundant = this->stream.in_sint16_le();
@@ -1018,6 +1024,7 @@ public:
                         this->multiscrblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
                     }
                 }
+*/
             break;
 
             case LAST_IMAGE_CHUNK:
