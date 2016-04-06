@@ -1686,115 +1686,373 @@ test-run test_keymapSym
     ;
 }
 
-if [ SHELL false ] {
 
 ## Widget tests
 ## @{
-test-run test_widget2_rect : mod/internal/widget2/test_widget2_rect.cpp : <library>png <library>crypto ;
-test-run test_image : mod/internal/widget2/test_image.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_label : mod/internal/widget2/test_label.cpp : <library>png <library>crypto ;
-test-run test_tooltip : mod/internal/widget2/test_tooltip.cpp : <library>png <library>crypto ;
-test-run test_flat_button : mod/internal/widget2/test_flat_button.cpp : <library>png <library>crypto ;
-test-run test_edit : mod/internal/widget2/test_edit.cpp : <library>png <library>crypto ;
-test-run test_multiline : mod/internal/widget2/test_multiline.cpp : <library>png <library>crypto ;
-test-run test_password : mod/internal/widget2/test_password.cpp : <library>png <library>crypto ;
-test-run test_number_edit : mod/internal/widget2/test_number_edit.cpp : <library>png <library>crypto ;
-test-run test_edit_valid : mod/internal/widget2/test_edit_valid.cpp : <library>png <library>crypto ;
+test-run test_widget2_rect 
+    : mod/internal/widget2/test_widget2_rect.cpp 
+    : mod/internal/widget2/widget2_rect.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_image 
+    : mod/internal/widget2/test_image.cpp 
+    : mod/internal/widget2/image.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_label 
+    : mod/internal/widget2/test_label.cpp 
+    : mod/internal/widget2/label.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_tooltip 
+    : mod/internal/widget2/test_tooltip.cpp 
+    : mod/internal/widget2/tooltip.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_flat_button 
+    : mod/internal/widget2/test_flat_button.cpp 
+    : mod/internal/widget2/flat_button.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_edit 
+    : mod/internal/widget2/test_edit.cpp 
+    : mod/internal/widget2/edit.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_multiline 
+    : mod/internal/widget2/test_multiline.cpp 
+    : mod/internal/widget2/multiline.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_password 
+    : mod/internal/widget2/test_password.cpp 
+    : mod/internal/widget2/password.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_number_edit 
+    : mod/internal/widget2/test_number_edit.cpp 
+    : mod/internal/widget2/number_edit.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_edit_valid 
+    : mod/internal/widget2/test_edit_valid.cpp 
+    : mod/internal/widget2/edit_valid.hpp 
+    : <library>png <library>crypto 
+    ;
+
 # test-run test_radio_list : mod/internal/widget2/test_radio_list.cpp : <library>png <library>libboost_unit_test ;
-test-run test_flat_dialog : mod/internal/widget2/test_flat_dialog.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_widget : mod/internal/widget2/test_widget.cpp : <library>crypto ;
-test-run test_composite : mod/internal/widget2/test_composite.cpp : <library>png <library>crypto ;
+test-run test_flat_dialog 
+    : mod/internal/widget2/test_flat_dialog.cpp 
+    : mod/internal/widget2/flat_dialog.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_widget 
+    : mod/internal/widget2/test_widget.cpp 
+    : mod/internal/widget2/widget.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_composite 
+    : mod/internal/widget2/test_composite.cpp 
+    : mod/internal/widget2/composite.hpp 
+    : <library>png <library>crypto 
+    ;
 
 #test-run test_window_dialog : mod/internal/widget2/test_window_dialog.cpp : <library>png <library>z <library>crypto <library>dl ;
 
-test-run test_flat_login : mod/internal/widget2/test_flat_login.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_flat_wab_close : mod/internal/widget2/test_flat_wab_close.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_screen : mod/internal/widget2/test_screen.cpp : <library>png <library>crypto ;
+test-run test_flat_login 
+    : mod/internal/widget2/test_flat_login.cpp 
+    : mod/internal/widget2/flat_login.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_flat_wab_close 
+    : mod/internal/widget2/test_flat_wab_close.cpp 
+    : mod/internal/widget2/flat_wab_close.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_screen 
+    : mod/internal/widget2/test_screen.cpp 
+    : mod/internal/widget2/screen.hpp 
+    : <library>png <library>crypto 
+    ;
 
 # test-run test_columnlayout : mod/internal/widget2/test_columnlayout.cpp : <library>png ;
 # test-run test_linelayout : mod/internal/widget2/test_linelayout.cpp : <library>png ;
 # test-run test_stacklayout : mod/internal/widget2/test_stacklayout.cpp : <library>png ;
-test-run test_grid : mod/internal/widget2/test_grid.cpp : <library>png <library>crypto ;
-test-run test_labelgrid : mod/internal/widget2/test_labelgrid.cpp : <library>png <library>crypto ;
+test-run test_grid 
+    : mod/internal/widget2/test_grid.cpp 
+    : mod/internal/widget2/grid.hpp 
+    : <library>png <library>crypto 
+    ;
 
-test-run test_flat_selector2 : mod/internal/widget2/test_flat_selector2.cpp : <library>png <library>crypto ;
-test-run test_group_box : mod/internal/widget2/test_group_box.cpp : <library>png <library>crypto ;
+test-run test_labelgrid 
+    : mod/internal/widget2/test_labelgrid.cpp 
+    : mod/internal/widget2/labelgrid.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_flat_selector2 
+    : mod/internal/widget2/test_flat_selector2.cpp 
+    : mod/internal/widget2/flat_selector2.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_group_box 
+    : mod/internal/widget2/test_group_box.cpp 
+    : mod/internal/widget2/group_box.hpp 
+    : <library>png <library>crypto 
+    ;
 # test-run test_scroll : mod/internal/widget2/test_scroll.cpp : <library>png ;
 # test-run test_tab : mod/internal/widget2/test_tab.cpp : <library>png ;
-test-run test_flat_interactive_target : mod/internal/widget2/test_flat_interactive_target.cpp : <library>png <library>crypto ;
+test-run test_flat_interactive_target 
+    : mod/internal/widget2/test_flat_interactive_target.cpp 
+    : mod/internal/widget2/flat_interactive_target.hpp 
+    : <library>png <library>crypto 
+    ;
 ## @}
-
 
 ## Mod tests
 ## @{
-test-run test_flat_dialog_mod : mod/internal/test_flat_dialog_mod.cpp : <library>bitmap <library>png ;
-test-run test_flat_login_mod : mod/internal/test_flat_login_mod.cpp : <library>bitmap <library>png ;
-test-run test_flat_wab_close_mod : mod/internal/test_flat_wab_close_mod.cpp : <library>bitmap <library>png ;
-test-run test_widget_test_mod : mod/internal/test_widget_test_mod.cpp : <library>png ;
-test-run test_interactive_target_mod : mod/internal/test_interactive_target_mod.cpp : <library>png <library>crypto ;
+test-run test_flat_dialog_mod 
+    : mod/internal/test_flat_dialog_mod.cpp 
+    : mod/internal/flat_dialog_mod.hpp 
+    : <library>bitmap <library>png 
+    ;
 
-test-run test_bouncer2_mod : mod/internal/test_bouncer2_mod.cpp : <library>png ;
-test-run test_test_card_mod : mod/internal/test_test_card_mod.cpp : ;
+test-run test_flat_login_mod 
+    : mod/internal/test_flat_login_mod.cpp 
+    : mod/internal/flat_login_mod.hpp 
+    : <library>bitmap <library>png 
+    ;
 
-test-run test_replay_mod : mod/internal/test_replay_mod.cpp : ;
-test-run test_internal_mod : mod/internal/test_internal_mod.cpp : ;
+test-run test_flat_wab_close_mod 
+    : mod/internal/test_flat_wab_close_mod.cpp 
+    : mod/internal/flat_wab_close_mod.hpp 
+    : <library>bitmap <library>png 
+    ;
 
-test-run test_copy_paste : mod/internal/test_copy_paste.cpp : <library>png <library>crypto ;
+test-run test_widget_test_mod 
+    : mod/internal/test_widget_test_mod.cpp 
+    : mod/internal/widget_test_mod.hpp 
+    : <library>png 
+    ;
+
+test-run test_interactive_target_mod 
+    : mod/internal/test_interactive_target_mod.cpp 
+    : mod/internal/interactive_target_mod.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_bouncer2_mod 
+    : mod/internal/test_bouncer2_mod.cpp 
+    : mod/internal/bouncer2_mod.hpp 
+    : <library>png 
+    ;
+
+test-run test_test_card_mod 
+    : mod/internal/test_test_card_mod.cpp 
+    : mod/internal/test_card_mod.hpp 
+    ;
+
+test-run test_replay_mod 
+    : mod/internal/test_replay_mod.cpp 
+    : mod/internal/replay_mod.hpp 
+    ;
+
+test-run test_internal_mod 
+    : mod/internal/test_internal_mod.cpp 
+    : mod/internal/internal_mod.hpp 
+    ;
+
+test-run test_copy_paste 
+    : mod/internal/test_copy_paste.cpp 
+    : mod/internal/copy_paste.hpp 
+    : <library>png <library>crypto 
+    ;
 ## @}
-
 
 ## Regex tests
 ## @{
-test-run test_regex_state : regex/test_regex_state.cpp : ;
-test-run test_regex_parser : regex/test_regex_parser.cpp : ;
-test-run test_regex_ndfa : regex/test_regex_ndfa.cpp : ;
-test-run test_regex : regex/test_regex.cpp : ;
+test-run test_regex_state 
+    : regex/test_regex_state.cpp 
+    : regex/regex_state.hpp 
+    ;
+
+test-run test_regex_parser 
+    : regex/test_regex_parser.cpp 
+    : regex/regex_parser.hpp 
+    ;
+
+
+if [ SHELL false ] {
+
+test-run test_regex_ndfa 
+    : regex/test_regex_ndfa.cpp 
+    : regex/regex_ndfa.hpp 
+    ;
+
+}
+
+test-run test_regex 
+    : regex/test_regex.cpp 
+    : regex/regex.hpp 
+    ;
+
 # test-run benchmark_regex_parser : benchmark/parser.cpp ;
 # test-run benchmark_regex_search : benchmark/search.cpp ;
 ## @}
 
 # test-run test_base64 : utils/test_base64.cpp : ;
 
-test-run test_translation : utils/test_translation.cpp : ;
+test-run test_translation 
+    : utils/test_translation.cpp 
+    : utils/translation.hpp 
+    ;
 
 
 ## NLA TESTS
 ## @{
-test-run test_ber : core/RDP/nla/asn1/test_ber.cpp : ;
-test-run test_credssp : core/RDP/nla/test_credssp.cpp : <library>crypto ;
-test-run test_sspi : core/RDP/nla/test_sspi.cpp : ;
-test-run test_nla : core/RDP/nla/test_nla.cpp : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto ;
+test-run test_ber 
+    : core/RDP/nla/asn1/test_ber.cpp 
+    : core/RDP/nla/asn1/ber.hpp 
+    ;
 
-alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
+test-run test_credssp 
+    : core/RDP/nla/test_credssp.cpp 
+    : core/RDP/nla/credssp.hpp 
+    : <library>crypto 
+    ;
 
-test-run test_ntlm_message_negotiate : core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp : <library>crypto ;
-test-run test_ntlm_avpair : core/RDP/nla/ntlm/test_ntlm_avpair.cpp : ;
-test-run test_ntlm_message_challenge : core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp : <library>crypto ;
-test-run test_ntlm_message_authenticate : core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp : <library>crypto ;
-test-run test_ntlm_context : core/RDP/nla/ntlm/test_ntlm_context.cpp : <library>dl <library>z <library>crypto ;
-test-run test_ntlm : core/RDP/nla/ntlm/test_ntlm.cpp : <library>dl <library>z <library>crypto ;
-test-run test_credentials : core/RDP/nla/kerberos/test_credentials.cpp : <library>krb5 ;
-test-run test_kerberos : core/RDP/nla/kerberos/test_kerberos.cpp : <library>krb5 <library>gssglue ;
+test-run test_sspi 
+    : core/RDP/nla/test_sspi.cpp 
+    : core/RDP/nla/sspi.hpp 
+    ;
+
+test-run test_nla 
+    : core/RDP/nla/test_nla.cpp 
+    : core/RDP/nla/nla.hpp 
+    : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto 
+    ;
+
+#alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
+
+test-run test_ntlm_message_negotiate 
+    : core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp 
+    : core/RDP/nla/ntlm/ntlm_message_negotiate.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_ntlm_avpair 
+    : core/RDP/nla/ntlm/test_ntlm_avpair.cpp 
+    : core/RDP/nla/ntlm/ntlm_avpair.hpp 
+    ;
+
+test-run test_ntlm_message_challenge 
+    : core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp 
+    : core/RDP/nla/ntlm/ntlm_message_challenge.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_ntlm_message_authenticate 
+    : core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp 
+    : core/RDP/nla/ntlm/ntlm_message_authenticate.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_ntlm_context 
+    : core/RDP/nla/ntlm/test_ntlm_context.cpp 
+    : core/RDP/nla/ntlm/ntlm_context.hpp 
+    : <library>dl <library>z <library>crypto 
+    ;
+
+test-run test_ntlm 
+    : core/RDP/nla/ntlm/test_ntlm.cpp 
+    : core/RDP/nla/ntlm/ntlm.hpp 
+    : <library>dl <library>z <library>crypto 
+    ;
+
+test-run test_credentials 
+    : core/RDP/nla/kerberos/test_credentials.cpp 
+    : core/RDP/nla/kerberos/credentials.hpp 
+    : <library>krb5 
+    ;
+
+test-run test_kerberos 
+    : core/RDP/nla/kerberos/test_kerberos.cpp 
+    : core/RDP/nla/kerberos/kerberos.hpp 
+    : <library>krb5 <library>gssglue 
+    ;
 ## @}
 
-
-test-run test_darray : utils/test_darray.cpp : ;
+test-run test_darray 
+    : utils/test_darray.cpp 
+    : utils/darray.hpp 
+    ;
 
 ## Widget for workflow
 ## @{
-test-run test_flat_wait : mod/internal/widget2/test_flat_wait.cpp : <library>png <library>crypto ;
-test-run test_flat_form : mod/internal/widget2/test_flat_form.cpp : <library>png <library>crypto ;
+test-run test_flat_wait 
+    : mod/internal/widget2/test_flat_wait.cpp 
+    : mod/internal/widget2/flat_wait.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_flat_form 
+    : mod/internal/widget2/test_flat_form.cpp 
+    : mod/internal/widget2/flat_form.hpp 
+    : <library>png <library>crypto 
+    ;
 ## @}
 
-test-run test_authorization_channels : utils/test_authorization_channels.cpp : ;
-test-run test_pattutils : utils/test_pattutils.cpp : ;
-test-run test_strutils : utils/test_strutils.cpp : ;
+test-run test_authorization_channels 
+    : utils/test_authorization_channels.cpp 
+    : utils/authorization_channels.hpp 
+    ;
 
-test-run test_diffiehellman : utils/test_diffiehellman.cpp : ;
+test-run test_pattutils 
+    : utils/test_pattutils.cpp 
+    : utils/pattutils.hpp 
+    ;
 
-test-run test_finally : utils/test_finally.cpp : ;
+test-run test_strutils 
+    : utils/test_strutils.cpp 
+    : utils/strutils.hpp 
+    ;
 
-test-run test_verifier : test_verifier.cpp : <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+test-run test_diffiehellman 
+    : utils/test_diffiehellman.cpp 
+    : utils/diffiehellman.hpp 
+    ;
+
+test-run test_finally 
+    : utils/test_finally.cpp 
+    : utils/finally.hpp 
+    ;
+
+if [ SHELL false ] {
+
+test-run test_verifier 
+    : test_verifier.cpp 
+    : verifier.hpp 
+    : <library>program_options 
+      <library>openssl 
+      <library>crypto 
+      <library>snappy 
+      <library>dl 
+      <library>z ;
+
 
 
 install install-share
