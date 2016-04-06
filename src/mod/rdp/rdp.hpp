@@ -56,7 +56,7 @@
 #include "RDP/mppc_unified_dec.hpp"
 #include "RDP/capabilities/cap_bitmap.hpp"
 #include "RDP/capabilities/order.hpp"
-#include "RDP/capabilities/bmpcache.hpp"
+#include "RDP/capabilities/cap_bmpcache.hpp"
 #include "RDP/capabilities/bmpcache2.hpp"
 #include "RDP/capabilities/colcache.hpp"
 #include "RDP/capabilities/activate.hpp"

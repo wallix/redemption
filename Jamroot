@@ -716,7 +716,7 @@ unit-test test_bitmapcodecs : tests/core/RDP/capabilities/test_bitmapcodecs.cpp 
 
 unit-test test_activate : tests/core/RDP/capabilities/test_activate.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cap_bitmap : tests/core/RDP/capabilities/test_cap_bitmap.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cap_brushcache : tests/core/RDP/capabilities/test_cap_brushcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_compdesk : tests/core/RDP/capabilities/test_compdesk.cpp : $(TEST_DEPENDENCIES) ;

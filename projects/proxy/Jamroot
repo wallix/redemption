@@ -1059,20 +1059,10 @@ test-run test_cap_bitmap
     : core/RDP/capabilities/cap_bitmap.hpp 
     ;
 
-if [ SHELL false ] {
-
-obj test_cap_bmpcache.o 
-    : core/RDP/capabilities/test_bmpcache.cpp 
-    : core/RDP/capabilities/test_bmpcache.cpp 
-    ;
-
 test-run test_cap_bmpcache 
-    : test_cap_bmpcache.o 
-    : test_cap_bmpcache.o 
+    : core/RDP/capabilities/test_cap_bmpcache.cpp 
+    : core/RDP/capabilities/cap_bmpcache.hpp 
     ;
-}
-
-#test-run test_cap_bmpcache : core/RDP/capabilities/test_bmpcache.cpp : ;
 
 test-run test_bitmapcachehostsupport 
     : core/RDP/capabilities/test_bitmapcachehostsupport.cpp 
