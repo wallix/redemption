@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     FakeFront front(info, verbose);
 
     const char * name       = "RDP W2008 TLS Target";
-    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, verbose);
+    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, {}, verbose);
 
     //std::string  error_message;
     //SocketTransport     t( name

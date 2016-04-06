@@ -18,15 +18,6 @@
 *   Author(s): Jonathan Poelen
 */
 
-
-#ifndef aaaaaaa
-#define aaaaaaa
-#include <type_traits>
-template<class... Ts>
-constexpr std::integral_constant<std::size_t, sizeof...(Ts)>
-arguments_size(Ts const &...){ return {}; }
-#endif
-
 #ifndef MK_ENUM_IO
 
 #include <iosfwd>
@@ -34,6 +25,7 @@ arguments_size(Ts const &...){ return {}; }
 #include <cstdlib>
 #include "utils/underlying_cast.hpp"
 #include "configs/c_str_buf.hpp"
+#include <initializer_list>
 
 #define MK_ENUM_IO(E)                                    \
     template<class Ch, class Tr>                         \
@@ -81,17 +73,19 @@ arguments_size(Ts const &...){ return {}; }
 #else
 # define ENUM_OPTION(Enum, X, ...)                       \
     template<class T> struct enum_option<Enum, T> {      \
-        static constexpr const std::decay<decltype(X)>::type value[decltype(arguments_size(X, __VA_ARGS__))::value] = {X, __VA_ARGS__};                        \
+        static constexpr const std::initializer_list<    \
+            std::decay<decltype(X)>::type                \
+        > value {X, __VA_ARGS__};                        \
         using type = std::true_type;                     \
-    };                                                   
-//    template<class T> constexpr const                    
-//    std::decay<decltype(X)>::type[decltype(arguments_size(X, __VA_ARGS__))::value]
-//    enum_option<Enum, T>::value
+    };                                                   \
+    template<class T> constexpr const                    \
+    std::initializer_list<std::decay<decltype(X)>::type> \
+    enum_option<Enum, T>::value
 #endif
 
 #define MK_ENUM_FIELD(Enum, ...)                               \
     MK_ENUM_IO(Enum)                                           \
-    ENUM_OPTION(Enum, __VA_ARGS__)                            \
+    ENUM_OPTION(Enum, __VA_ARGS__);                            \
     inline void parse(Enum & e, char const * cstr)  {          \
         unsigned i = 0;                                        \
         auto l = {__VA_ARGS__};                                \

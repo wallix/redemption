@@ -80,7 +80,7 @@ namespace { namespace compiler_aux_ {
         1                                                                        \
     ))
 #  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
-        user, device, service, account, priority, ...)                           \
+        ip_client, ip_target, user, device, service, account, priority, ...)     \
     LOGCHECK__REDEMPTION__INTERNAL((                                             \
         LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
         LOGNULL__REDEMPTION__SESSION__INTERNAL(                                  \
@@ -89,6 +89,8 @@ namespace { namespace compiler_aux_ {
             session_type,                                                        \
             type,                                                                \
             session_id,                                                          \
+            ip_client,                                                           \
+            ip_target,                                                           \
             user,                                                                \
             device,                                                              \
             service,                                                             \
@@ -101,7 +103,7 @@ namespace { namespace compiler_aux_ {
 #elif defined(LOGNULL)
 #  define LOG(priority, ...) LOG_FORMAT_CHECK(__VA_ARGS__)
 #  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
-        user, device, service, account, priority, ...)                           \
+        ip_client, ip_target, user, device, service, account, priority, ...)     \
     LOGCHECK__REDEMPTION__INTERNAL((                                             \
         LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
         LOGNULL__REDEMPTION__SESSION__INTERNAL(                                  \
@@ -110,6 +112,8 @@ namespace { namespace compiler_aux_ {
             session_type,                                                        \
             type,                                                                \
             session_id,                                                          \
+            ip_client,                                                           \
+            ip_target,                                                           \
             user,                                                                \
             device,                                                              \
             service,                                                             \
@@ -126,19 +130,22 @@ namespace { namespace compiler_aux_ {
         1                                                                        \
     ))
 #  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
-        user, device, service, account, priority, format, ...                    \
+        ip_client, ip_target, user, device, service, account, priority, format,  \
+        ...                                                                      \
     )                                                                            \
     LOGCHECK__REDEMPTION__INTERNAL((                                             \
         LOG_FORMAT_CHECK(format, __VA_ARGS__),                                   \
         LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                                \
             normal_log,                                                          \
             session_log,                                                         \
-            session_type, type, session_id,                                      \
+            session_type, type, session_id, ip_client, ip_target,                \
             user, device, service, account, priority,                            \
             "%s (%d/%d) -- type='%s'%s" format,                                  \
             "[%s Session] "                                                      \
                 "type='%s' "                                                     \
                 "session_id='%s' "                                               \
+                "ip_client='%s' "                                                \
+                "ip_target='%s' "                                                \
                 "user='%s' "                                                     \
                 "device='%s' "                                                   \
                 "service='%s' "                                                  \
@@ -211,6 +218,8 @@ namespace {
         const char * session_type,
         const char * type,
         const char * session_id,
+        const char * ip_client,
+        const char * ip_target,
         const char * user,
         const char * device,
         const char * service,
@@ -238,6 +247,8 @@ namespace {
                 session_type,
                 type,
                 session_id,
+                ip_client,
+                ip_target,
                 user,
                 device,
                 service,
@@ -256,6 +267,8 @@ namespace {
         char const * session_type,
         char const * type,
         char const * session_id,
+        char const * ip_client,
+        char const * ip_target,
         char const * user,
         char const * device,
         char const * service,
@@ -266,6 +279,8 @@ namespace {
         (void)session_type;
         (void)type;
         (void)session_id;
+        (void)ip_client;
+        (void)ip_target;
         (void)user;
         (void)device;
         (void)service;

@@ -617,6 +617,8 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "manager_disconnect_reason");
         W.member(type_<std::string>(), "disconnect_reason", r);
         W.member(type_<bool>(), "disconnect_reason_ack", set(false), w);
+        W.sep();
+        W.member(type_<std::string>(), "ip_target");
     });
 
     W.section("", [&]

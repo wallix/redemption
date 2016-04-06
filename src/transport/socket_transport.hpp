@@ -206,7 +206,7 @@ public:
         if (this->sck_closed == 1){
             this->sck = ip_connect(this->ip_address,
                                     this->port,
-                                    3, 1000,
+                                    3, 1000, {},
                                     this->verbose);
             this->sck_closed = 0;
         }
