@@ -289,6 +289,7 @@ inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, 
     return 0;
 }
 
+
 inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
     switch (out_bpp){
     case 8:

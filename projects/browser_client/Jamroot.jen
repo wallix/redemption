@@ -1,0 +1,136 @@
+<<<<<<< HEAD
+# using emscripten ;
+
+project js_client
+=======
+
+
+path-constant SRCDIR : ../../src ;
+path-constant INCLUDEDIR : ../../include ;
+
+project redjs
+>>>>>>> 78229227c59092690fd8a8c2a9d30da7c529f309
+    : requirements
+    <include>$(SRCDIR)
+    <include>$(SRCDIR)/system/linux
+    <include>$(SRCDIR)/core
+    <include>$(SRCDIR)/mod
+    <include>$(SRCDIR)/front
+    <include>$(SRCDIR)/acl
+    <include>$(SRCDIR)/capture
+    <include>$(SRCDIR)/keyboard
+    <include>$(SRCDIR)/keyboard/reversed_keymaps
+    <include>$(SRCDIR)/regex
+    <include>$(SRCDIR)/headers
+    <include>$(SRCDIR)/main
+    #<include>modules/includes 
+    <include>$(SRCDIR)/utils
+    <include>$(SRCDIR)/system/linux/system
+    <include>src
+    <include>$(INCLUDEDIR)
+    <cxxflags>-std=c++11
+    <cxxflags>-Wall
+    <cxxflags>-O2
+    : default-build release
+<<<<<<< HEAD
+;
+
+
+#
+# JS Client
+#
+
+path-constant TOP : . ;
+
+install js_client
+#    : [ glob ./sys/js_client/* ] js_client.html
+    : [ glob ./sys/js_client/* ] templates/js_client_template.html
+    : <location>./sandbox
+    ;
+
+#js js_client.js : 
+#    <cxxflags>-g3
+#    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+#    <cxxflags>"--shell-file templates/js_client_template.html"
+ #;
+
+actions nothing { }
+
+#make js_client.html
+#    <cxxflags>-g3
+#    <cxxflags>"--shell-file templates/js_client_template.html" : nothing ;
+
+
+# project pentamino
+#     : requirements
+#     <cxxflags>-Wall
+#     <include>src
+#     : default-build release
+# ;
+# 
+# #
+# # Pentamino
+# #
+# 
+# path-constant TOP : . ;
+# 
+# install pentamino
+#     : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
+#     : <location>./sandbox
+#     ;
+# 
+# objjs penta.bc 
+#     : 
+#     src/ftests/penta.cpp 
+#     : 
+#     <cxxflags>-g3 
+#     ;
+# 
+# js pentamino.js : penta.bc : 
+#     <cxxflags>-g3
+#     <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+#     <cxxflags>"--shell-file templates/penta_template.html"
+#  ;
+# 
+# actions nothing { }
+# 
+# make pentamino.html : pentamino.js : nothing ;
+# 
+# import testing ;
+# 
+# # unit-test test_penta : test_penta.cpp libboost_unit_test ;
+
+=======
+    ;
+
+using emscripten ;
+
+#install client_rdp_JS
+#    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+#    : <location>./sandbox
+#    ;
+    
+objjs test_rdp_client_test_card_JS.bc 
+	: src/test_rdp_client_test_card_JS.cpp 
+	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+	;
+
+objjs bitmap_data_allocator.bc 
+	: $(SRCDIR)/utils/bitmap_data_allocator.cpp 
+	: <cxxflags>-g3 
+	  <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+	;
+
+js client_rdp_JS.js 
+     : 
+        test_rdp_client_test_card_JS.bc 
+        bitmap_data_allocator.bc
+     :  
+        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+        <cxxflags>-g3 
+     ;
+
+actions nothing { }
+
+make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
+>>>>>>> 78229227c59092690fd8a8c2a9d30da7c529f309

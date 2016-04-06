@@ -97,22 +97,8 @@
 #include "RDP/caches/pointercache.hpp"
 #include "caches/glyphcache.hpp"
 
-#include "orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "orders/RDPOrdersPrimaryLineTo.hpp"
-#include "orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "orders/RDPOrdersPrimaryPolyline.hpp"
-#include "orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "orders/RDPOrdersSecondaryColorCache.hpp"
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
@@ -124,6 +110,8 @@
 
 #include "utils/finally.hpp"
 #include "utils/stream.hpp"
+
+#include "capture/utils/save_state_chunk.hpp"
 
 struct RDPSerializer : public RDPGraphicDevice
 {
@@ -156,24 +144,11 @@ private:
 
 protected:
     // Internal state of orders
-    RDPOrderCommon     common;
-    RDPDestBlt         destblt;
-    RDPMultiDstBlt     multidstblt;
-    RDPMultiOpaqueRect multiopaquerect;
-    RDP::RDPMultiPatBlt multipatblt;
-    RDP::RDPMultiScrBlt multiscrblt;
-    RDPPatBlt          patblt;
-    RDPScrBlt          scrblt;
-    RDPOpaqueRect      opaquerect;
-    RDPMemBlt          memblt;
-    RDPMem3Blt         mem3blt;
-    RDPLineTo          lineto;
-    RDPGlyphIndex      glyphindex;
-    RDPPolygonSC       polygonSC;
-    RDPPolygonCB       polygonCB;
-    RDPPolyline        polyline;
-    RDPEllipseSC       ellipseSC;
-    RDPEllipseCB       ellipseCB;
+    RDPPolygonSC polygonSC;
+    RDPPolygonCB polygonCB;
+    RDPEllipseCB ellipseCB;
+
+    SaveStateChunk ssc;
 
     // state variables for gathering batch of orders
     size_t order_count;
@@ -210,22 +185,8 @@ public:
     , op2(op2)
     , max_bitmap_size(max_bitmap_size)
     // Internal state of orders
-    , common(RDP::PATBLT, Rect(0, 0, 1, 1))
-    , destblt(Rect(), 0)
-    , multidstblt()
-    , patblt(Rect(), 0, 0, 0, RDPBrush())
-    , scrblt(Rect(), 0, 0, 0)
-    , opaquerect(Rect(), 0)
-    , memblt(0, Rect(), 0, 0, 0, 0)
-    , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-    , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-    , glyphindex( 0, 0, 0, 0, 0, 0
-                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                , reinterpret_cast<const uint8_t *>(""))
     , polygonSC()
     , polygonCB()
-    , polyline()
-    , ellipseSC()
     , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
     // state variables for a batch of orders
     , order_count(0)
@@ -286,12 +247,12 @@ public:
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->opaquerect);
-        this->common = newcommon;
-        this->opaquerect = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.opaquerect);
+        this->ssc.common = newcommon;
+        this->ssc.opaquerect = cmd;
 
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect done");
     }
@@ -299,77 +260,77 @@ public:
     void draw(const RDPScrBlt & cmd, const Rect &clip) override {
         this->reserve_order(25);
         RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->scrblt);
-        this->common = newcommon;
-        this->scrblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.scrblt);
+        this->ssc.common = newcommon;
+        this->ssc.scrblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip) override {
         this->reserve_order(21);
         RDPOrderCommon newcommon(RDP::DESTBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->destblt);
-        this->common = newcommon;
-        this->destblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.destblt);
+        this->ssc.common = newcommon;
+        this->ssc.destblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->reserve_order(395 * 2);
         RDPOrderCommon newcommon(RDP::MULTIDSTBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multidstblt);
-        this->common      = newcommon;
-        this->multidstblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multidstblt);
+        this->ssc.common      = newcommon;
+        this->ssc.multidstblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->reserve_order(397 * 2);
         RDPOrderCommon newcommon(RDP::MULTIOPAQUERECT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multiopaquerect);
-        this->common          = newcommon;
-        this->multiopaquerect = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiopaquerect);
+        this->ssc.common          = newcommon;
+        this->ssc.multiopaquerect = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->reserve_order(412 * 2);
         RDPOrderCommon newcommon(RDP::MULTIPATBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multipatblt);
-        this->common      = newcommon;
-        this->multipatblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multipatblt);
+        this->ssc.common      = newcommon;
+        this->ssc.multipatblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->reserve_order(399 * 2);
         RDPOrderCommon newcommon(RDP::MULTISCRBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multiscrblt);
-        this->common      = newcommon;
-        this->multiscrblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiscrblt);
+        this->ssc.common      = newcommon;
+        this->ssc.multiscrblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->reserve_order(29);
         RDPOrderCommon newcommon(RDP::PATBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->patblt);
-        this->common = newcommon;
-        this->patblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.patblt);
+        this->ssc.common = newcommon;
+        this->ssc.patblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
@@ -443,31 +404,31 @@ public:
 
         this->reserve_order(is_RDPMemBlt() ? 30 : 60);
         RDPOrderCommon newcommon(is_RDPMemBlt() ? RDP::MEMBLT : RDP::MEM3BLT, clip);
-        newcmd.emit(this->stream_orders, newcommon, this->common, this_memblt);
-        this->common = newcommon;
+        newcmd.emit(this->stream_orders, newcommon, this->ssc.common, this_memblt);
+        this->ssc.common = newcommon;
         this_memblt = newcmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            newcmd.log(LOG_INFO, common.clip);
+            newcmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
 public:
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp) override {
-        this->draw_memblt(cmd, this->memblt, clip, oldbmp);
+        this->draw_memblt(cmd, this->ssc.memblt, clip, oldbmp);
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & oldbmp) override {
-        this->draw_memblt(cmd, this->mem3blt, clip, oldbmp);
+        this->draw_memblt(cmd, this->ssc.mem3blt, clip, oldbmp);
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip) override {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->lineto);
-        this->common = newcommon;
-        this->lineto = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.lineto);
+        this->ssc.common = newcommon;
+        this->ssc.lineto = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
@@ -572,11 +533,11 @@ public:
 
         this->reserve_order(297);
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
-        new_cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
-        this->common = newcommon;
-        this->glyphindex = new_cmd;
+        new_cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.glyphindex);
+        this->ssc.common = newcommon;
+        this->ssc.glyphindex = new_cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            new_cmd.log(LOG_INFO, common.clip);
+            new_cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
@@ -593,43 +554,43 @@ public:
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYGONSC, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->polygonSC);
-        this->common    = newcommon;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonSC);
+        this->ssc.common    = newcommon;
         this->polygonSC = cmd;
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYGONCB, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->polygonCB);
-        this->common    = newcommon;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonCB);
+        this->ssc.common    = newcommon;
         this->polygonCB = cmd;
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYLINE, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->polyline);
-        this->common   = newcommon;
-        this->polyline = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.polyline);
+        this->ssc.common   = newcommon;
+        this->ssc.polyline = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         this->reserve_order(26);
         RDPOrderCommon newcommon(RDP::ELLIPSESC, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->ellipseSC);
-        this->common = newcommon;
-        this->ellipseSC = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.ellipseSC);
+        this->ssc.common = newcommon;
+        this->ssc.ellipseSC = cmd;
     }
 
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         this->reserve_order(54);
         RDPOrderCommon newcommon(RDP::ELLIPSECB, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->ellipseCB);
-        this->common = newcommon;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ellipseCB);
+        this->ssc.common = newcommon;
         this->ellipseCB = cmd;
     }
 

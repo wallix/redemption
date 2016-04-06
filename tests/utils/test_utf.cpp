@@ -829,3 +829,15 @@ BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €\r\ntrapézoïdal");
 }
+
+BOOST_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast(""), 6), 0);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 6), 4);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 3), 2);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 1), 0);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 0), 0);
+}

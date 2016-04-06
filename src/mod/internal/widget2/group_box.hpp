@@ -120,7 +120,10 @@ public:
     void set_text(const char * text) {
         this->buffer[0] = 0;
         if (text) {
-            const size_t max = std::min(buffer_size - 1, strlen(text));
+            const size_t remain_n = buffer_size - 1;
+            const size_t n = strlen(text);
+            const size_t max = ((remain_n >= n) ? n :
+                                ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
         }

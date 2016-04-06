@@ -103,7 +103,11 @@ public:
         this->num_chars = 0;
         this->w_text = 0;
         if (text && *text) {
-            this->buffer_size = std::min(WidgetLabel::buffer_size - 1, strlen(text));
+            const size_t n = strlen(text);
+            const size_t remain_n = WidgetLabel::buffer_size - 1;
+
+            this->buffer_size = ((remain_n >= n) ? n : ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
+
             memcpy(this->label.buffer, text, this->buffer_size);
             this->label.buffer[this->buffer_size] = 0;
             this->drawable.text_metrics(this->font, this->label.buffer, this->w_text, this->h_text);
@@ -126,8 +130,11 @@ public:
         if (text && *text) {
             const size_t n = strlen(text);
             const size_t tmp_buffer_size = this->buffer_size;
-            const size_t total_n = std::min(WidgetLabel::buffer_size - 1, n + this->buffer_size);
-            const size_t max_n = total_n - this->buffer_size;
+
+            const size_t remain_n = WidgetLabel::buffer_size - 1 - this->buffer_size;
+            const size_t max_n = ((remain_n >= n) ? n : ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
+            const size_t total_n = max_n + this->buffer_size;
+
             if (this->edit_pos == this->buffer_size || total_n == WidgetLabel::buffer_size - 1) {
                 memcpy(this->label.buffer + this->buffer_size, text, max_n);
             }
