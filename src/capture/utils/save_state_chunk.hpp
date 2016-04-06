@@ -35,8 +35,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "utils/stream.hpp"
 
 class SaveStateChunk {
