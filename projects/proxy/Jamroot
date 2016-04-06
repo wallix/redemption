@@ -1439,13 +1439,19 @@ test-run test_request_full_cleaning
     : transport/test_request_full_cleaning.cpp 
     : transport/request_full_cleaning.hpp 
     ;
+}
 
-test-run test_filename_transport 
-    : transport/test_filename_transport.cpp 
-    : transport/filename_transport.hpp 
+test-run test_in_filename_transport 
+    : transport/test_in_filename_transport.cpp 
+    : transport/in_filename_transport.hpp 
     : <library>z <library>dl <library>snappy <library>crypto 
     ;
-}
+
+test-run test_out_filename_transport 
+    : transport/test_out_filename_transport.cpp 
+    : transport/out_filename_transport.hpp 
+    : <library>z <library>dl <library>snappy <library>crypto 
+    ;
 
 test-run test_bulk_compression_transport 
     : transport/test_bulk_compression_transport.cpp 
