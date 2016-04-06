@@ -50,9 +50,8 @@ js client_rdp_JS.js
      : 
         test_rdp_client_test_card_JS.bc 
         bitmap_data_allocator.bc
-     : 
-        #<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
-        #<cxxflags>"--shell-file templates/template.html"
+     :  
+        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>-g3 
      ;
 
