@@ -19,6 +19,7 @@ constant INCLUDEDIR : ../../include ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 
+echo "components of debug" [ feature.get-values <variant> ] ;
 
 # Returns environment value if it exists or default otherwise.
 # Allow us to customize install path with shell variables like $PREFIX...
@@ -1433,14 +1434,6 @@ test-run test_out_file_transport
     : transport/out_file_transport.hpp
     ;
 
-if [ SHELL false ] {
-
-test-run test_request_full_cleaning 
-    : transport/test_request_full_cleaning.cpp 
-    : transport/request_full_cleaning.hpp 
-    ;
-}
-
 test-run test_in_filename_transport 
     : transport/test_in_filename_transport.cpp 
     : transport/in_filename_transport.hpp 
@@ -1618,70 +1611,103 @@ test-run test_rdp
       <library>dl <library>crypto 
     ;
 
-if [ SHELL false ] {
-    
 test-run test_rdp_client_test_card 
     : client_mods/test_rdp_client_test_card.cpp 
-    : client_mods/rdp_client_test_card.hpp 
-    : <library>bitmap <library>z 
-      <library>png <library>crypto 
-      <library>dl <library>openssl 
+    : 
+    : <library>bitmap
+      <library>z
+      <library>png
+      <library>crypto 
+      <library>dl
+      <library>openssl 
+      <covflag>nocover
     ;
 test-run test_rdp_client_tls_w2008 
     : client_mods/test_rdp_client_tls_w2008.cpp 
-    : client_mods/rdp_client_tls_w2008.hpp 
-    : <library>bitmap <library>krb5 
-      <library>gssglue <library>png 
-      <library>crypto <library>d3des 
-      <library>z <library>dl 
+    : 
+    : <library>bitmap
+      <library>krb5 
+      <library>gssglue
+      <library>png 
+      <library>crypto
+      <library>d3des 
+      <library>z
+      <library>dl 
       <library>openssl 
+      <covflag>nocover
     ;
 
 test-run test_rdp_client_wab 
     : client_mods/test_rdp_client_wab.cpp 
-    : client_mods/rdp_client_wab.hpp 
-    : <library>bitmap <library>krb5 
-      <library>gssglue <library>png 
-      <library>crypto <library>d3des 
-      <library>openssl <library>dl 
-      <library>krb5 <library>gssglue 
+    : 
+    : <library>bitmap
+      <library>krb5 
+      <library>gssglue
+      <library>png 
+      <library>crypto
+      <library>d3des 
+      <library>openssl
+      <library>dl 
+      <library>krb5
+      <library>gssglue 
+      <covflag>nocover
     ;
 
 test-run test_vnc_client_simple 
     : client_mods/test_vnc_client_simple.cpp 
-    : client_mods/vnc_client_simple.hpp 
-    : <library>bitmap <library>krb5 
-      <library>gssglue <library>png 
-      <library>crypto <library>d3des 
+    : 
+    : <library>bitmap
+      <library>krb5 
+      <library>gssglue
+      <library>png 
+      <library>crypto
+      <library>d3des 
       <library>dl 
+      <covflag>nocover
     ;
 
 test-run test_rdesktop_client 
     : server/test_rdesktop_client.cpp 
-    : server/rdesktop_client.hpp 
-    : <library>bitmap <library>png 
-      <library>openssl <library>snappy 
-      <library>d3des <library>crypto 
+    : 
+    : <library>bitmap
+      <library>png 
+      <library>openssl
+      <library>snappy 
+      <library>d3des
+      <library>crypto 
       <library>dl 
+      <covflag>nocover
     ;
+
 
 test-run test_mstsc_client 
     : server/test_mstsc_client.cpp 
-    : server/mstsc_client.hpp 
-    : <library>bitmap <library>png 
-      <library>openssl <library>snappy 
-      <library>d3des <library>crypto 
-      <library>dl 
+    : 
+    : <library>bitmap
+      <library>png 
+      <library>openssl
+      <library>snappy 
+      <library>d3des
+      <library>crypto 
+      <library>dl
+      <covflag>nocover
     ;
+
 
 test-run test_mstsc_client_rdp50bulk 
     : server/test_mstsc_client_rdp50bulk.cpp 
-    : server/mstsc_client_rdp50bulk.hpp 
-    : <library>bitmap <library>png 
-      <library>openssl <library>snappy 
-      <library>d3des <library>crypto 
+    : 
+    : <library>bitmap
+      <library>png 
+      <library>openssl
+      <library>snappy 
+      <library>d3des
+      <library>crypto 
       <library>dl 
+      <covflag>nocover
     ;
+
+if [ SHELL false ] {
 
 test-run test_keymap2 
     : test_keymap2.cpp 

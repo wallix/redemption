@@ -802,9 +802,6 @@ unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_seque
 unit-test test_test_transport : tests/transport/test_test_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_count_transport : tests/transport/test_count_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl ;
-unit-test test_file_transport : tests/transport/test_file_transport.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_filename_transport : tests/transport/test_filename_transport.cpp : $(TEST_DEPENDENCIES) <library>z <library>dl <library>snappy <library>crypto ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>z ;

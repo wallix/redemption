@@ -144,3 +144,33 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 }
 
+BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
+{
+    unlink("./xxx-000000.wrm");
+    unlink("./xxx-000001.wrm");
+    unlink("./xxx.mwrm");
+
+    timeval now;
+    now.tv_sec = 1352304810;
+    now.tv_usec = 0;
+    const int groupid = 0;
+    OutMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr, 0,
+                                       FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
+    wrm_trans.send("AAAAX", 5);
+    wrm_trans.send("BBBBX", 5);
+    wrm_trans.next();
+    wrm_trans.send("CCCCX", 5);
+
+    const FilenameGenerator * sqgen = wrm_trans.seqgen();
+
+    BOOST_CHECK(-1 != filesize(sqgen->get(0)));
+    BOOST_CHECK(-1 != filesize(sqgen->get(1)));
+    BOOST_CHECK(-1 != filesize("./xxx.mwrm"));
+
+    wrm_trans.request_full_cleaning();
+
+    BOOST_CHECK_EQUAL(-1, filesize(sqgen->get(0)));
+    BOOST_CHECK_EQUAL(-1, filesize(sqgen->get(1)));
+    BOOST_CHECK_EQUAL(-1, filesize("./xxx.mwrm"));
+}
+
