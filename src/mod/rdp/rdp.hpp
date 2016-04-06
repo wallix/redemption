@@ -5159,6 +5159,11 @@ public:
                 this->front.disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
             }
+
+            if (this->session_probe_virtual_channel_p &&
+                this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                this->session_probe_virtual_channel_p->start_launch_timeout_timer();
+            }
         }
         break;
         case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
