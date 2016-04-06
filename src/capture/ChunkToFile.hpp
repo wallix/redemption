@@ -207,8 +207,8 @@ public:
 
                 ssc.send(payload);
 
-                send_wrm_chunk(this->trans, SAVE_STATE, stream.get_offset(), chunk_count);
-                this->trans.send(stream.get_data(), stream.get_offset());
+                send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), chunk_count);
+                this->trans.send(payload.get_data(), payload.get_offset());
             }
             break;
 
