@@ -1,33 +1,4 @@
 
-
-path-constant SRCDIR : ../../src ;
-path-constant INCLUDEDIR : ../../include ;
-
-project redjs
-    : requirements
-    <include>$(SRCDIR)
-    <include>$(SRCDIR)/system/linux
-    <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/mod
-    <include>$(SRCDIR)/front
-    <include>$(SRCDIR)/acl
-    <include>$(SRCDIR)/capture
-    <include>$(SRCDIR)/keyboard
-    <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/regex
-    <include>$(SRCDIR)/headers
-    <include>$(SRCDIR)/main
-    #<include>modules/includes 
-    <include>$(SRCDIR)/utils
-    <include>$(SRCDIR)/system/linux/system
-    <include>src
-    <include>$(INCLUDEDIR)
-    <cxxflags>-std=c++11
-    <cxxflags>-Wall
-    <cxxflags>-O2
-    : default-build release
-    ;
-
 using emscripten ;
 
 #install client_rdp_JS
