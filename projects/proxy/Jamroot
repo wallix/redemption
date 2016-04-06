@@ -602,8 +602,8 @@ actions nop { }
 
 import toolset ;
 
-feature.feature <cov-file> : : free ;
-toolset.flags cover COVERFILE : <cov-file> ;
+feature.feature <covfile> : : free ;
+toolset.flags cover COVERFILE : <covfile> ;
 
 feature.feature <covflag> : : free ;
 toolset.flags cover COVERFLAG : <covflag> ;
@@ -612,6 +612,9 @@ actions cover
 {
     echo "Computing coverage for $(COVERFILE)"
     if [ "++ $(COVERFLAG) ++" = "++ nocover ++" ]; then
+        if [ ! -e "$(SRCDIR)/$(COVERFILE)" ]; then
+            echo "source file $(SRCDIR)/$(COVERFILE) missing"
+        fi
         echo "NO COVERAGE"
         touch "$(<)"
     else
@@ -651,19 +654,19 @@ actions cover
                     exit 1
                 fi
             else
-                echo "gcov mv KO"
+                echo "gcov mv failed"
                 exit 1
             fi
         else
-            echo "gcov KO"
+            echo "gcov failed"
             exit 1
         fi
     fi
 }
 
-rule test-run ( target : sources + : tested : requirements * )
+rule test-run ( target : sources + : tested ? : requirements * )
 {
-#    ECHO "TEST RUN" ;
+#    ECHO " TEST RUN" ;
     sources = $(TESTDIR)/$(sources) ;
     local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
     local basepath = "" ;
@@ -680,7 +683,7 @@ rule test-run ( target : sources + : tested : requirements * )
     run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
     make $(target:S=.coverage) : $(target) : nop 
         : <variant>coverage:<action>@cover 
-          <cov-file>$(tested) $(requirements)
+          <covfile>$(tested) $(requirements)
         ;
 }
 
@@ -1365,12 +1368,12 @@ test-run test_ssl_calls
     : system/linux/system/ssl_calls.hpp 
     : <library>openssl <library>crypto <library>dl <library>z ;
 
-if [ SHELL false ] {
 test-run test_strings 
     : test_strings.cpp 
-    : strings.hpp 
+    : 
+    : <covflag>nocover 
     ;
-}
+
 
 ## Transport tests
 ## @{
@@ -1390,12 +1393,11 @@ test-run test_in_meta_sequence_transport
     : <library>crypto <library>snappy <library>dl <library>z 
     ;
 
-if [ SHELL false ] {
 test-run test_filename_sequence_transport 
     : transport/test_filename_sequence_transport.cpp 
-    : transport/filename_sequence_transport.hpp 
+    :
+    : <covflag>nocover 
     ;
-}
 
 test-run test_out_meta_sequence_transport 
     : transport/test_out_meta_sequence_transport.cpp 
