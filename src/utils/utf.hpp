@@ -103,7 +103,6 @@ enum {
 //    return i;
 //}
 
-
 REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
 static inline size_t UTF8Len(const uint8_t * source)
 {
@@ -174,7 +173,6 @@ static inline void UTF16Upper(uint8_t * source, size_t max_len)
 //         i_s += 2;
 //     }
 // }
-
 
 REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
       " It assumes input is valid utf8, zero terminated (that has been checked before).")
@@ -260,8 +258,6 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
     return true;
 }
 
-
-
 // UTF8CharNbBytes:
 // ----------------
 // input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
@@ -272,6 +268,23 @@ static inline size_t UTF8CharNbBytes(const uint8_t * source)
 {
     uint8_t c = *source;
     return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
+}
+
+REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
+static inline size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len)
+{
+    size_t adjust_len = 0;
+    while (*source) {
+        const size_t char_nb_bytes = UTF8CharNbBytes(source);
+        if (adjust_len + char_nb_bytes >= max_len) {
+            break;
+        }
+
+        adjust_len += char_nb_bytes;
+        source += char_nb_bytes;
+    }
+
+    return adjust_len;
 }
 
 REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before")
@@ -292,7 +305,6 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
     }
     return;
 }
-
 
 REDOC(
     "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
@@ -487,7 +499,6 @@ class UTF8toUnicodeIterator
 {
     const uint8_t * source;
     uint32_t ucode = 0;
-
 
 public:
     explicit UTF8toUnicodeIterator(const uint8_t * str)

@@ -59,7 +59,8 @@ class CopyPaste
         }
 
         void assign(char const * s, size_t n) {
-            this->size_ = std::min(n, this->max_size());
+            this->size_ = ((this->max_size() >= n) ? n :
+                           ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(s), this->max_size()));
             memcpy(this->buf_, s, this->size_);
             this->buf_[this->size_] = 0;
         }

@@ -35,5 +35,6 @@
 
 BOOST_AUTO_TEST_CASE(Testmatch_finder)
 {
+    utils::MatchFinder mf;
     BOOST_CHECK(true);
 }

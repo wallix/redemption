@@ -27,6 +27,8 @@
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
 
+#include "capture/utils/save_state_chunk.hpp"
+
 struct ChunkToFile : public RDPChunkedDevice {
 private:
     CompressionOutTransportWrapper compression_wrapper;
@@ -36,6 +38,8 @@ private:
     const Inifile & ini;
 
     const uint8_t wrm_format_version;
+
+    uint16_t info_version = 0;
 
 public:
     ChunkToFile(Transport * trans
@@ -114,7 +118,7 @@ public:
         switch (chunk_type) {
         case META_FILE:
             {
-                uint16_t info_version               = stream.in_uint16_le();
+                this->info_version                  = stream.in_uint16_le();
                 uint16_t info_width                 = stream.in_uint16_le();
                 uint16_t info_height                = stream.in_uint16_le();
                 uint16_t info_bpp                   = stream.in_uint16_le();
@@ -139,7 +143,7 @@ public:
                 uint16_t info_cache_4_size          = 0;
                 bool     info_cache_4_persistent    = false;
 
-                if (info_version > 3) {
+                if (this->info_version > 3) {
                     info_number_of_cache            = stream.in_uint8();
                     info_use_waiting_list           = (stream.in_uint8() ? true : false);
 
@@ -190,6 +194,21 @@ public:
 
                   , this->compression_wrapper.get_index_algorithm()
                 );
+            }
+            break;
+
+        case SAVE_STATE:
+            {
+                SaveStateChunk ssc;
+
+                ssc.recv(stream, this->info_version);
+
+                StaticOutStream<65536> payload;
+
+                ssc.send(payload);
+
+                send_wrm_chunk(this->trans, SAVE_STATE, stream.get_offset(), chunk_count);
+                this->trans.send(stream.get_data(), stream.get_offset());
             }
             break;
 
