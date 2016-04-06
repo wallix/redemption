@@ -39,25 +39,25 @@ struct FilenameGenerator
         PATH_FILE_EXTENSION
     };
 
+private:
     char         path[1024];
     char         filename[1012];
     char         extension[12];
     Format       format;
     unsigned     pid;
-    int          groupid;
     mutable char filename_gen[1024];
 
     const char * last_filename;
     unsigned     last_num;
 
-    FilenameGenerator(Format format,
-                      const char * const prefix,
-                      const char * const filename,
-                      const char * const extension,
-                      const int groupid)
+public:
+    FilenameGenerator(
+        Format format,
+        const char * const prefix,
+        const char * const filename,
+        const char * const extension)
     : format(format)
     , pid(getpid())
-    , groupid(groupid)
     , last_filename(nullptr)
     , last_num(-1u)
     {
@@ -110,12 +110,10 @@ struct FilenameGenerator
     }
 
 private:
-    FilenameGenerator(FilenameGenerator const &);
-    FilenameGenerator& operator=(FilenameGenerator const &);
+    FilenameGenerator(FilenameGenerator const &) = delete;
+    FilenameGenerator& operator=(FilenameGenerator const &) = delete;
 };
 
 typedef FilenameGenerator::Format FilenameFormat;
-
-typedef FilenameGenerator SequenceGenerator;
 
 #endif

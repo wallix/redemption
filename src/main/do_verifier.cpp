@@ -12,7 +12,7 @@
 #include "version.hpp"
 
 extern "C" {
-    __attribute__((__visibility__("default"))) 
+    __attribute__((__visibility__("default")))
     int vermemcpy(char * dest, char * source, int len)
     {
 //        hexdump(dest, 32);
@@ -23,12 +23,11 @@ extern "C" {
     }
 
 
-    __attribute__((__visibility__("default"))) 
+    __attribute__((__visibility__("default")))
     int do_main(int argc, char ** argv,
             get_hmac_key_prototype * hmac_fn,
-            get_trace_key_prototype * trace_fn) 
+            get_trace_key_prototype * trace_fn)
     {
-    
         Inifile ini;
         ini.set<cfg::debug::config>(false);
         { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), CFG_PATH "/" RDPPROXY_INI); }
@@ -36,7 +35,7 @@ extern "C" {
         CryptoContext cctx(rnd, ini);
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
-        
+
         int res = -1;
         try {
             res = app_verifier(ini,

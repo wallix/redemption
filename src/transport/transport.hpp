@@ -70,7 +70,7 @@ public:
     virtual ~Transport()
     {}
 
-    //virtual const SequenceGenerator * seqgen() const noexcept
+    //virtual const FilenameGenerator * seqgen() const noexcept
     //{ return this->pseq; }
 
     uint32_t get_seqno() const

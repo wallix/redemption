@@ -46,7 +46,6 @@ extern "C" {
     {
         std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
         Inifile ini;
-        { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), CFG_PATH "/" RDPPROXY_INI); }
 
         UdevRandom rnd;
         CryptoContext cctx(rnd, ini);
@@ -81,9 +80,6 @@ extern "C" {
             );
         } catch (const Error & e) {
             printf("decrypt failed: with id=%d\n", e.id);
-            if (!res) {
-                res = 1;
-            }
         }
         return res;
     }

@@ -40,7 +40,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(0);
-    const int groupid = 0;
     {
         LCGRandom rnd(0);
 
@@ -70,8 +69,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         TODO("remove this after unifying capture interface");
         bool full_video = false;
         TODO("remove this after unifying capture interface");
-        bool extract_meta_data = false;
-        TODO("remove this after unifying capture interface");
         bool clear_png = false;
         TODO("remove this after unifying capture interface");
         bool no_timestamp = false;
@@ -81,8 +78,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         Capture capture(
             now, scr.cx, scr.cy, 24, 24
             , clear_png, no_timestamp, authentifier
-            , ini, rnd, cctx
-            , full_video, extract_meta_data);
+            , ini, rnd, cctx, full_video);
 
         bool ignore_frame_in_timeval = false;
 
@@ -125,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator png_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".png", ini.get<cfg::video::capture_groupid>()
+          , "./" , "capture", ".png"
         );
 
         const char * filename;
@@ -159,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator wrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".wrm", ini.get<cfg::video::capture_groupid>()
+          , "./" , "capture", ".wrm"
         );
 
         struct {
@@ -191,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
-          , "./", "capture", ".mwrm", groupid
+          , "./", "capture", ".mwrm"
         );
         filename = mwrm_seq.get(0);
         BOOST_CHECK_EQUAL(meta_len_writer.len, ::filesize(filename));
@@ -202,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
-          , "/tmp/", "capture", ".mwrm", groupid
+          , "/tmp/", "capture", ".mwrm"
         );
         const char * filename = mwrm_seq.get(0);
         BOOST_CHECK_EQUAL(32, ::filesize(filename));
@@ -242,8 +238,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         TODO("remove this after unifying capture interface");
         bool full_video = false;
         TODO("remove this after unifying capture interface");
-        bool extract_meta_data = false;
-        TODO("remove this after unifying capture interface");
         bool clear_png = false;
         TODO("remove this after unifying capture interface");
         bool no_timestamp = false;
@@ -252,8 +246,7 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Capture capture(now, scr.cx, scr.cy, 16, 16
                         , clear_png, no_timestamp, authentifier
-                        , ini, rnd, cctx
-                        , full_video, extract_meta_data);
+                        , ini, rnd, cctx, full_video);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
         capture.set_pointer(pointer1);

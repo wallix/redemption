@@ -258,13 +258,15 @@ namespace detail
         FilenameGenerator filegen_;
         Buf buf_;
         unsigned num_file_;
+        int groupid_;
 
     public:
         template<class BufParams>
         explicit out_sequence_filename_buf_impl(out_sequence_filename_buf_param<BufParams> const & params)
-        : filegen_(params.format, params.prefix, params.filename, params.extension, params.groupid)
+        : filegen_(params.format, params.prefix, params.filename, params.extension)
         , buf_(params.buf_params)
         , num_file_(0)
+        , groupid_(params.groupid)
         {
             this->current_filename_[0] = 0;
         }
@@ -338,10 +340,10 @@ namespace detail
             if (fd < 0) {
                 return fd;
             }
-            if (chmod(this->current_filename_, this->filegen_.groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+            if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
                    , this->current_filename_
-                   , this->filegen_.groupid ? "u+r, g+r" : "u+r"
+                   , this->groupid_ ? "u+r, g+r" : "u+r"
                    , strerror(errno), errno);
             }
             this->filegen_.set_last_filename(this->num_file_, this->current_filename_);

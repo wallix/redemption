@@ -28,8 +28,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
 #include "transport/out_file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"

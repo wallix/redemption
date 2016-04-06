@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
-    const SequenceGenerator * seq = out_png_trans.seqgen();
+    const FilenameGenerator * seq = out_png_trans.seqgen();
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 

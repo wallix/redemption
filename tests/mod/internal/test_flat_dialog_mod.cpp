@@ -27,8 +27,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "internal/flat_dialog_mod.hpp"
 #include "../../front/fake_front.hpp"
