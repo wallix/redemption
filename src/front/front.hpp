@@ -881,12 +881,10 @@ public:
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
         TODO("remove this after unifying capture interface");
         bool full_video = false;
-        TODO("remove this after unifying capture interface");
-        bool extract_meta_data = false;
         this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
                                    , true, false, authentifier
                                    , ini, this->gen, this->cctx
-                                   , full_video, extract_meta_data);
+                                   , full_video);
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }

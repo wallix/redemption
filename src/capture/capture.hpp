@@ -90,15 +90,13 @@ public:
         uint16_t width, uint16_t height, int order_bpp, int capture_bpp,
         bool enable_rt, bool no_timestamp, auth_api * authentifier,
         const Inifile & ini, Random & rnd, CryptoContext & cctx,
-        bool full_video, bool extract_meta_data)
+        bool full_video)
     : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , capture_api(now, width / 2, height / 2)
     {
         TODO("Remove that after change of capture interface")
         (void)full_video;
-        TODO("Remove that after change of capture interface")
-        (void)extract_meta_data;
 
         bool const enable_kbd
           = !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
@@ -201,13 +199,6 @@ public:
 
     wait_obj & get_capture_event() {
         return this->capture_api.get_capture_event();
-    }
-
-    void request_full_cleaning()
-    {
-        if (this->pnc) {
-            this->pnc->request_full_cleaning();
-        }
     }
 
     void pause_capture(timeval const & now) {

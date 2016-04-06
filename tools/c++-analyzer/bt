@@ -28,6 +28,7 @@ usage () {
   echo ' -s           Use source-highlight.'
   echo ' -e           Catch exceptions.'
   echo ' -f           Used as filter (... | '"$0" -f').'
+  echo ' -r           gdb run command arguments.'
   echo ' -l line      Breakpoint line.'
   echo ' -p file      Breakpoint file.'
 }
@@ -35,10 +36,11 @@ usage () {
 filter=bt
 nogdb=0
 cmd_extra=''
+cmd_run='r'
 break_line=
 break_file=
 
-TEMP=`getopt -o hqsfel:p: --long help -n "$0" -- "$@"`
+TEMP=`getopt -o hqsfer:l:p: --long help -n "$0" -- "$@"`
 [ $? -ne 0 ] && exit 1
 eval set -- "$TEMP"
 while true ; do
@@ -50,6 +52,7 @@ while true ; do
     -f) nogdb=1 ; shift ;;
     -l) break_line="$2" ; shift 2 ;;
     -p) break_file="$2" ; shift 2 ;;
+    -r) cmd_run="r ${2}" ; shift 2 ;;
     --) shift ; break ;;
     *) break ;;
   esac
@@ -67,11 +70,12 @@ shift
 
 if [ ! -z "$break_line" ] ; then
   [ -z "$break_file" ] && break_file="${command/*\//}.cpp"
-  cmd_extra+=$(echo -e "\nb ${break_file}:$break_line\nr\nc")
+  cmd_extra+=$(echo -e "\nb ${break_file}:$break_line\n$cmd_run\nc")
 elif [ ! -z "$break_file" ] ; then
-  cmd_extra+=$(echo -e "\nb ${break_file}\nr\nc")
+  cmd_extra+=$(echo -e "\nb ${break_file}\n$cmd_run\nc")
 else
-  cmd_extra+=$(echo -e "\nr")
+  [ ! -z "$cmd_extra" ] && cmd_extra+=$(echo)
+  cmd_extra+="$cmd_run"
 fi
 
 gdb -q "$@" "$command" <<< "$cmd_extra

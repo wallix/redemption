@@ -239,8 +239,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
-                    , bool full_video
-                    , bool extract_meta_data) {
+                    , bool full_video) {
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
@@ -321,8 +320,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , ini
                     , rnd
                     , cctx
-                    , full_video
-                    , extract_meta_data);
+                    , full_video);
 
             if (capture.capture_png) {
                 if (png_width && png_height) {
@@ -397,7 +395,7 @@ inline
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
                         , int wrm_compression_algorithm_
                         , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
-    FileToChunk player(&in_wrm_trans, 0);
+    FileToChunk player(&in_wrm_trans, verbose);
 
 /*
     char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
@@ -544,7 +542,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                 , CryptoContext & cctx, Random & rnd
                 , HasExtraCapture has_extra_capture
                 , bool full_video
-                , bool extract_meta_data
                 )
 {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -580,6 +577,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string wrm_color_depth;
     std::string wrm_encryption;
     std::string png_geometry;
+    std::string hash_path;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -617,6 +615,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         {"remove-input-file", "remove input file"},
 
         {"config-file", &config_filename, "used an another ini file"},
+
+        {"hash-path", &hash_path, "output hash dirname (if empty, use hash_path of ini)"},
     });
 
     add_prog_option(desc);
@@ -679,6 +679,11 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
+
+    if (!hash_path.empty()) {
+        hash_path += '/';
+        ini.set<cfg::video::hash_path>(hash_path);
+    }
 
     int wrm_compression_algorithm_;
 
@@ -925,7 +930,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                             , png_width, png_height
                             , show_file_metadata, show_statistics, verbose
                             , full_video
-                            , extract_meta_data
                             );
             }
             else {

@@ -561,6 +561,15 @@ exe rdpclient
         $(EXE_DEPENDENCIES)
     ;
 
+exe redrec
+    :
+        src/main/redrec.cpp
+        dl
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
 
 #
 # Functional tests (run by hand)
