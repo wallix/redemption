@@ -605,8 +605,8 @@ import toolset ;
 feature.feature <cov-file> : : free ;
 toolset.flags cover COVERFILE : <cov-file> ;
 
-feature.feature <cov-flag> : : free ;
-toolset.flags cover COVERFLAG : <cov-flag> ;
+feature.feature <covflag> : : free ;
+toolset.flags cover COVERFLAG : <covflag> ;
 
 actions cover
 {
@@ -788,7 +788,7 @@ test-run test_transparentrecorder
 test-run test_utils_match_finder 
     : capture/utils/test_match_finder.cpp 
     : capture/utils/match_finder.hpp 
-    : <cov-flag>nocover
+    : <covflag>nocover
     ;
 
 test-run test_wrm_label 
@@ -1315,13 +1315,11 @@ test-run test_bitmap
     : <library>bitmap <library>png <library>crypto 
     ;
 
-if [ SHELL false ] {
 test-run test_bitmap_perf 
     : test_bitmap_perf.cpp 
     : bitmap_perf.hpp 
-    : <library>bitmap <library>png 
+    : <library>bitmap <library>png <covflag>nocover
     ;
-}
 
 test-run test_colors 
     : utils/test_colors.cpp 
