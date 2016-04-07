@@ -63,7 +63,7 @@ public:
             }
             else {
                 // Wait 0.3 x frame_interval.
-                return microseconds(this->frame_interval / 3);
+                return this->frame_interval / 3;
             }
         }
         return microseconds(interval - duration);
