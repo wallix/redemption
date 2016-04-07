@@ -82,19 +82,15 @@ public:
 
         char text[MAX_TEXT];
 
-//        DrawingPolicy & drawing_policy;
-
         CompositeArray child_array;
 
     public:
         Item( const char * text
             , mod_api & drawable
-//            , DrawingPolicy & drawing_policy
             , const Rect & rect
             , Widget2 & parent
             , NotifyApi * notifier)
         : WidgetParent(drawable, rect, parent, notifier)
-//        , drawing_policy(drawing_policy)
  {
             this->impl = &child_array;
 
@@ -107,7 +103,10 @@ public:
         void set_text(const char * text) {
             this->text[0] = 0;
             if (text) {
-                const size_t max = std::min<int>(MAX_TEXT - 1, strlen(text));
+                const size_t remain_n = sizeof(this->text) - 1;
+                const size_t n = strlen(text);
+                const size_t max = ((remain_n >= n) ? n :
+                                    ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
                 memcpy(this->text, text, max);
                 this->text[max] = 0;
             }
@@ -151,7 +150,6 @@ public:
         Rect rect_item        = rect_child_area.offset(-this->rect.x, -this->rect.y);
 
         this->items[this->item_count] = new Item( name, this->drawable
-//                                                , this->drawing_policy
                                                 , rect_item
                                                 , *this
                                                 , this);

@@ -17,7 +17,7 @@ To compile ReDemPtion you need the following packages:
 - libpng12-dev
 
 Optionally:
-- python
+- python (python-dev)
 
 Submodule (`$ git submodule init && git submodule update`):
 - https://github.com/wallix/program_options.git

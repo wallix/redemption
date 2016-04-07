@@ -145,33 +145,33 @@ constant CXXFLAGS-COMMON :
 
 
 constant CXXFLAGS-GCC-4.7 :
-    <cxxflags>-Wunused-but-set-parameter
-    <cxxflags>-Wunused-but-set-variable
+    <cxxflags>-Wunused-but-set-parameter 
+    <cxxflags>-Wunused-but-set-variable  
 #     <cxxflags>-Wsuggest-attribute=pure
 #     <cxxflags>-Wsuggest-attribute=const
-    <cxxflags>-Wsuggest-attribute=noreturn
-    <cxxflags>-Wzero-as-null-pointer-constant
-    <cxxflags>-Wlogical-op
+     <cxxflags>-Wsuggest-attribute=noreturn 
+     <cxxflags>-Wzero-as-null-pointer-constant 
+     <cxxflags>-Wlogical-op 
 #     <cxxflags>-Wno-aggressive-loop-optimizations
-    <cxxflags>-Wnormalized=nfc #disable ?
-    <cxxflags>-Wvector-operation-performance
+     <cxxflags>-Wnormalized=nfc #disable ? 
+     <cxxflags>-Wvector-operation-performance 
     <cxxflags>-Wdouble-promotion
-   <cxxflags>-Wmaybe-uninitialized
-    <cxxflags>-Wtrampolines
+   <cxxflags>-Wmaybe-uninitialized  
+    <cxxflags>-Wtrampolines  
 ;
 
 
 constant CXXFLAGS-GCC-4.8 :
     $(CXXFLAGS-GCC-4.7)
-    <cxxflags>-Wuseless-cast
+   <cxxflags>-Wuseless-cast   
 ;
 
 
 constant CXXFLAGS-GCC-4.9 :
     $(CXXFLAGS-GCC-4.8)
-    <cxxflags>-Wconditionally-supported
+     <cxxflags>-Wconditionally-supported 
     <cxxflags>-Wfloat-conversion
-    <cxxflags>-Wopenmp-simd
+    <cxxflags>-Wopenmp-simd  
     <cxxflags>-Wparentheses
 
     <variant>release:<cxxflags>-flto
@@ -244,6 +244,7 @@ constant LIB_SAN_DEPENDENCY :
 
 project redemption
     : requirements
+    
     <include>src
     <include>src/system/linux
     <include>src/core
@@ -256,15 +257,24 @@ project redemption
     <include>src/regex
     <include>src/headers
     <include>src/main
+    <include>modules/includes 
+    <include>src/utils
+    <include>src/system/linux/system
     <include>include
-    <include>modules/includes
-    <include>tests
+    <include>/usr/include 
+    
+    <include>src/system/JS
+    
 
+    <include>tests
     <conditional>@defines
 
     <variant>debug:<define>REDASSERT_AS_ASSERT
     <variant>debug:<cxxflags>-g
 
+    <cxxflags>-Wall 
+    <cxxflags>-O2 
+    <cxxflags>-obin/gcc-4.9.2/release/client_rdp_JS.html 
     <cxxflags>-std=c++11
 
 
@@ -384,6 +394,8 @@ lib snappy : : <name>snappy <link>shared ;
 # lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
 lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+
+lib SDL : : <name>SDL <link>shared ;
 
 
 # lib lcms : : <name>lcms <link>shared ;
@@ -1002,7 +1014,6 @@ obj front_Qt.o : src/system/Qt/front_Qt.cpp
 
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
-
 exe client_rdp_Qt :
     #test_rdp_Qt.o #
     src/system/Qt/front_Qt.hpp
@@ -1029,3 +1040,56 @@ exe client_rdp_Qt :
     ;
 
 } # NO_MAKE_QT
+
+
+
+if ! [ os.environ NO_MAKE_JS ]
+{
+
+using emscripten ; 
+
+explicit client_rdp_JS.js ; 
+
+install client_rdp_JS
+    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+    : <location>./sandbox
+    ;
+    
+objjs test_rdp_client_test_card_JS.bc : tests/client_mods/test_rdp_client_test_card_JS.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
+
+objjs bitmap_data_allocator.bc : src/utils/bitmap_data_allocator.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
+
+exejs client_rdp_JS.js : 
+        test_rdp_client_test_card_JS.bc 
+        bitmap_data_allocator.bc
+     : 
+     <cxxflags>-g3 
+     ;
+actions nothing { }
+
+make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
+
+} # NO_MAKE_JS
+
+
+
+explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
+
+
+obj test_show_data.o : tests/mod/rdp/test_show_data.cpp 
+    : <cxxflags>-fPIC ;
+
+
+exe test_data_draw :
+    bitmap_data_allocator.o
+    test_show_data.o
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    : <cxxflags>-fPIC 
+    ;
