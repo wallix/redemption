@@ -680,9 +680,9 @@ rule test-run ( target : sources + : tested ? : requirements * )
 #    ECHO "base = $(base)" ;
 #    ECHO "sources = $(sources)" ;
 #    ECHO "target = $(target)" ;
+    run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
 
     if ($(tested)) {
-        run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
         make $(target:S=.coverage) : $(target) : nop 
             : <variant>coverage:<action>@cover 
               <covfile>$(tested) $(requirements)
@@ -1930,14 +1930,10 @@ test-run test_regex_parser
     ;
 
 
-if [ SHELL false ] {
-
-test-run test_regex_ndfa 
-    : regex/test_regex_ndfa.cpp 
-    : regex/regex_ndfa.hpp 
+test-run test_regex_st_automate 
+    : regex/test_regex_st_automate.cpp 
+    : regex/regex_st_automate.hpp 
     ;
-
-}
 
 test-run test_regex 
     : regex/test_regex.cpp 
