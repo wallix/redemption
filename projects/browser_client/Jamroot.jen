@@ -1,15 +1,6 @@
-<<<<<<< HEAD
-# using emscripten ;
+using emscripten ;
 
 project js_client
-=======
-
-
-path-constant SRCDIR : ../../src ;
-path-constant INCLUDEDIR : ../../include ;
-
-project redjs
->>>>>>> 78229227c59092690fd8a8c2a9d30da7c529f309
     : requirements
     <include>$(SRCDIR)
     <include>$(SRCDIR)/system/linux
@@ -32,7 +23,6 @@ project redjs
     <cxxflags>-Wall
     <cxxflags>-O2
     : default-build release
-<<<<<<< HEAD
 ;
 
 
@@ -100,37 +90,4 @@ actions nothing { }
 # 
 # # unit-test test_penta : test_penta.cpp libboost_unit_test ;
 
-=======
-    ;
 
-using emscripten ;
-
-#install client_rdp_JS
-#    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
-#    : <location>./sandbox
-#    ;
-    
-objjs test_rdp_client_test_card_JS.bc 
-	: src/test_rdp_client_test_card_JS.cpp 
-	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
-	;
-
-objjs bitmap_data_allocator.bc 
-	: $(SRCDIR)/utils/bitmap_data_allocator.cpp 
-	: <cxxflags>-g3 
-	  <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
-	;
-
-js client_rdp_JS.js 
-     : 
-        test_rdp_client_test_card_JS.bc 
-        bitmap_data_allocator.bc
-     :  
-        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
-        <cxxflags>-g3 
-     ;
-
-actions nothing { }
-
-make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
->>>>>>> 78229227c59092690fd8a8c2a9d30da7c529f309
