@@ -1078,7 +1078,9 @@ test-canonical utils/bitmap.hpp
     : <library>bitmap <library>png <library>crypto 
     ;
 
-test-canonical bitmap_perf.hpp 
+test-run test_bitmap_perf
+    : test_bitmap_perf.cpp
+    :
     : <library>bitmap <library>png <covflag>nocover
     ;
 
@@ -1117,19 +1119,13 @@ test-run test_strings
 
 ## Transport tests
 ## @{
-test-run test_meta_writer 
-    : transport/detail/test_meta_writer.cpp 
-    : transport/detail/meta_writer.hpp 
+test-canonical transport/detail/meta_writer.hpp 
     ;
 
-test-run test_meta_opener 
-    : transport/detail/test_meta_opener.cpp 
-    : transport/detail/meta_opener.hpp 
+test-canonical transport/detail/meta_opener.hpp 
     ;
 
-test-run test_in_meta_sequence_transport 
-    : transport/test_in_meta_sequence_transport.cpp 
-    : transport/in_meta_sequence_transport.hpp 
+test-canonical transport/in_meta_sequence_transport.hpp 
     : <library>crypto <library>snappy <library>dl <library>z 
     ;
 
@@ -1139,76 +1135,50 @@ test-run test_filename_sequence_transport
     : <covflag>nocover 
     ;
 
-test-run test_out_meta_sequence_transport 
-    : transport/test_out_meta_sequence_transport.cpp 
-    : transport/out_meta_sequence_transport.hpp 
+test-canonical transport/out_meta_sequence_transport.hpp 
     : <library>crypto <library>snappy <library>dl <library>z 
     ;
 
-test-run test_test_transport 
-    : transport/test_test_transport.cpp 
-    : transport/transport.hpp 
+test-canonical transport/test_transport.hpp 
     ;
     
-test-run test_count_transport 
-    : transport/test_count_transport.cpp 
-    : transport/count_transport.hpp 
+test-canonical transport/count_transport.hpp 
     ;
     
-test-run test_socket_transport 
-    : transport/test_socket_transport.cpp 
-    : transport/socket_transport.hpp 
+test-canonical transport/socket_transport.hpp 
     : <library>openssl <library>crypto <library>dl 
     ;
 
-test-run test_in_file_transport 
-    : transport/test_in_file_transport.cpp 
-    : transport/in_file_transport.hpp
+test-canonical transport/in_file_transport.hpp
     ;
 
-test-run test_out_file_transport 
-    : transport/test_out_file_transport.cpp 
-    : transport/out_file_transport.hpp
+test-canonical transport/out_file_transport.hpp
     ;
 
-test-run test_in_filename_transport 
-    : transport/test_in_filename_transport.cpp 
-    : transport/in_filename_transport.hpp 
+test-canonical transport/in_filename_transport.hpp 
     : <library>z <library>dl <library>snappy <library>crypto 
     ;
 
-test-run test_out_filename_transport 
-    : transport/test_out_filename_transport.cpp 
-    : transport/out_filename_transport.hpp 
+test-canonical transport/out_filename_transport.hpp 
     : <library>z <library>dl <library>snappy <library>crypto 
     ;
 
-test-run test_bulk_compression_transport 
-    : transport/test_bulk_compression_transport.cpp 
-    : transport/bulk_compression_transport.hpp 
+test-canonical transport/bulk_compression_transport.hpp 
     ;
 
-test-run test_gzip_compression_transport 
-    : transport/test_gzip_compression_transport.cpp 
-    : transport/gzip_compression_transport.hpp 
+test-canonical transport/gzip_compression_transport.hpp 
     : <library>z 
     ;
 
-test-run test_snappy_compression_transport 
-    : transport/test_snappy_compression_transport.cpp 
-    : transport/snappy_compression_transport.hpp 
+test-canonical transport/snappy_compression_transport.hpp 
     : <library>snappy 
     ;
 
-test-run test_cryptofile 
-    : transport/test_cryptofile.cpp 
-    : transport/cryptofile.hpp 
+test-canonical transport/cryptofile.hpp 
     : <library>openssl <library>crypto <library>snappy <library>dl <library>z 
     ;
 
-test-run test_compression_transport_wrapper 
-    : utils/test_compression_transport_wrapper.cpp 
-    : utils/compression_transport_wrapper.hpp 
+test-canonical utils/compression_transport_wrapper.hpp 
     : <library>z <library>snappy 
     ;
 ## @}
@@ -1216,14 +1186,10 @@ test-run test_compression_transport_wrapper
 
 ## Buffer Transport tests
 ## @{
-test-run test_buffering_buf 
-    : transport/buffer/test_buffering_buf.cpp 
-    : transport/buffer/buffering_buf.hpp 
+test-canonical transport/buffer/buffering_buf.hpp 
     ;
 
-test-run test_checksum_buf 
-    : transport/buffer/test_checksum_buf.cpp 
-    : transport/buffer/checksum_buf.hpp 
+test-canonical transport/buffer/checksum_buf.hpp 
     : <library>crypto <library>dl <library>z 
     ;
 ## @}
@@ -1233,104 +1199,33 @@ test-run test_checksum_buf
 #test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
-test-run test_RDPOrdersPrimaryOpaqueRect 
-    : core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp 
+test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp 
     ;
     
-test-run test_RDPOrdersPrimaryScrBlt 
-    : core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp 
+test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp 
     ;
     
-test-run test_RDPOrdersPrimaryMemBlt 
-    : core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp 
+test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp 
     ;
     
-test-run test_RDPOrdersPrimaryDestBlt 
-    : core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryMultiDstBlt 
-    : core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryMultiPatBlt 
-    : core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryMultiScrBlt 
-    : core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryMultiOpaqueRect 
-    : core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryLineTo 
-    : core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryLineTo.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryPolygonSC 
-    : core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryPolygonCB 
-    : core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp 
-    ;
-test-run test_RDPOrdersPrimaryPolyline 
-    : core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryPolyline.hpp 
-    ;
-test-run test_RDPOrdersPrimaryEllipseSC 
-    : core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryEllipseCB
-    : core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp 
-    ;
-    
-test-run test_RDPOrdersPrimaryPatBlt 
-    : core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp
-    ;
-    
-test-run test_RDPOrdersPrimaryGlyphIndex 
-    : core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp 
-    ;
-    
-test-run test_RDPOrdersSecondaryBmpCache 
-    : core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp 
-    : core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp 
-    : <library>bitmap <library>crypto 
-    ;
-    
-test-run test_RDPOrdersSecondaryColorCache 
-    : core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp 
-    : core/RDP/orders/RDPOrdersSecondaryColorCache.hpp 
-    ;
-    
-test-run test_RDPOrdersSecondaryBrushCache 
-    : core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp 
-    : core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp 
-    ;
-    
-test-run test_AlternateSecondaryWindowing 
-    : core/RDP/orders/test_AlternateSecondaryWindowing.cpp 
-    : core/RDP/orders/AlternateSecondaryWindowing.hpp 
-    ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryLineTo.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolyline.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
+test-canonical core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp 
+    : <library>bitmap <library>crypto ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
+test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
 
 test-run test_libpng 
     : test_libpng.cpp 
@@ -1339,9 +1234,7 @@ test-run test_libpng
     ;
 
 #test-run test_convert_bitmap : test_convert_bitmap.cpp : <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
-test-run test_rdp 
-    : mod/rdp/test_rdp.cpp 
-    : mod/rdp/rdp.hpp 
+test-canonical mod/rdp/rdp.hpp 
     : <library>bitmap <library>krb5 
       <library>gssglue <library>png 
       <library>d3des <library>z 
@@ -1460,353 +1353,101 @@ test-run test_keymapSym
 
 ## Widget tests
 ## @{
-test-run test_widget2_rect 
-    : mod/internal/widget2/test_widget2_rect.cpp 
-    : mod/internal/widget2/widget2_rect.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_image 
-    : mod/internal/widget2/test_image.cpp 
-    : mod/internal/widget2/image.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
-
-test-run test_label 
-    : mod/internal/widget2/test_label.cpp 
-    : mod/internal/widget2/label.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_tooltip 
-    : mod/internal/widget2/test_tooltip.cpp 
-    : mod/internal/widget2/tooltip.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_flat_button 
-    : mod/internal/widget2/test_flat_button.cpp 
-    : mod/internal/widget2/flat_button.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_edit 
-    : mod/internal/widget2/test_edit.cpp 
-    : mod/internal/widget2/edit.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_multiline 
-    : mod/internal/widget2/test_multiline.cpp 
-    : mod/internal/widget2/multiline.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_password 
-    : mod/internal/widget2/test_password.cpp 
-    : mod/internal/widget2/password.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_number_edit 
-    : mod/internal/widget2/test_number_edit.cpp 
-    : mod/internal/widget2/number_edit.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_edit_valid 
-    : mod/internal/widget2/test_edit_valid.cpp 
-    : mod/internal/widget2/edit_valid.hpp 
-    : <library>png <library>crypto 
-    ;
-
+test-canonical mod/internal/widget2/widget2_rect.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/image.hpp : <library>bitmap <library>png <library>crypto ;
+test-canonical mod/internal/widget2/label.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/tooltip.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/flat_button.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/edit.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/multiline.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/password.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/number_edit.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/edit_valid.hpp : <library>png <library>crypto ;
 # test-run test_radio_list : mod/internal/widget2/test_radio_list.cpp : <library>png <library>libboost_unit_test ;
-test-run test_flat_dialog 
-    : mod/internal/widget2/test_flat_dialog.cpp 
-    : mod/internal/widget2/flat_dialog.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
-
-test-run test_widget 
-    : mod/internal/widget2/test_widget.cpp 
-    : mod/internal/widget2/widget.hpp 
-    : <library>crypto 
-    ;
-
-test-run test_composite 
-    : mod/internal/widget2/test_composite.cpp 
-    : mod/internal/widget2/composite.hpp 
-    : <library>png <library>crypto 
-    ;
+test-canonical mod/internal/widget2/flat_dialog.hpp : <library>bitmap <library>png <library>crypto ;
+test-canonical mod/internal/widget2/widget.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/composite.hpp : <library>png <library>crypto ;
 
 #test-run test_window_dialog : mod/internal/widget2/test_window_dialog.cpp : <library>png <library>z <library>crypto <library>dl ;
 
-test-run test_flat_login 
-    : mod/internal/widget2/test_flat_login.cpp 
-    : mod/internal/widget2/flat_login.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
+test-canonical mod/internal/widget2/flat_login.hpp : <library>bitmap <library>png <library>crypto ;
 
-test-run test_flat_wab_close 
-    : mod/internal/widget2/test_flat_wab_close.cpp 
-    : mod/internal/widget2/flat_wab_close.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
-
-test-run test_screen 
-    : mod/internal/widget2/test_screen.cpp 
-    : mod/internal/widget2/screen.hpp 
-    : <library>png <library>crypto 
-    ;
-
+test-canonical mod/internal/widget2/flat_wab_close.hpp : <library>bitmap <library>png <library>crypto ;
+test-canonical mod/internal/widget2/screen.hpp : <library>png <library>crypto ;
 # test-run test_columnlayout : mod/internal/widget2/test_columnlayout.cpp : <library>png ;
 # test-run test_linelayout : mod/internal/widget2/test_linelayout.cpp : <library>png ;
 # test-run test_stacklayout : mod/internal/widget2/test_stacklayout.cpp : <library>png ;
-test-run test_grid 
-    : mod/internal/widget2/test_grid.cpp 
-    : mod/internal/widget2/grid.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_labelgrid 
-    : mod/internal/widget2/test_labelgrid.cpp 
-    : mod/internal/widget2/labelgrid.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_flat_selector2 
-    : mod/internal/widget2/test_flat_selector2.cpp 
-    : mod/internal/widget2/flat_selector2.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_group_box 
-    : mod/internal/widget2/test_group_box.cpp 
-    : mod/internal/widget2/group_box.hpp 
-    : <library>png <library>crypto 
-    ;
+test-canonical mod/internal/widget2/grid.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/labelgrid.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/flat_selector2.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/group_box.hpp : <library>png <library>crypto ;
 # test-run test_scroll : mod/internal/widget2/test_scroll.cpp : <library>png ;
 # test-run test_tab : mod/internal/widget2/test_tab.cpp : <library>png ;
-test-run test_flat_interactive_target 
-    : mod/internal/widget2/test_flat_interactive_target.cpp 
-    : mod/internal/widget2/flat_interactive_target.hpp 
-    : <library>png <library>crypto 
-    ;
+test-canonical mod/internal/widget2/flat_interactive_target.hpp : <library>png <library>crypto ;
 ## @}
 
 ## Mod tests
 ## @{
-test-run test_flat_dialog_mod 
-    : mod/internal/test_flat_dialog_mod.cpp 
-    : mod/internal/flat_dialog_mod.hpp 
-    : <library>bitmap <library>png 
-    ;
+test-canonical mod/internal/flat_dialog_mod.hpp : <library>bitmap <library>png ;
 
-test-run test_flat_login_mod 
-    : mod/internal/test_flat_login_mod.cpp 
-    : mod/internal/flat_login_mod.hpp 
-    : <library>bitmap <library>png 
-    ;
+test-canonical mod/internal/flat_login_mod.hpp : <library>bitmap <library>png ;
 
-test-run test_flat_wab_close_mod 
-    : mod/internal/test_flat_wab_close_mod.cpp 
-    : mod/internal/flat_wab_close_mod.hpp 
-    : <library>bitmap <library>png 
-    ;
-
-test-run test_widget_test_mod 
-    : mod/internal/test_widget_test_mod.cpp 
-    : mod/internal/widget_test_mod.hpp 
-    : <library>png 
-    ;
-
-test-run test_interactive_target_mod 
-    : mod/internal/test_interactive_target_mod.cpp 
-    : mod/internal/interactive_target_mod.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_bouncer2_mod 
-    : mod/internal/test_bouncer2_mod.cpp 
-    : mod/internal/bouncer2_mod.hpp 
-    : <library>png 
-    ;
-
-test-run test_test_card_mod 
-    : mod/internal/test_test_card_mod.cpp 
-    : mod/internal/test_card_mod.hpp 
-    ;
-
-test-run test_replay_mod 
-    : mod/internal/test_replay_mod.cpp 
-    : mod/internal/replay_mod.hpp 
-    ;
-
-test-run test_internal_mod 
-    : mod/internal/test_internal_mod.cpp 
-    : mod/internal/internal_mod.hpp 
-    ;
-
-test-run test_copy_paste 
-    : mod/internal/test_copy_paste.cpp 
-    : mod/internal/copy_paste.hpp 
-    : <library>png <library>crypto 
-    ;
+test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap <library>png ;
+test-canonical mod/internal/widget_test_mod.hpp : <library>png ;
+test-canonical mod/internal/interactive_target_mod.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/bouncer2_mod.hpp : <library>png ;
+test-canonical mod/internal/test_card_mod.hpp ;
+test-canonical mod/internal/replay_mod.hpp ;
+test-canonical mod/internal/internal_mod.hpp ;
+test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto ;
 ## @}
 
 ## Regex tests
 ## @{
-test-run test_regex_state 
-    : regex/test_regex_state.cpp 
-    : regex/regex_state.hpp 
-    ;
-
-test-run test_regex_parser 
-    : regex/test_regex_parser.cpp 
-    : regex/regex_parser.hpp 
-    ;
-
-
-test-run test_regex_st_automate 
-    : regex/test_regex_st_automate.cpp 
-    : regex/regex_st_automate.hpp 
-    ;
-
-test-run test_regex 
-    : regex/test_regex.cpp 
-    : regex/regex.hpp 
-    ;
+test-canonical regex/regex_state.hpp ;
+test-canonical regex/regex_parser.hpp ;
+test-canonical regex/regex_st_automate.hpp ;
+test-canonical regex/regex.hpp ;
 
 # test-run benchmark_regex_parser : benchmark/parser.cpp ;
 # test-run benchmark_regex_search : benchmark/search.cpp ;
 ## @}
 
 # test-run test_base64 : utils/test_base64.cpp : ;
-
-test-run test_translation 
-    : utils/test_translation.cpp 
-    : utils/translation.hpp 
-    ;
+test-canonical utils/translation.hpp ;
 
 
 ## NLA TESTS
 ## @{
-test-run test_ber 
-    : core/RDP/nla/asn1/test_ber.cpp 
-    : core/RDP/nla/asn1/ber.hpp 
-    ;
-
-test-run test_credssp 
-    : core/RDP/nla/test_credssp.cpp 
-    : core/RDP/nla/credssp.hpp 
-    : <library>crypto 
-    ;
-
-test-run test_sspi 
-    : core/RDP/nla/test_sspi.cpp 
-    : core/RDP/nla/sspi.hpp 
-    ;
-
-test-run test_nla 
-    : core/RDP/nla/test_nla.cpp 
-    : core/RDP/nla/nla.hpp 
-    : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto 
-    ;
+test-canonical core/RDP/nla/asn1/ber.hpp ;
+test-canonical core/RDP/nla/credssp.hpp : <library>crypto ;
+test-canonical core/RDP/nla/sspi.hpp ;
+test-canonical core/RDP/nla/nla.hpp : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto ;
 
 #alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
-test-run test_ntlm_message_negotiate 
-    : core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp 
-    : core/RDP/nla/ntlm/ntlm_message_negotiate.hpp 
-    : <library>crypto 
-    ;
-
-test-run test_ntlm_avpair 
-    : core/RDP/nla/ntlm/test_ntlm_avpair.cpp 
-    : core/RDP/nla/ntlm/ntlm_avpair.hpp 
-    ;
-
-test-run test_ntlm_message_challenge 
-    : core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp 
-    : core/RDP/nla/ntlm/ntlm_message_challenge.hpp 
-    : <library>crypto 
-    ;
-
-test-run test_ntlm_message_authenticate 
-    : core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp 
-    : core/RDP/nla/ntlm/ntlm_message_authenticate.hpp 
-    : <library>crypto 
-    ;
-
-test-run test_ntlm_context 
-    : core/RDP/nla/ntlm/test_ntlm_context.cpp 
-    : core/RDP/nla/ntlm/ntlm_context.hpp 
-    : <library>dl <library>z <library>crypto 
-    ;
-
-test-run test_ntlm 
-    : core/RDP/nla/ntlm/test_ntlm.cpp 
-    : core/RDP/nla/ntlm/ntlm.hpp 
-    : <library>dl <library>z <library>crypto 
-    ;
-
-test-run test_credentials 
-    : core/RDP/nla/kerberos/test_credentials.cpp 
-    : core/RDP/nla/kerberos/credentials.hpp 
-    : <library>krb5 
-    ;
-
-test-run test_kerberos 
-    : core/RDP/nla/kerberos/test_kerberos.cpp 
-    : core/RDP/nla/kerberos/kerberos.hpp 
-    : <library>krb5 <library>gssglue 
-    ;
+test-canonical core/RDP/nla/ntlm/ntlm_message_negotiate.hpp : <library>crypto ;
+test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ;
+test-canonical core/RDP/nla/ntlm/ntlm_message_challenge.hpp : <library>crypto ;
+test-canonical core/RDP/nla/ntlm/ntlm_message_authenticate.hpp : <library>crypto ;
+test-canonical core/RDP/nla/ntlm/ntlm_context.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/nla/ntlm/ntlm.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/nla/kerberos/credentials.hpp : <library>krb5 ;
+test-canonical core/RDP/nla/kerberos/kerberos.hpp : <library>krb5 <library>gssglue ;
 ## @}
 
-test-run test_darray 
-    : utils/test_darray.cpp 
-    : utils/darray.hpp 
-    ;
+test-canonical utils/darray.hpp ;
 
 ## Widget for workflow
 ## @{
-test-run test_flat_wait 
-    : mod/internal/widget2/test_flat_wait.cpp 
-    : mod/internal/widget2/flat_wait.hpp 
-    : <library>png <library>crypto 
-    ;
-
-test-run test_flat_form 
-    : mod/internal/widget2/test_flat_form.cpp 
-    : mod/internal/widget2/flat_form.hpp 
-    : <library>png <library>crypto 
-    ;
+test-canonical mod/internal/widget2/flat_wait.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/widget2/flat_form.hpp : <library>png <library>crypto ;
 ## @}
-
-test-run test_authorization_channels 
-    : utils/test_authorization_channels.cpp 
-    : utils/authorization_channels.hpp 
-    ;
-
-test-run test_pattutils 
-    : utils/test_pattutils.cpp 
-    : utils/pattutils.hpp 
-    ;
-
-test-run test_strutils 
-    : utils/test_strutils.cpp 
-    : utils/strutils.hpp 
-    ;
-
-test-run test_diffiehellman 
-    : utils/test_diffiehellman.cpp 
-    : utils/diffiehellman.hpp 
-    ;
-
-test-run test_finally 
-    : utils/test_finally.cpp 
-    : utils/finally.hpp 
-    ;
+test-canonical utils/authorization_channels.hpp ;
+test-canonical utils/pattutils.hpp ;
+test-canonical utils/strutils.hpp ;
+test-canonical utils/diffiehellman.hpp ;
+test-canonical utils/finally.hpp ;
 
 if [ SHELL false ] {
 
