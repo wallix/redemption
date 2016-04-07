@@ -239,7 +239,7 @@ struct Font
 
             // Read header
             // -----------
-            while ((b = read(fd, stream_buf, std::min(size_to_read, stream_buf_sz))) < 0) {
+            while ((b = read(fd, stream_buf, stream_buf_sz)) < 0) {
                 if (b >= 0){
                     break;
                 }

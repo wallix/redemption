@@ -19,7 +19,7 @@ constant INCLUDEDIR : ../../include ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 
-echo "components of debug" [ feature.get-values <variant> ] ;
+#echo "toolset" [ feature.get-values toolset ] ;
 
 # Returns environment value if it exists or default otherwise.
 # Allow us to customize install path with shell variables like $PREFIX...
@@ -288,6 +288,7 @@ project redemption
     <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1)
     <toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1)
     <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5.1)
     <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.1)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
@@ -690,572 +691,348 @@ rule test-run ( target : sources + : tested ? : requirements * )
     }
 }
 
+rule test-canonical ( base : requirements * )
+{
+    #basetarget = $(base:B) ;
+    #base = $(base:P) ;
+    #echo "base=" $(base) ;
+    #while "$(base)" != "" {
+    #    basetarget = $(base:B)_$(basetarget) ;
+    #    base = $(base:P) ;
+    #}
+    #target = test_$(basetarget) ;
+    
+    target = test_$(base:B) ;
+    source = $(base:P)/test_$(base:B).cpp ;
+    tested = $(base) ;
+
+    #echo "target=" $(target) ;
+    #echo "source=" $(source) ;
+    #echo "tested=" $(tested) ;
+
+    
+    test-run $(target) : $(source) : $(tested) : $(requirements) ;
+}
+
+
 # To compute coverage
 # ===================
 # bjam coverage test_utf.coverage 
 
 ## Acl tests
 ## @{
-test-run test_acl_serializer : acl/test_acl_serializer.cpp : acl/acl_serializer.hpp ;
-test-run test_authentifier : acl/test_authentifier.cpp : acl/authentifier.hpp : <library>crypto <library>png ;
-test-run test_module_manager : acl/test_module_manager.cpp : acl/module_manager.hpp : <library>crypto <library>png ;
+test-canonical acl/acl_serializer.hpp ;
+test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
+test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
 ## @}
 
 ## Capture tests
 ## @{
-test-run test_CaptureDevice 
-    : capture/test_CaptureDevice.cpp 
-    : capture/CaptureDevice.hpp 
-    ;
-test-run test_capture 
-    : capture/test_capture.cpp 
-    : capture/capture.hpp 
+test-canonical capture/CaptureDevice.hpp ;
+test-canonical capture/capture.hpp 
     : <library>bitmap <library>crypto <library>dl <library>png <library>z <library>snappy 
     ;
-test-run test_chunked_image_transport 
-    : capture/test_chunked_image_transport.cpp 
-    : capture/chunked_image_transport.hpp 
+test-canonical capture/chunked_image_transport.hpp 
     : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
     ;
-
-test-run test_ChunkToFile 
-    : capture/test_ChunkToFile.cpp 
-    : capture/ChunkToFile.hpp 
+test-canonical capture/ChunkToFile.hpp 
     ;
-
-test-run test_FileToChunk 
-    : capture/test_FileToChunk.cpp
-    : capture/FileToChunk.hpp 
+test-canonical capture/FileToChunk.hpp 
     : <library>png 
     ;
 
-test-run test_FileToGraphic 
-    : capture/test_FileToGraphic.cpp 
-    : capture/FileToGraphic.hpp 
+test-canonical capture/FileToGraphic.hpp 
     : <library>bitmap <library>png <library>snappy <library>crypto 
     ;
 
-test-run test_GraphicToFile 
-    : capture/test_GraphicToFile.cpp 
-    : capture/GraphicToFile.hpp 
+test-canonical capture/GraphicToFile.hpp 
     : <library>bitmap <library>png <library>crypto <library>snappy 
 #    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
-    
     ;
 
-test-run test_image_capture 
-    : capture/test_image_capture.cpp 
-    : capture/image_capture.hpp 
-    : <library>bitmap <library>png 
-    ;
+test-canonical capture/image_capture.hpp : <library>bitmap <library>png ;
 
-test-run test_nativecapture 
-    : capture/test_nativecapture.cpp 
-    : capture/nativecapture.hpp 
-    : <library>bitmap <library>png <library>crypto <library>snappy 
-    ;
+test-canonical capture/nativecapture.hpp 
+    : <library>bitmap <library>png <library>crypto <library>snappy ;
+test-canonical capture/new_kbdcapture.hpp ;
+test-canonical capture/RDPChunkedDevice.hpp ;
+test-canonical capture/send_wrm_chunk.hpp ;
+test-canonical capture/staticcapture.hpp : <library>png ;
+test-canonical capture/transparentchunk.hpp ;
+test-canonical capture/transparentplayer.hpp ;
+test-canonical capture/transparentrecorder.hpp ;
 
-test-run test_new_kbdcapture 
-    : capture/test_new_kbdcapture.cpp 
-    : capture/new_kbdcapture.hpp 
-    ;
-
-test-run test_RDPChunkedDevice 
-    : capture/test_RDPChunkedDevice.cpp 
-    : capture/RDPChunkedDevice.hpp 
-    ;
-
-test-run test_send_wrm_chunk 
-    : capture/test_send_wrm_chunk.cpp 
-    : capture/send_wrm_chunk.hpp 
-    ;
-
-test-run test_staticcapture 
-    : capture/test_staticcapture.cpp 
-    : capture/staticcapture.hpp 
-    : <library>png 
-    ;
-
-test-run test_transparentchunk 
-    : capture/test_transparentchunk.cpp 
-    : capture/transparentchunk.hpp 
-    ;
-
-test-run test_transparentplayer 
-    : capture/test_transparentplayer.cpp 
-    : capture/transparentplayer.hpp 
-    ;
-
-test-run test_transparentrecorder 
-    : capture/test_transparentrecorder.cpp 
-    : capture/transparentrecorder.hpp 
-    ;
-
-test-run test_utils_match_finder 
-    : capture/utils/test_match_finder.cpp 
-    : capture/utils/match_finder.hpp 
+test-canonical capture/utils/match_finder.hpp 
     : <covflag>nocover
     ;
 
-test-run test_wrm_label 
-    : capture/test_wrm_label.cpp 
-    : capture/wrm_label.hpp 
+test-canonical capture/wrm_label.hpp 
     ;
 
 ## @}
 
 ## Test facility functions or classes
 ## @{
-test-run test_iter 
-    : utils/test_iter.cpp 
-    : utils/iter.hpp 
+test-canonical utils/iter.hpp 
     ;
 
-test-run test_noncopyable 
-    : utils/test_noncopyable.cpp 
-    : utils/noncopyable.hpp 
+test-canonical utils/noncopyable.hpp 
     ;
 
-test-run test_splitter 
-    : utils/test_splitter.cpp 
-    : utils/splitter.hpp 
+test-canonical utils/splitter.hpp 
     ;
 
-test-run test_algostring 
-    : utils/test_algostring.cpp 
-    : utils/algostring.hpp 
+test-canonical utils/algostring.hpp 
     ;
 
-test-run test_make_unique 
-    : utils/test_make_unique.cpp 
-    : utils/make_unique.hpp 
+test-canonical utils/make_unique.hpp 
     : ;
 ## @}
 
-test-run test_stream 
-    : utils/test_stream.cpp 
-    : utils/stream.hpp 
+test-canonical utils/stream.hpp 
     ;
 
-test-run test_utf 
-    : utils/test_utf.cpp 
-    : utils/utf.hpp 
+test-canonical utils/utf.hpp 
     ;
-test-run test_rect 
-    : utils/test_rect.cpp
-    : utils/rect.hpp 
+test-canonical utils/rect.hpp 
     ;
     
-test-run test_ellipse 
-    : utils/test_ellipse.cpp 
-    : utils/ellipse.hpp 
+test-canonical utils/ellipse.hpp 
     ;
 
-test-run test_drawable 
-    : utils/test_drawable.cpp 
-    : utils/drawable.hpp 
+test-canonical utils/drawable.hpp 
     : <library>bitmap <library>png <library>crypto 
     ;
 
-test-run test_region 
-    : utils/test_region.cpp 
-    : utils/region.hpp 
+test-canonical utils/region.hpp 
     ;
 
-test-run test_bitfu 
-    : utils/test_bitfu.cpp
-    : utils/bitfu.hpp
+test-canonical utils/bitfu.hpp
     ;
     
-test-run test_parse 
-    : utils/test_parse.cpp 
-    : utils/parse.hpp 
+test-canonical utils/parse.hpp 
     ;
     
-test-run test_parser 
-    : utils/test_parser.cpp 
-    : utils/parser.hpp 
+test-canonical utils/parser.hpp 
     ;
     
-test-run test_fileutils 
-    : utils/test_fileutils.cpp 
-    : utils/fileutils.hpp 
+test-canonical utils/fileutils.hpp 
     ;
     
-test-run test_parse_ip_conntrack 
-    : utils/test_parse_ip_conntrack.cpp 
-    : utils/parse_ip_conntrack.hpp 
+test-canonical utils/parse_ip_conntrack.hpp 
     ;
     
-test-run test_x224 
-    : core/RDP/test_x224.cpp 
-    : core/RDP/x224.hpp 
+test-canonical core/RDP/x224.hpp 
     ;
     
-test-run test_out_per_bstream 
-    : core/RDP/test_out_per_bstream.cpp 
-    : core/RDP/out_per_bstream.hpp 
+test-canonical core/RDP/out_per_bstream.hpp 
     ;
     
-test-run test_mcs 
-    : core/RDP/test_mcs.cpp 
-    : core/RDP/mcs.hpp 
+test-canonical core/RDP/mcs.hpp 
     ;
 
-test-run test_mppc 
-    : core/RDP/test_mppc.cpp
-    : core/RDP/mppc.hpp
+test-canonical core/RDP/mppc.hpp
     ;
     
-test-run test_mppc_40 
-    : core/RDP/test_mppc_40.cpp 
-    : core/RDP/mppc_40.hpp 
+test-canonical core/RDP/mppc_40.hpp 
     ;
     
-test-run test_mppc_50 
-    : core/RDP/test_mppc_50.cpp 
-    : core/RDP/mppc_50.hpp 
+test-canonical core/RDP/mppc_50.hpp 
     ;
     
-test-run test_mppc_60 
-    : core/RDP/test_mppc_60.cpp
-    : core/RDP/mppc_60.hpp
+test-canonical core/RDP/mppc_60.hpp
     ;
     
-test-run test_mppc_61 
-    : core/RDP/test_mppc_61.cpp
-    : core/RDP/mppc_61.hpp
+test-canonical core/RDP/mppc_61.hpp
     ;
     
-test-run test_gcc 
-    : core/RDP/test_gcc.cpp 
-    : core/RDP/gcc.hpp 
+test-canonical core/RDP/gcc.hpp 
     : <library>dl <library>z <library>crypto 
     ;
 
-test-run test_sec 
-    : core/RDP/test_sec.cpp 
-    : core/RDP/sec.hpp 
+test-canonical core/RDP/sec.hpp 
     : <library>crypto 
     ;
 
-test-run test_lic 
-    : core/RDP/test_lic.cpp 
-    : core/RDP/lic.hpp 
+test-canonical core/RDP/lic.hpp 
     : <library>crypto 
     ;
 
-test-run test_share 
-    : core/RDP/test_share.cpp 
-    : core/RDP/share.hpp 
+test-canonical core/RDP/share.hpp 
     ;
 
-test-run test_fastpath 
-    : core/RDP/test_fastpath.cpp 
-    : core/RDP/fastpath.hpp 
+test-canonical core/RDP/fastpath.hpp 
     : <library>crypto 
     ;
     
-test-run test_slowpath 
-    : core/RDP/test_slowpath.cpp 
-    : core/RDP/slowpath.hpp 
+test-canonical core/RDP/slowpath.hpp 
     ;
 
-test-run test_clipboard 
-    : core/RDP/test_clipboard.cpp 
-    : core/RDP/clipboard.hpp 
+test-canonical core/RDP/clipboard.hpp 
     ;
 
-test-run test_FileInformation 
-    : core/FSCC/test_FileInformation.cpp 
-    : core/FSCC/FileInformation.hpp 
+test-canonical core/FSCC/FileInformation.hpp 
     ;
 
-test-run test_rdpdr 
-    : core/RDP/channels/test_rdpdr.cpp 
-    : core/RDP/channels/rdpdr.hpp 
+test-canonical core/RDP/channels/rdpdr.hpp 
     ;
 
-test-run test_callback 
-    : core/test_callback.cpp 
-    : core/callback.hpp 
+test-canonical core/callback.hpp 
     ;
-test-run test_channel_list 
-    : core/test_channel_list.cpp 
-    : core/channel_list.hpp 
+test-canonical core/channel_list.hpp 
     ;
-test-run test_check_files 
-    : core/test_check_files.cpp 
-    : core/check_files.hpp 
+test-canonical core/check_files.hpp 
     ;
-test-run test_client_info 
-    : core/test_client_info.cpp 
-    : core/client_info.hpp 
+test-canonical core/client_info.hpp 
     ;
-test-run test_theme 
-    : utils/test_theme.cpp 
-    : utils/theme.hpp 
+test-canonical utils/theme.hpp 
     ;
-test-run test_confdescriptor 
-    : utils/test_confdescriptor.cpp 
-    : utils/confdescriptor.hpp 
+test-canonical utils/confdescriptor.hpp 
     ;
-test-run test_error 
-    : core/test_error.cpp 
-    : core/error.hpp 
+test-canonical core/error.hpp 
     ;
-test-run test_font 
-    : core/test_font.cpp 
-    : core/font.hpp 
+test-canonical core/font.hpp 
     ;
     
-test-run test_listen 
-    : core/test_listen.cpp 
-    : core/listen.hpp 
+test-canonical core/listen.hpp 
     ;
-test-run test_mainloop 
-    : core/test_mainloop.cpp 
-    : core/mainloop.hpp 
+test-canonical core/mainloop.hpp 
     ;
-test-run test_bitmapupdate 
-    : core/RDP/test_bitmapupdate.cpp 
-    : core/RDP/bitmapupdate.hpp 
+test-canonical core/RDP/bitmapupdate.hpp 
     : <library>bitmap <library>png <library>crypto 
     ;
-test-run test_bmpcache 
-    : core/RDP/caches/test_bmpcache.cpp 
-    : core/RDP/caches/bmpcache.hpp 
+test-canonical core/RDP/caches/bmpcache.hpp 
     : <library>bitmap <library>png <library>crypto 
     ;
-test-run test_bmpcachepersister 
-    : core/RDP/caches/test_bmpcachepersister.cpp 
-    : core/RDP/caches/bmpcachepersister.hpp 
+test-canonical core/RDP/caches/bmpcachepersister.hpp 
     : <library>bitmap <library>crypto 
     ;
-test-run test_brushcache 
-    : core/RDP/caches/test_brushcache.cpp 
-    : core/RDP/caches/brushcache.hpp 
+test-canonical core/RDP/caches/brushcache.hpp 
     ;
-test-run test_glyphcache 
-    : core/RDP/caches/test_glyphcache.cpp 
-    : core/RDP/caches/glyphcache.hpp 
+test-canonical core/RDP/caches/glyphcache.hpp 
     ;
-test-run test_pointercache 
-    : core/RDP/caches/test_pointercache.cpp 
-    : core/RDP/caches/pointercache.hpp 
+test-canonical core/RDP/caches/pointercache.hpp 
     ;
-test-run test_redirection_info 
-    : utils/test_redirection_info.cpp 
-    : utils/redirection_info.hpp 
+test-canonical utils/redirection_info.hpp 
     ;
 
 ## Capabilities tests
 ## @{
-test-run test_bitmapcodecs 
-    : core/RDP/capabilities/test_bitmapcodecs.cpp 
-    : core/RDP/capabilities/bitmapcodecs.hpp 
+test-canonical core/RDP/capabilities/bitmapcodecs.hpp 
     ;
 
-test-run test_activate 
-    : core/RDP/capabilities/test_activate.cpp 
-    : core/RDP/capabilities/activate.hpp 
+test-canonical core/RDP/capabilities/activate.hpp 
     ;
-test-run test_cap_bitmap 
-    : core/RDP/capabilities/test_cap_bitmap.cpp 
-    : core/RDP/capabilities/cap_bitmap.hpp 
+test-canonical core/RDP/capabilities/cap_bitmap.hpp 
     ;
 
-test-run test_cap_bmpcache 
-    : core/RDP/capabilities/test_cap_bmpcache.cpp 
-    : core/RDP/capabilities/cap_bmpcache.hpp 
+test-canonical core/RDP/capabilities/cap_bmpcache.hpp 
     ;
 
-test-run test_bitmapcachehostsupport 
-    : core/RDP/capabilities/test_bitmapcachehostsupport.cpp 
-    : core/RDP/capabilities/bitmapcachehostsupport.hpp 
+test-canonical core/RDP/capabilities/bitmapcachehostsupport.hpp 
     ;
-test-run test_cap_brushcache 
-    : core/RDP/capabilities/test_cap_brushcache.cpp 
-    : core/RDP/capabilities/cap_brushcache.hpp 
+test-canonical core/RDP/capabilities/cap_brushcache.hpp 
     ;
-test-run test_compdesk 
-    : core/RDP/capabilities/test_compdesk.cpp 
-    : core/RDP/capabilities/compdesk.hpp 
+test-canonical core/RDP/capabilities/compdesk.hpp 
     ;
-test-run test_control 
-    : core/RDP/capabilities/test_control.cpp 
-    : core/RDP/capabilities/control.hpp 
+test-canonical core/RDP/capabilities/control.hpp 
     ;
 
-test-run test_drawgdiplus 
-    : core/RDP/capabilities/test_drawgdiplus.cpp 
-    : core/RDP/capabilities/drawgdiplus.hpp 
+test-canonical core/RDP/capabilities/drawgdiplus.hpp 
     ;
-test-run test_drawninegridcache 
-    : core/RDP/capabilities/test_drawninegridcache.cpp 
-    : core/RDP/capabilities/drawninegridcache.hpp 
+test-canonical core/RDP/capabilities/drawninegridcache.hpp 
     ;
-test-run test_cap_font 
-    : core/RDP/capabilities/test_cap_font.cpp 
-    : core/RDP/capabilities/cap_font.hpp 
+test-canonical core/RDP/capabilities/cap_font.hpp 
     ;
-test-run test_frameacknowledge 
-    : core/RDP/capabilities/test_frameacknowledge.cpp 
-    : core/RDP/capabilities/frameacknowledge.hpp 
+test-canonical core/RDP/capabilities/frameacknowledge.hpp 
     ;
-test-run test_general 
-    : core/RDP/capabilities/test_general.cpp 
-    : core/RDP/capabilities/general.hpp 
+test-canonical core/RDP/capabilities/general.hpp 
     ;
-test-run test_cap_glyphcache 
-    : core/RDP/capabilities/test_cap_glyphcache.cpp 
-    : core/RDP/capabilities/cap_glyphcache.hpp 
+test-canonical core/RDP/capabilities/cap_glyphcache.hpp 
     ;
-test-run test_input 
-    : core/RDP/capabilities/test_input.cpp 
-    : core/RDP/capabilities/input.hpp 
+test-canonical core/RDP/capabilities/input.hpp 
     ;
-test-run test_largepointer 
-    : core/RDP/capabilities/test_largepointer.cpp 
-    : core/RDP/capabilities/largepointer.hpp 
+test-canonical core/RDP/capabilities/largepointer.hpp 
     ;
-test-run test_multifragmentupdate 
-    : core/RDP/capabilities/test_multifragmentupdate.cpp 
-    : core/RDP/capabilities/multifragmentupdate.hpp 
+test-canonical core/RDP/capabilities/multifragmentupdate.hpp 
     ;
-test-run test_offscreencache 
-    : core/RDP/capabilities/test_offscreencache.cpp 
-    : core/RDP/capabilities/offscreencache.hpp 
+test-canonical core/RDP/capabilities/offscreencache.hpp 
     ;
-test-run test_order 
-    : core/RDP/capabilities/test_order.cpp 
-    : core/RDP/capabilities/order.hpp 
+test-canonical core/RDP/capabilities/order.hpp 
     ;
-test-run test_pointer 
-    : core/RDP/capabilities/test_pointer.cpp 
-    : core/RDP/capabilities/pointer.hpp 
+test-canonical core/RDP/capabilities/pointer.hpp 
     ;
-test-run test_rail 
-    : core/RDP/capabilities/test_rail.cpp 
-    : core/RDP/capabilities/rail.hpp 
+test-canonical core/RDP/capabilities/rail.hpp 
     ;
-test-run test_cap_share 
-    : core/RDP/capabilities/test_cap_share.cpp 
-    : core/RDP/capabilities/cap_share.hpp 
+test-canonical core/RDP/capabilities/cap_share.hpp 
     ;
-test-run test_cap_sound 
-    : core/RDP/capabilities/test_cap_sound.cpp 
-    : core/RDP/capabilities/cap_sound.hpp 
+test-canonical core/RDP/capabilities/cap_sound.hpp 
     ;
-test-run test_surfacecommands 
-    : core/RDP/capabilities/test_surfacecommands.cpp 
-    : core/RDP/capabilities/surfacecommands.hpp 
+test-canonical core/RDP/capabilities/surfacecommands.hpp 
     ;
-test-run test_window 
-    : core/RDP/capabilities/test_window.cpp 
-    : core/RDP/capabilities/window.hpp 
+test-canonical core/RDP/capabilities/window.hpp 
     ;
 
-test-run test_bmpcache2 
-    : core/RDP/capabilities/test_bmpcache2.cpp 
-    : core/RDP/capabilities/bmpcache2.hpp 
+test-canonical core/RDP/capabilities/bmpcache2.hpp 
     ;
-test-run test_colcache 
-    : core/RDP/capabilities/test_colcache.cpp 
-    : core/RDP/capabilities/colcache.hpp 
+test-canonical core/RDP/capabilities/colcache.hpp 
     ;
-test-run test_common 
-    : core/RDP/capabilities/test_common.cpp 
-    : core/RDP/capabilities/common.hpp 
+test-canonical core/RDP/capabilities/common.hpp 
     ;
-test-run test_virchan 
-    : core/RDP/capabilities/test_virchan.cpp 
-    : core/RDP/capabilities/virchan.hpp 
+test-canonical core/RDP/capabilities/virchan.hpp 
     ;
 ## @}
 
 
-test-run test_ServerRedirection 
-    : core/RDP/test_ServerRedirection.cpp 
-    : core/RDP/ServerRedirection.hpp 
+test-canonical core/RDP/ServerRedirection.hpp 
     ;
 
-test-run test_GraphicUpdatePDU 
-    : core/RDP/test_GraphicUpdatePDU.cpp 
-    : core/RDP/GraphicUpdatePDU.hpp 
+test-canonical core/RDP/GraphicUpdatePDU.hpp 
     ;
 
-test-run test_RefreshRectPDU 
-    : core/RDP/test_RefreshRectPDU.cpp 
-    : core/RDP/RefreshRectPDU.hpp 
+test-canonical core/RDP/RefreshRectPDU.hpp 
     : <library>crypto 
     ;
     
-test-run test_logon 
-    : core/RDP/test_logon.cpp 
-    : core/RDP/logon.hpp 
+test-canonical core/RDP/logon.hpp 
     ;
     
-test-run test_nego 
-    : core/RDP/test_nego.cpp 
-    : core/RDP/nego.hpp 
+test-canonical core/RDP/nego.hpp 
     : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue 
     ;
 
-test-run test_RDPOrdersCommon 
-    : core/RDP/orders/test_RDPOrdersCommon.cpp 
-    : core/RDP/orders/RDPOrdersCommon.hpp 
+test-canonical core/RDP/orders/RDPOrdersCommon.hpp 
     ;
 
-test-run test_RDPOrdersPrimaryMem3Blt 
-    : core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp 
-    : core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp 
+test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp 
     ;
     
-test-run test_RDPOrdersSecondaryGlyphCache 
-    : core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp 
-    : core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp 
+test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp 
     ;
     
-test-run test_RDPDrawable 
-    : core/RDP/test_RDPDrawable.cpp 
-    : core/RDP/RDPDrawable.hpp 
+test-canonical core/RDP/RDPDrawable.hpp 
     : <library>crypto <library>png 
     ;
     
-test-run test_RDPGraphicDevice 
-    : core/RDP/test_RDPGraphicDevice.cpp 
-    : core/RDP/RDPGraphicDevice.hpp 
+test-canonical core/RDP/RDPGraphicDevice.hpp 
     ;
     
-test-run test_RDPSerializer 
-    : core/RDP/test_RDPSerializer.cpp 
-    : core/RDP/RDPSerializer.hpp 
+test-canonical core/RDP/RDPSerializer.hpp 
     ;
     
-test-run test_remote_programs 
-    : core/RDP/test_remote_programs.cpp 
-    : core/RDP/remote_programs.hpp 
+test-canonical core/RDP/remote_programs.hpp 
     ;
     
-test-run test_server 
-    : core/test_server.cpp 
-    : core/server.hpp 
+test-canonical core/server.hpp 
     ;
     
-test-run test_session 
-    : core/test_session.cpp 
-    : core/session.hpp 
+test-canonical core/session.hpp 
     ;
     
-test-run test_session_server 
-    : core/test_session_server.cpp 
-    : core/session_server.hpp 
+test-canonical core/session_server.hpp 
     ;
     
-test-run test_wait_obj 
-    : core/test_wait_obj.cpp
-    : core/wait_obj.hpp
+test-canonical core/wait_obj.hpp
     ;
     
 test-run test_front 
@@ -1268,107 +1045,67 @@ test-run test_front
       <library>dl <library>crypto 
     ;
     
-test-run test_mod_api 
-    : mod/test_mod_api.cpp 
-    : mod/mod_api.hpp 
+test-canonical mod/mod_api.hpp 
     ;
 
-test-run test_mod_osd 
-    : mod/test_mod_osd.cpp 
-    : mod/mod_osd.hpp 
+test-canonical mod/mod_osd.hpp 
     : <library>bitmap <library>png 
     ;
 
-test-run test_null 
-    : mod/null/test_null.cpp 
-    : mod/null/null.hpp 
+test-canonical mod/null/null.hpp 
     ;
     
-test-run test_rdp_orders 
-    : mod/rdp/test_rdp_orders.cpp 
-    : mod/rdp/rdp_orders.hpp 
+test-canonical mod/rdp/rdp_orders.hpp 
     ;
     
-test-run test_rdpdr_asynchronous_task 
-    : mod/rdp/channels/test_rdpdr_asynchronous_task.cpp 
-    : mod/rdp/channels/rdpdr_asynchronous_task.hpp 
+test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp 
     ;
     
-test-run test_cliprdr_channel 
-    : mod/rdp/channels/test_cliprdr_channel.cpp
-    : mod/rdp/channels/cliprdr_channel.hpp
+test-canonical mod/rdp/channels/cliprdr_channel.hpp
     : <library>png 
     ;
 
-test-run test_rdpdr_channel 
-    : mod/rdp/channels/test_rdpdr_channel.cpp 
-    : mod/rdp/channels/rdpdr_channel.hpp 
+test-canonical mod/rdp/channels/rdpdr_channel.hpp 
     : <library>png ;
     
-test-run test_vnc 
-    : mod/vnc/test_vnc.cpp 
-    : mod/vnc/vnc.hpp 
+test-canonical mod/vnc/vnc.hpp 
     ;
     
-test-run test_xup 
-    : mod/xup/test_xup.cpp 
-    : mod/xup/xup.hpp 
+test-canonical mod/xup/xup.hpp 
     ;
     
-test-run test_bitmap 
-    : utils/test_bitmap.cpp 
-    : utils/bitmap.hpp 
+test-canonical utils/bitmap.hpp 
     : <library>bitmap <library>png <library>crypto 
     ;
 
-test-run test_bitmap_perf 
-    : test_bitmap_perf.cpp 
-    : bitmap_perf.hpp 
+test-canonical bitmap_perf.hpp 
     : <library>bitmap <library>png <covflag>nocover
     ;
 
-test-run test_colors 
-    : utils/test_colors.cpp 
-    : utils/colors.hpp 
+test-canonical utils/colors.hpp 
     ;
     
-test-run test_d3des 
-    : utils/test_d3des.cpp 
-    : utils/d3des.hpp 
+test-canonical utils/d3des.hpp 
     ;
     
-test-run test_difftimeval 
-    : utils/test_difftimeval.cpp 
-    : utils/difftimeval.hpp 
+test-canonical utils/difftimeval.hpp 
     ;
     
-test-run test_genrandom 
-    : utils/test_genrandom.cpp 
-    : utils/genrandom.hpp 
+test-canonical utils/genrandom.hpp 
     ;
-test-run test_log 
-    : utils/test_log.cpp 
-    : utils/log.hpp 
+test-canonical utils/log.hpp 
     ;
 
-test-run test_netutils 
-    : utils/test_netutils.cpp 
-    : utils/netutils.hpp 
+test-canonical utils/netutils.hpp 
     ;
 
-test-run test_png 
-    : utils/test_png.cpp 
-    : utils/png.hpp 
+test-canonical utils/png.hpp 
     : <library>png ;
 
-test-run test_rdtsc 
-    : utils/test_rdtsc.cpp 
-    : utils/rdtsc.hpp 
+test-canonical utils/rdtsc.hpp 
     ;
 
-test-run test_ssl_calls 
-    : system/linux/system/test_ssl_calls.cpp 
-    : system/linux/system/ssl_calls.hpp 
+test-canonical system/linux/system/ssl_calls.hpp 
     : <library>openssl <library>crypto <library>dl <library>z ;
 
 test-run test_strings 
