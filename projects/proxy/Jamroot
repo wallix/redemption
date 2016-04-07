@@ -19,6 +19,7 @@ constant INCLUDEDIR : ../../include ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 
+echo "components of debug" [ feature.get-values <variant> ] ;
 
 # Returns environment value if it exists or default otherwise.
 # Allow us to customize install path with shell variables like $PREFIX...
@@ -602,46 +603,71 @@ actions nop { }
 
 import toolset ;
 
-feature.feature <cov-file> : : free ;
-toolset.flags cover COVERFILE : <cov-file> ;
+feature.feature <covfile> : : free ;
+toolset.flags cover COVERFILE : <covfile> ;
 
-feature.feature <cov-flag> : : free ;
-toolset.flags cover COVERFLAG : <cov-flag> ;
+feature.feature <covflag> : : free ;
+toolset.flags cover COVERFLAG : <covflag> ;
 
 actions cover
 {
+    echo "Computing coverage for $(COVERFILE)"
     if [ "++ $(COVERFLAG) ++" = "++ nocover ++" ]; then
+        if [ ! -e "$(SRCDIR)/$(COVERFILE)" ]; then
+            echo "source file $(SRCDIR)/$(COVERFILE) missing"
+        fi
         echo "NO COVERAGE"
-        touch $(<)
+        touch "$(<)"
     else
-        echo "COVERFILE = $(COVERFILE)"
-        echo "source = $(>)"
-        echo "target = $(<)"
+        # echo "COVERFILE = $(COVERFILE)"
+        # echo "source = $(>)"
+        # echo "target = $(<)"
         mkdir -p $(COVERAGE_PREFIX)coverage/$(COVERFILE)
-        echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
+        if [ ! -e $(>:S=.gcno) ]; then
+            echo "coverage file $(>:S=.gcno) does not exist"
+            exit 1
+        fi
+        
+        #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
         gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
         if [ $? = "0" ]; then
+        
             mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
             if [ $? = "0" ]; then
+
+                if [ ! -e "$(SRCDIR)/$(COVERFILE)" ]; then
+                    echo "source file $(SRCDIR)/$(COVERFILE) missing"
+                    exit 1
+                fi
+
+                # If no gcov file available for coverage target create an empty one
+                if [ ! -e "$(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov" ]; then
+                    touch $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov
+                fi
+                
                 etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
                 if [ $? = "0" ]; then
-                    python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR)
+                    python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).report
+                    cat $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).report
                     touch $(<)
                 else
                     echo "etags failed"
+                    exit 1
                 fi
             else
-                echo "gcov mv KO"
+                echo "gcov mv failed"
+                exit 1
             fi
         else
-            echo "gcov KO"
+            echo "gcov failed"
+            exit 1
         fi
     fi
 }
 
-rule test-run ( target : sources + : tested : requirements * )
+rule test-run ( target : sources + : tested ? : requirements * )
 {
-#    ECHO "TEST RUN" ;
+#    ECHO " TEST RUN" ;
     sources = $(TESTDIR)/$(sources) ;
     local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
     local basepath = "" ;
@@ -655,18 +681,18 @@ rule test-run ( target : sources + : tested : requirements * )
 #    ECHO "sources = $(sources)" ;
 #    ECHO "target = $(target)" ;
 
-    run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
-    make $(target:S=.coverage) : $(target) : nop 
-        : <variant>coverage:<action>@cover 
-          <cov-file>$(tested) $(requirements)
-        ;
+    if ($(tested)) {
+        run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
+        make $(target:S=.coverage) : $(target) : nop 
+            : <variant>coverage:<action>@cover 
+              <covfile>$(tested) $(requirements)
+            ;
+    }
 }
 
 # To compute coverage
 # ===================
 # bjam coverage test_utf.coverage 
-
-test-run test_utf : utils/test_utf.cpp : utils/utf.hpp ;
 
 ## Acl tests
 ## @{
@@ -713,6 +739,8 @@ test-run test_GraphicToFile
     : capture/test_GraphicToFile.cpp 
     : capture/GraphicToFile.hpp 
     : <library>bitmap <library>png <library>crypto <library>snappy 
+#    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
+    
     ;
 
 test-run test_image_capture 
@@ -766,7 +794,7 @@ test-run test_transparentrecorder
 test-run test_utils_match_finder 
     : capture/utils/test_match_finder.cpp 
     : capture/utils/match_finder.hpp 
-    : <cov-flag>nocover
+    : <covflag>nocover
     ;
 
 test-run test_wrm_label 
@@ -774,11 +802,6 @@ test-run test_wrm_label
     : capture/wrm_label.hpp 
     ;
 
-test-run test_capture_wrm_save_state 
-    : capture/test_capture_wrm_save_state.cpp 
-    : capture/capture_wrm_save_state.hpp 
-    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
-    ;
 ## @}
 
 ## Test facility functions or classes
@@ -809,188 +832,663 @@ test-run test_make_unique
     : ;
 ## @}
 
+test-run test_stream 
+    : utils/test_stream.cpp 
+    : utils/stream.hpp 
+    ;
 
+test-run test_utf 
+    : utils/test_utf.cpp 
+    : utils/utf.hpp 
+    ;
+test-run test_rect 
+    : utils/test_rect.cpp
+    : utils/rect.hpp 
+    ;
+    
+test-run test_ellipse 
+    : utils/test_ellipse.cpp 
+    : utils/ellipse.hpp 
+    ;
 
-if [ SHELL false ] {
+test-run test_drawable 
+    : utils/test_drawable.cpp 
+    : utils/drawable.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
 
+test-run test_region 
+    : utils/test_region.cpp 
+    : utils/region.hpp 
+    ;
 
+test-run test_bitfu 
+    : utils/test_bitfu.cpp
+    : utils/bitfu.hpp
+    ;
+    
+test-run test_parse 
+    : utils/test_parse.cpp 
+    : utils/parse.hpp 
+    ;
+    
+test-run test_parser 
+    : utils/test_parser.cpp 
+    : utils/parser.hpp 
+    ;
+    
+test-run test_fileutils 
+    : utils/test_fileutils.cpp 
+    : utils/fileutils.hpp 
+    ;
+    
+test-run test_parse_ip_conntrack 
+    : utils/test_parse_ip_conntrack.cpp 
+    : utils/parse_ip_conntrack.hpp 
+    ;
+    
+test-run test_x224 
+    : core/RDP/test_x224.cpp 
+    : core/RDP/x224.hpp 
+    ;
+    
+test-run test_out_per_bstream 
+    : core/RDP/test_out_per_bstream.cpp 
+    : core/RDP/out_per_bstream.hpp 
+    ;
+    
+test-run test_mcs 
+    : core/RDP/test_mcs.cpp 
+    : core/RDP/mcs.hpp 
+    ;
 
-test-run test_stream : utils/test_stream.cpp : ;
-# test-run test_inputarray : utils/test_inputarray.cpp : ;
-test-run test_utf : utils/test_utf.cpp : ;
-test-run test_rect : utils/test_rect.cpp : ;
-test-run test_ellipse : utils/test_ellipse.cpp : ;
-test-run test_drawable : utils/test_drawable.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_region : utils/test_region.cpp : ;
-test-run test_bitfu : utils/test_bitfu.cpp : ;
-test-run test_parse : utils/test_parse.cpp : ;
-test-run test_parser : utils/test_parser.cpp : ;
-test-run test_fileutils : utils/test_fileutils.cpp : ;
-test-run test_parse_ip_conntrack : utils/test_parse_ip_conntrack.cpp : ;
-test-run test_x224 : core/RDP/test_x224.cpp : ;
-test-run test_out_per_bstream : core/RDP/test_out_per_bstream.cpp : ;
-test-run test_mcs : core/RDP/test_mcs.cpp : ;
+test-run test_mppc 
+    : core/RDP/test_mppc.cpp
+    : core/RDP/mppc.hpp
+    ;
+    
+test-run test_mppc_40 
+    : core/RDP/test_mppc_40.cpp 
+    : core/RDP/mppc_40.hpp 
+    ;
+    
+test-run test_mppc_50 
+    : core/RDP/test_mppc_50.cpp 
+    : core/RDP/mppc_50.hpp 
+    ;
+    
+test-run test_mppc_60 
+    : core/RDP/test_mppc_60.cpp
+    : core/RDP/mppc_60.hpp
+    ;
+    
+test-run test_mppc_61 
+    : core/RDP/test_mppc_61.cpp
+    : core/RDP/mppc_61.hpp
+    ;
+    
+test-run test_gcc 
+    : core/RDP/test_gcc.cpp 
+    : core/RDP/gcc.hpp 
+    : <library>dl <library>z <library>crypto 
+    ;
 
-test-run test_mppc : core/RDP/test_mppc.cpp : ;
-test-run test_mppc_40 : core/RDP/test_mppc_40.cpp : ;
-test-run test_mppc_50 : core/RDP/test_mppc_50.cpp : ;
-test-run test_mppc_60 : core/RDP/test_mppc_60.cpp : ;
-test-run test_mppc_61 : core/RDP/test_mppc_61.cpp : ;
-test-run test_gcc : core/RDP/test_gcc.cpp : <library>dl <library>z <library>crypto ;
-test-run test_sec : core/RDP/test_sec.cpp : <library>crypto ;
-test-run test_lic : core/RDP/test_lic.cpp : <library>crypto ;
-test-run test_share : core/RDP/test_share.cpp : ;
-test-run test_fastpath : core/RDP/test_fastpath.cpp : <library>crypto ;
-test-run test_slowpath : core/RDP/test_slowpath.cpp : ;
+test-run test_sec 
+    : core/RDP/test_sec.cpp 
+    : core/RDP/sec.hpp 
+    : <library>crypto 
+    ;
 
-test-run test_clipboard : core/RDP/test_clipboard.cpp : ;
+test-run test_lic 
+    : core/RDP/test_lic.cpp 
+    : core/RDP/lic.hpp 
+    : <library>crypto 
+    ;
 
-test-run test_FileInformation : core/FSCC/test_FileInformation.cpp : ;
-test-run test_rdpdr : core/RDP/channels/test_rdpdr.cpp : ;
+test-run test_share 
+    : core/RDP/test_share.cpp 
+    : core/RDP/share.hpp 
+    ;
 
+test-run test_fastpath 
+    : core/RDP/test_fastpath.cpp 
+    : core/RDP/fastpath.hpp 
+    : <library>crypto 
+    ;
+    
+test-run test_slowpath 
+    : core/RDP/test_slowpath.cpp 
+    : core/RDP/slowpath.hpp 
+    ;
 
+test-run test_clipboard 
+    : core/RDP/test_clipboard.cpp 
+    : core/RDP/clipboard.hpp 
+    ;
 
-test-run test_cliprdr : channels/cliprdr/test_cliprdr.cpp : ;
-test-run test_sound : channels/sound/test_sound.cpp : ;
-test-run test_callback : core/test_callback.cpp : ;
-test-run test_channel_list : core/test_channel_list.cpp : ;
-test-run test_check_files : core/test_check_files.cpp : ;
-test-run test_cipher : core/test_cipher.cpp : ;
-test-run test_client_info : core/test_client_info.cpp : ;
-test-run test_theme : utils/test_theme.cpp : ;
-test-run test_confdescriptor : utils/test_confdescriptor.cpp : ;
-test-run test_error : core/test_error.cpp : ;
-test-run test_font : core/test_font.cpp : ;
-test-run test_listen : core/test_listen.cpp : ;
-test-run test_mainloop : core/test_mainloop.cpp : ;
-test-run test_bitmapupdate : core/RDP/test_bitmapupdate.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_bmpcache : core/RDP/caches/test_bmpcache.cpp : <library>bitmap <library>crypto ;
-test-run test_bmpcachepersister : core/RDP/caches/test_bmpcachepersister.cpp : <library>bitmap <library>crypto ;
-test-run test_brushcache : core/RDP/caches/test_brushcache.cpp : ;
-test-run test_glyphcache : core/RDP/caches/test_glyphcache.cpp : ;
-test-run test_pointercache : core/RDP/caches/test_pointercache.cpp : ;
-test-run test_bmpcache_put_get : core/RDP/caches/test_bmpcache_put_get.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_redirection_info : utils/test_redirection_info.cpp : ;
+test-run test_FileInformation 
+    : core/FSCC/test_FileInformation.cpp 
+    : core/FSCC/FileInformation.hpp 
+    ;
+
+test-run test_rdpdr 
+    : core/RDP/channels/test_rdpdr.cpp 
+    : core/RDP/channels/rdpdr.hpp 
+    ;
+
+test-run test_callback 
+    : core/test_callback.cpp 
+    : core/callback.hpp 
+    ;
+test-run test_channel_list 
+    : core/test_channel_list.cpp 
+    : core/channel_list.hpp 
+    ;
+test-run test_check_files 
+    : core/test_check_files.cpp 
+    : core/check_files.hpp 
+    ;
+test-run test_client_info 
+    : core/test_client_info.cpp 
+    : core/client_info.hpp 
+    ;
+test-run test_theme 
+    : utils/test_theme.cpp 
+    : utils/theme.hpp 
+    ;
+test-run test_confdescriptor 
+    : utils/test_confdescriptor.cpp 
+    : utils/confdescriptor.hpp 
+    ;
+test-run test_error 
+    : core/test_error.cpp 
+    : core/error.hpp 
+    ;
+test-run test_font 
+    : core/test_font.cpp 
+    : core/font.hpp 
+    ;
+    
+test-run test_listen 
+    : core/test_listen.cpp 
+    : core/listen.hpp 
+    ;
+test-run test_mainloop 
+    : core/test_mainloop.cpp 
+    : core/mainloop.hpp 
+    ;
+test-run test_bitmapupdate 
+    : core/RDP/test_bitmapupdate.cpp 
+    : core/RDP/bitmapupdate.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+test-run test_bmpcache 
+    : core/RDP/caches/test_bmpcache.cpp 
+    : core/RDP/caches/bmpcache.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+test-run test_bmpcachepersister 
+    : core/RDP/caches/test_bmpcachepersister.cpp 
+    : core/RDP/caches/bmpcachepersister.hpp 
+    : <library>bitmap <library>crypto 
+    ;
+test-run test_brushcache 
+    : core/RDP/caches/test_brushcache.cpp 
+    : core/RDP/caches/brushcache.hpp 
+    ;
+test-run test_glyphcache 
+    : core/RDP/caches/test_glyphcache.cpp 
+    : core/RDP/caches/glyphcache.hpp 
+    ;
+test-run test_pointercache 
+    : core/RDP/caches/test_pointercache.cpp 
+    : core/RDP/caches/pointercache.hpp 
+    ;
+test-run test_redirection_info 
+    : utils/test_redirection_info.cpp 
+    : utils/redirection_info.hpp 
+    ;
 
 ## Capabilities tests
 ## @{
-test-run test_config : core/test_config.cpp : ;
-test-run test_config_assign : core/test_config_assign.cpp : ;
-## }
+test-run test_bitmapcodecs 
+    : core/RDP/capabilities/test_bitmapcodecs.cpp 
+    : core/RDP/capabilities/bitmapcodecs.hpp 
+    ;
 
-## Capabilities tests
-## @{
-test-run test_bitmapcodecs : core/RDP/capabilities/test_bitmapcodecs.cpp : ;
+test-run test_activate 
+    : core/RDP/capabilities/test_activate.cpp 
+    : core/RDP/capabilities/activate.hpp 
+    ;
+test-run test_cap_bitmap 
+    : core/RDP/capabilities/test_cap_bitmap.cpp 
+    : core/RDP/capabilities/cap_bitmap.hpp 
+    ;
 
-test-run test_activate : core/RDP/capabilities/test_activate.cpp : ;
-test-run test_cap_bitmap : core/RDP/capabilities/test_cap_bitmap.cpp : ;
+test-run test_cap_bmpcache 
+    : core/RDP/capabilities/test_cap_bmpcache.cpp 
+    : core/RDP/capabilities/cap_bmpcache.hpp 
+    ;
 
-obj test_cap_bmpcache.o : core/RDP/capabilities/test_bmpcache.cpp : ;
-test-run test_cap_bmpcache : test_cap_bmpcache.o : ;
+test-run test_bitmapcachehostsupport 
+    : core/RDP/capabilities/test_bitmapcachehostsupport.cpp 
+    : core/RDP/capabilities/bitmapcachehostsupport.hpp 
+    ;
+test-run test_cap_brushcache 
+    : core/RDP/capabilities/test_cap_brushcache.cpp 
+    : core/RDP/capabilities/cap_brushcache.hpp 
+    ;
+test-run test_compdesk 
+    : core/RDP/capabilities/test_compdesk.cpp 
+    : core/RDP/capabilities/compdesk.hpp 
+    ;
+test-run test_control 
+    : core/RDP/capabilities/test_control.cpp 
+    : core/RDP/capabilities/control.hpp 
+    ;
 
-#test-run test_cap_bmpcache : core/RDP/capabilities/test_bmpcache.cpp : ;
+test-run test_drawgdiplus 
+    : core/RDP/capabilities/test_drawgdiplus.cpp 
+    : core/RDP/capabilities/drawgdiplus.hpp 
+    ;
+test-run test_drawninegridcache 
+    : core/RDP/capabilities/test_drawninegridcache.cpp 
+    : core/RDP/capabilities/drawninegridcache.hpp 
+    ;
+test-run test_cap_font 
+    : core/RDP/capabilities/test_cap_font.cpp 
+    : core/RDP/capabilities/cap_font.hpp 
+    ;
+test-run test_frameacknowledge 
+    : core/RDP/capabilities/test_frameacknowledge.cpp 
+    : core/RDP/capabilities/frameacknowledge.hpp 
+    ;
+test-run test_general 
+    : core/RDP/capabilities/test_general.cpp 
+    : core/RDP/capabilities/general.hpp 
+    ;
+test-run test_cap_glyphcache 
+    : core/RDP/capabilities/test_cap_glyphcache.cpp 
+    : core/RDP/capabilities/cap_glyphcache.hpp 
+    ;
+test-run test_input 
+    : core/RDP/capabilities/test_input.cpp 
+    : core/RDP/capabilities/input.hpp 
+    ;
+test-run test_largepointer 
+    : core/RDP/capabilities/test_largepointer.cpp 
+    : core/RDP/capabilities/largepointer.hpp 
+    ;
+test-run test_multifragmentupdate 
+    : core/RDP/capabilities/test_multifragmentupdate.cpp 
+    : core/RDP/capabilities/multifragmentupdate.hpp 
+    ;
+test-run test_offscreencache 
+    : core/RDP/capabilities/test_offscreencache.cpp 
+    : core/RDP/capabilities/offscreencache.hpp 
+    ;
+test-run test_order 
+    : core/RDP/capabilities/test_order.cpp 
+    : core/RDP/capabilities/order.hpp 
+    ;
+test-run test_pointer 
+    : core/RDP/capabilities/test_pointer.cpp 
+    : core/RDP/capabilities/pointer.hpp 
+    ;
+test-run test_rail 
+    : core/RDP/capabilities/test_rail.cpp 
+    : core/RDP/capabilities/rail.hpp 
+    ;
+test-run test_cap_share 
+    : core/RDP/capabilities/test_cap_share.cpp 
+    : core/RDP/capabilities/cap_share.hpp 
+    ;
+test-run test_cap_sound 
+    : core/RDP/capabilities/test_cap_sound.cpp 
+    : core/RDP/capabilities/cap_sound.hpp 
+    ;
+test-run test_surfacecommands 
+    : core/RDP/capabilities/test_surfacecommands.cpp 
+    : core/RDP/capabilities/surfacecommands.hpp 
+    ;
+test-run test_window 
+    : core/RDP/capabilities/test_window.cpp 
+    : core/RDP/capabilities/window.hpp 
+    ;
 
-test-run test_bitmapcachehostsupport : core/RDP/capabilities/test_bitmapcachehostsupport.cpp : ;
-test-run test_cap_brushcache : core/RDP/capabilities/test_cap_brushcache.cpp : ;
-test-run test_compdesk : core/RDP/capabilities/test_compdesk.cpp : ;
-test-run test_control : core/RDP/capabilities/test_control.cpp : ;
-test-run test_drawgdiplus : core/RDP/capabilities/test_drawgdiplus.cpp : ;
-test-run test_drawninegridcache : core/RDP/capabilities/test_drawninegridcache.cpp : ;
-test-run test_cap_font : core/RDP/capabilities/test_cap_font.cpp : ;
-test-run test_frameacknowledge : core/RDP/capabilities/test_frameacknowledge.cpp : ;
-test-run test_general : core/RDP/capabilities/test_general.cpp : ;
-test-run test_cap_glyphcache : core/RDP/capabilities/test_cap_glyphcache.cpp : ;
-test-run test_input : core/RDP/capabilities/test_input.cpp : ;
-test-run test_largepointer : core/RDP/capabilities/test_largepointer.cpp : ;
-test-run test_multifragmentupdate : core/RDP/capabilities/test_multifragmentupdate.cpp : ;
-test-run test_offscreencache : core/RDP/capabilities/test_offscreencache.cpp : ;
-test-run test_order : core/RDP/capabilities/test_order.cpp : ;
-test-run test_pointer : core/RDP/capabilities/test_pointer.cpp : ;
-test-run test_rail : core/RDP/capabilities/test_rail.cpp : ;
-test-run test_cap_share : core/RDP/capabilities/test_cap_share.cpp : ;
-test-run test_cap_sound : core/RDP/capabilities/test_cap_sound.cpp : ;
-test-run test_surfacecommands : core/RDP/capabilities/test_surfacecommands.cpp : ;
-test-run test_window : core/RDP/capabilities/test_window.cpp : ;
-
-test-run test_bmpcache2 : core/RDP/capabilities/test_bmpcache2.cpp : ;
-test-run test_colcache : core/RDP/capabilities/test_colcache.cpp : ;
-test-run test_common : core/RDP/capabilities/test_common.cpp : ;
-test-run test_virchan : core/RDP/capabilities/test_virchan.cpp : ;
+test-run test_bmpcache2 
+    : core/RDP/capabilities/test_bmpcache2.cpp 
+    : core/RDP/capabilities/bmpcache2.hpp 
+    ;
+test-run test_colcache 
+    : core/RDP/capabilities/test_colcache.cpp 
+    : core/RDP/capabilities/colcache.hpp 
+    ;
+test-run test_common 
+    : core/RDP/capabilities/test_common.cpp 
+    : core/RDP/capabilities/common.hpp 
+    ;
+test-run test_virchan 
+    : core/RDP/capabilities/test_virchan.cpp 
+    : core/RDP/capabilities/virchan.hpp 
+    ;
 ## @}
 
-test-run test_ServerRedirection : core/RDP/test_ServerRedirection.cpp : ;
-test-run test_GraphicUpdatePDU : core/RDP/test_GraphicUpdatePDU.cpp : ;
-test-run test_RefreshRectPDU : core/RDP/test_RefreshRectPDU.cpp : <library>crypto ;
-test-run test_logon : core/RDP/test_logon.cpp : ;
-test-run test_nego : core/RDP/test_nego.cpp : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
-test-run test_RDPOrdersCommon : core/RDP/orders/test_RDPOrdersCommon.cpp : ;
-test-run test_RDPOrdersNames : core/RDP/orders/test_RDPOrdersNames.cpp : ;
-test-run test_RDPOrdersPrimaryMem3Blt : core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : ;
-test-run test_RDPOrdersSecondaryGlyphCache : core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : ;
-test-run test_RDPDrawable : core/RDP/test_RDPDrawable.cpp : <library>crypto <library>png ;
-test-run test_RDPGraphicDevice : core/RDP/test_RDPGraphicDevice.cpp : ;
-test-run test_RDPSerializer : core/RDP/test_RDPSerializer.cpp : ;
-test-run test_remote_programs : core/RDP/test_remote_programs.cpp : ;
-test-run test_server : core/test_server.cpp : ;
-test-run test_session : core/test_session.cpp : ;
-test-run test_session_server : core/test_session_server.cpp : ;
-test-run test_wait_obj : core/test_wait_obj.cpp : ;
-test-run test_front : front/test_front.cpp : <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
-test-run test_mod_api : mod/test_mod_api.cpp : ;
-test-run test_mod_osd : mod/test_mod_osd.cpp : <library>bitmap <library>png ;
-test-run test_draw_api : mod/test_draw_api.cpp : ;
-test-run test_null : mod/null/test_null.cpp : ;
-test-run test_rdp_cursor : mod/rdp/test_rdp_cursor.cpp : ;
-test-run test_rdp_orders : mod/rdp/test_rdp_orders.cpp : ;
-test-run test_rdpdr_asynchronous_task : mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : ;
-test-run test_cliprdr_channel : mod/rdp/channels/test_cliprdr_channel.cpp : <library>png ;
-test-run test_rdpdr_channel : mod/rdp/channels/test_rdpdr_channel.cpp : <library>png ;
-test-run test_vnc : mod/vnc/test_vnc.cpp : ;
-test-run test_xup : mod/xup/test_xup.cpp : ;
 
-test-run test_bitmap : utils/test_bitmap.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_bitmap_perf : test_bitmap_perf.cpp : <library>bitmap <library>png ;
-test-run test_colors : utils/test_colors.cpp : ;
-test-run test_d3des : utils/test_d3des.cpp : ;
-test-run test_difftimeval : utils/test_difftimeval.cpp : ;
-test-run test_genrandom : utils/test_genrandom.cpp : ;
-test-run test_log : utils/test_log.cpp : ;
-test-run test_netutils : utils/test_netutils.cpp : ;
-test-run test_png : utils/test_png.cpp : <library>png ;
-test-run test_rdtsc : utils/test_rdtsc.cpp : ;
-test-run test_ssl_calls : system/linux/system/test_ssl_calls.cpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-run test_strings : test_strings.cpp : ;
+test-run test_ServerRedirection 
+    : core/RDP/test_ServerRedirection.cpp 
+    : core/RDP/ServerRedirection.hpp 
+    ;
+
+test-run test_GraphicUpdatePDU 
+    : core/RDP/test_GraphicUpdatePDU.cpp 
+    : core/RDP/GraphicUpdatePDU.hpp 
+    ;
+
+test-run test_RefreshRectPDU 
+    : core/RDP/test_RefreshRectPDU.cpp 
+    : core/RDP/RefreshRectPDU.hpp 
+    : <library>crypto 
+    ;
+    
+test-run test_logon 
+    : core/RDP/test_logon.cpp 
+    : core/RDP/logon.hpp 
+    ;
+    
+test-run test_nego 
+    : core/RDP/test_nego.cpp 
+    : core/RDP/nego.hpp 
+    : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue 
+    ;
+
+test-run test_RDPOrdersCommon 
+    : core/RDP/orders/test_RDPOrdersCommon.cpp 
+    : core/RDP/orders/RDPOrdersCommon.hpp 
+    ;
+
+test-run test_RDPOrdersPrimaryMem3Blt 
+    : core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp 
+    ;
+    
+test-run test_RDPOrdersSecondaryGlyphCache 
+    : core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp 
+    : core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp 
+    ;
+    
+test-run test_RDPDrawable 
+    : core/RDP/test_RDPDrawable.cpp 
+    : core/RDP/RDPDrawable.hpp 
+    : <library>crypto <library>png 
+    ;
+    
+test-run test_RDPGraphicDevice 
+    : core/RDP/test_RDPGraphicDevice.cpp 
+    : core/RDP/RDPGraphicDevice.hpp 
+    ;
+    
+test-run test_RDPSerializer 
+    : core/RDP/test_RDPSerializer.cpp 
+    : core/RDP/RDPSerializer.hpp 
+    ;
+    
+test-run test_remote_programs 
+    : core/RDP/test_remote_programs.cpp 
+    : core/RDP/remote_programs.hpp 
+    ;
+    
+test-run test_server 
+    : core/test_server.cpp 
+    : core/server.hpp 
+    ;
+    
+test-run test_session 
+    : core/test_session.cpp 
+    : core/session.hpp 
+    ;
+    
+test-run test_session_server 
+    : core/test_session_server.cpp 
+    : core/session_server.hpp 
+    ;
+    
+test-run test_wait_obj 
+    : core/test_wait_obj.cpp
+    : core/wait_obj.hpp
+    ;
+    
+test-run test_front 
+    : front/test_front.cpp 
+    : front/front.hpp 
+    : <library>bitmap <library>openssl 
+      <library>snappy <library>d3des 
+      <library>krb5 <library>gssglue 
+      <library>png <library>d3des 
+      <library>dl <library>crypto 
+    ;
+    
+test-run test_mod_api 
+    : mod/test_mod_api.cpp 
+    : mod/mod_api.hpp 
+    ;
+
+test-run test_mod_osd 
+    : mod/test_mod_osd.cpp 
+    : mod/mod_osd.hpp 
+    : <library>bitmap <library>png 
+    ;
+
+test-run test_null 
+    : mod/null/test_null.cpp 
+    : mod/null/null.hpp 
+    ;
+    
+test-run test_rdp_orders 
+    : mod/rdp/test_rdp_orders.cpp 
+    : mod/rdp/rdp_orders.hpp 
+    ;
+    
+test-run test_rdpdr_asynchronous_task 
+    : mod/rdp/channels/test_rdpdr_asynchronous_task.cpp 
+    : mod/rdp/channels/rdpdr_asynchronous_task.hpp 
+    ;
+    
+test-run test_cliprdr_channel 
+    : mod/rdp/channels/test_cliprdr_channel.cpp
+    : mod/rdp/channels/cliprdr_channel.hpp
+    : <library>png 
+    ;
+
+test-run test_rdpdr_channel 
+    : mod/rdp/channels/test_rdpdr_channel.cpp 
+    : mod/rdp/channels/rdpdr_channel.hpp 
+    : <library>png ;
+    
+test-run test_vnc 
+    : mod/vnc/test_vnc.cpp 
+    : mod/vnc/vnc.hpp 
+    ;
+    
+test-run test_xup 
+    : mod/xup/test_xup.cpp 
+    : mod/xup/xup.hpp 
+    ;
+    
+test-run test_bitmap 
+    : utils/test_bitmap.cpp 
+    : utils/bitmap.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_bitmap_perf 
+    : test_bitmap_perf.cpp 
+    : bitmap_perf.hpp 
+    : <library>bitmap <library>png <covflag>nocover
+    ;
+
+test-run test_colors 
+    : utils/test_colors.cpp 
+    : utils/colors.hpp 
+    ;
+    
+test-run test_d3des 
+    : utils/test_d3des.cpp 
+    : utils/d3des.hpp 
+    ;
+    
+test-run test_difftimeval 
+    : utils/test_difftimeval.cpp 
+    : utils/difftimeval.hpp 
+    ;
+    
+test-run test_genrandom 
+    : utils/test_genrandom.cpp 
+    : utils/genrandom.hpp 
+    ;
+test-run test_log 
+    : utils/test_log.cpp 
+    : utils/log.hpp 
+    ;
+
+test-run test_netutils 
+    : utils/test_netutils.cpp 
+    : utils/netutils.hpp 
+    ;
+
+test-run test_png 
+    : utils/test_png.cpp 
+    : utils/png.hpp 
+    : <library>png ;
+
+test-run test_rdtsc 
+    : utils/test_rdtsc.cpp 
+    : utils/rdtsc.hpp 
+    ;
+
+test-run test_ssl_calls 
+    : system/linux/system/test_ssl_calls.cpp 
+    : system/linux/system/ssl_calls.hpp 
+    : <library>openssl <library>crypto <library>dl <library>z ;
+
+test-run test_strings 
+    : test_strings.cpp 
+    : 
+    : <covflag>nocover 
+    ;
 
 
 ## Transport tests
 ## @{
-test-run test_meta_writer : transport/detail/test_meta_writer.cpp : ;
-test-run test_meta_opener : transport/detail/test_meta_opener.cpp : ;
-test-run test_in_meta_sequence_transport : transport/test_in_meta_sequence_transport.cpp : <library>crypto <library>snappy <library>dl <library>z ;
-test-run test_filename_sequence_transport : transport/test_filename_sequence_transport.cpp : ;
-test-run test_out_meta_sequence_transport : transport/test_out_meta_sequence_transport.cpp : <library>crypto <library>snappy <library>dl <library>z ;
-test-run test_test_transport : transport/test_test_transport.cpp : ;
-test-run test_count_transport : transport/test_count_transport.cpp : ;
-test-run test_socket_transport : transport/test_socket_transport.cpp : <library>openssl <library>crypto <library>dl ;
-test-run test_file_transport : transport/test_file_transport.cpp : ;
-test-run test_request_full_cleaning : transport/test_request_full_cleaning.cpp : ;
-test-run test_filename_transport : transport/test_filename_transport.cpp : <library>z <library>dl <library>snappy <library>crypto ;
-test-run test_bulk_compression_transport : transport/test_bulk_compression_transport.cpp : ;
+test-run test_meta_writer 
+    : transport/detail/test_meta_writer.cpp 
+    : transport/detail/meta_writer.hpp 
+    ;
 
-test-run test_gzip_compression_transport : transport/test_gzip_compression_transport.cpp : <library>z ;
-test-run test_snappy_compression_transport : transport/test_snappy_compression_transport.cpp : <library>snappy ;
+test-run test_meta_opener 
+    : transport/detail/test_meta_opener.cpp 
+    : transport/detail/meta_opener.hpp 
+    ;
 
-test-run test_cryptofile : transport/test_cryptofile.cpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+test-run test_in_meta_sequence_transport 
+    : transport/test_in_meta_sequence_transport.cpp 
+    : transport/in_meta_sequence_transport.hpp 
+    : <library>crypto <library>snappy <library>dl <library>z 
+    ;
 
-test-run test_compression_transport_wrapper : utils/test_compression_transport_wrapper.cpp : <library>z <library>snappy ;
+test-run test_filename_sequence_transport 
+    : transport/test_filename_sequence_transport.cpp 
+    :
+    : <covflag>nocover 
+    ;
+
+test-run test_out_meta_sequence_transport 
+    : transport/test_out_meta_sequence_transport.cpp 
+    : transport/out_meta_sequence_transport.hpp 
+    : <library>crypto <library>snappy <library>dl <library>z 
+    ;
+
+test-run test_test_transport 
+    : transport/test_test_transport.cpp 
+    : transport/transport.hpp 
+    ;
+    
+test-run test_count_transport 
+    : transport/test_count_transport.cpp 
+    : transport/count_transport.hpp 
+    ;
+    
+test-run test_socket_transport 
+    : transport/test_socket_transport.cpp 
+    : transport/socket_transport.hpp 
+    : <library>openssl <library>crypto <library>dl 
+    ;
+
+test-run test_in_file_transport 
+    : transport/test_in_file_transport.cpp 
+    : transport/in_file_transport.hpp
+    ;
+
+test-run test_out_file_transport 
+    : transport/test_out_file_transport.cpp 
+    : transport/out_file_transport.hpp
+    ;
+
+test-run test_in_filename_transport 
+    : transport/test_in_filename_transport.cpp 
+    : transport/in_filename_transport.hpp 
+    : <library>z <library>dl <library>snappy <library>crypto 
+    ;
+
+test-run test_out_filename_transport 
+    : transport/test_out_filename_transport.cpp 
+    : transport/out_filename_transport.hpp 
+    : <library>z <library>dl <library>snappy <library>crypto 
+    ;
+
+test-run test_bulk_compression_transport 
+    : transport/test_bulk_compression_transport.cpp 
+    : transport/bulk_compression_transport.hpp 
+    ;
+
+test-run test_gzip_compression_transport 
+    : transport/test_gzip_compression_transport.cpp 
+    : transport/gzip_compression_transport.hpp 
+    : <library>z 
+    ;
+
+test-run test_snappy_compression_transport 
+    : transport/test_snappy_compression_transport.cpp 
+    : transport/snappy_compression_transport.hpp 
+    : <library>snappy 
+    ;
+
+test-run test_cryptofile 
+    : transport/test_cryptofile.cpp 
+    : transport/cryptofile.hpp 
+    : <library>openssl <library>crypto <library>snappy <library>dl <library>z 
+    ;
+
+test-run test_compression_transport_wrapper 
+    : utils/test_compression_transport_wrapper.cpp 
+    : utils/compression_transport_wrapper.hpp 
+    : <library>z <library>snappy 
+    ;
 ## @}
 
 
 ## Buffer Transport tests
 ## @{
-test-run test_buffering_buf : transport/buffer/test_buffering_buf.cpp : ;
+test-run test_buffering_buf 
+    : transport/buffer/test_buffering_buf.cpp 
+    : transport/buffer/buffering_buf.hpp 
+    ;
 
-test-run test_checksum_buf : transport/buffer/test_checksum_buf.cpp : <library>crypto <library>dl <library>z ;
+test-run test_checksum_buf 
+    : transport/buffer/test_checksum_buf.cpp 
+    : transport/buffer/checksum_buf.hpp 
+    : <library>crypto <library>dl <library>z 
+    ;
 ## @}
 
 
@@ -998,156 +1496,602 @@ test-run test_checksum_buf : transport/buffer/test_checksum_buf.cpp : <library>c
 #test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
-test-run test_RDPOrdersPrimaryOpaqueRect : core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp : ;
-test-run test_RDPOrdersPrimaryScrBlt : core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp : ;
-test-run test_RDPOrdersPrimaryMemBlt : core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp : ;
-test-run test_RDPOrdersPrimaryDestBlt : core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp : ;
-test-run test_RDPOrdersPrimaryMultiDstBlt : core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp : ;
-test-run test_RDPOrdersPrimaryMultiPatBlt : core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp : ;
-test-run test_RDPOrdersPrimaryMultiScrBlt : core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp : ;
-test-run test_RDPOrdersPrimaryMultiOpaqueRect : core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp : ;
-test-run test_RDPOrdersPrimaryLineTo : core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp : ;
-test-run test_RDPOrdersPrimaryPolygonSC : core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp : ;
-test-run test_RDPOrdersPrimaryPolygonCB : core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp : ;
-test-run test_RDPOrdersPrimaryPolyline : core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp : ;
-test-run test_RDPOrdersPrimaryEllipseSC : core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp : ;
-test-run test_RDPOrdersPrimaryEllipseCB : core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp : ;
-test-run test_RDPOrdersPrimaryPatBlt : core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp : ;
-test-run test_RDPOrdersPrimaryGlyphIndex : core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp : ;
-test-run test_RDPOrdersSecondaryBmpCache : core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp : <library>bitmap <library>crypto ;
-test-run test_RDPOrdersSecondaryColorCache : core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp : ;
-test-run test_RDPOrdersSecondaryBrushCache : core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp : ;
-test-run test_AlternateSecondaryWindowing : core/RDP/orders/test_AlternateSecondaryWindowing.cpp : ;
+test-run test_RDPOrdersPrimaryOpaqueRect 
+    : core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryScrBlt 
+    : core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryMemBlt 
+    : core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryDestBlt 
+    : core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryMultiDstBlt 
+    : core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryMultiPatBlt 
+    : core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryMultiScrBlt 
+    : core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryMultiOpaqueRect 
+    : core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryLineTo 
+    : core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryLineTo.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryPolygonSC 
+    : core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryPolygonCB 
+    : core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp 
+    ;
+test-run test_RDPOrdersPrimaryPolyline 
+    : core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryPolyline.hpp 
+    ;
+test-run test_RDPOrdersPrimaryEllipseSC 
+    : core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryEllipseCB
+    : core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp 
+    ;
+    
+test-run test_RDPOrdersPrimaryPatBlt 
+    : core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp
+    ;
+    
+test-run test_RDPOrdersPrimaryGlyphIndex 
+    : core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp 
+    : core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp 
+    ;
+    
+test-run test_RDPOrdersSecondaryBmpCache 
+    : core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp 
+    : core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp 
+    : <library>bitmap <library>crypto 
+    ;
+    
+test-run test_RDPOrdersSecondaryColorCache 
+    : core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp 
+    : core/RDP/orders/RDPOrdersSecondaryColorCache.hpp 
+    ;
+    
+test-run test_RDPOrdersSecondaryBrushCache 
+    : core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp 
+    : core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp 
+    ;
+    
+test-run test_AlternateSecondaryWindowing 
+    : core/RDP/orders/test_AlternateSecondaryWindowing.cpp 
+    : core/RDP/orders/AlternateSecondaryWindowing.hpp 
+    ;
 
+test-run test_libpng 
+    : test_libpng.cpp 
+    :  
+    : <library>png <library>z <covflag>nocover
+    ;
 
-test-run test_libpng : test_libpng.cpp : <library>png <library>z ;
 #test-run test_convert_bitmap : test_convert_bitmap.cpp : <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
-test-run test_rdp : mod/rdp/test_rdp.cpp : <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
-test-run test_rdp_client_test_card : client_mods/test_rdp_client_test_card.cpp : <library>bitmap <library>z <library>png <library>crypto <library>dl <library>openssl ;
-test-run test_rdp_client_tls_w2008 : client_mods/test_rdp_client_tls_w2008.cpp : <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>z <library>dl <library>openssl ;
-test-run test_rdp_client_wab : client_mods/test_rdp_client_wab.cpp : <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>openssl <library>dl <library>krb5 <library>gssglue ;
-test-run test_vnc_client_simple : client_mods/test_vnc_client_simple.cpp : <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>dl ;
-test-run test_rdesktop_client : server/test_rdesktop_client.cpp : <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
-test-run test_mstsc_client : server/test_mstsc_client.cpp : <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
-test-run test_mstsc_client_rdp50bulk : server/test_mstsc_client_rdp50bulk.cpp : <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
+test-run test_rdp 
+    : mod/rdp/test_rdp.cpp 
+    : mod/rdp/rdp.hpp 
+    : <library>bitmap <library>krb5 
+      <library>gssglue <library>png 
+      <library>d3des <library>z 
+      <library>dl <library>crypto 
+    ;
 
-test-run test_keymap2 : test_keymap2.cpp : ;
-test-run test_keymapSym : test_keymapSym.cpp : ;
+test-run test_rdp_client_test_card 
+    : client_mods/test_rdp_client_test_card.cpp 
+    : 
+    : <library>bitmap
+      <library>z
+      <library>png
+      <library>crypto 
+      <library>dl
+      <library>openssl 
+      <covflag>nocover
+    ;
+test-run test_rdp_client_tls_w2008 
+    : client_mods/test_rdp_client_tls_w2008.cpp 
+    : 
+    : <library>bitmap
+      <library>krb5 
+      <library>gssglue
+      <library>png 
+      <library>crypto
+      <library>d3des 
+      <library>z
+      <library>dl 
+      <library>openssl 
+      <covflag>nocover
+    ;
+
+test-run test_rdp_client_wab 
+    : client_mods/test_rdp_client_wab.cpp 
+    : 
+    : <library>bitmap
+      <library>krb5 
+      <library>gssglue
+      <library>png 
+      <library>crypto
+      <library>d3des 
+      <library>openssl
+      <library>dl 
+      <library>krb5
+      <library>gssglue 
+      <covflag>nocover
+    ;
+
+test-run test_vnc_client_simple 
+    : client_mods/test_vnc_client_simple.cpp 
+    : 
+    : <library>bitmap
+      <library>krb5 
+      <library>gssglue
+      <library>png 
+      <library>crypto
+      <library>d3des 
+      <library>dl 
+      <covflag>nocover
+    ;
+
+test-run test_rdesktop_client 
+    : server/test_rdesktop_client.cpp 
+    : 
+    : <library>bitmap
+      <library>png 
+      <library>openssl
+      <library>snappy 
+      <library>d3des
+      <library>crypto 
+      <library>dl 
+      <covflag>nocover
+    ;
+
+
+test-run test_mstsc_client 
+    : server/test_mstsc_client.cpp 
+    : 
+    : <library>bitmap
+      <library>png 
+      <library>openssl
+      <library>snappy 
+      <library>d3des
+      <library>crypto 
+      <library>dl
+      <covflag>nocover
+    ;
+
+
+test-run test_mstsc_client_rdp50bulk 
+    : server/test_mstsc_client_rdp50bulk.cpp 
+    : 
+    : <library>bitmap
+      <library>png 
+      <library>openssl
+      <library>snappy 
+      <library>d3des
+      <library>crypto 
+      <library>dl 
+      <covflag>nocover
+    ;
+
+if [ SHELL false ] {
+
+test-run test_keymap2 
+    : test_keymap2.cpp 
+    : keymap2.hpp 
+    ;
+    
+test-run test_keymapSym 
+    : test_keymapSym.cpp 
+    : keymapSym.hpp 
+    ;
+}
+
 
 ## Widget tests
 ## @{
-test-run test_widget2_rect : mod/internal/widget2/test_widget2_rect.cpp : <library>png <library>crypto ;
-test-run test_image : mod/internal/widget2/test_image.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_label : mod/internal/widget2/test_label.cpp : <library>png <library>crypto ;
-test-run test_tooltip : mod/internal/widget2/test_tooltip.cpp : <library>png <library>crypto ;
-test-run test_flat_button : mod/internal/widget2/test_flat_button.cpp : <library>png <library>crypto ;
-test-run test_edit : mod/internal/widget2/test_edit.cpp : <library>png <library>crypto ;
-test-run test_multiline : mod/internal/widget2/test_multiline.cpp : <library>png <library>crypto ;
-test-run test_password : mod/internal/widget2/test_password.cpp : <library>png <library>crypto ;
-test-run test_number_edit : mod/internal/widget2/test_number_edit.cpp : <library>png <library>crypto ;
-test-run test_edit_valid : mod/internal/widget2/test_edit_valid.cpp : <library>png <library>crypto ;
+test-run test_widget2_rect 
+    : mod/internal/widget2/test_widget2_rect.cpp 
+    : mod/internal/widget2/widget2_rect.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_image 
+    : mod/internal/widget2/test_image.cpp 
+    : mod/internal/widget2/image.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_label 
+    : mod/internal/widget2/test_label.cpp 
+    : mod/internal/widget2/label.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_tooltip 
+    : mod/internal/widget2/test_tooltip.cpp 
+    : mod/internal/widget2/tooltip.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_flat_button 
+    : mod/internal/widget2/test_flat_button.cpp 
+    : mod/internal/widget2/flat_button.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_edit 
+    : mod/internal/widget2/test_edit.cpp 
+    : mod/internal/widget2/edit.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_multiline 
+    : mod/internal/widget2/test_multiline.cpp 
+    : mod/internal/widget2/multiline.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_password 
+    : mod/internal/widget2/test_password.cpp 
+    : mod/internal/widget2/password.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_number_edit 
+    : mod/internal/widget2/test_number_edit.cpp 
+    : mod/internal/widget2/number_edit.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_edit_valid 
+    : mod/internal/widget2/test_edit_valid.cpp 
+    : mod/internal/widget2/edit_valid.hpp 
+    : <library>png <library>crypto 
+    ;
+
 # test-run test_radio_list : mod/internal/widget2/test_radio_list.cpp : <library>png <library>libboost_unit_test ;
-test-run test_flat_dialog : mod/internal/widget2/test_flat_dialog.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_widget : mod/internal/widget2/test_widget.cpp : <library>crypto ;
-test-run test_composite : mod/internal/widget2/test_composite.cpp : <library>png <library>crypto ;
+test-run test_flat_dialog 
+    : mod/internal/widget2/test_flat_dialog.cpp 
+    : mod/internal/widget2/flat_dialog.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_widget 
+    : mod/internal/widget2/test_widget.cpp 
+    : mod/internal/widget2/widget.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_composite 
+    : mod/internal/widget2/test_composite.cpp 
+    : mod/internal/widget2/composite.hpp 
+    : <library>png <library>crypto 
+    ;
 
 #test-run test_window_dialog : mod/internal/widget2/test_window_dialog.cpp : <library>png <library>z <library>crypto <library>dl ;
 
-test-run test_flat_login : mod/internal/widget2/test_flat_login.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_flat_wab_close : mod/internal/widget2/test_flat_wab_close.cpp : <library>bitmap <library>png <library>crypto ;
-test-run test_screen : mod/internal/widget2/test_screen.cpp : <library>png <library>crypto ;
+test-run test_flat_login 
+    : mod/internal/widget2/test_flat_login.cpp 
+    : mod/internal/widget2/flat_login.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_flat_wab_close 
+    : mod/internal/widget2/test_flat_wab_close.cpp 
+    : mod/internal/widget2/flat_wab_close.hpp 
+    : <library>bitmap <library>png <library>crypto 
+    ;
+
+test-run test_screen 
+    : mod/internal/widget2/test_screen.cpp 
+    : mod/internal/widget2/screen.hpp 
+    : <library>png <library>crypto 
+    ;
 
 # test-run test_columnlayout : mod/internal/widget2/test_columnlayout.cpp : <library>png ;
 # test-run test_linelayout : mod/internal/widget2/test_linelayout.cpp : <library>png ;
 # test-run test_stacklayout : mod/internal/widget2/test_stacklayout.cpp : <library>png ;
-test-run test_grid : mod/internal/widget2/test_grid.cpp : <library>png <library>crypto ;
-test-run test_labelgrid : mod/internal/widget2/test_labelgrid.cpp : <library>png <library>crypto ;
+test-run test_grid 
+    : mod/internal/widget2/test_grid.cpp 
+    : mod/internal/widget2/grid.hpp 
+    : <library>png <library>crypto 
+    ;
 
-test-run test_flat_selector2 : mod/internal/widget2/test_flat_selector2.cpp : <library>png <library>crypto ;
-test-run test_group_box : mod/internal/widget2/test_group_box.cpp : <library>png <library>crypto ;
+test-run test_labelgrid 
+    : mod/internal/widget2/test_labelgrid.cpp 
+    : mod/internal/widget2/labelgrid.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_flat_selector2 
+    : mod/internal/widget2/test_flat_selector2.cpp 
+    : mod/internal/widget2/flat_selector2.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_group_box 
+    : mod/internal/widget2/test_group_box.cpp 
+    : mod/internal/widget2/group_box.hpp 
+    : <library>png <library>crypto 
+    ;
 # test-run test_scroll : mod/internal/widget2/test_scroll.cpp : <library>png ;
 # test-run test_tab : mod/internal/widget2/test_tab.cpp : <library>png ;
-test-run test_flat_interactive_target : mod/internal/widget2/test_flat_interactive_target.cpp : <library>png <library>crypto ;
+test-run test_flat_interactive_target 
+    : mod/internal/widget2/test_flat_interactive_target.cpp 
+    : mod/internal/widget2/flat_interactive_target.hpp 
+    : <library>png <library>crypto 
+    ;
 ## @}
-
 
 ## Mod tests
 ## @{
-test-run test_flat_dialog_mod : mod/internal/test_flat_dialog_mod.cpp : <library>bitmap <library>png ;
-test-run test_flat_login_mod : mod/internal/test_flat_login_mod.cpp : <library>bitmap <library>png ;
-test-run test_flat_wab_close_mod : mod/internal/test_flat_wab_close_mod.cpp : <library>bitmap <library>png ;
-test-run test_widget_test_mod : mod/internal/test_widget_test_mod.cpp : <library>png ;
-test-run test_interactive_target_mod : mod/internal/test_interactive_target_mod.cpp : <library>png <library>crypto ;
+test-run test_flat_dialog_mod 
+    : mod/internal/test_flat_dialog_mod.cpp 
+    : mod/internal/flat_dialog_mod.hpp 
+    : <library>bitmap <library>png 
+    ;
 
-test-run test_bouncer2_mod : mod/internal/test_bouncer2_mod.cpp : <library>png ;
-test-run test_test_card_mod : mod/internal/test_test_card_mod.cpp : ;
+test-run test_flat_login_mod 
+    : mod/internal/test_flat_login_mod.cpp 
+    : mod/internal/flat_login_mod.hpp 
+    : <library>bitmap <library>png 
+    ;
 
-test-run test_replay_mod : mod/internal/test_replay_mod.cpp : ;
-test-run test_internal_mod : mod/internal/test_internal_mod.cpp : ;
+test-run test_flat_wab_close_mod 
+    : mod/internal/test_flat_wab_close_mod.cpp 
+    : mod/internal/flat_wab_close_mod.hpp 
+    : <library>bitmap <library>png 
+    ;
 
-test-run test_copy_paste : mod/internal/test_copy_paste.cpp : <library>png <library>crypto ;
+test-run test_widget_test_mod 
+    : mod/internal/test_widget_test_mod.cpp 
+    : mod/internal/widget_test_mod.hpp 
+    : <library>png 
+    ;
+
+test-run test_interactive_target_mod 
+    : mod/internal/test_interactive_target_mod.cpp 
+    : mod/internal/interactive_target_mod.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_bouncer2_mod 
+    : mod/internal/test_bouncer2_mod.cpp 
+    : mod/internal/bouncer2_mod.hpp 
+    : <library>png 
+    ;
+
+test-run test_test_card_mod 
+    : mod/internal/test_test_card_mod.cpp 
+    : mod/internal/test_card_mod.hpp 
+    ;
+
+test-run test_replay_mod 
+    : mod/internal/test_replay_mod.cpp 
+    : mod/internal/replay_mod.hpp 
+    ;
+
+test-run test_internal_mod 
+    : mod/internal/test_internal_mod.cpp 
+    : mod/internal/internal_mod.hpp 
+    ;
+
+test-run test_copy_paste 
+    : mod/internal/test_copy_paste.cpp 
+    : mod/internal/copy_paste.hpp 
+    : <library>png <library>crypto 
+    ;
 ## @}
-
 
 ## Regex tests
 ## @{
-test-run test_regex_state : regex/test_regex_state.cpp : ;
-test-run test_regex_parser : regex/test_regex_parser.cpp : ;
-test-run test_regex_ndfa : regex/test_regex_ndfa.cpp : ;
-test-run test_regex : regex/test_regex.cpp : ;
+test-run test_regex_state 
+    : regex/test_regex_state.cpp 
+    : regex/regex_state.hpp 
+    ;
+
+test-run test_regex_parser 
+    : regex/test_regex_parser.cpp 
+    : regex/regex_parser.hpp 
+    ;
+
+
+if [ SHELL false ] {
+
+test-run test_regex_ndfa 
+    : regex/test_regex_ndfa.cpp 
+    : regex/regex_ndfa.hpp 
+    ;
+
+}
+
+test-run test_regex 
+    : regex/test_regex.cpp 
+    : regex/regex.hpp 
+    ;
+
 # test-run benchmark_regex_parser : benchmark/parser.cpp ;
 # test-run benchmark_regex_search : benchmark/search.cpp ;
 ## @}
 
 # test-run test_base64 : utils/test_base64.cpp : ;
 
-test-run test_translation : utils/test_translation.cpp : ;
+test-run test_translation 
+    : utils/test_translation.cpp 
+    : utils/translation.hpp 
+    ;
 
 
 ## NLA TESTS
 ## @{
-test-run test_ber : core/RDP/nla/asn1/test_ber.cpp : ;
-test-run test_credssp : core/RDP/nla/test_credssp.cpp : <library>crypto ;
-test-run test_sspi : core/RDP/nla/test_sspi.cpp : ;
-test-run test_nla : core/RDP/nla/test_nla.cpp : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto ;
+test-run test_ber 
+    : core/RDP/nla/asn1/test_ber.cpp 
+    : core/RDP/nla/asn1/ber.hpp 
+    ;
 
-alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
+test-run test_credssp 
+    : core/RDP/nla/test_credssp.cpp 
+    : core/RDP/nla/credssp.hpp 
+    : <library>crypto 
+    ;
 
-test-run test_ntlm_message_negotiate : core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp : <library>crypto ;
-test-run test_ntlm_avpair : core/RDP/nla/ntlm/test_ntlm_avpair.cpp : ;
-test-run test_ntlm_message_challenge : core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp : <library>crypto ;
-test-run test_ntlm_message_authenticate : core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp : <library>crypto ;
-test-run test_ntlm_context : core/RDP/nla/ntlm/test_ntlm_context.cpp : <library>dl <library>z <library>crypto ;
-test-run test_ntlm : core/RDP/nla/ntlm/test_ntlm.cpp : <library>dl <library>z <library>crypto ;
-test-run test_credentials : core/RDP/nla/kerberos/test_credentials.cpp : <library>krb5 ;
-test-run test_kerberos : core/RDP/nla/kerberos/test_kerberos.cpp : <library>krb5 <library>gssglue ;
+test-run test_sspi 
+    : core/RDP/nla/test_sspi.cpp 
+    : core/RDP/nla/sspi.hpp 
+    ;
+
+test-run test_nla 
+    : core/RDP/nla/test_nla.cpp 
+    : core/RDP/nla/nla.hpp 
+    : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto 
+    ;
+
+#alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
+
+test-run test_ntlm_message_negotiate 
+    : core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp 
+    : core/RDP/nla/ntlm/ntlm_message_negotiate.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_ntlm_avpair 
+    : core/RDP/nla/ntlm/test_ntlm_avpair.cpp 
+    : core/RDP/nla/ntlm/ntlm_avpair.hpp 
+    ;
+
+test-run test_ntlm_message_challenge 
+    : core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp 
+    : core/RDP/nla/ntlm/ntlm_message_challenge.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_ntlm_message_authenticate 
+    : core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp 
+    : core/RDP/nla/ntlm/ntlm_message_authenticate.hpp 
+    : <library>crypto 
+    ;
+
+test-run test_ntlm_context 
+    : core/RDP/nla/ntlm/test_ntlm_context.cpp 
+    : core/RDP/nla/ntlm/ntlm_context.hpp 
+    : <library>dl <library>z <library>crypto 
+    ;
+
+test-run test_ntlm 
+    : core/RDP/nla/ntlm/test_ntlm.cpp 
+    : core/RDP/nla/ntlm/ntlm.hpp 
+    : <library>dl <library>z <library>crypto 
+    ;
+
+test-run test_credentials 
+    : core/RDP/nla/kerberos/test_credentials.cpp 
+    : core/RDP/nla/kerberos/credentials.hpp 
+    : <library>krb5 
+    ;
+
+test-run test_kerberos 
+    : core/RDP/nla/kerberos/test_kerberos.cpp 
+    : core/RDP/nla/kerberos/kerberos.hpp 
+    : <library>krb5 <library>gssglue 
+    ;
 ## @}
 
-
-test-run test_darray : utils/test_darray.cpp : ;
+test-run test_darray 
+    : utils/test_darray.cpp 
+    : utils/darray.hpp 
+    ;
 
 ## Widget for workflow
 ## @{
-test-run test_flat_wait : mod/internal/widget2/test_flat_wait.cpp : <library>png <library>crypto ;
-test-run test_flat_form : mod/internal/widget2/test_flat_form.cpp : <library>png <library>crypto ;
+test-run test_flat_wait 
+    : mod/internal/widget2/test_flat_wait.cpp 
+    : mod/internal/widget2/flat_wait.hpp 
+    : <library>png <library>crypto 
+    ;
+
+test-run test_flat_form 
+    : mod/internal/widget2/test_flat_form.cpp 
+    : mod/internal/widget2/flat_form.hpp 
+    : <library>png <library>crypto 
+    ;
 ## @}
 
-test-run test_authorization_channels : utils/test_authorization_channels.cpp : ;
-test-run test_pattutils : utils/test_pattutils.cpp : ;
-test-run test_strutils : utils/test_strutils.cpp : ;
-
-test-run test_diffiehellman : utils/test_diffiehellman.cpp : ;
-
-test-run test_finally : utils/test_finally.cpp : ;
-
-test-run test_verifier : test_verifier.cpp : <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
-
-
-install install-share
-    : [ glob sys/share/rdpproxy/[^.k]* ]
-    :
-    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
+test-run test_authorization_channels 
+    : utils/test_authorization_channels.cpp 
+    : utils/authorization_channels.hpp 
     ;
+
+test-run test_pattutils 
+    : utils/test_pattutils.cpp 
+    : utils/pattutils.hpp 
+    ;
+
+test-run test_strutils 
+    : utils/test_strutils.cpp 
+    : utils/strutils.hpp 
+    ;
+
+test-run test_diffiehellman 
+    : utils/test_diffiehellman.cpp 
+    : utils/diffiehellman.hpp 
+    ;
+
+test-run test_finally 
+    : utils/test_finally.cpp 
+    : utils/finally.hpp 
+    ;
+
+if [ SHELL false ] {
+
+test-run test_verifier 
+    : test_verifier.cpp 
+    : verifier.hpp 
+    : <library>program_options 
+      <library>openssl 
+      <library>crypto 
+      <library>snappy 
+      <library>dl 
+      <library>z ;
+
+}
+
+actions pass {
+    touch $(<)
+}
 
 actions run-python-test {
     rm -f $(<)
@@ -1161,5 +2105,6 @@ make test_trace.py.unittest
     :
         run-python-test
     :
+        <variant>coverage:<action>@pass
     ;
-}
+

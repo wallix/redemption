@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <netdb.h>
 
+#include "utils/array_view.hpp"
 #include "utils/log.hpp"
 
 TODO("-Wold-style-cast is ignored")
@@ -93,7 +94,8 @@ bool set_snd_buffer(int sck, int buffer_size = 32768) {
 int connect_sck(
     int sck, int nbretry, int retry_delai_ms,
     sockaddr & addr, socklen_t addr_len,
-    const char * ip, int port
+    const char * ip, int port,
+    array_view<char> out_ip_addr
 ) {
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
@@ -109,7 +111,11 @@ int connect_sck(
         } u;
         memset(&u, 0, sizeof(u));
         memcpy(&u.s, &addr, sizeof(u.s));
-        snprintf(ip_addr, sizeof(ip_addr), " (%s)", inet_ntoa(u.s4.sin_addr));
+        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(u.s4.sin_addr));
+
+        if (out_ip_addr.data()) {
+            snprintf(out_ip_addr.data(), out_ip_addr.size(), "%s", ip_addr);
+        }
     }
 
     int trial = 0;
@@ -121,7 +127,7 @@ int connect_sck(
         }
         int const err =  errno;
         if (trial > 0){
-            LOG(LOG_INFO, "Connection to %s%s failed with errno = %d (%s)", ip, ip_addr, err, strerror(err));
+            LOG(LOG_INFO, "Connection to %s (%s) failed with errno = %d (%s)", ip, ip_addr, err, strerror(err));
         }
         if ((err == EINPROGRESS) || (err == EALREADY)){
             // try again
@@ -167,6 +173,7 @@ int connect_sck(
 
 static inline int ip_connect(const char* ip, int port,
              int nbretry = 3, int retry_delai_ms = 1000,
+             array_view<char> out_ip_addr = {},
              uint32_t verbose = 0)
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
@@ -218,7 +225,7 @@ static inline int ip_connect(const char* ip, int port,
         freeaddrinfo(addr_info);
     }
 
-    return detail_::netutils::connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), ip, port);
+    return detail_::netutils::connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), ip, port, out_ip_addr);
 }
 
 
@@ -253,7 +260,7 @@ static inline int local_connect(const char* sck_name,
         sck, nbretry, retry_delai_ms,
         u.addr,
         static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u),
-        sck_name, -1
+        sck_name, -1, {}
     );
 }
 

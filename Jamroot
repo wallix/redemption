@@ -597,6 +597,11 @@ import testing ;
 import type ;
 type.register PYTHON : py ;
 
+actions pass {
+    touch $(<)
+}
+
+
 actions run-python-test {
     rm -f $(<)
     python $(>[1]) && touch $(<)
@@ -609,6 +614,7 @@ make test_trace.py.unittest
     :
         run-python-test
     :
+        <variant>coverage:<action>@pass
     ;
 
 ## Acl tests
@@ -630,7 +636,7 @@ unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transp
 #ChunkToFile.hpp
 unit-test test_ChunkToFile : tests/capture/test_ChunkToFile.cpp : $(TEST_DEPENDENCIES) ;
 #FileToChunk.hpp
-unit-test test_FileToChunk : tests/capture/test_FileToChunk.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_FileToChunk : tests/capture/test_FileToChunk.cpp : $(TEST_DEPENDENCIES) <library>png ;
 #FileToGraphic.hpp
 unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>snappy <library>crypto ;
 #GraphicToFile.hpp
@@ -657,7 +663,6 @@ unit-test test_transparentrecorder : tests/capture/test_transparentrecorder.cpp 
 unit-test test_utils_match_finder : tests/capture/utils/test_match_finder.cpp : $(TEST_DEPENDENCIES) ;
 #wrm_label.hpp
 unit-test test_wrm_label : tests/capture/test_wrm_label.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
 ## @}
 
 
@@ -705,12 +710,9 @@ unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp : $(TEST_DEPENDENC
 
 
 
-unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_sound : tests/channels/sound/test_sound.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_callback : tests/core/test_callback.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_channel_list : tests/core/test_channel_list.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_check_files : tests/core/test_check_files.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_cipher : tests/core/test_cipher.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_client_info : tests/core/test_client_info.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_theme : tests/utils/test_theme.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp : $(TEST_DEPENDENCIES) ;
@@ -719,12 +721,11 @@ unit-test test_font : tests/core/test_font.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_listen : tests/core/test_listen.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mainloop : tests/core/test_mainloop.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
-unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
+unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto <library>png ;
 unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
 unit-test test_redirection_info : tests/utils/test_redirection_info.cpp : $(TEST_DEPENDENCIES) ;
 
 ## Capabilities tests
@@ -733,7 +734,7 @@ unit-test test_bitmapcodecs : tests/core/RDP/capabilities/test_bitmapcodecs.cpp 
 
 unit-test test_activate : tests/core/RDP/capabilities/test_activate.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cap_bitmap : tests/core/RDP/capabilities/test_cap_bitmap.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cap_brushcache : tests/core/RDP/capabilities/test_cap_brushcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_compdesk : tests/core/RDP/capabilities/test_compdesk.cpp : $(TEST_DEPENDENCIES) ;
@@ -768,7 +769,6 @@ unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp : $(TEST_
 unit-test test_logon : tests/core/RDP/test_logon.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_nego : tests/core/RDP/test_nego.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
 unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_RDPOrdersNames : tests/core/RDP/orders/test_RDPOrdersNames.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
@@ -782,9 +782,7 @@ unit-test test_wait_obj : tests/core/test_wait_obj.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_front : tests/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_osd : tests/mod/test_mod_osd.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
-unit-test test_draw_api : tests/mod/test_draw_api.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_null : tests/mod/null/test_null.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
@@ -816,9 +814,6 @@ unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_seque
 unit-test test_test_transport : tests/transport/test_test_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_count_transport : tests/transport/test_count_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl ;
-unit-test test_file_transport : tests/transport/test_file_transport.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_filename_transport : tests/transport/test_filename_transport.cpp : $(TEST_DEPENDENCIES) <library>z <library>dl <library>snappy <library>crypto ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>z ;

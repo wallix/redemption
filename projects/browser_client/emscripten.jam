@@ -36,8 +36,8 @@ actions objjs
 }
 
 
-type.register JS : js ;
-generators.register-composing emscripten.exejs : CPP OBJJS : JS ;
+type.register exejs : js ;
+generators.register-composing emscripten.exejs : CPP OBJJS : exejs ;
 flags emscripten.exejs INCLUDES <include> ;
 flags emscripten.exejs CXXFLAGS <cxxflags> ;
 

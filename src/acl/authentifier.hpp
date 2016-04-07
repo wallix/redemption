@@ -466,6 +466,10 @@ public:
                    , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
                    , type
                    , this->ini.get<cfg::context::session_id>().c_str()
+                   , this->ini.get<cfg::globals::host>().c_str()
+                   , (isdigit(*this->ini.get<cfg::context::target_host>().c_str()) ?
+                      this->ini.get<cfg::context::target_host>().c_str() :
+                      this->ini.get<cfg::context::ip_target>().c_str())
                    , this->ini.get<cfg::globals::auth_user>().c_str()
                    , this->ini.get<cfg::globals::target_device>().c_str()
                    , this->ini.get<cfg::context::target_service>().c_str()

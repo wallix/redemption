@@ -57,4 +57,5 @@ js client_rdp_JS.js
 
 actions nothing { }
 
-make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
+make client_rdp_JS.html : client_rdp_JS.js : @nothing ;    
+

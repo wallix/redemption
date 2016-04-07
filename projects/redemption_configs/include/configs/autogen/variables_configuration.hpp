@@ -691,6 +691,14 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+
+        struct ip_target {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = std::string;
+            type value{};
+        };
     };
 
     struct crypto {
@@ -1999,6 +2007,7 @@ struct context
 , cfg::context::manager_disconnect_reason
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
+, cfg::context::ip_target
 { static constexpr bool is_section = true; };
 
 struct crypto
