@@ -75,7 +75,7 @@
 
 #include "RDP/compress_and_draw_bitmap_update.hpp"
 
-#include "RDP/capabilities/bmpcache.hpp"
+#include "RDP/capabilities/cap_bmpcache.hpp"
 #include "RDP/capabilities/offscreencache.hpp"
 #include "RDP/capabilities/bmpcache2.hpp"
 #include "RDP/capabilities/bitmapcachehostsupport.hpp"
@@ -87,7 +87,7 @@
 #include "RDP/capabilities/multifragmentupdate.hpp"
 #include "RDP/capabilities/compdesk.hpp"
 #include "RDP/capabilities/cap_font.hpp"
-#include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/cap_glyphcache.hpp"
 #include "RDP/capabilities/rail.hpp"
 #include "RDP/capabilities/window.hpp"
 

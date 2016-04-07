@@ -23,7 +23,7 @@
 
 #include "font.hpp"
 #include "utils/noncopyable.hpp"
-#include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/cap_glyphcache.hpp"
 
 #include <array>
 

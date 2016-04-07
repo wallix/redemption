@@ -66,7 +66,7 @@
 #include "mod_api.hpp"
 #include "utils/bitmap.hpp"
 #include "RDP/caches/glyphcache.hpp"
-#include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/cap_glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "client_info.hpp"

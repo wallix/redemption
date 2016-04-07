@@ -30,7 +30,7 @@
 
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/logon.hpp"
-#include "core/RDP/capabilities/glyphcache.hpp"
+#include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/get_printable_password.hpp"
 
