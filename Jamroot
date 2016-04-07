@@ -148,33 +148,33 @@ constant CXXFLAGS-CLANG :
 
 
 constant CXXFLAGS-GCC-4.7 :
-    <cxxflags>-Wunused-but-set-parameter
-    <cxxflags>-Wunused-but-set-variable
+    <cxxflags>-Wunused-but-set-parameter 
+    <cxxflags>-Wunused-but-set-variable  
 #     <cxxflags>-Wsuggest-attribute=pure
 #     <cxxflags>-Wsuggest-attribute=const
-    <cxxflags>-Wsuggest-attribute=noreturn
-    <cxxflags>-Wzero-as-null-pointer-constant
-    <cxxflags>-Wlogical-op
+     <cxxflags>-Wsuggest-attribute=noreturn 
+     <cxxflags>-Wzero-as-null-pointer-constant 
+     <cxxflags>-Wlogical-op 
 #     <cxxflags>-Wno-aggressive-loop-optimizations
-    <cxxflags>-Wnormalized=nfc #disable ?
-    <cxxflags>-Wvector-operation-performance
+     <cxxflags>-Wnormalized=nfc #disable ? 
+     <cxxflags>-Wvector-operation-performance 
     <cxxflags>-Wdouble-promotion
-   <cxxflags>-Wmaybe-uninitialized
-    <cxxflags>-Wtrampolines
+   <cxxflags>-Wmaybe-uninitialized  
+    <cxxflags>-Wtrampolines  
 ;
 
 
 constant CXXFLAGS-GCC-4.8 :
     $(CXXFLAGS-GCC-4.7)
-    <cxxflags>-Wuseless-cast
+   <cxxflags>-Wuseless-cast   
 ;
 
 
 constant CXXFLAGS-GCC-4.9 :
     $(CXXFLAGS-GCC-4.8)
-    <cxxflags>-Wconditionally-supported
+     <cxxflags>-Wconditionally-supported 
     <cxxflags>-Wfloat-conversion
-    <cxxflags>-Wopenmp-simd
+    <cxxflags>-Wopenmp-simd  
     <cxxflags>-Wparentheses
 
     <variant>release:<cxxflags>-flto
@@ -254,6 +254,7 @@ constant LIB_SAN_DEPENDENCY :
 
 project redemption
     : requirements
+    
     <include>src
     <include>src/system/linux
     <include>src/core
@@ -266,16 +267,25 @@ project redemption
     <include>src/regex
     <include>src/headers
     <include>src/main
+    <include>modules/includes 
+    <include>src/utils
+    <include>src/system/linux/system
     <include>include
-    <include>modules/includes
-    <include>tests
+    <include>/usr/include 
+    
+    <include>src/system/JS
+    
 
+    <include>tests
     <conditional>@defines
 
     <variant>debug:<define>REDASSERT_AS_ASSERT
     <variant>debug:<define>_GLIBCXX_DEBUG
     <variant>debug:<cxxflags>-g
 
+    <cxxflags>-Wall 
+    <cxxflags>-O2 
+    <cxxflags>-obin/gcc-4.9.2/release/client_rdp_JS.html 
     <cxxflags>-std=c++11
 
 
@@ -397,6 +407,8 @@ lib snappy : : <name>snappy <link>shared ;
 # lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
 lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+
+lib SDL : : <name>SDL <link>shared ;
 
 
 # lib lcms : : <name>lcms <link>shared ;
@@ -607,6 +619,11 @@ import testing ;
 import type ;
 type.register PYTHON : py ;
 
+actions pass {
+    touch $(<)
+}
+
+
 actions run-python-test {
     rm -f $(<)
     python $(>[1]) && touch $(<)
@@ -619,6 +636,7 @@ make test_trace.py.unittest
     :
         run-python-test
     :
+        <variant>coverage:<action>@pass
     ;
 
 ## Acl tests
@@ -664,7 +682,6 @@ unit-test test_transparentrecorder : tests/capture/test_transparentrecorder.cpp 
 unit-test test_utils_match_finder : tests/capture/utils/test_match_finder.cpp : $(TEST_DEPENDENCIES) ;
 #wrm_label.hpp
 unit-test test_wrm_label : tests/capture/test_wrm_label.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
 ## @}
 
 
@@ -712,12 +729,9 @@ unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp : $(TEST_DEPENDENC
 
 
 
-unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_sound : tests/channels/sound/test_sound.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_callback : tests/core/test_callback.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_channel_list : tests/core/test_channel_list.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_check_files : tests/core/test_check_files.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_cipher : tests/core/test_cipher.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_client_info : tests/core/test_client_info.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_theme : tests/utils/test_theme.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp : $(TEST_DEPENDENCIES) ;
@@ -726,12 +740,11 @@ unit-test test_font : tests/core/test_font.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_listen : tests/core/test_listen.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mainloop : tests/core/test_mainloop.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
-unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
+unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto <library>png ;
 unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_bmpcache_put_get : tests/core/RDP/caches/test_bmpcache_put_get.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
 unit-test test_redirection_info : tests/utils/test_redirection_info.cpp : $(TEST_DEPENDENCIES) ;
 
 ## Capabilities tests
@@ -740,7 +753,7 @@ unit-test test_bitmapcodecs : tests/core/RDP/capabilities/test_bitmapcodecs.cpp 
 
 unit-test test_activate : tests/core/RDP/capabilities/test_activate.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cap_bitmap : tests/core/RDP/capabilities/test_cap_bitmap.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cap_brushcache : tests/core/RDP/capabilities/test_cap_brushcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_compdesk : tests/core/RDP/capabilities/test_compdesk.cpp : $(TEST_DEPENDENCIES) ;
@@ -775,7 +788,6 @@ unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp : $(TEST_
 unit-test test_logon : tests/core/RDP/test_logon.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_nego : tests/core/RDP/test_nego.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
 unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_RDPOrdersNames : tests/core/RDP/orders/test_RDPOrdersNames.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
@@ -789,9 +801,7 @@ unit-test test_wait_obj : tests/core/test_wait_obj.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_front : tests/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mod_osd : tests/mod/test_mod_osd.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
-unit-test test_draw_api : tests/mod/test_draw_api.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_null : tests/mod/null/test_null.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
@@ -823,9 +833,6 @@ unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_seque
 unit-test test_test_transport : tests/transport/test_test_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_count_transport : tests/transport/test_count_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl ;
-unit-test test_file_transport : tests/transport/test_file_transport.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_request_full_cleaning : tests/transport/test_request_full_cleaning.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_filename_transport : tests/transport/test_filename_transport.cpp : $(TEST_DEPENDENCIES) <library>z <library>dl <library>snappy <library>crypto ;
 unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>z ;
@@ -1022,7 +1029,6 @@ obj front_Qt.o : src/system/Qt/front_Qt.cpp
 
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
 
-
 exe client_rdp_Qt :
     #test_rdp_Qt.o #
     src/system/Qt/front_Qt.hpp
@@ -1049,3 +1055,56 @@ exe client_rdp_Qt :
     ;
 
 } # NO_MAKE_QT
+
+
+
+if ! [ os.environ NO_MAKE_JS ]
+{
+
+using emscripten ; 
+
+explicit client_rdp_JS.js ; 
+
+install client_rdp_JS
+    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+    : <location>./sandbox
+    ;
+    
+objjs test_rdp_client_test_card_JS.bc : tests/client_mods/test_rdp_client_test_card_JS.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
+
+objjs bitmap_data_allocator.bc : src/utils/bitmap_data_allocator.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
+
+exejs client_rdp_JS.js : 
+        test_rdp_client_test_card_JS.bc 
+        bitmap_data_allocator.bc
+     : 
+     <cxxflags>-g3 
+     ;
+actions nothing { }
+
+make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
+
+} # NO_MAKE_JS
+
+
+
+explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
+
+
+obj test_show_data.o : tests/mod/rdp/test_show_data.cpp 
+    : <cxxflags>-fPIC ;
+
+
+exe test_data_draw :
+    bitmap_data_allocator.o
+    test_show_data.o
+    krb5
+    openssl
+    crypto
+    gssglue
+    png
+    d3des
+    z
+    dl
+    : <cxxflags>-fPIC 
+    ;

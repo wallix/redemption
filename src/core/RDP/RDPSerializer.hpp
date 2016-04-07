@@ -96,22 +96,8 @@
 #include "RDP/caches/pointercache.hpp"
 #include "caches/glyphcache.hpp"
 
-#include "orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "orders/RDPOrdersPrimaryLineTo.hpp"
-#include "orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "orders/RDPOrdersPrimaryPolyline.hpp"
-#include "orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "orders/RDPOrdersSecondaryColorCache.hpp"
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
@@ -134,8 +120,6 @@ struct RDPSerializer
     // Packet more than 16384 bytes can cause MSTSC to crash.
     enum { MAX_ORDERS_SIZE = 16384, };
 
-    SaveStateChunk ssc;
-
 protected:
     OutStream & stream_orders;
     OutStream & stream_bitmaps;
@@ -152,24 +136,11 @@ private:
 
 protected:
     // Internal state of orders
-//    RDPOrderCommon     common;
-//    RDPDestBlt         destblt;
-    //RDPMultiDstBlt     multidstblt;
-//    RDPMultiOpaqueRect multiopaquerect;
-//    RDP::RDPMultiPatBlt multipatblt;
-//    RDP::RDPMultiScrBlt multiscrblt;
-//    RDPPatBlt          patblt;
-//    RDPScrBlt          scrblt;
-//    RDPOpaqueRect      opaquerect;
-//    RDPMemBlt          memblt;
-//    RDPMem3Blt         mem3blt;
-//    RDPLineTo          lineto;
-//    RDPGlyphIndex      glyphindex;
-    RDPPolygonSC       polygonSC;
-    RDPPolygonCB       polygonCB;
-//    RDPPolyline        polyline;
-//    RDPEllipseSC       ellipseSC;
-    RDPEllipseCB       ellipseCB;
+    RDPPolygonSC polygonSC;
+    RDPPolygonCB polygonCB;
+    RDPEllipseCB ellipseCB;
+
+    SaveStateChunk ssc;
 
     // state variables for gathering batch of orders
     size_t order_count;
@@ -204,22 +175,8 @@ public:
     , use_compact_packets(use_compact_packets)
     , max_bitmap_size(max_bitmap_size)
     // Internal state of orders
-//    , common(RDP::PATBLT, Rect(0, 0, 1, 1))
-//    , destblt(Rect(), 0)
-//    , multidstblt()
-//    , patblt(Rect(), 0, 0, 0, RDPBrush())
-//    , scrblt(Rect(), 0, 0, 0)
-//    , opaquerect(Rect(), 0)
-//    , memblt(0, Rect(), 0, 0, 0, 0)
-//    , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-//    , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-//    , glyphindex( 0, 0, 0, 0, 0, 0
-//                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-//                , reinterpret_cast<const uint8_t *>(""))
     , polygonSC()
     , polygonCB()
-//    , polyline()
-//    , ellipseSC()
     , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
     // state variables for a batch of orders
     , order_count(0)

@@ -75,22 +75,6 @@ public:
     Rect screen_rect;
 
     // Internal state of orders
-//    RDPOrderCommon     common;
-//    RDPDestBlt         destblt;
-//    RDPMultiDstBlt     multidstblt;
-//    RDPMultiOpaqueRect multiopaquerect;
-//    RDP::RDPMultiPatBlt     multipatblt;
-//    RDP::RDPMultiScrBlt     multiscrblt;
-//    RDPPatBlt          patblt;
-//    RDPScrBlt          scrblt;
-//    RDPOpaqueRect      opaquerect;
-//    RDPMemBlt          memblt;
-//    RDPMem3Blt         mem3blt;
-//    RDPLineTo          lineto;
-//    RDPGlyphIndex      glyphindex;
-//    RDPPolyline        polyline;
-//    RDPEllipseSC       ellipseSC;
-
     SaveStateChunk ssc;
 
     BmpCache     * bmp_cache;
@@ -137,13 +121,6 @@ public:
     const timeval end_capture;
     uint32_t max_order_count;
     uint32_t verbose;
-
-//    bool mem3blt_support;
-//    bool polyline_support;
-//    bool multidstblt_support;
-//    bool multiopaquerect_support;
-//    bool multipatblt_support;
-//    bool multiscrblt_support;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -207,22 +184,6 @@ public:
         , compression_wrapper(*trans, CompressionTransportBase::Algorithm::None)
         , trans_source(trans)
         , trans(trans)
-//        , common(RDP::PATBLT, Rect(0, 0, 1, 1))
-//        , destblt(Rect(), 0)
-//        , multidstblt()
-//        , multiopaquerect()
-//        , multipatblt()
-//        , multiscrblt()
-//        , patblt(Rect(), 0, 0, 0, RDPBrush())
-//        , scrblt(Rect(), 0, 0, 0)
-//        , opaquerect(Rect(), 0)
-//        , memblt(0, Rect(), 0, 0, 0, 0)
-//        , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-//        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-//        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-//                    , reinterpret_cast<const uint8_t *>(""))
-//        , polyline()
-//        , ellipseSC()
         , bmp_cache(nullptr)
         // variables used to read batch of orders "chunks"
         , chunk_size(0)
@@ -240,12 +201,6 @@ public:
         , end_capture(end_capture)
         , max_order_count(0)
         , verbose(verbose)
-//        , mem3blt_support(false)
-//        , polyline_support(false)
-//        , multidstblt_support(false)
-//        , multiopaquerect_support(false)
-//        , multipatblt_support(false)
-//        , multiscrblt_support(false)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -757,12 +712,6 @@ public:
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk");
             {
                 this->info_version                   = this->stream.in_uint16_le();
-//                this->mem3blt_support                = (this->info_version > 1);
-//                this->polyline_support               = (this->info_version > 2);
-//                this->multidstblt_support            = (this->info_version > 3);
-//                this->multiopaquerect_support        = (this->info_version > 3);
-//                this->multipatblt_support            = (this->info_version > 3);
-//                this->multiscrblt_support            = (this->info_version > 3);
                 this->info_width                     = this->stream.in_uint16_le();
                 this->info_height                    = this->stream.in_uint16_le();
                 this->info_bpp                       = this->stream.in_uint16_le();
@@ -842,218 +791,7 @@ public:
             break;
             case SAVE_STATE:
                 this->ssc.recv(this->stream, this->info_version);
-/*
-                // RDPOrderCommon common;
-                this->common.order = this->stream.in_uint8();
-                this->common.clip.x = this->stream.in_uint16_le();
-                this->common.clip.y = this->stream.in_uint16_le();
-                this->common.clip.cx = this->stream.in_uint16_le();
-                this->common.clip.cy = this->stream.in_uint16_le();
-
-                // RDPDestBlt destblt;
-                this->destblt.rect.x = this->stream.in_uint16_le();
-                this->destblt.rect.y = this->stream.in_uint16_le();
-                this->destblt.rect.cx = this->stream.in_uint16_le();
-                this->destblt.rect.cy = this->stream.in_uint16_le();
-                this->destblt.rop = this->stream.in_uint8();
-
-                // RDPPatBlt patblt;
-                this->patblt.rect.x = this->stream.in_uint16_le();
-                this->patblt.rect.y = this->stream.in_uint16_le();
-                this->patblt.rect.cx = this->stream.in_uint16_le();
-                this->patblt.rect.cy = this->stream.in_uint16_le();
-                this->patblt.rop = this->stream.in_uint8();
-                this->patblt.back_color = this->stream.in_uint32_le();
-                this->patblt.fore_color = this->stream.in_uint32_le();
-                this->patblt.brush.org_x = this->stream.in_uint8();
-                this->patblt.brush.org_y = this->stream.in_uint8();
-                this->patblt.brush.style = this->stream.in_uint8();
-                this->patblt.brush.hatch = this->stream.in_uint8();
-                this->stream.in_copy_bytes(this->patblt.brush.extra, 7);
-
-                // RDPScrBlt scrblt;
-                this->scrblt.rect.x = this->stream.in_uint16_le();
-                this->scrblt.rect.y = this->stream.in_uint16_le();
-                this->scrblt.rect.cx = this->stream.in_uint16_le();
-                this->scrblt.rect.cy = this->stream.in_uint16_le();
-                this->scrblt.rop = this->stream.in_uint8();
-                this->scrblt.srcx = this->stream.in_uint16_le();
-                this->scrblt.srcy = this->stream.in_uint16_le();
-
-                // RDPOpaqueRect opaquerect;
-                this->opaquerect.rect.x  = this->stream.in_uint16_le();
-                this->opaquerect.rect.y  = this->stream.in_uint16_le();
-                this->opaquerect.rect.cx = this->stream.in_uint16_le();
-                this->opaquerect.rect.cy = this->stream.in_uint16_le();
-                {
-                    uint8_t red              = this->stream.in_uint8();
-                    uint8_t green            = this->stream.in_uint8();
-                    uint8_t blue             = this->stream.in_uint8();
-                    this->opaquerect.color = red | green << 8 | blue << 16;
-                }
-
-                // RDPMemBlt memblt;
-                this->memblt.cache_id = this->stream.in_uint16_le();
-                this->memblt.rect.x  = this->stream.in_uint16_le();
-                this->memblt.rect.y  = this->stream.in_uint16_le();
-                this->memblt.rect.cx = this->stream.in_uint16_le();
-                this->memblt.rect.cy = this->stream.in_uint16_le();
-                this->memblt.rop = this->stream.in_uint8();
-                this->memblt.srcx    = this->stream.in_uint8();
-                this->memblt.srcy    = this->stream.in_uint8();
-                this->memblt.cache_idx = this->stream.in_uint16_le();
-
-                // RDPMem3Blt memblt;
-                if (this->mem3blt_support) {
-                    this->mem3blt.cache_id    = this->stream.in_uint16_le();
-                    this->mem3blt.rect.x      = this->stream.in_uint16_le();
-                    this->mem3blt.rect.y      = this->stream.in_uint16_le();
-                    this->mem3blt.rect.cx     = this->stream.in_uint16_le();
-                    this->mem3blt.rect.cy     = this->stream.in_uint16_le();
-                    this->mem3blt.rop         = this->stream.in_uint8();
-                    this->mem3blt.srcx        = this->stream.in_uint8();
-                    this->mem3blt.srcy        = this->stream.in_uint8();
-                    this->mem3blt.back_color  = this->stream.in_uint32_le();
-                    this->mem3blt.fore_color  = this->stream.in_uint32_le();
-                    this->mem3blt.brush.org_x = this->stream.in_uint8();
-                    this->mem3blt.brush.org_y = this->stream.in_uint8();
-                    this->mem3blt.brush.style = this->stream.in_uint8();
-                    this->mem3blt.brush.hatch = this->stream.in_uint8();
-                    this->stream.in_copy_bytes(this->mem3blt.brush.extra, 7);
-                    this->mem3blt.cache_idx   = this->stream.in_uint16_le();
-                }
-
-                // RDPLineTo lineto;
-                this->lineto.back_mode = this->stream.in_uint8();
-                this->lineto.startx = this->stream.in_uint16_le();
-                this->lineto.starty = this->stream.in_uint16_le();
-                this->lineto.endx = this->stream.in_uint16_le();
-                this->lineto.endy = this->stream.in_uint16_le();
-                this->lineto.back_color = this->stream.in_uint32_le();
-                this->lineto.rop2 = this->stream.in_uint8();
-                this->lineto.pen.style = this->stream.in_uint8();
-                this->lineto.pen.width = this->stream.in_sint8();
-                this->lineto.pen.color = this->stream.in_uint32_le();
-
-                // RDPGlyphIndex glyphindex;
-                this->ssc.glyphindex.cache_id  = this->stream.in_uint8();
-                this->glyphindex.fl_accel  = this->stream.in_sint16_le();
-                this->glyphindex.ui_charinc  = this->stream.in_sint16_le();
-                this->glyphindex.f_op_redundant = this->stream.in_sint16_le();
-                this->glyphindex.back_color = this->stream.in_uint32_le();
-                this->glyphindex.fore_color = this->stream.in_uint32_le();
-                this->glyphindex.bk.x  = this->stream.in_uint16_le();
-                this->glyphindex.bk.y  = this->stream.in_uint16_le();
-                this->glyphindex.bk.cx = this->stream.in_uint16_le();
-                this->glyphindex.bk.cy = this->stream.in_uint16_le();
-                this->glyphindex.op.x  = this->stream.in_uint16_le();
-                this->glyphindex.op.y  = this->stream.in_uint16_le();
-                this->glyphindex.op.cx = this->stream.in_uint16_le();
-                this->glyphindex.op.cy = this->stream.in_uint16_le();
-                this->glyphindex.brush.org_x = this->stream.in_uint8();
-                this->glyphindex.brush.org_y = this->stream.in_uint8();
-                this->glyphindex.brush.style = this->stream.in_uint8();
-                this->glyphindex.brush.hatch = this->stream.in_uint8();
-                this->stream.in_copy_bytes(this->glyphindex.brush.extra, 7);
-                this->glyphindex.glyph_x = this->stream.in_sint16_le();
-                this->glyphindex.glyph_y = this->stream.in_sint16_le();
-                this->glyphindex.data_len = this->stream.in_uint8();
-                this->stream.in_copy_bytes(this->glyphindex.data, 256);
-
-                // RDPPolyine polyline;
-                if (this->polyline_support) {
-                    this->polyline.xStart          = this->stream.in_sint16_le();
-                    this->polyline.yStart          = this->stream.in_sint16_le();
-                    this->polyline.bRop2           = this->stream.in_uint8();
-                    this->polyline.BrushCacheEntry = this->stream.in_uint16_le();
-                    this->polyline.PenColor        = this->stream.in_uint32_le();
-                    this->polyline.NumDeltaEntries = this->stream.in_uint8();
-                    for (uint8_t i = 0; i < this->polyline.NumDeltaEntries; i++) {
-                        this->polyline.deltaEncodedPoints[i].xDelta = this->stream.in_sint16_le();
-                        this->polyline.deltaEncodedPoints[i].yDelta = this->stream.in_sint16_le();
-                    }
-                }
-
-                // RDPMultiDstBlt multidstblt;
-                if (this->multidstblt_support) {
-                    this->multidstblt.nLeftRect     = this->stream.in_sint16_le();
-                    this->multidstblt.nTopRect      = this->stream.in_sint16_le();
-                    this->multidstblt.nWidth        = this->stream.in_sint16_le();
-                    this->multidstblt.nHeight       = this->stream.in_sint16_le();
-                    this->multidstblt.bRop          = this->stream.in_uint8();
-                    this->multidstblt.nDeltaEntries = this->stream.in_uint8();
-                    for (uint8_t i = 0; i < this->multidstblt.nDeltaEntries; i++) {
-                        this->multidstblt.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
-                        this->multidstblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
-                        this->multidstblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
-                        this->multidstblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
-                    }
-                }
-
-                // RDPMultiOpaqueRect multiopaquerect;
-                if (this->multiopaquerect_support) {
-                    this->multiopaquerect.nLeftRect         = this->stream.in_sint16_le();
-                    this->multiopaquerect.nTopRect          = this->stream.in_sint16_le();
-                    this->multiopaquerect.nWidth            = this->stream.in_sint16_le();
-                    this->multiopaquerect.nHeight           = this->stream.in_sint16_le();
-                    {
-                        uint8_t red                         = this->stream.in_uint8();
-                        uint8_t green                       = this->stream.in_uint8();
-                        uint8_t blue                        = this->stream.in_uint8();
-                        this->multiopaquerect._Color        = red | green << 8 | blue << 16;
-                    }
-                    this->multiopaquerect.nDeltaEntries     = this->stream.in_uint8();
-                    for (uint8_t i = 0; i < this->multiopaquerect.nDeltaEntries; i++) {
-                        this->multiopaquerect.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
-                        this->multiopaquerect.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
-                        this->multiopaquerect.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
-                        this->multiopaquerect.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
-                    }
-                }
-
-                // RDPMultiPatBlt multipatblt;
-                if (this->multipatblt_support) {
-                    this->multipatblt.nLeftRect  = this->stream.in_sint16_le();
-                    this->multipatblt.nTopRect   = this->stream.in_sint16_le();
-                    this->multipatblt.nWidth     = this->stream.in_uint16_le();
-                    this->multipatblt.nHeight    = this->stream.in_uint16_le();
-                    this->multipatblt.bRop       = this->stream.in_uint8();
-                    this->multipatblt.BackColor  = this->stream.in_uint32_le();
-                    this->multipatblt.ForeColor  = this->stream.in_uint32_le();
-                    this->multipatblt.BrushOrgX  = this->stream.in_uint8();
-                    this->multipatblt.BrushOrgY  = this->stream.in_uint8();
-                    this->multipatblt.BrushStyle = this->stream.in_uint8();
-                    this->multipatblt.BrushHatch = this->stream.in_uint8();
-                    this->stream.in_copy_bytes(this->multipatblt.BrushExtra, 7);
-                    this->multipatblt.nDeltaEntries = this->stream.in_uint8();
-                    for (uint8_t i = 0; i < this->multipatblt.nDeltaEntries; i++) {
-                        this->multipatblt.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
-                        this->multipatblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
-                        this->multipatblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
-                        this->multipatblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
-                    }
-                }
-
-                // RDPMultiScrBlt multiscrblt;
-                if (this->multiscrblt_support) {
-                    this->multiscrblt.nLeftRect  = this->stream.in_sint16_le();
-                    this->multiscrblt.nTopRect   = this->stream.in_sint16_le();
-                    this->multiscrblt.nWidth     = this->stream.in_uint16_le();
-                    this->multiscrblt.nHeight    = this->stream.in_uint16_le();
-                    this->multiscrblt.bRop       = this->stream.in_uint8();
-                    this->multiscrblt.nXSrc      = this->stream.in_sint16_le();
-                    this->multiscrblt.nYSrc      = this->stream.in_sint16_le();
-                    this->multiscrblt.nDeltaEntries = this->stream.in_uint8();
-                    for (uint8_t i = 0; i < this->multiscrblt.nDeltaEntries; i++) {
-                        this->multiscrblt.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
-                        this->multiscrblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
-                        this->multiscrblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
-                        this->multiscrblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
-                    }
-                }
-*/
             break;
-
             case LAST_IMAGE_CHUNK:
             case PARTIAL_IMAGE_CHUNK:
             {

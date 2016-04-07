@@ -17,7 +17,6 @@ rule init ( * )
 {
 }
 
-
 type.register OBJJS : bc ;
 generators.register-standard emscripten.objjs : CPP : OBJJS ;
 flags emscripten.objjs INCLUDES <include> ;
@@ -32,12 +31,12 @@ rule objjs ( name : extra-sources * : requirements * )
 
 actions objjs
 {
-    em++ -c $(CXXFLAGS) -I$(INCLUDES) $(2) -o $(1)
+    em++ -c $(CXXFLAGS) -I$(INCLUDES) $(2) -o $(1) 
 }
 
 
-type.register exejs : js ;
-generators.register-composing emscripten.exejs : CPP OBJJS : exejs ;
+type.register EXEJS : js ;
+generators.register-composing emscripten.exejs : CPP OBJJS : EXEJS ;
 flags emscripten.exejs INCLUDES <include> ;
 flags emscripten.exejs CXXFLAGS <cxxflags> ;
 
@@ -50,5 +49,6 @@ actions exejs
 {
     em++ $(CXXFLAGS) -I$(INCLUDES) $(2) -o `perl -e '$f = @ARGV[0]; $f =~ s/js$/html/; print $f;' $(1)` 
 }
+
 
 

@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/cap_glyphcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 {

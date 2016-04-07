@@ -762,9 +762,12 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
+                char ip_addr[256];
+
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             4, 1000,
+                                            ip_addr,
                                             this->ini.get<cfg::debug::mod_xup>());
 
                 if (client_sck == -1){
@@ -773,6 +776,7 @@ public:
                 }
 
                 this->ini.set<cfg::context::auth_error_message>("failed authentification on remote X host");
+                this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 this->mod = new ModWithSocket<xup_mod>( *this
                                                       , name
@@ -812,9 +816,12 @@ public:
                 //    // default is "allow", do nothing special
                 //}
 
+                char ip_addr[256];
+
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
+                                            ip_addr,
                                             this->ini.get<cfg::debug::mod_rdp>());
 
                 if (client_sck == -1) {
@@ -827,6 +834,7 @@ public:
                 }
 
                 this->ini.set<cfg::context::auth_error_message>("failed authentification on remote RDP host");
+                this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 // BEGIN READ PROXY_OPT
                 if (!this->ini.get<cfg::globals::disable_proxy_opt>()) {
@@ -965,9 +973,12 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
 
+                char ip_addr[256];
+
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
                                             3, 1000,
+                                            ip_addr,
                                             this->ini.get<cfg::debug::mod_vnc>());
 
                 if (client_sck == -1) {
@@ -980,6 +991,7 @@ public:
                 }
 
                 this->ini.set<cfg::context::auth_error_message>("failed authentification on remote VNC host");
+                this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 try {
                     const char * const name = "VNC Target";

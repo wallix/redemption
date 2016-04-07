@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_GLYPHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_GLYPHCACHE_HPP_
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_GLYPHCACHE_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_GLYPHCACHE_HPP_
 
 #include "common.hpp"
 #include "utils/stream.hpp"

@@ -31,7 +31,7 @@
 
 #include "caches/glyphcache.hpp"
 
-#include "capabilities/glyphcache.hpp"
+#include "capabilities/cap_glyphcache.hpp"
 
 #include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"

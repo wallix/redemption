@@ -20,7 +20,7 @@ To compile ReDemPtion you need the following packages:
 - g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
 Optionally:
-- python
+- python (python-dev)
 
 Submodule (`$ git submodule init && git submodule update`):
 - https://github.com/wallix/program_options.git

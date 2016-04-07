@@ -36,6 +36,8 @@ private:
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
 
+    bool session_probe_launch_timeout_timer_started = false;
+
     const unsigned session_probe_effective_launch_timeout;
 
     const unsigned param_session_probe_keepalive_timeout;
@@ -159,8 +161,12 @@ public:
                     "SessionProbeVirtualChannel::start_launch_timeout_timer");
             }
 
-            this->session_probe_event.set(
-                this->session_probe_effective_launch_timeout * 1000);
+            if (!this->session_probe_launch_timeout_timer_started) {
+                this->session_probe_event.set(
+                    this->session_probe_effective_launch_timeout * 1000);
+
+                this->session_probe_launch_timeout_timer_started = true;
+            }
         }
     }
 

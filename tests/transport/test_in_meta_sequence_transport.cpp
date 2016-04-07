@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestInMetaSequenceTransport
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH

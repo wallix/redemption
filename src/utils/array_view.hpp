@@ -61,7 +61,7 @@ struct array_view
     , sz(x.size())
     {}
 
-    constexpr bool empty() const noexcept { return this->sz; }
+    constexpr bool empty() const noexcept { return !this->sz; }
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
@@ -77,8 +77,8 @@ struct array_view
     type const & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
 
 private:
-    type * p;
-    std::size_t sz;
+    type * p        = nullptr;
+    std::size_t sz  = 0;
 };
 
 template<class T>
@@ -116,7 +116,7 @@ struct array_view<T const>
     , sz(x.size())
     {}
 
-    constexpr bool empty() const noexcept { return this->sz; }
+    constexpr bool empty() const noexcept { return !this->sz; }
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
@@ -128,8 +128,8 @@ struct array_view<T const>
     type & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
 
 private:
-    type * p;
-    std::size_t sz;
+    type * p        = nullptr;
+    std::size_t sz  = 0;
 };
 
 
