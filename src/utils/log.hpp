@@ -144,8 +144,8 @@ namespace { namespace compiler_aux_ {
             "[%s Session] "                                                      \
                 "type='%s' "                                                     \
                 "session_id='%s' "                                               \
-                "ip_client='%s' "                                                \
-                "ip_target='%s' "                                                \
+                "client_ip='%s' "                                                \
+                "target_ip='%s' "                                                \
                 "user='%s' "                                                     \
                 "device='%s' "                                                   \
                 "service='%s' "                                                  \
