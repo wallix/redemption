@@ -258,13 +258,9 @@ project redemption
     <include>src/headers
     <include>src/main
     <include>modules/includes 
-    <include>src/utils
     <include>src/system/linux/system
     <include>include
     <include>/usr/include 
-    
-    <include>src/system/JS
-    
 
     <include>tests
     <conditional>@defines
@@ -862,7 +858,6 @@ unit-test test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_Alternat
 unit-test test_libpng : tests/test_libpng.cpp : $(TEST_DEPENDENCIES) <library>png <library>z ;
 #unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp : $(TEST_DEPENDENCIES) <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
 unit-test test_rdp : tests/mod/rdp/test_rdp.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
-unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>z <library>png <library>crypto <library>dl <library>openssl ;
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>z <library>dl <library>openssl ;
 unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>openssl <library>dl <library>krb5 <library>gssglue ;
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>dl ;
@@ -932,7 +927,7 @@ unit-test test_copy_paste : tests/mod/internal/test_copy_paste.cpp : $(TEST_DEPE
 ## @{
 unit-test test_regex_state : tests/regex/test_regex_state.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_regex_parser : tests/regex/test_regex_parser.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_regex_ndfa : tests/regex/test_regex_ndfa.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_regex_st_automate : tests/regex/test_regex_st_automate.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_regex : tests/regex/test_regex.cpp : $(TEST_DEPENDENCIES) ;
 # unit-test benchmark_regex_parser : tests/benchmark/parser.cpp ;
 # unit-test benchmark_regex_search : tests/benchmark/search.cpp ;
@@ -980,93 +975,6 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp : $(TEST_DEPEN
 unit-test test_finally : tests/utils/test_finally.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
-
-
-
-if ! [ os.environ NO_MAKE_QT ]
-{
-
-explicit front_Qt.o bitmap_data_allocator.o client_rdp_Qt ; #
-#explicit test_rdp_Qt.o front_Qt.o bitmap_data_allocator.o test_rdp_Qt ; #
-
-
-using qt : /usr ; #4
-
-#using qt5 : /usr/lib/x86_64-linux-gnu/qt5 : 5 : : : : : /usr/include/x86_64-linux-gnu/qt5 : /usr/lib/x86_64-linux-gnu ; #5
-
-#obj test_rdp_Qt.o : tests/mod/rdp/test_rdp_Qt.cpp
-#    :
-	 #<include>/usr/include/qt4
-#        <include>/usr/include/x86_64-linux-gnu/qt5
-#        <cxxflags>-fPIC
-#    ;
-
-obj front_Qt.o : src/system/Qt/front_Qt.cpp
-    :
-	<include>/usr/include/qt4                   #4
-	#<include>/usr/include/x86_64-linux-gnu/qt5  #5
-	#<cxxflags>-fPIC                             #5
-    ;
-
-obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp ;
-
-exe client_rdp_Qt :
-    #test_rdp_Qt.o #
-    src/system/Qt/front_Qt.hpp
-    src/system/Qt/front_widget_Qt.hpp
-    src/system/Qt/keymaps/Qt_ScanCode_KeyMap.hpp
-    front_Qt.o
-    bitmap_data_allocator.o
-    /qt//QtGui       #4
-    #/qt5//QtGui      #5
-    #/qt5//QtNetwork  #5
-    #/qt5//QtWidgets  #5
-    krb5
-    openssl
-    crypto
-    gssglue
-    png
-    d3des
-    z
-    dl
-    :
-    <include>/usr/include/qt4                   #4
-    #<include>/usr/include/x86_64-linux-gnu/qt5  #5
-    #<cxxflags>-fPIC                             #5
-    ;
-
-} # NO_MAKE_QT
-
-
-
-if ! [ os.environ NO_MAKE_JS ]
-{
-
-using emscripten ; 
-
-explicit client_rdp_JS.js ; 
-
-install client_rdp_JS
-    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
-    : <location>./sandbox
-    ;
-    
-objjs test_rdp_client_test_card_JS.bc : tests/client_mods/test_rdp_client_test_card_JS.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
-
-objjs bitmap_data_allocator.bc : src/utils/bitmap_data_allocator.cpp : <cxxflags>-g3 : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include ;
-
-exejs client_rdp_JS.js : 
-        test_rdp_client_test_card_JS.bc 
-        bitmap_data_allocator.bc
-     : 
-     <cxxflags>-g3 
-     ;
-actions nothing { }
-
-make client_rdp_JS.html : client_rdp_JS.js : @nothing ;
-
-} # NO_MAKE_JS
-
 
 
 explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
