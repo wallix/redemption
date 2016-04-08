@@ -211,19 +211,21 @@ constant CXXFLAGS-GCC-6 :
     $(CXXFLAGS-GCC-5.2)
 ;
 
+
+
 rule empty_rule ( properties * ) {
     local defs ;
     return $(defs) ;
 }
 
 
-if [ os.environ NO_LTO ] {
+# if [ os.environ NO_LTO ] {
     constant CXXFLAGS-GCC-4.9-release-lto : <conditional>@empty_rule ;
     constant CXXFLAGS-GCC-5-release-lto : <conditional>@empty_rule ;
-} else {
-    constant CXXFLAGS-GCC-4.9-release-lto : <cxxflags>-flto ;
-    constant CXXFLAGS-GCC-5-release-lto : <cxxflags>-flto-odr-type-merging ;
-}
+# } else {
+#     constant CXXFLAGS-GCC-4.9-release-lto : <cxxflags>-flto ;
+#     constant CXXFLAGS-GCC-5-release-lto : <cxxflags>-flto-odr-type-merging ;
+# }
 
 constant CXXFLAGS-GCC-4.9-release :
     $(CXXFLAGS-GCC-4.9-release-lto)
