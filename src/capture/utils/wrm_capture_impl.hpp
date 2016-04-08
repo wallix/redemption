@@ -124,8 +124,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, public gdi::CaptureProxy<
         using NativeCapture::NativeCapture;
     } nc;
 
-    std::size_t idx_kbd = -1u;
-    std::vector<std::reference_wrapper<gdi::KbdInputApi>> * kbd_list = nullptr;
+    ApiRegisterElement<gdi::KbdInputApi> kbd_element;
 
 public:
     WrmCaptureImpl(
@@ -158,21 +157,14 @@ public:
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
-            auto & list = apis_register.kbd_input_list;
-
-            this->kbd_list = &list;
-            this->idx_kbd = list.size();
-
+            this->kbd_element = {apis_register.kbd_input_list, this->graphic_to_file};
             this->graphic_to_file.impl = this;
-
-            list.push_back(this->graphic_to_file);
         }
     }
 
     void enable_kbd_input_mask(bool enable) override {
-        auto & kbd = (*this->kbd_list)[this->idx_kbd];
-        assert(&kbd.get() == this || &kbd.get() == &this->graphic_to_file);
-        kbd = enable
+        assert(this->kbd_element == *this || this->kbd_element == this->graphic_to_file);
+        this->kbd_element = enable
             ? static_cast<gdi::KbdInputApi&>(*this)
             : static_cast<gdi::KbdInputApi&>(this->graphic_to_file);
     }

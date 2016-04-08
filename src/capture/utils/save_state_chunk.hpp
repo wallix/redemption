@@ -82,6 +82,7 @@ private:
     static void io_sint8(InStream & stream, int8_t & value) { value = stream.in_sint8(); }
     static void io_sint8(OutStream & stream, int8_t value) { stream.out_sint8(value); }
 
+    // TODO("this is an error")
     static void io_uint8_unsafe(InStream & stream, uint16_t & value) { value = stream.in_uint8(); }
     static void io_uint8_unsafe(OutStream & stream, uint16_t value) { stream.out_uint8(value); }
 
