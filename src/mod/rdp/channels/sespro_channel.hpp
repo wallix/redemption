@@ -151,6 +151,8 @@ public:
         }
 
         this->session_probe_event.object_and_time = true;
+
+        REDASSERT(this->param_acl);
     }
 
     void start_launch_timeout_timer() {
@@ -761,17 +763,15 @@ public:
                         subitem_separator = ::strchr(subitems, '\x01');
 
                         if (subitem_separator) {
-                            std::string window_class(subitems,
-                                subitem_separator - subitems);
-                            std::string command_line(subitem_separator + 1);
+                            //std::string window_class(subitems,
+                            //    subitem_separator - subitems);
+                            //std::string command_line(subitem_separator + 1);
 
                             std::string info(
-                                "window='" + text +
-                                "' class='" + window_class +
-                                "' command_line='" + command_line + "'");
+                                "source='Probe' window='" + text + "'");
                             this->param_acl->log4(
                                 (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                                order.c_str(), info.c_str());
+                                "TITLE_BAR", info.c_str());
                         }
                         else {
                             message_format_invalid = true;

@@ -781,8 +781,8 @@ class Sesman():
                         os.mkdir(RECORD_PATH)
                     except Exception:
                         Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
-                        self.send_data({u'rejected': TR(u'error_creating_record_path')})
-                        _status, _error = False, TR(u'error_creating_record_path %s') % RECORD_PATH
+                        self.send_data({u'rejected': TR(u'error_getting_record_path')})
+                        _status, _error = False, TR(u'error_getting_record_path %s') % RECORD_PATH
                 if _status:
                     # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
                     # NB :  backslashes are replaced by pipes for IE compatibility
@@ -1336,7 +1336,9 @@ class Sesman():
                             trace_written = True
                             _status, _error = self.engine.write_trace(self.full_path)
                             if not _status:
-                                _error = TR(_error) % self.full_path
+                                _error = TR("Trace writer failed for %s") % self.full_path
+                                Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                                self.send_data({u'rejected': TR(u'error_getting_record_path')})
                                 break
 
                         update_args = { "is_application": bool(application),
