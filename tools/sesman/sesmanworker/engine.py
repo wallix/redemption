@@ -860,7 +860,7 @@ class Engine(object):
                 trace.end()
         except Exception, e:
             Logger().info("Engine write_trace failed: %s" % e)
-            _status, _error = False, u"Trace writer failed for %s"
+            _status, _error = False, u"Exception"
         return _status, _error
 
     def read_session_parameters(self, key=None):
