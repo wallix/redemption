@@ -729,315 +729,133 @@ test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
 ## Capture tests
 ## @{
 test-canonical capture/CaptureDevice.hpp ;
-test-canonical capture/capture.hpp 
-    : <library>bitmap <library>crypto <library>dl <library>png <library>z <library>snappy 
-    ;
-test-canonical capture/chunked_image_transport.hpp 
-    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
-    ;
-test-canonical capture/ChunkToFile.hpp 
-    ;
-test-canonical capture/FileToChunk.hpp 
-    : <library>png 
-    ;
-
-test-canonical capture/FileToGraphic.hpp 
-    : <library>bitmap <library>png <library>snappy <library>crypto 
-    ;
-
-test-canonical capture/GraphicToFile.hpp 
-    : <library>bitmap <library>png <library>crypto <library>snappy 
-#    : <library>bitmap <library>png <library>z <library>snappy <library>crypto 
-    ;
-
-test-canonical capture/image_capture.hpp : <library>bitmap <library>png ;
-
-test-canonical capture/nativecapture.hpp 
-    : <library>bitmap <library>png <library>crypto <library>snappy ;
+test-canonical capture/ChunkToFile.hpp ;
 test-canonical capture/new_kbdcapture.hpp ;
 test-canonical capture/RDPChunkedDevice.hpp ;
 test-canonical capture/send_wrm_chunk.hpp ;
-test-canonical capture/staticcapture.hpp : <library>png ;
 test-canonical capture/transparentchunk.hpp ;
 test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
-
-test-canonical capture/utils/match_finder.hpp 
-    : <covflag>nocover
-    ;
-
-test-canonical capture/wrm_label.hpp 
-    ;
+test-canonical capture/utils/save_state_chunk.hpp ;
+test-canonical capture/wrm_label.hpp ;
+test-canonical capture/staticcapture.hpp : <library>png ;
+test-canonical capture/FileToChunk.hpp : <library>png ;
+test-canonical capture/image_capture.hpp : <library>bitmap <library>png ;
+test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>png <library>snappy <library>crypto ;
+test-canonical capture/GraphicToFile.hpp : <library>bitmap <library>png <library>snappy <library>crypto ;
+test-canonical capture/nativecapture.hpp : <library>bitmap <library>png <library>crypto <library>snappy ;
+test-canonical capture/chunked_image_transport.hpp : <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
+test-canonical capture/capture.hpp : <library>bitmap <library>crypto <library>dl <library>png <library>z <library>snappy ;
+test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
 
 ## @}
 
 ## Test facility functions or classes
 ## @{
-test-canonical utils/iter.hpp 
-    ;
-
-test-canonical utils/noncopyable.hpp 
-    ;
-
-test-canonical utils/splitter.hpp 
-    ;
-
-test-canonical utils/algostring.hpp 
-    ;
-
-test-canonical utils/make_unique.hpp 
-    : ;
+test-canonical utils/iter.hpp ;
+test-canonical utils/noncopyable.hpp ;
+test-canonical utils/splitter.hpp ;
+test-canonical utils/algostring.hpp ;
+test-canonical utils/make_unique.hpp ;
 ## @}
 
-test-canonical utils/stream.hpp 
-    ;
-
-test-canonical utils/utf.hpp 
-    ;
-test-canonical utils/rect.hpp 
-    ;
-    
-test-canonical utils/ellipse.hpp 
-    ;
-
-test-canonical utils/drawable.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
-
-test-canonical utils/region.hpp 
-    ;
-
-test-canonical utils/bitfu.hpp
-    ;
-    
-test-canonical utils/parse.hpp 
-    ;
-    
-test-canonical utils/parser.hpp 
-    ;
-    
-test-canonical utils/fileutils.hpp 
-    ;
-    
-test-canonical utils/parse_ip_conntrack.hpp 
-    ;
-    
-test-canonical core/RDP/x224.hpp 
-    ;
-    
-test-canonical core/RDP/out_per_bstream.hpp 
-    ;
-    
-test-canonical core/RDP/mcs.hpp 
-    ;
-
-test-canonical core/RDP/mppc.hpp
-    ;
-    
-test-canonical core/RDP/mppc_40.hpp 
-    ;
-    
-test-canonical core/RDP/mppc_50.hpp 
-    ;
-    
-test-canonical core/RDP/mppc_60.hpp
-    ;
-    
-test-canonical core/RDP/mppc_61.hpp
-    ;
-    
-test-canonical core/RDP/gcc.hpp 
-    : <library>dl <library>z <library>crypto 
-    ;
-
-test-canonical core/RDP/sec.hpp 
-    : <library>crypto 
-    ;
-
-test-canonical core/RDP/lic.hpp 
-    : <library>crypto 
-    ;
-
-test-canonical core/RDP/share.hpp 
-    ;
-
-test-canonical core/RDP/fastpath.hpp 
-    : <library>crypto 
-    ;
-    
-test-canonical core/RDP/slowpath.hpp 
-    ;
-
-test-canonical core/RDP/clipboard.hpp 
-    ;
-
-test-canonical core/FSCC/FileInformation.hpp 
-    ;
-
-test-canonical core/RDP/channels/rdpdr.hpp 
-    ;
-
-test-canonical core/callback.hpp 
-    ;
-test-canonical core/channel_list.hpp 
-    ;
-test-canonical core/check_files.hpp 
-    ;
-test-canonical core/client_info.hpp 
-    ;
-test-canonical utils/theme.hpp 
-    ;
-test-canonical utils/confdescriptor.hpp 
-    ;
-test-canonical core/error.hpp 
-    ;
-test-canonical core/font.hpp 
-    ;
-    
-test-canonical core/listen.hpp 
-    ;
-test-canonical core/mainloop.hpp 
-    ;
-test-canonical core/RDP/bitmapupdate.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
-test-canonical core/RDP/caches/bmpcache.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
-test-canonical core/RDP/caches/bmpcachepersister.hpp 
-    : <library>bitmap <library>crypto 
-    ;
-test-canonical core/RDP/caches/brushcache.hpp 
-    ;
-test-canonical core/RDP/caches/glyphcache.hpp 
-    ;
-test-canonical core/RDP/caches/pointercache.hpp 
-    ;
-test-canonical utils/redirection_info.hpp 
-    ;
+test-canonical utils/stream.hpp ;
+test-canonical utils/utf.hpp ;
+test-canonical utils/rect.hpp ;
+test-canonical utils/ellipse.hpp ;
+test-canonical utils/drawable.hpp : <library>bitmap <library>png <library>crypto ;
+test-canonical utils/region.hpp ;
+test-canonical utils/bitfu.hpp ;
+test-canonical utils/parse.hpp ;
+test-canonical utils/parser.hpp ;
+test-canonical utils/fileutils.hpp ;
+test-canonical utils/parse_ip_conntrack.hpp ;
+test-canonical core/RDP/x224.hpp ;
+test-canonical core/RDP/out_per_bstream.hpp ;
+test-canonical core/RDP/mcs.hpp ;
+test-canonical core/RDP/mppc.hpp ;
+test-canonical core/RDP/mppc_40.hpp ;
+test-canonical core/RDP/mppc_50.hpp ;
+test-canonical core/RDP/mppc_60.hpp ;
+test-canonical core/RDP/mppc_61.hpp ;
+test-canonical core/RDP/gcc.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/sec.hpp : <library>crypto ;
+test-canonical core/RDP/lic.hpp : <library>crypto ;
+test-canonical core/RDP/share.hpp ;
+test-canonical core/RDP/fastpath.hpp : <library>crypto ;
+test-canonical core/RDP/slowpath.hpp ;
+test-canonical core/RDP/clipboard.hpp ;
+test-canonical core/FSCC/FileInformation.hpp ;
+test-canonical core/RDP/channels/rdpdr.hpp ;
+test-canonical core/callback.hpp ;
+test-canonical core/channel_list.hpp ;
+test-canonical core/check_files.hpp ;
+test-canonical core/client_info.hpp ;
+test-canonical utils/theme.hpp ;
+test-canonical utils/confdescriptor.hpp ;
+test-canonical core/error.hpp ;
+test-canonical core/font.hpp ;
+test-canonical core/listen.hpp ;
+test-canonical core/mainloop.hpp ;
+test-canonical core/RDP/bitmapupdate.hpp : <library>bitmap <library>png <library>crypto ;
+test-canonical core/RDP/caches/bmpcache.hpp : <library>bitmap <library>png <library>crypto ;
+test-canonical core/RDP/caches/bmpcachepersister.hpp : <library>bitmap <library>crypto ;
+test-canonical core/RDP/caches/brushcache.hpp ;
+test-canonical core/RDP/caches/glyphcache.hpp ;
+test-canonical core/RDP/caches/pointercache.hpp ;
+test-canonical utils/redirection_info.hpp ;
 
 ## Capabilities tests
 ## @{
-test-canonical core/RDP/capabilities/bitmapcodecs.hpp 
-    ;
-
-test-canonical core/RDP/capabilities/activate.hpp 
-    ;
-test-canonical core/RDP/capabilities/cap_bitmap.hpp 
-    ;
-
-test-canonical core/RDP/capabilities/cap_bmpcache.hpp 
-    ;
-
-test-canonical core/RDP/capabilities/bitmapcachehostsupport.hpp 
-    ;
-test-canonical core/RDP/capabilities/cap_brushcache.hpp 
-    ;
-test-canonical core/RDP/capabilities/compdesk.hpp 
-    ;
-test-canonical core/RDP/capabilities/control.hpp 
-    ;
-
-test-canonical core/RDP/capabilities/drawgdiplus.hpp 
-    ;
-test-canonical core/RDP/capabilities/drawninegridcache.hpp 
-    ;
-test-canonical core/RDP/capabilities/cap_font.hpp 
-    ;
-test-canonical core/RDP/capabilities/frameacknowledge.hpp 
-    ;
-test-canonical core/RDP/capabilities/general.hpp 
-    ;
-test-canonical core/RDP/capabilities/cap_glyphcache.hpp 
-    ;
-test-canonical core/RDP/capabilities/input.hpp 
-    ;
-test-canonical core/RDP/capabilities/largepointer.hpp 
-    ;
-test-canonical core/RDP/capabilities/multifragmentupdate.hpp 
-    ;
-test-canonical core/RDP/capabilities/offscreencache.hpp 
-    ;
-test-canonical core/RDP/capabilities/order.hpp 
-    ;
-test-canonical core/RDP/capabilities/pointer.hpp 
-    ;
-test-canonical core/RDP/capabilities/rail.hpp 
-    ;
-test-canonical core/RDP/capabilities/cap_share.hpp 
-    ;
-test-canonical core/RDP/capabilities/cap_sound.hpp 
-    ;
-test-canonical core/RDP/capabilities/surfacecommands.hpp 
-    ;
-test-canonical core/RDP/capabilities/window.hpp 
-    ;
-
-test-canonical core/RDP/capabilities/bmpcache2.hpp 
-    ;
-test-canonical core/RDP/capabilities/colcache.hpp 
-    ;
-test-canonical core/RDP/capabilities/common.hpp 
-    ;
-test-canonical core/RDP/capabilities/virchan.hpp 
-    ;
+test-canonical core/RDP/capabilities/bitmapcodecs.hpp ;
+test-canonical core/RDP/capabilities/activate.hpp ;
+test-canonical core/RDP/capabilities/cap_bitmap.hpp ;
+test-canonical core/RDP/capabilities/cap_bmpcache.hpp ;
+test-canonical core/RDP/capabilities/bitmapcachehostsupport.hpp ;
+test-canonical core/RDP/capabilities/cap_brushcache.hpp ;
+test-canonical core/RDP/capabilities/compdesk.hpp ;
+test-canonical core/RDP/capabilities/control.hpp ;
+test-canonical core/RDP/capabilities/drawgdiplus.hpp ;
+test-canonical core/RDP/capabilities/drawninegridcache.hpp ;
+test-canonical core/RDP/capabilities/cap_font.hpp ;
+test-canonical core/RDP/capabilities/frameacknowledge.hpp ;
+test-canonical core/RDP/capabilities/general.hpp ;
+test-canonical core/RDP/capabilities/cap_glyphcache.hpp ;
+test-canonical core/RDP/capabilities/input.hpp ;
+test-canonical core/RDP/capabilities/largepointer.hpp ;
+test-canonical core/RDP/capabilities/multifragmentupdate.hpp ;
+test-canonical core/RDP/capabilities/offscreencache.hpp ;
+test-canonical core/RDP/capabilities/order.hpp ;
+test-canonical core/RDP/capabilities/pointer.hpp ;
+test-canonical core/RDP/capabilities/rail.hpp ;
+test-canonical core/RDP/capabilities/cap_share.hpp ;
+test-canonical core/RDP/capabilities/cap_sound.hpp ;
+test-canonical core/RDP/capabilities/surfacecommands.hpp ;
+test-canonical core/RDP/capabilities/window.hpp ;
+test-canonical core/RDP/capabilities/bmpcache2.hpp ;
+test-canonical core/RDP/capabilities/colcache.hpp ;
+test-canonical core/RDP/capabilities/common.hpp ;
+test-canonical core/RDP/capabilities/virchan.hpp ;
 ## @}
 
+test-canonical core/RDP/ServerRedirection.hpp ;
+test-canonical core/RDP/GraphicUpdatePDU.hpp ;
+test-canonical core/RDP/RefreshRectPDU.hpp : <library>crypto ;
+test-canonical core/RDP/logon.hpp ;
+test-canonical core/RDP/nego.hpp : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
+test-canonical core/RDP/orders/RDPOrdersCommon.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
+test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
+test-canonical core/RDP/RDPGraphicDevice.hpp ;
+test-canonical core/RDP/RDPSerializer.hpp ;
+test-canonical core/RDP/remote_programs.hpp ;
+test-canonical core/server.hpp ;
+test-canonical core/session.hpp ;
+test-canonical core/session_server.hpp ;
+test-canonical core/wait_obj.hpp ;
 
-test-canonical core/RDP/ServerRedirection.hpp 
-    ;
-
-test-canonical core/RDP/GraphicUpdatePDU.hpp 
-    ;
-
-test-canonical core/RDP/RefreshRectPDU.hpp 
-    : <library>crypto 
-    ;
-    
-test-canonical core/RDP/logon.hpp 
-    ;
-    
-test-canonical core/RDP/nego.hpp 
-    : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue 
-    ;
-
-test-canonical core/RDP/orders/RDPOrdersCommon.hpp 
-    ;
-
-test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp 
-    ;
-    
-test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp 
-    ;
-    
-test-canonical core/RDP/RDPDrawable.hpp 
-    : <library>crypto <library>png 
-    ;
-    
-test-canonical core/RDP/RDPGraphicDevice.hpp 
-    ;
-    
-test-canonical core/RDP/RDPSerializer.hpp 
-    ;
-    
-test-canonical core/RDP/remote_programs.hpp 
-    ;
-    
-test-canonical core/server.hpp 
-    ;
-    
-test-canonical core/session.hpp 
-    ;
-    
-test-canonical core/session_server.hpp 
-    ;
-    
-test-canonical core/wait_obj.hpp
-    ;
-    
-test-run test_front 
-    : front/test_front.cpp 
-    : front/front.hpp 
+test-run test_front : front/test_front.cpp : front/front.hpp 
     : <library>bitmap <library>openssl 
       <library>snappy <library>d3des 
       <library>krb5 <library>gssglue 
@@ -1045,89 +863,42 @@ test-run test_front
       <library>dl <library>crypto 
     ;
     
-test-canonical mod/mod_api.hpp 
-    ;
+test-canonical mod/mod_api.hpp ;
+test-canonical mod/mod_osd.hpp : <library>bitmap <library>png ;
+test-canonical mod/null/null.hpp ;
+test-canonical mod/rdp/rdp_orders.hpp ;
+test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ;
+test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>png ;
+test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
+test-canonical mod/vnc/vnc.hpp ;
+test-canonical mod/xup/xup.hpp ;
+test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
 
-test-canonical mod/mod_osd.hpp 
-    : <library>bitmap <library>png 
-    ;
-
-test-canonical mod/null/null.hpp 
-    ;
-    
-test-canonical mod/rdp/rdp_orders.hpp 
-    ;
-    
-test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp 
-    ;
-    
-test-canonical mod/rdp/channels/cliprdr_channel.hpp
-    : <library>png 
-    ;
-
-test-canonical mod/rdp/channels/rdpdr_channel.hpp 
-    : <library>png ;
-    
-test-canonical mod/vnc/vnc.hpp 
-    ;
-    
-test-canonical mod/xup/xup.hpp 
-    ;
-    
-test-canonical utils/bitmap.hpp 
-    : <library>bitmap <library>png <library>crypto 
-    ;
-
-test-run test_bitmap_perf
-    : test_bitmap_perf.cpp
-    :
+test-run test_bitmap_perf 
+    : test_bitmap_perf.cpp 
+    : 
     : <library>bitmap <library>png <covflag>nocover
     ;
 
-test-canonical utils/colors.hpp 
-    ;
-    
-test-canonical utils/d3des.hpp 
-    ;
-    
-test-canonical utils/difftimeval.hpp 
-    ;
-    
-test-canonical utils/genrandom.hpp 
-    ;
-test-canonical utils/log.hpp 
-    ;
+test-canonical utils/colors.hpp ;
+test-canonical utils/d3des.hpp ;
+test-canonical utils/difftimeval.hpp ;
+test-canonical utils/genrandom.hpp ;
+test-canonical utils/log.hpp ;
+test-canonical utils/netutils.hpp ;
+test-canonical utils/png.hpp : <library>png ;
+test-canonical utils/rdtsc.hpp ;
+test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 
-test-canonical utils/netutils.hpp 
-    ;
-
-test-canonical utils/png.hpp 
-    : <library>png ;
-
-test-canonical utils/rdtsc.hpp 
-    ;
-
-test-canonical system/linux/system/ssl_calls.hpp 
-    : <library>openssl <library>crypto <library>dl <library>z ;
-
-test-run test_strings 
-    : test_strings.cpp 
-    : 
-    : <covflag>nocover 
-    ;
+test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 
 
 ## Transport tests
 ## @{
-test-canonical transport/detail/meta_writer.hpp 
-    ;
+test-canonical transport/detail/meta_writer.hpp ;
+test-canonical transport/detail/meta_opener.hpp ;
 
-test-canonical transport/detail/meta_opener.hpp 
-    ;
-
-test-canonical transport/in_meta_sequence_transport.hpp 
-    : <library>crypto <library>snappy <library>dl <library>z 
-    ;
+test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 
 test-run test_filename_sequence_transport 
     : transport/test_filename_sequence_transport.cpp 
@@ -1135,63 +906,27 @@ test-run test_filename_sequence_transport
     : <covflag>nocover 
     ;
 
-test-canonical transport/out_meta_sequence_transport.hpp 
-    : <library>crypto <library>snappy <library>dl <library>z 
-    ;
+test-canonical transport/out_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical transport/test_transport.hpp ;
+test-canonical transport/count_transport.hpp ;
+test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
+test-canonical transport/in_file_transport.hpp ;
+test-canonical transport/out_file_transport.hpp ;
+test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
+test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
+test-canonical transport/bulk_compression_transport.hpp ;
+test-canonical transport/gzip_compression_transport.hpp : <library>z ;
+test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
+test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
-test-canonical transport/test_transport.hpp 
-    ;
-    
-test-canonical transport/count_transport.hpp 
-    ;
-    
-test-canonical transport/socket_transport.hpp 
-    : <library>openssl <library>crypto <library>dl 
-    ;
-
-test-canonical transport/in_file_transport.hpp
-    ;
-
-test-canonical transport/out_file_transport.hpp
-    ;
-
-test-canonical transport/in_filename_transport.hpp 
-    : <library>z <library>dl <library>snappy <library>crypto 
-    ;
-
-test-canonical transport/out_filename_transport.hpp 
-    : <library>z <library>dl <library>snappy <library>crypto 
-    ;
-
-test-canonical transport/bulk_compression_transport.hpp 
-    ;
-
-test-canonical transport/gzip_compression_transport.hpp 
-    : <library>z 
-    ;
-
-test-canonical transport/snappy_compression_transport.hpp 
-    : <library>snappy 
-    ;
-
-test-canonical transport/cryptofile.hpp 
-    : <library>openssl <library>crypto <library>snappy <library>dl <library>z 
-    ;
-
-test-canonical utils/compression_transport_wrapper.hpp 
-    : <library>z <library>snappy 
-    ;
+test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
 ## @}
 
 
 ## Buffer Transport tests
 ## @{
-test-canonical transport/buffer/buffering_buf.hpp 
-    ;
-
-test-canonical transport/buffer/checksum_buf.hpp 
-    : <library>crypto <library>dl <library>z 
-    ;
+test-canonical transport/buffer/buffering_buf.hpp ;
+test-canonical transport/buffer/checksum_buf.hpp : <library>crypto <library>dl <library>z ;
 ## @}
 
 
@@ -1199,15 +934,9 @@ test-canonical transport/buffer/checksum_buf.hpp
 #test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
-test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp 
-    ;
-    
-test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp 
-    ;
-    
-test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp 
-    ;
-    
+test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp ;
@@ -1221,8 +950,7 @@ test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
-test-canonical core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp 
-    : <library>bitmap <library>crypto ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp : <library>bitmap <library>crypto ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
 test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
@@ -1482,3 +1210,85 @@ make test_trace.py.unittest
         <variant>coverage:<action>@pass
     ;
 
+lib gssapi_krb5 : : <name>gssapi_krb5 <link>shared ;
+lib rt : : <name>rt <link>shared ;
+
+
+explicit install-sashimi local-install-sashimi sashimi ;
+
+install install-sashimi
+    : sashimi
+    : <location>debian/sashimi/usr/lib
+    ;
+
+install local-install-sashimi
+    : sashimi
+    : <location>/usr/lib
+    ;
+
+obj sashimi_error : $(SRCDIR)/sashimi/error.cpp     :
+    ;
+
+obj sashimi_pki : $(SRCDIR)/sashimi/pki.cpp     :
+    <include>$(SRCDIR)/sashimi
+    ;
+
+obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp     :
+    <include>$(SRCDIR)/sashimi
+    ;
+
+obj sashimi_log : $(SRCDIR)/sashimi/log.cpp     :
+    <include>$(SRCDIR)/sashimi
+    ;
+
+obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp     :
+    <include>$(SRCDIR)/sashimi
+    ;
+
+obj sashimi_libssh : $(SRCDIR)/sashimi/libssh.cpp     :
+    <include>$(SRCDIR)/sashimi
+    ;
+
+
+lib sashimi :
+    sashimi_pki
+    sashimi_channels
+    sashimi_log
+    sashimi_sftp
+    sashimi_libssh
+    sashimi_error
+#    #openssl
+    krb5
+    gssapi_krb5
+    crypto
+    dl
+    z
+    rt
+    :
+    <link>shared
+    :
+    :
+;
+
+##
+## Unit Tests
+##
+
+unit-test test_buffer : 
+    $(SRCDIR)/sashimi/tests/buffer.cpp 
+    sashimi_error 
+    sashimi_log 
+    libboost_unit_test 
+    :
+    <include>$(SRCDIR)/sashimi
+    ;
+
+unit-test test_crypto : 
+    $(SRCDIR)/sashimi/tests/test_crypto.cpp 
+    sashimi_error 
+    sashimi_log 
+    crypto
+    libboost_unit_test 
+    :
+    <include>$(SRCDIR)/sashimi
+    ;
