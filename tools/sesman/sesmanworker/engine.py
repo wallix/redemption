@@ -507,6 +507,7 @@ class Engine(object):
                 account_name = right.account.name
                 account_domain = right.account.domain_cn
                 account_login = right.account.login
+                account_logindom = self.get_account_login(right)
                 account_namedom = account_name
                 if account_domain and account_domain != AM_IL_DOMAIN:
                     account_namedom = "%s@%s" % (account_name, account_domain)
@@ -535,7 +536,10 @@ class Engine(object):
                         continue
                     if (target_context.login and
                         account_login and
-                        account_login != target_context.login):
+                        target_context.login not in [
+                            account_login, account_logindom,
+                            account_name, account_namedom ]):
+                        # match context login with login or name with or without domain
                         continue
                     if (target_context.service and
                         service_name != target_context.service):
