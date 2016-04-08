@@ -1281,6 +1281,7 @@ unit-test test_buffer :
     libboost_unit_test 
     :
     <include>$(SRCDIR)/sashimi
+    $(TEST_DEPENDENCIES)
     ;
 
 unit-test test_crypto : 
@@ -1291,4 +1292,5 @@ unit-test test_crypto :
     libboost_unit_test 
     :
     <include>$(SRCDIR)/sashimi
+    $(TEST_DEPENDENCIES)
     ;
