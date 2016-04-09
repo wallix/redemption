@@ -724,6 +724,8 @@ rule test-canonical ( base : requirements * )
 test-canonical acl/acl_serializer.hpp ;
 test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
 test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
+test-canonical acl/auth_api.hpp ;
+
 ## @}
 
 ## Capture tests
@@ -826,7 +828,7 @@ test-canonical core/RDP/capabilities/largepointer.hpp ;
 test-canonical core/RDP/capabilities/multifragmentupdate.hpp ;
 test-canonical core/RDP/capabilities/offscreencache.hpp ;
 test-canonical core/RDP/capabilities/order.hpp ;
-test-canonical core/RDP/capabilities/pointer.hpp ;
+#test-canonical core/RDP/capabilities/pointer.hpp ;
 test-canonical core/RDP/capabilities/rail.hpp ;
 test-canonical core/RDP/capabilities/cap_share.hpp ;
 test-canonical core/RDP/capabilities/cap_sound.hpp ;
@@ -918,6 +920,7 @@ test-canonical transport/bulk_compression_transport.hpp ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+#test-canonical transport/out_filename_sequence_transport.hpp ;
 
 test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
 ## @}
@@ -1092,6 +1095,7 @@ test-canonical mod/internal/widget2/password.hpp : <library>png <library>crypto 
 test-canonical mod/internal/widget2/number_edit.hpp : <library>png <library>crypto ;
 test-canonical mod/internal/widget2/edit_valid.hpp : <library>png <library>crypto ;
 # test-run test_radio_list : mod/internal/widget2/test_radio_list.cpp : <library>png <library>libboost_unit_test ;
+#test-canonical mod/internal/widget2/radio_list.hpp ;
 test-canonical mod/internal/widget2/flat_dialog.hpp : <library>bitmap <library>png <library>crypto ;
 test-canonical mod/internal/widget2/widget.hpp : <library>crypto ;
 test-canonical mod/internal/widget2/composite.hpp : <library>png <library>crypto ;
@@ -1103,14 +1107,19 @@ test-canonical mod/internal/widget2/flat_login.hpp : <library>bitmap <library>pn
 test-canonical mod/internal/widget2/flat_wab_close.hpp : <library>bitmap <library>png <library>crypto ;
 test-canonical mod/internal/widget2/screen.hpp : <library>png <library>crypto ;
 # test-run test_columnlayout : mod/internal/widget2/test_columnlayout.cpp : <library>png ;
+#test-canonical mod/internal/widget2/columnlayout.hpp ;
 # test-run test_linelayout : mod/internal/widget2/test_linelayout.cpp : <library>png ;
+#test-canonical mod/internal/widget2/linelayout.hpp ;
 # test-run test_stacklayout : mod/internal/widget2/test_stacklayout.cpp : <library>png ;
+#test-canonical mod/internal/widget2/stacklayout.hpp ;
 test-canonical mod/internal/widget2/grid.hpp : <library>png <library>crypto ;
 test-canonical mod/internal/widget2/labelgrid.hpp : <library>png <library>crypto ;
 test-canonical mod/internal/widget2/flat_selector2.hpp : <library>png <library>crypto ;
 test-canonical mod/internal/widget2/group_box.hpp : <library>png <library>crypto ;
 # test-run test_scroll : mod/internal/widget2/test_scroll.cpp : <library>png ;
+#test-canonical mod/internal/widget2/scroll.hpp ;
 # test-run test_tab : mod/internal/widget2/test_tab.cpp : <library>png ;
+#test-canonical mod/internal/widget2/tab.hpp ;
 test-canonical mod/internal/widget2/flat_interactive_target.hpp : <library>png <library>crypto ;
 ## @}
 
@@ -1294,3 +1303,77 @@ unit-test test_crypto :
     <include>$(SRCDIR)/sashimi
     $(TEST_DEPENDENCIES)
     ;
+
+test-canonical acl/mm_api.hpp ;
+test-canonical core/activity_checker.hpp ;
+test-canonical core/authid.hpp ;
+test-canonical core/channel_names.hpp ;
+test-canonical core/defines.hpp ;
+test-canonical core/front_api.hpp ;
+test-canonical core/RDP/autoreconnect.hpp ;
+test-canonical core/RDP/capabilities.hpp ;
+test-canonical core/RDP/compress_and_draw_bitmap_update.hpp ;
+test-canonical core/RDP/mppc_unified_dec.hpp ;
+test-canonical core/RDP/nla/ntlm/ntlm_message.hpp ;
+test-canonical core/RDP/non_null_terminated_utf16_from_utf8.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp ;
+test-canonical core/RDP/PersistentKeyListPDU.hpp ;
+test-canonical core/RDP/pointer.hpp ;
+test-canonical core/RDP/protocol.hpp ;
+test-canonical core/RDP/SaveSessionInfoPDU.hpp ;
+test-canonical core/server_notifier_api.hpp ;
+test-canonical mod/internal/flat_selector2_mod.hpp ;
+test-canonical mod/internal/flat_wait_mod.hpp ;
+test-canonical mod/internal/transparent_replay_mod.hpp ;
+test-canonical mod/internal/widget2/flat_vnc_authentification.hpp ;
+test-canonical mod/internal/widget2/language_button.hpp ;
+test-canonical mod/internal/widget2/layout.hpp ;
+test-canonical mod/internal/widget2/notify_api.hpp ;
+test-canonical mod/rdp/channels/base_channel.hpp ;
+test-canonical mod/rdp/channels/rdpdr_file_system_drive_manager.hpp ;
+test-canonical mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp ;
+test-canonical mod/rdp/channels/sespro_channel.hpp ;
+test-canonical mod/rdp/channels/sespro_clipboard_based_launcher.hpp ;
+test-canonical mod/rdp/channels/sespro_launcher.hpp ;
+test-canonical mod/rdp/rdp_log.hpp ;
+test-canonical mod/rdp/rdp_params.hpp ;
+test-canonical regex/regex_automate.hpp ;
+test-canonical regex/regex_consumer.hpp ;
+test-canonical regex/regex_states_value.hpp ;
+test-canonical regex/regex_utils.hpp ;
+test-canonical system/linux/system/openssl.hpp ;
+test-canonical transport/buffer/file_buf.hpp ;
+test-canonical transport/buffer/null_buf.hpp ;
+test-canonical transport/detail/meta_hash.hpp ;
+test-canonical transport/detail/no_param.hpp ;
+test-canonical transport/filter/crypto_filter.hpp ;
+test-canonical transport/mixin_transport.hpp ;
+test-canonical utils/apps/app_decrypter.hpp ;
+test-canonical utils/apps/app_proxy.hpp ;
+test-canonical utils/apps/app_recorder.hpp ;
+test-canonical utils/apps/app_verifier.hpp ;
+test-canonical utils/apps/recording_progress.hpp ;
+test-canonical utils/array.hpp ;
+test-canonical utils/array_view.hpp ;
+test-canonical utils/asynchronous_task_manager.hpp ;
+test-canonical utils/bitmap_data_allocator.hpp ;
+test-canonical utils/bytes_t.hpp ;
+test-canonical utils/cast.hpp ;
+test-canonical utils/cfgloader.hpp ;
+test-canonical utils/exchange.hpp ;
+test-canonical utils/fdbuf.hpp ;
+test-canonical utils/get_printable_password.hpp ;
+test-canonical utils/movable_noncopyable.hpp ;
+test-canonical utils/outbound_connection_monitor_rules.hpp ;
+test-canonical utils/range.hpp ;
+#test-canonical utils/server_certificate.hpp ;
+test-canonical utils/socket_transport_utility.hpp ;
+test-canonical utils/text_metrics.hpp ;
+test-canonical utils/timeout.hpp ;
+test-canonical utils/timeval_ops.hpp ;
+test-canonical utils/underlying_cast.hpp ;
+test-canonical utils/update_lock.hpp ;
+test-canonical utils/urandom_read.hpp ;
+test-canonical utils/virtual_channel_data_sender.hpp ;
+test-canonical utils/winpr/pattern.hpp ;
+
