@@ -402,7 +402,7 @@ ssh_gssapi_creds ssh_gssapi_get_creds_server(SshServerSession * server_session){
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     if (!server_session || !server_session->gssapi || server_session->gssapi->client_creds == GSS_C_NO_CREDENTIAL)
         return NULL;
-    return (ssh_gssapi_creds)server_session->gssapi->client_creds;
+    return static_cast<ssh_gssapi_creds>(server_session->gssapi->client_creds);
 }
 
 
@@ -551,9 +551,9 @@ int ssh_channel_read_stdout_server(ssh_session_struct * server_session, ssh_chan
      * as asked
      */
 
-    int minimumsize = count - channel->stdout_buffer->in_remain();
+    unsigned minimumsize = count - channel->stdout_buffer->in_remain();
     if (minimumsize > channel->local_window) {
-        int new_window = (minimumsize > WINDOWBASE) ? minimumsize : WINDOWBASE;
+        unsigned new_window = (minimumsize > WINDOWBASE) ? minimumsize : WINDOWBASE;
         if (new_window > channel->local_window){
             /* WINDOW_ADJUST packet needs a relative increment rather than an absolute
              * value, so we give here the missing bytes needed to reach new_window
@@ -715,9 +715,9 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
 
         channel->remote_window -= effectivelen;
         len -= effectivelen;
-        data = ((uint8_t*)data + effectivelen);
+        data = data + effectivelen;
     }
-    return (int)(origlen - len);
+    return static_cast<int>(origlen - len);
 
 }
 
@@ -881,8 +881,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
                 syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
-            syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
-                this->session_state, channel->state);
+            syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", this->session_state, static_cast<int>(channel->state));
             if (this->socket == NULL){
                 return SSH_ERROR;
             }
@@ -916,7 +915,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
         len -= effectivelen;
         data += effectivelen;
     }
-    return (int)(origlen - len);
+    return static_cast<int>(origlen - len);
 }
 
 
