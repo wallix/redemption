@@ -473,21 +473,21 @@ static inline void hexdump(const char * data, size_t size, unsigned line_length)
     size_t j = 0;
     for (j = 0 ; j < size ; j += line_length){
         char * line = buffer;
-        line += sprintf(line, "/* %.4x */ ", (unsigned)(j));
+        line += sprintf(line, "/* %.4x */ ", static_cast<unsigned>(j));
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "0x%.2x, ", (unsigned char)(data[j+i]));
+            line += sprintf(line, "0x%.2x, ", static_cast<unsigned char>(data[j+i]));
         }
         if (i < line_length){
-            line += sprintf(line, "%*c", (unsigned)((line_length-i)*3), ' ');
+            line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*3), ' ');
         }
 
         line += sprintf(line, " // ");
 
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = (unsigned)(data[j+i]);
+            unsigned char tmp = static_cast<unsigned>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }

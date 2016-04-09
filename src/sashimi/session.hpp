@@ -239,7 +239,7 @@ struct ssh_session_struct {
 
 //      hexa("received mac",mac,SHA_DIGEST_LENGTH);
 //      hexa("Computed mac",hmacbuf,SHA_DIGEST_LENGTH);
-//      hexa("seq",(unsigned char *)&seq,sizeof(uint32_t));
+//      hexa("seq",static_cast<unsigned char *>(&seq),sizeof(uint32_t));
         if (memcmp(mac, hmacbuf, SHA_DIGEST_LENGTH) == 0) {
             return 0;
         }
@@ -997,19 +997,19 @@ struct SshServerSession : public ssh_session_struct
             for (q = 0 ; q < this->nbchannels; q++){
                 if (this->channels[q]->server_outbuffer->in_remain() > 0){
                     syslog(LOG_INFO, "Data %u waiting to be sent on channel %u", 
-                        (unsigned)this->channels[q]->server_outbuffer->in_remain(),
-                        (unsigned)q);
+                        static_cast<unsigned>(this->channels[q]->server_outbuffer->in_remain()),
+                        static_cast<unsigned>(q));
                     this->ssh_channel_write_server(this->channels[q], nullptr, 0);
                     break;
                 }
                 else if (this->channels[q]->local_eof_to_send){
-                    syslog(LOG_INFO, "EOF to be sent on channel %u", (unsigned)q);
+                    syslog(LOG_INFO, "EOF to be sent on channel %u", static_cast<unsigned>(q));
                     this->socket->out_buffer->out_uint8(SSH_MSG_CHANNEL_EOF);
                     this->socket->out_buffer->out_uint32_be(this->channels[q]->remote_channel);
                     this->channels[q]->local_eof_to_send = false;
                 }
                 else if (this->channels[q]->local_close_to_send){
-                    syslog(LOG_INFO, "CLOSE to be sent on channel %u", (unsigned)q);
+                    syslog(LOG_INFO, "CLOSE to be sent on channel %u", static_cast<unsigned>(q));
                     this->socket->out_buffer->out_uint8(SSH_MSG_CHANNEL_CLOSE);
                     this->socket->out_buffer->out_uint32_be(this->channels[q]->remote_channel);
                     this->channels[q]->local_close_to_send = false;
@@ -1051,7 +1051,7 @@ struct SshServerSession : public ssh_session_struct
                     int err=0;
                     socklen_t errlen=sizeof(err);
                     int r = getsockopt(this->socket->fd_in,
-                                SOL_SOCKET, SO_ERROR, (char *)&err, &errlen);
+                                SOL_SOCKET, SO_ERROR, &err, &errlen);
                     if (r < 0) {
                         err = errno;
                     }
@@ -1163,7 +1163,7 @@ struct SshServerSession : public ssh_session_struct
                 }
 
                 syslog(LOG_INFO, "POLLOUT for write remain=%d except=%d wontblock=%d", 
-                        (unsigned)this->socket->out_buffer->in_remain(),
+                        static_cast<unsigned>(this->socket->out_buffer->in_remain()),
                         this->socket->data_except,
                         this->socket->write_wontblock
                         );
@@ -1189,7 +1189,7 @@ struct SshServerSession : public ssh_session_struct
                             return;
                         }
                         syslog(LOG_INFO, "Sending %d bytes",
-                            (unsigned)this->socket->out_buffer->in_remain());
+                            static_cast<unsigned>(this->socket->out_buffer->in_remain()));
                         int w = write(this->socket->fd_out, 
                                       this->socket->out_buffer->get_pos_ptr(), 
                                       this->socket->out_buffer->in_remain());
@@ -1244,7 +1244,7 @@ struct SshServerSession : public ssh_session_struct
             this->out_buffer->out_blob(channel->server_outbuffer->get_pos_ptr(), effectivelen);
             channel->server_outbuffer->in_skip_bytes(effectivelen);
             channel->remote_window -= effectivelen;
-            syslog(LOG_INFO, "wrote 9 bytes header + %u bytes data", (unsigned) effectivelen);
+            syslog(LOG_INFO, "wrote 9 bytes header + %u bytes data", static_cast<unsigned>(effectivelen));
             this->packet_send();
         }
         // TODO: We are always saying to caller we have sent everything
@@ -1440,7 +1440,7 @@ struct SshServerSession : public ssh_session_struct
     
     
     int ssh_channel_is_open_server(ssh_channel_struct * channel) {
-        syslog(LOG_INFO, "%s --- channel_state=%d", __FUNCTION__, channel->state);
+        syslog(LOG_INFO, "%s --- channel_state=%d", __FUNCTION__, static_cast<int>(channel->state));
         return (channel->state == ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN);
     }
 
@@ -1752,7 +1752,7 @@ struct SshServerSession : public ssh_session_struct
                 /* Too big banner */
                 this->session_state = SSH_SESSION_STATE_ERROR;
                 ssh_set_error(error,  SSH_FATAL, 
-                    "Receiving banner: too large banner (%u) %s", (unsigned)i, buffer);
+                    "Receiving banner: too large banner (%u) %s", static_cast<unsigned>(i), buffer);
                 syslog(LOG_INFO, "%s --- [D]", __FUNCTION__);    
                 return 0;
             }
@@ -1804,7 +1804,7 @@ struct SshServerSession : public ssh_session_struct
                      * we need at least one block size, give up
                      */
                     syslog(LOG_INFO, "%s Need more data (got %d, need %d)",
-                         __FUNCTION__, (int)receivedlen, (int)blocksize );
+                         __FUNCTION__, static_cast<int>(receivedlen), static_cast<int>(blocksize) );
                     return 0;
                 }
                 this->in_packet_type = 0;
@@ -1866,7 +1866,7 @@ struct SshServerSession : public ssh_session_struct
                         return processed;
                     }
                     
-                    packet = ((uint8_t*)data) + processed;
+                    packet = (reinterpret_cast<const uint8_t*>(data)) + processed;
                     this->in_buffer->out_blob(packet, to_be_read - current_macsize);
                     processed += to_be_read - current_macsize;
                 }
@@ -1881,7 +1881,7 @@ struct SshServerSession : public ssh_session_struct
 
                     /* The following check avoids decrypting zero bytes */
                     if (buffer_len > blocksize) {
-                        uint8_t *payload = ((uint8_t*)this->in_buffer->get_pos_ptr() + blocksize);
+                        uint8_t *payload = (reinterpret_cast<uint8_t*>(this->in_buffer->get_pos_ptr()) + blocksize);
                         uint32_t plen = buffer_len - blocksize;
 
                         rc = packet_decrypt(*this->current_crypto, payload, plen, this->error);
@@ -1894,7 +1894,7 @@ struct SshServerSession : public ssh_session_struct
                     }
 
                     /* copy the last part from the incoming buffer */
-                    packet = ((uint8_t *)data) + processed;
+                    packet = (reinterpret_cast<const uint8_t*>(data)) + processed;
                     memcpy(mac, packet, MACSIZE);
 
                     rc = this->packet_hmac_verify(this->in_buffer, mac);
@@ -2156,7 +2156,7 @@ struct SshServerSession : public ssh_session_struct
                     }
                 }
                 syslog(LOG_INFO, "Packet used processed=%d receivedLen=%d", 
-                    (int)processed, (int)receivedlen);
+                    static_cast<int>(processed), static_cast<int>(receivedlen));
 
                 this->packet_state = PACKET_STATE_INIT;
                 return processed;
@@ -3468,7 +3468,7 @@ struct SshServerSession : public ssh_session_struct
 
                 if (q_c_string.size != CURVE25519_PUBKEY_SIZE){
                     ssh_set_error(this->error, SSH_FATAL, "Incorrect size for server Curve25519 public key: %d",
-                            (int)q_c_string.size);
+                            static_cast<int>(q_c_string.size));
                     this->out_buffer->buffer_reinit();
                     syslog(LOG_INFO, "%s --- error", __FUNCTION__);    
                     this->session_state = SSH_SESSION_STATE_ERROR;
@@ -4109,8 +4109,8 @@ struct SshServerSession : public ssh_session_struct
             this->ssh_auth_interactive_request_server(this->kbdint->name,
                                         this->kbdint->instruction,
                                         this->kbdint->nprompts,
-                                        (const char**)this->kbdint->prompts,
-                                        (char *)this->kbdint->echo);
+                                        const_cast<const char **>(this->kbdint->prompts),
+                                        reinterpret_cast<char*>(this->kbdint->echo));
         break;
         case SSH_AUTH_SUCCESS:
             syslog(LOG_INFO, "%s : SSH_AUTH_SUCCESS", __FUNCTION__);    
@@ -4408,7 +4408,7 @@ struct SshServerSession : public ssh_session_struct
         typedef SSHString * SSHString_pointer;
         SSHString_pointer * oids = new SSHString_pointer[n_oid];
         
-        for (i=0;i<(int) n_oid;++i){
+        for (i=0;i<static_cast<int>(n_oid);++i){
             uint32_t oid_len = packet->in_uint32_be();
             SSHString * poid = new SSHString(oid_len);
             packet->buffer_get_data(poid->data.get(), oid_len);
@@ -4417,7 +4417,7 @@ struct SshServerSession : public ssh_session_struct
         }
         this->ssh_gssapi_handle_userauth_server(username, n_oid, oids);
 
-        for(i=0;i<(int)n_oid;++i){
+        for(i=0;i<static_cast<int>(n_oid);++i){
             delete oids[i];
         }
         delete [] oids;
@@ -4460,10 +4460,10 @@ struct SshServerSession : public ssh_session_struct
         }
 
         for (i=0 ; i< n_oid ; ++i){
-            syslog(LOG_INFO,"GSSAPI: i=%u n_oid=%u", (unsigned)i, (unsigned)n_oid);
-            unsigned char *oid_s = (unsigned char *) oids[i]->data.get();
+            syslog(LOG_INFO,"GSSAPI: i=%u n_oid=%u", static_cast<unsigned>(i), static_cast<unsigned>(n_oid));
+            unsigned char *oid_s = static_cast<unsigned char *>(oids[i]->data.get());
             size_t len = oids[i]->size;
-            syslog(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", (int)len, SSH_OID_TAG, oid_s[0], oid_s[1]);
+            syslog(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", static_cast<int>(len), SSH_OID_TAG, oid_s[0], oid_s[1]);
             if(len < 2){
                 syslog(LOG_WARNING,"GSSAPI: received invalid OID 1");
                 continue;
@@ -4472,7 +4472,7 @@ struct SshServerSession : public ssh_session_struct
                 syslog(LOG_WARNING,"GSSAPI: received invalid OID 2");
                 continue;
             }
-            if(((size_t)oid_s[1]) != len - 2){
+            if((static_cast<size_t>(oid_s[1])) != len - 2){
                 syslog(LOG_WARNING,"GSSAPI: received invalid OID 3");
                 continue;
             }
@@ -4484,7 +4484,7 @@ struct SshServerSession : public ssh_session_struct
                 oid_count++;
             }
         }
-        syslog(LOG_INFO,"GSSAPI: i=%u loop done", (unsigned)i);
+        syslog(LOG_INFO,"GSSAPI: i=%u loop done", static_cast<unsigned>(i));
         gss_release_oid_set(&min_stat, &supported);
         if (oid_count == 0){
             syslog(LOG_INFO,"GSSAPI: no OID match");
@@ -4500,7 +4500,7 @@ struct SshServerSession : public ssh_session_struct
         name_buf.value = service_name;
         name_buf.length = strlen(static_cast<const char*>(name_buf.value)) + 1;
         maj_stat = gss_import_name(&min_stat, &name_buf,
-                (gss_OID) GSS_C_NT_HOSTBASED_SERVICE, &server_name);
+                static_cast<gss_OID>(GSS_C_NT_HOSTBASED_SERVICE), &server_name);
         if (maj_stat != GSS_S_COMPLETE) {
             syslog(LOG_WARNING, "importing name %d, %d", maj_stat, min_stat);
             gss_buffer_desc buffer;

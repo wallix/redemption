@@ -510,9 +510,17 @@ struct ssh_agent_struct {
 
   void set_channel(ssh_channel_struct * channel)
   {
-    syslog(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p", __FUNCTION__, channel, this->channel, this);    
+    syslog(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p",
+        __FUNCTION__,
+        reinterpret_cast<void*>(channel),
+        reinterpret_cast<void*>(this->channel),
+        reinterpret_cast<void*>(this));    
     this->channel = channel;
-    syslog(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p", __FUNCTION__, channel, this->channel, this);    
+    syslog(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p",
+        __FUNCTION__,
+        reinterpret_cast<void*>(channel),
+        reinterpret_cast<void*>(this->channel),
+        reinterpret_cast<void*>(this));    
   }
 
   void agent_close() {
@@ -537,10 +545,15 @@ struct ssh_agent_struct {
             return true;
         }
         if (this->channel){
-            syslog(LOG_INFO, "%s : true: agent channel OK %p", __FUNCTION__, this->channel);    
+            syslog(LOG_INFO, "%s : true: agent channel OK %p", __FUNCTION__,
+                reinterpret_cast<void*>(this->channel));    
             return true;
         }
-        syslog(LOG_INFO, "%s : false agent=%p channel=%p session=%p", __FUNCTION__, this, this->channel, session);    
+        syslog(LOG_INFO, "%s : false agent=%p channel=%p session=%p",
+            __FUNCTION__,
+            reinterpret_cast<void*>(this),
+            reinterpret_cast<void*>(this->channel),
+            reinterpret_cast<void*>(session));    
         return false;
     }
 
@@ -598,7 +611,7 @@ struct ssh_agent_struct {
                 syslog(LOG_WARNING, "atomicio read response length failed: %s", strerror(errno));
                 return -1;
             }
-            pos2 += (size_t)res;
+            pos2 += static_cast<size_t>(res);
         }
         
         len = Parse(payload).in_uint32_be();
