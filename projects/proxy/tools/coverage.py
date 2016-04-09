@@ -164,6 +164,7 @@ if __name__ == "__main__":
             td = td + '/'
 
     print "================ Coverage Results: ==================="
+    td = ""
     g_covered = 0
     g_no_coverage = 0
     g_low_coverage = 0
