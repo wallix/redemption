@@ -679,8 +679,8 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
     ssh_pollfd_t * front_pollfd = nullptr;
 
     syslog(LOG_INFO, "%s --- POLLING FRONT to_send=%d received=%d", __FUNCTION__,
-         (int)ctx->front_session->socket->out_buffer->in_remain(),
-         (int)ctx->front_session->socket->in_buffer->in_remain());
+         static_cast<int>(ctx->front_session->socket->out_buffer->in_remain()),
+         static_cast<int>(ctx->front_session->socket->in_buffer->in_remain()));
     front_pollfd = &pollfds[0];
     front_pollfd->fd = ctx->front_session->poll->socket->fd_in;
     front_pollfd->events = POLLIN;
@@ -723,12 +723,12 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
         }
         else {
             syslog(LOG_INFO, "%s --- POLLING TARGET to_send=%d received=%d", __FUNCTION__,
-                 (int)ctx->target_session->socket->out_buffer->in_remain(),
-                 (int)ctx->target_session->socket->in_buffer->in_remain());
+                 static_cast<int>(ctx->target_session->socket->out_buffer->in_remain()),
+                 static_cast<int>(ctx->target_session->socket->in_buffer->in_remain()));
 
             if(ctx->target_session->socket->out_buffer->in_remain() > 0){
                 syslog(LOG_INFO, "%s --- POLLOUT TARGET because %d to send",
-                    __FUNCTION__, (int)ctx->target_session->socket->out_buffer->in_remain());
+                    __FUNCTION__, static_cast<int>(ctx->target_session->socket->out_buffer->in_remain()));
                 pollfds[n].events |= POLLOUT;
             }
 
@@ -755,7 +755,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
   }
 
     syslog(LOG_INFO, "%s FRONT state rc=%d %p revent=%d lock=%d", 
-        __FUNCTION__, rc, front_pollfd, pollfds[0].revents,
+        __FUNCTION__, rc, static_cast<void*>(front_pollfd), pollfds[0].revents,
         ctx->front_session->poll->lock);
 
     /* Do not do anything if this socket was already closed */
@@ -1559,7 +1559,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     case SSH_KEYTYPE_DSS:
     {
         LOG(LOG_INFO, "SSH_KEYTYPE_DSS");
-        BIO *mem = BIO_new_mem_buf((void*)b64_key, -1);
+        BIO *mem = BIO_new_mem_buf(b64_key, -1);
         privkey->dsa = PEM_read_bio_DSAPrivateKey(mem, NULL, NULL, NULL);
         if (privkey->dsa == NULL) {
             BIO_free(mem);
@@ -1577,7 +1577,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     case SSH_KEYTYPE_RSA:
     {
         LOG(LOG_INFO, "SSH_KEYTYPE_RSA");
-        BIO *mem = BIO_new_mem_buf((void*)b64_key, -1);
+        BIO *mem = BIO_new_mem_buf(b64_key, -1);
         privkey->rsa = PEM_read_bio_RSAPrivateKey(mem, NULL, NULL, NULL);
         if (privkey->rsa == NULL) {
             BIO_free(mem);
@@ -1594,7 +1594,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     case SSH_KEYTYPE_ECDSA:
     {
         LOG(LOG_INFO, "SSH_KEYTYPE_ECDSA");
-        BIO *mem = BIO_new_mem_buf((void*)b64_key, -1);
+        BIO *mem = BIO_new_mem_buf(b64_key, -1);
         privkey->ecdsa = PEM_read_bio_ECPrivateKey(mem, NULL, NULL, NULL);
         if (privkey->ecdsa == NULL) {
             BIO_free(mem);
