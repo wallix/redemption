@@ -42,7 +42,7 @@ public:
         this->p[4] = (v >> 32) & 0xFF;
         this->p[5] = (v >> 40) & 0xFF;
         this->p[6] = (v >> 48) & 0xFF;
-        this->p[7] = (uint8_t)(v >> 56) & 0xFF;
+        this->p[7] = static_cast<uint8_t>(v >> 56) & 0xFF;
         this->p+=8;
     }
 
@@ -199,12 +199,12 @@ public:
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
-        this->p[3] = (uint8_t)(v >> 24) & 0xFF;
+        this->p[3] = static_cast<unsigned>(v >> 24) & 0xFF;
         this->p+=4;
     }
 
     void out_uint32_be(unsigned int v) {
-        this->p[0] = (uint8_t)(v >> 24) & 0xFF;
+        this->p[0] = static_cast<unsigned>(v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
         this->p[3] = v & 0xFF;

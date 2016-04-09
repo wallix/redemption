@@ -1161,7 +1161,7 @@ int sftp_packet_write(sftp_session sftp, uint8_t type, ssh_buffer_struct* payloa
     if (size < 0) {
         return -1;
     }
-    else if((uint32_t) size != payload->in_remain()) {
+    else if(static_cast<uint32_t>(size) != payload->in_remain()) {
         syslog(LOG_INFO,
             "Had to write %d bytes, wrote only %d",
             static_cast<uint32_t>(payload->in_remain()),
@@ -1216,9 +1216,9 @@ int ssh_channel_read_stdout(ssh_session_struct * session, ssh_channel channel, v
      * as asked
      */
 
-    int minimumsize = count - channel->stdout_buffer->in_remain();
+    unsigned minimumsize = count - channel->stdout_buffer->in_remain();
     if (minimumsize > channel->local_window) {
-        int new_window = (minimumsize > WINDOWBASE) ? minimumsize : WINDOWBASE;
+        unsigned new_window = (minimumsize > WINDOWBASE) ? minimumsize : WINDOWBASE;
         if (new_window > channel->local_window){
             /* WINDOW_ADJUST packet needs a relative increment rather than an absolute
              * value, so we give here the missing bytes needed to reach new_window
@@ -2124,13 +2124,13 @@ static sftp_attributes sftp_parse_attr_3(sftp_session sftp, ssh_buffer_struct* b
 
     attr->flags = buf->in_uint32_be();
     syslog(LOG_INFO,
-        "Flags: %.8lx\n", (long unsigned int) flags);
+        "Flags: %.8lx\n", static_cast<long unsigned int>(flags));
 
     if (flags & SSH_FILEXFER_ATTR_SIZE) {
       attr->size = buf->in_uint64_be();
       syslog(LOG_INFO,
           "Size: %llu\n",
-          (long long unsigned int) attr->size);
+          static_cast<long long unsigned int>(attr->size));
     }
 
     if (flags & SSH_FILEXFER_ATTR_UIDGID) {
@@ -2717,11 +2717,11 @@ int sftp_seek64(sftp_file file, uint64_t new_offset) {
 
 /* Report current byte position in file. */
 unsigned long sftp_tell(sftp_file file) {
-    return (unsigned long)file->offset;
+    return static_cast<uint64_t>(file->offset);
 }
 /* Report current byte position in file. */
 uint64_t sftp_tell64(sftp_file file) {
-    return (uint64_t) file->offset;
+    return static_cast<uint64_t>(file->offset);
 }
 
 /* Rewinds the position of the file pointer to the beginning of the file.*/
