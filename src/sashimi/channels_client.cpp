@@ -1555,7 +1555,9 @@ static inline void handle_pty_req_request_client(SshClientSession * client_sessi
 
     syslog(LOG_INFO,
       "SSH_MSG_CHANNEL_REQUEST '%s' <%s, %d, %d, %d, %d, %s> for channel %s wr=%d",
-      "pty-req", TERM, (int)width, (int)height, (int)pxwidth, (int)pxheight, modes,
+      "pty-req", TERM,
+      static_cast<int>(width), static_cast<int>(height),
+      static_cast<int>(pxwidth), static_cast<int>(pxheight), modes,
       channel->show(), want_reply);
 
     delete TERM;
@@ -1590,7 +1592,7 @@ static inline void handle_window_change_request_client(SshClientSession * client
 
     syslog(LOG_INFO,
       "SSH_MSG_CHANNEL_REQUEST '%s' <%d, %d, %d, %d> for channel %s wr=%d",
-      "window-change", (int)width, (int)height, (int)pxwidth, (int)pxheight, 
+      "window-change", static_cast<int>(width), static_cast<int>(height), static_cast<int>(pxwidth), static_cast<int>(pxheight), 
       channel->show(), want_reply);
 }
 
@@ -1704,7 +1706,7 @@ void SshClientSession::handle_channel_rcv_request_client(ssh_buffer_struct* pack
     if (channel == NULL) {
         ssh_set_error(error,  SSH_FATAL,
                       "Server specified invalid channel %lu",
-                      (long unsigned int) ntohl(chan));
+                      static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO,"%s", ssh_get_error(&error));
         return;
     }
@@ -2303,7 +2305,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
 
         if (q_s_string_len != CURVE25519_PUBKEY_SIZE){
             ssh_set_error(client_session->error, SSH_FATAL, "Incorrect size for server Curve25519 public key: %d",
-                    (int)q_s_string_len);
+                    static_cast<int>(q_s_string_len));
             client_session->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
         }
@@ -2558,10 +2560,10 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
     }
 
     for (i=0 ; i< n_oid ; ++i){
-        syslog(LOG_INFO,"GSSAPI: i=%u n_oid=%u", (unsigned)i, (unsigned)n_oid);
+        syslog(LOG_INFO,"GSSAPI: i=%u n_oid=%u", static_cast<unsigned>(i), static_cast<unsigned>(n_oid));
         unsigned char *oid_s = oids[i]->data.get();
         size_t len = oids[i]->size;
-        syslog(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", (int)len, SSH_OID_TAG, oid_s[0], oid_s[1]);
+        syslog(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", static_cast<int>(len), SSH_OID_TAG, oid_s[0], oid_s[1]);
         if(len < 2){
             syslog(LOG_WARNING,"GSSAPI: received invalid OID 1");
             continue;
@@ -2570,7 +2572,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
             syslog(LOG_WARNING,"GSSAPI: received invalid OID 2");
             continue;
         }
-        if(((size_t)oid_s[1]) != len - 2){
+        if(static_cast<size_t>(oid_s[1]) != len - 2){
             syslog(LOG_WARNING,"GSSAPI: received invalid OID 3");
             continue;
         }
@@ -2582,7 +2584,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
             oid_count++;
         }
     }
-    syslog(LOG_INFO,"GSSAPI: n_oid loop done i=%u", (unsigned)i);
+    syslog(LOG_INFO,"GSSAPI: n_oid loop done i=%u", static_cast<unsigned>(i));
 
     gss_release_oid_set(&min_stat, &supported);
     if (oid_count == 0){
@@ -2598,14 +2600,14 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
 
     name_buf.value = service_name;
     name_buf.length = strlen(static_cast<const char*>(name_buf.value)) + 1;
-    OM_uint32 maj_stat2 = gss_import_name(&min_stat, &name_buf, (gss_OID) GSS_C_NT_HOSTBASED_SERVICE, &server_name);
+    OM_uint32 maj_stat2 = gss_import_name(&min_stat, &name_buf, static_cast<gss_OID>(GSS_C_NT_HOSTBASED_SERVICE), &server_name);
     if (maj_stat2 != GSS_S_COMPLETE) {
         syslog(LOG_WARNING, "importing name %d, %d", maj_stat2, min_stat);
         gss_buffer_desc buffer;
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat2, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_WARNING, "GSSAPI(%s): %s", "importing name", (const char *)buffer.value);
+        syslog(LOG_WARNING, "GSSAPI(%s): %s", "importing name", static_cast<char *>(buffer.value));
         return -1;
     }
 
@@ -2621,7 +2623,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat3, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_WARNING, "GSSAPI(%s): %s", "acquiring creds", (const char *)buffer.value);
+        syslog(LOG_WARNING, "GSSAPI(%s): %s", "acquiring creds", static_cast<char *>(buffer.value));
 
         
         ssh_auth_reply_denied_client(client_session);
@@ -2778,7 +2780,7 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_INFO, "GSSAPI(%s): %s", "verifying MIC", (const char *)buffer.value);
+        syslog(LOG_INFO, "GSSAPI(%s): %s", "verifying MIC", static_cast<char *>(buffer.value));
     }
 
     {
@@ -2786,7 +2788,7 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, min_stat, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_INFO, "GSSAPI(%s): %s", "verifying MIC (min stat)", (const char *)buffer.value);
+        syslog(LOG_INFO, "GSSAPI(%s): %s", "verifying MIC (min stat)", static_cast<char *>(buffer.value));
     }
 
     
@@ -2851,7 +2853,7 @@ static int ssh_gssapi_send_mic_client(SshClientSession * client_session){
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat,GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_WARNING, "GSSAPI(%s): %s", "generating MIC", (const char *)buffer.value);
+        syslog(LOG_WARNING, "GSSAPI(%s): %s", "generating MIC", static_cast<char *>(buffer.value));
 
         return SSH_ERROR;
     }
@@ -2886,7 +2888,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, 0, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_WARNING, "GSSAPI(%s): %s", "Gssapi error", (const char *)buffer.value);
+        syslog(LOG_WARNING, "GSSAPI(%s): %s", "Gssapi error", static_cast<char *>(buffer.value));
 
         ssh_gssapi_free_client(client_session);
         client_session->gssapi = NULL;
@@ -2898,7 +2900,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, 0, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_WARNING, "GSSAPI(%s): %s", "Gssapi error", (const char *)buffer.value);
+        syslog(LOG_WARNING, "GSSAPI(%s): %s", "Gssapi error", static_cast<char *>(buffer.value));
         ssh_gssapi_free_client(client_session);
         client_session->gssapi = NULL;
         return SSH_PACKET_USED;
@@ -2938,14 +2940,14 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
     OM_uint32 dummy;
     OM_uint32 message_context;
     gss_display_status(&dummy, 0, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-    syslog(LOG_WARNING, "GSSAPI(%s): %s", "accepting token", (const char *)buffer.value);
+    syslog(LOG_WARNING, "GSSAPI(%s): %s", "accepting token", static_cast<char *>(buffer.value));
 
     if (GSS_ERROR(maj_stat1)){
         gss_buffer_desc buffer;
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat1,GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_INFO, "GSSAPI(%s): %s", "Gssapi error", (const char *)buffer.value);
+        syslog(LOG_INFO, "GSSAPI(%s): %s", "Gssapi error", static_cast<char *>(buffer.value));
         
         ssh_gssapi_free_client(client_session);
         client_session->gssapi=NULL;
@@ -3167,7 +3169,7 @@ static inline int ssh_packet_channel_open_fail_client(SshClientSession * client_
     ssh_set_error(client_session->error,  SSH_REQUEST_DENIED,
                   "Channel opening failure: channel %u error (%lu) %*s",
                   channel->local_channel,
-                  (long unsigned int) ntohl(code),
+                  static_cast<long unsigned int>(ntohl(code)),
                   error_s.size, error_s.data.get());
     channel->state = ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN_DENIED;
     return SSH_PACKET_USED;
@@ -3629,7 +3631,7 @@ int ssh_packet_userauth_gssapi_response_client(SshClientSession * client_session
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat,GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_WARNING, "GSSAPI(%s): %s", "Initializing gssapi context", (const char *)buffer.value);
+        syslog(LOG_WARNING, "GSSAPI(%s): %s", "Initializing gssapi context", static_cast<char *>(buffer.value));
 
         return SSH_PACKET_USED;
     }
@@ -3805,7 +3807,7 @@ static inline int ssh2_msg_channel_open_confirmation_client(SshClientSession * c
     if(channel==NULL){
         ssh_set_error(client_session->error,  SSH_FATAL,
                       "Unknown channel id %lu",
-                      (long unsigned int) chan);
+                      static_cast<long unsigned int>(chan));
         /* TODO: Set error marking in channel object */
 
         return SSH_PACKET_USED;
@@ -3821,8 +3823,8 @@ static inline int ssh2_msg_channel_open_confirmation_client(SshClientSession * c
             channel->remote_channel);
     syslog(LOG_INFO,
             "Remote window : %lu, maxpacket : %lu",
-            (long unsigned int) channel->remote_window,
-            (long unsigned int) channel->remote_maxpacket);
+            static_cast<long unsigned int>(channel->remote_window),
+            static_cast<long unsigned int>(channel->remote_maxpacket));
 
     channel->state = ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN;
     channel->flags &= ~SSH_CHANNEL_FLAG_NOT_BOUND;
@@ -3839,7 +3841,7 @@ static inline int channel_rcv_data_stderr_client(SshClientSession * client_sessi
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
     if (channel == NULL) {
         ssh_set_error(error, SSH_FATAL, 
-            "Server specified invalid channel %lu", (long unsigned int) ntohl(chan));
+            "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
 
         return SSH_PACKET_USED;
@@ -3917,7 +3919,7 @@ static inline int channel_rcv_data_client(SshClientSession * client_session, ssh
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
     if (channel == NULL) {
         ssh_set_error(error, SSH_FATAL, 
-            "Server specified invalid channel %lu", (long unsigned int) ntohl(chan));
+            "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
         return SSH_PACKET_USED;
     }
@@ -3993,7 +3995,7 @@ static inline int channel_rcv_close_client(SshClientSession * client_session, ss
     if (channel == NULL) {
         ssh_set_error(client_session->error,  SSH_FATAL,
                       "Server specified invalid channel %lu",
-                      (long unsigned int) ntohl(chan));
+                      static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&client_session->error));
 
         return SSH_PACKET_USED;
@@ -4050,7 +4052,7 @@ static inline int channel_rcv_change_window_client(SshClientSession * client_ses
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
     if (channel == NULL) {
-        ssh_set_error(error, SSH_FATAL, "Server specified invalid channel %lu", (long unsigned int) ntohl(chan));
+        ssh_set_error(error, SSH_FATAL, "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
         syslog(LOG_INFO, "Error getting a window adjust message: invalid packet");
 
@@ -4133,7 +4135,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                  * we need at least one block size, give up
                  */
                 syslog(LOG_INFO, "%s Need more data (got %d, need %d)",
-                     __FUNCTION__, (int)receivedlen, (int)blocksize );
+                     __FUNCTION__, static_cast<int>(receivedlen), static_cast<int>(blocksize));
                 return 0;
             }
             this->in_packet_type = 0;
@@ -4190,7 +4192,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                     return processed;
                 }
 
-                packet = ((uint8_t*)data) + processed;
+                packet = static_cast<const uint8_t*>(data) + processed;
                 this->in_buffer->out_blob(packet, to_be_read - current_macsize);
                 processed += to_be_read - current_macsize;
             }
@@ -4204,7 +4206,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 
                 /* The following check avoids decrypting zero bytes */
                 if (buffer_len > blocksize) {
-                    uint8_t *payload = ((uint8_t*)this->in_buffer->get_pos_ptr() + blocksize);
+                    uint8_t *payload = this->in_buffer->get_pos_ptr() + blocksize;
                     uint32_t plen = buffer_len - blocksize;
 
                     rc = packet_decrypt(*this->current_crypto, payload, plen, this->error);
@@ -4217,7 +4219,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                 }
 
                 /* copy the last part from the incoming buffer */
-                packet = ((uint8_t *)data) + processed;
+                packet = static_cast<const uint8_t*>(data) + processed;
                 memcpy(mac, packet, MACSIZE);
 
                 rc = this->packet_hmac_verify(this->in_buffer, mac);
@@ -4416,7 +4418,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                         if (channel == NULL) {
                             ssh_set_error(this->error,  SSH_FATAL,
                                           "Server specified invalid channel %lu",
-                                          (long unsigned int) ntohl(chan));
+                                          static_cast<long unsigned int>(ntohl(chan)));
                             syslog(LOG_ERR,"Invalid channel in packet");
                         }
                         else {
@@ -4482,7 +4484,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                 }
             }
             syslog(LOG_INFO, "Packet used processed=%d receivedLen=%d", 
-                (int)processed, (int)receivedlen);
+                static_cast<int>(processed), static_cast<int>(receivedlen));
 
             this->packet_state = PACKET_STATE_INIT;
 //            if (processed < receivedlen) {
@@ -5064,7 +5066,12 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
  */
 int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSession * front_session, const char *username, error_struct * error) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    syslog(LOG_INFO, "%s session=%p front_session=%p username=%p agent=%p---", __FUNCTION__, client_session, front_session, username, client_session->agent);    
+    syslog(LOG_INFO, "%s session=%p front_session=%p username=%p agent=%p---",
+        __FUNCTION__,
+        static_cast<void*>(client_session),
+        static_cast<void*>(front_session),
+        reinterpret_cast<const void*>(username),
+        static_cast<void*>(client_session->agent));
 
     if (!client_session->agent) {
         syslog(LOG_INFO, "No agent in session %s ---", __FUNCTION__);    
@@ -5265,7 +5272,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                 request->buffer_add_buffer(&sig_buf);
                 request->out_uint32_be(flags);
 
-                hexdump((char *)(request->get_pos_ptr()), request->in_remain(), 16);
+                hexdump(reinterpret_cast<char*>(request->get_pos_ptr()), request->in_remain(), 16);
 
                 reply = new ssh_buffer_struct;
 
@@ -5696,7 +5703,7 @@ static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_se
 
     if (client_session->gssapi->client.client_deleg_creds == NULL) {
         if (client_session->opts.gss_client_identity != NULL) {
-            namebuf.value = (void *)client_session->opts.gss_client_identity;
+            namebuf.value = client_session->opts.gss_client_identity;
             namebuf.length = strlen(client_session->opts.gss_client_identity);
 
             maj_stat = gss_import_name(&min_stat, &namebuf,
@@ -5799,7 +5806,7 @@ int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
     hostname.value = name_buf;
     hostname.length = strlen(name_buf) + 1;
     maj_stat = gss_import_name(&min_stat, &hostname,
-                               (gss_OID)GSS_C_NT_HOSTBASED_SERVICE,
+                               static_cast<gss_OID>(GSS_C_NT_HOSTBASED_SERVICE),
                                &client_session->gssapi->client.server_name);
     if (maj_stat != GSS_S_COMPLETE) {
         syslog(LOG_WARNING, "importing name %d, %d", maj_stat, min_stat);
@@ -5807,7 +5814,7 @@ int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
         OM_uint32 dummy;
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat,GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        syslog(LOG_WARNING, "GSSAPI(%s): %s", "importing name", (const char *)buffer.value);
+        syslog(LOG_WARNING, "GSSAPI(%s): %s", "importing name", static_cast<char *>(buffer.value));
 
         
         return SSH_PACKET_USED;
@@ -6499,7 +6506,7 @@ void ssh_gssapi_set_creds_client(SshClientSession * client_session, const ssh_gs
     if (client_session->gssapi == nullptr){
         client_session->gssapi = new ssh_gssapi_struct;
     }
-    client_session->gssapi->client.client_deleg_creds = (gss_cred_id_t)creds;
+    client_session->gssapi->client.client_deleg_creds = static_cast<gss_cred_id_t>(creds);
 }
 
 int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channel channel, const char *name, const char *value) 
@@ -6953,7 +6960,7 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
                 return SSH_ERROR;
             }
             syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
-                this->session_state, channel->state);
+                this->session_state, static_cast<int>(channel->state));
             if (this->socket == NULL){
                 return SSH_ERROR;
             }
@@ -6985,13 +6992,13 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
         this->packet_send();
 
         syslog(LOG_INFO,
-                "%s wrote %ld bytes", __FUNCTION__, (long int) effectivelen);
+                "%s wrote %ld bytes", __FUNCTION__, static_cast<long int>(effectivelen));
 
         channel->remote_window -= effectivelen;
         len -= effectivelen;
         data += effectivelen;
     }
-    return (int)(origlen - len);
+    return static_cast<int>(origlen - len);
 
 }
 
@@ -7060,7 +7067,7 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
                 return SSH_ERROR;
             }
             syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
-                this->session_state, channel->state);
+                this->session_state, static_cast<int>(channel->state));
             if (this->socket == NULL){
                 return SSH_ERROR;
             }
@@ -7088,12 +7095,12 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
         this->packet_send();
 
 //        syslog(LOG_INFO,
-//                "channel_write wrote %ld bytes", (long int) effectivelen);
+//                "channel_write wrote %ld bytes", static_cast<long int>(effectivelen));
 
         channel->remote_window -= effectivelen;
         len -= effectivelen;
-        data = ((uint8_t*)data + effectivelen);
+        data = data + effectivelen;
     }
-    return (int)(origlen - len);
+    return static_cast<int>(origlen - len);
 }
 
