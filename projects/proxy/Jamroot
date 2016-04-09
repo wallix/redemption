@@ -600,7 +600,9 @@ import testing ;
 import type ;
 type.register PYTHON : py ;
 
-actions nop { }
+actions id {
+    touch $(<);
+}
 
 import toolset ;
 
@@ -684,7 +686,7 @@ rule test-run ( target : sources + : tested ? : requirements * )
     run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
 
     if ($(tested)) {
-        make $(target:S=.coverage) : $(target) : nop 
+        make $(target:S=.coverage) : $(target) : id 
             : <variant>coverage:<action>@cover 
               <covfile>$(tested) $(requirements)
             ;
