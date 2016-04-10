@@ -199,12 +199,12 @@ public:
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
-        this->p[3] = static_cast<unsigned>(v >> 24) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
         this->p+=4;
     }
 
     void out_uint32_be(unsigned int v) {
-        this->p[0] = static_cast<unsigned>(v >> 24) & 0xFF;
+        this->p[0] = (v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
         this->p[3] = v & 0xFF;
