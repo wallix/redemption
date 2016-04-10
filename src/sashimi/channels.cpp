@@ -158,8 +158,6 @@ char *ssh_get_local_username(void) {
     return name;
 }
 
-
-
 int options_set(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
 {
     const char *v;
@@ -589,6 +587,567 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
 
     return 0;
 }
+
+
+int options_set_host(options_struct & opts, const char *value, error_struct & error)
+{
+    long int i;
+
+    if (value == NULL || value[0] == '\0') {
+        ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+        return -1;
+    } 
+    else {
+        char *q = strdup(value);
+        // TODO: check memory allocation
+        char *p = strchr(q, '@');
+
+        free(opts.host);
+        opts.host = nullptr;
+
+        if (p) {
+            *p = '\0';
+            opts.host = strdup(static_cast<const char*>(p + 1));
+            // TODO: check memory allocation
+
+            free(opts.username);
+            opts.username = strdup(static_cast<const char*>(q));
+            free(q);
+            q = nullptr;
+            // TODO: check memory allocation
+        } 
+        else {
+            opts.host = q;
+        }
+    }
+    return 0;
+}
+
+
+int options_set_port(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                int *x = (int *) value;
+                if (*x <= 0) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.port = *x & 0xffff;
+            }
+    return 0;
+}
+
+
+int options_set_port_str(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                q = strdup(static_cast<const char*>(v));
+                // TODO: check memory allocation
+                i = strtol(q, &p, 10);
+                if (q == p) {
+                    free(q);
+                    q = nullptr;
+                }
+                free(q);
+                q = nullptr;
+                if (i <= 0) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.port = i & 0xffff;
+            }
+
+    return 0;
+}
+
+int options_set_fd(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            if (value == NULL) {
+                opts.fd = SSH_INVALID_SOCKET;
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                socket_t *x = (socket_t *) value;
+                if (*x < 0) {
+                    opts.fd = SSH_INVALID_SOCKET;
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.fd = *x & 0xffff;
+            }
+
+    return 0;
+}
+
+int options_set_bindaddr(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            }
+
+            q = strdup(static_cast<const char*>(v));
+            if (q == NULL) {
+                return -1;
+            }
+            free(opts.bindaddr);
+            opts.bindaddr = q;
+    return 0;
+}
+
+
+int options_set_user(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            v = static_cast<const char*>(value);
+            free(opts.username);
+            opts.username = nullptr;
+            if (v == NULL) {
+                q = ssh_get_local_username();
+                // TODO: check memory allocation
+                opts.username = q;
+            } 
+            else if (v[0] == 0) {
+                return -1;
+            } 
+            else { /* username provided */
+                opts.username = strdup(static_cast<const char*>(value));
+               // TODO: check memory allocation
+            }
+
+    return 0;
+}
+
+int options_set_timeout(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+        case SSH_OPTIONS_TIMEOUT:
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                long *x = (long *) value;
+                if (*x < 0) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.timeout = *x & 0xffffffff;
+            }
+
+    return 0;
+}
+
+int options_set_timeout_usec(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                long *x = (long *) value;
+                if (*x < 0) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.timeout_usec = *x & 0xffffffff;
+            }
+
+    return 0;
+}
+
+int options_set_ssh2(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                int *x = (int *) value;
+                if (*x < 0) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.ssh2 = *x & 0xffff;
+            }
+    return 0;
+}
+
+int options_set_ssh1(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                int *x = (int *) value;
+                if (*x < 0) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.ssh1 = *x;
+            }
+    return 0;
+}
+
+
+int options_set_ssh2(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                int *x = (int *) value;
+                if (*x < 0) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+
+                opts.ssh2 = *x & 0xffff;
+            }
+
+    return 0;
+}
+
+int options_set_cipher_c_s(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } 
+            else {
+                const char * supported_ssh_crypt_c_s = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
+
+                SSHString tmp = find_matching(supported_ssh_crypt_c_s, v, ',');
+                if (tmp.size == 0){
+                    ssh_set_error(error, SSH_REQUEST_DENIED,
+                        "Setting method: no algorithm for method \"%s\" (%s)\n",
+                        "encryption client->server", v);
+                    return -1;
+                }
+
+                free(opts.wanted_methods[SSH_CRYPT_C_S]);
+                opts.wanted_methods[SSH_CRYPT_C_S] = strdup(v);
+            }
+    return 0;
+}
+
+
+int options_set_cipher_s_c(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } 
+            else {
+                const char * supported_ssh_crypt_s_c = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
+
+                SSHString tmp = find_matching(supported_ssh_crypt_s_c, v, ',');
+                if (tmp.size == 0){
+                    ssh_set_error(error, SSH_REQUEST_DENIED,
+                        "Setting method: no algorithm for method \"%s\" (%s)\n",
+                        "encryption server->client", v);
+                    return -1;
+                }
+
+                free(opts.wanted_methods[SSH_CRYPT_S_C]);
+                opts.wanted_methods[SSH_CRYPT_S_C] = strdup(v);
+            }
+
+    return 0;
+}
+
+int options_set_keyexchange(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                const char * supported_ssh_kex =       "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
+
+                SSHString tmp = find_matching(supported_ssh_kex, v, ',');
+                if (tmp.size == 0){
+                    ssh_set_error(error, SSH_REQUEST_DENIED,
+                        "Setting method: no algorithm for method \"%s\" (%s)\n",
+                        "kex algos", v);
+                    return -1;
+                }
+
+                free(opts.wanted_methods[SSH_KEX]);
+                opts.wanted_methods[SSH_KEX] = strdup(v);
+            }
+
+    return 0;
+}
+
+
+int options_set_hostkeys(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            }
+            else {
+                const char * supported_ssh_hostkeys = "ecdsa-sha2-nistp256,ssh-rsa,ssh-dss";
+
+                SSHString tmp = find_matching(supported_ssh_hostkeys, v, ',');
+                if (tmp.size == 0){
+                    ssh_set_error(error, SSH_REQUEST_DENIED,
+                        "Setting method: no algorithm for method \"%s\" (%s)\n",
+                        "server host key algo", v);
+                    return -1;
+                }
+
+                free(opts.wanted_methods[SSH_HOSTKEYS]);
+                opts.wanted_methods[SSH_HOSTKEYS] = strdup(v);
+            }
+    return 0;
+}
+int options_set_compression_c_s(options_struct & opts, enum ssh_options_e type, const void *value, error_struct & error)
+{
+    const char *v;
+    char *p, *q;
+    long int i;
+
+    switch (type) {
+        case SSH_OPTIONS_COMPRESSION_C_S:
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } 
+            else {
+                if (strcasecmp(static_cast<const char*>(value),"yes")==0){
+                    const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
+                    SSHString tmp = find_matching(supported_ssh_comp_c_s, "zlib@openssh.com,zlib", ',');
+                    if (tmp.size == 0){
+                        ssh_set_error(error, SSH_REQUEST_DENIED,
+                            "Setting method: no algorithm for method \"%s\" (%s)\n",
+                            "compression algo client->server",
+                            "zlib@openssh.com,zlib");
+                        return -1;
+                    }
+                    free(opts.wanted_methods[SSH_COMP_C_S]);
+                    opts.wanted_methods[SSH_COMP_C_S] = strdup("zlib@openssh.com,zlib");
+                } else if (strcasecmp(static_cast<const char*>(value),"no")==0){
+                    const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
+                    SSHString tmp = find_matching(supported_ssh_comp_c_s, "none", ',');
+                    if (tmp.size == 0){
+                        ssh_set_error(error, SSH_REQUEST_DENIED,
+                            "Setting method: no algorithm for method \"%s\" (%s)\n",
+                            "compression algo client->server",
+                            "none");
+                        return -1;
+                    }
+                    free(opts.wanted_methods[SSH_COMP_C_S]);
+                    opts.wanted_methods[SSH_COMP_C_S] = strdup("none");
+                } else {
+                    const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
+                    SSHString tmp = find_matching(supported_ssh_comp_c_s, v, ',');
+                    if (tmp.size == 0){
+                        ssh_set_error(error, SSH_REQUEST_DENIED,
+                            "Setting method: no algorithm for method \"%s\" (%s)\n",
+                            "compression algo client->server", v);
+                        return -1;
+                    }
+                    free(opts.wanted_methods[SSH_COMP_C_S]);
+                    opts.wanted_methods[SSH_COMP_C_S] = strdup(v);
+                }
+            }
+            break;
+        case SSH_OPTIONS_COMPRESSION_S_C:
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } 
+            else {
+                if (strcasecmp(static_cast<const char*>(value),"yes")==0){
+                    const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
+                    SSHString tmp = find_matching(supported_ssh_comp_s_c, "zlib@openssh.com,zlib", ',');
+                    if (tmp.size == 0){
+                        ssh_set_error(error, SSH_REQUEST_DENIED,
+                            "Setting method: no algorithm for method \"%s\" (%s)\n",
+                            "compression algo server->client",
+                            "zlib@openssh.com,zlib");
+                        return -1;
+                    }
+                    free(opts.wanted_methods[SSH_COMP_S_C]);
+                    opts.wanted_methods[SSH_COMP_S_C] = strdup("zlib@openssh.com,zlib");
+                } else if (strcasecmp(static_cast<const char*>(value),"no")==0){
+                    const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
+                    SSHString tmp = find_matching(supported_ssh_comp_s_c, "none", ',');
+                    if (tmp.size == 0){
+                        ssh_set_error(error, SSH_REQUEST_DENIED,
+                            "Setting method: no algorithm for method \"%s\" (%s)\n",
+                            "compression algo server->client",
+                            "none");
+                        return -1;
+                    }
+                    free(opts.wanted_methods[SSH_COMP_S_C]);
+                    opts.wanted_methods[SSH_COMP_S_C] = strdup("none");
+                } else {
+                    const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
+                    SSHString tmp = find_matching(supported_ssh_comp_s_c, v, ',');
+                    if (tmp.size == 0){
+                        ssh_set_error(error, SSH_REQUEST_DENIED,
+                            "Setting method: no algorithm for method \"%s\" (%s)\n",
+                            "compression algo server->client", v);
+                        return -1;
+                    }
+                    free(opts.wanted_methods[SSH_COMP_S_C]);
+                    opts.wanted_methods[SSH_COMP_S_C] = strdup(v);
+                }
+            }
+            break;
+        case SSH_OPTIONS_COMPRESSION:
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            }
+            if(options_set(opts, SSH_OPTIONS_COMPRESSION_C_S, v, error) < 0)
+                return -1;
+            if(options_set(opts, SSH_OPTIONS_COMPRESSION_S_C, v, error) < 0)
+                return -1;
+            break;
+        case SSH_OPTIONS_COMPRESSION_LEVEL:
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                int *x = (int *)value;
+                if (*x < 1 || *x > 9) {
+                    ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                    return -1;
+                }
+                opts.compressionlevel = *x & 0xff;
+            }
+            break;
+        case SSH_OPTIONS_STRICTHOSTKEYCHECK:
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                int *x = (int *) value;
+
+                opts.StrictHostKeyChecking = (*x & 0xff) > 0 ? 1 : 0;
+            }
+            opts.StrictHostKeyChecking = *(int*)value;
+            break;
+        case SSH_OPTIONS_GSSAPI_SERVER_IDENTITY:
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                free(opts.gss_server_identity);
+                opts.gss_server_identity = nullptr;
+                opts.gss_server_identity = strdup(static_cast<const char*>(v));
+                // TODO: check memory allocation
+            }
+            break;
+        case SSH_OPTIONS_GSSAPI_CLIENT_IDENTITY:
+            v = static_cast<const char*>(value);
+            if (v == NULL || v[0] == '\0') {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                free(opts.gss_client_identity);
+                opts.gss_client_identity = nullptr;
+                opts.gss_client_identity = strdup(static_cast<const char*>(v));
+                // TODO: check memory allocation
+            }
+            break;
+        case SSH_OPTIONS_GSSAPI_DELEGATE_CREDENTIALS:
+            if (value == NULL) {
+                ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
+                return -1;
+            } else {
+                int x = *(int *)value;
+
+                opts.gss_delegate_creds = (x & 0xff);
+            }
+            break;
+
+        default:
+            ssh_set_error(error, SSH_REQUEST_DENIED, "Unknown ssh option %d", type);
+            return -1;
+            break;
+    }
+
+    return 0;
+}
+
 
 enum ssh_config_opcode_e {
   SOC_UNSUPPORTED = -1,
