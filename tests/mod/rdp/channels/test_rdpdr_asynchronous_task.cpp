@@ -24,8 +24,8 @@
 #define BOOST_TEST_MODULE TestRDPDRAsynchronousTask
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "utils/fdbuf.hpp"
 #include "transport/in_file_transport.hpp"

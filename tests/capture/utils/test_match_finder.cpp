@@ -35,6 +35,28 @@
 
 BOOST_AUTO_TEST_CASE(Testmatch_finder)
 {
-    utils::MatchFinder mf;
-    BOOST_CHECK(true);
+    utils::MatchFinder::NamedRegexArray regexes;
+
+    utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "$kbd:a b \x01 $kbd: c", regexes, 0);
+
+    BOOST_REQUIRE_EQUAL(regexes.size(), 2);
+    BOOST_REQUIRE_EQUAL(regexes.begin()->name, "a b ");
+    BOOST_REQUIRE_EQUAL(regexes.begin()[1].name, " c");
+
+    struct Auth : auth_api {
+        void log4(bool duplicate_with_pid, const char* type, const char* extra) const override {
+            BOOST_CHECK_EQUAL(duplicate_with_pid, false);
+            BOOST_CHECK_EQUAL(type, "NOTIFY_PATTERN_DETECTED");
+            BOOST_CHECK_EQUAL(extra, "pattern='$kbd:c| cacao'");
+        }
+        void report(const char* reason, const char* message) override {
+            BOOST_CHECK_EQUAL(reason, "FINDPATTERN_NOTIFY");
+            BOOST_CHECK_EQUAL(message, "$kbd:c| cacao");
+        }
+        void set_auth_channel_target(const char*) override { BOOST_CHECK(false); }
+        void set_auth_error_message(const char*) override { BOOST_CHECK(false); }
+    };
+
+    Auth auth;
+    utils::MatchFinder::report(auth, false, utils::MatchFinder::KBD_INPUT, "c", " cacao");
 }
