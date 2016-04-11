@@ -205,6 +205,7 @@ public:
                 REDASSERT(this->info_compression_algorithm < CompressionTransportBase::max_algorithm);
 
                 // re-init
+                this->compression_wrapper.~CompressionTransportWrapper();
                 new (&this->compression_wrapper) CompressionInTransportWrapper(
                     *this->trans_source, this->info_compression_algorithm);
                 this->trans = &this->compression_wrapper.get();

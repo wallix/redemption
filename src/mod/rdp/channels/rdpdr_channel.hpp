@@ -1614,8 +1614,7 @@ public:
                                                 message +=
                                                     std::get<2>(*target_iter).c_str();
 
-                                                this->front.session_update(
-                                                    message.c_str());
+                                                this->front.session_update(message);
                                             }
                                         }
 
@@ -1687,8 +1686,7 @@ public:
                                             message +=
                                                 std::get<2>(*target_iter).c_str();
 
-                                            this->front.session_update(
-                                                message.c_str());
+                                            this->front.session_update(message);
                                         }
 
                                         std::get<4>(*target_iter) = true;

@@ -16,13 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Raphael Zhou
-
-   RDPGraphicDevice is an abstract class that describe a device able to
-   proceed RDP Drawing Orders. How the drawing will be actually done
-   depends on the implementation.
-   - It may be sent on the wire,
-   - Used to draw on some internal bitmap,
-   - etc.
 */
 
 #ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
@@ -32,6 +25,7 @@
 
 #include "utils/log.hpp"
 #include "RDPSerializer.hpp"
+#include "gdi/input_pointer_api.hpp"
 #include "gcc.hpp"
 #include "sec.hpp"
 #include "mcs.hpp"
@@ -416,7 +410,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-class GraphicsUpdatePDU : public RDPSerializer {
+class GraphicsUpdatePDU : public RDPSerializer, public gdi::InputPointer {
     StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
     StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
 
@@ -432,8 +426,10 @@ class GraphicsUpdatePDU : public RDPSerializer {
     rdp_mppc_enc * mppc_enc;
     bool           compression;
 
+    Transport & trans;
+
 public:
-    GraphicsUpdatePDU( Transport * trans
+    GraphicsUpdatePDU( Transport & trans
                      , uint16_t & userid
                      , int & shareid
                      , int & encryptionLevel
@@ -452,8 +448,7 @@ public:
                      , bool compression
                      , uint32_t verbose
                      )
-        : RDPSerializer( trans
-                       , this->buffer_stream_orders.get_data_stream()
+        : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
                        , bpp, bmp_cache, gly_cache, pointer_cache
                        , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, ini, verbose)
@@ -464,7 +459,8 @@ public:
         , offset_bitmap_count(0)
         , fastpath_support(fastpath_support)
         , mppc_enc(mppc_enc)
-        , compression(compression) {
+        , compression(compression)
+        , trans(trans) {
         this->init_orders();
         this->init_bitmaps();
     }
@@ -494,7 +490,7 @@ public:
     }
 
 public:
-    void flush() override {
+    void sync() override {
         this->flush_bitmaps();
         this->flush_orders();
     }
@@ -507,7 +503,7 @@ protected:
                    , this->order_count);
             }
 
-            ::send_server_update( *this->trans, this->fastpath_support, this->compression
+            ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid, SERVER_UPDATE_GRAPHICS_ORDERS
                                 , this->order_count, this->buffer_stream_orders, this->verbose);
@@ -527,7 +523,7 @@ protected:
             }
             this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
 
-            ::send_server_update( *this->trans, this->fastpath_support, this->compression
+            ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt
                                 , this->userid, SERVER_UPDATE_GRAPHICS_BITMAP, 0
                                 , this->buffer_stream_bitmaps, this->verbose);
@@ -722,7 +718,7 @@ protected:
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
 
-        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+        ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_COLOR
                             , 0, stream, this->verbose);
@@ -771,7 +767,7 @@ protected:
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         stream.get_data_stream().out_uint16_le(cache_idx);
 
-        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+        ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
                             , 0, stream, this->verbose);
@@ -782,6 +778,8 @@ protected:
     }   // void set_pointer(int cache_idx)
 
 public:
+    using RDPSerializer::set_pointer;
+
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
@@ -791,7 +789,7 @@ public:
         stream.get_data_stream().out_uint16_le(xPos);
         stream.get_data_stream().out_uint16_le(yPos);
 
-        ::send_server_update( *this->trans, this->fastpath_support, this->compression
+        ::send_server_update( this->trans, this->fastpath_support, this->compression
                             , this->mppc_enc, this->shareid, this->encryptionLevel
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
                             , 0, stream, this->verbose);

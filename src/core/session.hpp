@@ -186,7 +186,7 @@ public:
 
                 add_to_fd_set(this->front->get_event(), &front_trans, rfds, max, timeout);
                 if (this->front->capture) {
-                    add_to_fd_set(this->front->capture->capture_event, nullptr, rfds, max, timeout);
+                    add_to_fd_set(this->front->capture->get_capture_event(), nullptr, rfds, max, timeout);
                 }
                 if (this->client) {
                     this->client->add_to_fd_set(rfds, max, timeout);
@@ -322,7 +322,7 @@ public:
                                 }
                             }
                         }
-                        if (this->front->capture && is_set(this->front->capture->capture_event, nullptr, rfds)) {
+                        if (this->front->capture && is_set(this->front->capture->get_capture_event(), nullptr, rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl

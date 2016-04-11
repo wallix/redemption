@@ -16,13 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Jonathan Poelen, Raphael Zhou
-
-   RDPGraphicDevice is an abstract class that describe a device able to
-   proceed RDP Drawing Orders. How the drawing will be actually done
-   depends on the implementation.
-   - It may be sent on the wire,
-   - Used to draw on some internal bitmap,
-   - etc.
 */
 
 #ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
@@ -34,9 +27,12 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "RDP/share.hpp"
-#include "RDP/RDPDrawable.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
+
+#include "gdi/dump_png24.hpp"
+#include "gdi/kbd_input_api.hpp"
+#include "gdi/capture_probe_api.hpp"
 
 
 template <size_t SZ>
@@ -80,7 +76,10 @@ private:
     }
 };
 
-class GraphicToFile : public RDPSerializer, public RDPCaptureDevice
+class GraphicToFile
+: public RDPSerializer
+, public gdi::KbdInputApi
+, public gdi::CaptureProbeApi
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
@@ -99,11 +98,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     timeval timer;
     const uint16_t width;
     const uint16_t height;
-    const uint8_t  capture_bpp;
     uint16_t mouse_x;
     uint16_t mouse_y;
     const bool send_input;
-    RDPDrawable & drawable;
+    gdi::DumpPng24Api & dump_png24_api;
 
 
     uint8_t keyboard_buffer_32_buf[GTF_SIZE_KEYBUF_REC * sizeof(uint32_t)];
@@ -120,33 +118,30 @@ public:
     enum class SendInput { NO, YES };
 
     GraphicToFile(const timeval & now
-                , Transport * trans
+                , Transport & trans
                 , const uint16_t width
                 , const uint16_t height
                 , const uint8_t  capture_bpp
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
-                , RDPDrawable & drawable
+                , gdi::DumpPng24Api & dump_png24
                 , const Inifile & ini
                 , SendInput send_input = SendInput::NO
                 , uint32_t verbose = 0)
-    : RDPSerializer( trans, this->buffer_stream_orders
-                   , this->buffer_stream_bitmaps, capture_bpp, bmp_cache, gly_cache, ptr_cache,
-                   0, 1, 1, 32 * 1024, ini)
-    , RDPCaptureDevice()
-    , compression_wrapper(*trans, ini.get<cfg::video::wrm_compression_algorithm>())
-    , trans_target(*trans)
+    : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
+                   , bmp_cache, gly_cache, ptr_cache, 0, 1, 1, 32 * 1024, ini)
+    , compression_wrapper(trans, ini.get<cfg::video::wrm_compression_algorithm>())
+    , trans_target(trans)
     , trans(this->compression_wrapper.get())
     , last_sent_timer()
     , timer(now)
     , width(width)
     , height(height)
-    , capture_bpp(capture_bpp)
     , mouse_x(0)
     , mouse_y(0)
     , send_input(send_input == SendInput::YES)
-    , drawable(drawable)
+    , dump_png24_api(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , ini(ini)
     , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
@@ -166,7 +161,7 @@ public:
     }
 
     void dump_png24(Transport & trans, bool bgr) const {
-        this->drawable.dump_png24(trans, bgr);
+        this->dump_png24_api.dump_png24(trans, bgr);
     }
 
     REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event");
@@ -182,22 +177,23 @@ public:
         }
     }
 
-    virtual void mouse(uint16_t mouse_x, uint16_t mouse_y)
+    void mouse(uint16_t mouse_x, uint16_t mouse_y)
     {
         this->mouse_x = mouse_x;
         this->mouse_y = mouse_y;
     }
 
-    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
-        uint32_t count  = data_sz / sizeof(uint32_t);
-
-        size_t c = std::min<size_t>(count, keyboard_buffer_32.tailroom() / sizeof(uint32_t));
-        keyboard_buffer_32.out_copy_bytes(input_data_32, c * sizeof(uint32_t));
-
+    bool kbd_input(const timeval & now, uint32_t uchar) override {
+        if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
+            keyboard_buffer_32.out_uint32_le(uchar);
+        }
         return true;
     }
 
-    void send_meta_chunk(void)
+    void enable_kbd_input_mask(bool) override {
+    }
+
+    void send_meta_chunk()
     {
         const BmpCache::cache_ & c0 = this->bmp_cache.get_cache(0);
         const BmpCache::cache_ & c1 = this->bmp_cache.get_cache(1);
@@ -242,7 +238,7 @@ public:
     void send_image_chunk(void)
     {
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
-        this->drawable.dump_png24(png_trans, false);
+        this->dump_png24_api.dump_png24(png_trans, false);
     }
 
     void send_reset_chunk()
@@ -342,7 +338,7 @@ public:
 
         OutChunkedBufferingTransport<65536> png_trans(this->trans);
 
-        this->drawable.dump_png24(png_trans, true);
+        this->dump_png24_api.dump_png24(png_trans, true);
 
         this->send_caches_chunk();
     }
@@ -366,96 +362,6 @@ public:
         this->stream_orders.rewind();
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect &clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->drawable.draw(cmd, clip, bmp);
-        this->RDPSerializer::draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->drawable.draw(cmd, clip, bmp);
-        this->RDPSerializer::draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        this->drawable.draw(cmd, clip, gly_cache);
-        this->RDPSerializer::draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPPolyline& cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {}
-    void draw(const RDP::RAIL::WindowIcon          & order) override {}
-    void draw(const RDP::RAIL::CachedIcon          & order) override {}
-    void draw(const RDP::RAIL::DeletedWindow       & order) override {}
-
 protected:
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
@@ -467,22 +373,10 @@ protected:
     }
 
 public:
-    void flush() override {
+    void sync() override {
         this->flush_bitmaps();
         this->flush_orders();
     }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override {
-        this->drawable.draw(bitmap_data, data, size, bmp);
-        this->RDPSerializer::draw(bitmap_data, data, size, bmp);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->drawable.draw(order);
-        this->RDPSerializer::draw(order);
-    }
-
-    using RDPSerializer::draw;
 
     void send_bitmaps_chunk()
     {
@@ -490,11 +384,6 @@ public:
         this->trans.send(this->stream_bitmaps.get_data(), this->stream_bitmaps.get_offset());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
-    }
-
-    void server_set_pointer(const Pointer & cursor) override {
-        this->drawable.server_set_pointer(cursor);
-        this->RDPSerializer::server_set_pointer(cursor);
     }
 
 protected:
@@ -536,8 +425,8 @@ protected:
     }
 
 public:
-    void session_update(const timeval & now, const char * message) override {
-        uint16_t message_length = ::strlen(message) + 1;    // Null-terminator is included.
+    void session_update(timeval const & now, array_const_char const & message) override {
+        uint16_t message_length = message.size() + 1;       // Null-terminator is included.
 
         StaticOutStream<16> payload;
         payload.out_timeval_to_uint64le_usec(now);
@@ -545,10 +434,15 @@ public:
 
         send_wrm_chunk(this->trans, SESSION_UPDATE, payload.get_offset() + message_length, 1);
         this->trans.send(payload.get_data(), payload.get_offset());
-        this->trans.send(message, message_length);
+        this->trans.send(message.data(), message.size());
+        this->trans.send("\0", 1);
 
         this->last_sent_timer = this->timer;
     }
+
+    void possible_active_window_change() override {}
+
+    using RDPSerializer::set_pointer;
 };  // struct GraphicToFile
 
 #endif

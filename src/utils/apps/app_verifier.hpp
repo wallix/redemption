@@ -59,7 +59,7 @@ class ReaderLine2
     int read(int err)
     {
         ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
-        
+
         if (ret < 0 && errno != EINTR) {
             return -ERR_TRANSPORT_READ_FAILED;
         }
@@ -143,7 +143,7 @@ HashHeader read_hash_headers(ReaderLine2<Reader> & reader)
 }
 
 template<class Reader>
-int read_meta_file_v1(ReaderLine2<Reader> & reader, MetaLine2 & meta_line) 
+int read_meta_file_v1(ReaderLine2<Reader> & reader, MetaLine2 & meta_line)
 {
     char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
     ssize_t len = reader.read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
@@ -412,7 +412,7 @@ namespace transbuf {
 
                     err = this->cfb_file_read(ciphered_buf, ciphered_buf_size);
 
-                    // len ? 
+                    // len ?
                     if (err != ssize_t(ciphered_buf_size)){
                         return err < 0 ? err : -1;
                     }
@@ -529,7 +529,7 @@ namespace transbuf {
                 }
                 remaining_len -= ret;
             }
-            return len - remaining_len;        
+            return len - remaining_len;
         }
 
 
@@ -552,14 +552,14 @@ namespace transbuf {
 
                 this->cfb_file_close();
                 this->cfb_file_fd = ::open(filename, O_RDONLY);
-                
+
                 if (this->cfb_file_fd < 0) {
                     return this->cfb_file_fd;
                 }
 
                 size_t base_len = 0;
                 const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-                
+
                 unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
                 cctx->get_derived_key(trace_key, base, base_len);
 
@@ -640,7 +640,7 @@ namespace transbuf {
         }
 
         bool is_open() const noexcept
-        { 
+        {
             return this->cfb_file_is_open();
         }
     };
@@ -811,7 +811,7 @@ static inline int check_encrypted_or_checksumed(
         if (res < 0){
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
-    
+
         struct ReaderBuf1
         {
             transbuf::ifile_buf & buf;
@@ -857,7 +857,7 @@ static inline int check_encrypted_or_checksumed(
                     }
 
                     ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
-                    
+
                     if (ret < 0 && errno != EINTR) {
                         return -ERR_TRANSPORT_READ_FAILED;
                     }
@@ -876,7 +876,7 @@ static inline int check_encrypted_or_checksumed(
                 while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
 
                     ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
-                    
+
                     if (ret < 0 && errno != EINTR) {
                         return -ERR_TRANSPORT_READ_FAILED;
                     }
@@ -975,7 +975,7 @@ static inline int check_encrypted_or_checksumed(
                 //         ^
                 //         |
                 //     separator
-                if (!memcmp(temp_buffer, input_filename.c_str(), filename_len) 
+                if (!memcmp(temp_buffer, input_filename.c_str(), filename_len)
                 // Separator
                 &&  (temp_buffer[filename_len] == ' ')) {
 
@@ -1059,7 +1059,7 @@ static inline int check_encrypted_or_checksumed(
                   , sizeof(cctx->get_hmac_key())
                   , (quick_check ? QUICK_CHECK_LENGTH : 0)
                   , is_status_enabled
-                  , hash_line) == true) 
+                  , hash_line) == true)
     {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         if (ifile.open(full_mwrm_filename.c_str()) < 0) {
@@ -1093,10 +1093,10 @@ static inline int check_encrypted_or_checksumed(
 
 
             size_t tmp_wrm_filename_len = 0;
-            const char * tmp_wrm_filename = 
+            const char * tmp_wrm_filename =
                     basename_len(meta_line_wrm.filename
                                 , tmp_wrm_filename_len);
-            
+
             std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
 
             if (check_file( meta_line_wrm_filename
@@ -1115,7 +1115,7 @@ static inline int check_encrypted_or_checksumed(
 
     if (!result){
         std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
-        return 1;;
+        return 1;
     }
 
     std::cout << "No error detected during the data verification." << std::endl << std::endl;

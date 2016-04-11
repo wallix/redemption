@@ -60,9 +60,8 @@
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/bmpcachepersister.hpp"
 #include "RDP/caches/glyphcache.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
 
-class RDPGraphicDevice;
+#include "gdi/graphic_api.hpp"
 
 /* orders */
 class rdp_orders {
@@ -264,7 +263,7 @@ public:
 
 private:
     void process_framemarker( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
-                            , RDPGraphicDevice & gd) {
+                            , gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_framemarker");
         }
@@ -277,7 +276,7 @@ private:
     }
 
     void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
-                                   , RDPGraphicDevice & gd) {
+                                   , gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");
         }
@@ -375,7 +374,7 @@ private:
         }
     }
 
-    void process_colormap(InStream & stream, const RDPSecondaryOrderHeader & header, RDPGraphicDevice & gd) {
+    void process_colormap(InStream & stream, const RDPSecondaryOrderHeader & header, gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_colormap");
         }
@@ -391,7 +390,7 @@ private:
 
 public:
     /*****************************************************************************/
-    int process_orders(uint8_t bpp, InStream & stream, bool fast_path, RDPGraphicDevice & gd,
+    int process_orders(uint8_t bpp, InStream & stream, bool fast_path, gdi::GraphicApi & gd,
                        uint16_t front_width, uint16_t front_height) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_orders bpp=%u", bpp);
@@ -464,7 +463,7 @@ public:
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
                     //this->glyph_index.log(LOG_INFO, cmd_clip);
-                    gd.draw(this->glyph_index, cmd_clip, &this->gly_cache);
+                    gd.draw(this->glyph_index, cmd_clip, this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
@@ -578,7 +577,7 @@ public:
             LOG(LOG_INFO, "process_orders done");
         }
         return 0;
-    }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, RDPGraphicDevice & gd)
+    }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, gdi::GraphicApi & gd)
 };
 
 #endif

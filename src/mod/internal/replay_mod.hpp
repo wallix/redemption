@@ -26,7 +26,6 @@
 #define REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
 
 #include "FileToGraphic.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
@@ -84,11 +83,9 @@ public:
         TODO("This use of cctx for replay will lead to memory leak because the object is never deallocated, fix that");
         CryptoContext * cctx = new CryptoContext(rnd, ini); // cctx will not be really used
         this->in_trans = new InMetaSequenceTransport(cctx, prefix, extension, 0, 0);
-        
-        
-        
-        timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-        timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+
+        timeval const begin_capture{0, 0};
+        timeval const end_capture{0, 0};
         this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true, debug_capture);
 
         switch (this->front.server_resize( this->reader->info_width
@@ -113,8 +110,7 @@ public:
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
 
-        this->reader->add_consumer(&this->front, nullptr);
-        this->front.send_global_palette();
+        this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr);
     }
 
     ~ReplayMod() override {
@@ -160,7 +156,7 @@ public:
                     this->event.set(1);
                 }
                 else {
-                    this->front.flush();
+                    this->front.sync();
 
                     if (!this->wait_for_escape) {
                         this->event.signal = BACK_EVENT_STOP;

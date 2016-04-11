@@ -53,6 +53,8 @@
 #include "utils/rect.hpp"
 #include "bitmap_data_allocator.hpp"
 
+#include "array_view.hpp"
+
 using std::size_t;
 
 class Bitmap
@@ -785,6 +787,14 @@ public:
 
     size_t bmp_size() const noexcept {
         return this->data_bitmap->bmp_size();
+    }
+
+    array_view<uint8_t const> data_compressed() const noexcept {
+        return {this->data_bitmap->compressed_data(), this->data_bitmap->compressed_size()};
+    }
+
+    bool has_data_compressed() const noexcept {
+        return this->data_bitmap->compressed_size();
     }
 
     bool open_png_file(const char * filename) {

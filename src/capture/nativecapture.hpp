@@ -22,13 +22,14 @@
 #ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 
-#include "CaptureDevice.hpp"
 #include "utils/difftimeval.hpp"
-#include "GraphicToFile.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/dump_png24.hpp"
 
-class NativeCapture : public RDPGraphicDevice, public RDPCaptureDevice
+class NativeCapture
+: public gdi::CaptureApi
 {
-public:
     uint64_t frame_interval;
     timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
@@ -37,24 +38,13 @@ public:
     timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
-    GraphicToFile recorder;
-    uint32_t nb_file;
+    GraphicToFile & recorder;
     uint64_t time_to_wait;
 
-    bool disable_keyboard_log_wrm;
-
-    typedef GraphicToFile::SendInput SendInput;
-
-    bool keyboard_input_mask_enabled = false;
-
-    NativeCapture( const timeval & now, Transport & trans, int width, int height, int capture_bpp, BmpCache & bmp_cache
-                 , GlyphCache & gly_cache, PointerCache & ptr_cache, RDPDrawable & drawable, const Inifile & ini
-                 , SendInput send_input = SendInput::NO)
-    : recorder( now, &trans, width, height, capture_bpp, bmp_cache, gly_cache, ptr_cache, drawable, ini, send_input
-              , ini.get<cfg::debug::capture>())
-    , nb_file(0)
+public:
+    NativeCapture( GraphicToFile & recorder, const timeval & now, const Inifile & ini)
+    : recorder(recorder)
     , time_to_wait(0)
-    , disable_keyboard_log_wrm(bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm))
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -69,10 +59,10 @@ public:
     }
 
     ~NativeCapture() override {
-        this->recorder.flush();
+        this->recorder.sync();
     }
 
-    void update_config(const Inifile & ini)
+    void update_config(const Inifile & ini) override
     {
         if (ini.get<cfg::video::frame_interval>() != this->frame_interval){
             // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
@@ -86,8 +76,10 @@ public:
         }
     }
 
-    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
-                          bool const & requested_to_stop) override {
+    void pause_capture(const timeval& now) override {}
+    void resume_capture(const timeval& now) override {}
+
+    std::chrono::microseconds snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) override {
         if (difftimeval(now, this->start_native_capture)
                 >= this->inter_frame_interval_native_capture) {
             this->recorder.timestamp(now);
@@ -103,145 +95,17 @@ public:
         else {
             this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
         }
+        return std::chrono::microseconds{this->time_to_wait};
     }
 
-    void flush() override {
-        this->recorder.flush();
-    }
-
-    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
-        if (!this->disable_keyboard_log_wrm) {
-            if (this->keyboard_input_mask_enabled) {
-                StaticOutStream<256> decoded_data;
-                for (unsigned char_count = data_sz / sizeof(uint32_t);
-                     char_count > 0; char_count--) {
-                    if (decoded_data.has_room(sizeof(uint32_t))) {
-                        decoded_data.out_uint32_le('*');
-                    }
-                }
-                return this->recorder.input(now, decoded_data.get_data(), decoded_data.get_offset());
-            }
-
-            return this->recorder.input(now, input_data_32, data_sz);
-        }
-
-        return true;
-    }
-
-    void enable_keyboard_input_mask(bool enable) {
-        this->keyboard_input_mask_enabled = enable;
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->recorder.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->recorder.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        this->recorder.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-            size_t size, const Bitmap & bmp) override {
-        this->recorder.draw(bitmap_data, data, size, bmp);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        this->recorder.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->recorder.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->recorder.draw(order);
-    }
-
-    using RDPGraphicDevice::draw;
-
-    void server_set_pointer(const Pointer & cursor) override {
-        this->recorder.server_set_pointer(cursor);
-    }
-
+    // toggles externally genareted breakpoint.
     void external_breakpoint() override {
         this->recorder.breakpoint();
     }
 
     void external_time(const timeval & now) override {
-        this->recorder.flush();
+        this->recorder.sync();
         this->recorder.timestamp(now);
-    }
-
-    void session_update(const timeval & now, const char * message) override {
-        this->recorder.session_update(now, message);
     }
 };
 

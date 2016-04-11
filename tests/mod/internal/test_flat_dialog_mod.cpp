@@ -27,8 +27,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "internal/flat_dialog_mod.hpp"
 #include "../../front/fake_front.hpp"
@@ -102,23 +102,22 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
 
 
-    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
 
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 16; // key is 'a'
 
-    keymap.event(keyboardFlags, keyCode + 1, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     keymap.push_kevent(Keymap2::KEVENT_ENTER);

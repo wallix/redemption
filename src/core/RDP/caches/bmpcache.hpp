@@ -33,11 +33,11 @@
 using std::size_t;
 
 struct BmpCache {
-    
+
     enum {
         MAXIMUM_NUMBER_OF_CACHES = 5
     };
-    
+
     enum {
         IN_WAIT_LIST = 0x80
     };

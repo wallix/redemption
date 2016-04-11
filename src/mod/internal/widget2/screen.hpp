@@ -136,10 +136,10 @@ public:
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
             if (((w != nullptr) ? w->pointer_flag : Pointer::POINTER_NORMAL) == Pointer::POINTER_EDIT) {
-                this->drawable.server_set_pointer(edit_pointer);
+                this->drawable.set_pointer(edit_pointer);
             }
             else {
-                this->drawable.server_set_pointer(normal_pointer);
+                this->drawable.set_pointer(normal_pointer);
             }
             this->current_over = w;
         }

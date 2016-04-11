@@ -286,7 +286,7 @@ public:
 
 private:
     static constexpr const std::array<const char *, 3> cliprde_list() {
-        
+
         return {{"cliprdr_up,", "cliprdr_down,", "cliprdr_file,"}};
     }
     static constexpr const std::array<const char *, 5> rdpdr_list() {
@@ -371,8 +371,8 @@ private:
     std::array<bool, 5> rdpdr_restriction_ {{}};
     std::array<bool, 3> cliprdr_restriction_ {{}};
     std::array<bool, 1> rdpsnd_restriction_ {{}};
-    
-    
+
+
 };
 
 

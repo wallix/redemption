@@ -51,55 +51,45 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     } auth;
 
     timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, nullptr, nullptr, false, false);
-
-    const unsigned char input[] = {'a', 0, 0, 0};
-    const std::size_t input_sz = std::end(input) - std::begin(input);
-    MemoryTransport trans;
+    SessionLogKbd kbd_capture(auth);
 
     {
-        kbd_capture.input(time, input, input_sz);
+        kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
-        kbd_capture.send_session_data();
         BOOST_CHECK_EQUAL(auth.s.size(), 8);
         BOOST_CHECK_EQUAL("data='a'", auth.s);
-        trans.out_stream.rewind();
-        kbd_capture.send_data(trans);
-        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 1);
-        BOOST_CHECK_EQUAL('a', *trans.out_stream.get_data());
     }
 
-    kbd_capture.enable_keyboard_input_mask(true);
+    kbd_capture.enable_kbd_input_mask(true);
     auth.s.clear();
 
     {
-        kbd_capture.input(time, input, input_sz);
+        kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
-        kbd_capture.send_session_data();
         // prob is not enabled
         BOOST_CHECK_EQUAL(auth.s.size(), 0);
-        trans.out_stream.rewind();
-        kbd_capture.send_data(trans);
-        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 1);
-        BOOST_CHECK_EQUAL('*', *trans.out_stream.get_data());
     }
 
-    kbd_capture.enable_keyboard_input_mask(false);
+    kbd_capture.enable_kbd_input_mask(false);
     auth.s.clear();
 
     {
-        kbd_capture.input(time, input, input_sz);
-        kbd_capture.enable_keyboard_input_mask(true);
-        kbd_capture.input(time, input, input_sz);
+        kbd_capture.kbd_input(time, 'a');
+
+        BOOST_CHECK_EQUAL(auth.s.size(), 0);
+
+        kbd_capture.enable_kbd_input_mask(true);
+
+        BOOST_CHECK_EQUAL(auth.s.size(), 8);
+        BOOST_CHECK_EQUAL("data='a'", auth.s);
+        auth.s.clear();
+
+        kbd_capture.kbd_input(time, 'a');
         kbd_capture.flush();
 
-        trans.out_stream.rewind();
-        kbd_capture.send_data(trans);
-        BOOST_CHECK_EQUAL(trans.out_stream.get_offset(), 2);
-        BOOST_CHECK_EQUAL('a', trans.out_stream.get_data()[0]);
-        BOOST_CHECK_EQUAL('*', trans.out_stream.get_data()[1]);
+        BOOST_CHECK_EQUAL(auth.s.size(), 0);
     }
 }
 
@@ -121,20 +111,17 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         void log4(bool, const char*, const char*) const override {}
     } auth;
 
-    timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, "$kbd:abcd", nullptr, false, false);
+    PatternKbd kbd_capture(&auth, "$kbd:abcd", nullptr);
 
-    unsigned char input[] = {0, 0, 0, 0};
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
-    unsigned count_ok = 0;
+    unsigned pattern_count = 0;
     for (auto c : str) {
-        input[0] = c;
-        if (!kbd_capture.input(time, input, 4)) {
-            ++count_ok;
+        if (!kbd_capture.kbd_input({0, 0}, c)) {
+            ++pattern_count;
         }
     }
-    kbd_capture.flush();
-    BOOST_CHECK_EQUAL(4, count_ok);
+
+    BOOST_CHECK_EQUAL(4, pattern_count);
     BOOST_CHECK_EQUAL(
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
         "FINDPATTERN_KILL -- $kbd:abcd|abcd\n"
@@ -148,10 +135,10 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
     struct : auth_api {
-        bool kill = 0;
+        bool is_killed = 0;
 
         void report(const char* , const char* ) override {
-            this->kill = 1;
+            this->is_killed = 1;
         }
 
         void set_auth_channel_target(const char*) override {}
@@ -159,19 +146,15 @@ BOOST_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         void log4(bool, const char*, const char*) const override {}
     } auth;
 
-    timeval const time = {0, 0};
-    NewKbdCapture kbd_capture(time, &auth, "$kbd:ab/cd", nullptr, false, false);
+    PatternKbd kbd_capture(&auth, "$kbd:ab/cd", nullptr);
 
-    unsigned char input[] = {0, 0, 0, 0};
     char const str[] = "abcdab/cdaa";
-    unsigned count_ok = 0;
+    unsigned pattern_count = 0;
     for (auto c : str) {
-        input[0] = c;
-        if (!kbd_capture.input(time, input, 4)) {
-            ++count_ok;
+        if (!kbd_capture.kbd_input({0, 0}, c)) {
+            ++pattern_count;
         }
     }
-    kbd_capture.flush();
-    BOOST_CHECK_EQUAL(1, count_ok);
-    BOOST_CHECK_EQUAL(auth.kill, true);
+    BOOST_CHECK_EQUAL(1, pattern_count);
+    BOOST_CHECK_EQUAL(auth.is_killed, true);
 }

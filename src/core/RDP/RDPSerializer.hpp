@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Raphael Zhou
 
-   RDPSerializer is an implementation of RDPGraphicDevice that know how to serialize RDP Orders
+   RDPSerializer is an implementation of GraphicApi that know how to serialize RDP Orders
    and send them on the wire or store them in a file (actual storage will be provided as a Transport class).
    Serialized RDP orders are put in a chunk and sent when flush is called (either explicit call or because
    the provided buffer is full).
@@ -90,7 +90,6 @@
 
 #include "configs/config.hpp"
 
-#include "RDPGraphicDevice.hpp"
 #include "bitmapupdate.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
@@ -113,33 +112,26 @@
 
 #include "capture/utils/save_state_chunk.hpp"
 
-struct RDPSerializer : public RDPGraphicDevice
+#include "gdi/graphic_api.hpp"
+
+struct RDPSerializer
+: public gdi::GraphicApi
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
-    enum { MAX_ORDERS_SIZE = 16384,
-           MAX_BITMAP_SIZE_8K = 8192,
-           MAX_BITMAP_SIZE_64K = 65536
-    };
-
-    using RDPGraphicDevice::draw;
+    enum { MAX_ORDERS_SIZE = 16384, };
 
 protected:
     OutStream & stream_orders;
     OutStream & stream_bitmaps;
 
-private:
-    uint8_t bpp;
+    const uint8_t capture_bpp;
 
-protected:
-    Transport * trans;
-
-protected:
     const Inifile & ini;
 
 private:
     const int bitmap_cache_version;
-    const int use_bitmap_comp;
-    const int op2;
+    const bool use_bitmap_comp;
+    const bool use_compact_packets;
     const size_t max_bitmap_size;
 
 protected:
@@ -161,28 +153,26 @@ protected:
     const uint32_t verbose;
 
 public:
-    RDPSerializer( Transport * trans
-                 , OutStream & stream_orders
+    RDPSerializer( OutStream & stream_orders
                  , OutStream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
                  , GlyphCache & glyph_cache
                  , PointerCache & pointer_cache
                  , const int bitmap_cache_version
-                 , const int use_bitmap_comp
-                 , const int op2
+                 , const bool use_bitmap_comp
+                 , const bool use_compact_packets
                  , size_t max_bitmap_size
                  , const Inifile & ini
                  , uint32_t verbose = 0)
-    : RDPGraphicDevice()
+    : GraphicApi(gdi::GraphicDepth::unspecified())
     , stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
-    , bpp(bpp)
-    , trans(trans)
+    , capture_bpp(bpp)
     , ini(ini)
     , bitmap_cache_version(bitmap_cache_version)
     , use_bitmap_comp(use_bitmap_comp)
-    , op2(op2)
+    , use_compact_packets(use_compact_packets)
     , max_bitmap_size(max_bitmap_size)
     // Internal state of orders
     , polygonSC()
@@ -194,7 +184,9 @@ public:
     , bmp_cache(bmp_cache)
     , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)
-    , verbose(verbose) {}
+    , verbose(verbose) {
+
+    }
 
     ~RDPSerializer() override {}
 
@@ -350,8 +342,8 @@ protected:
             this->bmp_cache.is_cache_persistent(cache_id), in_wait_list,
             this->ini.get<cfg::debug::secondary_orders>());
         this->reserve_order(cmd_cache.bmp.bmp_size() + 16);
-        cmd_cache.emit( this->bpp, this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
-                      , this->op2);
+        cmd_cache.emit( this->capture_bpp, this->stream_orders, this->bitmap_cache_version
+                      , this->use_bitmap_comp, this->use_compact_packets);
 
         if (this->ini.get<cfg::debug::secondary_orders>()) {
             cmd_cache.log(LOG_INFO);
@@ -432,10 +424,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-        const GlyphCache * gly_cache) override {
-        REDASSERT(gly_cache);
-
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
             uint16_t delta = cmd.data[i++];
             if (delta == 0x80) {
@@ -452,7 +441,7 @@ public:
         for (uint8_t i = 0; i < new_cmd.data_len; ) {
             if (new_cmd.data[i] <= 0xFD) {
                 //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                FontChar const & fc = gly_cache->glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                FontChar const & fc = gly_cache.glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
                 REDASSERT(fc);
 
                 int cacheIndex;
@@ -668,18 +657,19 @@ public:
         this->bitmap_count++;
     }
 
-    void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) override {
-        this->reserve_bitmap(bitmap_data.struct_size() + size);
+    void draw( const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        REDASSERT(bmp.has_data_compressed());
+        auto data_compressed = bmp.data_compressed();
+        this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
 
         bitmap_data.emit(this->stream_bitmaps);
-        this->stream_bitmaps.out_copy_bytes(data, size);
+        this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
         if (this->ini.get<cfg::debug::bitmap_update>()) {
             bitmap_data.log(LOG_INFO, "RDPSerializer");
         }
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -697,6 +687,9 @@ public:
         break;
         }
     }
+
+    // TODO
+    void set_palette(const BGRPalette& palette) override {}
 };
 
 #endif

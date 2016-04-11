@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                  );
 
         Rect rect_clip(0, 0, 1024, 768);
-        gd.draw(glyph_index, rect_clip, &gly_cache);
+        gd.draw(glyph_index, rect_clip, gly_cache);
 
         RDPGlyphIndex glyph_index_1(7,                              // cacheId
                                     3,                              // flAccel
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestDrawGlyphIndex)
                                     byte_ptr_cast("\xfe\x00\x00")   // rgbData
                                    );
 
-        gd.draw(glyph_index, rect_clip, &gly_cache);
+        gd.draw(glyph_index, rect_clip, gly_cache);
     }
 
     char message[1024];

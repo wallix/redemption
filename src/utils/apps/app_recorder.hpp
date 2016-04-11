@@ -34,7 +34,7 @@
 #include "recording_progress.hpp"
 #include "utils/iter.hpp"
 #include "program_options/program_options.hpp"
-#include "auth_api.hpp" 
+#include "auth_api.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -231,16 +231,15 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , const timeval begin_capture, const timeval end_capture, std::string const & output_filename
                     , int capture_bpp, int wrm_compression_algorithm_
 
-                    , bool clear_png
+                    , bool enable_rt
                     , bool no_timestamp
                     , auth_api * authentifier
                     , Inifile & ini, Random & rnd, CryptoContext & cctx
-                    
+
                     , unsigned file_count, uint32_t order_count, uint32_t clear, unsigned zoom
                     , unsigned png_width, unsigned png_height
                     , bool show_file_metadata, bool show_statistics, uint32_t verbose
-                    , bool full_video
-                    , bool extract_meta_data) {
+                    , bool full_video) {
     for (unsigned i = 1; i < file_count ; i++) {
         in_wrm_trans.next();
     }
@@ -315,14 +314,13 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     , player.screen_rect.cy
                     , player.info_bpp
                     , capture_bpp
-                    , clear_png
+                    , enable_rt
                     , no_timestamp
                     , authentifier
                     , ini
                     , rnd
                     , cctx
-                    , full_video
-                    , extract_meta_data);
+                    , full_video);
 
             if (capture.capture_png) {
                 if (png_width && png_height) {
@@ -336,9 +334,9 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
                     //std::cout << "zoom: " << zoom << '%' << std::endl;
                 }
 
-                capture.psc->zoom(zoom);
+                capture.zoom(zoom);
             }
-            player.add_consumer(&capture, &capture);
+            player.add_consumer(&capture, &capture, &capture, &capture);
 
             char progress_filename[4096];
             snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
@@ -397,7 +395,7 @@ inline
 static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const timeval begin_record
                         , int wrm_compression_algorithm_
                         , std::string const & output_filename, Inifile & ini, uint32_t verbose) {
-    FileToChunk player(&in_wrm_trans, 0);
+    FileToChunk player(&in_wrm_trans, verbose);
 
 /*
     char outfile_path     [1024] = PNG_PATH "/"   ; // default value, actual one should come from output_filename
@@ -494,11 +492,11 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
             run(
                 OutMetaSequenceTransport(
                     &cctx,
-                    outfile_path.c_str(), 
-                    ini.get<cfg::video::hash_path>(), 
+                    outfile_path.c_str(),
+                    ini.get<cfg::video::hash_path>(),
                     outfile_basename.c_str(),
-                    begin_record, 
-                    player.info_width, 
+                    begin_record,
+                    player.info_width,
                     player.info_height,
                     ini.get<cfg::video::capture_groupid>()
                 ));
@@ -544,7 +542,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                 , CryptoContext & cctx, Random & rnd
                 , HasExtraCapture has_extra_capture
                 , bool full_video
-                , bool extract_meta_data
                 )
 {
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -557,8 +554,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string input_filename;
     std::string output_filename;
 
-    bool clear_png = false;
-    bool no_timestamp = false;
+    bool const enable_rt = false;
+    bool const no_timestamp = false;
     auth_api * authentifier = nullptr;
 
     uint32_t    verbose            = 0;
@@ -580,6 +577,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     std::string wrm_color_depth;
     std::string wrm_encryption;
     std::string png_geometry;
+    std::string hash_path;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -617,6 +615,8 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         {"remove-input-file", "remove input file"},
 
         {"config-file", &config_filename, "used an another ini file"},
+
+        {"hash-path", &hash_path, "output hash dirname (if empty, use hash_path of ini)"},
     });
 
     add_prog_option(desc);
@@ -679,6 +679,11 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     }
 
     { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), config_filename.c_str()); }
+
+    if (!hash_path.empty()) {
+        hash_path += '/';
+        ini.set<cfg::video::hash_path>(hash_path);
+    }
 
     int wrm_compression_algorithm_;
 
@@ -877,7 +882,7 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
     try {
         InMetaSequenceTransport in_wrm_trans_tmp(
             &cctx,
-            infile_prefix, 
+            infile_prefix,
             infile_extension.c_str(), infile_is_encrypted?1:0, 0);
         file_count = get_file_count(in_wrm_trans_tmp, begin_cap, end_cap, begin_record, end_record);
     }
@@ -908,16 +913,16 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
              || show_statistics
              || file_count > 1
              || order_count);
-             
+
             if (test){
                 std::cout << "[A]" << std::endl;
-                
+
                 result = do_record<CaptureMaker>(trans
                             , begin_record, end_record
                             , begin_capture, end_capture
                             , output_filename, capture_bpp
                             , wrm_compression_algorithm_
-                            , clear_png
+                            , enable_rt
                             , no_timestamp
                             , authentifier
                             , ini, rnd, cctx
@@ -925,7 +930,6 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
                             , png_width, png_height
                             , show_file_metadata, show_statistics, verbose
                             , full_video
-                            , extract_meta_data
                             );
             }
             else {
@@ -948,9 +952,9 @@ int app_recorder( int argc, char ** argv, const char * copyright_notice
         if (!result && remove_input_file) {
             InMetaSequenceTransport in_wrm_trans_tmp(
                 &cctx,
-                infile_prefix, 
+                infile_prefix,
                 infile_extension.c_str(), infile_is_encrypted?1:0, 0);
-                
+
             remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
                        , infile_basename.c_str(), infile_extension.c_str()
                        , infile_is_encrypted);

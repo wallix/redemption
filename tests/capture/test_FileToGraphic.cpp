@@ -30,11 +30,12 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
 #include "transport/in_file_transport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
-#include "image_capture.hpp"
+#include "drawable_to_file.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
@@ -66,10 +67,10 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
 //    png_recorder.update_config(ini);
-    player.add_consumer(&drawable1, &drawable1);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
     ini.set<cfg::video::frame_interval>(10);
@@ -97,16 +98,20 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     PointerCache ptr_cache;
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    NativeCapture wrm_recorder(
+    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
+    GraphicToFile graphic_to_file(
         player.record_now,
         out_wrm_trans,
         player.screen_rect.cx,
         player.screen_rect.cy,
         24,
-        bmp_cache, gly_cache, ptr_cache, drawable, ini);
+        bmp_cache, gly_cache, ptr_cache, dump_png, ini
+    );
+    NativeCapture wrm_recorder(graphic_to_file, player.record_now, ini);
 
     wrm_recorder.update_config(ini);
-    player.add_consumer(&wrm_recorder, &wrm_recorder);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
+    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr);
 
     bool requested_to_stop = false;
 
@@ -116,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     png_recorder.flush();
     BOOST_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
 
-    wrm_recorder.flush();
+    graphic_to_file.sync();
     const char * filename;
 
     out_png_trans.disconnect();
@@ -168,10 +173,10 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    const int groupid = 0;
 //    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
 //    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-//    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
+//    DrawableToFile png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
 //    png_recorder.update_config(ini);
-//    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
+//    player.add_consumer(&drawable1, &drawable1);
 
 //    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
 //    ini.set<cfg::video::frame_interval>(10);
@@ -207,7 +212,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //        bmp_cache, drawable, ini);
 
 //    wrm_recorder.update_config(ini);
-//    player.add_consumer((RDPGraphicDevice *)&wrm_recorder, (RDPCaptureDevice *)&wrm_recorder);
+//    player.add_consumer(&wrm_recorder, &wrm_recorder);
 
 //    bool requested_to_stop = false;
 

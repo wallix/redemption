@@ -30,7 +30,7 @@
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
+#include "gdi/graphic_api.hpp"
 
 class Inifile;
 
@@ -39,11 +39,11 @@ enum {
     BUTTON_STATE_DOWN = 1
 };
 
-class mod_api : public Callback, public RDPGraphicDevice {
+class mod_api : public Callback, public gdi::GraphicApi {
 protected:
     wait_obj           event;
     RDPPen             pen;
-    RDPGraphicDevice * gd;
+    gdi::GraphicApi * gd;
 
     uint16_t front_width;
     uint16_t front_height;
@@ -149,17 +149,17 @@ public:
 
             x += total_width;
 
-            this->gd->draw(glyphindex, clip, &mod_glyph_cache);
+            this->gd->draw(glyphindex, clip, mod_glyph_cache);
         }
     }
 
 protected:
-    static RDPGraphicDevice * get_gd(mod_api const & mod)
+    static gdi::GraphicApi * get_gd(mod_api const & mod)
     {
         return mod.gd;
     }
 
-    static void set_gd(mod_api & mod, RDPGraphicDevice * gd)
+    static void set_gd(mod_api & mod, gdi::GraphicApi * gd)
     {
         mod.gd = gd;
     }
@@ -185,8 +185,6 @@ public:
 
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
-
-    virtual void flush() override {}
 
     virtual void display_osd_message(std::string & message) {}
 };

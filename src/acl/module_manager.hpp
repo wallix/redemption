@@ -323,7 +323,7 @@ class ModuleManager : public MMIni
             ModuleManager & manager, const Rect & rect,
             std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
             bool external_deleting)
-        : mod_osd(manager.front, *manager.mod, rect, std::move(f))
+        : mod_osd(*manager.mod, rect, std::move(f))
         , external_deleting(external_deleting)
         , manager(manager)
         , old_mod(manager.mod)
@@ -471,6 +471,7 @@ public:
 
                 InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
+                TODO("Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)")
                 RDPPolyline polyline_box( r.x, r.y
                                         , 0x0D, 0, BLACK, 4, in_deltaPoints);
                 mod.draw(polyline_box, r);

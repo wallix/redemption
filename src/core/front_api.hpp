@@ -24,9 +24,11 @@
 #ifndef _REDEMPTION_CORE_FRONT_API_HPP_
 #define _REDEMPTION_CORE_FRONT_API_HPP_
 
-#include "RDP/RDPGraphicDevice.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/input_pointer_api.hpp"
 
 #include "core/wait_obj.hpp"
+#include "utils/array_view.hpp"
 
 class Capability;
 class InStream;
@@ -37,13 +39,11 @@ namespace CHANNELS {
     class ChannelDef;
 }
 
-class FrontAPI : public RDPGraphicDevice{
+class FrontAPI : public gdi::GraphicApi, public gdi::InputPointer {
     public:
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , std::size_t length, std::size_t chunk_size, int flags) = 0;
-
-    virtual void send_global_palette() = 0;
 
     virtual int server_resize(int width, int height, int bpp) = 0;
     //virtual void update_config(const timeval & now, const Inifile & ini) {}
@@ -65,7 +65,7 @@ class FrontAPI : public RDPGraphicDevice{
     public:
     virtual wait_obj& get_event() { return this->event; }
 
-    TODO("RZ : Move these methods in OrderCaps class.")
+    // TODO("RZ : Move these methods in OrderCaps class.")
     virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {}
     virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {}
 
@@ -83,21 +83,20 @@ class FrontAPI : public RDPGraphicDevice{
 
     virtual void session_probe_started(bool started) {}
     virtual void set_keylayout(int LCID) {}
-    /// \return  -1 is error
-    virtual int get_keylayout() const { return -1; }
     virtual void set_focus_on_password_textbox(bool set) {}
     virtual void set_consent_ui_visible(bool set) {}
-    virtual void session_update(const char * message) {}
+    virtual void session_update(array_const_char const & message) {}
 
     virtual bool disable_input_event_and_graphics_update(
             bool disable_input_event, bool disable_graphics_update) {
         return false;
     }
 
+    /// \return  -1 is an error
+    virtual int get_keylayout() const { return -1; }
+
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
-
-    virtual void flush() {}
 };
 
 #endif

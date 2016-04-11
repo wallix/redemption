@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "mod/null/null.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

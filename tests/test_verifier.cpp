@@ -28,7 +28,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-#define LOGPRINT
+// #define LOGPRINT
+#define LOGNULL
 
 #include <fcntl.h>
 
@@ -253,7 +254,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
                 "Christophe Grosjean, Raphael Zhou."
               , cctx);
             if (res == 0){
-                printf("verify ok");
+                printf("verify ok\n");
             }
             else {
                 printf("verify failed\n");
@@ -309,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
                 "Christophe Grosjean, Raphael Zhou."
               , cctx);
             if (res == 0){
-                printf("verify ok");
+                printf("verify ok\n");
             }
             else {
                 printf("verify failed\n");

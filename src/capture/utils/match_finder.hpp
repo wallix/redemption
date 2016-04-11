@@ -184,7 +184,7 @@ public:
         }
     }
 
-    static void report(auth_api * authentifier, bool pattern_kill,
+    static void report(auth_api & authentifier, bool is_pattern_kill,
         ConfigureRegexes conf_regex, const char * pattern, const char * data) {
         char message[4096];
 
@@ -194,12 +194,12 @@ public:
         std::string extra = "pattern='";
         extra += message;
         extra += "'";
-        authentifier->log4(false,
-            (pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED"),
+        authentifier.log4(false,
+            (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED"),
             extra.c_str());
 
-        authentifier->report(
-            (pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),
+        authentifier.report(
+            (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),
             message);
     }
 };

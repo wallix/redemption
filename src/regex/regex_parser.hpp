@@ -586,7 +586,8 @@ namespace re {
                     }
                 }
                 ++result;
-                ranges.ranges.resize(ranges.ranges.size() - (last - result));
+                ranges.ranges.erase(result, ranges.ranges.end());
+                result = ranges.ranges.end();
             }
 
             State * eps = accu.epsilone();

@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 
 //    gd.draw(bitmap_data, raw_bitmap, sizeof(raw_bitmap), bmp);
 //    gd.draw(bitmap_data, capture_bmp.data(), capture_bmp.bmp_size(), capture_bmp);
-    gd.draw(bitmap_data, bmp_stream.get_data(), bmp_stream.get_offset(), capture_bmp);
+    gd.draw(bitmap_data, capture_bmp);
 
     char message[1024];
     if (!check_sig(gd, message,

@@ -46,7 +46,6 @@ extern "C" {
     {
         std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
         Inifile ini;
-        { ConfigurationLoader cfg_loader_full(ini.configuration_holder(), CFG_PATH "/" RDPPROXY_INI); }
 
         UdevRandom rnd;
         CryptoContext cctx(rnd, ini);
@@ -55,7 +54,7 @@ extern "C" {
 
         int res = -1;
         try {
-            app_recorder<Capture>(
+            res = app_recorder<Capture>(
                 argc, argv
               , "ReDemPtion RECorder " VERSION ": An RDP movie converter.\n"
                 "Copyright (C) Wallix 2010-2015.\n"
@@ -78,9 +77,7 @@ extern "C" {
               , config_filename, ini, cctx, rnd
               , [](Inifile const &) { return false; }/*has_extra_capture*/
               , false // full_video
-              , false // extract_meta_data
             );
-            res = 0;
         } catch (const Error & e) {
             printf("decrypt failed: with id=%d\n", e.id);
         }

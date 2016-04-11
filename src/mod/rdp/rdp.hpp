@@ -288,7 +288,10 @@ protected:
         get_session_probe_virtual_channel_params() const = 0;
 };  // RDPChannelManagerMod
 
-class mod_rdp : public RDPChannelManagerMod {
+class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
+{
+    friend gdi::GraphicCoreAccess;
+
     CHANNELS::ChannelDefArray mod_channel_list;
 
     const AuthorizationChannels authorization_channels;
@@ -638,7 +641,7 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : RDPChannelManagerMod(info.width - (info.width % 4), info.height, front)
+        : mod_rdp::base_type(info.width - (info.width % 4), info.height, front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -3007,7 +3010,7 @@ public:
                                         if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL"); }
                                         struct Pointer cursor;
                                         memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                                        this->front.server_set_pointer(cursor);
+                                        this->front.set_pointer(cursor);
                                     }
                                     break;
 
@@ -3015,7 +3018,7 @@ public:
                                     {
                                         if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT"); }
                                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
-                                        this->front.server_set_pointer(cursor);
+                                        this->front.set_pointer(cursor);
                                     }
                                     break;
 
@@ -3965,7 +3968,7 @@ public:
         }
 
         RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
-        this->front.set_mod_palette(this->orders.global_palette);
+        this->front.set_palette(this->orders.global_palette);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_palette done");
@@ -5763,7 +5766,7 @@ public:
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
 
-        this->front.server_set_pointer(cursor);
+        this->front.set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
@@ -5798,14 +5801,14 @@ public:
         }
         struct Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
-            this->front.server_set_pointer(cursor);
+            this->front.set_pointer(cursor);
         }
         else {
             LOG(LOG_WARNING,
                 "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u",
                 pointer_idx);
             Pointer cursor(Pointer::POINTER_NORMAL);
-            this->front.server_set_pointer(cursor);
+            this->front.set_pointer(cursor);
         }
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -5836,13 +5839,13 @@ public:
             {
                 Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
             }
             break;
         default:
             {
                 Pointer cursor(Pointer::POINTER_NORMAL);
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
             }
             break;
         }
@@ -5911,8 +5914,8 @@ public:
             for (unsigned i = 0; i < dlen ; i++) {
                 BGRColor px = indata[i];
                 // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(data[6 * i]),     3, color_decode((px >> 4) & 0xF, bpp, this->orders.global_palette));
-                ::out_bytes_le(&(data[6 * i + 3]), 3, color_decode(px        & 0xF, bpp, this->orders.global_palette));
+                ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF]);
+                ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF]);
             }
         }
         break;
@@ -6050,7 +6053,7 @@ public:
             stream.in_skip_bytes(mlen);
         }
 
-        this->front.server_set_pointer(cursor);
+        this->front.set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
@@ -6246,7 +6249,7 @@ public:
                      );
             }
 
-            this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+            this->gd->draw(bmpdata, bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
@@ -6315,115 +6318,12 @@ public:
         this->front.end_update();
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
+protected:
+    FrontAPI & get_gd_proxy_impl() {
+        return this->front;
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip,
-                      const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip,
-                      const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-                      const GlyphCache * gly_cache) override {
-        this->front.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-
-    void draw(const RDPPolyline& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void server_set_pointer(const Pointer & cursor) override {
-        this->front.server_set_pointer(cursor);
-    }
-
-    void draw(const RDPColCache & cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp) override {
-        this->front.draw(bitmap_data, data, size, bmp);
-    }
-
-    void draw(const RDPBrushCache & cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->front.draw(order);
-    }
-
+public:
     bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }

@@ -2,6 +2,7 @@ Master branch: [![Build Status from master](https://travis-ci.org/wallix/redempt
 
 Future branch: [![Build Status from future](https://travis-ci.org/wallix/redemption.svg?branch=future)](https://travis-ci.org/wallix/redemption)
 
+
 Dependencies
 ------------
 
@@ -15,6 +16,8 @@ To compile ReDemPtion you need the following packages:
 - libgssglue-dev
 - libsnappy-dev
 - libpng12-dev
+- python2.7-dev or python2.6-dev
+- g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
 Optionally:
 - python (python-dev)
@@ -97,23 +100,23 @@ Well, that's pretty easy once you installed the required dependencies.
 
 Just run (as user):
 
-`$ bjam`
+$ `bjam` or `bjam toolset=compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
 
 Compile executables without tests (as user):
 
-`$ bjam exe`
+$ `bjam exe`
 
 and install (as administrator):
 
-`# bjam install`
+\# `bjam install`
 
 Binaries are located in /usr/local/bin.
 
 To test it, executes:
 
-`$ python tools/passthrough/passthrough.py`
+$ `python tools/passthrough/passthrough.py`
 
-`# /usr/local/bin/rdpproxy -nf`
+\# `/usr/local/bin/rdpproxy -nf`
 
 Now, at that point you'll just have two servers waiting for connections
 not much fun. You still have to run some RDP client to connect to proxy. Choose
@@ -123,7 +126,7 @@ occurs just report it to us so that we can correct it.
 
 Example with freerdp when the proxy runs on the same host as the client:
 
-`$ xfreerdp 127.0.0.1`
+$ `xfreerdp 127.0.0.1`
 
 A dialog box should open in which you can type a username and a password.
 With default authhook at least internal services should work. Try login: bouncer
@@ -136,7 +139,7 @@ to current authhook.py, please contribute it, it will be much appreciated.
 You can also bypass login dialog box and go directly to the RDP server by
 providing a login and a password from command line.
 
-`$ xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
+$ `xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
 
 
 Q - Why are there so many #pragma messages when compiling ReDemPtion ?
@@ -161,7 +164,7 @@ other way, but now that has changed).
 
 If you want to see internal warnings, just define `VERBOSE` or compile using:
 
-`$ VERBOSE=1 bjam`
+$ `VERBOSE=1 bjam`
 
 
 Q - Why did you choose this special "headers only" coding style ?

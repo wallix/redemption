@@ -80,15 +80,15 @@ variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <c
 
 
 constant CXXFLAGS-COMMON :
-#     <cxxflags>-Weffc++
-#     <cxxflags>-Wswitch-enum
-#     <cxxflags>-Wswitch-default
+#    <cxxflags>-Weffc++
+#    <cxxflags>-Wswitch-enum
+#    <cxxflags>-Wswitch-default
     <cxxflags>-pedantic
     <cxxflags>-pedantic-errors
-#    <cxxflags>-Wconversion
+#   <cxxflags>-Wconversion
     <cxxflags>-Wvla
     <cxxflags>-Wstrict-aliasing=2
-#    <cxxflags>-Wlong-long
+#   <cxxflags>-Wlong-long
 
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
@@ -100,81 +100,82 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wundef
     <cxxflags>-Wcast-align
     <cxxflags>-Wchar-subscripts
-#     <cxxflags>-Wformat
+#    <cxxflags>-Wformat
     <cxxflags>-Wformat=2
     <cxxflags>-Wformat-security
-#     <cxxflags>-Wmissing-format-attribute
+#    <cxxflags>-Wmissing-format-attribute
     <cxxflags>-Wsequence-point
     <cxxflags>-Wreturn-type
     <cxxflags>-Wfloat-equal
-#     <cxxflags>-Wshadow
+#    <cxxflags>-Wshadow
     <cxxflags>-Wpointer-arith
     <cxxflags>-Wsign-compare
-#     <cxxflags>-Wmissing-declarations
+#    <cxxflags>-Wmissing-declarations
     <cxxflags>-Wpacked
     <cxxflags>-Wredundant-decls
-#     <cxxflags>-Winline
+#    <cxxflags>-Winline
     <cxxflags>-Winit-self
     <cxxflags>-Wcast-qual
     <cxxflags>-Woverloaded-virtual
     <cxxflags>-Wunused-variable
-#     <cxxflags>-Wunused-parameter
+#    <cxxflags>-Wunused-parameter
     <cxxflags>-Wmissing-include-dirs
     <cxxflags>-Wunused
     <cxxflags>-Wendif-labels
     <cxxflags>-Wwrite-strings
-#     <cxxflags>-Wpadded
+#    <cxxflags>-Wpadded
     <cxxflags>-Wstrict-overflow=1
-#     <cxxflags>-Wstrict-overflow=5
+#    <cxxflags>-Wstrict-overflow=5
     <cxxflags>-Wc++11-compat
     <cxxflags>-Wnarrowing
     <cxxflags>-Wvolatile-register-var
     <cxxflags>-Wdisabled-optimization
-    <cxxflags>-Wno-overlength-strings
     <cxxflags>-Warray-bounds
     <cxxflags>-Wold-style-cast
+    <cxxflags>-Wno-overlength-strings
+;
 
-#     <toolset>clang:<cxxflags>-Weverything
-#     <toolset>clang:<cxxflags>-Wno-c++98-compat
-    <toolset>clang:<cxxflags>-Wno-mismatched-tags
-#    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
-    <toolset>clang:<cxxflags>-Wno-char-subscripts
-    <toolset>clang:<cxxflags>-Wno-unused-variable
-#     <toolset>clang:<cxxflags>-Wno-unused-private-field
+
+constant CXXFLAGS-CLANG :
+#    <cxxflags>-Weverything
+#    <cxxflags>-Wno-c++98-compat
+    <cxxflags>-Wno-mismatched-tags
+#   <cxxflags>-Wno-overloaded-virtual
+    <cxxflags>-Wno-char-subscripts
+    <cxxflags>-Wno-unused-variable
+#    <cxxflags>-Wno-unused-private-field
 ;
 
 
 constant CXXFLAGS-GCC-4.7 :
-    <cxxflags>-Wunused-but-set-parameter 
-    <cxxflags>-Wunused-but-set-variable  
-#     <cxxflags>-Wsuggest-attribute=pure
-#     <cxxflags>-Wsuggest-attribute=const
-     <cxxflags>-Wsuggest-attribute=noreturn 
-     <cxxflags>-Wzero-as-null-pointer-constant 
-     <cxxflags>-Wlogical-op 
-#     <cxxflags>-Wno-aggressive-loop-optimizations
-     <cxxflags>-Wnormalized=nfc #disable ? 
-     <cxxflags>-Wvector-operation-performance 
+    <cxxflags>-Wunused-but-set-parameter
+    <cxxflags>-Wunused-but-set-variable
+#    <cxxflags>-Wsuggest-attribute=pure
+#    <cxxflags>-Wsuggest-attribute=const
+    <cxxflags>-Wsuggest-attribute=noreturn
+    <cxxflags>-Wzero-as-null-pointer-constant
+    <cxxflags>-Wlogical-op
+#    <cxxflags>-Wno-aggressive-loop-optimizations
+    <cxxflags>-Wnormalized=nfc #disable ?
+    <cxxflags>-Wvector-operation-performance
     <cxxflags>-Wdouble-promotion
-   <cxxflags>-Wmaybe-uninitialized  
-    <cxxflags>-Wtrampolines  
+    <cxxflags>-Wmaybe-uninitialized
+    <cxxflags>-Wtrampolines
 ;
 
 
 constant CXXFLAGS-GCC-4.8 :
     $(CXXFLAGS-GCC-4.7)
-   <cxxflags>-Wuseless-cast   
+    <cxxflags>-Wuseless-cast
 ;
 
 
 constant CXXFLAGS-GCC-4.9 :
     $(CXXFLAGS-GCC-4.8)
-     <cxxflags>-Wconditionally-supported 
+    <cxxflags>-Wconditionally-supported
     <cxxflags>-Wfloat-conversion
-    <cxxflags>-Wopenmp-simd  
+    <cxxflags>-Wopenmp-simd
     <cxxflags>-Wparentheses
-
-    <variant>release:<cxxflags>-flto
 ;
 
 
@@ -186,10 +187,9 @@ constant CXXFLAGS-GCC-5 :
     <cxxflags>-Wbool-compare
 #    <cxxflags>-Wsuggest-final-types
 #    <cxxflags>-Wsuggest-final-methods
-#     <cxxflags>-Wsuggest-attribute=pure
+#    <cxxflags>-Wsuggest-attribute=pure
 #    <cxxflags>-Wsuggest-attribute=const
-    <variant>release:<cxxflags>-flto-odr-type-merging
-    # <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by ##default)
+#   <cxxflags>-Wno-odr #  Requires -flto-odr-type-merging to be enabled (enabled by ##default)
 ;
 
 
@@ -202,18 +202,55 @@ constant CXXFLAGS-GCC-5.1 :
 ;
 
 
-constant CXXFLAGS-GCC-6 :
-    $(CXXFLAGS-GCC-5)
+constant CXXFLAGS-GCC-5.2 :
+    $(CXXFLAGS-GCC-5.1)
 ;
 
 
-# switch [ modules.peek : ODSHOME ]
-# {
-#     case *gcc-4.8* : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-4.8) ;
-#     case *gcc-4.9* : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-4.9) ;
-#     case *gcc-5*   : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-5) ;
-#     case *gcc-6*   : constant CXXFLAGS-GCC : $(CXXFLAGS-GCC-6) ;
+constant CXXFLAGS-GCC-6 :
+    $(CXXFLAGS-GCC-5.2)
+;
+
+
+
+rule empty_rule ( properties * ) {
+    local defs ;
+    return $(defs) ;
+}
+
+
+# if [ os.environ NO_LTO ] {
+    constant CXXFLAGS-GCC-4.9-release-lto : <conditional>@empty_rule ;
+    constant CXXFLAGS-GCC-5-release-lto : <conditional>@empty_rule ;
+# } else {
+#     constant CXXFLAGS-GCC-4.9-release-lto : <cxxflags>-flto ;
+#     constant CXXFLAGS-GCC-5-release-lto : <cxxflags>-flto-odr-type-merging ;
 # }
+
+constant CXXFLAGS-GCC-4.9-release :
+    $(CXXFLAGS-GCC-4.9-release-lto)
+;
+
+
+constant CXXFLAGS-GCC-5-release :
+    $(CXXFLAGS-GCC-4.9-release)
+    $(CXXFLAGS-GCC-5-release-lto)
+;
+
+
+constant CXXFLAGS-GCC-5.1-release :
+    $(CXXFLAGS-GCC-5-release)
+;
+
+
+constant CXXFLAGS-GCC-5.2-release :
+    $(CXXFLAGS-GCC-5.1-release)
+;
+
+
+constant CXXFLAGS-GCC-6-release :
+    $(CXXFLAGS-GCC-5.2-release)
+;
 
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
@@ -228,6 +265,8 @@ variant strict : :
 ;
 
 variant asan : debug :
+    <define>REDASSERT_AS_ASSERT
+    <define>_GLIBCXX_DEBUG
 #    <cxxflags>-fsanitize=address
 #    <cxxflags>-fsanitize=leak
 #    <cxxflags>-fno-omit-frame-pointer
@@ -244,7 +283,7 @@ constant LIB_SAN_DEPENDENCY :
 
 project redemption
     : requirements
-    
+
     <include>src
     <include>src/system/linux
     <include>src/core
@@ -257,25 +296,22 @@ project redemption
     <include>src/regex
     <include>src/headers
     <include>src/main
-    <include>modules/includes 
+    <include>modules/includes
     <include>src/system/linux/system
     <include>include
-    <include>/usr/include 
 
-    <include>tests
     <conditional>@defines
 
     <variant>debug:<define>REDASSERT_AS_ASSERT
+    <variant>debug:<define>_GLIBCXX_DEBUG
     <variant>debug:<cxxflags>-g
 
-    <cxxflags>-Wall 
-    <cxxflags>-O2 
-    <cxxflags>-obin/gcc-4.9.2/release/client_rdp_JS.html 
+    <cxxflags>-Wall
     <cxxflags>-std=c++11
 
 
     $(CXXFLAGS-COMMON)
-    <toolset>gcc-4.7:$(CXXFLAGS-GCC-4.7)
+    <toolset>clang:$(CXXFLAGS-CLANG)
     <toolset>gcc-4.8:$(CXXFLAGS-GCC-4.8)
     <toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9)
     <toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9)
@@ -285,10 +321,27 @@ project redemption
     <toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5)
     <toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1)
     <toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1)
-    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.1)
-    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.1)
+    <toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
+
+    <variant>release,<toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9-release)
+    <variant>release,<toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9-release)
+    <variant>release,<toolset>gcc-4.9.2:$(CXXFLAGS-GCC-4.9-release)
+    <variant>release,<toolset>gcc-4.9.3:$(CXXFLAGS-GCC-4.9-release)
+    <variant>release,<toolset>gcc-5.0:$(CXXFLAGS-GCC-5-release)
+    <variant>release,<toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5-release)
+    <variant>release,<toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5.1-release)
+    <variant>release,<toolset>gcc-5.1:$(CXXFLAGS-GCC-5.1-release)
+    <variant>release,<toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5.2-release)
+    <variant>release,<toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5.2-release)
+    <variant>release,<toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5.2-release)
+    <variant>release,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2-release)
+    <variant>release,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-release)
+    <variant>release,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6-release)
 
 #    <cxxflags>-fpie
     <cxxflags>-fPIC
@@ -300,9 +353,6 @@ project redemption
     <define>__STDC_FORMAT_MACROS
 
     <define>PUBLIC
-
-    <define>QT_NO_KEYWORDS
-    <define>QT_NO_DEBUG
 
    : default-build release
 
@@ -416,7 +466,7 @@ obj program_options : modules/program_options/src/program_options.cpp ;
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
 constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
-constant TEST_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
+constant TEST_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) <include>tests ;
 
 
 #
@@ -558,6 +608,15 @@ exe rdpclient
         $(EXE_DEPENDENCIES)
     ;
 
+exe redrec
+    :
+        src/main/redrec.cpp
+        dl
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
 
 #
 # Functional tests (run by hand)
@@ -624,7 +683,6 @@ unit-test test_module_manager : tests/acl/test_module_manager.cpp : $(TEST_DEPEN
 ## Capture tests
 ## @{
 #CaptureDevice.hpp
-unit-test test_CaptureDevice : tests/capture/test_CaptureDevice.cpp : $(TEST_DEPENDENCIES) ;
 #capture.hpp
 unit-test test_capture : tests/capture/test_capture.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto <library>dl <library>png <library>z <library>snappy ;
 #chunked_image_transport.hpp
@@ -647,8 +705,6 @@ unit-test test_new_kbdcapture : tests/capture/test_new_kbdcapture.cpp : $(TEST_D
 unit-test test_RDPChunkedDevice : tests/capture/test_RDPChunkedDevice.cpp : $(TEST_DEPENDENCIES) ;
 #send_wrm_chunk.hpp
 unit-test test_send_wrm_chunk : tests/capture/test_send_wrm_chunk.cpp : $(TEST_DEPENDENCIES) ;
-#staticcapture.hpp
-unit-test test_staticcapture : tests/capture/test_staticcapture.cpp : $(TEST_DEPENDENCIES) <library>png ;
 #transparentchunk.hpp
 unit-test test_transparentchunk : tests/capture/test_transparentchunk.cpp : $(TEST_DEPENDENCIES) ;
 #transparentplayer.hpp
@@ -980,7 +1036,7 @@ unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <librar
 explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
 
 
-obj test_show_data.o : tests/mod/rdp/test_show_data.cpp 
+obj test_show_data.o : tests/mod/rdp/test_show_data.cpp
     : <cxxflags>-fPIC ;
 
 
@@ -995,5 +1051,5 @@ exe test_data_draw :
     d3des
     z
     dl
-    : <cxxflags>-fPIC 
+    : <cxxflags>-fPIC
     ;

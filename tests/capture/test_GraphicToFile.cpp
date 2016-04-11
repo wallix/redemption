@@ -38,7 +38,9 @@
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
-#include "image_capture.hpp"
+#include "drawable_to_file.hpp"
+
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
 const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
@@ -187,7 +189,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
+    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
 
@@ -195,7 +198,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
-    consumer.flush();
+    consumer.sync();
 
     now.tv_sec++;
     consumer.timestamp(now);
@@ -218,7 +221,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     now.tv_sec++;
     consumer.timestamp(now);
 
-    consumer.flush();
+    consumer.sync();
 }
 
 const char expected_stripped_wrm2[] =
@@ -364,7 +367,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
+    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
@@ -379,7 +383,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), BLACK), screen_rect);
 
-    consumer.flush();
+    consumer.sync();
 }
 
 BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
@@ -416,7 +420,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
-    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png24_api(drawable);
+    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, ini);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
@@ -425,7 +430,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     now.tv_sec++;
     BOOST_CHECK_EQUAL(0, 0);
     consumer.timestamp(now);
-    consumer.flush();
+    consumer.sync();
     BOOST_CHECK_EQUAL(0, 0);
 
     RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), WHITE);
@@ -434,7 +439,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.draw(cmd3, screen_rect);
     now.tv_sec+=6;
     consumer.timestamp(now);
-    consumer.flush();
+    consumer.sync();
     BOOST_CHECK_EQUAL(0, 0);
     trans.disconnect(); // close file before reading filesize
     BOOST_CHECK_EQUAL(1588, filesize(filename));
@@ -461,8 +466,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
-    player.add_consumer(&drawable1, &drawable1);
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr);
 
     png_recorder.flush();
     out_png_trans.next();
@@ -570,7 +575,8 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png(drawable);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
@@ -585,14 +591,14 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
         RDPMemBlt(0, Rect(0, scr.cy - 10, bloc20x10.cx(), bloc20x10.cy()), 0xCC, 0, 0, 0),
         scr,
         bloc20x10);
-    consumer.flush();
+    consumer.sync();
 
     now.tv_sec++;
     consumer.timestamp(now);
 
     consumer.save_bmp_caches();
 
-    consumer.flush();
+    consumer.sync();
 }
 
 BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
@@ -607,9 +613,9 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, &drawable);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -714,21 +720,22 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png(drawable);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr.shrink(5), BLUE), scr);
     consumer.draw(RDPOpaqueRect(scr.shrink(10), RED), scr);
 
-    consumer.flush();
+    consumer.sync();
 
     consumer.send_save_state_chunk();
 
     now.tv_sec++;
     consumer.timestamp(now);
     consumer.draw(RDPOpaqueRect(scr.shrink(20), GREEN), scr);
-    consumer.flush();
+    consumer.sync();
 }
 
 BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
@@ -743,9 +750,9 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, &drawable);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
@@ -834,11 +841,12 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
-    const SequenceGenerator * seq = out_png_trans.seqgen();
+    const FilenameGenerator * seq = out_png_trans.seqgen();
+    BOOST_CHECK(seq);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, &drawable);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();

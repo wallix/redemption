@@ -655,7 +655,7 @@ public:
                 memset(cursor.data + 30 * (32 * 3), 0xff, 9);
                 memset(cursor.data + 29 * (32 * 3), 0xff, 9);
                 memset(cursor.mask, 0xff, 32 * (32 / 8));
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
 
                 if (this->acl) {
                     this->acl->log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
@@ -1960,7 +1960,7 @@ private:
                 }
                 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation");
                 this->front.begin_update();
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
                 this->front.end_update();
             }
             break;
@@ -2005,8 +2005,7 @@ private:
             LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
         }
 
-        this->front.set_mod_palette(this->palette);
-        this->front.send_global_palette();
+        this->front.set_palette(this->palette);
         this->front.begin_update();
         RDPColCache cmd(0, this->palette);
         this->gd->draw(cmd);

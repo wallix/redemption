@@ -234,11 +234,23 @@ public:
 
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
 // triggered the event.
+    struct DecodedKeys
+    {
+        uint32_t uchars[2]{};
+        unsigned count = 0;
+
+        void set_uhar(uint32_t uchar) {
+            REDASSERT(this->count < 2);
+            this->uchars[this->count++] = uchar;
+        }
+    };
 
     //==============================================================================
-    void event(const uint16_t keyboardFlags, const uint16_t keyCode, OutStream & decoded_data, bool & tsk_switch_shortcuts)
+    DecodedKeys event(const uint16_t keyboardFlags, const uint16_t keyCode, bool & tsk_switch_shortcuts)
     //==============================================================================
     {
+        DecodedKeys decoded_key;
+
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
@@ -381,7 +393,7 @@ public:
                             uint8_t sym = map[extendedKeyCode];
                             // Translate the X11 scancode to an unicode code point
                             uint32_t uchar = (*layout)[sym];
-                            if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                            decoded_key.set_uhar(uchar);
                             this->push(uchar);
                         }
                         // if numlock is not activated OR shift is down, keys are NOT printable characters
@@ -390,27 +402,27 @@ public:
                             switch (extendedKeyCode){
                                /* kEYPAD LEFT ARROW */
                                 case 0x4b:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2190); }
+                                    decoded_key.set_uhar(0x2190);
                                     this->push_kevent(KEVENT_LEFT_ARROW);
                                     break;
                                 /* kEYPAD UP ARROW */
                                 case 0x48:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2191); }
+                                    decoded_key.set_uhar(0x2191);
                                     this->push_kevent(KEVENT_UP_ARROW);
                                     break;
                                 /* kEYPAD RIGHT ARROW */
                                 case 0x4d:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2192); }
+                                    decoded_key.set_uhar(0x2192);
                                     this->push_kevent(KEVENT_RIGHT_ARROW);
                                     break;
                                 /* kEYPAD DOWN ARROW */
                                 case 0x50:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2193); }
+                                    decoded_key.set_uhar(0x2193);
                                     this->push_kevent(KEVENT_DOWN_ARROW);
                                     break;
                                 /* kEYPAD HOME */
                                 case 0x47:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2196); }
+                                    decoded_key.set_uhar(0x2196);
                                     this->push_kevent(KEVENT_HOME);
                                     break;
                                 /* kEYPAD PGUP */
@@ -423,7 +435,7 @@ public:
                                     break;
                                 /* kEYPAD END */
                                 case 0x4F:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2198); }
+                                    decoded_key.set_uhar(0x2198);
                                     this->push_kevent(KEVENT_END);
                                     break;
                                 /* kEYPAD INSERT */
@@ -432,7 +444,7 @@ public:
                                     break;
                                 /* kEYPAD DELETE */
                                 case 0x53:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
+                                    decoded_key.set_uhar(0x007F);
                                     this->push_kevent(KEVENT_DELETE);
                                 default:
                                     break;
@@ -522,7 +534,7 @@ public:
                                      if (this->deadkey_pending_def.secondKeys[i].secondKey == uchar) {
 
                                         // push the translation into keyboard buffer
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.secondKeys[i].modifiedKey); }
+                                        decoded_key.set_uhar(this->deadkey_pending_def.secondKeys[i].modifiedKey);
                                         this->push(this->deadkey_pending_def.secondKeys[i].modifiedKey);
                                         deadkeyTranslated = true;
                                         break;
@@ -531,9 +543,9 @@ public:
                                 // If that second key is not associated with that deadkey,
                                 // push both deadkey uchar and unmodified second key uchar in keyboard buffer
                                 if (not deadkeyTranslated) {
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.uchar); }
+                                    decoded_key.set_uhar(this->deadkey_pending_def.uchar);
                                     this->push(this->deadkey_pending_def.uchar);
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                                    decoded_key.set_uhar(uchar);
                                     this->push(uchar);
                                 }
                                 this->deadkey = DEADKEY_NONE;
@@ -543,7 +555,7 @@ public:
                                 if (this->verbose){
                                     LOG(LOG_INFO, "not dead key - so pushing char %02x", uchar);
                                 }
-                                if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                                decoded_key.set_uhar(uchar);
                                 this->push(uchar);
                             }
                         }
@@ -564,9 +576,9 @@ public:
                                 {
                                     if (this->deadkey == DEADKEY_FOUND) {
                                         check_extendedkey = false;
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.uchar); }
+                                        decoded_key.set_uhar(this->deadkey_pending_def.uchar);
                                         this->push(this->deadkey_pending_def.uchar);
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                                        decoded_key.set_uhar(uchar);
                                         this->push(uchar);
                                         this->deadkey = DEADKEY_NONE;
                                     }
@@ -584,32 +596,32 @@ public:
                                 switch (extendedKeyCode){
                                 // ESCAPE
                                 case 0x01:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x001B); }
+                                    decoded_key.set_uhar(0x001B);
                                     this->push_kevent(KEVENT_ESC);
                                     break;
                                 // LEFT ARROW
                                 case 0xCB:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2190); }
+                                    decoded_key.set_uhar(0x2190);
                                     this->push_kevent(KEVENT_LEFT_ARROW);
                                     break;
                                 // UP ARROW
                                 case 0xC8:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2191); }
+                                    decoded_key.set_uhar(0x2191);
                                     this->push_kevent(KEVENT_UP_ARROW);
                                     break;
                                 // RIGHT ARROW
                                 case 0xCD:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2192); }
+                                    decoded_key.set_uhar(0x2192);
                                     this->push_kevent(KEVENT_RIGHT_ARROW);
                                     break;
                                 // DOWN ARROW
                                 case 0xD0:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2193); }
+                                    decoded_key.set_uhar(0x2193);
                                     this->push_kevent(KEVENT_DOWN_ARROW);
                                     break;
                                 // HOME
                                 case 0xC7:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2196); }
+                                    decoded_key.set_uhar(0x2196);
                                     this->push_kevent(KEVENT_HOME);
                                     break;
                                 // PGUP
@@ -622,7 +634,7 @@ public:
                                     break;
                                 // END
                                 case 0xCF:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2198); }
+                                    decoded_key.set_uhar(0x2198);
                                     this->push_kevent(KEVENT_END);
                                     break;
                                 // TAB
@@ -631,7 +643,7 @@ public:
                                         this->push_kevent(KEVENT_BACKTAB);
                                     }
                                     else {
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0009); }
+                                        decoded_key.set_uhar(0x0009);
                                         this->push_kevent(KEVENT_TAB);
                                     }
                                     break;
@@ -639,7 +651,7 @@ public:
                                 case 0x0E:
                                     // Windows(c) behavior for backspace following a Deadkey
                                     if (this->deadkey == DEADKEY_NONE) {
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0008); }
+                                        decoded_key.set_uhar(0x0008);
                                         this->push_kevent(KEVENT_BACKSPACE);
                                     }
                                     else {
@@ -652,15 +664,15 @@ public:
                                     break;
                                 case 0xD3: // delete
                                 case 0x53: // numpad delete
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
+                                    decoded_key.set_uhar(0x007F);
                                     this->push_kevent(KEVENT_DELETE);
                                     break;
                                 case 0x1C: // enter
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x000D); }
+                                    decoded_key.set_uhar(0x000D);
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 case 0x9C: // numpad enter
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x000D); }
+                                    decoded_key.set_uhar(0x000D);
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 case 45: // ctrl+x
@@ -681,6 +693,8 @@ public:
                 } // IF event is a Make
             break;
         } // END SWITCH : extendedKeyCode
+
+        return decoded_key;
     } // END METHOD : event
 
 

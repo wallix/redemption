@@ -489,6 +489,14 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TestUTF32toUTF8) {
+    uint8_t buf[5]{};
+    BOOST_REQUIRE_EQUAL(1, UTF32toUTF8(reinterpret_cast<uint8_t const *>("a\0\0\0"), 1, buf, 5));
+    BOOST_REQUIRE_EQUAL('a', buf[0]);
+    BOOST_REQUIRE_EQUAL(1, UTF32toUTF8('a', buf, 4));
+    BOOST_REQUIRE_EQUAL('a', buf[0]);
+}
+
 //BOOST_AUTO_TEST_CASE(TestUTF8toUnicode)
 //{
 //    uint8_t source[16] = "Red";

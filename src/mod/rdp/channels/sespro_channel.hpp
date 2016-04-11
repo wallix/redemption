@@ -653,7 +653,7 @@ public:
         }
         else {
             const char * message   = session_probe_message.c_str();
-            this->front.session_update(message);
+            this->front.session_update({message, session_probe_message.size()});
 
             const char * separator = ::strchr(message, '=');
 

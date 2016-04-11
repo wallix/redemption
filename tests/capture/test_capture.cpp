@@ -29,7 +29,7 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-#define LOGPRINT
+// #define LOGPRINT
 
 #include "capture.hpp"
 #include "check_sig.hpp"
@@ -40,7 +40,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(0);
-    const int groupid = 0;
     {
         LCGRandom rnd(0);
 
@@ -70,8 +69,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         TODO("remove this after unifying capture interface");
         bool full_video = false;
         TODO("remove this after unifying capture interface");
-        bool extract_meta_data = false;
-        TODO("remove this after unifying capture interface");
         bool clear_png = false;
         TODO("remove this after unifying capture interface");
         bool no_timestamp = false;
@@ -81,43 +78,41 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         Capture capture(
             now, scr.cx, scr.cy, 24, 24
             , clear_png, no_timestamp, authentifier
-            , ini, rnd, cctx
-            , full_video, extract_meta_data);
+            , ini, rnd, cctx, full_video);
 
         bool ignore_frame_in_timeval = false;
-        bool requested_to_stop       = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // The destruction of capture object will finalize the metafile content
     }
@@ -126,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator png_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".png", ini.get<cfg::video::capture_groupid>()
+          , "./" , "capture", ".png"
         );
 
         const char * filename;
@@ -160,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator wrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".wrm", ini.get<cfg::video::capture_groupid>()
+          , "./" , "capture", ".wrm"
         );
 
         struct {
@@ -192,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
-          , "./", "capture", ".mwrm", groupid
+          , "./", "capture", ".mwrm"
         );
         filename = mwrm_seq.get(0);
         BOOST_CHECK_EQUAL(meta_len_writer.len, ::filesize(filename));
@@ -203,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
-          , "/tmp/", "capture", ".mwrm", groupid
+          , "/tmp/", "capture", ".mwrm"
         );
         const char * filename = mwrm_seq.get(0);
         BOOST_CHECK_EQUAL(32, ::filesize(filename));
@@ -243,8 +238,6 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         TODO("remove this after unifying capture interface");
         bool full_video = false;
         TODO("remove this after unifying capture interface");
-        bool extract_meta_data = false;
-        TODO("remove this after unifying capture interface");
         bool clear_png = false;
         TODO("remove this after unifying capture interface");
         bool no_timestamp = false;
@@ -253,20 +246,18 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Capture capture(now, scr.cx, scr.cy, 16, 16
                         , clear_png, no_timestamp, authentifier
-                        , ini, rnd, cctx
-                        , full_video, extract_meta_data);
+                        , ini, rnd, cctx, full_video);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
-        capture.server_set_pointer(pointer1);
+        capture.set_pointer(pointer1);
 
         bool ignore_frame_in_timeval = true;
-        bool requested_to_stop       = false;
 
         capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        const char * filename = capture.png_trans->seqgen()->get(0);
+        const char * filename = "./capture-000000.png";
 
         auto s = get_file_contents<std::string>(filename);
         char message[1024];
