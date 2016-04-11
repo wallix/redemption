@@ -824,7 +824,6 @@ unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp 
 unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
-unit-test test_RDPGraphicDevice : tests/core/RDP/test_RDPGraphicDevice.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_remote_programs : tests/core/RDP/test_remote_programs.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_server : tests/core/test_server.cpp : $(TEST_DEPENDENCIES) ;

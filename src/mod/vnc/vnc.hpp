@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_MOD_VNC_VNC_HPP_
 #define _REDEMPTION_MOD_VNC_VNC_HPP_
 
-#include "version.hpp"
+#include "main/version.hpp"
 
 #include "utils/log.hpp"
 #include "mod/internal/widget2/flat_vnc_authentification.hpp"

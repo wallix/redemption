@@ -22,7 +22,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
 
-#include "version.hpp"
+#include "main/version.hpp"
 #include "core/front_api.hpp"
 #include "widget2/flat_login.hpp"
 #include "internal_mod.hpp"

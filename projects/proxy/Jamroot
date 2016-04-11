@@ -264,7 +264,7 @@ project redemption
     <include>$(SRCDIR)/keyboard/reversed_keymaps
     <include>$(SRCDIR)/regex
     <include>$(SRCDIR)/headers
-    <include>$(SRCDIR)/main
+#    <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
     <include>/usr/include
 
@@ -732,7 +732,6 @@ test-canonical acl/auth_api.hpp ;
 
 ## Capture tests
 ## @{
-test-canonical capture/CaptureDevice.hpp ;
 test-canonical capture/ChunkToFile.hpp ;
 test-canonical capture/new_kbdcapture.hpp ;
 test-canonical capture/RDPChunkedDevice.hpp ;
@@ -742,7 +741,6 @@ test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
 test-canonical capture/utils/save_state_chunk.hpp ;
 test-canonical capture/wrm_label.hpp ;
-test-canonical capture/staticcapture.hpp : <library>png ;
 test-canonical capture/FileToChunk.hpp : <library>png ;
 test-canonical capture/image_capture.hpp : <library>bitmap <library>png ;
 test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>png <library>snappy <library>crypto ;
@@ -851,7 +849,6 @@ test-canonical core/RDP/orders/RDPOrdersCommon.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
 test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
-test-canonical core/RDP/RDPGraphicDevice.hpp ;
 test-canonical core/RDP/RDPSerializer.hpp ;
 test-canonical core/RDP/remote_programs.hpp ;
 test-canonical core/server.hpp ;
@@ -1314,7 +1311,6 @@ test-canonical core/defines.hpp ;
 test-canonical core/front_api.hpp ;
 test-canonical core/RDP/autoreconnect.hpp ;
 test-canonical core/RDP/capabilities.hpp ;
-test-canonical core/RDP/compress_and_draw_bitmap_update.hpp ;
 test-canonical core/RDP/mppc_unified_dec.hpp ;
 test-canonical core/RDP/nla/ntlm/ntlm_message.hpp ;
 test-canonical core/RDP/non_null_terminated_utf16_from_utf8.hpp ;
