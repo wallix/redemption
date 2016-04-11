@@ -24,7 +24,7 @@
 
 #include "utils/noncopyable.hpp"
 
-#include "RDP/pointer.hpp"
+#include "core/RDP/pointer.hpp"
 
 
 enum {

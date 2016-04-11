@@ -23,8 +23,8 @@
 
 #include "widget.hpp"
 #include "composite.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
 class WidgetTab : public Widget2
 {

@@ -22,7 +22,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP
 
-#include "font.hpp"
+#include "core/font.hpp"
 #include "composite.hpp"
 #include "tooltip.hpp"
 #include "utils/theme.hpp"

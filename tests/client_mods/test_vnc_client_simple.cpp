@@ -32,8 +32,8 @@
 #define SHARE_PATH FIXTURES_PATH
 
 #include "transport/test_transport.hpp"
-#include "client_info.hpp"
-#include "vnc/vnc.hpp"
+#include "core/client_info.hpp"
+#include "mod/vnc/vnc.hpp"
 #include "front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)

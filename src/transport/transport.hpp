@@ -28,8 +28,8 @@
 #include <cstddef>
 
 #include "utils/log.hpp"
-#include "error.hpp"
-#include "auth_api.hpp"
+#include "core/error.hpp"
+#include "acl/auth_api.hpp"
 #include "utils/noncopyable.hpp"
 
 #include "configs/types.hpp"

@@ -29,7 +29,7 @@
 //#define LOGPRINT
 #define LOGNULL
 
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 
 #include "test_orders.hpp"
 

@@ -26,8 +26,8 @@
 
 #define LOGNULL
 
-#include "internal/widget2/widget2_rect.hpp"
-#include "internal/widget2/composite.hpp"
+#include "mod/internal/widget2/widget2_rect.hpp"
+#include "mod/internal/widget2/composite.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 

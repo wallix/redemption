@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_MOD_NULL_NULL_HPP_
 #define _REDEMPTION_MOD_NULL_NULL_HPP_
 
-#include "mod_api.hpp"
+#include "mod/mod_api.hpp"
 
 // Null module receive every event and does nothing. It allow session code to always have a receiving module active, thus avoidind to test that so back_end is available.
 

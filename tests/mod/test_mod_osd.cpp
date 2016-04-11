@@ -33,8 +33,8 @@
 
 #include "transport/out_filename_sequence_transport.hpp"
 #include "capture/image_capture.hpp"
-#include "RDP/RDPDrawable.hpp"
-#include "mod_osd.hpp"
+#include "core/RDP/RDPDrawable.hpp"
+#include "mod/mod_osd.hpp"
 
 struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
 {

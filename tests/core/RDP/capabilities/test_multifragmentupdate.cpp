@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/multifragmentupdate.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
 {

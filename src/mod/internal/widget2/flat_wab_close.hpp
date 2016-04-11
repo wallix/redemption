@@ -31,7 +31,7 @@
 #include "utils/translation.hpp"
 #include "widget2_rect.hpp"
 #include "utils/theme.hpp"
-#include "defines.hpp"
+#include "core/defines.hpp"
 
 #include <vector>
 

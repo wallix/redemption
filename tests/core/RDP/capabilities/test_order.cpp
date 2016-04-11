@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/order.hpp"
+#include "core/RDP/capabilities/order.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 {

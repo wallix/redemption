@@ -25,7 +25,7 @@
 
 #define LOGNULL
 
-// #include "RDP/nla/kerberos/credentials.hpp"
+// #include "core/RDP/nla/kerberos/credentials.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestTSRequest)

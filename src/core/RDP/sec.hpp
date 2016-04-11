@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <cinttypes>
 
-#include "RDP/share.hpp"
+#include "core/RDP/share.hpp"
 
 
 #include "system/ssl_calls.hpp"

@@ -26,8 +26,8 @@
 #define LOGNULL
 
 #include "transport/socket_transport.hpp"
-#include "listen.hpp"
-#include "server.hpp"
+#include "core/listen.hpp"
+#include "core/server.hpp"
 
 TODO("-Wold-style-cast is ignored")
 #pragma GCC diagnostic push

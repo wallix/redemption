@@ -26,7 +26,7 @@
 
 #include "common.hpp"
 #include "utils/stream.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
 // ============================================================

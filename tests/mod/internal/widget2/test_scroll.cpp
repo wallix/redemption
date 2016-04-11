@@ -25,9 +25,9 @@
 
 #define LOGNULL
 
-#include "internal/widget2/scroll.hpp"
-#include "internal/widget2/screen.hpp"
-#include "internal/widget2/image.hpp"
+#include "mod/internal/widget2/scroll.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/image.hpp"
 
 #include "check_sig.hpp"
 #include "fake_draw.hpp"

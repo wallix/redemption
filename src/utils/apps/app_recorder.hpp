@@ -34,7 +34,7 @@
 #include "recording_progress.hpp"
 #include "utils/iter.hpp"
 #include "program_options/program_options.hpp"
-#include "auth_api.hpp"
+#include "acl/auth_api.hpp"
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF

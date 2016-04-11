@@ -25,8 +25,8 @@
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "vnc/vnc.hpp"
+#include "core/font.hpp"
+#include "mod/vnc/vnc.hpp"
 #include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)

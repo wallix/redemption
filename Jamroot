@@ -286,18 +286,18 @@ project redemption
 
     <include>src
     <include>src/system/linux
-    <include>src/core
-    <include>src/mod
-    <include>src/front
-    <include>src/acl
+#    <include>src/core
+#    <include>src/mod
+#    <include>src/front
+#    <include>src/acl
     <include>src/capture
     <include>src/keyboard
     <include>src/keyboard/reversed_keymaps
-    <include>src/regex
+#    <include>src/regex
     <include>src/headers
     <include>src/main
     <include>modules/includes
-    <include>src/system/linux/system
+#    <include>src/system/linux/system
     <include>include
 
     <conditional>@defines

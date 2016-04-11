@@ -31,7 +31,7 @@
 
 #include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
-#include "RDP/slowpath.hpp"
+#include "core/RDP/slowpath.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
     const char *payload =

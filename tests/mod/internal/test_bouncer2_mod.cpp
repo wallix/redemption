@@ -30,7 +30,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "internal/bouncer2_mod.hpp"
+#include "mod/internal/bouncer2_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBouncer2Mod)

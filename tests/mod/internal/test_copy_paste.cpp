@@ -32,10 +32,10 @@
 #define LOGNULL
 
 #include "widget2/fake_draw.hpp"
-#include "font.hpp"
-#include "internal/copy_paste.hpp"
-#include "internal/widget2/edit.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget2/edit.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "../../front/fake_front.hpp"
 #include "check_sig.hpp"
 

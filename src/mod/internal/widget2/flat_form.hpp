@@ -32,7 +32,7 @@
 #include "utils/theme.hpp"
 #include "group_box.hpp"
 #include "utils/translation.hpp"
-#include "regex.hpp"
+#include "regex/regex.hpp"
 
 class FlatForm : public WidgetParent
 {

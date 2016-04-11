@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_ACL_MM_API_HPP
 #define REDEMPTION_ACL_MM_API_HPP
 
-#include "mod_api.hpp"
+#include "mod/mod_api.hpp"
 
 class auth_api;
 

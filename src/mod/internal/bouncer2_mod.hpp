@@ -25,7 +25,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
 
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "internal_mod.hpp"
 
 class Bouncer2Mod : public InternalMod

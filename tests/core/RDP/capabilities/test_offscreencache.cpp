@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/offscreencache.hpp"
+#include "core/RDP/capabilities/offscreencache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
 {

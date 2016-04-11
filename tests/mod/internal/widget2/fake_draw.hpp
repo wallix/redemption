@@ -23,9 +23,9 @@
 
 #include <cstdio>
 
-#include "font.hpp"
-#include "mod_api.hpp"
-#include "RDP/RDPDrawable.hpp"
+#include "core/font.hpp"
+#include "mod/mod_api.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 
 #ifdef IN_IDE_PARSER
 #define FIXTURES_PATH

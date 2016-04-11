@@ -26,7 +26,7 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
 {

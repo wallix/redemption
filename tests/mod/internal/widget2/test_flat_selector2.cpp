@@ -32,9 +32,9 @@
 
 #include "utils/log.hpp"
 
-#include "font.hpp"
-#include "internal/widget2/flat_selector2.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_selector2.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/drawgdiplus.hpp"
+#include "core/RDP/capabilities/drawgdiplus.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
 {

@@ -24,7 +24,7 @@
 
 #include "widget.hpp"
 #include "multiline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 class WidgetTooltip : public Widget2
 {

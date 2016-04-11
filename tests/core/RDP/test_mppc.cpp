@@ -30,7 +30,7 @@
 #define LOGNULL
 
 #include <sys/time.h>
-#include "RDP/mppc_unified_dec.hpp"
+#include "core/RDP/mppc_unified_dec.hpp"
 
 BOOST_AUTO_TEST_CASE(TestMPPC)
 {

@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 
-#include "error.hpp"
+#include "core/error.hpp"
 #include "transport/transport.hpp"
 
 class InFileTransport : public Transport

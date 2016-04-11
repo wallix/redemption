@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
-#include "wait_obj.hpp"
+#include "core/wait_obj.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"

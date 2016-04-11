@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/cap_font.hpp"
+#include "core/RDP/capabilities/cap_font.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
 {

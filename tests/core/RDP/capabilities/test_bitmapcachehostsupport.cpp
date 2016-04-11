@@ -26,7 +26,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/bitmapcachehostsupport.hpp"
+#include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)

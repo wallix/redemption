@@ -23,7 +23,7 @@
 #define REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
 
 #include "utils/translation.hpp"
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "configs/config.hpp"
 #include "widget2/language_button.hpp"
 #include "widget2/flat_dialog.hpp"

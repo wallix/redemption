@@ -29,7 +29,7 @@
 
 #define LOGPRINT
 
-#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
 
 #include "test_orders.hpp"
 

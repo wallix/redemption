@@ -36,7 +36,7 @@
 #include "transport/test_transport.hpp"
 #include "capture/drawable_to_file.hpp"
 #include "image_capture.hpp"
-#include "RDP/RDPDrawable.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 
 const char expected_red[] =
     /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....

@@ -34,9 +34,9 @@
 #include "transport/buffer/file_buf.hpp"
 #include "transport/sequence_generator.hpp"
 #include "no_param.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 #include "utils/log.hpp"
-#include "auth_api.hpp"
+#include "acl/auth_api.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/iter.hpp"
 

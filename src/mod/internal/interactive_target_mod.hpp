@@ -23,7 +23,7 @@
 #define REDEMPTION_MOD_INTERNAL_INTERACTIVE_TARGET_MOD_HPP
 
 #include "utils/translation.hpp"
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "configs/config.hpp"
 #include "widget2/flat_interactive_target.hpp"
 #include "widget2/screen.hpp"

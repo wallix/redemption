@@ -29,7 +29,7 @@
 
 #define LOGNULL
 
-#include "internal/interactive_target_mod.hpp"
+#include "mod/internal/interactive_target_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 TODO("Need more tests, with or without device/login/password asking, ")

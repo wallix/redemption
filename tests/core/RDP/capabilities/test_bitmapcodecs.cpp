@@ -24,7 +24,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/bitmapcodecs.hpp"
+#include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "utils/stream.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)

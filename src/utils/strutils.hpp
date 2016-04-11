@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_UTILS_STRUTILS_HPP_
 #define _REDEMPTION_UTILS_STRUTILS_HPP_
 
-#include "error.hpp"
+#include "core/error.hpp"
 #include "utils/log.hpp"
 
 inline static char * in_place_windows_to_linux_newline_convert(char * s) {

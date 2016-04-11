@@ -10,8 +10,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDPQtDrawable.hpp"
 #include <QApplication>
 

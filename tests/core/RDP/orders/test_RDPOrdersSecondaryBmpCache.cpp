@@ -29,8 +29,8 @@
 //#define LOGPRINT
 #define LOGNULL
 
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "client_info.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "core/client_info.hpp"
 
 #include "test_orders.hpp"
 

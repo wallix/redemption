@@ -25,7 +25,7 @@
 
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 
 namespace RDP {
 

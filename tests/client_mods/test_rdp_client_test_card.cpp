@@ -33,9 +33,9 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "error.hpp"
-#include "font.hpp"
-#include "internal/test_card_mod.hpp"
+#include "core/error.hpp"
+#include "core/font.hpp"
+#include "mod/internal/test_card_mod.hpp"
 
 #include "../front/fake_front.hpp"
 

@@ -24,8 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
 
-#include "RDP/nla/nla.hpp"
-#include "RDP/x224.hpp"
+#include "core/RDP/nla/nla.hpp"
+#include "core/RDP/x224.hpp"
 
 #include "utils/strutils.hpp"
 

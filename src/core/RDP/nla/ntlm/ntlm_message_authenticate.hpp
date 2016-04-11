@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGEAUTHENTICATE_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGEAUTHENTICATE_HPP_
 
-#include "RDP/nla/ntlm/ntlm_message.hpp"
-#include "RDP/nla/ntlm/ntlm_avpair.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm/ntlm_avpair.hpp"
 
 // [MS-NLMP]
 // 2.2.1.3   AUTHENTICATE_MESSAGE

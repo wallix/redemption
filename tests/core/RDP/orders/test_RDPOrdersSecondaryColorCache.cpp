@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 
 #include "test_orders.hpp"
 

@@ -22,7 +22,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "configs/config.hpp"
 #include "widget2/language_button.hpp"
 #include "widget2/flat_wait.hpp"

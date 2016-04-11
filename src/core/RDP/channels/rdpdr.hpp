@@ -24,7 +24,7 @@
 #include <cinttypes>
 
 #include "utils/cast.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 #include "utils/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"

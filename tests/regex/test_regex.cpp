@@ -30,7 +30,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "regex.hpp"
+#include "regex/regex.hpp"
 
 #include <vector>
 #include <sstream>

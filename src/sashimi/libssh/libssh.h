@@ -86,7 +86,7 @@ static inline void ssh_set_error(error_struct & error, int code, const char *des
     syslog(LOG_ERR, "%s", error.error_buffer);
 }
 
-#include "error.hpp"
+#include "core/error.hpp"
 
 #undef des_cbc_encrypt
 #include "../libcrypto.hpp"

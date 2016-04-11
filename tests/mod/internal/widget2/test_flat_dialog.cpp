@@ -30,10 +30,10 @@
 #define LOGNULL
 #include "utils/log.hpp"
 
-#include "font.hpp"
-#include "internal/widget2/flat_dialog.hpp"
-#include "internal/widget2/screen.hpp"
-#include "internal/widget2/flat_button.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_dialog.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

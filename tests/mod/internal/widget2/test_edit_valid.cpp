@@ -30,9 +30,9 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "font.hpp"
-#include "internal/widget2/edit_valid.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/edit_valid.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

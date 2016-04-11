@@ -22,7 +22,7 @@
 #define REDEMPTION_UTILS_PARSE_IP_CONNTRACK_HPP
 
 #include "utils/log.hpp"
-#include "regex.hpp"
+#include "regex/regex.hpp"
 
 #include <unistd.h>
 #include <cstring>

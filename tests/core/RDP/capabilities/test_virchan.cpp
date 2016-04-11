@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/virchan.hpp"
+#include "core/RDP/capabilities/virchan.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
 {

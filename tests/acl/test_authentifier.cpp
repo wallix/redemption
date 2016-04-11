@@ -29,8 +29,8 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "authentifier.hpp"
-#include "module_manager.hpp"
+#include "acl/authentifier.hpp"
+#include "acl/module_manager.hpp"
 #include "transport/count_transport.hpp"
 #include "transport/test_transport.hpp"
 

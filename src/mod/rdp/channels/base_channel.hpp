@@ -23,7 +23,7 @@
 
 #include "utils/asynchronous_task_manager.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
-#include "rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_log.hpp"
 
 typedef int_fast32_t data_size_type;
 

@@ -24,8 +24,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/nla/ntlm/ntlm_context.hpp"
-#include "RDP/nla/ntlm/ntlm.hpp"
+#include "core/RDP/nla/ntlm/ntlm_context.hpp"
+#include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNtlmContext)

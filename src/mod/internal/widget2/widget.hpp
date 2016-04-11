@@ -25,10 +25,10 @@
 #include <vector>
 
 #include "notify_api.hpp"
-#include "mod_api.hpp"
+#include "mod/mod_api.hpp"
 #include "utils/rect.hpp"
-#include "callback.hpp"
-#include "RDP/pointer.hpp"
+#include "core/callback.hpp"
+#include "core/RDP/pointer.hpp"
 
 struct Keymap2;
 

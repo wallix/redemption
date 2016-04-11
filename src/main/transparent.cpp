@@ -26,12 +26,12 @@
 //#define LOGNULL
 #define LOGPRINT
 
-#include "listen.hpp"
-#include "session.hpp"
+#include "core/listen.hpp"
+#include "core/session.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "utils/socket_transport_utility.hpp"
-#include "internal/transparent_replay_mod.hpp"
+#include "mod/internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 
 void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);

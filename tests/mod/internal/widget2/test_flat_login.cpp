@@ -29,8 +29,8 @@
 
 #define LOGNULL
 
-#include "internal/widget2/flat_login.hpp"
-#include "internal/widget2/screen.hpp"
+#include "mod/internal/widget2/flat_login.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

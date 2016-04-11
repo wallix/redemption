@@ -39,14 +39,14 @@
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
 #include "transport/test_transport.hpp"
-#include "font.hpp"
-#include "null/null.hpp"
-#include "internal/test_card_mod.hpp"
+#include "core/font.hpp"
+#include "mod/null/null.hpp"
+#include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"
-#include "front.hpp"
+#include "front/front.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "listen.hpp"
-//#include "session.hpp"
+//#include "core/listen.hpp"
+//#include "core/session.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {

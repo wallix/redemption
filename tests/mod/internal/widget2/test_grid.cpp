@@ -27,11 +27,11 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "font.hpp"
-#include "internal/widget2/label.hpp"
-#include "internal/widget2/grid.hpp"
-#include "internal/widget2/screen.hpp"
-#include "internal/widget2/flat_button.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/label.hpp"
+#include "mod/internal/widget2/grid.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

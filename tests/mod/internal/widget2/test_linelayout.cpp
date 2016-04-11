@@ -25,12 +25,12 @@
 
 #define LOGNULL
 
-#include "internal/widget2/columnlayout.hpp"
-#include "internal/widget2/linelayout.hpp"
-#include "internal/widget2/screen.hpp"
-#include "internal/widget2/stacklayout.hpp"
-#include "internal/widget2/label.hpp"
-#include "internal/widget2/flat_button.hpp"
+#include "mod/internal/widget2/columnlayout.hpp"
+#include "mod/internal/widget2/linelayout.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/stacklayout.hpp"
+#include "mod/internal/widget2/label.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
 #include "fake_draw.hpp"
 
 #undef OUTPUT_FILE_PATH

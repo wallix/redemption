@@ -23,11 +23,11 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_MOD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_TEST_CARD_MOD_HPP_
 
-#include "defines.hpp"
+#include "core/defines.hpp"
 #include "internal_mod.hpp"
-#include "RDP/bitmapupdate.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "utils/bitmap.hpp"
 
 class TestCardMod : public InternalMod

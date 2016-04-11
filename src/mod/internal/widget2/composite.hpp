@@ -26,7 +26,7 @@
 #include "keymap2.hpp"
 #include "utils/region.hpp"
 #include "utils/colors.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 inline void fill_region(mod_api & drawable, const Region & region, int bg_color) {
     for (const Rect & rect : region.rects) {

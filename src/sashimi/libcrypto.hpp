@@ -40,7 +40,7 @@
 #include <syslog.h>
 #include <vector>
 
-#include "error.hpp"
+#include "core/error.hpp"
 //#include "string.hpp"
 
 #undef des_cbc_encryt

@@ -24,9 +24,9 @@
 #include "utils/colors.hpp"
 #include "utils/compression_transport_wrapper.hpp"
 #include "configs/config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/RDPSerializer.hpp"
-#include "RDP/share.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/RDPSerializer.hpp"
+#include "core/RDP/share.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
 

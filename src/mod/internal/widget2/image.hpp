@@ -24,7 +24,7 @@
 
 #include "widget.hpp"
 #include "utils/bitmap.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
 class WidgetImage : public Widget2
 {

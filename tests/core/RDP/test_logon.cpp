@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "RDP/logon.hpp"
+#include "core/RDP/logon.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestLogon)

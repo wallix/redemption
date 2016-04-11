@@ -21,12 +21,12 @@
 #ifndef _REDEMPTION_CORE_RDP_REFRESH_RECT_PDU_HPP_
 #define _REDEMPTION_CORE_RDP_REFRESH_RECT_PDU_HPP_
 
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/share.hpp"
-#include "RDP/sec.hpp"
-#include "RDP/gcc.hpp"
-#include "RDP/out_per_bstream.hpp"
+#include "core/RDP/x224.hpp"
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/share.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/out_per_bstream.hpp"
 
 namespace RDP {
 

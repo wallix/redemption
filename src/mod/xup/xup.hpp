@@ -24,7 +24,7 @@
 #if !defined(__XUP_HPP__)
 #define __XUP_HPP__
 
-#include "mod_api.hpp"
+#include "mod/mod_api.hpp"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -32,11 +32,11 @@
 #include <errno.h>
 
 /* include "ther h files */
-#include "RDP/pointer.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "front_api.hpp"
+#include "core/RDP/pointer.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/front_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitmap.hpp"

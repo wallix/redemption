@@ -32,7 +32,7 @@
 #include <cstring>
 #include <cassert>
 
-#include "error.hpp"
+#include "core/error.hpp"
 #include "openssl_crypto.hpp"
 
 #include "utils/log.hpp"

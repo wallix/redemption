@@ -29,7 +29,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "module_manager.hpp"
+#include "acl/module_manager.hpp"
 
 BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)
 {

@@ -35,8 +35,8 @@
 #include "configs/config.hpp"
 //#include "transport/socket_transport.hpp"
 #include "transport/test_transport.hpp"
-#include "client_info.hpp"
-#include "rdp/rdp.hpp"
+#include "core/client_info.hpp"
+#include "mod/rdp/rdp.hpp"
 
 #include "../front/fake_front.hpp"
 

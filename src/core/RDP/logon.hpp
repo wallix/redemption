@@ -28,7 +28,7 @@
 
 #include "utils/cast.hpp"
 #include "utils/log.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "utils/get_printable_password.hpp"
 

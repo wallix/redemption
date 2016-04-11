@@ -31,7 +31,7 @@
 #include <cinttypes>
 
 #include "utils/log.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 class OutStream;
 
 // 3.1.8 MPPC-Based Bulk Data Compression

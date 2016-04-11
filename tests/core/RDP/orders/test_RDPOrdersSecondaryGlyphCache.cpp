@@ -30,7 +30,7 @@
 //#define LOGPRINT
 
 #include "utils/stream.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGlyphCache)
 {

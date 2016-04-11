@@ -28,7 +28,7 @@
 #include <cstdio>
 #include <sys/types.h>
 #include "utils/log.hpp"
-#include "font.hpp" //DEFAULT_FONT_NAME
+#include "core/font.hpp" //DEFAULT_FONT_NAME
 
 TODO("merge that with find and unlink")
 

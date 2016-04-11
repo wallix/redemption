@@ -30,7 +30,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "internal/flat_dialog_mod.hpp"
+#include "mod/internal/flat_dialog_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDialogMod)

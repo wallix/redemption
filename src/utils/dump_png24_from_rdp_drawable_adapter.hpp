@@ -22,7 +22,7 @@
 #define REDEMPTION_UTILS_DUMP_PNG24_FROM_RDP_DRAWABLE_ADAPTER_HPP
 
 #include "gdi/dump_png24.hpp"
-#include "RDP/RDPDrawable.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 
 TODO("temporary")
 struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api  {

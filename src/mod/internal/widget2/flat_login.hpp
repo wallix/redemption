@@ -32,7 +32,7 @@
 #include "utils/translation.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/theme.hpp"
-#include "defines.hpp"
+#include "core/defines.hpp"
 
 #include <array>
 

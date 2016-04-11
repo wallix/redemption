@@ -24,7 +24,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/colcache.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestColorCacheCaps)
 {
