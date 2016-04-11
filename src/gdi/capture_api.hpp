@@ -73,9 +73,9 @@ struct CaptureCoreAccess
     }
 
     template<class Derived, class Gd>
-    static auto to_capture_facade(Derived & derived, Gd & cap)
-    -> decltype(derived.to_capture_facade_impl(cap)) {
-        return derived.to_capture_facade_impl(cap);
+    static auto to_capture_proxy(Derived & derived, Gd & cap)
+    -> decltype(derived.to_capture_proxy_impl(cap)) {
+        return derived.to_capture_proxy_impl(cap);
     }
 };
 
@@ -151,7 +151,7 @@ public:
         for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
             time = std::min(
                 time,
-                CoreAccess::to_capture_facade(this->derived(), cap)
+                CoreAccess::to_capture_proxy(this->derived(), cap)
                     .snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval)
             );
         }
@@ -160,31 +160,31 @@ public:
 
     void update_config(Inifile const & ini) override {
         for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
-            CoreAccess::to_capture_facade(this->derived(), cap).update_config(ini);
+            CoreAccess::to_capture_proxy(this->derived(), cap).update_config(ini);
         }
     }
 
     void pause_capture (timeval const & now) override {
         for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
-            CoreAccess::to_capture_facade(this->derived(), cap).pause_capture(now);
+            CoreAccess::to_capture_proxy(this->derived(), cap).pause_capture(now);
         }
     }
 
     void resume_capture(timeval const & now) override {
         for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
-            CoreAccess::to_capture_facade(this->derived(), cap).resume_capture(now);
+            CoreAccess::to_capture_proxy(this->derived(), cap).resume_capture(now);
         }
     }
 
     void external_breakpoint() override {
         for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
-            CoreAccess::to_capture_facade(this->derived(), cap).external_breakpoint();
+            CoreAccess::to_capture_proxy(this->derived(), cap).external_breakpoint();
         }
     }
 
     void external_time(const timeval& now) override {
         for (auto && cap : CoreAccess::get_capture_list(this->derived())) {
-            CoreAccess::to_capture_facade(this->derived(), cap).external_time(now);
+            CoreAccess::to_capture_proxy(this->derived(), cap).external_time(now);
         }
     }
 
@@ -193,7 +193,7 @@ protected:
         return static_cast<Derived&>(*this);
     }
 
-    CaptureApi & to_capture_facade_impl(CaptureApi & cap) {
+    CaptureApi & to_capture_proxy_impl(CaptureApi & cap) {
         return cap;
     }
 };

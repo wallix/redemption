@@ -104,9 +104,9 @@
 
 #include "utils/timeout.hpp"
 #include "utils/underlying_cast.hpp"
+#include "utils/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
-#include "gdi/utils/non_null.hpp"
 
 #include <memory>
 
@@ -521,19 +521,20 @@ private:
     }
 
     static gdi::GraphicApi & null_gd() {
-        struct NullGd final
-        : gdi::GraphicBase<NullGd>
-        {};
-        static NullGd gd;
+        static gdi::BlackoutGraphic gd;
         return gd;
     }
 
-    gdi::utils::non_null<gdi::GraphicApi*> gd = &null_gd();
-    gdi::utils::non_null<gdi::GraphicApi*> graphics_update = &null_gd();
+    non_null_ptr<gdi::GraphicApi> gd = &null_gd();
+    non_null_ptr<gdi::GraphicApi> graphics_update = &null_gd();
+
+    void set_gd(gdi::GraphicApi * new_gd) {
+        this->gd = new_gd;
+        this->graphics_update = this->graphics_update_disabled ? &null_gd() : new_gd;
+    }
 
     void set_gd(gdi::GraphicApi & new_gd) {
-        this->gd = &new_gd;
-        this->graphics_update = this->graphics_update_disabled ? &null_gd() : &new_gd;
+        this->set_gd(&new_gd);
     }
 
 public:
@@ -891,7 +892,7 @@ public:
         this->capture->get_capture_event().set();
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
-            this->set_gd(*this->capture->get_graphic_api());
+            this->set_gd(this->capture->get_graphic_api());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
@@ -922,7 +923,7 @@ public:
         this->capture->resume_capture(now);
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
-            this->set_gd(*this->capture->get_graphic_api());
+            this->set_gd(this->capture->get_graphic_api());
         }
         else {
             this->set_gd(null_gd());
@@ -2693,7 +2694,7 @@ private:
 
         this->input_event_disabled     = disable_input_event;
         this->graphics_update_disabled = disable_graphics_update;
-        this->set_gd(*this->gd);
+        this->set_gd(this->gd.get());
 
         return need_full_screen_update;
     }

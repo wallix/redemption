@@ -264,9 +264,15 @@ variant strict : :
     <cxxflags>-Wsign-conversion
 ;
 
-variant asan : debug :
+
+constant CXXFLAGS-debug :
     <define>REDASSERT_AS_ASSERT
     <define>_GLIBCXX_DEBUG
+    <cxxflags>-g
+;
+
+variant asan : debug :
+    $(CXXFLAGS-debug)
 #    <cxxflags>-fsanitize=address
 #    <cxxflags>-fsanitize=leak
 #    <cxxflags>-fno-omit-frame-pointer
@@ -302,11 +308,8 @@ project redemption
 
     <conditional>@defines
 
-    <variant>debug:<define>REDASSERT_AS_ASSERT
-    <variant>debug:<define>_GLIBCXX_DEBUG
-    <variant>debug:<cxxflags>-g
+    <variant>debug:$(CXXFLAGS-debug)
 
-    <cxxflags>-Wall
     <cxxflags>-std=c++11
 
 

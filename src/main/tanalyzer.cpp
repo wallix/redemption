@@ -61,7 +61,7 @@ class Analyzer : public gdi::GraphicUniFormProxy<Analyzer, FrontAPI>
 {
     friend gdi::GraphicCoreAccess;
 
-    template<class... Ts> void graphic_proxy_func_impl(Ts const & ...) { REDASSERT(false); }
+    template<class... Ts> void invoke_uniform_gd_impl(Ts const & ...) { REDASSERT(false); }
 
 private:
     CHANNELS::ChannelDefArray channel_list;

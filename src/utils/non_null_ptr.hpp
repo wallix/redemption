@@ -14,36 +14,47 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
+*   Copyright (C) Wallix 2010-2016
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_UTILS_NON_NULL_HPP
-#define REDEMPTION_GDI_UTILS_NON_NULL_HPP
+#pragma once
 
-#include <type_traits>
 #include <cassert>
 
-namespace gdi { namespace utils {
 
 template<class T>
-struct non_null
+struct non_null_ptr
 {
-    static_assert(std::is_pointer<T>::value, "");
+    using pointer = T*;
+    using element_type = T;
 
-    non_null(decltype(nullptr)) = delete;
-    non_null(int) = delete;
-    non_null(T p)
-    : p(p)
-    { assert(p); }
 
-    typename std::remove_pointer<T>::type & operator * () { return *p; }
-    T operator->() { return p; }
+    non_null_ptr(decltype(nullptr)) = delete;
+    non_null_ptr(int) = delete;
+
+    non_null_ptr(T * ptr) noexcept {
+        *this = ptr;
+    }
+
+    non_null_ptr(non_null_ptr const &) noexcept = default;
+
+    non_null_ptr& operator = (decltype(nullptr)) noexcept = delete;
+    non_null_ptr& operator = (int) noexcept = delete;
+
+    non_null_ptr& operator = (T * ptr) noexcept {
+        assert(ptr);
+        this->ptr_ = ptr;
+        return *this;
+    }
+
+    non_null_ptr& operator = (non_null_ptr const &) noexcept = default;
+
+
+    T * get() const noexcept { return this->ptr_; }
+    T & operator*() const noexcept { return this->ptr_; }
+    T * operator->() const noexcept { return this->ptr_; }
 
 private:
-    T p;
+    T * ptr_;
 };
-
-} }
-
-#endif
