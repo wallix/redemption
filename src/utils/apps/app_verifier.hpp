@@ -11,7 +11,7 @@
 #include <utility>
 #include <string>
 
-#include "version.hpp"
+#include "main/version.hpp"
 #include "transport/in_filename_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "system/ssl_calls.hpp"

@@ -53,7 +53,7 @@
 #include "RDP/protocol.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "transparentplayer.hpp"
-#include "version.hpp"
+#include "main/version.hpp"
 #include "program_options/program_options.hpp"
 
 

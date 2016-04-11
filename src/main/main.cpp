@@ -22,7 +22,7 @@
    main program
 */
 
-#include "version.hpp"
+#include "main/version.hpp"
 
 #include "utils/apps/app_proxy.hpp"
 

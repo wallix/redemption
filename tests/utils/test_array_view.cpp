@@ -27,7 +27,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "array_view.hpp"
+#include "utils/array_view.hpp"
 
 #include <string>
 

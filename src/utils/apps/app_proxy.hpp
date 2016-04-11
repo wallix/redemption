@@ -46,7 +46,7 @@
 
 #include "program_options/program_options.hpp"
 
-#include "version.hpp"
+#include "main/version.hpp"
 
 inline void daemonize(const char * pid_file)
 {
