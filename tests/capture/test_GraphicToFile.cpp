@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl());
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     png_recorder.flush();
     out_png_trans.next();
@@ -615,8 +615,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
-    BOOST_CHECK_EQUAL(1, player.nbconsumers);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -752,8 +751,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
-    BOOST_CHECK_EQUAL(1, player.nbconsumers);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -846,8 +844,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr);
-    BOOST_CHECK_EQUAL(1, player.nbconsumers);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }

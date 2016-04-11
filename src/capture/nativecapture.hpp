@@ -29,6 +29,8 @@
 
 class NativeCapture
 : public gdi::CaptureApi
+, public gdi::ExternalEventApi
+, public gdi::ConfigUpdaterApi
 {
     uint64_t frame_interval;
     timeval start_native_capture;
@@ -75,9 +77,6 @@ public:
             this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
         }
     }
-
-    void pause_capture(const timeval& now) override {}
-    void resume_capture(const timeval& now) override {}
 
     std::chrono::microseconds snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) override {
         if (difftimeval(now, this->start_native_capture)

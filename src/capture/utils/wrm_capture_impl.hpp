@@ -30,7 +30,7 @@
 #include "apis_register.hpp"
 
 
-class WrmCaptureImpl final : private gdi::KbdInputApi, public gdi::CaptureProxy<WrmCaptureImpl>
+class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
 {
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
@@ -120,9 +120,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, public gdi::CaptureProxy<
         }
     } graphic_to_file;
 
-    struct WrmCapture final : NativeCapture {
-        using NativeCapture::NativeCapture;
-    } nc;
+    NativeCapture nc;
 
     ApiRegisterElement<gdi::KbdInputApi> kbd_element;
 
@@ -153,7 +151,7 @@ public:
 
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         apis_register.graphic_list->push_back(this->graphic_to_file);
-        apis_register.capture_list.push_back(*this);
+        apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
@@ -179,9 +177,10 @@ public:
     }
 
 private:
-    friend gdi::CaptureCoreAccess;
-    WrmCapture & get_capture_proxy_impl() {
-        return this->nc;
+    std::chrono::microseconds snapshot(
+        const timeval & now, int x, int y, bool ignore_frame_in_timeval
+    ) override {
+        return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
     void resume_capture(const timeval& now) override {
@@ -189,7 +188,6 @@ private:
         this->send_timestamp_chunk(now, true);
     }
 
-private:
     // shadow text
     bool kbd_input(const timeval& now, uint32_t) override {
         return this->graphic_to_file.kbd_input(now, '*');

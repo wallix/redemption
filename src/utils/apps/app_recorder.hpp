@@ -336,7 +336,7 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 
                 capture.zoom(zoom);
             }
-            player.add_consumer(&capture, &capture, &capture, &capture);
+            player.add_consumer(&capture, &capture, &capture, &capture, &capture);
 
             char progress_filename[4096];
             snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"

@@ -39,7 +39,7 @@ namespace CHANNELS {
     class ChannelDef;
 }
 
-class FrontAPI : public gdi::GraphicApi, public gdi::InputPointer {
+class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
     public:
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data

@@ -31,7 +31,7 @@
 #include "apis_register.hpp"
 
 
-class ImageCaptureImpl final : private gdi::CaptureApi
+class ImageCaptureImpl final : private gdi::ConfigUpdaterApi, gdi::CaptureApi
 {
     struct ImageTransportBuilder final : private Transport
     {
@@ -81,39 +81,10 @@ class ImageCaptureImpl final : private gdi::CaptureApi
         }
     };
 
-    struct SnapshotDisabled : gdi::CaptureApi
-    {
-        ImageCaptureImpl & impl;
-
-        SnapshotDisabled(ImageCaptureImpl & impl)
-        : impl(impl)
-        {}
-
-        std::chrono::microseconds snapshot(const timeval&, int, int, bool) override {
-            return this->impl.png_interval;
-        }
-
-        void update_config(Inifile const & ini) override {
-            this->impl.update_config(ini);
-        }
-
-        void pause_capture(timeval const &) override {}
-        void resume_capture(timeval const &) override {}
-
-        void external_breakpoint() override {}
-        void external_time(timeval const &) override {}
-    };
-
     std::chrono::microseconds png_interval;
     ImageTransportBuilder trans_builder;
     ImageCapture ic;
-    SnapshotDisabled disable_capture;
     bool enable_rt_display = false;
-
-    using capture_list_t = std::vector <std::reference_wrapper <gdi::CaptureApi > >;
-
-    capture_list_t * capture_list = nullptr;
-    capture_list_t * graphic_snapshot_list = nullptr;
 
 public:
     ImageCaptureImpl(
@@ -125,22 +96,13 @@ public:
             ini.get<cfg::video::png_interval>()))
     , trans_builder(record_tmp_path, basename, groupid, authentifier, enable_rt, ini)
     , ic(now, drawable, this->trans_builder.get_transport(), this->png_interval)
-    , disable_capture(*this)
     {}
 
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         if (this->trans_builder.enable_rt) {
-            this->capture_list = &apis_register.capture_list;
-            this->graphic_snapshot_list = apis_register.graphic_snapshot_list;
             this->enable_rt_display = ini.get<cfg::video::rt_display>();
-            if (this->enable_rt_display) {
-                this->capture_list->push_back(*this);
-                this->graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
-            }
-            else {
-                this->capture_list->push_back(this->disable_capture);
-            }
-            this->update_config(ini);
+            apis_register.config_updater_list.push_back(static_cast<gdi::ConfigUpdaterApi&>(*this));
+            apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
         }
         else {
             apis_register.capture_list.push_back(this->ic);
@@ -159,13 +121,6 @@ public:
 private:
     void update_config(Inifile const & ini) override {
         if (this->trans_builder.enable_rt) {
-            assert(this->capture_list && this->graphic_snapshot_list);
-
-            auto find_capture = [&](capture_list_t & list, gdi::CaptureApi & cap) {
-                auto is_cap = [&cap](gdi::CaptureApi & other) { return &other == &cap; };
-                return std::find_if(this->capture_list->begin(), this->capture_list->end(), is_cap);
-            };
-
             auto const old_enable_rt_display = this->enable_rt_display;
             this->enable_rt_display = ini.get<cfg::video::rt_display>();
 
@@ -174,32 +129,38 @@ private:
             }
 
             if (this->enable_rt_display) {
-                auto p = find_capture(*this->capture_list, this->disable_capture);
-                assert(p != this->capture_list->end());
-                *p = *this;
-                this->graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
                 this->trans_builder.png_limit = ini.get<cfg::video::png_limit>();
             }
             else {
-                auto p = find_capture(*this->capture_list, *this);
-                assert(p != this->capture_list->end());
-                *p = this->disable_capture;
-                this->graphic_snapshot_list->erase(find_capture(*this->graphic_snapshot_list, *this));
                 this->trans_builder.unlink_all_png();
             }
         }
     }
 
     std::chrono::microseconds snapshot(
-        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+        timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override {
-        return this->ic.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        if (this->enable_capture()) {
+            return this->ic.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        }
+        return this->png_interval;
     }
 
-    void external_breakpoint() override { this->ic.external_breakpoint(); }
-    void external_time(const timeval& now) override { this->ic.external_time(now); }
-    void resume_capture(timeval const & now) override { this->ic.resume_capture(now); }
-    void pause_capture(const timeval& now) override { this->ic.pause_capture(now); }
+    void pause_capture(timeval const & now) override {
+        if (this->enable_capture()) {
+            this->ic.pause_capture(now);
+        }
+    }
+
+    void resume_capture(timeval const & now) override {
+        if (this->enable_capture()) {
+            this->ic.resume_capture(now);
+        }
+    }
+
+    bool enable_capture() const {
+        return ! this->trans_builder.enable_rt || this->enable_rt_display;
+    }
 };
 
 #endif

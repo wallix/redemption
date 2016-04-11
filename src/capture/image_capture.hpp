@@ -99,10 +99,6 @@ public:
         this->flush_png();
         const_cast<Drawable&>(this->drawable).clear_timestamp();
     }
-
-    void external_breakpoint() override {}
-    void external_time(const timeval&) override {}
-    void update_config(const Inifile&) override {}
 };
 
 #endif
