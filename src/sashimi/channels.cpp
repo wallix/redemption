@@ -214,7 +214,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
         case SSH_OPTIONS_PORT:
             // options_set_port(opts, type, value, error);
             {
-                int *x = (int *) value;
+                const int *x = reinterpret_cast<const int *>(value);
                 if (*x <= 0) {
                     ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                     return -1;
@@ -231,7 +231,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                 return -1;
             } else {
-                q = strdup(static_cast<const char*>(v));
+                q = strdup(v);
                 // TODO: check memory allocation
                 i = strtol(q, &p, 10);
                 if (q == p) {
@@ -251,7 +251,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
         case SSH_OPTIONS_FD:
             // options_set_fd(opts, type, value, error);
             {
-                socket_t *x = (socket_t *) value;
+                const socket_t *x = reinterpret_cast<const socket_t *>(value);
                 if (*x < 0) {
                     opts.fd = SSH_INVALID_SOCKET;
                     ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
@@ -270,7 +270,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 return -1;
             }
 
-            q = strdup(static_cast<const char*>(v));
+            q = strdup(v);
             if (q == nullptr) {
                 return -1;
             }
@@ -300,7 +300,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             // options_set_timeout(opts, type, value, error);
 
             {
-                long *x = (long *) value;
+                const long *x = reinterpret_cast<const long *>(value);
                 if (*x < 0) {
                     ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                     return -1;
@@ -313,7 +313,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             // options_set_timeout_usec(opts, type, value, error);
 
             {
-                long *x = (long *) value;
+                const long *x = reinterpret_cast<const long *>(value);
                 if (*x < 0) {
                     ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                     return -1;
@@ -562,7 +562,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             } else {
                 free(opts.gss_server_identity);
                 opts.gss_server_identity = nullptr;
-                opts.gss_server_identity = strdup(reinterpret_cast<const char*>(v));
+                opts.gss_server_identity = strdup(v);
                 // TODO: check memory allocation
             }
             break;
@@ -649,7 +649,7 @@ int options_set_port_str(options_struct & opts, const void *value, error_struct 
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
     } else {
-        char * q = strdup(static_cast<const char*>(v));
+        char * q = strdup(v);
         char * p;
         long int i = strtol(q, &p, 10);
         free(q);
@@ -685,7 +685,7 @@ int options_set_bindaddr(options_struct & opts, const void *value, error_struct 
         return -1;
     }
 
-    char * q = strdup(static_cast<const char*>(v));
+    char * q = strdup(v);
     if (q == nullptr) {
         return -1;
     }
@@ -1004,7 +1004,7 @@ int options_set_gssapi_server_identity(options_struct & opts, const void *value,
     } else {
         free(opts.gss_server_identity);
         opts.gss_server_identity = nullptr;
-        opts.gss_server_identity = strdup(static_cast<const char*>(v));
+        opts.gss_server_identity = strdup(v);
         // TODO: check memory allocation
     }
 
@@ -1020,7 +1020,7 @@ int options_set_gssapi_client_identity(options_struct & opts, const void *value,
     } else {
         free(opts.gss_client_identity);
         opts.gss_client_identity = nullptr;
-        opts.gss_client_identity = strdup(static_cast<const char*>(v));
+        opts.gss_client_identity = strdup(v);
         // TODO: check memory allocation
     }
 
@@ -1139,7 +1139,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
     */
 
     if(ctx->front_session->socket->out_buffer->in_remain() == 0){
-        static_cast<SshServerSession*>(ctx->front_session)->do_delayed_sending();
+        ctx->front_session->do_delayed_sending();
     }
     
     if(ctx->front_session->socket->out_buffer->in_remain() > 0){
@@ -1205,7 +1205,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
 
     /* Do not do anything if this socket was already closed */
     if(front_pollfd->fd != SSH_INVALID_SOCKET && front_pollfd->revents){
-        static_cast<SshServerSession*>(ctx->front_session)->do_front_event(front_pollfd->revents);
+        ctx->front_session->do_front_event(front_pollfd->revents);
         
         if (ctx->front_session->waiting_list.size() > 0){
             Event * event = ctx->front_session->waiting_list.back();
@@ -1225,7 +1225,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
 
     if (polling_target && ctx->target_session){
         if (pollfds[n-1].revents){
-            static_cast<SshClientSession*>(ctx->target_session)->do_target_event(pollfds[n-1].revents);
+            ctx->target_session->do_target_event(pollfds[n-1].revents);
         }
 
         if (ctx->target_session->waiting_list.size() > 0){
