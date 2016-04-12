@@ -2560,7 +2560,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
     }
 
     for (i=0 ; i< n_oid ; ++i){
-        syslog(LOG_INFO,"GSSAPI: i=%u n_oid=%u", static_cast<unsigned>(i), static_cast<unsigned>(n_oid));
+        syslog(LOG_INFO,"GSSAPI: i=%u n_oid=%u", i, n_oid);
         unsigned char *oid_s = oids[i]->data.get();
         size_t len = oids[i]->size;
         syslog(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", static_cast<int>(len), SSH_OID_TAG, oid_s[0], oid_s[1]);
@@ -2584,7 +2584,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
             oid_count++;
         }
     }
-    syslog(LOG_INFO,"GSSAPI: n_oid loop done i=%u", static_cast<unsigned>(i));
+    syslog(LOG_INFO,"GSSAPI: n_oid loop done i=%u", i);
 
     gss_release_oid_set(&min_stat, &supported);
     if (oid_count == 0){
@@ -2600,7 +2600,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
 
     name_buf.value = service_name;
     name_buf.length = strlen(static_cast<const char*>(name_buf.value)) + 1;
-    OM_uint32 maj_stat2 = gss_import_name(&min_stat, &name_buf, static_cast<gss_OID>(GSS_C_NT_HOSTBASED_SERVICE), &server_name);
+    OM_uint32 maj_stat2 = gss_import_name(&min_stat, &name_buf, GSS_C_NT_HOSTBASED_SERVICE, &server_name);
     if (maj_stat2 != GSS_S_COMPLETE) {
         syslog(LOG_WARNING, "importing name %d, %d", maj_stat2, min_stat);
         gss_buffer_desc buffer;
@@ -4555,7 +4555,8 @@ int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_ca
  
 void ssh_event_set_session_client(ssh_poll_ctx_struct * ctx, SshClientSession * client_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    ctx->target_session = reinterpret_cast<SshClientSession *>(client_session);        
+    //TODO: check here: I changed it from ctx->target_session = client_session
+    ctx->client_session = client_session;        
 }
 
 /**
@@ -5806,7 +5807,7 @@ int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
     hostname.value = name_buf;
     hostname.length = strlen(name_buf) + 1;
     maj_stat = gss_import_name(&min_stat, &hostname,
-                               static_cast<gss_OID>(GSS_C_NT_HOSTBASED_SERVICE),
+                               GSS_C_NT_HOSTBASED_SERVICE,
                                &client_session->gssapi->client.server_name);
     if (maj_stat != GSS_S_COMPLETE) {
         syslog(LOG_WARNING, "importing name %d, %d", maj_stat, min_stat);
@@ -7090,7 +7091,7 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
         this->out_buffer->out_uint32_be(channel->remote_channel);
         this->out_buffer->out_uint32_be(SSH2_EXTENDED_DATA_STDERR);
         this->out_buffer->out_uint32_be(effectivelen);
-        this->out_buffer->out_blob(reinterpret_cast<const uint8_t *>(data), effectivelen);
+        this->out_buffer->out_blob(data, effectivelen);
 
         this->packet_send();
 

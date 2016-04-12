@@ -575,7 +575,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             } else {
                 free(opts.gss_client_identity);
                 opts.gss_client_identity = nullptr;
-                opts.gss_client_identity = strdup(static_cast<const char*>(v));
+                opts.gss_client_identity = strdup(v);
                 // TODO: check memory allocation
             }
             break;
