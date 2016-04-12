@@ -43,8 +43,8 @@ class Capture final
 , public gdi::KbdInputApi
 , public gdi::MouseInputApi
 , public gdi::CaptureProbeApi
-, public gdi::ExternalEventApi
-, public gdi::ConfigUpdaterApi
+, public gdi::ExternalCaptureApi
+, public gdi::UpdateConfigCaptureApi
 {
     using Graphic = GraphicCaptureImpl;
 

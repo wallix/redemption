@@ -152,6 +152,8 @@ public:
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         apis_register.graphic_list->push_back(this->graphic_to_file);
         apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
+        apis_register.update_config_capture_list.push_back(this->nc);
+        apis_register.external_capture_list.push_back(this->nc);
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 
         if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {

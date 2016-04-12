@@ -153,33 +153,33 @@ struct CaptureApisImpl
     };
 
 
-    struct ExternalEvent : gdi::ExternalEventApi
+    struct ExternalEvent : gdi::ExternalCaptureApi
     {
         void external_breakpoint() override {
-            for (gdi::ExternalEventApi & obj : this->objs) {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
                 obj.external_breakpoint();
             }
         }
 
         void external_time(const timeval& now) override {
-            for (gdi::ExternalEventApi & obj : this->objs) {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
                 obj.external_time(now);
             }
         }
 
-        std::vector<std::reference_wrapper<gdi::ExternalEventApi>> objs;
+        std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
     };
 
 
-    struct ConfigUpdater : gdi::ConfigUpdaterApi
+    struct ConfigUpdater : gdi::UpdateConfigCaptureApi
     {
         void update_config(const Inifile & ini) override {
-            for (gdi::ConfigUpdaterApi & obj : this->objs) {
+            for (gdi::UpdateConfigCaptureApi & obj : this->objs) {
                 obj.update_config(ini);
             }
         }
 
-        std::vector<std::reference_wrapper<gdi::ConfigUpdaterApi>> objs;
+        std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> objs;
     };
 };
 

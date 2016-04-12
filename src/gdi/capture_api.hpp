@@ -46,20 +46,20 @@ struct CaptureApi : private noncopyable
 };
 
 
-struct ExternalEventApi : private noncopyable
+struct ExternalCaptureApi : private noncopyable
 {
     virtual void external_breakpoint() = 0;
     virtual void external_time(timeval const & now) = 0;
 
-    virtual ~ExternalEventApi() = default;
+    virtual ~ExternalCaptureApi() = default;
 };
 
 
-struct ConfigUpdaterApi : private noncopyable
+struct UpdateConfigCaptureApi : private noncopyable
 {
     virtual void update_config(Inifile const & ini) = 0;
 
-    virtual ~ConfigUpdaterApi() = default;
+    virtual ~UpdateConfigCaptureApi() = default;
 };
 
 }

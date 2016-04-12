@@ -31,7 +31,7 @@
 #include "apis_register.hpp"
 
 
-class ImageCaptureImpl final : private gdi::ConfigUpdaterApi, gdi::CaptureApi
+class ImageCaptureImpl final : private gdi::UpdateConfigCaptureApi, gdi::CaptureApi
 {
     struct ImageTransportBuilder final : private Transport
     {
@@ -101,7 +101,8 @@ public:
     void attach_apis(ApisRegister & apis_register, const Inifile & ini) {
         if (this->trans_builder.enable_rt) {
             this->enable_rt_display = ini.get<cfg::video::rt_display>();
-            apis_register.config_updater_list.push_back(static_cast<gdi::ConfigUpdaterApi&>(*this));
+            apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
+            apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
             apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
         }
         else {
@@ -120,46 +121,37 @@ public:
 
 private:
     void update_config(Inifile const & ini) override {
-        if (this->trans_builder.enable_rt) {
-            auto const old_enable_rt_display = this->enable_rt_display;
-            this->enable_rt_display = ini.get<cfg::video::rt_display>();
+        auto const old_enable_rt_display = this->enable_rt_display;
+        this->enable_rt_display = ini.get<cfg::video::rt_display>();
 
-            if (old_enable_rt_display == this->enable_rt_display) {
-                return ;
-            }
+        if (old_enable_rt_display == this->enable_rt_display) {
+            return ;
+        }
 
-            if (this->enable_rt_display) {
-                this->trans_builder.png_limit = ini.get<cfg::video::png_limit>();
-            }
-            else {
-                this->trans_builder.unlink_all_png();
-            }
+        if (!this->enable_rt_display) {
+            this->trans_builder.unlink_all_png();
         }
     }
 
     std::chrono::microseconds snapshot(
         timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override {
-        if (this->enable_capture()) {
+        if (this->enable_rt_display) {
             return this->ic.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         }
         return this->png_interval;
     }
 
     void pause_capture(timeval const & now) override {
-        if (this->enable_capture()) {
+        if (this->enable_rt_display) {
             this->ic.pause_capture(now);
         }
     }
 
     void resume_capture(timeval const & now) override {
-        if (this->enable_capture()) {
+        if (this->enable_rt_display) {
             this->ic.resume_capture(now);
         }
-    }
-
-    bool enable_capture() const {
-        return ! this->trans_builder.enable_rt || this->enable_rt_display;
     }
 };
 

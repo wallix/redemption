@@ -29,8 +29,8 @@
 
 class NativeCapture
 : public gdi::CaptureApi
-, public gdi::ExternalEventApi
-, public gdi::ConfigUpdaterApi
+, public gdi::ExternalCaptureApi
+, public gdi::UpdateConfigCaptureApi
 {
     uint64_t frame_interval;
     timeval start_native_capture;

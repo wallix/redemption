@@ -30,8 +30,8 @@ namespace gdi {
     class CaptureProbeApi;
     class KbdInputApi;
     class MouseInputApi;
-    class ExternalEventApi;
-    class ConfigUpdaterApi;
+    class ExternalCaptureApi;
+    class UpdateConfigCaptureApi;
 }
 
 struct ApisRegister
@@ -42,8 +42,8 @@ struct ApisRegister
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> & kbd_input_list;
     std::vector<std::reference_wrapper<gdi::MouseInputApi>> & input_pointer_list;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> & capture_probe_list;
-    std::vector<std::reference_wrapper<gdi::ExternalEventApi>> & external_event_list;
-    std::vector<std::reference_wrapper<gdi::ConfigUpdaterApi>> & config_updater_list;
+    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> & external_capture_list;
+    std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> & update_config_capture_list;
 };
 
 

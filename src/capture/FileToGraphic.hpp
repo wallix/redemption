@@ -129,7 +129,7 @@ public:
     fixed_ptr_array<gdi::CaptureApi, 10> capture_consumers;
     fixed_ptr_array<gdi::KbdInputApi, 10> kbd_input_consumers;
     fixed_ptr_array<gdi::CaptureProbeApi, 10> capture_probe_consumers;
-    fixed_ptr_array<gdi::ExternalEventApi, 10> external_event_consumers;
+    fixed_ptr_array<gdi::ExternalCaptureApi, 10> external_event_consumers;
 
     bool meta_ok;
     bool timestamp_ok;
@@ -265,7 +265,7 @@ public:
         gdi::CaptureApi * capture_ptr,
         gdi::KbdInputApi * kbd_input_ptr,
         gdi::CaptureProbeApi * capture_probe_ptr,
-        gdi::ExternalEventApi * external_event_ptr
+        gdi::ExternalCaptureApi * external_event_ptr
     ) {
         this->graphic_consumers.push_back(graphic_ptr);
         this->capture_consumers.push_back(capture_ptr);
@@ -613,7 +613,7 @@ public:
             {
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
-                for (gdi::ExternalEventApi * obj : this->external_event_consumers){
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
                     obj->external_time(this->record_now);
                 }
 
@@ -772,7 +772,7 @@ public:
                     }
                 }
 
-                for (gdi::ExternalEventApi * obj : this->external_event_consumers){
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
                     obj->external_breakpoint();
                 }
             }
@@ -927,7 +927,7 @@ public:
             case SESSION_UPDATE:
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
-                for (gdi::ExternalEventApi * obj : this->external_event_consumers){
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
                     obj->external_time(this->record_now);
                 }
 
