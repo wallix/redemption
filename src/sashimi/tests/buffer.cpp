@@ -27,9 +27,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 //#include "string.hpp"
-#include "libssh/libssh.h"
+#include "sashimi/libssh/libssh.h"
 
-#include "buffer.hpp"
+#include "sashimi/buffer.hpp"
 
 BOOST_AUTO_TEST_CASE(TestInputArrayOneBlock)
 {

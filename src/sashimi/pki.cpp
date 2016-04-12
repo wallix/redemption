@@ -35,14 +35,12 @@
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 
-#include "libssh/libssh.h"
+#include "sashimi/libssh/libssh.h"
 
-#include "buffer.hpp"
-#include "channels.hpp"
+#include "sashimi/buffer.hpp"
+#include "sashimi/channels.hpp"
 #include "utils/log.hpp"
-#include "pki.hpp"
-
-#include "buffer.hpp"
+#include "sashimi/pki.hpp"
 
 static char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                          "abcdefghijklmnopqrstuvwxyz"

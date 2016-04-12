@@ -21,7 +21,7 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#include "libssh/libssh.h"
+#include "sashimi/libssh/libssh.h"
 
 struct error_struct * ssh_new_error()
 {

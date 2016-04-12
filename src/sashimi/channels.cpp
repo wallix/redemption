@@ -111,11 +111,11 @@
 
 
 
-#include "libssh/libssh.h"
+#include "sashimi/libssh/libssh.h"
 
-#include "buffer.hpp"
-#include "channels.hpp"
-#include "pki.hpp"
+#include "sashimi/buffer.hpp"
+#include "sashimi/channels.hpp"
+#include "sashimi/pki.hpp"
 
 
 

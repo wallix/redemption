@@ -27,8 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "sashimi/log.hpp"
-#include "libcrypto.hpp"
+#include "utils/log.hpp"
+#include "sashimi/libcrypto.hpp"
 
 // test AES cipher
 

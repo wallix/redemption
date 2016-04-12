@@ -255,14 +255,9 @@ project redemption
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
     <include>$(SRCDIR)/system/linux
-    <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/mod
-    <include>$(SRCDIR)/front
-    <include>$(SRCDIR)/acl
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/regex
     <include>$(SRCDIR)/headers
 #    <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
@@ -1234,25 +1229,11 @@ install local-install-sashimi
     : <location>/usr/lib
     ;
 
-obj sashimi_error : $(SRCDIR)/sashimi/error.cpp     :
-    ;
-
-obj sashimi_pki : $(SRCDIR)/sashimi/pki.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
-obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
-obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
-obj sashimi_libssh : $(SRCDIR)/sashimi/libssh.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
+obj sashimi_error : $(SRCDIR)/sashimi/error.cpp ;
+obj sashimi_pki : $(SRCDIR)/sashimi/pki.cpp ;
+obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp ;
+obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp ;
+obj sashimi_libssh : $(SRCDIR)/sashimi/libssh.cpp ;
 
 lib sashimi :
     sashimi_pki
@@ -1282,7 +1263,6 @@ unit-test test_buffer :
     sashimi_error 
     libboost_unit_test 
     :
-    <include>$(SRCDIR)/sashimi
     $(TEST_DEPENDENCIES)
     ;
 
@@ -1292,7 +1272,6 @@ unit-test test_crypto :
     crypto
     libboost_unit_test 
     :
-    <include>$(SRCDIR)/sashimi
     $(TEST_DEPENDENCIES)
     ;
 
