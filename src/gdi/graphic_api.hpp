@@ -461,7 +461,7 @@ protected:
 };
 
 
-class BlackoutGraphic : public GraphicBase<BlackoutGraphic>
+class BlackoutGraphic final : public GraphicBase<BlackoutGraphic>
 {
     friend gdi::GraphicCoreAccess;
 
