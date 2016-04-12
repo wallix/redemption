@@ -102,6 +102,7 @@
 #include "core/RDP/mppc_60.hpp"
 #include "core/RDP/mppc_61.hpp"
 
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/timeout.hpp"
 #include "utils/underlying_cast.hpp"
 
@@ -1414,11 +1415,21 @@ public:
                     case CS_MONITOR:
                     {
                         GCC::UserData::CSMonitor & cs_monitor =
-                            this->client_info.client_monitor;
+                            this->client_info.monitors;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
                         }
+
+                        Rect client_monitors_rect = this->client_info.monitors.get_rect();
+                        if (this->verbose & 1) {
+                            LOG(LOG_INFO, "MonitorsRect=(%d, %d, %d, %d)",
+                                client_monitors_rect.x, client_monitors_rect.y,
+                                client_monitors_rect.cx, client_monitors_rect.cy);
+                        }
+
+                        this->client_info.width     = client_monitors_rect.cx + 1;
+                        this->client_info.height    = client_monitors_rect.cy + 1;
                     }
                     break;
                     case CS_MCS_MSGCHANNEL:
@@ -1893,6 +1904,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::incoming::ACTIVATED (mce)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
@@ -2097,6 +2109,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::incoming::ACTIVATED (new license request)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
@@ -2905,6 +2918,10 @@ private:
                 }
             }
         );
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "Front::send_demand_active done");
+        }
     }   // send_demand_active
 
     void process_confirm_active(InStream & stream)
@@ -3462,6 +3479,43 @@ private:
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "send_fontmap done");
+        }
+    }
+
+    void send_monitor_layout() {
+        if (!this->client_info.monitors.monitorCount) {
+            return;
+        }
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_monitor_layout");
+        }
+
+        MonitorLayoutPDU monitor_layout_pdu;
+
+        monitor_layout_pdu.set(this->client_info.monitors);
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+        // Payload
+        monitor_layout_pdu.emit(stream.get_data_stream());
+
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_MONITOR_LAYOUT_PDU
+                            , false
+                            , this->mppc_enc
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , this->verbose
+                            );
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_monitor_layout done");
         }
     }
 

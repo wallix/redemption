@@ -87,7 +87,7 @@ struct ClientInfo {
     char alternate_shell[512] = { 0 };
     char working_dir[512] = { 0 };
 
-    GCC::UserData::CSMonitor client_monitor;
+    GCC::UserData::CSMonitor monitors;
 
     ClientTimeZone client_time_zone;
 

@@ -633,6 +633,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
 
     std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
+    GCC::UserData::CSMonitor cs_monitor;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -749,6 +751,7 @@ public:
                           mod_rdp_params.server_cert_error_message,
                           mod_rdp_params.verbose
                          )
+        , cs_monitor(info.monitors)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -1995,9 +1998,13 @@ public:
                             [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
                                 // ------------------------------------------------------------
                                 GCC::UserData::CSCore cs_core;
+
+                                Rect primary_monitor_rect =
+                                    this->cs_monitor.get_primary_monitor_rect();
+
                                 cs_core.version = this->use_rdp5?0x00080004:0x00080001;
-                                cs_core.desktopWidth = this->front_width;
-                                cs_core.desktopHeight = this->front_height;
+                                cs_core.desktopWidth = (primary_monitor_rect.isempty() ? this->front_width : primary_monitor_rect.cx + 1);
+                                cs_core.desktopHeight = (primary_monitor_rect.isempty() ? this->front_height : primary_monitor_rect.cy + 1);
                                 //cs_core.highColorDepth = this->front_bpp;
                                 cs_core.highColorDepth = ((this->front_bpp == 32)
                                     ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
@@ -2205,6 +2212,13 @@ public:
                                         cs_net.log("Sending to server");
                                     }
                                     cs_net.emit(stream);
+                                }
+
+                                if (this->cs_monitor.monitorCount) {
+                                    if (this->verbose & 1) {
+                                        this->cs_monitor.log("Sending to server");
+                                    }
+                                    this->cs_monitor.emit(stream);
                                 }
                             },
                             [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
