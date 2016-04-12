@@ -85,7 +85,7 @@ struct GeneratorTransport : public InputTransportDynarray
         }
     }
 
-    void do_send(const char * const buffer, size_t len) {
+    void do_send(const char * const buffer, size_t len) override {
         LOG(LOG_INFO, "do_send %zu bytes", len);
         if (verbose > 127){
             LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
@@ -139,7 +139,7 @@ public:
     }
 
 private:
-    void do_send(const char * const data, size_t len)
+    void do_send(const char * const data, size_t len) override
     {
         const size_t available_len = std::min<size_t>(this->len - this->current, len );
         if (0 != memcmp(data, this->data.get() + this->current, available_len)){
@@ -205,11 +205,11 @@ public:
         memcpy(this->public_key.get(), data, data_size);
     }
 
-    virtual const uint8_t * get_public_key() const {
+    virtual const uint8_t * get_public_key() const override {
         return this->public_key.get();
     }
 
-    virtual size_t get_public_key_length() const {
+    virtual size_t get_public_key_length() const override {
         return this->public_key_length;
     }
 
@@ -218,11 +218,11 @@ public:
     }
 
 private:
-    void do_recv(char ** pbuffer, size_t len) {
+    void do_recv(char ** pbuffer, size_t len) override {
         this->gen.recv(pbuffer, len);
     }
 
-    void do_send(const char * const buffer, size_t len) {
+    void do_send(const char * const buffer, size_t len) override {
         this->check.send(buffer, len);
     }
 };
@@ -232,7 +232,7 @@ private:
 class LogTransport
 : public Transport
 {
-    void do_send(const char * const buffer, size_t len) {
+    void do_send(const char * const buffer, size_t len) override {
         LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
         hexdump_c(buffer, len);
         LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
@@ -248,13 +248,13 @@ public:
     InStream    in_stream{buf};
     OutStream   out_stream{buf};
 
-    virtual void do_recv(char ** pbuffer, size_t len) {
+    virtual void do_recv(char ** pbuffer, size_t len) override {
         char * buffer = *pbuffer;
         this->in_stream.in_copy_bytes(buffer, len);
         (*pbuffer) = buffer + len;
     }
 
-    virtual void do_send(const char * const buffer, size_t len) {
+    virtual void do_send(const char * const buffer, size_t len) override {
         this->out_stream.out_copy_bytes(buffer, len);
     }
 };

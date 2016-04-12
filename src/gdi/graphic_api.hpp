@@ -269,10 +269,10 @@ public:
         this->draw_(cmd, clip, gly_cache);
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) { this->draw_(order); }
-    void draw(const RDP::RAIL::WindowIcon          & order) { this->draw_(order); }
-    void draw(const RDP::RAIL::CachedIcon          & order) { this->draw_(order); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) { this->draw_(order); }
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowIcon          & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::CachedIcon          & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::DeletedWindow       & order) override { this->draw_(order); }
 
     void draw(RDPColCache   const & cmd) override { this->draw_(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_(cmd); }

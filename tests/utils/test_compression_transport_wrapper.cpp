@@ -35,15 +35,15 @@ BOOST_AUTO_TEST_CASE(TestCompressionTransportWrapper)
     std::stringbuf buf;
     auto * oldbuf = std::cout.rdbuf(&buf);
     struct NoneTransport : Transport {
-        virtual void flush() { std::cout << "none\n"; };
+        virtual void flush() override { std::cout << "none\n"; };
     };
     struct GzipTransport : Transport {
         GzipTransport(Transport &, uint32_t) {}
-        virtual void flush() { std::cout << "gzip\n"; };
+        virtual void flush() override { std::cout << "gzip\n"; };
     };
     struct SnappyTransport : Transport {
         SnappyTransport(Transport &, uint32_t) {}
-        virtual void flush() { std::cout << "snappy\n"; };
+        virtual void flush() override { std::cout << "snappy\n"; };
     };
 
     NoneTransport trans;

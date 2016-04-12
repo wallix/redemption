@@ -35,10 +35,10 @@
 #include "transport/test_transport.hpp"
 
 struct ActivityAlwaysTrue : ActivityChecker {
-    virtual bool check_and_reset_activity() { return true; };
+    virtual bool check_and_reset_activity() override { return true; };
 };
 struct ActivityAlwaysFalse : ActivityChecker {
-    virtual bool check_and_reset_activity() { return false; };
+    virtual bool check_and_reset_activity() override { return false; };
 };
 
 

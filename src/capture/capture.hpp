@@ -201,15 +201,15 @@ public:
         return this->capture_api.get_capture_event();
     }
 
-    void pause_capture(timeval const & now) {
+    void pause_capture(timeval const & now) override {
         this->capture_api.pause_capture(now);
     }
 
-    void resume_capture(timeval const & now) {
+    void resume_capture(timeval const & now) override {
         this->capture_api.resume_capture(now);
     }
 
-    void update_config(const Inifile & ini) {
+    void update_config(const Inifile & ini) override {
         this->capture_api.update_config(ini);
     }
 

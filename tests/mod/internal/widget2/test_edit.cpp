@@ -334,10 +334,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
         : Widget2(drawable, Rect(), *this, nullptr)
         {}
 
-        virtual void draw(const Rect&)
+        virtual void draw(const Rect&) override
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -348,7 +348,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
