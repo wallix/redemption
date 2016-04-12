@@ -33,11 +33,12 @@
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/input_pointer_api.hpp"
 #include "gdi/kbd_input_api.hpp"
+#include "capture/utils/mouse_trace.hpp"
 
 
 struct CaptureApisImpl
 {
-    struct Capture : gdi::CaptureDispatcher<Capture>
+    struct Capture : gdi::CaptureApi
     {
         Capture(const timeval & now, int cursor_x, int cursor_y)
         : mouse_info{now, cursor_x, cursor_y}
@@ -59,19 +60,25 @@ struct CaptureApisImpl
 
             std::chrono::microseconds time = std::chrono::microseconds::max();
             if (!this->caps.empty()) {
-                time = Capture::base_type::snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+                for (gdi::CaptureApi & cap : this->caps) {
+                    time = std::min(time, cap.snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval));
+                }
                 this->capture_event.update(time.count());
             }
             return time;
         }
 
         void pause_capture(const timeval& now) override {
-            Capture::base_type::pause_capture(now);
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.pause_capture(now);
+            }
             this->capture_event.reset();
         }
 
         void resume_capture(const timeval& now) override {
-            Capture::base_type::resume_capture(now);
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.resume_capture(now);
+            }
             this->capture_event.set();
         }
 
@@ -87,17 +94,10 @@ struct CaptureApisImpl
             return this->capture_event;
         }
 
-        using captures_list = std::vector<std::reference_wrapper<gdi::CaptureApi>>;
-
-        captures_list caps;
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
 
     private:
-        friend gdi::CaptureCoreAccess;
-        captures_list & get_capture_list_impl() {
-            return this->caps;
-        }
-
-        Drawable * drawable;
+        Drawable * drawable = nullptr;
         MouseTrace mouse_info;
         wait_obj capture_event;
     };
@@ -123,15 +123,15 @@ struct CaptureApisImpl
     };
 
 
-    struct InputPointer : gdi::InputPointer
+    struct MouseInput : gdi::MouseInputApi
     {
         void update_pointer_position(uint16_t x, uint16_t y) override {
-            for (gdi::InputPointer & mouse : this->mouses) {
+            for (gdi::MouseInputApi & mouse : this->mouses) {
                 mouse.update_pointer_position(x, y);
             }
         }
 
-        std::vector<std::reference_wrapper<gdi::InputPointer>> mouses;
+        std::vector<std::reference_wrapper<gdi::MouseInputApi>> mouses;
     };
 
 
@@ -150,6 +150,36 @@ struct CaptureApisImpl
         }
 
         std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
+    };
+
+
+    struct ExternalCapture : gdi::ExternalCaptureApi
+    {
+        void external_breakpoint() override {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
+                obj.external_breakpoint();
+            }
+        }
+
+        void external_time(const timeval& now) override {
+            for (gdi::ExternalCaptureApi & obj : this->objs) {
+                obj.external_time(now);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
+    };
+
+
+    struct UpdateConfigCapture : gdi::UpdateConfigCaptureApi
+    {
+        void update_config(const Inifile & ini) override {
+            for (gdi::UpdateConfigCaptureApi & obj : this->objs) {
+                obj.update_config(ini);
+            }
+        }
+
+        std::vector<std::reference_wrapper<gdi::UpdateConfigCaptureApi>> objs;
     };
 };
 

@@ -437,12 +437,6 @@ public:
             this->kbd_stream.rewind();
         }
     }
-
-    void external_breakpoint() override {}
-    void external_time(const timeval&) override {}
-    void pause_capture(const timeval&) override {}
-    void resume_capture(const timeval&) override {}
-    void update_config(const Inifile&) override {}
 };
 
 

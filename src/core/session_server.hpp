@@ -47,7 +47,7 @@ public:
     {
     }
 
-    virtual Server_status start(int incoming_sck)
+    virtual Server_status start(int incoming_sck) override
     {
         union
         {

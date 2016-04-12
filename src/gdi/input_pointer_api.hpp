@@ -25,10 +25,9 @@
 
 namespace gdi {
 
-// TODO MouseInputApi
-struct InputPointer : private noncopyable
+struct MouseInputApi : private noncopyable
 {
-    virtual ~InputPointer() = default;
+    virtual ~MouseInputApi() = default;
 
     virtual void update_pointer_position(uint16_t x, uint16_t y) = 0;
 };

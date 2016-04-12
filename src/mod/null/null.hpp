@@ -50,6 +50,12 @@ struct null_mod : public gdi::GraphicBase<null_mod, mod_api> {
     void end_update() override {}
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
+
+private:
+    friend gdi::GraphicCoreAccess;
+
+    template<class... Args>
+    void draw_impl(Args const & ...) {}
 };
 
 #endif

@@ -33,7 +33,7 @@
 
 class FakeFront;
 namespace {
-    using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverter>;
+    using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverterAccess>;
 }
 
 class FakeFront : public FakeFrontBase
