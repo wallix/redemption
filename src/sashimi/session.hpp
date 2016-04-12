@@ -28,10 +28,10 @@
 
 #define GZIP_BLOCKSIZE 4092
 
-#include "event.hpp"
+#include "sashimi/event.hpp"
 
-#include "pki.hpp"
-#include "libcrypto.hpp"
+#include "sashimi/pki.hpp"
+#include "sashimi/libcrypto.hpp"
 
 #include <gssapi/gssapi.h>
 #include <fcntl.h>

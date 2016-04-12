@@ -22,10 +22,10 @@
    Copyright (c) 2009-2013 by Andreas Schneider <asn@cryptomilk.org>
 */
 
-#include "libssh/libssh.h"
+#include "sashimi/libssh/libssh.h"
 
-#include "buffer.hpp"
-#include "channels.hpp"
+#include "sashimi/buffer.hpp"
+#include "sashimi/channels.hpp"
 
 /**
  * @brief Allocate a new channel.

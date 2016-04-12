@@ -30,13 +30,13 @@
 #include <stdio.h> // for stderr
 #include <arpa/inet.h> // for ntohl
 
-#include "parse.hpp"
-#include "serialize.hpp"
+#include "utils/parse.hpp"
+#include "sashimi/serialize.hpp"
 #include <syslog.h>
 
 //#include "string.hpp"
-#include "libssh/libssh.h"
-#include "libcrypto.hpp"
+#include "sashimi/libssh/libssh.h"
+#include "sashimi/libcrypto.hpp"
 
 #define DEBUG_BUFFER
 

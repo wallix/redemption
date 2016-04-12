@@ -30,11 +30,10 @@
 #include <sys/select.h> // fd_set
 #include <poll.h>
 
-#include "libssh/libssh.h"
-
-#include "libcrypto.hpp"
-#include "pki.hpp"
-#include "buffer.hpp"
+#include "sashimi/libssh/libssh.h"
+#include "sashimi/libcrypto.hpp"
+#include "sashimi/pki.hpp"
+#include "sashimi/buffer.hpp"
 
 /*
  * All implementations MUST be able to process packets with an
@@ -875,7 +874,7 @@ struct ssh_auth_auto_state_struct {
     }
 };
 
-#include "core/session.hpp"
+#include "sashimi/session.hpp"
 
 int ssh_poll_ctx_dopoll(struct ssh_poll_ctx_struct * ctx, int timeout);
 int dopoll(ssh_poll_ctx_struct * ctx, int timeout);
