@@ -232,39 +232,30 @@ struct GraphicCmdColorDistributor<RngByBpp, Dec, false, false, false, false>
 };
 
 
-template<class CoreAccess>
-struct GraphicColorConverterBase : CoreAccess
+struct GraphicColorConverterAccess : GraphicCoreAccess
 {
     template<class Derived, class... Ts>
     static void draw(Derived & gd, Ts const & ... args) {
-        static_assert(decltype(/*Graphic*/CoreAccess::color_converter(gd)(uint32_t{})){1}, "unimplemented");
+        static_assert(sizeof(GraphicCoreAccess::color_converter(gd)), "unimplemented");
         encode_cmd(1, gd, args...);
     }
 
 private:
     template<class Gd, class Cmd, class... Ts>
     static auto encode_cmd(int, Gd & gd, Cmd const & cmd, Ts const & ... args)
-    -> decltype(GraphicCmdColor::encode_cmd_color(
-        CoreAccess::color_converter(gd),
-        std::declval<Cmd&>())
-    ) {
+    -> decltype(void(GraphicCmdColor::encode_cmd_color(
+        GraphicCoreAccess::color_converter(gd), std::declval<Cmd&>())
+    )) {
         auto new_cmd = cmd;
-        GraphicCmdColor::encode_cmd_color(CoreAccess::color_converter(gd), new_cmd);
-        CoreAccess::draw(gd, new_cmd, args...);
+        GraphicCmdColor::encode_cmd_color(GraphicCoreAccess::color_converter(gd), new_cmd);
+        GraphicCoreAccess::draw(gd, new_cmd, args...);
     }
 
     template<class Gd, class Cmd, class... Ts>
     static void encode_cmd(unsigned, Gd & gd, Cmd const & cmd, Ts const & ... args) {
-        CoreAccess::draw(gd, cmd, args...);
+        GraphicCoreAccess::draw(gd, cmd, args...);
     }
 };
-
-struct GraphicColorConverter
-: GraphicColorConverterBase<GraphicCoreAccess>
-{};
-
-template<class Derived, class CoreAccess = GraphicColorConverter>
-using GraphicConverterBase = GraphicBase<Derived, GraphicApi, CoreAccess>;
 
 }
 

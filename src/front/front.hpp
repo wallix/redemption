@@ -443,19 +443,19 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverted : gdi::GraphicProxy<
-            GraphicConverted<ColorConverter>,
+        struct GraphicConverter : gdi::GraphicProxy<
+            GraphicConverter<ColorConverter>,
             gdi::GraphicApi,
-            gdi::GraphicColorConverter
+            gdi::GraphicColorConverterAccess
         > {
             friend gdi::GraphicCoreAccess;
 
-            GraphicConverted(
+            GraphicConverter(
                 gdi::GraphicDepth depth,
                 Graphics::PrivateGraphicsUpdatePDU & graphics,
                 ColorConverter const & color_converter
             )
-            : GraphicConverted::base_type(depth)
+            : GraphicConverter::base_type(depth)
             , color_converter(color_converter)
             , graphics(graphics)
             {}
@@ -475,7 +475,7 @@ private:
         template<class Dec, class Enc>
         void build_graphics(Dec const & dec, Enc const & enc) {
             using color_converter_t = color_converter<Dec, Enc>;
-            using Drawable = GraphicConverted<color_converter_t>;
+            using Drawable = GraphicConverter<color_converter_t>;
             this->gd_converted = std::make_unique<Drawable>(
                 gdi::GraphicDepth::from_bpp(Dec::bpp),
                 this->graphics_update_pdu(),

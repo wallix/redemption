@@ -97,7 +97,7 @@ struct CaptureApisImpl
         std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
 
     private:
-        Drawable * drawable;
+        Drawable * drawable = nullptr;
         MouseTrace mouse_info;
         wait_obj capture_event;
     };

@@ -1068,7 +1068,7 @@ public:
 
     using Color = DrawableImplPrivate::color_t;
 
-    static const std::size_t Bpp = DrawableImplPrivate::Bpp;
+    using DrawableImplPrivate::Bpp;
 
 
     Drawable(int width, int height)

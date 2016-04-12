@@ -38,7 +38,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
 
     DumpPng24FromRDPDrawableAdapter dump_png24_api;
 
-    struct Transport {
+    struct TransportVariant{
         union Variant
         {
             OutMetaSequenceTransportWithSum out_with_sum;
@@ -52,7 +52,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
         ::Transport * trans;
 
         template<class... Ts>
-        Transport(configs::TraceType trace_type, Ts && ... args)
+        TransportVariant(configs::TraceType trace_type, Ts && ... args)
         {
             TODO("there should only be one outmeta, not two."
                 " Capture code should not really care if file is encrypted or not."
@@ -76,7 +76,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
             }
         }
 
-        ~Transport() {
+        ~TransportVariant() {
             this->trans->~Transport();
         }
     } trans_variant;
