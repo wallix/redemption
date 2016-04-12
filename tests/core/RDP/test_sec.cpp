@@ -30,7 +30,7 @@
 
 #include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
-#include "RDP/sec.hpp"
+#include "core/RDP/sec.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 {

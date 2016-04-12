@@ -29,8 +29,8 @@
 
 #define LOGNULL
 
-#include "regex_parser.hpp"
-#include "regex_st_automate.hpp"
+#include "regex/regex_parser.hpp"
+#include "regex/regex_st_automate.hpp"
 
 #include <vector>
 

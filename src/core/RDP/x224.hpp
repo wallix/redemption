@@ -29,7 +29,7 @@
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 #include "fastpath.hpp"
 #include "utils/parse.hpp"
 

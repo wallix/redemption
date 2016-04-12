@@ -26,7 +26,7 @@
 
 #define LOGNULL
 
-#include "wait_obj.hpp"
+#include "core/wait_obj.hpp"
 #include "utils/socket_transport_utility.hpp"
 
 BOOST_AUTO_TEST_CASE(Testwait_obj)

@@ -92,8 +92,8 @@
 
 #include "bitmapupdate.hpp"
 
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
 #include "caches/glyphcache.hpp"
 
 #include "orders/RDPOrdersPrimaryPolygonSC.hpp"

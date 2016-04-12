@@ -29,7 +29,7 @@
 //#define LOGPRINT
 #define LOGNULL
 
-#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 
 #include "test_orders.hpp"
 

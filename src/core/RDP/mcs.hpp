@@ -26,9 +26,9 @@
 
 #include <cinttypes>
 
-#include "error.hpp"
+#include "core/error.hpp"
 #include "utils/stream.hpp"
-#include "RDP/out_per_bstream.hpp"
+#include "core/RDP/out_per_bstream.hpp"
 
 
 namespace MCS

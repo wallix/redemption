@@ -26,8 +26,8 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/caches/bmpcachepersister.hpp"
-#include "RDP/PersistentKeyListPDU.hpp"
+#include "core/RDP/caches/bmpcachepersister.hpp"
+#include "core/RDP/PersistentKeyListPDU.hpp"
 #include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBmpCachePersister)

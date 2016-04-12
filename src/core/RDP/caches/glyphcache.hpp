@@ -21,9 +21,9 @@
 #ifndef _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
 
-#include "font.hpp"
+#include "core/font.hpp"
 #include "utils/noncopyable.hpp"
-#include "RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/cap_glyphcache.hpp"
 
 #include <array>
 

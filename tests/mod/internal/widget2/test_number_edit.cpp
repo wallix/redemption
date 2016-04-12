@@ -29,9 +29,9 @@
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/number_edit.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/number_edit.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;

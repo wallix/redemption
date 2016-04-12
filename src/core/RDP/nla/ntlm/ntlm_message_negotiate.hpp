@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGENEGOTIATE_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGENEGOTIATE_HPP_
 
-#include "RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
 
 // [MS-NLMP]
 

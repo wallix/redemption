@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/cap_sound.hpp"
+#include "core/RDP/capabilities/cap_sound.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilitySoundEmit)
 {

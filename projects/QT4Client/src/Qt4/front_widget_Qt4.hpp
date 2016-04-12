@@ -25,7 +25,7 @@
 //#define LOGPRINT
 
 #include "transport/socket_transport.hpp"
-#include "rdp/rdp.hpp"
+#include "mod/rdp/rdp.hpp"
 
 #include "front_Qt4.hpp"
 

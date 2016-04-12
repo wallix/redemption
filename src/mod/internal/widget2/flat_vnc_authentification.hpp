@@ -31,7 +31,7 @@
 #include "flat_button.hpp"
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
-#include "defines.hpp"
+#include "core/defines.hpp"
 
 class FlatVNCAuthentification : public WidgetParent
 {

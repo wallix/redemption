@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/frameacknowledge.hpp"
+#include "core/RDP/capabilities/frameacknowledge.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
 {

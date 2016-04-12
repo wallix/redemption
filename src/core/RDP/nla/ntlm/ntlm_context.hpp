@@ -26,11 +26,11 @@
 #include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
 
-#include "RDP/nla/ntlm/ntlm_message.hpp"
-#include "RDP/nla/ntlm/ntlm_message_negotiate.hpp"
-#include "RDP/nla/ntlm/ntlm_message_challenge.hpp"
-#include "RDP/nla/ntlm/ntlm_message_authenticate.hpp"
-#include "RDP/nla/sspi.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_negotiate.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_challenge.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_authenticate.hpp"
+#include "core/RDP/nla/sspi.hpp"
 
 enum NtlmState {
     NTLM_STATE_INITIAL,

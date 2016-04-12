@@ -29,10 +29,10 @@
 #include <sys/socket.h>
 
 #include "configs/config.hpp"
-#include "mainloop.hpp"
+#include "core/mainloop.hpp"
 #include "utils/log.hpp"
-#include "listen.hpp"
-#include "session_server.hpp"
+#include "core/listen.hpp"
+#include "core/session_server.hpp"
 #include "utils/parse_ip_conntrack.hpp"
 
 #include "configs/config.hpp"

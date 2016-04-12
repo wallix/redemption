@@ -24,7 +24,7 @@
 
 #include <utility>
 
-#include "font.hpp"
+#include "core/font.hpp"
 
 #include "bitmapupdate.hpp"
 #include "pointer.hpp"

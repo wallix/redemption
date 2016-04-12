@@ -28,7 +28,7 @@
 
 #define LOGNULL
 #include "transport/test_transport.hpp"
-#include "RDP/x224.hpp"
+#include "core/RDP/x224.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
 {

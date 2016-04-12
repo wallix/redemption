@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/cap_bitmap.hpp"
+#include "core/RDP/capabilities/cap_bitmap.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 {

@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
 
-#include "RDP/nla/sspi.hpp"
-#include "RDP/nla/ntlm/ntlm_context.hpp"
+#include "core/RDP/nla/sspi.hpp"
+#include "core/RDP/nla/ntlm/ntlm_context.hpp"
 
 // TODO: constants below are still globals, 
 // better to move them in the scope of functions/objects using them

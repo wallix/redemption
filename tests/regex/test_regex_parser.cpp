@@ -29,8 +29,8 @@
 
 #define LOGNULL
 
-#include "regex_parser.hpp"
-#include "regex_states_value.hpp"
+#include "regex/regex_parser.hpp"
+#include "regex/regex_states_value.hpp"
 
 using namespace re;
 

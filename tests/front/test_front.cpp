@@ -42,12 +42,12 @@
 #include "configs/config.hpp"
 //#include "socket_transport.hpp"
 #include "transport/test_transport.hpp"
-#include "client_info.hpp"
-#include "rdp/rdp.hpp"
+#include "core/client_info.hpp"
+#include "mod/rdp/rdp.hpp"
 #include "utils/fileutils.hpp"
 
-#include "front.hpp"
-#include "null/null.hpp"
+#include "front/front.hpp"
+#include "mod/null/null.hpp"
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"

@@ -29,16 +29,16 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "authentifier.hpp"
-#include "module_manager.hpp"
+#include "acl/authentifier.hpp"
+#include "acl/module_manager.hpp"
 #include "transport/count_transport.hpp"
 #include "transport/test_transport.hpp"
 
 struct ActivityAlwaysTrue : ActivityChecker {
-    virtual bool check_and_reset_activity() { return true; };
+    virtual bool check_and_reset_activity() override { return true; };
 };
 struct ActivityAlwaysFalse : ActivityChecker {
-    virtual bool check_and_reset_activity() { return false; };
+    virtual bool check_and_reset_activity() override { return false; };
 };
 
 

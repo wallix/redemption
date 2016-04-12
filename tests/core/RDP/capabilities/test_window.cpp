@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/window.hpp"
+#include "core/RDP/capabilities/window.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
 {

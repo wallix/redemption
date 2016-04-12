@@ -34,7 +34,7 @@
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
 #include "nativecapture.hpp"
-#include "RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
 #include "utils/fileutils.hpp"
 
 

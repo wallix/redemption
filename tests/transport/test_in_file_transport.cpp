@@ -35,7 +35,7 @@
 
 #include "transport/in_file_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutFileTransport)
 {

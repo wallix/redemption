@@ -29,9 +29,9 @@
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/label.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/label.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
@@ -328,10 +328,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         : Widget2(drawable, Rect(), *this, nullptr)
         {}
 
-        virtual void draw(const Rect&)
+        virtual void draw(const Rect&) override
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;

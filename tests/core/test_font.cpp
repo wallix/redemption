@@ -31,7 +31,7 @@
 #define LOGPRINT
 
 #include "utils/log.hpp"
-#include "font.hpp"
+#include "core/font.hpp"
 
 #ifndef FIXTURES_PATH
 #define FIXTURES_PATH ""

@@ -26,7 +26,7 @@
 //#define LOGNULL
 #define LOGPRINT
 
-#include "RDP/RefreshRectPDU.hpp"
+#include "core/RDP/RefreshRectPDU.hpp"
 #include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRefreshRectPDU)

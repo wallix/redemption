@@ -25,7 +25,7 @@
 
 #define LOGNULL
 
-#include "RDP/nla/credssp.hpp"
+#include "core/RDP/nla/credssp.hpp"
 
 #include "check_sig.hpp"
 

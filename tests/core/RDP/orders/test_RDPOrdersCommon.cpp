@@ -25,7 +25,7 @@
 
 #define LOGNULL
 
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 #include "test_orders.hpp"
 

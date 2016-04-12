@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestError
 #include <boost/test/auto_unit_test.hpp>
 
-#include "error.hpp"
+#include "core/error.hpp"
 
 #define LOGNULL
 

@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/mppc_60.hpp"
+#include "core/RDP/mppc_60.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression)
 {

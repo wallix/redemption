@@ -22,7 +22,7 @@
 #ifndef REDEMPTION_TRANSPORT_SEQUENCE_GENERATOR_HPP
 #define REDEMPTION_TRANSPORT_SEQUENCE_GENERATOR_HPP
 
-#include "error.hpp"
+#include "core/error.hpp"
 
 #include <cstdio>
 #include <cstring>

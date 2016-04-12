@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/surfacecommands.hpp"
+#include "core/RDP/capabilities/surfacecommands.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilitySurfaceCommandsEmit)
 {

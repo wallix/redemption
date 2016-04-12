@@ -29,10 +29,10 @@
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/tooltip.hpp"
-#include "internal/widget2/screen.hpp"
-#include "internal/widget2/label.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/tooltip.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/label.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

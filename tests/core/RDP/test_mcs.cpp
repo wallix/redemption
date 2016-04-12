@@ -30,7 +30,7 @@
 
 #include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
-#include "RDP/mcs.hpp"
+#include "core/RDP/mcs.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 {

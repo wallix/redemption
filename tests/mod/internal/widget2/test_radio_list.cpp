@@ -26,8 +26,8 @@
 
 #define LOGNULL
 
-#include "internal/widget2/radio_list.hpp"
-#include "internal/widget2/screen.hpp"
+#include "mod/internal/widget2/radio_list.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #ifndef FIXTURES_PATH

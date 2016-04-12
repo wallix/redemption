@@ -27,10 +27,10 @@
 
 #include "utils/log.hpp"
 #include "configs/config.hpp"
-#include "activity_checker.hpp"
+#include "core/activity_checker.hpp"
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
-#include "front.hpp"
+#include "front/front.hpp"
 
 class KeepAlive {
     // Keep alive Variables

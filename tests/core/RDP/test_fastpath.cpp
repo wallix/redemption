@@ -32,9 +32,9 @@
 
 #include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
-#include "RDP/sec.hpp"
-#include "RDP/x224.hpp"
-#include "RDP/fastpath.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/x224.hpp"
+#include "core/RDP/fastpath.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     CryptContext decrypt;

@@ -31,7 +31,7 @@
 #include <string.h> // for memcpy, memset
 #include <algorithm>
 
-#include "error.hpp"
+#include "core/error.hpp"
 #include "utils/bitfu.hpp"
 //#include "utils/utf.hpp"
 

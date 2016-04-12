@@ -30,7 +30,7 @@
 #include <array>
 #include <iosfwd>
 
-#include "RDP/channels/rdpdr.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 
 #include "utils/algostring.hpp"
 

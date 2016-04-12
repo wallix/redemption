@@ -25,7 +25,7 @@
 //#define LOGPRINT
 
 #include "transport/socket_transport.hpp"
-#include "rdp/rdp.hpp"
+#include "mod/rdp/rdp.hpp"
 #include "../src/system/Qt/front_Qt.hpp"
 #ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtWidgets/QWidget>

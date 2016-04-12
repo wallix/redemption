@@ -23,13 +23,13 @@
 
 #include <ctime>
 
-#include "callback.hpp"
-#include "font.hpp"
+#include "core/callback.hpp"
+#include "core/font.hpp"
 #include "utils/text_metrics.hpp"
-#include "wait_obj.hpp"
-#include "RDP/caches/glyphcache.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/wait_obj.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "gdi/graphic_api.hpp"
 
 class Inifile;

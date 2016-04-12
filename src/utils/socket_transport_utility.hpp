@@ -22,7 +22,7 @@
 #define REDEMPTION_UTILS_SOCKET_TRANSPORT_UTILITY_HPP
 
 #include "transport/socket_transport.hpp"
-#include "wait_obj.hpp"
+#include "core/wait_obj.hpp"
 
 TODO("-Wold-style-cast is ignored")
 #pragma GCC diagnostic push

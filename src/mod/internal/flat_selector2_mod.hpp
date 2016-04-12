@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR2_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR2_MOD_HPP
 
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "configs/config.hpp"
 #include "widget2/flat_selector2.hpp"
 #include "internal_mod.hpp"

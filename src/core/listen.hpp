@@ -34,7 +34,7 @@
 #include <fcntl.h>
 
 #include "utils/log.hpp"
-#include "server.hpp"
+#include "core/server.hpp"
 
 #if !defined(IP_TRANSPARENT)
 #define IP_TRANSPARENT 19

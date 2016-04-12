@@ -35,10 +35,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
-#include "libssh/libssh.h"
+#include "sashimi/libssh/libssh.h"
 
-#include "buffer.hpp"
-#include "channels.hpp"
+#include "sashimi/buffer.hpp"
+#include "sashimi/channels.hpp"
 
 #define LIBSFTP_VERSION 3
 

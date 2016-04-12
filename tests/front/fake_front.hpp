@@ -21,12 +21,12 @@
 */
 
 #include "utils/log.hpp"
-#include "front_api.hpp"
-#include "channel_list.hpp"
-#include "client_info.hpp"
-#include "RDP/RDPDrawable.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "core/front_api.hpp"
+#include "core/channel_list.hpp"
+#include "core/client_info.hpp"
+#include "core/RDP/RDPDrawable.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "gdi/graphic_cmd_color_converter.hpp"
 
 //#include <openssl/ssl.h>

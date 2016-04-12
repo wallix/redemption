@@ -30,13 +30,13 @@
 
 #define LOGNULL
 
-#include "font.hpp"
+#include "core/font.hpp"
 #include "utils/log.hpp"
-#include "internal/widget2/flat_interactive_target.hpp"
-#include "internal/widget2/screen.hpp"
+#include "mod/internal/widget2/flat_interactive_target.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "utils/png.hpp"
 #include "system/ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

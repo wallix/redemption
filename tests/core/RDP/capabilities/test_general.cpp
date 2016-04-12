@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/general.hpp"
+#include "core/RDP/capabilities/general.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
 {

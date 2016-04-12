@@ -29,9 +29,9 @@
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/flat_wait.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_wait.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH

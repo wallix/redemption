@@ -27,7 +27,7 @@
 //#define LOGPRINT
 
 #include "utils/log.hpp"
-#include "RDP/remote_programs.hpp"
+#include "core/RDP/remote_programs.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 {

@@ -38,15 +38,15 @@
 #include "openssl_crypto.hpp"
 
 #include "configs/config.hpp"
-#include "check_files.hpp"
-#include "mainloop.hpp"
+#include "core/check_files.hpp"
+#include "core/mainloop.hpp"
 #include "utils/log.hpp"
 #include "utils/fdbuf.hpp"
 #include "utils/fdbuf.hpp"
 
 #include "program_options/program_options.hpp"
 
-#include "version.hpp"
+#include "main/version.hpp"
 
 inline void daemonize(const char * pid_file)
 {

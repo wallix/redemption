@@ -27,9 +27,9 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/RDPDrawable.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 
-#include "RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
 
 #include "utils/log.hpp"
 #include "check_sig.hpp"

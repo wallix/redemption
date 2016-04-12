@@ -23,7 +23,7 @@
 
 #include "transport/transport.hpp"
 #include "transparentchunk.hpp"
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "utils/difftimeval.hpp"
 
 class TransparentPlayer {

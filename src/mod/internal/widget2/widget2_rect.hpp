@@ -24,7 +24,7 @@
 
 #include "widget.hpp"
 #include "utils/colors.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 class WidgetRect : public Widget2
 {

@@ -25,9 +25,9 @@
 
 #define LOGNULL
 
-#include "internal/widget2/columnlayout.hpp"
-#include "internal/widget2/screen.hpp"
-#include "internal/widget2/label.hpp"
+#include "mod/internal/widget2/columnlayout.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/label.hpp"
 #include "fake_draw.hpp"
 
 #undef OUTPUT_FILE_PATH

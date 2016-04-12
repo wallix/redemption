@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/pointer.hpp"
+#include "core/RDP/capabilities/pointer.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
 {

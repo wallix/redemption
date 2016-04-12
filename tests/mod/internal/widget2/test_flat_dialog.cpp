@@ -30,10 +30,10 @@
 #define LOGNULL
 #include "utils/log.hpp"
 
-#include "font.hpp"
-#include "internal/widget2/flat_dialog.hpp"
-#include "internal/widget2/screen.hpp"
-#include "internal/widget2/flat_button.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_dialog.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
 
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -461,7 +461,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
 
         Notify() = default;
 
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;

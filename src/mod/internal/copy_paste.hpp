@@ -21,12 +21,12 @@
 #ifndef REDEMPTION_MOD_INTERNAL_COPY_PASTE_UTILITY_HPP
 #define REDEMPTION_MOD_INTERNAL_COPY_PASTE_UTILITY_HPP
 
-#include "RDP/clipboard.hpp"
-#include "channel_list.hpp"
-#include "front_api.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "core/channel_list.hpp"
+#include "core/front_api.hpp"
 #include "utils/stream.hpp"
 #include "widget2/edit.hpp"
-#include "channel_names.hpp"
+#include "core/channel_names.hpp"
 
 #include <utility>
 #include <algorithm>

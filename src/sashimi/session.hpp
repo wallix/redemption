@@ -28,10 +28,10 @@
 
 #define GZIP_BLOCKSIZE 4092
 
-#include "event.hpp"
+#include "sashimi/event.hpp"
 
-#include "pki.hpp"
-#include "libcrypto.hpp"
+#include "sashimi/pki.hpp"
+#include "sashimi/libcrypto.hpp"
 
 #include <gssapi/gssapi.h>
 #include <fcntl.h>
@@ -758,7 +758,7 @@ static inline void ssh_analyze_banner(const char * banner, int & version, int & 
         char * endptr = nullptr;
         openssh_version = (strtol(openssh + 8, &endptr, 10) & 0xF) << 16;
         if (endptr && endptr[0] == '.'){
-            openssh_version |= ((strtol(endptr + 1, (char **) nullptr, 10) & 0xF) << 8);
+            openssh_version |= ((strtol(endptr + 1, static_cast<char **>(nullptr), 10) & 0xF) << 8);
         }
     }
 }

@@ -25,7 +25,7 @@
 
 #define LOGNULL
 
-#include "RDP/nla/asn1/ber.hpp"
+#include "core/RDP/nla/asn1/ber.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBERInteger)
 {

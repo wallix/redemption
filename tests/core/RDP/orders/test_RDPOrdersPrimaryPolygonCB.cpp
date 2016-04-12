@@ -30,7 +30,7 @@
 //#define LOGPRINT
 #define LOGNULL
 
-#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 
 #include "test_orders.hpp"
 

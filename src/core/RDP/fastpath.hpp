@@ -23,9 +23,9 @@
 #ifndef _REDEMPTION_CORE_RDP_FASTPATH_HPP_
 #define _REDEMPTION_CORE_RDP_FASTPATH_HPP_
 
-#include "RDP/slowpath.hpp"
+#include "core/RDP/slowpath.hpp"
 
-#include "RDP/mppc.hpp"
+#include "core/RDP/mppc.hpp"
 #include "system/ssl_calls.hpp"
 
 

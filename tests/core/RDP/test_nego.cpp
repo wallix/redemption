@@ -28,7 +28,7 @@
 //#define LOGPRINT
 
 #include "utils/log.hpp"
-#include "RDP/nego.hpp"
+#include "core/RDP/nego.hpp"
 #include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNego)

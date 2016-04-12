@@ -25,7 +25,7 @@
 #include <cinttypes>
 
 #include "utils/log.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "utils/redirection_info.hpp"
 

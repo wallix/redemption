@@ -35,14 +35,12 @@
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 
-#include "libssh/libssh.h"
+#include "sashimi/libssh/libssh.h"
 
-#include "buffer.hpp"
-#include "channels.hpp"
-#include "sashimi/log.hpp"
-#include "pki.hpp"
-
-#include "buffer.hpp"
+#include "sashimi/buffer.hpp"
+#include "sashimi/channels.hpp"
+#include "utils/log.hpp"
+#include "sashimi/pki.hpp"
 
 static char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                          "abcdefghijklmnopqrstuvwxyz"
@@ -54,9 +52,9 @@ static char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define SET_C(n, i) do { (n) |= ((i) & 63) << 6; } while (0)
 #define SET_D(n, i) do { (n) |= ((i) & 63); } while (0)
 
-#define GET_A(n) (unsigned char) (((n) & 0xff0000) >> 16)
-#define GET_B(n) (unsigned char) (((n) & 0xff00) >> 8)
-#define GET_C(n) (unsigned char) ((n) & 0xff)
+#define GET_A(n) static_cast<unsigned char>(((n) & 0xff0000) >> 16)
+#define GET_B(n) static_cast<unsigned char>(((n) & 0xff00) >> 8)
+#define GET_C(n) static_cast<unsigned char>((n) & 0xff)
 
 static int _base64_to_bin(unsigned char dest[3], const char *source, int num);
 static int get_equals(char *string);
@@ -691,7 +689,7 @@ int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
         return SSH_ERROR;
     }
 
-    *b64_key = (char *)b64;
+    *b64_key = reinterpret_cast<char*>(b64);
 
     return SSH_OK;
 }
@@ -876,7 +874,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             /* 40 is the dual signature blob len. */
             if (sig_blob.size != 40) {
                 LOG(LOG_INFO, "Signature has wrong size: %lu",
-                            (unsigned long)sig_blob.size);
+                            static_cast<unsigned long>(sig_blob.size));
                 ssh_signature_free(sig);
                 return NULL;
             }
@@ -897,7 +895,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             }
 
             SSHString s(20);
-            memcpy(s.data.get(), (char *)sig_blob.data.get() + 20, 20);
+            memcpy(s.data.get(), sig_blob.data.get() + 20, 20);
 
             sig->dsa_sig->s = bignum_bin2bn(s.data.get(), s.size, NULL);
             if (sig->dsa_sig->s == NULL) {
@@ -914,12 +912,12 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
 
             if (sig_blob.size > rsalen) {
                 LOG(LOG_INFO, "Signature is too big: %lu > %lu",
-                            (unsigned long)sig_blob.size, (unsigned long)rsalen);
+                            static_cast<unsigned long>(sig_blob.size), static_cast<unsigned long>(rsalen));
                 ssh_signature_free(sig);
             }
 
             #ifdef DEBUG_CRYPTO
-                LOG(LOG_INFO, "RSA signature len: %lu", (unsigned long)sig_blob.size);
+                LOG(LOG_INFO, "RSA signature len: %lu", static_cast<unsigned char>(sig_blob.size));
                 ssh_print_hexa("RSA signature", sig_blob.data, sig_blob.size);
             #endif
 
@@ -930,7 +928,8 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             else {
                 /* pad the blob to the expected rsalen size */
                 LOG(LOG_INFO, "RSA signature len %lu < %lu",
-                            (unsigned long)sig_blob.size, (unsigned long)rsalen);
+                            static_cast<unsigned long>(sig_blob.size),
+                            static_cast<unsigned long>(rsalen));
 
                 pad_len = rsalen - sig_blob.size;
 
@@ -1019,7 +1018,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                     delete b;
                     LOG(LOG_INFO, "Signature has remaining bytes in inner "
                                 "sigblob: %lu",
-                                (unsigned long)b->in_remain());
+                                static_cast<unsigned long>(b->in_remain()));
                     ssh_signature_free(sig);
                     return NULL;
                 }

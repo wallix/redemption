@@ -9,7 +9,7 @@
 #include "utils/apps/app_decrypter.hpp"
 
 #include "configs/config.hpp"
-#include "version.hpp"
+#include "main/version.hpp"
 
 extern "C" {
     __attribute__((__visibility__("default")))

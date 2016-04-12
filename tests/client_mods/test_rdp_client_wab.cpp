@@ -38,8 +38,8 @@
 #include "configs/config.hpp"
 // Comment the code block below to generate testing data.
 #include "transport/test_transport.hpp"
-#include "client_info.hpp"
-#include "rdp/rdp.hpp"
+#include "core/client_info.hpp"
+#include "mod/rdp/rdp.hpp"
 #include "../front/fake_front.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "utils/netutils.hpp"

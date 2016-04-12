@@ -36,20 +36,20 @@
 
 #include <array>
 
-#include "server.hpp"
+#include "core/server.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
-#include "front.hpp"
+#include "front/front.hpp"
 #include "system/ssl_calls.hpp"
 #include "utils/rect.hpp"
 #include "utils/netutils.hpp"
 
 #include "configs/config.hpp"
-#include "wait_obj.hpp"
+#include "core/wait_obj.hpp"
 #include "transport/transport.hpp"
 #include "utils/bitmap.hpp"
 
-#include "authentifier.hpp"
+#include "acl/authentifier.hpp"
 
 #include "utils/socket_transport_utility.hpp"
 

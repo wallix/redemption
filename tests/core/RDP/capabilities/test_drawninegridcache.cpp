@@ -27,7 +27,7 @@
 
 #define LOGNULL
 
-#include "RDP/capabilities/drawninegridcache.hpp"
+#include "core/RDP/capabilities/drawninegridcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityDrawNineGridCacheEmit)
 {

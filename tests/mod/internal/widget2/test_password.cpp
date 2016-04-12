@@ -29,9 +29,9 @@
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/password.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/password.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -512,10 +512,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         : Widget2(drawable, Rect(), *this, nullptr)
         {}
 
-        virtual void draw(const Rect&)
+        virtual void draw(const Rect&) override
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -609,7 +609,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -709,7 +709,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -822,7 +822,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;

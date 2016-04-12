@@ -29,9 +29,9 @@
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/flat_button.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
@@ -45,7 +45,7 @@ struct Notify : public NotifyApi {
 
     Notify() = default;
 
-    virtual void notify(Widget2* sender, notify_event_t event)
+    virtual void notify(Widget2* sender, notify_event_t event) override
     {
         this->sender = sender;
         this->event = event;

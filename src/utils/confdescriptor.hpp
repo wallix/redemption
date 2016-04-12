@@ -27,9 +27,9 @@
 #include "utils/parser.hpp"
 #include "cfgloader.hpp"
 
-#include "RDP/capabilities/general.hpp"
-#include "RDP/capabilities/cap_bitmap.hpp"
-#include "RDP/capabilities/order.hpp"
+#include "core/RDP/capabilities/general.hpp"
+#include "core/RDP/capabilities/cap_bitmap.hpp"
+#include "core/RDP/capabilities/order.hpp"
 
 TODO("We could probably use templated Entries instead of InputType_t and StorageType_t enums, this with also avoid combinatorial explosion."
      "Well, not really, but the compiler will do the work.")

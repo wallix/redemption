@@ -26,10 +26,10 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "internal/widget2/edit.hpp"
-#include "internal/widget2/flat_button.hpp"
-#include "internal/widget2/tab.hpp"
-#include "internal/widget2/screen.hpp"
+#include "mod/internal/widget2/edit.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
+#include "mod/internal/widget2/tab.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 

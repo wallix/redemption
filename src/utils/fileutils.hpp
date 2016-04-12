@@ -34,7 +34,7 @@
 #include <string>
 
 #include "utils/log.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 
 // two flavors of basename_len to make it const agnostic
 static inline const char * basename_len(const char * path, size_t & len)

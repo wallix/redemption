@@ -31,7 +31,7 @@
 #include "utils/exchange.hpp"
 #include "utils/stream.hpp"
 #include "configs/config.hpp"
-#include "authid.hpp"
+#include "core/authid.hpp"
 #include "transport/transport.hpp"
 #include "utils/translation.hpp"
 #include "utils/get_printable_password.hpp"

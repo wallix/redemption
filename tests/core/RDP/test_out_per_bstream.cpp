@@ -30,7 +30,7 @@
 // #define LOGPRINT
 
 #include "utils/stream.hpp"
-#include "RDP/out_per_bstream.hpp"
+#include "core/RDP/out_per_bstream.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutPerStream)
 {
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
 }
 
 #include "transport/test_transport.hpp"
-#include "RDP/gcc.hpp"
+#include "core/RDP/gcc.hpp"
 
 
 TODO("For now we are testing out_per primitive through gcc object,"

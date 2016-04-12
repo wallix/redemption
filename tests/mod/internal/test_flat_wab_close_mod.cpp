@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "internal/flat_wab_close_mod.hpp"
+#include "mod/internal/flat_wab_close_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestWabCloseMod)

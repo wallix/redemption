@@ -31,7 +31,7 @@
 #include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
 #include "utils/make_unique.hpp"
-#include "rdp/channels/rdpdr_asynchronous_task.hpp"
+#include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "utils/socket_transport_utility.hpp"
 #include "transport/test_transport.hpp"
 

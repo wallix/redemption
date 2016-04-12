@@ -29,8 +29,8 @@
 
 #define LOGNULL
 
-#include "internal/widget2/flat_login.hpp"
-#include "internal/widget2/screen.hpp"
+#include "mod/internal/widget2/flat_login.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
         Notify() = default;
 
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 
         Notify() = default;
 
-        virtual void notify(Widget2* sender, notify_event_t event)
+        virtual void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;

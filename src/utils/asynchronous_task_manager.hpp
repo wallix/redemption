@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_UTILS_ASYNCHRONOUS_TASK_MANAGER_HPP
 #define REDEMPTION_UTILS_ASYNCHRONOUS_TASK_MANAGER_HPP
 
-#include "wait_obj.hpp"
+#include "core/wait_obj.hpp"
 
 class AsynchronousTask {
 public:

@@ -22,8 +22,8 @@
 #define _REDEMPTION_CORE_RDP_NLA_KERBEROS_KERBEROS_HPP_
 
 #include <gssapi/gssapi.h>
-#include "RDP/nla/sspi.hpp"
-#include "RDP/nla/kerberos/credentials.hpp"
+#include "core/RDP/nla/sspi.hpp"
+#include "core/RDP/nla/kerberos/credentials.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"

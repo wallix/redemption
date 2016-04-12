@@ -29,7 +29,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 
-#include "RDP/mppc.hpp"
+#include "core/RDP/mppc.hpp"
 
 
 /* RDP PDU codes */

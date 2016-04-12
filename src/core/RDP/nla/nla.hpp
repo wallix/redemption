@@ -21,10 +21,10 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NLA_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NLA_HPP_
 
-#include "RDP/nla/sspi.hpp"
-#include "RDP/nla/credssp.hpp"
-#include "RDP/nla/ntlm/ntlm.hpp"
-#include "RDP/nla/kerberos/kerberos.hpp"
+#include "core/RDP/nla/sspi.hpp"
+#include "core/RDP/nla/credssp.hpp"
+#include "core/RDP/nla/ntlm/ntlm.hpp"
+#include "core/RDP/nla/kerberos/kerberos.hpp"
 #include "transport/transport.hpp"
 
 #define NLA_PKG_NAME NTLMSP_NAME

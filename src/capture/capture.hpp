@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
 #define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
-#include "wait_obj.hpp"
+#include "core/wait_obj.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
@@ -207,15 +207,15 @@ public:
         return this->capture_api.get_capture_event();
     }
 
-    void pause_capture(timeval const & now) {
+    void pause_capture(timeval const & now) override {
         this->capture_api.pause_capture(now);
     }
 
-    void resume_capture(timeval const & now) {
+    void resume_capture(timeval const & now) override {
         this->capture_api.resume_capture(now);
     }
 
-    void update_config(const Inifile & ini) {
+    void update_config(const Inifile & ini) override {
         this->config_updater_api.update_config(ini);
     }
 

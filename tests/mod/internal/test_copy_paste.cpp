@@ -32,10 +32,10 @@
 #define LOGNULL
 
 #include "widget2/fake_draw.hpp"
-#include "font.hpp"
-#include "internal/copy_paste.hpp"
-#include "internal/widget2/edit.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget2/edit.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "../../front/fake_front.hpp"
 #include "check_sig.hpp"
 
@@ -118,7 +118,7 @@ public:
     : copy_paste(copy_paste)
     {}
 
-    virtual void notify(Widget2 * sender, notify_event_t event) {
+    virtual void notify(Widget2 * sender, notify_event_t event) override {
         BOOST_REQUIRE(sender);
         copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
     }
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestPaste)
     CopyPaste copy_paste;
     CopyPasteFront front(info, copy_paste);
     TestDraw mod(info.width, info.height);
-    
+
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 

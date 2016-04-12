@@ -22,8 +22,8 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAB_CLOSE_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_WAB_CLOSE_MOD_HPP
 
-#include "front_api.hpp"
-#include "mod_api.hpp"
+#include "core/front_api.hpp"
+#include "mod/mod_api.hpp"
 #include "widget2/flat_wab_close.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"

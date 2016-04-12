@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 #define REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
 
-#include "error.hpp"
+#include "core/error.hpp"
 #include "transport/transport.hpp"
 
 class InFileTransport : public Transport
@@ -39,7 +39,7 @@ public:
         this->disconnect();
     }
 
-    bool disconnect() {
+    bool disconnect() override {
         if (-1 != this->fd) {
             const int ret = ::close(this->fd);
             this->fd = -1;
@@ -49,7 +49,7 @@ public:
     }
 
 private:
-    void do_recv(char ** pbuffer, size_t len) {
+    void do_recv(char ** pbuffer, size_t len) override {
         TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
         ssize_t res = -1;
         size_t remaining_len = len;
@@ -85,7 +85,7 @@ struct InFileSeekableTransport : public InFileTransport
     explicit InFileSeekableTransport(int fd) noexcept
     : InFileTransport(fd)
     {}
-    
+
     void seek(int64_t offset, int whence) override {
         if (static_cast<off64_t>(-1) == lseek64(this->fd, offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);

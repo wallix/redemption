@@ -31,7 +31,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "acl_serializer.hpp"
+#include "acl/acl_serializer.hpp"
 #include "transport/test_transport.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager

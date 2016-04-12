@@ -23,10 +23,10 @@
 
 #include "transport/in_file_transport.hpp"
 #include "utils/asynchronous_task_manager.hpp"
-#include "channel_list.hpp"
+#include "core/channel_list.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
-#include "RDP/channels/rdpdr.hpp"
-#include "wait_obj.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
+#include "core/wait_obj.hpp"
 
 class RdpdrDriveReadTask : public AsynchronousTask {
     InFileSeekableTransport * transport;

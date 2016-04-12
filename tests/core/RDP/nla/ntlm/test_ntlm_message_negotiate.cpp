@@ -25,8 +25,8 @@
 
 #define LOGNULL
 
-#include "RDP/nla/credssp.hpp"
-#include "RDP/nla/ntlm/ntlm_message_negotiate.hpp"
+#include "core/RDP/nla/credssp.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_negotiate.hpp"
 
 #include "check_sig.hpp"
 

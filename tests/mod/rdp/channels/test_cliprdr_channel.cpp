@@ -27,13 +27,13 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "channel_list.hpp"
-#include "client_info.hpp"
+#include "core/channel_list.hpp"
+#include "core/client_info.hpp"
 #include "utils/make_unique.hpp"
-#include "RDP/clipboard.hpp"
+#include "core/RDP/clipboard.hpp"
 #include "transport/test_transport.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
-#include "rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
 
 #include "../../../front/fake_front.hpp"
 

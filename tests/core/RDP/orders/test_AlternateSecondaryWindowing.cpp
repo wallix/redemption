@@ -26,7 +26,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
 BOOST_AUTO_TEST_CASE(TestWindowingCommon)
 {

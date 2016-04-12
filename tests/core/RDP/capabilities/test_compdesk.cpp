@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/compdesk.hpp"
+#include "core/RDP/capabilities/compdesk.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
 {

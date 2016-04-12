@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "RDP/capabilities/activate.hpp"
+#include "core/RDP/capabilities/activate.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
 {

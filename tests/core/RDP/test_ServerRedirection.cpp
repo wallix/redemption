@@ -27,7 +27,7 @@
 
 #define LOGNULL
 // #define LOGPRINT
-#include "RDP/ServerRedirection.hpp"
+#include "core/RDP/ServerRedirection.hpp"
 
 BOOST_AUTO_TEST_CASE(TestServerRedirectionPDU)
 {

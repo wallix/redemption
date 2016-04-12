@@ -22,8 +22,8 @@
 #ifndef REDEMPTION_CAPTURE_UTILS_MATCH_FINDER_HPP
 #define REDEMPTION_CAPTURE_UTILS_MATCH_FINDER_HPP
 
-#include "auth_api.hpp"
-#include "regex.hpp"
+#include "acl/auth_api.hpp"
+#include "regex/regex.hpp"
 #include "utils/log.hpp"
 
 #include <memory>

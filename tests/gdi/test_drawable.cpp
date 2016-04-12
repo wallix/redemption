@@ -27,7 +27,7 @@
 #define LOGNULL
 #include "gdi/drawable.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 using DummyGD = gdi::GraphicDelegate<gdi::DummyProxy>;
 

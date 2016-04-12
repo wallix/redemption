@@ -28,7 +28,7 @@
 //#define LOGPRINT
 
 #include "transport/test_transport.hpp"
-#include "error.hpp"
+#include "core/error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
 {

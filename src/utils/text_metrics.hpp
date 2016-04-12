@@ -22,7 +22,7 @@
 #define REDEMPTION_UTILS_TEXT_METRICS_HPP
 
 #include "utils/utf.hpp"
-#include "font.hpp"
+#include "core/font.hpp"
 
 template<class NotFoundCallback>
 void text_metrics(const Font & font, const char * text, int & width, int & height, NotFoundCallback not_found_callback)

@@ -22,8 +22,8 @@
 #define _REDEMPTION_CORE_SESSION_SERVER_HPP_
 
 #include "configs/config.hpp"
-#include "server.hpp"
-#include "session.hpp"
+#include "core/server.hpp"
+#include "core/session.hpp"
 #include "utils/parse_ip_conntrack.hpp"
 
 class SessionServer : public Server
@@ -47,7 +47,7 @@ public:
     {
     }
 
-    virtual Server_status start(int incoming_sck)
+    virtual Server_status start(int incoming_sck) override
     {
         union
         {
