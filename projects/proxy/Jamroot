@@ -1245,10 +1245,6 @@ obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp     :
     <include>$(SRCDIR)/sashimi
     ;
 
-obj sashimi_log : $(SRCDIR)/sashimi/log.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
 obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp     :
     <include>$(SRCDIR)/sashimi
     ;
@@ -1261,7 +1257,6 @@ obj sashimi_libssh : $(SRCDIR)/sashimi/libssh.cpp     :
 lib sashimi :
     sashimi_pki
     sashimi_channels
-    sashimi_log
     sashimi_sftp
     sashimi_libssh
     sashimi_error
@@ -1285,7 +1280,6 @@ lib sashimi :
 unit-test test_buffer : 
     $(SRCDIR)/sashimi/tests/buffer.cpp 
     sashimi_error 
-    sashimi_log 
     libboost_unit_test 
     :
     <include>$(SRCDIR)/sashimi
@@ -1295,7 +1289,6 @@ unit-test test_buffer :
 unit-test test_crypto : 
     $(SRCDIR)/sashimi/tests/test_crypto.cpp 
     sashimi_error 
-    sashimi_log 
     crypto
     libboost_unit_test 
     :
