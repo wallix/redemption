@@ -153,7 +153,7 @@ struct CaptureApisImpl
     };
 
 
-    struct ExternalEvent : gdi::ExternalCaptureApi
+    struct ExternalCapture : gdi::ExternalCaptureApi
     {
         void external_breakpoint() override {
             for (gdi::ExternalCaptureApi & obj : this->objs) {
@@ -171,7 +171,7 @@ struct CaptureApisImpl
     };
 
 
-    struct ConfigUpdater : gdi::UpdateConfigCaptureApi
+    struct UpdateConfigCapture : gdi::UpdateConfigCaptureApi
     {
         void update_config(const Inifile & ini) override {
             for (gdi::UpdateConfigCaptureApi & obj : this->objs) {
