@@ -2354,8 +2354,6 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
         return SSH_PACKET_USED;
     }
 
-    ssh_key_struct *key;
-
     int rc = client_session->make_sessionid();
 
     if (rc != SSH_OK) {
@@ -2393,15 +2391,12 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
     SSHString sig_blob = std::move(client_session->next_crypto->dh_server_signature);
 
     /* get the server public key */
-    rc = SSH_ERROR;
-    if (&key != nullptr) {
-        ssh_buffer_struct buffer;
-        buffer.out_blob(client_session->next_crypto->server_pubkey.data.get(),
-                        client_session->next_crypto->server_pubkey.size);
+    ssh_buffer_struct buffer;
+    buffer.out_blob(client_session->next_crypto->server_pubkey.data.get(),
+                    client_session->next_crypto->server_pubkey.size);
 
-        rc = ssh_pki_import_pubkey_blob(buffer, &key);
-    }
-    if (rc < 0) {
+    ssh_key_struct *key;
+    if (ssh_pki_import_pubkey_blob(buffer, &key) < 0){
         return SSH_ERROR;
     }
 
