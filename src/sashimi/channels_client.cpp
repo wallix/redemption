@@ -118,7 +118,7 @@ void ssh_disconnect_client(SshClientSession * client_session) {
 
     if(client_session->current_crypto){
         delete client_session->current_crypto;
-        client_session->current_crypto = NULL;
+        client_session->current_crypto = nullptr;
     }
     if(client_session->in_buffer){
         client_session->in_buffer->buffer_reinit();
@@ -739,7 +739,7 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
       "none",
       "",
       "",
-      NULL
+      nullptr
     };
 
     syslog(LOG_INFO,"Initialising client methods");
@@ -1117,7 +1117,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
             // TODO move that to ecdh.init
             bignum_CTX ctx = BN_CTX_new();
             client_session->next_crypto->ecdh.privkey = EC_KEY_new_by_curve_name(NISTP256);
-            if (client_session->next_crypto->ecdh.privkey == NULL) {
+            if (client_session->next_crypto->ecdh.privkey == nullptr) {
                 BN_CTX_free(ctx);
                 return SSH_ERROR;
             }
@@ -1125,7 +1125,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
             EC_KEY_generate_key(client_session->next_crypto->ecdh.privkey);
 
             const EC_POINT * pubkey = EC_KEY_get0_public_key(client_session->next_crypto->ecdh.privkey);
-            int len = EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, ctx);
+            int len = EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, ctx);
 
             client_session->next_crypto->ecdh.client_pubkey = SSHString(len);
             EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED, 
@@ -1703,7 +1703,7 @@ void SshClientSession::handle_channel_rcv_request_client(ssh_buffer_struct* pack
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = this->ssh_channel_from_local(chan);
-    if (channel == NULL) {
+    if (channel == nullptr) {
         ssh_set_error(error,  SSH_FATAL,
                       "Server specified invalid channel %lu",
                       static_cast<long unsigned int>(ntohl(chan)));
@@ -1850,7 +1850,7 @@ static inline void handle_channel_open_auth_agent_request_client(SshClientSessio
             client_session,
             client_session->client_callbacks->userdata);
 
-    if (channel != NULL) {
+    if (channel != nullptr) {
         syslog(LOG_INFO,
                 "Auth Agent Accepting a channel request_open for chan %d",
                 channel->remote_channel);
@@ -2095,7 +2095,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         uint8_t * f = new uint8_t[f_len];
         packet->buffer_get_data(f, f_len);
         // TODO: is there error management for bignum_bin2bn
-        client_session->next_crypto->f = bignum_bin2bn(f, f_len, NULL);
+        client_session->next_crypto->f = bignum_bin2bn(f, f_len, nullptr);
 
         if (sizeof(uint32_t) > packet->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -2169,7 +2169,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         uint8_t * f = new uint8_t[f_len];
         packet->buffer_get_data(f, f_len);
         // TODO: is there error management for bignum_bin2bn
-        client_session->next_crypto->f = bignum_bin2bn(f, f_len, NULL);
+        client_session->next_crypto->f = bignum_bin2bn(f, f_len, nullptr);
 
         if (sizeof(uint32_t) > packet->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -2394,7 +2394,7 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
 
     /* get the server public key */
     rc = SSH_ERROR;
-    if (&key != NULL) {
+    if (&key != nullptr) {
         ssh_buffer_struct buffer;
         buffer.out_blob(client_session->next_crypto->server_pubkey.data.get(),
                         client_session->next_crypto->server_pubkey.size);
@@ -2413,7 +2413,7 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
         for (;;)
         {
             const char *a = strchr(remaining_list, ',');
-            if (a == NULL) { // last
+            if (a == nullptr) { // last
                 if (strcmp(remaining_list, object) != 0) {
                     // definitely not found
                     ssh_set_error(error, 
@@ -2457,7 +2457,7 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
      */
     if (client_session->current_crypto) {
         delete client_session->current_crypto;
-        client_session->current_crypto = NULL;
+        client_session->current_crypto = nullptr;
     }
 
     /* FIXME later, include a function to change keys */
@@ -2613,7 +2613,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
 
     OM_uint32 maj_stat3 = gss_acquire_cred(&min_stat, server_name, 0,
             both_supported, GSS_C_ACCEPT,
-            &client_session->gssapi->server_creds, &selected, NULL);
+            &client_session->gssapi->server_creds, &selected, nullptr);
     gss_release_name(&min_stat, &server_name);
     gss_release_oid_set(&min_stat, &both_supported);
 
@@ -2682,7 +2682,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
 static void ssh_gssapi_free_client(SshClientSession * client_session){
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     OM_uint32 min;
-    if (client_session->gssapi == NULL)
+    if (client_session->gssapi == nullptr)
         return;
     free(client_session->gssapi->user);
     client_session->gssapi->user = nullptr;
@@ -2723,14 +2723,14 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
 
     (void)user;
     (void)type;
-    ssh_buffer_struct * mic_buffer = NULL;
+    ssh_buffer_struct * mic_buffer = nullptr;
 
     syslog(LOG_INFO,"Received SSH_MSG_USERAUTH_GSSAPI_MIC");
     
     if (sizeof(uint32_t) > packet->in_remain()) {
         ssh_auth_reply_denied_client(client_session);
         ssh_gssapi_free_client(client_session);
-        if (mic_buffer != NULL) {
+        if (mic_buffer != nullptr) {
             delete mic_buffer;
         }
         return SSH_PACKET_USED;
@@ -2739,7 +2739,7 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
     if (mic_token_len > packet->in_remain()) {
         ssh_auth_reply_denied_client(client_session);
         ssh_gssapi_free_client(client_session);
-        if (mic_buffer != NULL) {
+        if (mic_buffer != nullptr) {
             delete mic_buffer;
         }
         return SSH_PACKET_USED;
@@ -2748,22 +2748,22 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
     packet->buffer_get_data(mic_token.data.get(),mic_token_len);
 
 
-    if (client_session->gssapi == NULL
+    if (client_session->gssapi == nullptr
     || client_session->gssapi->state != SSH_GSSAPI_STATE_RCV_MIC) {
         ssh_set_error(client_session->error,  SSH_FATAL, "Received SSH_MSG_USERAUTH_GSSAPI_MIC in invalid state");
         ssh_auth_reply_denied_client(client_session);
         ssh_gssapi_free_client(client_session);
-        if (mic_buffer != NULL) {
+        if (mic_buffer != nullptr) {
             delete mic_buffer;
         }
         return SSH_PACKET_USED;
     }
     mic_buffer = new ssh_buffer_struct;
-    if (ssh_gssapi_build_mic_client(client_session, mic_buffer) == NULL){
+    if (ssh_gssapi_build_mic_client(client_session, mic_buffer) == nullptr){
         // TODO : check memory allocation
         ssh_auth_reply_denied_client(client_session);
         ssh_gssapi_free_client(client_session);
-        if (mic_buffer != NULL) {
+        if (mic_buffer != nullptr) {
             delete mic_buffer;
         }
         return SSH_PACKET_USED;
@@ -2773,7 +2773,7 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
     mic_token_buf.length = mic_token.size;
     mic_token_buf.value = mic_token.data.get();
 
-    maj_stat = gss_verify_mic(&min_stat, client_session->gssapi->ctx, &mic_buf, &mic_token_buf, NULL);
+    maj_stat = gss_verify_mic(&min_stat, client_session->gssapi->ctx, &mic_buf, &mic_token_buf, nullptr);
     
     {
         gss_buffer_desc buffer;
@@ -2795,14 +2795,14 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
     if (maj_stat == GSS_S_DEFECTIVE_TOKEN || GSS_ERROR(maj_stat)) {
         ssh_auth_reply_denied_client(client_session);
         ssh_gssapi_free_client(client_session);
-        if (mic_buffer != NULL) {
+        if (mic_buffer != nullptr) {
             delete mic_buffer;
         }
         return SSH_PACKET_USED;
     }
 
     ssh_gssapi_free_client(client_session);
-    if (mic_buffer != NULL) {
+    if (mic_buffer != nullptr) {
         delete mic_buffer;
     }
     return SSH_PACKET_USED;
@@ -2891,7 +2891,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         syslog(LOG_WARNING, "GSSAPI(%s): %s", "Gssapi error", static_cast<char *>(buffer.value));
 
         ssh_gssapi_free_client(client_session);
-        client_session->gssapi = NULL;
+        client_session->gssapi = nullptr;
         return SSH_PACKET_USED;
     }
     uint32_t token_len = packet->in_uint32_be();
@@ -2902,7 +2902,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         gss_display_status(&dummy, 0, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
         syslog(LOG_WARNING, "GSSAPI(%s): %s", "Gssapi error", static_cast<char *>(buffer.value));
         ssh_gssapi_free_client(client_session);
-        client_session->gssapi = NULL;
+        client_session->gssapi = nullptr;
         return SSH_PACKET_USED;
     }
 
@@ -2933,8 +2933,8 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
                                     client_session->gssapi->client.server_name,
                                     client_session->gssapi->client.oid,
                                     client_session->gssapi->client.flags,
-                                    0, NULL, &input_token, NULL,
-                                    &output_token, NULL, NULL);
+                                    0, nullptr, &input_token, nullptr,
+                                    &output_token, nullptr, nullptr);
 
     gss_buffer_desc buffer;
     OM_uint32 dummy;
@@ -2950,7 +2950,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         syslog(LOG_INFO, "GSSAPI(%s): %s", "Gssapi error", static_cast<char *>(buffer.value));
         
         ssh_gssapi_free_client(client_session);
-        client_session->gssapi=NULL;
+        client_session->gssapi=nullptr;
         return SSH_PACKET_USED;
     }
 
@@ -3002,7 +3002,7 @@ static inline int ssh_packet_userauth_info_response_client(SshClientSession * cl
 //    int kbdint_response = 1;
     uint32_t nanswers = packet->in_uint32_be();
 
-    if (client_session->kbdint == NULL) {
+    if (client_session->kbdint == nullptr) {
         syslog(LOG_INFO, "Warning: Got a keyboard-interactive "
                             "response but it seems we didn't send the request.");
 
@@ -3015,7 +3015,7 @@ static inline int ssh_packet_userauth_info_response_client(SshClientSession * cl
             "Too many answers received from client: %u (0x%.4x)",
             nanswers, nanswers);
         ssh_kbdint_free(client_session->kbdint);
-        client_session->kbdint = NULL;
+        client_session->kbdint = nullptr;
         return SSH_PACKET_USED;
     }
 
@@ -3206,21 +3206,21 @@ static ssh_buffer_struct* gzip_decompress_client(SshClientSession * client_sessi
     void *in_ptr = source->get_pos_ptr();
     unsigned long in_size = source->in_remain();
     unsigned char out_buf[GZIP_BLOCKSIZE] = {0};
-    ssh_buffer_struct* dest = NULL;
+    ssh_buffer_struct* dest = nullptr;
     unsigned long len;
     int status;
 
-    if (zin == NULL) {
+    if (zin == nullptr) {
         client_session->current_crypto->compress_in_ctx = initdecompress_client(client_session);
         zin = static_cast<z_stream_s*>(client_session->current_crypto->compress_in_ctx);
-        if (zin == NULL) {
-          return NULL;
+        if (zin == nullptr) {
+          return nullptr;
         }
     }
 
     dest = new ssh_buffer_struct;
-    if (dest == NULL) {
-        return NULL;
+    if (dest == nullptr) {
+        return nullptr;
     }
 
     zin->next_out = out_buf;
@@ -3234,7 +3234,7 @@ static ssh_buffer_struct* gzip_decompress_client(SshClientSession * client_sessi
             ssh_set_error(client_session->error,  SSH_FATAL,
               "status %d inflating zlib packet", status);
             delete dest;
-            return NULL;
+            return nullptr;
         }
 
         len = GZIP_BLOCKSIZE - zin->avail_out;
@@ -3242,7 +3242,7 @@ static ssh_buffer_struct* gzip_decompress_client(SshClientSession * client_sessi
         if (dest->in_remain() > maxlen){
             /* Size of packet exceeded, avoid a denial of service attack */
             delete dest;
-            return NULL;
+            return nullptr;
         }
         zin->next_out = out_buf;
     } while (zin->avail_out == 0);
@@ -3255,7 +3255,7 @@ static int decompress_buffer_client(SshClientSession * client_session,ssh_buffer
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     ssh_buffer_struct* dest = gzip_decompress_client(client_session,buf, maxlen);
-    if (dest == NULL) {
+    if (dest == nullptr) {
         return -1;
     }
 
@@ -3302,7 +3302,7 @@ static inline int global_request_client(SshClientSession * client_session, const
         client_session->out_buffer->out_length_prefixed_cstr(request);
         client_session->out_buffer->out_uint8(reply != 0);
 
-        if (buffer != NULL) {
+        if (buffer != nullptr) {
             client_session->out_buffer->out_blob(buffer->get_pos_ptr(), buffer->in_remain());
         }
 
@@ -3377,7 +3377,7 @@ static inline int global_request_client(SshClientSession * client_session, const
  *
  * @param[in]  session  The ssh session to send the request.
  *
- * @param[in]  address  The address to bind to on the server. Pass NULL to bind
+ * @param[in]  address  The address to bind to on the server. Pass nullptr to bind
  *                      to all available addresses on all protocol families
  *                      supported by the server.
  *
@@ -3385,7 +3385,7 @@ static inline int global_request_client(SshClientSession * client_session, const
  *                      server to allocate the next available unprivileged port
  *                      number
  *
- * @param[in]  bound_port The pointer to get actual bound port. Pass NULL to
+ * @param[in]  bound_port The pointer to get actual bound port. Pass nullptr to
  *                        ignore.
  *
  * @return              SSH_OK on success,
@@ -3508,7 +3508,7 @@ static inline int ssh_packet_userauth_info_request_client(SshClientSession * cli
 
     uint32_t nprompts = packet->in_uint32_be();
 
-    if (client_session->kbdint == NULL) {
+    if (client_session->kbdint == nullptr) {
         client_session->kbdint = new ssh_kbdint_struct();
     } 
     else {
@@ -3529,7 +3529,7 @@ static inline int ssh_packet_userauth_info_request_client(SshClientSession * cli
             "Too much prompts requested by the server: %u (0x%.4x)",
             nprompts, nprompts);
         ssh_kbdint_free(client_session->kbdint);
-        client_session->kbdint = NULL;
+        client_session->kbdint = nullptr;
 
     return SSH_PACKET_USED;
     }
@@ -3549,7 +3549,7 @@ static inline int ssh_packet_userauth_info_request_client(SshClientSession * cli
             // TODO : check memory allocation
             client_session->kbdint->nprompts = i-1;
             ssh_kbdint_free(client_session->kbdint);
-            client_session->kbdint = NULL;
+            client_session->kbdint = nullptr;
             return SSH_PACKET_USED;
         }
         uint32_t tmp2_len = packet->in_uint32_be();
@@ -3557,7 +3557,7 @@ static inline int ssh_packet_userauth_info_request_client(SshClientSession * cli
            // TODO : check memory allocation
             client_session->kbdint->nprompts = i-1;
             ssh_kbdint_free(client_session->kbdint);
-            client_session->kbdint = NULL;
+            client_session->kbdint = nullptr;
 
             return SSH_PACKET_USED;
         }
@@ -3624,8 +3624,8 @@ int ssh_packet_userauth_gssapi_response_client(SshClientSession * client_session
                                     client_session->gssapi->client.server_name,
                                     client_session->gssapi->client.oid,
                                     client_session->gssapi->client.flags,
-                                    0, NULL, &input_token, NULL,
-                                    &output_token, NULL, NULL);
+                                    0, nullptr, &input_token, nullptr,
+                                    &output_token, nullptr, nullptr);
     if(GSS_ERROR(maj_stat)){
         gss_buffer_desc buffer;
         OM_uint32 dummy;
@@ -3735,7 +3735,7 @@ static inline int ssh_packet_userauth_success_client(SshClientSession * client_s
 static inline int ssh_packet_userauth_failure_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet)
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    char *auth_methods = NULL;
+    char *auth_methods = nullptr;
     uint8_t partial = 0;
     (void) type;
 
@@ -3775,19 +3775,19 @@ static inline int ssh_packet_userauth_failure_client(SshClientSession * client_s
 
         client_session->auth_methods = 0;
     }
-    if (strstr(auth_methods, "password") != NULL) {
+    if (strstr(auth_methods, "password") != nullptr) {
         client_session->auth_methods |= SSH_AUTH_METHOD_PASSWORD;
     }
-    if (strstr(auth_methods, "keyboard-interactive") != NULL) {
+    if (strstr(auth_methods, "keyboard-interactive") != nullptr) {
         client_session->auth_methods |= SSH_AUTH_METHOD_INTERACTIVE;
     }
-    if (strstr(auth_methods, "publickey") != NULL) {
+    if (strstr(auth_methods, "publickey") != nullptr) {
         client_session->auth_methods |= SSH_AUTH_METHOD_PUBLICKEY;
     }
-    if (strstr(auth_methods, "hostbased") != NULL) {
+    if (strstr(auth_methods, "hostbased") != nullptr) {
         client_session->auth_methods |= SSH_AUTH_METHOD_HOSTBASED;
     }
-    if (strstr(auth_methods, "gssapi-with-mic") != NULL) {
+    if (strstr(auth_methods, "gssapi-with-mic") != nullptr) {
           client_session->auth_methods |= SSH_AUTH_METHOD_GSSAPI_MIC;
     }
 
@@ -3804,7 +3804,7 @@ static inline int ssh2_msg_channel_open_confirmation_client(SshClientSession * c
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
-    if(channel==NULL){
+    if(channel==nullptr){
         ssh_set_error(client_session->error,  SSH_FATAL,
                       "Unknown channel id %lu",
                       static_cast<long unsigned int>(chan));
@@ -3839,7 +3839,7 @@ static inline int channel_rcv_data_stderr_client(SshClientSession * client_sessi
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
-    if (channel == NULL) {
+    if (channel == nullptr) {
         ssh_set_error(error, SSH_FATAL, 
             "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
@@ -3917,7 +3917,7 @@ static inline int channel_rcv_data_client(SshClientSession * client_session, ssh
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
-    if (channel == NULL) {
+    if (channel == nullptr) {
         ssh_set_error(error, SSH_FATAL, 
             "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
@@ -3992,7 +3992,7 @@ static inline int channel_rcv_close_client(SshClientSession * client_session, ss
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
-    if (channel == NULL) {
+    if (channel == nullptr) {
         ssh_set_error(client_session->error,  SSH_FATAL,
                       "Server specified invalid channel %lu",
                       static_cast<long unsigned int>(ntohl(chan)));
@@ -4051,7 +4051,7 @@ static inline int channel_rcv_change_window_client(SshClientSession * client_ses
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
-    if (channel == NULL) {
+    if (channel == nullptr) {
         ssh_set_error(error, SSH_FATAL, "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
         syslog(LOG_INFO, "Error getting a window adjust message: invalid packet");
@@ -4116,7 +4116,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
     size_t processed = 0; /* number of byte processed from the callback */
     uint8_t padding = 0;
 
-    if (data == NULL) {
+    if (data == nullptr) {
         this->session_state= SSH_SESSION_STATE_ERROR;
         return 0;
     }
@@ -4362,7 +4362,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 //                case SSH_MSG_USERAUTH_GSSAPI_TOKEN:
                     // TODO: replace this with a better test where the accepted answer
                     // depends on the type of the previously sent request
-                    if (this->gssapi != NULL) {
+                    if (this->gssapi != nullptr) {
                         syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_GSSAPI_TOKEN", __FUNCTION__);
                         ssh_packet_userauth_gssapi_token_client(this, this->in_buffer);
                     }
@@ -4415,7 +4415,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                     {
                         uint32_t chan = this->in_buffer->in_uint32_be();
                         ssh_channel channel = this->ssh_channel_from_local(chan);
-                        if (channel == NULL) {
+                        if (channel == nullptr) {
                             ssh_set_error(this->error,  SSH_FATAL,
                                           "Server specified invalid channel %lu",
                                           static_cast<long unsigned int>(ntohl(chan)));
@@ -4529,7 +4529,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
  *                      The prototype of cb is:
  *                      int (*ssh_event_callback)(socket_t fd, int revents,
  *                                                          void *userdata);
- * @param  userdata     Userdata to be passed to the callback function. NULL if
+ * @param  userdata     Userdata to be passed to the callback function. nullptr if
  *                      not needed.
  *
  * @returns SSH_OK      on success
@@ -4540,7 +4540,7 @@ int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_ca
     syslog(LOG_WARNING, "ssh_event_add_fd = %u", fd);
 
     
-    if(ctx == NULL || pw_cb == NULL || fd == SSH_INVALID_SOCKET) {
+    if(ctx == nullptr || pw_cb == nullptr || fd == SSH_INVALID_SOCKET) {
         syslog(LOG_WARNING, "ssh_event_add_fd failed = %u", fd);
         return SSH_ERROR;
     }
@@ -4555,8 +4555,7 @@ int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_ca
  
 void ssh_event_set_session_client(ssh_poll_ctx_struct * ctx, SshClientSession * client_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    //TODO: check here: I changed it from ctx->target_session = client_session
-    ctx->client_session = client_session;        
+    ctx->target_session = client_session;
 }
 
 /**
@@ -4580,7 +4579,7 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
     if ((client_session->flags & SSH_SESSION_FLAG_BLOCKING)){
         int timeout = TIMEOUT_DEFAULT_MS;
         struct timeval start;
-        gettimeofday(&start, NULL);
+        gettimeofday(&start, nullptr);
 
         while(client_session->auth_state == SSH_AUTH_STATE_NONE
             || client_session->auth_state == SSH_AUTH_STATE_KBDINT_SENT
@@ -4593,7 +4592,7 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
                 return SSH_AUTH_ERROR;
             }
             struct timeval now;
-            gettimeofday(&now, NULL);
+            gettimeofday(&now, nullptr);
             long ms =   (now.tv_sec - start.tv_sec) * 1000
                     + (now.tv_usec < start.tv_usec) * 1000 
                     + (now.tv_usec - start.tv_usec) / 1000;
@@ -4746,7 +4745,7 @@ static inline int ssh_send_service_request_client(SshClientSession * client_sess
  *
  * @param[in] session   The SSH session.
  *
- * @param[in] username  Deprecated, set to NULL.
+ * @param[in] username  Deprecated, set to nullptr.
  *
  * @returns             A bitfield of the fllowing values:
  *                      - SSH_AUTH_METHOD_PASSWORD
@@ -4773,7 +4772,7 @@ int ssh_userauth_list_client(SshClientSession * client_session, error_struct * e
  *
  * @param[in] session     The SSH session.
  *
- * @param[in] username    The username, this SHOULD be NULL.
+ * @param[in] username    The username, this SHOULD be nullptr.
  *
  * @param[in] pubkey      The public key to try.
  *
@@ -4798,7 +4797,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
 
     syslog(LOG_INFO, "%s A ---", __FUNCTION__);    
 
-    if (pubkey == NULL || !(pubkey->flags & SSH_KEY_FLAG_PUBLIC)) {
+    if (pubkey == nullptr || !(pubkey->flags & SSH_KEY_FLAG_PUBLIC)) {
         syslog(LOG_INFO, "%s Invalid pubkey", __FUNCTION__);
         ssh_set_error(client_session->error,  SSH_FATAL, "Invalid pubkey");
         return SSH_AUTH_ERROR;
@@ -4887,13 +4886,13 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
                         const EC_GROUP *g = EC_KEY_get0_group(pubkey->ecdsa);
                         const EC_POINT *p = EC_KEY_get0_public_key(pubkey->ecdsa);
 
-                        size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+                        size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
                         if (len_ec == 0) {
                             return SSH_AUTH_ERROR;
                         }
 
                         SSHString e(static_cast<uint32_t>(len_ec));
-                        if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, NULL)){
+                        if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
                             return SSH_AUTH_ERROR;
                         }
 
@@ -5049,7 +5048,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
  *
  * @param[in]  session  The ssh session to use.
  *
- * @param[in]  username The username, this SHOULD be NULL.
+ * @param[in]  username The username, this SHOULD be nullptr.
  *
  * @return  SSH_AUTH_ERROR:   A serious error happened.\n
  *          SSH_AUTH_DENIED:  The server doesn't accept that public key as an
@@ -5089,7 +5088,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
     if (!client_session->agent_state){
         client_session->agent_state = new ssh_agent_state_struct;
     }
-    if (client_session->agent_state->pubkey == NULL){
+    if (client_session->agent_state->pubkey == nullptr){
         if (client_session->agent->channel){
             client_session->agent->ssh_agent_get_ident_count_channel_ssh2_server(front_session, front_session->error);
             if (client_session->agent->count > 0) {
@@ -5098,7 +5097,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
             }
         }
     }
-    while (client_session->agent_state->pubkey != NULL) {
+    while (client_session->agent_state->pubkey != nullptr) {
         switch (client_session->agent_state->state)
         {
         case SSH_AGENT_STATE_NONE:
@@ -5214,13 +5213,13 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                         const EC_GROUP *g = EC_KEY_get0_group(pubkey->ecdsa);
                         const EC_POINT *p = EC_KEY_get0_public_key(pubkey->ecdsa);
 
-                        size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+                        size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
                         if (len_ec == 0) {
                             return SSH_AUTH_ERROR;
                         }
 
                         SSHString e(static_cast<uint32_t>(len_ec));
-                        if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, NULL)){
+                        if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
                             return SSH_AUTH_ERROR;
                         }
 
@@ -5408,7 +5407,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
  *
  * @param[in] session   The ssh session to use.
  *
- * @param[in] username  The username, this SHOULD be NULL.
+ * @param[in] username  The username, this SHOULD be nullptr.
  *
  * @param[in] password  The password to authenticate in UTF-8.
  *
@@ -5518,7 +5517,7 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
         /* username */
         {
             const char * str_username = username?username:client_session->opts.username;
-            if (str_username == NULL){
+            if (str_username == nullptr){
                 client_session->out_buffer->buffer_reinit();
                 return SSH_AUTH_ERROR;
             }
@@ -5592,7 +5591,7 @@ static int ssh_userauth_kbdint_send_client(SshClientSession * client_session)
     client_session->auth_state = SSH_AUTH_STATE_KBDINT_SENT;
     client_session->pending_call_state = SSH_PENDING_CALL_AUTH_KBDINT_SEND;
     ssh_kbdint_free(client_session->kbdint);
-    client_session->kbdint = NULL;
+    client_session->kbdint = nullptr;
 
     syslog(LOG_DEBUG,
             "Sending keyboard-interactive response packet");
@@ -5611,11 +5610,11 @@ static int ssh_userauth_kbdint_send_client(SshClientSession * client_session)
  *
  * @param[in]  session  The ssh session to use.
  *
- * @param[in]  user     The username to authenticate. You can specify NULL if
+ * @param[in]  user     The username to authenticate. You can specify nullptr if
  *                      ssh_option_set_username() has been used. You cannot try
  *                      two different logins in a row.
  *
- * @param[in]  submethods Undocumented. Set it to NULL.
+ * @param[in]  submethods Undocumented. Set it to nullptr.
  *
  * @returns SSH_AUTH_ERROR:   A serious error happened\n
  *          SSH_AUTH_DENIED:  Authentication failed : use another method\n
@@ -5637,26 +5636,26 @@ int ssh_userauth_kbdint_client(SshClientSession * client_session, const char *us
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     int rc = SSH_AUTH_ERROR;
 
-    if (client_session == NULL) {
+    if (client_session == nullptr) {
         return SSH_AUTH_ERROR;
     }
 
-    if ((client_session->pending_call_state == SSH_PENDING_CALL_NONE && client_session->kbdint == NULL) ||
+    if ((client_session->pending_call_state == SSH_PENDING_CALL_NONE && client_session->kbdint == nullptr) ||
             client_session->pending_call_state == SSH_PENDING_CALL_AUTH_KBDINT_INIT)
         rc = ssh_userauth_kbdint_init_client(client_session, user, submethods);
     else if (client_session->pending_call_state == SSH_PENDING_CALL_AUTH_KBDINT_SEND ||
-            client_session->kbdint != NULL) {
+            client_session->kbdint != nullptr) {
         /*
          * If we are at this point, it is because client_session->kbdint exists.
          * It means the user has set some information there we need to send
          * the server and then we need to ack the status (new questions or ok
          * pass in).
-         * It is possible that client_session->kbdint is NULL while we're waiting for
+         * It is possible that client_session->kbdint is nullptr while we're waiting for
          * a reply, hence the test for the pending call.
          */
         rc = ssh_userauth_kbdint_send_client(client_session);
     } else {
-        /* We are here because client_session->kbdint == NULL & state != NONE.
+        /* We are here because client_session->kbdint == nullptr & state != NONE.
          * This should not happen
          */
         rc = SSH_AUTH_ERROR;
@@ -5678,10 +5677,10 @@ int ssh_userauth_kbdint_client(SshClientSession * client_session, const char *us
  */
 int ssh_userauth_kbdint_getnprompts_client(SshClientSession * client_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if(client_session==NULL){
+    if(client_session==nullptr){
         return SSH_ERROR;
     }
-    if(client_session->kbdint == NULL) {
+    if(client_session->kbdint == nullptr) {
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return SSH_ERROR;
     }
@@ -5702,8 +5701,8 @@ static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_se
     unsigned int i;
     int ret;
 
-    if (client_session->gssapi->client.client_deleg_creds == NULL) {
-        if (client_session->opts.gss_client_identity != NULL) {
+    if (client_session->gssapi->client.client_deleg_creds == nullptr) {
+        if (client_session->opts.gss_client_identity != nullptr) {
             namebuf.value = client_session->opts.gss_client_identity;
             namebuf.length = strlen(client_session->opts.gss_client_identity);
 
@@ -5719,7 +5718,7 @@ static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_se
         maj_stat = gss_acquire_cred(&min_stat, client_id, GSS_C_INDEFINITE,
                                     GSS_C_NO_OID_SET, GSS_C_INITIATE,
                                     &client_session->gssapi->client.creds,
-                                    &actual_mechs, NULL);
+                                    &actual_mechs, nullptr);
         if (GSS_ERROR(maj_stat)) {
             ret = SSH_ERROR;
             gss_release_name(&min_stat, &client_id);
@@ -5730,7 +5729,7 @@ static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_se
                                     client_session->gssapi->client.client_deleg_creds;
 
         maj_stat = gss_inquire_cred(&min_stat, client_session->gssapi->client.creds,
-                                    &client_id, NULL, NULL, &actual_mechs);
+                                    &client_id, nullptr, nullptr, &actual_mechs);
         if (GSS_ERROR(maj_stat)) {
             ret = SSH_ERROR;
             gss_release_name(&min_stat, &client_id);
@@ -5747,7 +5746,7 @@ static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_se
         oid = &actual_mechs->elements[i];
         maj_stat = gss_inquire_cred_by_mech(&min_stat,
                                             client_session->gssapi->client.creds,
-                                            oid, NULL, &lifetime, NULL, NULL);
+                                            oid, nullptr, &lifetime, nullptr, nullptr);
 
         if (maj_stat == GSS_S_COMPLETE && lifetime > 0) {
             gss_add_oid_set_member(&min_stat, oid, valid_oids);
@@ -5798,7 +5797,7 @@ int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
         client_session->gssapi = new ssh_gssapi_struct;
     }
 
-    if (client_session->opts.gss_server_identity != NULL) {
+    if (client_session->opts.gss_server_identity != nullptr) {
         gss_host = client_session->opts.gss_server_identity;
     }
     /* import target host name */
@@ -5931,16 +5930,16 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
 int ssh_userauth_kbdint_setanswer_client(SshClientSession * client_session, unsigned int i, const char *answer, error_struct * error) 
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if (client_session == NULL){
+    if (client_session == nullptr){
         return -1;
     }
-    if (answer == NULL 
-    || client_session->kbdint == NULL 
+    if (answer == nullptr 
+    || client_session->kbdint == nullptr 
     || i >= client_session->kbdint->nprompts){
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
     }
-    if (client_session->kbdint->answers == NULL) {
+    if (client_session->kbdint->answers == nullptr) {
         client_session->kbdint->answers = static_cast<char**>(malloc(sizeof(char*) * client_session->kbdint->nprompts));
         // TODO : check memory allocation
         memset(client_session->kbdint->answers, 0, sizeof(char *) * client_session->kbdint->nprompts);
@@ -5985,16 +5984,16 @@ int ssh_userauth_kbdint_setanswer_client(SshClientSession * client_session, unsi
 const char *ssh_userauth_kbdint_getprompt_client(SshClientSession * client_session, unsigned int i, char *echo, error_struct * error) 
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if (client_session == NULL){
-        return NULL;
+    if (client_session == nullptr){
+        return nullptr;
     }
-    if (client_session->kbdint == NULL) {
+    if (client_session->kbdint == nullptr) {
         ssh_set_error(*error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
-        return NULL;
+        return nullptr;
     }
     if (i > client_session->kbdint->nprompts) {
         ssh_set_error(*error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
-        return NULL;
+        return nullptr;
     }
 
     if (echo) {
@@ -6026,7 +6025,7 @@ int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channe
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     int err = SSH_ERROR;
     
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
 
@@ -6099,11 +6098,11 @@ int ssh_channel_open_forward_client(SshClientSession * client_session, ssh_chann
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     int err = SSH_ERROR;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return err;
     }
 
-    if(remotehost == NULL || sourcehost == NULL) {
+    if(remotehost == nullptr || sourcehost == nullptr) {
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return err;
     }
@@ -6136,7 +6135,7 @@ int ssh_channel_open_forward_client(SshClientSession * client_session, ssh_chann
             err = SSH_OK;
             break;
         }
-        if (client_session->socket == NULL) {
+        if (client_session->socket == nullptr) {
             syslog(LOG_WARNING, "handle_packets early exit : no socket");
             err = SSH_ERROR;
             break;
@@ -6204,7 +6203,7 @@ int ssh_channel_send_eof_client(SshClientSession * client_session, ssh_channel c
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     int err = SSH_ERROR;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return err;
     }
 
@@ -6230,7 +6229,7 @@ int ssh_channel_send_eof_client(SshClientSession * client_session, ssh_channel c
         if (client_session->session_state == SSH_SESSION_STATE_ERROR) {
             break;
         }
-        if (client_session->socket == NULL) {
+        if (client_session->socket == nullptr) {
             syslog(LOG_WARNING, "handle_packets early exit : no socket");
             err = SSH_ERROR;
             break;
@@ -6265,7 +6264,7 @@ int ssh_channel_close_client(SshClientSession * client_session, ssh_channel chan
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     int err = 0;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
 
@@ -6302,7 +6301,7 @@ int ssh_channel_close_client(SshClientSession * client_session, ssh_channel chan
         if (client_session->session_state == SSH_SESSION_STATE_ERROR) {
             break;
         }
-        if (client_session->socket == NULL) {
+        if (client_session->socket == nullptr) {
             syslog(LOG_WARNING, "handle_packets early exit : no socket");
             err = SSH_ERROR;
             break;
@@ -6421,13 +6420,13 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
             const EC_GROUP *g = EC_KEY_get0_group(key->ecdsa);
             const EC_POINT *p = EC_KEY_get0_public_key(key->ecdsa);
 
-            size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+            size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
             if (len_ec == 0) {
                 return SSH_ERROR;
             }
 
             SSHString e(static_cast<uint32_t>(len_ec));
-            if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, NULL)){
+            if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
                 return SSH_ERROR;
             }
 
@@ -6516,10 +6515,10 @@ int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channe
     syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_ENV <%s=%s> %s", name, value, channel->show());
     int rc = SSH_ERROR;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
-    if(name == NULL || value == NULL) {
+    if(name == nullptr || value == nullptr) {
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return rc;
     }
@@ -6569,10 +6568,10 @@ int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channe
  * @param[in]  single_connection A boolean to mark only one X11 app will be
  *                               redirected.
  *
- * @param[in]  protocol A x11 authentication protocol. Pass NULL to use the
+ * @param[in]  protocol A x11 authentication protocol. Pass nullptr to use the
  *                      default value MIT-MAGIC-COOKIE-1.
  *
- * @param[in]  cookie   A x11 authentication cookie. Pass NULL to generate
+ * @param[in]  cookie   A x11 authentication cookie. Pass nullptr to generate
  *                      a random cookie.
  *
  * @param[in] screen_number The screen number.
@@ -6587,7 +6586,7 @@ int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channe
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_X11 <%s %s> %s", 
         protocol, cookie, channel->show());
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
 
@@ -6681,10 +6680,10 @@ int ssh_channel_request_send_signal_client(SshClientSession * client_session, ss
     syslog(LOG_INFO, ">>>>>>>>>>> CHANNEL_REQUEST_SEND_SIGNAL %s", channel->show());    
     int rc = SSH_ERROR;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
-    if(sig == NULL) {
+    if(sig == nullptr) {
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return rc;
     }
@@ -6789,10 +6788,10 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
     syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_EXEC <%s> %s", cmd, channel->show());
     int rc = SSH_ERROR;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
-    if(cmd == NULL) {
+    if(cmd == nullptr) {
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return rc;
     }
@@ -6848,11 +6847,11 @@ int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_c
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_PTY_SIZE <%s, %d, %d> %s", terminal, col, row, channel->show());    
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
 
-    if(terminal == NULL) {
+    if(terminal == nullptr) {
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return SSH_ERROR;
     }
@@ -6910,11 +6909,11 @@ int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_c
 int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_t *data, uint32_t len) 
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if(channel == NULL) {
+    if(channel == nullptr) {
         syslog(LOG_WARNING, "Invalid channel");
         return SSH_ERROR;
     }
-    if(data == NULL) {
+    if(data == nullptr) {
         syslog(LOG_WARNING, "Invalid data");
         return SSH_ERROR;
     }
@@ -6962,7 +6961,7 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
             }
             syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
                 this->session_state, static_cast<int>(channel->state));
-            if (this->socket == NULL){
+            if (this->socket == nullptr){
                 return SSH_ERROR;
             }
             
@@ -7018,11 +7017,11 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
 int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const uint8_t *data, uint32_t len) 
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if(channel == NULL) {
+    if(channel == nullptr) {
         syslog(LOG_WARNING, "Invalid channel");
         return SSH_ERROR;
     }
-    if(data == NULL) {
+    if(data == nullptr) {
         syslog(LOG_WARNING, "Invalid data");
         return SSH_ERROR;
     }
@@ -7069,7 +7068,7 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
             }
             syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
                 this->session_state, static_cast<int>(channel->state));
-            if (this->socket == NULL){
+            if (this->socket == nullptr){
                 return SSH_ERROR;
             }
 

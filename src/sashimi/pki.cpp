@@ -66,13 +66,13 @@ static int get_equals(char *string);
  *
  * @brief Translates a base64 string into a binary one.
  *
- * @returns A buffer containing the decoded string, NULL if something went
+ * @returns A buffer containing the decoded string, nullptr if something went
  *          wrong (e.g. incorrect char).
  */
  
 // TODO: refactor that shit
 ssh_buffer_struct* base64_to_bin(const char *source) {
-  ssh_buffer_struct* buffer = NULL;
+  ssh_buffer_struct* buffer = nullptr;
   unsigned char block[3];
   char *base64;
   char *ptr;
@@ -80,8 +80,8 @@ ssh_buffer_struct* base64_to_bin(const char *source) {
   int equals;
 
   base64 = strdup(source);
-  if (base64 == NULL) {
-    return NULL;
+  if (base64 == nullptr) {
+    return nullptr;
   }
   ptr = base64;
 
@@ -93,7 +93,7 @@ ssh_buffer_struct* base64_to_bin(const char *source) {
   }
 
   buffer = new ssh_buffer_struct;
-  if (buffer == NULL) {
+  if (buffer == nullptr) {
     free(base64);
     return nullptr;
   }
@@ -227,7 +227,7 @@ static int get_equals(char *string) {
   char *ptr = string;
   int num = 0;
 
-  while ((ptr=strchr(ptr,'=')) != NULL) {
+  while ((ptr=strchr(ptr,'=')) != nullptr) {
     num++;
     *ptr = '\0';
     ptr++;
@@ -276,8 +276,8 @@ unsigned char *bin_to_base64(const unsigned char *source, int len) {
   flen = (4 * flen) / 3 + 1;
 
   unsigned char *base64 = reinterpret_cast<decltype(base64)>(malloc(flen));
-  if (base64 == NULL) {
-    return NULL;
+  if (base64 == nullptr) {
+    return nullptr;
   }
   ptr = base64;
 
@@ -298,23 +298,23 @@ unsigned char *bin_to_base64(const unsigned char *source, int len) {
  * @param[in] key ssh_key_struct *handle to free
  */
 void ssh_key_free (ssh_key_struct *pubkey){
-    if(pubkey != NULL){
+    if(pubkey != nullptr){
         if(pubkey->dsa) DSA_free(pubkey->dsa);
         if(pubkey->rsa) RSA_free(pubkey->rsa);
         if(pubkey->ecdsa) EC_KEY_free(pubkey->ecdsa);
         pubkey->flags = SSH_KEY_FLAG_EMPTY;
         pubkey->type = SSH_KEYTYPE_UNKNOWN;
         pubkey->ecdsa_nid = 0;
-        pubkey->dsa = NULL;
-        pubkey->rsa = NULL;
-        pubkey->ecdsa = NULL;
+        pubkey->dsa = nullptr;
+        pubkey->rsa = nullptr;
+        pubkey->ecdsa = nullptr;
         delete pubkey;
     }
 }
 
 void ssh_signature_free(ssh_signature_struct * sig)
 {
-    if (sig == NULL) {
+    if (sig == nullptr) {
         return;
     }
 
@@ -340,7 +340,7 @@ void ssh_signature_free(ssh_signature_struct * sig)
  *
  * @param[in]  type     The type to convert.
  *
- * @return              A string for the keytype or NULL if unknown.
+ * @return              A string for the keytype or nullptr if unknown.
  */
 const char *ssh_key_type_to_char(enum ssh_keytypes_e type) {
   switch (type) {
@@ -438,15 +438,15 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         buffer.buffer_get_data(n.data.get(),n_len);
 
         (*pkey)->rsa = RSA_new();
-        if ((*pkey)->rsa == NULL) {
+        if ((*pkey)->rsa == nullptr) {
             syslog(LOG_INFO, "%s RSA err", __FUNCTION__);
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
 
-        (*pkey)->rsa->e = bignum_bin2bn(e.data.get(), e.size, NULL);
-        (*pkey)->rsa->n = bignum_bin2bn(n.data.get(), n.size, NULL);
-        if ((*pkey)->rsa->e == NULL || (*pkey)->rsa->n == NULL) {
+        (*pkey)->rsa->e = bignum_bin2bn(e.data.get(), e.size, nullptr);
+        (*pkey)->rsa->n = bignum_bin2bn(n.data.get(), n.size, nullptr);
+        if ((*pkey)->rsa->e == nullptr || (*pkey)->rsa->n == nullptr) {
             RSA_free((*pkey)->rsa);
             syslog(LOG_INFO, "%s RSA err", __FUNCTION__);
             ssh_key_free(*pkey);
@@ -501,18 +501,18 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         buffer.buffer_get_data(pubkey.data.get(),pubkey_len);
 
         (*pkey)->dsa = DSA_new();
-        if ((*pkey)->dsa == NULL) {
+        if ((*pkey)->dsa == nullptr) {
             syslog(LOG_INFO, "%s DSS ERR", __FUNCTION__);        
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
 
-        (*pkey)->dsa->p = bignum_bin2bn(p.data.get(), p.size, NULL);
-        (*pkey)->dsa->q = bignum_bin2bn(q.data.get(), q.size, NULL);
-        (*pkey)->dsa->g = bignum_bin2bn(g.data.get(), g.size, NULL);
-        (*pkey)->dsa->pub_key = bignum_bin2bn(pubkey.data.get(), pubkey.size, NULL);
-        if ((*pkey)->dsa->p == NULL || (*pkey)->dsa->q == NULL 
-         || (*pkey)->dsa->g == NULL || (*pkey)->dsa->pub_key == NULL) {
+        (*pkey)->dsa->p = bignum_bin2bn(p.data.get(), p.size, nullptr);
+        (*pkey)->dsa->q = bignum_bin2bn(q.data.get(), q.size, nullptr);
+        (*pkey)->dsa->g = bignum_bin2bn(g.data.get(), g.size, nullptr);
+        (*pkey)->dsa->pub_key = bignum_bin2bn(pubkey.data.get(), pubkey.size, nullptr);
+        if ((*pkey)->dsa->p == nullptr || (*pkey)->dsa->q == nullptr 
+         || (*pkey)->dsa->g == nullptr || (*pkey)->dsa->pub_key == nullptr) {
             DSA_free((*pkey)->dsa);
             syslog(LOG_INFO, "%s DSS ERR", __FUNCTION__);        
             ssh_key_free(*pkey);
@@ -556,20 +556,20 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
 
         (*pkey)->ecdsa_nid = nid;
         (*pkey)->ecdsa = EC_KEY_new_by_curve_name((*pkey)->ecdsa_nid);
-        if ((*pkey)->ecdsa == NULL) {
+        if ((*pkey)->ecdsa == nullptr) {
             return -1;
         }
 
         const EC_GROUP *g = EC_KEY_get0_group((*pkey)->ecdsa);
 
         EC_POINT *p = EC_POINT_new(g);
-        if (p == NULL) {
+        if (p == nullptr) {
             syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);        
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
 
-        int ok = EC_POINT_oct2point(g, p, e.data.get(), e.size, NULL);
+        int ok = EC_POINT_oct2point(g, p, e.data.get(), e.size, nullptr);
         if (!ok) {
             EC_POINT_free(p);
             syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);        
@@ -617,7 +617,7 @@ int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
 
     unsigned char *b64;
 
-    if (pubkey == NULL || b64_key == NULL) {
+    if (pubkey == nullptr || b64_key == nullptr) {
         return SSH_ERROR;
     }
 
@@ -663,13 +663,13 @@ int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
             const EC_GROUP *g = EC_KEY_get0_group(pubkey->ecdsa);
             const EC_POINT *p = EC_KEY_get0_public_key(pubkey->ecdsa);
 
-            size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+            size_t len_ec = EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
             if (len_ec == 0) {
                 return SSH_ERROR;
             }
 
             SSHString e(static_cast<uint32_t>(len_ec));
-            if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, NULL)){
+            if (e.size != EC_POINT_point2oct(g, p, POINT_CONVERSION_UNCOMPRESSED, e.data.get(), e.size, nullptr)){
                 return SSH_ERROR;
             }
 
@@ -685,7 +685,7 @@ int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
     }
 
     b64 = bin_to_base64(key_blob.data.get(), key_blob.size);
-    if (b64 == NULL) {
+    if (b64 == nullptr) {
         return SSH_ERROR;
     }
 
@@ -697,7 +697,7 @@ int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
 int ssh_pki_export_pubkey_base64_p(const ssh_key_struct *key, char *b64, int b64_len)
 {
     int rc;
-    char *buf = NULL;
+    char *buf = nullptr;
 
     rc = ssh_pki_export_pubkey_base64(key, &buf);
     if (rc != SSH_OK)
@@ -807,7 +807,7 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
     switch(key->type) {
         case SSH_KEYTYPE_DSS:
             sig->dsa_sig = DSA_do_sign(hash, hlen, key->dsa);
-            if (sig->dsa_sig == NULL) {
+            if (sig->dsa_sig == nullptr) {
                 ssh_signature_free(sig);
                 return SSHString(0);
             }
@@ -831,7 +831,7 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
         break;
         case SSH_KEYTYPE_ECDSA:
             sig->ecdsa_sig = ECDSA_do_sign(hash, hlen, key->ecdsa);
-            if (sig->ecdsa_sig == NULL) {
+            if (sig->ecdsa_sig == nullptr) {
                 ssh_signature_free(sig);
                 return SSHString(0);
             }
@@ -876,31 +876,31 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                 LOG(LOG_INFO, "Signature has wrong size: %lu",
                             static_cast<unsigned long>(sig_blob.size));
                 ssh_signature_free(sig);
-                return NULL;
+                return nullptr;
             }
 
             sig->dsa_sig = DSA_SIG_new();
-            if (sig->dsa_sig == NULL) {
+            if (sig->dsa_sig == nullptr) {
                 ssh_signature_free(sig);
-                return NULL;
+                return nullptr;
             }
 
             SSHString r(20);
             memcpy(r.data.get(), sig_blob.data.get(), 20);
 
-            sig->dsa_sig->r = bignum_bin2bn(r.data.get(), r.size, NULL);
-            if (sig->dsa_sig->r == NULL) {
+            sig->dsa_sig->r = bignum_bin2bn(r.data.get(), r.size, nullptr);
+            if (sig->dsa_sig->r == nullptr) {
                 ssh_signature_free(sig);
-                return NULL;
+                return nullptr;
             }
 
             SSHString s(20);
             memcpy(s.data.get(), sig_blob.data.get() + 20, 20);
 
-            sig->dsa_sig->s = bignum_bin2bn(s.data.get(), s.size, NULL);
-            if (sig->dsa_sig->s == NULL) {
+            sig->dsa_sig->s = bignum_bin2bn(s.data.get(), s.size, nullptr);
+            if (sig->dsa_sig->s == nullptr) {
                 ssh_signature_free(sig);
-                return NULL;
+                return nullptr;
             }
         }
         break;
@@ -911,8 +911,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             size_t rsalen = RSA_size(pubkey->rsa);
 
             if (sig_blob.size > rsalen) {
-                LOG(LOG_INFO, "Signature is too big: %lu > %lu",
-                            static_cast<unsigned long>(sig_blob.size), static_cast<unsigned long>(rsalen));
+                LOG(LOG_INFO, "Signature is too big: %u > %lu", sig_blob.size, rsalen);
                 ssh_signature_free(sig);
             }
 
@@ -927,9 +926,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             } 
             else {
                 /* pad the blob to the expected rsalen size */
-                LOG(LOG_INFO, "RSA signature len %lu < %lu",
-                            static_cast<unsigned long>(sig_blob.size),
-                            static_cast<unsigned long>(rsalen));
+                LOG(LOG_INFO, "RSA signature len %u < %lu", sig_blob.size, rsalen);
 
                 pad_len = rsalen - sig_blob.size;
 
@@ -946,18 +943,18 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
         break;
         case SSH_KEYTYPE_ECDSA:
             sig->ecdsa_sig = ECDSA_SIG_new();
-            if (sig->ecdsa_sig == NULL) {
+            if (sig->ecdsa_sig == nullptr) {
                 ssh_signature_free(sig);
-                return NULL;
+                return nullptr;
             }
 
             { /* build ecdsa signature */
                 ssh_buffer_struct* b;
 
                 b = new ssh_buffer_struct;
-                if (b == NULL) {
+                if (b == nullptr) {
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
 
                 b->out_blob(sig_blob.data.get(), sig_blob.size);
@@ -965,62 +962,62 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                 if (sizeof(uint32_t) > b->in_remain()){
                     delete b;
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
                 uint32_t r_len = b->in_uint32_be();
                 if (r_len > b->in_remain()){
                     delete b;
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
                 uint8_t * r = new uint8_t[r_len];
                 b->buffer_get_data(r, r_len);
                 // TODO: is there error management for bignum_bin2bn
-                sig->ecdsa_sig->r = bignum_bin2bn(r, r_len, NULL);
+                sig->ecdsa_sig->r = bignum_bin2bn(r, r_len, nullptr);
 
                 if (r){
                   delete [] r;
                 }
 
-                if (sig->ecdsa_sig->r == NULL) {
+                if (sig->ecdsa_sig->r == nullptr) {
                     delete b;
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
 
                 if (sizeof(uint32_t) > b->in_remain()){
                     delete b;
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
                 uint32_t s_len = b->in_uint32_be();
                 if (s_len > b->in_remain()){
                     delete b;
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
                 
                 uint8_t * s = new uint8_t[s_len];
                 b->buffer_get_data(s, s_len);
                 // TODO: is there error management for bignum_bin2bn
-                sig->ecdsa_sig->s = bignum_bin2bn(s, s_len, NULL);
+                sig->ecdsa_sig->s = bignum_bin2bn(s, s_len, nullptr);
                 if (s){
                   delete [] s;
                 }
 
-                if (sig->ecdsa_sig->s == NULL) {
+                if (sig->ecdsa_sig->s == nullptr) {
                     delete b;
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
 
                 if (b->in_remain() != 0) {
                     delete b;
                     LOG(LOG_INFO, "Signature has remaining bytes in inner "
                                 "sigblob: %lu",
-                                static_cast<unsigned long>(b->in_remain()));
+                                b->in_remain());
                     ssh_signature_free(sig);
-                    return NULL;
+                    return nullptr;
                 }
                 delete b;
             }
@@ -1029,7 +1026,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
         case SSH_KEYTYPE_UNKNOWN:
             LOG(LOG_INFO, "Unknown signature type");
             ssh_signature_free(sig);
-            return NULL;
+            return nullptr;
     }
 
     return sig;
@@ -1146,7 +1143,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
             ssh_set_error(error,
                           SSH_FATAL,
                           "ECDSA error: %s",
-                          ERR_error_string(ERR_get_error(), NULL));
+                          ERR_error_string(ERR_get_error(), nullptr));
             return SSH_ERROR;
         }
 
@@ -1168,7 +1165,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
             ssh_set_error(error,
                           SSH_FATAL,
                           "DSA error: %s",
-                          ERR_error_string(ERR_get_error(), NULL));
+                          ERR_error_string(ERR_get_error(), nullptr));
             return SSH_ERROR;
         }
         ssh_signature_free(sig);
@@ -1192,7 +1189,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
             ssh_set_error(error,
                           SSH_FATAL,
                           "RSA error: %s",
-                          ERR_error_string(ERR_get_error(), NULL));
+                          ERR_error_string(ERR_get_error(), nullptr));
             return SSH_ERROR;
         }
         ssh_signature_free(sig);
