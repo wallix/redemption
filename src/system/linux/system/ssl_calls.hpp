@@ -24,8 +24,7 @@
    Copyright (C) Matthew Chapman 1999-2007
 */
 
-#ifndef _REDEMPTION_UTILS_SSL_CALLS_HPP_
-#define _REDEMPTION_UTILS_SSL_CALLS_HPP_
+#pragma once
 
 #include <cstdint>
 #include <cstdlib>
@@ -607,4 +606,3 @@ struct CryptContext
 
 /*****************************************************************************/
 
-#endif

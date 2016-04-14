@@ -1003,10 +1003,10 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
         case SSH_KEX_DH_GROUP1_SHA1:
         {
             client_session->next_crypto->x = BN_new();
-            bignum_rand(client_session->next_crypto->x, 128, 0, -1);
+            BN_rand(client_session->next_crypto->x, 128, 0, -1);
 
             // TODO: see how to simplify bignum ctx allocation    
-            bignum_CTX ctx = bignum_ctx_new();
+            BN_CTX* ctx = BN_CTX_new();
             client_session->next_crypto->e = BN_new();
             BIGNUM * g = BN_new();
             /* G is defined as 2 by the ssh2 standards */
@@ -1026,12 +1026,12 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
             enum { P_GROUP1_LEN = 128 }; /* Size in bytes of the p number for group 1 */
-            bignum_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
+            BN_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
             BN_mod_exp(client_session->next_crypto->e, g, client_session->next_crypto->x, p_group1, ctx);
             BN_clear_free(p_group1);
 
             BN_clear_free(g);
-            bignum_ctx_free(ctx);
+            BN_CTX_free(ctx);
             
             {
                 unsigned int len3 = BN_num_bytes(client_session->next_crypto->e);
@@ -1054,10 +1054,10 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
         case SSH_KEX_DH_GROUP14_SHA1:
         {
             client_session->next_crypto->x = BN_new();
-            bignum_rand(client_session->next_crypto->x, 128, 0, -1);
+            BN_rand(client_session->next_crypto->x, 128, 0, -1);
 
             // TODO: see how to simplify bignum ctx allocation    
-            bignum_CTX ctx = bignum_ctx_new();
+            BN_CTX* ctx = BN_CTX_new();
             client_session->next_crypto->e = BN_new();
             BIGNUM * g = BN_new();
             /* G is defined as 2 by the ssh2 standards */
@@ -1087,12 +1087,12 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
                 0x15, 0x72, 0x8E, 0x5A, 0x8A, 0xAC, 0xAA, 0x68, 0xFF, 0xFF, 0xFF, 0xFF,
                 0xFF, 0xFF, 0xFF, 0xFF};
             enum { P_GROUP14_LEN = 256 }; /* Size in bytes of the p number for group 14 */
-            bignum_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
+            BN_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
             BN_mod_exp(client_session->next_crypto->e, g, client_session->next_crypto->x, p_group14, ctx);
             BN_clear_free(p_group14);
 
             BN_clear_free(g);
-            bignum_ctx_free(ctx);
+            BN_CTX_free(ctx);
             
             {
                 unsigned int len3 = BN_num_bytes(client_session->next_crypto->e);
@@ -1115,7 +1115,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
         case SSH_KEX_ECDH_SHA2_NISTP256:
         {
             // TODO move that to ecdh.init
-            bignum_CTX ctx = BN_CTX_new();
+            BN_CTX* ctx = BN_CTX_new();
             client_session->next_crypto->ecdh.privkey = EC_KEY_new_by_curve_name(NISTP256);
             if (client_session->next_crypto->ecdh.privkey == nullptr) {
                 BN_CTX_free(ctx);
@@ -2094,8 +2094,8 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         }
         uint8_t * f = new uint8_t[f_len];
         packet->buffer_get_data(f, f_len);
-        // TODO: is there error management for bignum_bin2bn
-        client_session->next_crypto->f = bignum_bin2bn(f, f_len, nullptr);
+        // TODO: is there error management for BN_bin2bn
+        client_session->next_crypto->f = BN_bin2bn(f, f_len, nullptr);
 
         if (sizeof(uint32_t) > packet->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -2114,7 +2114,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
 
         client_session->next_crypto->dh_server_signature = std::move(tmp_dh_server_signature);
         
-        bignum_CTX ctx = bignum_ctx_new();
+        BN_CTX* ctx = BN_CTX_new();
         client_session->next_crypto->k = BN_new();
         /* the server and clients don't use the same numbers */
         BIGNUM * p_group1 = BN_new();
@@ -2131,10 +2131,10 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         0x7C, 0x4B, 0x1F, 0xE6, 0x49, 0x28, 0x66, 0x51, 0xEC, 0xE6, 0x53, 0x81,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         enum { P_GROUP1_LEN = 128 }; /* Size in bytes of the p number for group 1 */
-        bignum_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
+        BN_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
         BN_mod_exp(client_session->next_crypto->k, client_session->next_crypto->f, client_session->next_crypto->x, p_group1, ctx);
         BN_clear_free(p_group1);
-        bignum_ctx_free(ctx);
+        BN_CTX_free(ctx);
     }
     break;
     case SSH_KEX_DH_GROUP14_SHA1:
@@ -2168,8 +2168,8 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         }
         uint8_t * f = new uint8_t[f_len];
         packet->buffer_get_data(f, f_len);
-        // TODO: is there error management for bignum_bin2bn
-        client_session->next_crypto->f = bignum_bin2bn(f, f_len, nullptr);
+        // TODO: is there error management for BN_bin2bn
+        client_session->next_crypto->f = BN_bin2bn(f, f_len, nullptr);
 
         if (sizeof(uint32_t) > packet->in_remain()) {
             // ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -2187,7 +2187,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
 
         client_session->next_crypto->dh_server_signature = std::move(tmp_dh_server_signature);
         
-        bignum_CTX ctx = bignum_ctx_new();
+        BN_CTX* ctx = BN_CTX_new();
         client_session->next_crypto->k = BN_new();
 
         /* the server and clients don't use the same numbers */
@@ -2217,10 +2217,10 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
             0xFF, 0xFF, 0xFF, 0xFF};
 
         enum { P_GROUP14_LEN = 256 }; /* Size in bytes of the p number for group 14 */
-        bignum_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
+        BN_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
         BN_mod_exp(client_session->next_crypto->k, client_session->next_crypto->f, client_session->next_crypto->x, p_group14, ctx);
         BN_clear_free(p_group14);
-        bignum_ctx_free(ctx);
+        BN_CTX_free(ctx);
     }
     break;
     case SSH_KEX_ECDH_SHA2_NISTP256:
