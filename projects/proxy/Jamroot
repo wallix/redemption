@@ -1275,6 +1275,8 @@ unit-test test_crypto :
     $(TEST_DEPENDENCIES)
     ;
 
+test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
+
 test-canonical acl/mm_api.hpp ;
 test-canonical core/activity_checker.hpp ;
 test-canonical core/authid.hpp ;
