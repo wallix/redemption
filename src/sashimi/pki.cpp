@@ -444,8 +444,8 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
             return SSH_ERROR;
         }
 
-        (*pkey)->rsa->e = bignum_bin2bn(e.data.get(), e.size, nullptr);
-        (*pkey)->rsa->n = bignum_bin2bn(n.data.get(), n.size, nullptr);
+        (*pkey)->rsa->e = BN_bin2bn(e.data.get(), e.size, nullptr);
+        (*pkey)->rsa->n = BN_bin2bn(n.data.get(), n.size, nullptr);
         if ((*pkey)->rsa->e == nullptr || (*pkey)->rsa->n == nullptr) {
             RSA_free((*pkey)->rsa);
             syslog(LOG_INFO, "%s RSA err", __FUNCTION__);
@@ -507,10 +507,10 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
             return SSH_ERROR;
         }
 
-        (*pkey)->dsa->p = bignum_bin2bn(p.data.get(), p.size, nullptr);
-        (*pkey)->dsa->q = bignum_bin2bn(q.data.get(), q.size, nullptr);
-        (*pkey)->dsa->g = bignum_bin2bn(g.data.get(), g.size, nullptr);
-        (*pkey)->dsa->pub_key = bignum_bin2bn(pubkey.data.get(), pubkey.size, nullptr);
+        (*pkey)->dsa->p = BN_bin2bn(p.data.get(), p.size, nullptr);
+        (*pkey)->dsa->q = BN_bin2bn(q.data.get(), q.size, nullptr);
+        (*pkey)->dsa->g = BN_bin2bn(g.data.get(), g.size, nullptr);
+        (*pkey)->dsa->pub_key = BN_bin2bn(pubkey.data.get(), pubkey.size, nullptr);
         if ((*pkey)->dsa->p == nullptr || (*pkey)->dsa->q == nullptr 
          || (*pkey)->dsa->g == nullptr || (*pkey)->dsa->pub_key == nullptr) {
             DSA_free((*pkey)->dsa);
@@ -888,7 +888,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             SSHString r(20);
             memcpy(r.data.get(), sig_blob.data.get(), 20);
 
-            sig->dsa_sig->r = bignum_bin2bn(r.data.get(), r.size, nullptr);
+            sig->dsa_sig->r = BN_bin2bn(r.data.get(), r.size, nullptr);
             if (sig->dsa_sig->r == nullptr) {
                 ssh_signature_free(sig);
                 return nullptr;
@@ -897,7 +897,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             SSHString s(20);
             memcpy(s.data.get(), sig_blob.data.get() + 20, 20);
 
-            sig->dsa_sig->s = bignum_bin2bn(s.data.get(), s.size, nullptr);
+            sig->dsa_sig->s = BN_bin2bn(s.data.get(), s.size, nullptr);
             if (sig->dsa_sig->s == nullptr) {
                 ssh_signature_free(sig);
                 return nullptr;
@@ -972,8 +972,8 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                 }
                 uint8_t * r = new uint8_t[r_len];
                 b->buffer_get_data(r, r_len);
-                // TODO: is there error management for bignum_bin2bn
-                sig->ecdsa_sig->r = bignum_bin2bn(r, r_len, nullptr);
+                // TODO: is there error management for BN_bin2bn
+                sig->ecdsa_sig->r = BN_bin2bn(r, r_len, nullptr);
 
                 if (r){
                   delete [] r;
@@ -999,8 +999,8 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                 
                 uint8_t * s = new uint8_t[s_len];
                 b->buffer_get_data(s, s_len);
-                // TODO: is there error management for bignum_bin2bn
-                sig->ecdsa_sig->s = bignum_bin2bn(s, s_len, nullptr);
+                // TODO: is there error management for BN_bin2bn
+                sig->ecdsa_sig->s = BN_bin2bn(s, s_len, nullptr);
                 if (s){
                   delete [] s;
                 }

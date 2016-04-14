@@ -11,6 +11,10 @@
 /tools/sesman/sesmanworker/password.py
 /tools/sesman/sesmanworker/*.pyc
 /tools/redcryptofile/redcryptofile.so
+/projects/QT4Client/bin
+/projects/QT5Client/bin
+/projects/browser_client/bin
+/projects/redemption_configs/bin
 [#]*[#]
 .\#*
 password.py

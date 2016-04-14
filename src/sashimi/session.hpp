@@ -2669,8 +2669,8 @@ struct SshServerSession : public ssh_session_struct
                 }
                 uint8_t * e = new uint8_t[e_len];
                 packet->buffer_get_data(e, e_len);
-                // TODO: is there error management for bignum_bin2bn
-                this->next_crypto->e = bignum_bin2bn(e, e_len, nullptr);
+                // TODO: is there error management for BN_bin2bn
+                this->next_crypto->e = BN_bin2bn(e, e_len, nullptr);
                 if (this->next_crypto->e == nullptr) {
                     ssh_set_error(this->error, SSH_FATAL, "Cannot import e number");
                     this->session_state = SSH_SESSION_STATE_ERROR;
@@ -2681,9 +2681,9 @@ struct SshServerSession : public ssh_session_struct
                 this->dh_handshake_state = DH_STATE_INIT_SENT;
 
                 this->next_crypto->y = BN_new();
-                bignum_rand(this->next_crypto->y, 128, 0, -1);
+                BN_rand(this->next_crypto->y, 128, 0, -1);
 
-                BN_CTX * ctx1 = bignum_ctx_new();
+                BN_CTX * ctx1 = BN_CTX_new();
                 this->next_crypto->f = BN_new();
                 BIGNUM * g = BN_new();
 
@@ -2704,11 +2704,11 @@ struct SshServerSession : public ssh_session_struct
                 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
                 enum { P_GROUP1_LEN = 128 }; /* Size in bytes of the p number for group 1 */
-                bignum_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
+                BN_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
                 BN_mod_exp(this->next_crypto->f, g, this->next_crypto->y, p_group1, ctx1);
                 BN_clear_free(p_group1);
 
-                bignum_ctx_free(ctx1);
+                BN_CTX_free(ctx1);
                 
                 BN_clear_free(g);
 
@@ -2839,7 +2839,7 @@ struct SshServerSession : public ssh_session_struct
 
                 /* the server and clients don't use the same numbers */
                 {
-                    bignum_CTX ctx = bignum_ctx_new();
+                    BN_CTX* ctx = BN_CTX_new();
                     BIGNUM * p_group1 = BN_new();
                     unsigned char p_group1_value[] = {
                     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2,
@@ -2854,13 +2854,13 @@ struct SshServerSession : public ssh_session_struct
                     0x7C, 0x4B, 0x1F, 0xE6, 0x49, 0x28, 0x66, 0x51, 0xEC, 0xE6, 0x53, 0x81,
                     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     enum { P_GROUP1_LEN = 128 }; /* Size in bytes of the p number for group 1 */
-                    bignum_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
+                    BN_bin2bn(p_group1_value, P_GROUP1_LEN, p_group1);
                     this->next_crypto->k = BN_new();
                     BN_mod_exp(this->next_crypto->k,
                                this->next_crypto->e,
                                this->next_crypto->y, p_group1, ctx);
                     BN_clear_free(p_group1);
-                    bignum_ctx_free(ctx);
+                    BN_CTX_free(ctx);
                 }
                 
                 int rc = this->make_sessionid();
@@ -2938,8 +2938,8 @@ struct SshServerSession : public ssh_session_struct
                 }
                 uint8_t * e = new uint8_t[e_len];
                 packet->buffer_get_data(e, e_len);
-                // TODO: is there error management for bignum_bin2bn
-                this->next_crypto->e = bignum_bin2bn(e, e_len, nullptr);
+                // TODO: is there error management for BN_bin2bn
+                this->next_crypto->e = BN_bin2bn(e, e_len, nullptr);
                 if (this->next_crypto->e == nullptr) {
                     ssh_set_error(this->error, SSH_FATAL, "Cannot import e number");
                     this->session_state = SSH_SESSION_STATE_ERROR;
@@ -2950,9 +2950,9 @@ struct SshServerSession : public ssh_session_struct
                 this->dh_handshake_state = DH_STATE_INIT_SENT;
 
                 this->next_crypto->y = BN_new();
-                bignum_rand(this->next_crypto->y, 128, 0, -1);
+                BN_rand(this->next_crypto->y, 128, 0, -1);
 
-                bignum_CTX ctx0 = bignum_ctx_new();
+                BN_CTX* ctx0 = BN_CTX_new();
                 this->next_crypto->f = BN_new();
                 BIGNUM * g = BN_new();
                 /* G is defined as 2 by the ssh2 standards */
@@ -2984,12 +2984,12 @@ struct SshServerSession : public ssh_session_struct
 
                 enum { P_GROUP14_LEN = 256 }; /* Size in bytes of the p number for group 14 */
 
-                bignum_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
+                BN_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
 
                 BN_mod_exp(this->next_crypto->f, g, this->next_crypto->y, p_group14, ctx0);
                 BN_clear_free(p_group14);
 
-                bignum_ctx_free(ctx0);
+                BN_CTX_free(ctx0);
                 BN_clear_free(g);
                 
 
@@ -3120,7 +3120,7 @@ struct SshServerSession : public ssh_session_struct
 
                 /* the server and clients don't use the same numbers */
                 {
-                    bignum_CTX ctx = bignum_ctx_new();
+                    BN_CTX* ctx = BN_CTX_new();
                     BIGNUM * p_group14 = BN_new();
                     unsigned char p_group14_value[] = {
                         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2,
@@ -3146,13 +3146,13 @@ struct SshServerSession : public ssh_session_struct
                         0x15, 0x72, 0x8E, 0x5A, 0x8A, 0xAC, 0xAA, 0x68, 0xFF, 0xFF, 0xFF, 0xFF,
                         0xFF, 0xFF, 0xFF, 0xFF};
                     enum { P_GROUP14_LEN = 256 }; /* Size in bytes of the p number for group 14 */
-                    bignum_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
+                    BN_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
                     this->next_crypto->k = BN_new();
                     BN_mod_exp(this->next_crypto->k,
                                this->next_crypto->e,
                                this->next_crypto->y, p_group14, ctx);
                     BN_clear_free(p_group14);
-                    bignum_ctx_free(ctx);
+                    BN_CTX_free(ctx);
                 }
                 
                 int rc = this->make_sessionid();
@@ -3233,7 +3233,7 @@ struct SshServerSession : public ssh_session_struct
                 this->next_crypto->ecdh.client_pubkey = std::move(q_c_string);
                 /* Build server's keypair */
 
-                bignum_CTX ctx = BN_CTX_new();
+                BN_CTX* ctx = BN_CTX_new();
                 EC_KEY *ecdh_key = EC_KEY_new_by_curve_name(NISTP256);
                 // TODO: check memory allocation
                 const EC_GROUP * group = EC_KEY_get0_group(ecdh_key);
