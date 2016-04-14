@@ -4035,6 +4035,34 @@ protected:
         this->priv_draw_memblt(cmd, clip, bitmap);
     }
 
+    void draw_impl(RDPPatBlt const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDPPatBlt new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip);
+            }
+            else {
+              this->graphics_update->draw(cmd, clip);
+            }
+        }
+    }
+
+    void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDP::RDPMultiPatBlt new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip);
+            }
+            else {
+              this->graphics_update->draw(cmd, clip);
+            }
+        }
+    }
+
     void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
         if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
             if (this->updatable_cache_brush(cmd.brush)) {

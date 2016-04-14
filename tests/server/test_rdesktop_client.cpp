@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     //}
     //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-    //                           , ini.get<cfg::debug::front,>() 0);
+    //                           , ini.get<cfg::debug::front>(), 0);
 
     LCGRandom gen(0);
 
