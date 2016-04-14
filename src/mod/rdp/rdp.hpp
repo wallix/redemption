@@ -2345,7 +2345,6 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
 
-                                            TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                                             RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
                                             EVP_PKEY_free(epk);
                                             this->server_public_key_len = RSA_size(server_public_key);
@@ -2355,8 +2354,8 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
 
-                                            if ((this->server_public_key_len < SEC_MODULUS_SIZE) ||
-                                                (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                                            if ((this->server_public_key_len < SEC_MODULUS_SIZE)
+                                            ||  (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
                                                 LOG(LOG_ERR, "Wrong server public key size (%u bits)", this->server_public_key_len * 8);
                                                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                                             }
@@ -2367,8 +2366,8 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
                                             int len_e = BN_bn2bin(server_public_key->e, exponent);
-                                            reverseit(exponent, len_e);
                                             int len_n = BN_bn2bin(server_public_key->n, modulus);
+                                            reverseit(exponent, len_e);
                                             reverseit(modulus, len_n);
                                             RSA_free(server_public_key);
                                         }
@@ -2381,7 +2380,13 @@ public:
 
                                         ssllib ssl;
 
-                                        ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
+                                        ssl.rsa_encrypt(
+                                            client_crypt_random,
+                                            client_random,
+                                            SEC_RANDOM_SIZE,
+                                            this->server_public_key_len,
+                                            modulus,
+                                            exponent);
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);
                                         if (sc_sec1.encryptionMethod == 1){

@@ -73,7 +73,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
                 err = SSH_OK;
                 break;
             }
-            if (this->socket == NULL) {
+            if (this->socket == nullptr) {
                 syslog(LOG_WARNING, "handle_packets early exit : no socket");
                 err = SSH_ERROR;
                 break;
@@ -175,7 +175,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 void ssh_disconnect_server(SshServerSession * server_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
 
-    if (server_session->socket != NULL && server_session->socket->fd_in != SSH_INVALID_SOCKET) {
+    if (server_session->socket != nullptr && server_session->socket->fd_in != SSH_INVALID_SOCKET) {
         server_session->out_buffer->out_uint8(SSH_MSG_DISCONNECT);
         server_session->out_buffer->out_uint32_be(SSH2_DISCONNECT_BY_APPLICATION);
         server_session->out_buffer->out_length_prefixed_cstr("Bye Bye");
@@ -188,7 +188,7 @@ void ssh_disconnect_server(SshServerSession * server_session) {
 
     if(server_session->current_crypto){
         delete server_session->current_crypto;
-        server_session->current_crypto = NULL;
+        server_session->current_crypto = nullptr;
     }
     if(server_session->in_buffer){
         server_session->in_buffer->buffer_reinit();
@@ -219,7 +219,7 @@ int ssh_auth_reply_success_server(SshServerSession * server_session) {
 void ssh_event_set_session_server(ssh_poll_ctx_struct * ctx, SshServerSession * server_session)
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    ctx->front_session = reinterpret_cast<SshServerSession *>(server_session);
+    ctx->front_session = server_session;
 }
 
 
@@ -246,7 +246,7 @@ int ssh_userauth_kbdint_settmpprompts_server(SshServerSession * server_session, 
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     unsigned int i = 0;
     syslog(LOG_INFO, "set prompt %d %s", num_prompts, prompts[0]);
-    if (server_session->tmp_kbdint == NULL) {
+    if (server_session->tmp_kbdint == nullptr) {
         syslog(LOG_INFO, "%s A ---", __FUNCTION__);    
         server_session->tmp_kbdint = new ssh_kbdint_struct;
         // TODO : check memory allocation
@@ -276,8 +276,8 @@ int ssh_userauth_kbdint_settmpprompts_server(SshServerSession * server_session, 
         }
     }
     else {
-        server_session->tmp_kbdint->prompts = NULL;
-        server_session->tmp_kbdint->echo = NULL;
+        server_session->tmp_kbdint->prompts = nullptr;
+        server_session->tmp_kbdint->echo = nullptr;
     }
     return SSH_OK;
 }
@@ -292,7 +292,7 @@ int ssh_userauth_kbdint_settmpprompts_server(SshServerSession * server_session, 
  *
  * @param[in] instruction  The Instruction in UTF-8.
  *
- * @param[in] prompt       The prompts in UTF-8 (can be NULL).
+ * @param[in] prompt       The prompts in UTF-8 (can be nullptr).
  *
  * @param[in] echo         Echo mode for the prompt.
  *
@@ -303,9 +303,9 @@ int ssh_userauth_kbdint_settmpprompt_server(SshServerSession * server_session, c
                                      unsigned char echo, error_struct * error) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     unsigned int num_prompts = 0;
-    const char ** prompts = NULL;
-    unsigned char * echos = NULL;
-    if (prompt != NULL) {
+    const char ** prompts = nullptr;
+    unsigned char * echos = nullptr;
+    if (prompt != nullptr) {
         num_prompts = 1;
         prompts = &prompt;
         echos = &echo;
@@ -323,7 +323,7 @@ int ssh_userauth_kbdint_settmpprompt_server(SshServerSession * server_session, c
  */
 int ssh_userauth_kbdint_getnanswers_server(SshServerSession * server_session, error_struct * error) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if(server_session == NULL || server_session->kbdint == NULL){
+    if(server_session == nullptr || server_session->kbdint == nullptr){
         return SSH_ERROR;
     }
     return server_session->kbdint->nanswers;
@@ -340,13 +340,13 @@ int ssh_userauth_kbdint_getnanswers_server(SshServerSession * server_session, er
  */
 const char *ssh_userauth_kbdint_getanswer_server(SshServerSession * server_session, unsigned int i, error_struct * error) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if (server_session == NULL 
-    || server_session->kbdint == NULL 
-    || server_session->kbdint->answers == NULL) {
-        return NULL;
+    if (server_session == nullptr 
+    || server_session->kbdint == nullptr 
+    || server_session->kbdint->answers == nullptr) {
+        return nullptr;
     }
     if (i >= server_session->kbdint->nanswers) {
-        return NULL;
+        return nullptr;
     }
 
     return server_session->kbdint->answers[i];
@@ -364,7 +364,7 @@ const char *ssh_userauth_kbdint_getanswer_server(SshServerSession * server_sessi
  */
 void ssh_channel_free_server(SshServerSession * server_session, ssh_channel channel) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if (channel == NULL) {
+    if (channel == nullptr) {
         return;
     }
 
@@ -396,12 +396,12 @@ void ssh_channel_free_server(SshServerSession * server_session, ssh_channel chan
  * If the client has given a forwardable token, the SSH server will
  * retrieve it.
  * @returns gssapi credentials handle.
- * @returns NULL if no forwardable token is available.
+ * @returns nullptr if no forwardable token is available.
  */
 ssh_gssapi_creds ssh_gssapi_get_creds_server(SshServerSession * server_session){
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     if (!server_session || !server_session->gssapi || server_session->gssapi->client_creds == GSS_C_NO_CREDENTIAL)
-        return NULL;
+        return nullptr;
     return static_cast<ssh_gssapi_creds>(server_session->gssapi->client_creds);
 }
 
@@ -428,12 +428,12 @@ void ssh_channel_open_x11_server(SshServerSession * server_session, ssh_channel 
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     syslog(LOG_INFO, "ssh_channel_open_x11_server %s %s", channel->show(), server_session->show());
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         syslog(LOG_INFO, "ssh_channel_open_x11_server E1");
         return;
     }
 
-    if ((orig_addr == NULL)
+    if ((orig_addr == nullptr)
     ||  (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_NOT_OPEN)){
             channel->callbacks->channel_open_x11_server_status_function(
                                 server_session,
@@ -534,10 +534,10 @@ int ssh_channel_read_stdout_server(ssh_session_struct * server_session, ssh_chan
     uint32_t len;
     int rc;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return SSH_ERROR;
     }
-    if(dest == NULL) {
+    if(dest == nullptr) {
         ssh_set_error(server_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return SSH_ERROR;
     }
@@ -590,7 +590,7 @@ int ssh_channel_read_stdout_server(ssh_session_struct * server_session, ssh_chan
     }
     else {
             struct timeval start;
-            gettimeofday(&start, NULL);
+            gettimeofday(&start, nullptr);
             int timeout = TIMEOUT_DEFAULT_MS;
 
             while(channel->stdout_buffer->in_remain() < count){
@@ -605,7 +605,7 @@ int ssh_channel_read_stdout_server(ssh_session_struct * server_session, ssh_chan
                     break;
                 }
                 struct timeval now;
-                gettimeofday(&now, NULL);
+                gettimeofday(&now, nullptr);
                 long ms =   (now.tv_sec - start.tv_sec) * 1000
                         + (now.tv_usec < start.tv_usec) * 1000 
                         + (now.tv_usec - start.tv_usec) / 1000;
@@ -688,7 +688,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
                 syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
-            if (server_session->socket == NULL){
+            if (server_session->socket == nullptr){
                 return SSH_ERROR;
             }
             
@@ -709,7 +709,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
         server_session->out_buffer->out_uint8(SSH_MSG_CHANNEL_DATA);
         server_session->out_buffer->out_uint32_be(channel->remote_channel);
         server_session->out_buffer->out_uint32_be(effectivelen);
-        server_session->out_buffer->out_blob(reinterpret_cast<const uint8_t *>(data), effectivelen);
+        server_session->out_buffer->out_blob(data, effectivelen);
 
         server_session->packet_send();
 
@@ -751,7 +751,7 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
         this->out_buffer->out_length_prefixed_cstr(request);
         this->out_buffer->out_uint8(reply != 0);
 
-        if (buffer != NULL) {
+        if (buffer != nullptr) {
             this->out_buffer->out_blob(buffer->get_pos_ptr(), buffer->in_remain());
         }
 
@@ -832,11 +832,11 @@ int SshServerSession::global_request_server(const char *request, ssh_buffer_stru
 int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const uint8_t *data, uint32_t len) 
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    if(channel == NULL) {
+    if(channel == nullptr) {
         syslog(LOG_WARNING, "Invalid channel");
         return SSH_ERROR;
     }
-    if(data == NULL) {
+    if(data == nullptr) {
         syslog(LOG_WARNING, "Invalid data");
         return SSH_ERROR;
     }
@@ -882,7 +882,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
                 return SSH_ERROR;
             }
             syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", this->session_state, static_cast<int>(channel->state));
-            if (this->socket == NULL){
+            if (this->socket == nullptr){
                 return SSH_ERROR;
             }
 
@@ -904,7 +904,7 @@ int SshServerSession::ssh_channel_write_stderr_server(ssh_channel channel, const
         this->out_buffer->out_uint32_be(channel->remote_channel);
         this->out_buffer->out_uint32_be(SSH2_EXTENDED_DATA_STDERR);
         this->out_buffer->out_uint32_be(effectivelen);
-        this->out_buffer->out_blob(reinterpret_cast<const uint8_t *>(data), effectivelen);
+        this->out_buffer->out_blob(data, effectivelen);
 
         this->packet_send();
 
@@ -948,10 +948,10 @@ int SshServerSession::ssh_channel_open_reverse_forward_server(ssh_channel channe
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
     int err = SSH_ERROR;
 
-    if(channel == NULL) {
+    if(channel == nullptr) {
         return err;
     }
-    if(remotehost == NULL || sourcehost == NULL) {
+    if(remotehost == nullptr || sourcehost == nullptr) {
         ssh_set_error(this->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return err;
     }

@@ -100,14 +100,36 @@ private:
     timeval start_synctime_now;
 
 public:
-    uint16_t nbconsumers;
+    template<class T, std::size_t N>
+    struct fixed_ptr_array
+    {
+        fixed_ptr_array() : last(arr) {}
 
-    struct Consumer {
-        gdi::GraphicApi * graphic_ptr;
-        gdi::CaptureApi * capture_ptr;
-        gdi::KbdInputApi * kbd_input_ptr;
-        gdi::CaptureProbeApi * capture_probe_ptr;
-    } consumers[10];
+        void push_back(T * p) {
+            if (p) {
+                assert(this->size() < N);
+                *this->last = p;
+                ++this->last;
+            }
+        }
+
+        T * * begin() { return this->arr; }
+        T * * end() { return this->last; }
+
+        std::size_t size() const noexcept {
+            return static_cast<std::size_t>(this->last - this->arr);
+        }
+
+    private:
+        T * arr[N];
+        T * * last = arr;
+    };
+
+    fixed_ptr_array<gdi::GraphicApi, 10> graphic_consumers;
+    fixed_ptr_array<gdi::CaptureApi, 10> capture_consumers;
+    fixed_ptr_array<gdi::KbdInputApi, 10> kbd_input_consumers;
+    fixed_ptr_array<gdi::CaptureProbeApi, 10> capture_probe_consumers;
+    fixed_ptr_array<gdi::ExternalCaptureApi, 10> external_event_consumers;
 
     bool meta_ok;
     bool timestamp_ok;
@@ -191,7 +213,6 @@ public:
         , chunk_count(0)
         , remaining_order_count(0)
         , total_orders_count(0)
-        , nbconsumers(0)
         , meta_ok(false)
         , timestamp_ok(false)
         , mouse_x(0)
@@ -243,13 +264,14 @@ public:
         gdi::GraphicApi * graphic_ptr,
         gdi::CaptureApi * capture_ptr,
         gdi::KbdInputApi * kbd_input_ptr,
-        gdi::CaptureProbeApi * capture_probe_ptr
+        gdi::CaptureProbeApi * capture_probe_ptr,
+        gdi::ExternalCaptureApi * external_event_ptr
     ) {
-        assert(std::end(this->consumers) != &this->consumers[this->nbconsumers]);
-        this->consumers[this->nbconsumers  ].graphic_ptr = graphic_ptr;
-        this->consumers[this->nbconsumers  ].capture_ptr = capture_ptr;
-        this->consumers[this->nbconsumers  ].kbd_input_ptr = kbd_input_ptr;
-        this->consumers[this->nbconsumers++].capture_probe_ptr = capture_probe_ptr;
+        this->graphic_consumers.push_back(graphic_ptr);
+        this->capture_consumers.push_back(capture_ptr);
+        this->kbd_input_consumers.push_back(kbd_input_ptr);
+        this->capture_probe_consumers.push_back(capture_probe_ptr);
+        this->external_event_consumers.push_back(external_event_ptr);
     }
 
     bool next_order()
@@ -274,10 +296,8 @@ public:
         }
 
         if (!this->remaining_order_count){
-            for (size_t i = 0; i < this->nbconsumers; i++){
-                if (this->consumers[i].graphic_ptr) {
-                    this->consumers[i].graphic_ptr->sync();
-                }
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->sync();
             }
 
             try {
@@ -328,28 +348,6 @@ public:
         return true;
     }
 
-    void dispatch_draw(Consumer & consumer, RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
-        if (consumer.graphic_ptr) consumer.graphic_ptr->draw(cmd, clip, gly_cache);
-    }
-
-    void dispatch_draw(Consumer & consumer, Pointer const & cursor) {
-        if (consumer.graphic_ptr) consumer.graphic_ptr->set_pointer(cursor);
-    }
-
-    void dispatch_draw(Consumer & consumer, BGRPalette const & palette) {
-        if (consumer.graphic_ptr) consumer.graphic_ptr->set_palette(palette);
-    }
-
-    template<class Sz>
-    void dispatch_draw(Consumer & consumer, RDPBitmapData const & cmd, uint8_t const * data, Sz sz, Bitmap const & bmp) {
-        if (consumer.graphic_ptr) consumer.graphic_ptr->draw(cmd, bmp);
-    }
-
-    template<class... Ts>
-    void dispatch_draw(Consumer & consumer, Ts const & ... args) {
-        if (consumer.graphic_ptr) consumer.graphic_ptr->draw(args...);
-    }
-
     void interpret_order()
     {
         this->total_orders_count++;
@@ -378,8 +376,8 @@ public:
                         if (this->verbose > 32){
                             order.log(LOG_INFO);
                         }
-                        for (size_t i = 0; i < this->nbconsumers; i++){
-                            this->dispatch_draw(this->consumers[i], order);
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->draw(order);
                         }
                     }
                     break;
@@ -446,8 +444,8 @@ public:
                 case RDP::GLYPHINDEX:
                     this->statistics.GlyphIndex++;
                     this->ssc.glyphindex.receive(this->stream, header);
-                    for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->dispatch_draw(this->consumers[i], this->ssc.glyphindex, clip, this->gly_cache);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.glyphindex, clip, this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
@@ -456,8 +454,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.destblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->dispatch_draw(this->consumers[i], this->ssc.destblt, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.destblt, clip);
                     }
                     break;
                 case RDP::MULTIDSTBLT:
@@ -466,8 +464,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.multidstblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], this->ssc.multidstblt, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multidstblt, clip);
                     }
                     break;
                 case RDP::MULTIOPAQUERECT:
@@ -476,8 +474,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.multiopaquerect.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], this->ssc.multiopaquerect, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multiopaquerect, clip);
                     }
                     break;
                 case RDP::MULTIPATBLT:
@@ -486,8 +484,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.multipatblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], this->ssc.multipatblt, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multipatblt, clip);
                     }
                     break;
                 case RDP::MULTISCRBLT:
@@ -496,8 +494,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.multiscrblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], this->ssc.multiscrblt, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.multiscrblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
@@ -506,8 +504,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.patblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->dispatch_draw(this->consumers[i], this->ssc.patblt, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.patblt, clip);
                     }
                     break;
                 case RDP::SCREENBLT:
@@ -516,8 +514,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.scrblt.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->dispatch_draw(this->consumers[i], this->ssc.scrblt, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
@@ -526,8 +524,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.lineto.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], this->ssc.lineto, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.lineto, clip);
                     }
                     break;
                 case RDP::RECT:
@@ -536,8 +534,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.opaquerect.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++){
-                        this->dispatch_draw(this->consumers[i], this->ssc.opaquerect, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.opaquerect, clip);
                     }
                     break;
                 case RDP::MEMBLT:
@@ -553,8 +551,8 @@ public:
                             throw Error(ERR_WRM);
                         }
                         else {
-                            for (size_t i = 0; i < this->nbconsumers; i++){
-                                this->dispatch_draw(this->consumers[i], this->ssc.memblt, clip, bmp);
+                            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                                gd->draw(this->ssc.memblt, clip, bmp);
                             }
                         }
                     }
@@ -572,8 +570,8 @@ public:
                             throw Error(ERR_WRM);
                         }
                         else {
-                            for (size_t i = 0; i < this->nbconsumers; i++){
-                                this->dispatch_draw(this->consumers[i], this->ssc.mem3blt, clip, bmp);
+                            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                                gd->draw(this->ssc.mem3blt, clip, bmp);
                             }
                         }
                     }
@@ -584,8 +582,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.polyline.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], this->ssc.polyline, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.polyline, clip);
                     }
                     break;
                 case RDP::ELLIPSESC:
@@ -594,8 +592,8 @@ public:
                     if (this->verbose > 32){
                         this->ssc.ellipseSC.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], this->ssc.ellipseSC, clip);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.ellipseSC, clip);
                     }
                     break;
                 default:
@@ -615,10 +613,8 @@ public:
             {
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
-                for (size_t i = 0; i < this->nbconsumers; i++){
-                    if (this->consumers[i].capture_ptr) {
-                        this->consumers[i].capture_ptr->external_time(this->record_now);
-                    }
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                    obj->external_time(this->record_now);
                 }
 
                 REDOC("If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)")
@@ -648,14 +644,10 @@ public:
                     auto const input_data = this->stream.get_current();
                     auto const input_len = this->stream.in_remain();
                     this->stream.in_skip_bytes(input_len);
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        if (this->consumers[i].kbd_input_ptr) {
-                            InStream input(input_data, input_len);
-                            while (input.in_remain()) {
-                                this->consumers[i].kbd_input_ptr->kbd_input(
-                                    this->record_now, input.in_uint32_le()
-                                );
-                            }
+                    for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
+                        InStream input(input_data, input_len);
+                        while (input.in_remain()) {
+                            kbd->kbd_input(this->record_now, input.in_uint32_le());
                         }
                     }
 
@@ -682,10 +674,8 @@ public:
                 }
                 else {
                    if (this->real_time) {
-                        for (size_t i = 0; i < this->nbconsumers; i++) {
-                            if (this->consumers[i].graphic_ptr) {
-                                this->consumers[i].graphic_ptr->sync();
-                            }
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->sync();
                         }
 
                         struct timeval now     = tvtime();
@@ -782,10 +772,8 @@ public:
                     }
                 }
 
-                for (size_t i = 0; i < this->nbconsumers; i++) {
-                    if (this->consumers[i].capture_ptr) {
-                        this->consumers[i].capture_ptr->external_breakpoint();
-                    }
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                    obj->external_breakpoint();
                 }
             }
             break;
@@ -795,7 +783,7 @@ public:
             case LAST_IMAGE_CHUNK:
             case PARTIAL_IMAGE_CHUNK:
             {
-                if (this->nbconsumers){
+                if (this->graphic_consumers.size()) {
                     InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
 
                     png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -833,10 +821,8 @@ public:
                                  | ((GBrg >> 16) & 0x000000FF);
                         }
 
-                        for (size_t cu = 0; cu < this->nbconsumers; cu++){
-                            if (this->consumers[cu].graphic_ptr) {
-                                this->consumers[cu].graphic_ptr->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
-                            }
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->set_row(k, reinterpret_cast<uint8_t*>(bgrtmp));
                         }
                     }
                     png_read_end(ppng, pinfo);
@@ -884,11 +870,8 @@ public:
                     bitmap_data.log(LOG_INFO, "         ");
                 }
 
-                for (size_t i = 0; i < this->nbconsumers; i++) {
-                    this->dispatch_draw(this->consumers[i],  bitmap_data
-                                            , data
-                                            , bitmap_data.bitmap_size()
-                                            , bitmap);
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                    gd->draw(bitmap_data, bitmap);
                 }
             }
             break;
@@ -914,8 +897,8 @@ public:
 
                     this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], cursor);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->set_pointer(cursor);
                     }
                 }
                 else {
@@ -930,8 +913,8 @@ public:
                     memcpy(cursor.data, pi.data, sizeof(pi.data));
                     memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
-                    for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->dispatch_draw(this->consumers[i], cursor);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->set_pointer(cursor);
                     }
                 }
             }
@@ -944,10 +927,8 @@ public:
             case SESSION_UPDATE:
                 this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
-                for (size_t i = 0; i < this->nbconsumers; i++){
-                    if (this->consumers[i].capture_ptr) {
-                        this->consumers[i].capture_ptr->external_time(this->record_now);
-                    }
+                for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                    obj->external_time(this->record_now);
                 }
 
                 {
@@ -957,12 +938,8 @@ public:
 
                     this->stream.in_skip_bytes(message_length);
 
-                    for (size_t i = 0; i < this->nbconsumers; i++){
-                        if (this->consumers[i].capture_probe_ptr) {
-                            this->consumers[i].capture_probe_ptr->session_update(
-                                this->record_now, {message, message_length}
-                            );
-                        }
+                    for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
+                        cap_probe->session_update(this->record_now, {message, message_length});
                     }
                 }
 
@@ -975,10 +952,8 @@ public:
                 }
                 else {
                    if (this->real_time) {
-                        for (size_t i = 0; i < this->nbconsumers; i++) {
-                            if (this->consumers[i].graphic_ptr) {
-                                this->consumers[i].graphic_ptr->sync();
-                            }
+                        for (gdi::GraphicApi * gd : this->graphic_consumers){
+                            gd->sync();
                         }
 
                         struct timeval now     = tvtime();
@@ -1031,13 +1006,11 @@ private:
             }
             this->interpret_order();
             if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
-                for (size_t i = 0; i < this->nbconsumers; i++) {
-                    if (this->consumers[i].capture_ptr) {
-                        this->consumers[i].capture_ptr->snapshot(
-                            this->record_now, this->mouse_x, this->mouse_y
-                          , this->ignore_frame_in_timeval
-                        );
-                    }
+                for (gdi::CaptureApi * cap : this->capture_consumers){
+                    cap->snapshot(
+                        this->record_now, this->mouse_x, this->mouse_y
+                      , this->ignore_frame_in_timeval
+                    );
                 }
 
                 this->ignore_frame_in_timeval = false;

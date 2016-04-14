@@ -36,6 +36,7 @@
 #include "openssl_crypto.hpp"
 
 #include "utils/log.hpp"
+#include "utils/bitfu.hpp"
 
 enum {
     SEC_RANDOM_SIZE   = 32,
@@ -417,47 +418,33 @@ class ssllib
     {
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
 
-        // in place reverse
-        for (size_t i = 0 ; i < modulus_size / 2; i++){
-            uint8_t tmp = modulus[modulus_size-1-i];
-            modulus[modulus_size-1-i] = modulus[i];
-            modulus[i] = tmp;
-        }
-
-        // in place reverse
-        for (size_t i = 0 ; i < SEC_EXPONENT_SIZE / 2; i++){
-            uint8_t tmp = exponent[SEC_EXPONENT_SIZE-1-i];
-            exponent[SEC_EXPONENT_SIZE-1-i] = exponent[i];
-            exponent[i] = tmp;
-        }
+        reverseit(modulus, modulus_size);
+        reverseit(exponent, SEC_EXPONENT_SIZE);
 
         for (int i = 0; i < len ; i++){
             inr[len-1-i] = in[i];
         }
 
-        BN_CTX *ctx = BN_CTX_new();
-        BIGNUM mod; BN_init(&mod); BN_bin2bn(modulus, modulus_size, &mod);
-        BIGNUM exp; BN_init(&exp); BN_bin2bn(exponent, SEC_EXPONENT_SIZE, &exp);
-        BIGNUM x; BN_init(&x); BN_bin2bn(inr, len, &x);
-        BIGNUM y; BN_init(&y); BN_mod_exp(&y, &x, &exp, &mod, ctx);
-
-        int outlen = BN_bn2bin(&y, out);
-
-        // in place reverse
-        for (int i = 0 ; i < outlen / 2; i++){
-            uint8_t tmp = out[outlen-1-i];
-            out[outlen-1-i] = out[i];
-            out[i] = tmp;
+        int outlen = 0;
+        {
+            BN_CTX *ctx = BN_CTX_new();
+            BIGNUM mod; BN_init(&mod); BN_bin2bn(modulus, modulus_size, &mod);
+            BIGNUM exp; BN_init(&exp); BN_bin2bn(exponent, SEC_EXPONENT_SIZE, &exp);
+            BIGNUM x; BN_init(&x); BN_bin2bn(inr, len, &x);
+            BIGNUM y; BN_init(&y); BN_mod_exp(&y, &x, &exp, &mod, ctx);
+            outlen = BN_bn2bin(&y, out);
+            BN_free(&y);
+            BN_clear_free(&x);
+            BN_free(&exp);
+            BN_free(&mod);
+            BN_CTX_free(ctx);
         }
+        
+        reverseit(out, outlen);
 
         if (outlen < static_cast<int>(modulus_size)){
             memset(out + outlen, 0, modulus_size - outlen);
         }
-        BN_free(&y);
-        BN_clear_free(&x);
-        BN_free(&exp);
-        BN_free(&mod);
-        BN_CTX_free(ctx);
     }
 
     static void sec_make_40bit(uint8_t* key)

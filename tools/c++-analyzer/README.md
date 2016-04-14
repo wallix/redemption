@@ -1,6 +1,6 @@
 # Dynamic analyzer
 
-- `valgrind [-d binary-directory] [testnames...]`: run tests in `binary-directory` (bin/gcc/debug by default) with valgrind and print a little diagnostic error (see `./tools/valgrind-filter/valgrind-output-color` and `./tools/valgrind-filter/valgrind-ignore-ssl-snappy`).
+- `valgrind [-d binary-directory] [testnames...]`: run tests from `binary-directory` (bin/gcc/debug by default) with valgrind and print a little diagnostic error (see `./tools/valgrind-filter/valgrind-output-color` and `./tools/valgrind-filter/valgrind-ignore-ssl-snappy`).
 - `bt [-hqsef] [--help] command [-- [gdb-args...]]`: show the backtrace with `gdb`.
 - `gtrace [-cph] [--help] command [-- [gdb-args...]]`: show functions trace with `gdb`.
 Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_in_meta_sequence_transport.cpp:340' | ./bt -fs`

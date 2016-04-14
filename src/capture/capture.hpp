@@ -41,8 +41,10 @@ class Capture final
 : public gdi::GraphicBase<Capture>
 , public gdi::CaptureApi
 , public gdi::KbdInputApi
-, public gdi::InputPointer
+, public gdi::MouseInputApi
 , public gdi::CaptureProbeApi
+, public gdi::ExternalCaptureApi
+, public gdi::UpdateConfigCaptureApi
 {
     using Graphic = GraphicCaptureImpl;
 
@@ -69,8 +71,10 @@ private:
 
     CaptureApisImpl::Capture capture_api;
     CaptureApisImpl::KbdInput kbd_input_api;
-    CaptureApisImpl::InputPointer input_pointer_api;
+    CaptureApisImpl::MouseInput mouse_input_api;
     CaptureApisImpl::CaptureProbe capture_probe_api;
+    CaptureApisImpl::ExternalCapture external_capture_api;
+    CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
     Graphic::GraphicApi * graphic_api = nullptr;
 
     ApisRegister get_apis_register() {
@@ -79,8 +83,10 @@ private:
             this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
             this->capture_api.caps,
             this->kbd_input_api.kbds,
-            this->input_pointer_api.mouses,
-            this->capture_probe_api.probes
+            this->mouse_input_api.mouses,
+            this->capture_probe_api.probes,
+            this->external_capture_api.objs,
+            this->update_config_capture_api.objs,
         };
     };
 
@@ -210,7 +216,7 @@ public:
     }
 
     void update_config(const Inifile & ini) override {
-        this->capture_api.update_config(ini);
+        this->update_config_capture_api.update_config(ini);
     }
 
     std::chrono::microseconds snapshot(
@@ -226,7 +232,7 @@ public:
     }
 
     void update_pointer_position(uint16_t x, uint16_t y) override {
-        this->input_pointer_api.update_pointer_position(x, y);
+        this->mouse_input_api.update_pointer_position(x, y);
     }
 
     void enable_kbd_input_mask(bool enable) override {
@@ -288,11 +294,11 @@ public:
 
     // toggles externally genareted breakpoint.
     void external_breakpoint() override {
-        this->capture_api.external_breakpoint();
+        this->external_capture_api.external_breakpoint();
     }
 
     void external_time(const timeval & now) override {
-        this->capture_api.external_time(now);
+        this->external_capture_api.external_time(now);
     }
 
     void session_update(const timeval & now, array_const_char const & message) override {

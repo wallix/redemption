@@ -29,10 +29,13 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
+// Comment the code block below to generate testing data.
 #define LOGNULL
+// Uncomment the code block below to generate testing data.
 //#define LOGPRINT
 
 #include "configs/config.hpp"
+// Uncomment the code block below to generate testing data.
 //#include "transport/socket_transport.hpp"
 #include "transport/test_transport.hpp"
 #include "core/client_info.hpp"
@@ -52,6 +55,104 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.width                 = 1024;
     info.height                = 768;
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
+                                 | PERF_DISABLE_FULLWINDOWDRAG
+                                 | PERF_DISABLE_MENUANIMATIONS;
+
+    // Uncomment the code block below to generate testing data.
+    //SSL_library_init();
+
+    FakeFront front(info, verbose);
+
+    const char * name       = "RDP W2008 TLS Target";
+    // Uncomment the code block below to generate testing data.
+    //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000, {},
+    //                                     verbose);
+
+    // Uncomment the code block below to generate testing data.
+    //std::string  error_message;
+    //SocketTransport     t( name
+    //                     , client_sck
+    //                     , "10.10.47.35"
+    //                     , 3389
+    //                     , verbose
+    //                     , &error_message
+    //                     );
+
+    // Comment the code block below to generate testing data.
+    #include "../fixtures/dump_TLSw2008.hpp"
+    TestTransport t(name, indata, sizeof(indata) - 1,
+        outdata, sizeof(outdata) - 1, verbose);
+
+    if (verbose > 2) {
+        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
+    }
+
+    snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
+
+    Inifile ini;
+
+    ModRDPParams mod_rdp_params( "administrateur"
+                               , "S3cur3!1nux"
+                               , "10.10.47.35"
+                               , "192.168.1.100"
+                               , 7
+                               , 511
+                               );
+    mod_rdp_params.device_id                       = "device_id";
+    //mod_rdp_params.enable_tls                      = true;
+    mod_rdp_params.enable_nla                      = false;
+    //mod_rdp_params.enable_krb                      = false;
+    //mod_rdp_params.enable_clipboard                = true;
+    mod_rdp_params.enable_fastpath                 = false;
+    mod_rdp_params.enable_mem3blt                  = false;
+    //mod_rdp_params.enable_bitmap_update            = false;
+    mod_rdp_params.enable_new_pointer              = false;
+    //mod_rdp_params.rdp_compression                 = 0;
+    //mod_rdp_params.error_message                   = nullptr;
+    //mod_rdp_params.disconnect_on_logon_user_change = false;
+    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.certificate_change_action       = 0;
+    //mod_rdp_params.extra_orders                    = "";
+    mod_rdp_params.server_redirection_support        = true;
+
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen, mod_rdp_params);
+    mod_api * mod = &mod_;
+
+    if (verbose > 2) {
+        LOG(LOG_INFO,
+            "========= CREATION OF MOD DONE ====================\n\n");
+    }
+    BOOST_CHECK(t.get_status());
+
+    BOOST_CHECK_EQUAL(mod->get_front_width(),  1024);
+    BOOST_CHECK_EQUAL(mod->get_front_height(), 768);
+
+    uint32_t count = 0;
+    BackEvent_t res = BACK_EVENT_NONE;
+    while (res == BACK_EVENT_NONE) {
+        LOG(LOG_INFO, "===================> count = %u", count);
+        if (count++ >= 70) break;
+        mod->draw_event(time(nullptr));
+    }
+
+    //front.dump_png("trace_w2008_tls_");
+}
+
+BOOST_AUTO_TEST_CASE(TestDecodePacket2)
+{
+    int verbose = 256;
+
+    ClientInfo info;
+    info.keylayout             = 0x040C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 16;
+    info.width                 = 1024;
+    info.height                = 768;
+    info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
 
     //SSL_library_init();
@@ -59,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     FakeFront front(info, verbose);
 
     const char * name       = "RDP W2008 TLS Target";
-    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, {}, verbose);
+    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, verbose);
 
     //std::string  error_message;
     //SocketTransport     t( name
@@ -70,7 +171,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     //                     , &error_message
     //                     );
 
-    #include "../fixtures/dump_TLSw2008.hpp"
+    #include "../fixtures/dump_TLSw2008_2.hpp"
     TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {

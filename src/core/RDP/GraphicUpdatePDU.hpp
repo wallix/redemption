@@ -410,7 +410,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-class GraphicsUpdatePDU : public RDPSerializer, public gdi::InputPointer {
+class GraphicsUpdatePDU : public RDPSerializer, public gdi::MouseInputApi {
     StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
     StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
 

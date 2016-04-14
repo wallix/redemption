@@ -105,9 +105,9 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/timeout.hpp"
 #include "utils/underlying_cast.hpp"
+#include "utils/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
-#include "gdi/utils/non_null.hpp"
 
 #include <memory>
 
@@ -444,19 +444,19 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverted : gdi::GraphicProxy<
-            GraphicConverted<ColorConverter>,
+        struct GraphicConverter : gdi::GraphicProxy<
+            GraphicConverter<ColorConverter>,
             gdi::GraphicApi,
-            gdi::GraphicColorConverter
+            gdi::GraphicColorConverterAccess
         > {
             friend gdi::GraphicCoreAccess;
 
-            GraphicConverted(
+            GraphicConverter(
                 gdi::GraphicDepth depth,
                 Graphics::PrivateGraphicsUpdatePDU & graphics,
                 ColorConverter const & color_converter
             )
-            : GraphicConverted::base_type(depth)
+            : GraphicConverter::base_type(depth)
             , color_converter(color_converter)
             , graphics(graphics)
             {}
@@ -476,7 +476,7 @@ private:
         template<class Dec, class Enc>
         void build_graphics(Dec const & dec, Enc const & enc) {
             using color_converter_t = color_converter<Dec, Enc>;
-            using Drawable = GraphicConverted<color_converter_t>;
+            using Drawable = GraphicConverter<color_converter_t>;
             this->gd_converted = std::make_unique<Drawable>(
                 gdi::GraphicDepth::from_bpp(Dec::bpp),
                 this->graphics_update_pdu(),
@@ -522,19 +522,20 @@ private:
     }
 
     static gdi::GraphicApi & null_gd() {
-        struct NullGd final
-        : gdi::GraphicBase<NullGd>
-        {};
-        static NullGd gd;
+        static gdi::BlackoutGraphic gd;
         return gd;
     }
 
-    gdi::utils::non_null<gdi::GraphicApi*> gd = &null_gd();
-    gdi::utils::non_null<gdi::GraphicApi*> graphics_update = &null_gd();
+    non_null_ptr<gdi::GraphicApi> gd = &null_gd();
+    non_null_ptr<gdi::GraphicApi> graphics_update = &null_gd();
+
+    void set_gd(gdi::GraphicApi * new_gd) {
+        this->gd = new_gd;
+        this->graphics_update = this->graphics_update_disabled ? &null_gd() : new_gd;
+    }
 
     void set_gd(gdi::GraphicApi & new_gd) {
-        this->gd = &new_gd;
-        this->graphics_update = this->graphics_update_disabled ? &null_gd() : &new_gd;
+        this->set_gd(&new_gd);
     }
 
 public:
@@ -892,7 +893,7 @@ public:
         this->capture->get_capture_event().set();
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
-            this->set_gd(*this->capture->get_graphic_api());
+            this->set_gd(this->capture->get_graphic_api());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
@@ -923,7 +924,7 @@ public:
         this->capture->resume_capture(now);
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
-            this->set_gd(*this->capture->get_graphic_api());
+            this->set_gd(this->capture->get_graphic_api());
         }
         else {
             this->set_gd(null_gd());
@@ -2706,7 +2707,7 @@ private:
 
         this->input_event_disabled     = disable_input_event;
         this->graphics_update_disabled = disable_graphics_update;
-        this->set_gd(*this->gd);
+        this->set_gd(this->gd.get());
 
         return need_full_screen_update;
     }
@@ -4086,6 +4087,34 @@ protected:
 
     void draw_impl(RDPMem3Blt const & cmd, Rect const & clip, Bitmap const & bitmap) {
         this->priv_draw_memblt(cmd, clip, bitmap);
+    }
+
+    void draw_impl(RDPPatBlt const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDPPatBlt new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip);
+            }
+            else {
+              this->graphics_update->draw(cmd, clip);
+            }
+        }
+    }
+
+    void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDP::RDPMultiPatBlt new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip);
+            }
+            else {
+              this->graphics_update->draw(cmd, clip);
+            }
+        }
     }
 
     void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {

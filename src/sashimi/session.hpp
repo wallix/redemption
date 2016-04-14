@@ -876,23 +876,16 @@ struct ssh_gssapi_struct{
         gss_OID oid; /* mech being used for authentication */
         gss_cred_id_t creds; /* creds used to initialize context */
         gss_cred_id_t client_deleg_creds; /* delegated creds (const, not freeable) */
-        
-        ssh_gssapi_struct_client()
-            : server_name{}
-            , flags(0)
-            , oid(0)
-            , creds(nullptr)
-            , client_deleg_creds(nullptr)
-        {}
+        ssh_gssapi_struct_client() = default;
     } client;
     
     ssh_gssapi_struct()
         : state(SSH_GSSAPI_STATE_NONE)
-        , mech{}
+        , mech{0,nullptr}
         , server_creds(GSS_C_NO_CREDENTIAL)
         , client_creds(GSS_C_NO_CREDENTIAL)
         , ctx(GSS_C_NO_CONTEXT)
-        , client_name{}
+        , client_name(nullptr)
         , user(nullptr)
         , canonic_user(nullptr)
         , service(nullptr)
