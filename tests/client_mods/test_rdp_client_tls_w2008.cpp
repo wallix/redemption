@@ -29,10 +29,13 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
+// Comment the code block below to generate testing data.
 #define LOGNULL
+// Uncomment the code block below to generate testing data.
 //#define LOGPRINT
 
 #include "configs/config.hpp"
+// Uncomment the code block below to generate testing data.
 //#include "transport/socket_transport.hpp"
 #include "transport/test_transport.hpp"
 #include "core/client_info.hpp"
@@ -52,26 +55,33 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.width                 = 1024;
     info.height                = 768;
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
-                                 | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+                                 | PERF_DISABLE_FULLWINDOWDRAG
+                                 | PERF_DISABLE_MENUANIMATIONS;
 
+    // Uncomment the code block below to generate testing data.
     //SSL_library_init();
 
     FakeFront front(info, verbose);
 
     const char * name       = "RDP W2008 TLS Target";
-    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, {}, verbose);
+    // Uncomment the code block below to generate testing data.
+    //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000, {},
+    //                                     verbose);
 
+    // Uncomment the code block below to generate testing data.
     //std::string  error_message;
     //SocketTransport     t( name
     //                     , client_sck
-    //                     , "10.10.47.16"
+    //                     , "10.10.47.35"
     //                     , 3389
     //                     , verbose
     //                     , &error_message
     //                     );
 
+    // Comment the code block below to generate testing data.
     #include "../fixtures/dump_TLSw2008.hpp"
-    TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(name, indata, sizeof(indata) - 1,
+        outdata, sizeof(outdata) - 1, verbose);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -83,8 +93,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     ModRDPParams mod_rdp_params( "administrateur"
                                , "S3cur3!1nux"
-                               , "10.10.47.16"
-                               , "10.10.43.33"
+                               , "10.10.47.35"
+                               , "192.168.1.100"
                                , 7
                                , 511
                                );
@@ -107,11 +117,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
+        LOG(LOG_INFO,
+            "========= CREATION OF MOD DONE ====================\n\n");
     }
     BOOST_CHECK(t.get_status());
 
@@ -122,9 +134,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 40) break;
+        if (count++ >= 70) break;
         mod->draw_event(time(nullptr));
     }
 
-//    front.dump_png("trace_w2008_tls_");
+    //front.dump_png("trace_w2008_tls_");
 }
