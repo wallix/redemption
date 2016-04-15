@@ -892,8 +892,8 @@ public:
 
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
                 mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::wrm);
-                mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
-                mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::wrm);
+                mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_file_system_log>() & configs::FileSystemLogFlags::syslog);
+                mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_file_system_log>() & configs::FileSystemLogFlags::wrm);
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.outbound_connection_blocking_rules  =
                     this->ini.get<cfg::context::outbound_connection_blocking_rules>().c_str();
