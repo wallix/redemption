@@ -1041,6 +1041,8 @@ explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
 obj test_show_data.o : tests/mod/rdp/test_show_data.cpp
     : <cxxflags>-fPIC ;
 
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp
+    : <cxxflags>-fPIC ;
 
 exe test_data_draw :
     bitmap_data_allocator.o

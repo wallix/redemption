@@ -41,7 +41,6 @@
 #include <vector>
 
 #include "core/error.hpp"
-//#include "string.hpp"
 
 #undef des_cbc_encryt
 
@@ -144,15 +143,6 @@ static inline SSHString find_matching(const char * avail, const char * pref, con
 
 #include <openssl/bn.h>
 #include <openssl/opensslv.h>
-typedef BN_CTX* bignum_CTX;
-
-#define bignum_bin2bn(bn,datalen,data) BN_bin2bn(bn,datalen,data)
-#define bignum_bn2dec(num) BN_bn2dec(num)
-#define bignum_dec2bn(bn,data) BN_dec2bn(data,bn)
-#define bignum_bn2hex(num) BN_bn2hex(num)
-#define bignum_rand(rnd, bits, top, bottom) BN_rand(rnd,bits,top,bottom)
-#define bignum_ctx_new() BN_CTX_new()
-#define bignum_ctx_free(num) BN_CTX_free(num)
 
 enum ssh_mac_e {
   SSH_MAC_SHA1=1,
@@ -1127,7 +1117,7 @@ struct ssh_crypto_struct {
             return -1;
           }
 
-          bignum_CTX ctx = bignum_ctx_new();
+          BN_CTX* ctx = BN_CTX_new();
           if (ctx == nullptr) {
               EC_POINT_clear_free(pubkey);
             return -1;
@@ -1140,7 +1130,7 @@ struct ssh_crypto_struct {
           int rc = ECDH_compute_key(buffer, len, pubkey, this->privkey, nullptr);
           EC_POINT_clear_free(pubkey);
           if (rc <= 0) {
-              bignum_ctx_free(ctx);
+              BN_CTX_free(ctx);
               return -1;
           }
 
@@ -1148,7 +1138,7 @@ struct ssh_crypto_struct {
           // TODO: see why we deallocate privkey here ? (note done for curve_25519)
           EC_KEY_free(this->privkey);
           this->privkey = nullptr;
-          bignum_ctx_free(ctx);
+          BN_CTX_free(ctx);
           return 0;
         }
     } ecdh;
@@ -1180,7 +1170,7 @@ struct ssh_crypto_struct {
             BN.crypto_scalarmult(tmpk, this->privkey, pubkey);
 
             k = BN_new();
-            bignum_bin2bn(tmpk, CURVE25519_PUBKEY_SIZE, k);
+            BN_bin2bn(tmpk, CURVE25519_PUBKEY_SIZE, k);
         }
     } curve_25519; 
 
