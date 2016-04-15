@@ -69,7 +69,7 @@ public:
     )
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->login, *this, front, this->font(), this->theme())
-        , login(*this, /*width, height*/1152, 864, this->screen, this, "Redemption " VERSION,
+        , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 username[0] != 0,
                 0, nullptr, nullptr,
                 TR("login", language(vars)),
