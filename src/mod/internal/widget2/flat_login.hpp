@@ -72,7 +72,7 @@ public:
               const char * label_error_message,
               WidgetFlatButton * extra_button,
               Font const & font, Translator tr = Translator(), Theme const & theme = Theme())
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, Rect(/*0, 0, width, height*/1152, 864, 1152, 864), parent, notifier)
         , bg_color(theme.global.bgcolor)
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
                         password, -14, theme.edit.fgcolor,
