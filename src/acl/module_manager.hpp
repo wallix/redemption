@@ -651,7 +651,13 @@ public:
                 this->mod = new InteractiveTargetMod(this->ini,
                                                      this->front,
                                                      this->front.client_info.width,
-                                                     this->front.client_info.height);
+                                                     this->front.client_info.height,
+                                                     get_widget_rect(
+                                                             this->front.client_info.width,
+                                                             this->front.client_info.height,
+                                                             this->front.client_info.monitors
+                                                     )
+                                                     );
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
             break;
