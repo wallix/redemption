@@ -70,7 +70,7 @@ enum {
     CompositeArray composite_array;
     int flags;
 
-    FlatForm(mod_api& drawable, int16_t width, int16_t height,
+    FlatForm(mod_api& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
              int flags = 0)
@@ -137,10 +137,10 @@ enum {
         int labelmaxwidth = std::max(this->comment_label.cx(),
                                      std::max(this->ticket_label.cx(),
                                               this->duration_label.cx()));
-        this->warning_msg.rect.x = labelmaxwidth + 20;
-        this->comment_edit.set_edit_x(labelmaxwidth + 20);
-        this->ticket_edit.set_edit_x(labelmaxwidth + 20);
-        this->duration_edit.set_edit_x(labelmaxwidth + 20);
+        this->warning_msg.rect.x = left + labelmaxwidth + 20;
+        this->comment_edit.set_edit_x(left + labelmaxwidth + 20);
+        this->ticket_edit.set_edit_x(left + labelmaxwidth + 20);
+        this->duration_edit.set_edit_x(left + labelmaxwidth + 20);
         this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->duration_edit.set_edit_cx((width - labelmaxwidth - 20) -
@@ -148,7 +148,7 @@ enum {
         this->duration_format.rect.x = labelmaxwidth + 20;
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
             this->add_widget(&this->notes);
-            this->notes.rect.x = labelmaxwidth + 20;
+            this->notes.rect.x = left + labelmaxwidth + 20;
         }
 
         int y = 20;
@@ -174,7 +174,7 @@ enum {
         }
 
         this->add_widget(&this->confirm);
-        this->confirm.set_button_x(width - this->confirm.cx());
+        this->confirm.set_button_x(left + width - this->confirm.cx());
         this->confirm.set_button_y(y + 10);
     }
 

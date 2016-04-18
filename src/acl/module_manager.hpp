@@ -753,6 +753,11 @@ public:
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height,
+                                            get_widget_rect(
+                                                    this->front.client_info.width,
+                                                    this->front.client_info.height,
+                                                    this->front.client_info.monitors
+                                            ),
                                             caption,
                                             message,
                                             now,

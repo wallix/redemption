@@ -47,19 +47,19 @@ public:
     bool hasform;
     CompositeArray composite_array;
 
-    FlatWait(mod_api& drawable, int16_t width, int16_t height,
+    FlatWait(mod_api& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
              bool showform = false, int required = FlatForm::NONE)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
+        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier, group_id)
         , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption, -6,
                    theme.global.fgcolor, theme.global.bgcolor, font)
         , bg_color(theme.global.bgcolor)
         , dialog(drawable, 0, 0, this->groupbox, nullptr, text, true, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
-        , form(drawable, width - 80, 150, *this, this, -20, font, theme, lang, required)
+        , form(drawable, left, top, width - 80, 150, *this, this, -20, font, theme, lang, required)
         , goselector(drawable, 0, 0, this->groupbox, this, TR("back_selector", lang), true, -12,
                      theme.global.fgcolor, theme.global.bgcolor,
                      theme.global.focus_color, font, 6, 2)
@@ -83,9 +83,9 @@ public:
         // int starty = (height - total_height) / 2;
         int starty = 20;
         int y = starty;
-        this->dialog.rect.x = 30; // dialog has 10 margin.
+        this->dialog.rect.x = left + 30; // dialog has 10 margin.
         // this->dialog.rect.x = (this->cx() - total_width) / 2;
-        this->dialog.rect.y = y + 10;
+        this->dialog.rect.y = top + y + 10;
 
         y = this->dialog.dy() + this->dialog.cy() + 20;
 
@@ -98,7 +98,7 @@ public:
         this->groupbox.add_widget(&this->goselector);
         this->groupbox.add_widget(&this->exit);
 
-        this->exit.set_button_x(width - 40 - this->exit.cx());
+        this->exit.set_button_x(left + width - 40 - this->exit.cx());
         this->goselector.set_button_x(this->exit.dx() - (this->goselector.cx() + 10));
 
         this->goselector.set_button_y(y);
@@ -111,8 +111,8 @@ public:
 
         if (extra_button) {
             this->add_widget(extra_button);
-            extra_button->set_button_x(60);
-            extra_button->set_button_y(height - 60);
+            extra_button->set_button_x(left + 60);
+            extra_button->set_button_y(top + height - 60);
         }
     }
 
