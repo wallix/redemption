@@ -152,8 +152,8 @@ public:
 
             px = std::max(this->username_label.cx(), this->diagnostic.cx());
             px = std::max(px, this->timeleft_label.cx()) + 10;
-            this->username_label_value.rect.x = left + this->username_label.dx() + px;
-            this->target_label_value.rect.x = left + this->username_label.dx() + px;
+            this->username_label_value.rect.x = this->username_label.dx() + px;
+            this->target_label_value.rect.x = this->username_label.dx() + px;
 
             this->username_label.rect.y = top + y;
             this->username_label_value.rect.y = top + y;
