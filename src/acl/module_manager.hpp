@@ -589,8 +589,6 @@ public:
         case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             this->mod = new FlatSelector2Mod(this->ini,
-                        // new FlatSelectorMod(this->ini,
-                        // new SelectorMod(this->ini,
                                         this->front,
                                         this->front.client_info.width,
                                         this->front.client_info.height,
@@ -611,10 +609,14 @@ public:
                     this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
                 }
                 this->mod = new FlatWabCloseMod(this->ini,
-                            // new WabCloseMod(this->ini,
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height,
+                                            get_widget_rect(
+                                                    this->front.client_info.width,
+                                                    this->front.client_info.height,
+                                                    this->front.client_info.monitors
+                                                ),
                                             now,
                                             true
                                             );
@@ -631,6 +633,11 @@ public:
                                                 this->front,
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
+                                                get_widget_rect(
+                                                        this->front.client_info.width,
+                                                        this->front.client_info.height,
+                                                        this->front.client_info.monitors
+                                                    ),
                                                 now,
                                                 true,
                                                 true
