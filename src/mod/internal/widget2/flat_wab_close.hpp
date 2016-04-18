@@ -134,7 +134,7 @@ public:
 
         uint16_t px = this->diagnostic.cx() + 10;
 
-        int y = this->dy() + 10;
+        int y = this->dy() + 10 - top;
         // this->img.rect.y = y;
         // y += this->img.cy() + 20;
 

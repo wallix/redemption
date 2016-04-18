@@ -173,21 +173,21 @@ public:
         this->separator.rect.cx = cbloc_w;
 
         y = this->caption_label.ly() + 20;
-        this->separator.set_xy(left + x_cbloc, top + y);
+        this->separator.set_xy(left + x_cbloc, y);
 
         y = this->separator.ly() + 20;
-        this->device_label.set_xy(left + x_cbloc, top + y);
-        device_show->set_xy(left + x_cbloc + margin_w + 20, top + y);
+        this->device_label.set_xy(left + x_cbloc, y);
+        device_show->set_xy(left + x_cbloc + margin_w + 20, y);
         y = device_show->ly() + 20;
         if (ask_device) {
-            this->device.set_xy(left + x_cbloc + margin_w + 20, top + y - 10);
+            this->device.set_xy(left + x_cbloc + margin_w + 20, y - 10);
             y = this->device.ly() + 20;
         }
-        this->login_label.set_xy(left + x_cbloc, top + y);
-        login_show->set_xy(left + x_cbloc + margin_w + 20, top + y);
+        this->login_label.set_xy(left + x_cbloc, y);
+        login_show->set_xy(left + x_cbloc + margin_w + 20, y);
         y = login_show->ly() + 20;
-        this->password_label.set_xy(left + x_cbloc, top + y);
-        this->password_edit.set_xy(left + x_cbloc + margin_w + 20, top + y);
+        this->password_label.set_xy(left + x_cbloc, y);
+        this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
 
         this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
         this->login_label.rect.y += (login_show->cy() - this->login_label.cy()) / 2;

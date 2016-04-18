@@ -153,29 +153,29 @@ enum {
 
         int y = 20;
         if (this->flags & DURATION_DISPLAY) {
-            this->duration_label.set_xy(this->duration_label.dx(), y);
-            this->duration_edit.set_edit_y(y);
-            this->duration_format.set_xy(this->duration_edit.lx() + 10, y + 2);
+            this->duration_label.set_xy(this->duration_label.dx(), top + y);
+            this->duration_edit.set_edit_y(top + y);
+            this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
             y += 30;
         }
         if (this->flags & TICKET_DISPLAY) {
-            this->ticket_label.set_xy(this->ticket_label.dx(), y);
-            this->ticket_edit.set_edit_y(y);
+            this->ticket_label.set_xy(this->ticket_label.dx(), top + y);
+            this->ticket_edit.set_edit_y(top + y);
             y += 30;
         }
         if (this->flags & COMMENT_DISPLAY) {
-            this->comment_label.set_xy(this->comment_label.dx(), y);
-            this->comment_edit.set_edit_y(y);
+            this->comment_label.set_xy(this->comment_label.dx(), top + y);
+            this->comment_edit.set_edit_y(top + y);
             y += 30;
         }
 
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
-            this->notes.set_xy(this->notes.dx(), y);
+            this->notes.set_xy(this->notes.dx(), top + y);
         }
 
         this->add_widget(&this->confirm);
         this->confirm.set_button_x(left + width - this->confirm.cx());
-        this->confirm.set_button_y(y + 10);
+        this->confirm.set_button_y(top + y + 10);
     }
 
     ~FlatForm() override {

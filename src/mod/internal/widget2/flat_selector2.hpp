@@ -259,37 +259,37 @@ public:
             this->target_group_label.rect.cx = columns_width[IDX_TARGETGROUP] +
                 this->selector_lines.border * 2;
             this->target_group_label.rect.x = this->left + offset;
-            this->target_group_label.rect.y = this->top + labels_y;
+            this->target_group_label.rect.y = labels_y;
             this->filter_target_group.set_edit_x(this->target_group_label.dx());
             this->filter_target_group.set_edit_cx(this->target_group_label.cx() -
                                                   FILTER_SEPARATOR);
-            this->filter_target_group.set_edit_y(this->top + filters_y);
+            this->filter_target_group.set_edit_y(filters_y);
             offset += this->target_group_label.rect.cx;
 
             // target
             this->target_label.rect.cx = columns_width[IDX_TARGET] +
                 this->selector_lines.border * 2;
             this->target_label.rect.x = this->left + offset;
-            this->target_label.rect.y = this->top + labels_y;
+            this->target_label.rect.y = labels_y;
             this->filter_target.set_edit_x(this->target_label.dx());
             this->filter_target.set_edit_cx(this->target_label.cx() - FILTER_SEPARATOR);
-            this->filter_target.set_edit_y(this->top + filters_y);
+            this->filter_target.set_edit_y(filters_y);
             offset += this->target_label.rect.cx;
 
             // protocol
             this->protocol_label.rect.cx = columns_width[IDX_PROTOCOL] +
                 this->selector_lines.border * 2;
             this->protocol_label.rect.x = this->left + offset;
-            this->protocol_label.rect.y = this->top + labels_y;
+            this->protocol_label.rect.y = labels_y;
             this->filter_protocol.set_edit_x(this->protocol_label.dx());
             this->filter_protocol.set_edit_cx(this->protocol_label.cx());
-            this->filter_protocol.set_edit_y(this->top + filters_y);
+            this->filter_protocol.set_edit_y(filters_y);
             offset += this->protocol_label.rect.cx;
         }
         {
             // selector list position
             this->selector_lines.rect.x = this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN);
-            this->selector_lines.rect.y = this->top + this->filter_target_group.ly() + FILTER_SEPARATOR;
+            this->selector_lines.rect.y = this->filter_target_group.ly() + FILTER_SEPARATOR;
         }
         {
             // Navigation buttons
@@ -298,12 +298,12 @@ public:
             this->logout.set_button_y(this->top + nav_bottom_y);
 
             uint16_t nav_top_y = this->connect.dy() - (this->last_page.cy() + VERTICAL_MARGIN);
-            this->last_page.set_button_y(this->top + nav_top_y);
-            this->next_page.set_button_y(this->top + nav_top_y);
-            this->number_page.rect.y = this->top + nav_top_y + (this->next_page.cy() - this->number_page.cy()) / 2;
-            this->current_page.set_edit_y(this->top + nav_top_y + (this->next_page.cy() - this->current_page.cy()) / 2);
-            this->prev_page.set_button_y(this->top + nav_top_y);
-            this->first_page.set_button_y(this->top + nav_top_y);
+            this->last_page.set_button_y(nav_top_y);
+            this->next_page.set_button_y(nav_top_y);
+            this->number_page.rect.y = nav_top_y + (this->next_page.cy() - this->number_page.cy()) / 2;
+            this->current_page.set_edit_y(nav_top_y + (this->next_page.cy() - this->current_page.cy()) / 2);
+            this->prev_page.set_button_y(nav_top_y);
+            this->first_page.set_button_y(nav_top_y);
 
             uint16_t nav_offset_x = this->cx() - (this->last_page.cx() + TEXT_MARGIN);
             this->last_page.set_button_x(this->left + nav_offset_x);
@@ -327,8 +327,6 @@ public:
             this->connect.set_button_x(this->left + this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
             this->logout.set_button_x(this->left + this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
         }
-
-
     }
 
     void ask_for_connection() {
