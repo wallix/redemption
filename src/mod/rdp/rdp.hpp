@@ -2320,7 +2320,8 @@ public:
                                                    lines of code that resets the OID and let's us extract the key. */
 
                                                 int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-                                            if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption)){
+                                            if ((nid == NID_md5WithRSAEncryption) 
+                                                || (nid == NID_shaWithRSAEncryption)){
                                                 ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
                                                 cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
                                             }
@@ -2368,10 +2369,11 @@ public:
 
                                         ssl.rsa_encrypt(
                                             client_crypt_random,
-                                            client_random,
                                             SEC_RANDOM_SIZE,
+                                            client_random,
                                             this->server_public_key_len,
                                             modulus,
+                                            SEC_EXPONENT_SIZE,
                                             exponent);
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);

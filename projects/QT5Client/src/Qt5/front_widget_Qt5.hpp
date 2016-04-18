@@ -374,7 +374,7 @@ public Q_SLOTS:
             this->_front->_info.rdp5_performanceflags = 0;
         }
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->_front->writeClientInfo();
+        //this->_front->writeClientInfo();
 
         remove(KEY_SETTING_PATH);
         this->_front->_qtRDPKeymap.clearCustomKeyCod();

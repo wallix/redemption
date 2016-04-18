@@ -413,23 +413,23 @@ class Sign
 class ssllib
 {
     public:
-    static void rsa_encrypt(uint8_t * out, uint8_t * in, int len, uint32_t modulus_size, uint8_t * modulus, uint8_t * exponent)
+    static void rsa_encrypt(uint8_t * out, uint32_t in_len, uint8_t * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
     {
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
 
         reverseit(modulus, modulus_size);
-        reverseit(exponent, SEC_EXPONENT_SIZE);
+        reverseit(exponent, exponent_size);
 
-        for (int i = 0; i < len ; i++){
-            inr[len-1-i] = in[i];
+        for (uint32_t i = 0; i < in_len ; i++){
+            inr[in_len-1-i] = in[i];
         }
 
         int outlen = 0;
         {
             BN_CTX *ctx = BN_CTX_new();
             BIGNUM mod; BN_init(&mod); BN_bin2bn(modulus, modulus_size, &mod);
-            BIGNUM exp; BN_init(&exp); BN_bin2bn(exponent, SEC_EXPONENT_SIZE, &exp);
-            BIGNUM x; BN_init(&x); BN_bin2bn(inr, len, &x);
+            BIGNUM exp; BN_init(&exp); BN_bin2bn(exponent, exponent_size, &exp);
+            BIGNUM x; BN_init(&x); BN_bin2bn(inr, in_len, &x);
             BIGNUM y; BN_init(&y); BN_mod_exp(&y, &x, &exp, &mod, ctx);
             outlen = BN_bn2bin(&y, out);
             BN_free(&y);

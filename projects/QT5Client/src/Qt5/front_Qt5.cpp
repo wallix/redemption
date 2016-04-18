@@ -17,6 +17,8 @@
    Copyright (C) Wallix 2010-2016
    Author(s): Clément Moroldo
 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 
 #include <string>
 #include <unistd.h>
@@ -25,6 +27,8 @@
 #include <QtGui/QBitmap>
 
 #include "Qt5/front_widget_Qt5.hpp"
+#pragma GCC diagnostic pop
+
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
@@ -66,9 +70,9 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _bufferRDPCLipboardMetaFilePic_width(0)
     , _bufferRDPCLipboardMetaFilePic_height(0)
 {
-    if(this->setClientInfo()) {
-        this->writeClientInfo();
-    }
+//    if(this->setClientInfo()) {
+//        this->writeClientInfo();
+//    }
 
     const char * localIPtmp = "unknow_local_IP";
     /*union
@@ -135,7 +139,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         this->connect();
 
     } else {
-        std::cout << "missing argument(s) (" << (int)commandIsValid << "): ";
+        std::cout << "missing argument(s) (" << static_cast<int>(commandIsValid) << "): ";
         if (!(commandIsValid & Front_Qt::NAME_GOTTEN)) {
             std::cout << "-n [user_name] ";
         }
@@ -155,84 +159,84 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 }
 
 
-bool Front_Qt::setClientInfo() {
-    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
-    if(ifichier) {
-        // get config from conf file
-        std::string ligne;
-        std::string delimiter = " ";
+//bool Front_Qt::setClientInfo() {
+//    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
+//    if(ifichier) {
+//        // get config from conf file
+//        std::string ligne;
+//        std::string delimiter = " ";
 
-        while(getline(ifichier, ligne)) {
+//        while(getline(ifichier, ligne)) {
 
-            int pos(ligne.find(delimiter));
-            std::string tag  = ligne.substr(0, pos);
-            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+//            int pos(ligne.find(delimiter));
+//            std::string tag  = ligne.substr(0, pos);
+//            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-            if (strcmp(tag.c_str(), "keylayout") == 0) {
-                this->_info.keylayout = std::stoi(info);
-            } else
-            if (strcmp(tag.c_str(), "console_session") == 0) {
-                this->_info.console_session = std::stoi(info);
-            } else
-            if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
-                this->_info.brush_cache_code = std::stoi(info);
-            } else
-            if (strcmp(tag.c_str(), "bpp") == 0) {
-                this->_info.bpp = std::stoi(info);
-            } else
-            if (strcmp(tag.c_str(), "width") == 0) {
-                this->_info.width = std::stoi(info);
-            } else
-            if (strcmp(tag.c_str(), "height") == 0) {
-                this->_info.height = std::stoi(info);
-            } else
-            if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
-                this->_info.rdp5_performanceflags = std::stoi(info);
-            }
-            if (strcmp(tag.c_str(), "fps") == 0) {
-                this->_fps = std::stoi(info);
-            }
-        }
-        ifichier.close();
+//            if (strcmp(tag.c_str(), "keylayout") == 0) {
+//                this->_info.keylayout = std::stoi(info);
+//            } else
+//            if (strcmp(tag.c_str(), "console_session") == 0) {
+//                this->_info.console_session = std::stoi(info);
+//            } else
+//            if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
+//                this->_info.brush_cache_code = std::stoi(info);
+//            } else
+//            if (strcmp(tag.c_str(), "bpp") == 0) {
+//                this->_info.bpp = std::stoi(info);
+//            } else
+//            if (strcmp(tag.c_str(), "width") == 0) {
+//                this->_info.width = std::stoi(info);
+//            } else
+//            if (strcmp(tag.c_str(), "height") == 0) {
+//                this->_info.height = std::stoi(info);
+//            } else
+//            if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
+//                this->_info.rdp5_performanceflags = std::stoi(info);
+//            }
+//            if (strcmp(tag.c_str(), "fps") == 0) {
+//                this->_fps = std::stoi(info);
+//            }
+//        }
+//        ifichier.close();
 
-        return false;
+//        return false;
 
-    } else {
-        // default config
-        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-        this->_info.console_session = 0;
-        this->_info.brush_cache_code = 0;
-        this->_info.bpp = 24;
-        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
-        this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
-        this->_info.width = 800;
-        this->_info.height = 600;
-        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        this->_fps = 30;
+//    } else {
+//        // default config
+//        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+//        this->_info.console_session = 0;
+//        this->_info.brush_cache_code = 0;
+//        this->_info.bpp = 24;
+//        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+//        this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+//        this->_info.width = 800;
+//        this->_info.height = 600;
+//        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+//        this->_fps = 30;
 
-        return true;
-    }
-}
+//        return true;
+//    }
+//}
 
 
-void Front_Qt::writeClientInfo() {
-    std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
-    if(ofichier) {
+//void Front_Qt::writeClientInfo() {
+//    std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
+//    if(ofichier) {
 
-        ofichier << "User Info" << std::endl << std::endl;
+//        ofichier << "User Info" << std::endl << std::endl;
 
-        ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
-        ofichier << "console_session "       << this->_info.console_session       << std::endl;
-        ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
-        ofichier << "bpp "                   << this->_info.bpp                   << std::endl;
-        ofichier << "width "                 << this->_info.width                 << std::endl;
-        ofichier << "height "                << this->_info.height                << std::endl;
-        ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
-        ofichier << "fps "                   << this->_fps                        << std::endl;
+//        ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
+//        ofichier << "console_session "       << this->_info.console_session       << std::endl;
+//        ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
+//        ofichier << "bpp "                   << this->_info.bpp                   << std::endl;
+//        ofichier << "width "                 << this->_info.width                 << std::endl;
+//        ofichier << "height "                << this->_info.height                << std::endl;
+//        ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
+//        ofichier << "fps "                   << this->_fps                        << std::endl;
 
-        ofichier.close();
-    }
-}
+//        ofichier.close();
+//    }
+//}
 
 
 Front_Qt::~Front_Qt() {
@@ -404,7 +408,26 @@ void Front_Qt::refresh(int x, int y, int w, int h) {
 }
 
 void Front_Qt::send_rdp_scanCode(int keyCode, int flag) {
-    this->_keymap.event(flag, keyCode, this->_decoded_data, this->_ctrl_alt_delete);
+    Keymap2::DecodedKeys decoded_keys = this->_keymap.event(flag, keyCode, this->_ctrl_alt_delete);
+    switch (decoded_keys.count)
+    {
+    case 2:
+        if (this->_decoded_data.has_room(sizeof(uint32_t))) {
+            this->_decoded_data.out_uint32_le(decoded_keys.uchars[0]);
+        }
+        if (this->_decoded_data.has_room(sizeof(uint32_t))) {
+            this->_decoded_data.out_uint32_le(decoded_keys.uchars[1]);
+        }
+        break;
+    case 1:
+        if (this->_decoded_data.has_room(sizeof(uint32_t))) {
+            this->_decoded_data.out_uint32_le(decoded_keys.uchars[0]);
+        }
+        break;
+    default:
+    case 0:
+        break;
+    }
     if (this->_callback != nullptr) {
         this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap));
     }
@@ -551,7 +574,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-    //std::cout << "RDPPatBlt " << std::hex << (int) cmd.rop << std::endl;
+    //std::cout << "RDPPatBlt " << std::hex << static_cast<int>(cmd.rop) << std::endl;
     RDPPatBlt new_cmd24 = cmd;
     new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
     new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
@@ -593,7 +616,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 }
                 break;
             default:
-                std::cout << "RDPPatBlt brush_style = 03 " << (int) cmd.rop << std::endl;
+                std::cout << "RDPPatBlt brush_style = 03 " << static_cast<int>(cmd.rop) << std::endl;
                 break;
         }
 
@@ -687,7 +710,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 this->_screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
                 break;
             default:
-                std::cout << "RDPPatBlt " << (int) cmd.rop << std::endl;
+                std::cout << "RDPPatBlt " << static_cast<int>(cmd.rop) << std::endl;
                 break;
         }
     }
@@ -710,8 +733,7 @@ void Front_Qt::draw(const RDPOpaqueRect & cmd, const Rect & clip) {
 }
 
 
-void Front_Qt::draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-    size_t size, const Bitmap & bmp) {
+void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         bitmap_data.log(LOG_INFO, "FakeFront");
@@ -853,7 +875,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
         case 0xFF:
             this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
-        default: std::cout << "RDPScrBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
+        default: std::cout << "RDPScrBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
             break;
     }
 }
@@ -865,7 +887,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         cmd.log(LOG_INFO, clip);
         LOG(LOG_INFO, "========================================\n");
     }
-    //std::cout << "RDPMemBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
+    //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
     Rect rectBmp(cmd.rect);
     const Rect& drect = clip.intersect(rectBmp);
     if (drect.isempty()){
@@ -879,7 +901,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         
         case 0x22:  // TODO
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << (int)cmd.rop << ")" << std::endl;
+            //std::cout << "RDPMemBlt TODO (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
             //std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
             QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
             dest.invertPixels();
@@ -907,7 +929,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         
         case 0x66:  // TODO
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << (int)cmd.rop << ")" << std::endl;
+            //std::cout << "RDPMemBlt TODO (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
             // std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
             QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
             
@@ -941,7 +963,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0xFF: this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
         break;
             
-        default: std::cout << "RDPMemBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
+        default: std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
         break;
     }
 }
@@ -1009,7 +1031,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
             }
             break;
 
-        default: std::cout << "RDPMem3Blt (" << std::hex << (int)cmd.rop << ")" << std::endl;
+        default: std::cout << "RDPMem3Blt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
             break;
     }
 }
@@ -1035,7 +1057,7 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
         case 0xFF: // whiteness
             this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
             break;
-        default: std::cout << "RDPDestBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
+        default: std::cout << "RDPDestBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
             break;
     }
 }
@@ -1080,7 +1102,7 @@ void Front_Qt::draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) {
     std::cout << "RDPMultiScrBlt" << std::endl;
 }
 
-void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         cmd.log(LOG_INFO, clip);
@@ -1253,24 +1275,28 @@ int Front_Qt::server_resize(int width, int height, int bpp) {
     return 1;
 }
 
-void Front_Qt::server_set_pointer(const Pointer & cursor) {
-    if (this->verbose > 10) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        LOG(LOG_INFO, "server_set_pointer");
-        LOG(LOG_INFO, "========================================\n");
-    }
-
-    //std::cout <<  cursor.pointer_type << std::endl;
-
+void Front_Qt::update_pointer_position(uint16_t xPos, uint16_t yPos)
+{
 }
 
-void Front_Qt::flush() {
-    if (this->verbose > 10) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        LOG(LOG_INFO, "flush()");
-        LOG(LOG_INFO, "========================================\n");
-    }
-}
+//void Front_Qt::server_set_pointer(const Pointer & cursor) {
+//    if (this->verbose > 10) {
+//        LOG(LOG_INFO, "--------- FRONT ------------------------");
+//        LOG(LOG_INFO, "server_set_pointer");
+//        LOG(LOG_INFO, "========================================\n");
+//    }
+
+//    //std::cout <<  cursor.pointer_type << std::endl;
+
+//}
+
+//void Front_Qt::flush() {
+//    if (this->verbose > 10) {
+//        LOG(LOG_INFO, "--------- FRONT ------------------------");
+//        LOG(LOG_INFO, "flush()");
+//        LOG(LOG_INFO, "========================================\n");
+//    }
+//}
 
 const CHANNELS::ChannelDefArray & Front_Qt::get_channel_list(void) const { 
     return this->_cl; 
@@ -2108,7 +2134,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
                                         }
                 
             } else {
-                std::cout << " Format Data not recognized (" << (int) this->_requestedFormatId << ")" << std::endl;
+                std::cout << " Format Data not recognized (" << static_cast<int>(this->_requestedFormatId) << ")" << std::endl;
             }
 
         break;
@@ -2125,7 +2151,7 @@ void Front_Qt::send_to_clipboard_Buffer(InStream & chunk) {
 
     const uint8_t * utf8_data = chunk.get_current();
 
-    for (int i = 0; i < length_of_data_to_dump && i + this->_bufferRDPClipboardChannelSize < this->_bufferRDPClipboardChannelSizeTotal; i++) {
+    for (size_t i = 0; i < length_of_data_to_dump && i + this->_bufferRDPClipboardChannelSize < this->_bufferRDPClipboardChannelSizeTotal; i++) {
         this->_bufferRDPClipboardChannel[i + this->_bufferRDPClipboardChannelSize] = utf8_data[i];
     }
 
@@ -2222,13 +2248,13 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
     std::cout << "client >> Format List PDU" << std::endl;
 }
 
-void Front_Qt::send_global_palette() {
-    if (this->verbose > 10) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        LOG(LOG_INFO, "send_global_palette()");
-        LOG(LOG_INFO, "========================================\n");
-    }
-}
+//void Front_Qt::send_global_palette() {
+//    if (this->verbose > 10) {
+//        LOG(LOG_INFO, "--------- FRONT ------------------------");
+//        LOG(LOG_INFO, "send_global_palette()");
+//        LOG(LOG_INFO, "========================================\n");
+//    }
+//}
 
 void Front_Qt::begin_update() {
     //if (this->verbose > 10) {
@@ -2246,13 +2272,13 @@ void Front_Qt::end_update() {
     //}
 }
 
-void Front_Qt::set_mod_palette(const BGRPalette & palette) {
-    if (this->verbose > 10) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        LOG(LOG_INFO, "set_mod_palette");
-        LOG(LOG_INFO, "========================================\n");
-    }
-}
+//void Front_Qt::set_mod_palette(const BGRPalette & palette) {
+//    if (this->verbose > 10) {
+//        LOG(LOG_INFO, "--------- FRONT ------------------------");
+//        LOG(LOG_INFO, "set_mod_palette");
+//        LOG(LOG_INFO, "========================================\n");
+//    }
+//}
 
 
 
