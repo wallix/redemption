@@ -1723,7 +1723,8 @@ namespace GCC
                 }
 
                 return Rect(0, 0, 0, 0);
-            }        };
+            }
+        };
 
         // 2.2.1.3.4 Client Network Data (TS_UD_CS_NET)
         // --------------------------------------------
