@@ -429,8 +429,12 @@ class ssllib
             BN_CTX *ctx = BN_CTX_new();
             BIGNUM mod; BN_init(&mod); BN_bin2bn(modulus, modulus_size, &mod);
             BIGNUM exp; BN_init(&exp); BN_bin2bn(exponent, exponent_size, &exp);
-            BIGNUM x; BN_init(&x); BN_bin2bn(inr, in_len, &x);
-            BIGNUM y; BN_init(&y); BN_mod_exp(&y, &x, &exp, &mod, ctx);
+            BIGNUM x; 
+            BN_init(&x); 
+            BN_bin2bn(inr, in_len, &x);
+            BIGNUM y; 
+            BN_init(&y); 
+            BN_mod_exp(&y, &x, &exp, &mod, ctx);
             outlen = BN_bn2bin(&y, out);
             BN_free(&y);
             BN_clear_free(&x);
