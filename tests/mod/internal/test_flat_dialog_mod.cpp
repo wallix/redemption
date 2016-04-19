@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -99,7 +99,51 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+
+
+    bool    ctrl_alt_del;
+
+    uint16_t keyboardFlags = 0 ;
+    uint16_t keyCode = 16; // key is 'a'
+
+    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    BOOST_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
+}
+
+BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
+{
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 1600;
+    info.height = 1200;
+
+    FakeFront front(info, 0);
+
+    Inifile ini;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+
+    FlatDialogMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
 
 
     bool    ctrl_alt_del;

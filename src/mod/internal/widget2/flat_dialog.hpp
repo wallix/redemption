@@ -109,15 +109,15 @@ public:
         if (has_challenge) {
             if (CHALLENGE_ECHO == has_challenge) {
                 this->challenge = new WidgetEdit(this->drawable,
-                                                 this->separator.rect.x + 10, y,
+                                                 this->separator.rect.x - left + 10, y - top,
                                                  total_width - 20, *this, this, nullptr, -13,
                                                  theme.edit.fgcolor,
                                                  theme.edit.bgcolor,
                                                  theme.edit.focus_color, font, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
-                                                     this->separator.rect.x + 10,
-                                                     y, total_width - 20, *this, this, nullptr,
+                                                     this->separator.rect.x - left + 10,
+                                                     y - top, total_width - 20, *this, this, nullptr,
                                                      -13, theme.edit.fgcolor,
                                                      theme.edit.bgcolor,
                                                      theme.edit.focus_color,

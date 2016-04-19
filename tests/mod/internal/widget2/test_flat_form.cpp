@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
     flag += FlatForm::DURATION_MANDATORY;
 
-    FlatForm form(drawable, 600, 150, parent, notifier, 0, font, colors, Translation::EN, flag);
+    FlatForm form(drawable, 0, 0, 600, 150, parent, notifier, 0, font, colors, Translation::EN, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.rect);
