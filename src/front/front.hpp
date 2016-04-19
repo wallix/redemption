@@ -734,7 +734,8 @@ public:
         break;
         }
 
-        this->event.set(0);
+        this->event.set(500000);
+        this->event.object_and_time = true;
     }
 
     ~Front() override {
@@ -1176,10 +1177,11 @@ public:
             throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
-            this->event.set(200000);
+            this->event.set(500000);
             break;
         default:
             this->event.reset();
+            this->event.object_and_time = false;
             break;
         }
 
