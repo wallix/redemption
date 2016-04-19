@@ -28,32 +28,36 @@
 class Bignum
 {
 public:
-    BIGNUM * n;
+    BIGNUM * bn;
     Bignum(unsigned long w) 
     {
-        this->n = BN_new();
-        BN_set_word(this->n, w);
+        this->bn = BN_new();
+        BN_set_word(this->bn, w);
+    }
+    Bignum(const uint8_t * data, size_t len) 
+    {
+        this->bn = BN_bin2bn(data, len, nullptr);
     }
     Bignum(BIGNUM * bn) 
     {
-        this->n = BN_dup(bn);
+        this->bn = BN_dup(bn);
     }
     ~Bignum()
     {
-        BN_free(this->n);
+        BN_free(this->bn);
     }  
     Bignum operator+(const Bignum & b) const
     {
-        Bignum result(BN_dup(this->n));
-        BN_add(result.n, result.n, b.n);
+        Bignum result(BN_dup(this->bn));
+        BN_add(result.bn, result.bn, b.bn);
         return result;
     }
     bool operator!=(const Bignum & b) const
     {
-        return BN_cmp(this->n, b.n) != 0;
+        return BN_cmp(this->bn, b.bn) != 0;
     }
     bool operator==(const Bignum & b) const
     {
-        return BN_cmp(this->n, b.n) == 0;
+        return BN_cmp(this->bn, b.bn) == 0;
     }
 };

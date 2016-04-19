@@ -225,17 +225,17 @@ public:
 
 
 
-    bool setClientInfo() override;
+    //bool setClientInfo() override;
 
-    void writeClientInfo() override;
+    //void writeClientInfo() override;
 
-    virtual void flush() override;
+    //virtual void flush() override;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override;
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override;
 
-    virtual void send_global_palette() override;
+    //virtual void send_global_palette() override;
 
     virtual void begin_update() override;
 
@@ -301,7 +301,7 @@ public:
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override;
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override;
 
@@ -313,7 +313,7 @@ public:
 
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override;
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override;
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override;
 
