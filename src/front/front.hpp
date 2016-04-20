@@ -632,6 +632,8 @@ private:
 
     bool is_client_disconnected = false;
 
+    bool client_support_monitor_layout_pdu = false;
+
 public:
     Front(  Transport & trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -1371,6 +1373,9 @@ public:
                             this->client_info.bpp = std::min(
                                 this->client_info.bpp, static_cast<int>(this->ini.get<cfg::client::max_color_depth>()));
                         }
+                        this->client_support_monitor_layout_pdu =
+                            (cs_core.earlyCapabilityFlags &
+                             GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU);
                     }
                     break;
                     case CS_SECURITY:
@@ -3486,7 +3491,8 @@ private:
     }
 
     void send_monitor_layout() {
-        if (!this->client_info.monitors.monitorCount) {
+        if (!this->client_info.monitors.monitorCount ||
+            !this->client_support_monitor_layout_pdu) {
             return;
         }
 
