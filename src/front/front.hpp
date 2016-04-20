@@ -45,6 +45,7 @@
 #include "core/RDP/slowpath.hpp"
 
 #include "system/ssl_calls.hpp"
+#include "system/ssl_lib.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
@@ -1706,7 +1707,7 @@ public:
             // subsequent RDP traffic.
 
             // From this point, all subsequent RDP traffic can be encrypted and a security
-            // header is include " with the data if encryption is in force (the Client Info
+            // header is included with the data if encryption is in force (the Client Info
             // and licensing PDUs are an exception in that they always have a security
             // header). The Security Header follows the X.224 and MCS Headers and indicates
             // whether the attached data is encrypted.
@@ -1743,38 +1744,14 @@ public:
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::SecExchangePacket_Recv sec(mcs.payload);
+                ssllib ssl;
 
-                TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
-                uint8_t client_random[64];
-                memset(client_random, 0, 64);
-                {
-                    uint8_t l_out[64]; memset(l_out, 0, 64);
-                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
-                    uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
-                    uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
-
-                    BN_CTX* ctx = BN_CTX_new();
-                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn(l_mod, 64, &lmod);
-                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn(l_exp, 64, &lexp);
-                    BIGNUM lin; BN_init(&lin);  BN_bin2bn(l_in, 64, &lin);
-                    BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-
-                    int rv = BN_bn2bin(&lout, l_out);
-                    if (rv <= 64) {
-                        reverseit(l_out, rv);
-                        memcpy(client_random, l_out, 64);
-                    }
-                    BN_free(&lin);
-                    BN_free(&lout);
-                    BN_free(&lexp);
-                    BN_free(&lmod);
-                    BN_CTX_free(ctx);
-                }
-
-                // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+                uint8_t client_random[64] = {};
+                ssl.ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
+                // beware order of parameters for key generation (decrypt/encrypt) 
+                // is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
-                ssllib ssl;
                 if (this->encrypt.encryptionMethod == 1) {
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }

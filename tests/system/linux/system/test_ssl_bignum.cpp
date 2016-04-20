@@ -36,11 +36,25 @@
 BOOST_AUTO_TEST_CASE(TestAdditionSimple)
 {
     Bignum bn(100);
-    
+    BOOST_CHECK_EQUAL(bn.get_word(), Bignum(100).get_word());
     BOOST_CHECK(bn == Bignum(100));
     Bignum bn2(234);
     Bignum res = bn + bn2;
     Bignum expected(334);
     //BOOST_CHECK_EQUAL(static_cast<int>(BN_cmp(res.n, expected.n)), static_cast<int>(0));
+    BOOST_CHECK(res == expected);
+}
+
+// (12345 ** 15) = 23570370761335746188692151519494473063659327922288482666015625L
+// (12345 ** 15) % 100 = 25
+
+BOOST_AUTO_TEST_CASE(TestModExpSimple)
+{
+    Bignum a(12345);
+    Bignum exp(15);
+    Bignum mod(100);
+    Bignum res = a.mod_exp(exp, mod);
+    Bignum expected(25);
+    //BOOST_CHECK_EQUAL(res.get_word(), 0);
     BOOST_CHECK(res == expected);
 }
