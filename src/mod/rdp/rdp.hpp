@@ -751,7 +751,7 @@ public:
                           mod_rdp_params.server_cert_error_message,
                           mod_rdp_params.verbose
                          )
-        , cs_monitor(info.monitors)
+        , cs_monitor(info.cs_monitor)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -2013,6 +2013,7 @@ public:
                                     cs_core.supportedColorDepths = 15;
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
                                 }
+                                cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
 
                                 uint16_t hostlen = strlen(hostname);
                                 uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
@@ -2340,7 +2341,7 @@ public:
                                                    lines of code that resets the OID and let's us extract the key. */
 
                                                 int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-                                            if ((nid == NID_md5WithRSAEncryption) 
+                                            if ((nid == NID_md5WithRSAEncryption)
                                                 || (nid == NID_shaWithRSAEncryption)){
                                                 ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
                                                 cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
@@ -2399,7 +2400,7 @@ public:
                                             modulus,
                                             SEC_EXPONENT_SIZE,
                                             exponent);
-                                            
+
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);
                                         if (sc_sec1.encryptionMethod == 1){
@@ -2412,7 +2413,7 @@ public:
                                 break;
                             case SC_NET:
 //                            LOG(LOG_INFO, "=================== SC_NET =============");
-                            
+
                                 {
                                     GCC::UserData::SCNet sc_net;
                                     sc_net.recv(f.payload, this->bogus_sc_net_size);
@@ -3208,18 +3209,45 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
-                                            this->connection_finalization_state = WAITING_CTL_COOPERATE;
+
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+
+                                                if (sdata.pdutype2 == PDUTYPE2_MONITOR_LAYOUT_PDU) {
+                                                    MonitorLayoutPDU monitor_layout_pdu;
+
+                                                    monitor_layout_pdu.recv(sdata.payload);
+                                                    monitor_layout_pdu.log(
+                                                        "Rdp::receiving the server-to-client Monitor Layout PDU");
+
+                                                    if (this->cs_monitor.monitorCount &&
+                                                        (monitor_layout_pdu.get_monitorCount() !=
+                                                         this->cs_monitor.monitorCount)) {
+                                                        LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
+                                                        throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
+                                                    }
+                                                }
+                                                else {
+                                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
+                                                    if (this->transparent_recorder) {
+                                                        this->transparent_recorder->server_resize(this->front_width,
+                                                            this->front_height, this->bpp);
+                                                    }
+                                                    if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
+                                                        LOG(LOG_ERR, "Resize not available on older clients,"
+                                                            " change client resolution to match server resolution");
+                                                        throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+                                                    }
+
+                                                    this->connection_finalization_state = WAITING_CTL_COOPERATE;
+                                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                                }
                                             }
                                             break;
                                         case WAITING_CTL_COOPERATE:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -3230,7 +3258,6 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
                                             }
-                                            //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_FONT_MAP;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -3241,7 +3268,6 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_FONTMAP);
                                             this->connection_finalization_state = UP_AND_RUNNING;
 
                                             if (this->acl && !this->deactivation_reactivation_in_progress) {
@@ -3466,6 +3492,7 @@ public:
 
                                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
 
+/*
                                             LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
                                             if (this->transparent_recorder) {
                                                 this->transparent_recorder->server_resize(this->front_width,
@@ -3476,10 +3503,8 @@ public:
                                                     " change client resolution to match server resolution");
                                                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                             }
-//                                            this->orders.reset();
+*/
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
-
-//                                            this->deactivation_reactivation_in_progress = false;
                                         }
                                         break;
                                     case PDUTYPE_DEACTIVATEALLPDU:
@@ -3567,6 +3592,10 @@ public:
                     const bool disable_graphics_update = false;
                     this->front.disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
+                }
+
+                if (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) {
+                    throw;
                 }
             }
         }

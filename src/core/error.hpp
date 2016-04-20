@@ -186,6 +186,7 @@ enum error_type {
     ERR_RDP_SERVER_REDIR,
     ERR_RDP_OPEN_SESSION_TIMEOUT,
     ERR_RDP_HANDSHAKE_TIMEOUT,
+    ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT,
 
     ERR_WM_PASSWORD = 9000,
     ERR_WM_USERNAME,
@@ -319,7 +320,7 @@ enum error_type {
     ERR_SSL_CALL_SHA1_INIT_FAILED,
     ERR_SSL_CALL_SHA1_UPDATE_FAILED,
     ERR_SSL_CALL_SHA1_FINAL_FAILED,
-    
+
     ERR_SSH_PARSE_PRIVATE_DSA_KEY,
     ERR_SSH_PARSE_PRIVATE_RSA_KEY
 };
@@ -373,6 +374,9 @@ public:
             return "Keep alive has been missed, connection may be dead or slow";
         case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
+
+        case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
+            return "Unsupported client display monitor layout";
 
         default:
             {

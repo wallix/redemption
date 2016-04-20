@@ -595,7 +595,7 @@ public:
                                         get_widget_rect(
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
-                                                this->front.client_info.monitors
+                                                this->front.client_info.cs_monitor
                                             )
                                         );
             if (this->verbose){
@@ -615,7 +615,7 @@ public:
                                             get_widget_rect(
                                                     this->front.client_info.width,
                                                     this->front.client_info.height,
-                                                    this->front.client_info.monitors
+                                                    this->front.client_info.cs_monitor
                                                 ),
                                             now,
                                             true
@@ -636,7 +636,7 @@ public:
                                                 get_widget_rect(
                                                         this->front.client_info.width,
                                                         this->front.client_info.height,
-                                                        this->front.client_info.monitors
+                                                        this->front.client_info.cs_monitor
                                                     ),
                                                 now,
                                                 true,
@@ -655,7 +655,7 @@ public:
                                                      get_widget_rect(
                                                              this->front.client_info.width,
                                                              this->front.client_info.height,
-                                                             this->front.client_info.monitors
+                                                             this->front.client_info.cs_monitor
                                                      )
                                                      );
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
@@ -676,7 +676,7 @@ public:
                                           get_widget_rect(
                                                   this->front.client_info.width,
                                                   this->front.client_info.height,
-                                                  this->front.client_info.monitors
+                                                  this->front.client_info.cs_monitor
                                           ),
                                           caption,
                                           message,
@@ -701,7 +701,7 @@ public:
                                           get_widget_rect(
                                                   this->front.client_info.width,
                                                   this->front.client_info.height,
-                                                  this->front.client_info.monitors
+                                                  this->front.client_info.cs_monitor
                                           ),
                                           caption,
                                           message,
@@ -730,7 +730,7 @@ public:
                                               get_widget_rect(
                                                       this->front.client_info.width,
                                                       this->front.client_info.height,
-                                                      this->front.client_info.monitors
+                                                      this->front.client_info.cs_monitor
                                               ),
                                               caption,
                                               message,
@@ -756,7 +756,7 @@ public:
                                             get_widget_rect(
                                                     this->front.client_info.width,
                                                     this->front.client_info.height,
-                                                    this->front.client_info.monitors
+                                                    this->front.client_info.cs_monitor
                                             ),
                                             caption,
                                             message,
@@ -806,7 +806,7 @@ public:
                                          get_widget_rect(
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
-                                                this->front.client_info.monitors
+                                                this->front.client_info.cs_monitor
                                             ),
                                          now
             );

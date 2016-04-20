@@ -814,6 +814,7 @@ public:
                 this->send_deactive();
                 /* this should do the actual resizing */
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
                 state = ACTIVATE_AND_PROCESS_DATA;
@@ -1423,13 +1424,13 @@ public:
                     case CS_MONITOR:
                     {
                         GCC::UserData::CSMonitor & cs_monitor =
-                            this->client_info.monitors;
+                            this->client_info.cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
                         }
 
-                        Rect client_monitors_rect = this->client_info.monitors.get_rect();
+                        Rect client_monitors_rect = this->client_info.cs_monitor.get_rect();
                         if (this->verbose & 1) {
                             LOG(LOG_INFO, "MonitorsRect=(%d, %d, %d, %d)",
                                 client_monitors_rect.x, client_monitors_rect.y,
@@ -3491,7 +3492,7 @@ private:
     }
 
     void send_monitor_layout() {
-        if (!this->client_info.monitors.monitorCount ||
+        if (!this->client_info.cs_monitor.monitorCount ||
             !this->client_support_monitor_layout_pdu) {
             return;
         }
@@ -3502,7 +3503,8 @@ private:
 
         MonitorLayoutPDU monitor_layout_pdu;
 
-        monitor_layout_pdu.set(this->client_info.monitors);
+        monitor_layout_pdu.set(this->client_info.cs_monitor);
+        monitor_layout_pdu.log("Send to client");
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 

@@ -170,31 +170,43 @@ public:
     : monitorCount(0)
     , monitorDefArray() {}
 
-    void set(GCC::UserData::CSMonitor & monitors) {
-        this->monitorCount = monitors.monitorCount;
+    void set(GCC::UserData::CSMonitor const & cs_monitor) {
+        this->monitorCount = cs_monitor.monitorCount;
 
-        for (uint32_t i = 0; i < monitors.monitorCount; i++) {
-            this->monitorDefArray[i].left   = monitors.monitorDefArray[i].left;
-            this->monitorDefArray[i].top    = monitors.monitorDefArray[i].top;
-            this->monitorDefArray[i].right  = monitors.monitorDefArray[i].right;
-            this->monitorDefArray[i].bottom = monitors.monitorDefArray[i].bottom;
-            this->monitorDefArray[i].flags  = monitors.monitorDefArray[i].flags;
+        for (uint32_t monitorIndex = 0; monitorIndex < cs_monitor.monitorCount; ++monitorIndex) {
+            this->monitorDefArray[monitorIndex].left   = cs_monitor.monitorDefArray[monitorIndex].left;
+            this->monitorDefArray[monitorIndex].top    = cs_monitor.monitorDefArray[monitorIndex].top;
+            this->monitorDefArray[monitorIndex].right  = cs_monitor.monitorDefArray[monitorIndex].right;
+            this->monitorDefArray[monitorIndex].bottom = cs_monitor.monitorDefArray[monitorIndex].bottom;
+            this->monitorDefArray[monitorIndex].flags  = cs_monitor.monitorDefArray[monitorIndex].flags;
         }
     }
 
-    void emit(OutStream & stream) {
+    void get(GCC::UserData::CSMonitor & cs_monitor) const {
+        cs_monitor.monitorCount = this->monitorCount;
+
+        for (uint32_t monitorIndex = 0; monitorIndex < cs_monitor.monitorCount; ++monitorIndex) {
+            cs_monitor.monitorDefArray[monitorIndex].left   = this->monitorDefArray[monitorIndex].left;
+            cs_monitor.monitorDefArray[monitorIndex].top    = this->monitorDefArray[monitorIndex].top;
+            cs_monitor.monitorDefArray[monitorIndex].right  = this->monitorDefArray[monitorIndex].right;
+            cs_monitor.monitorDefArray[monitorIndex].bottom = this->monitorDefArray[monitorIndex].bottom;
+            cs_monitor.monitorDefArray[monitorIndex].flags  = this->monitorDefArray[monitorIndex].flags;
+        }
+    }
+
+    void emit(OutStream & stream) const {
         REDASSERT((this->monitorCount > 0) &&
             (this->monitorCount <=
              GCC::UserData::CSMonitor::MAX_MONITOR_COUNT));
 
         stream.out_uint32_le(this->monitorCount);
 
-        for (uint32_t i = 0; i < this->monitorCount; i++) {
-            stream.out_sint32_le(this->monitorDefArray[i].left);
-            stream.out_sint32_le(this->monitorDefArray[i].top);
-            stream.out_sint32_le(this->monitorDefArray[i].right);
-            stream.out_sint32_le(this->monitorDefArray[i].bottom);
-            stream.out_uint32_le(this->monitorDefArray[i].flags);
+        for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
+            stream.out_sint32_le(this->monitorDefArray[monitorIndex].left);
+            stream.out_sint32_le(this->monitorDefArray[monitorIndex].top);
+            stream.out_sint32_le(this->monitorDefArray[monitorIndex].right);
+            stream.out_sint32_le(this->monitorDefArray[monitorIndex].bottom);
+            stream.out_uint32_le(this->monitorDefArray[monitorIndex].flags);
         }
     }
 
@@ -224,13 +236,17 @@ public:
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        for (uint32_t i = 0; i < this->monitorCount; i++) {
-            this->monitorDefArray[i].left   = stream.in_sint32_le();
-            this->monitorDefArray[i].top    = stream.in_sint32_le();
-            this->monitorDefArray[i].right  = stream.in_sint32_le();
-            this->monitorDefArray[i].bottom = stream.in_sint32_le();
-            this->monitorDefArray[i].flags  = stream.in_uint32_le();
+        for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
+            this->monitorDefArray[monitorIndex].left   = stream.in_sint32_le();
+            this->monitorDefArray[monitorIndex].top    = stream.in_sint32_le();
+            this->monitorDefArray[monitorIndex].right  = stream.in_sint32_le();
+            this->monitorDefArray[monitorIndex].bottom = stream.in_sint32_le();
+            this->monitorDefArray[monitorIndex].flags  = stream.in_uint32_le();
         }
+    }
+
+    uint32_t get_monitorCount() const {
+        return this->monitorCount;
     }
 
     void log(const char * msg)
@@ -244,18 +260,19 @@ public:
         lg += snprintf(buffer + lg, sizeof(buffer) - lg,
             "monitorCount=%u (", this->monitorCount);
 
-        for (uint32_t i = 0; i < this->monitorCount; i++) {
-            if (i) {
+        for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
+            if (monitorIndex) {
                 lg += snprintf(buffer + lg, sizeof(buffer) - lg, " ");
             }
             lg += snprintf(buffer + lg, sizeof(buffer) - lg,
                 "(left=%d, top=%d, right=%d, bottom=%d, primary=%s(0x%X))",
-                this->monitorDefArray[i].left, this->monitorDefArray[i].top,
-                this->monitorDefArray[i].right,
-                this->monitorDefArray[i].bottom,
-                ((this->monitorDefArray[i].flags & GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY) ?
+                this->monitorDefArray[monitorIndex].left,
+                this->monitorDefArray[monitorIndex].top,
+                this->monitorDefArray[monitorIndex].right,
+                this->monitorDefArray[monitorIndex].bottom,
+                ((this->monitorDefArray[monitorIndex].flags & GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY) ?
                  "yes" : "no"),
-                this->monitorDefArray[i].flags);
+                this->monitorDefArray[monitorIndex].flags);
         }
         snprintf(buffer + lg, sizeof(buffer) - lg, ")");
 
