@@ -2276,10 +2276,8 @@ public:
                                     else {
 
                                         uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
-                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
-                                        memset(modulus, 0, sizeof(modulus));
-                                        uint8_t exponent[SEC_EXPONENT_SIZE];
-                                        memset(exponent, 0, sizeof(exponent));
+                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
+                                        uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
                                         memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
 //                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");

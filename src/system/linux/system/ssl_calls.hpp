@@ -59,6 +59,11 @@ class SslSha1
         }
     }
 
+    void update(const char * const data,  size_t data_size)
+    {
+        this->update(reinterpret_cast<const uint8_t * const>(data), data_size);
+    }
+
     void update(const uint8_t * const data,  size_t data_size)
     {
         int res = 0;
