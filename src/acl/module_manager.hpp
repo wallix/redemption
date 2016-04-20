@@ -492,6 +492,7 @@ public:
 
     ModuleManager(Front & front, Inifile & ini, Random & gen)
         : MMIni(ini)
+        , osd(nullptr)
         , front(front)
         , no_mod(this->front)
         , mod_transport(nullptr)
