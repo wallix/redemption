@@ -2291,10 +2291,8 @@ public:
                                     else {
 
                                         uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
-                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
-                                        memset(modulus, 0, sizeof(modulus));
-                                        uint8_t exponent[SEC_EXPONENT_SIZE];
-                                        memset(exponent, 0, sizeof(exponent));
+                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
+                                        uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
                                         memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
 //                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
@@ -2391,15 +2389,34 @@ public:
                                         ssllib ssl;
 
 //                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
+//                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
+//                                        hexdump(client_random, SEC_RANDOM_SIZE);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+//                                            static_cast<unsigned>(SEC_RANDOM_SIZE));
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len");
+//                                        hexdump(modulus, this->server_public_key_len);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len=%u",
+//                                            static_cast<unsigned>(this->server_public_key_len));
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent");
+//                                        hexdump(exponent, SEC_EXPONENT_SIZE);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
+//                                            static_cast<unsigned>(SEC_EXPONENT_SIZE));
 
                                         ssl.rsa_encrypt(
-                                            client_crypt_random,
+                                            this->client_crypt_random,
                                             SEC_RANDOM_SIZE,
                                             client_random,
                                             this->server_public_key_len,
                                             modulus,
                                             SEC_EXPONENT_SIZE,
                                             exponent);
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY client_crypt_random");
+//                                        hexdump(this->client_crypt_random, sizeof(this->client_crypt_random));
+//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+//                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
 
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);
