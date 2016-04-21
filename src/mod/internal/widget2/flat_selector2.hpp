@@ -324,8 +324,8 @@ public:
             this->first_page.set_button_x(this->left + nav_offset_x);
 
             int nav_w = this->last_page.lx() - this->first_page.dx();
-            this->connect.set_button_x(this->left + this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
-            this->logout.set_button_x(this->left + this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
+            this->connect.set_button_x(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
+            this->logout.set_button_x(this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
         }
     }
 
