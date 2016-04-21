@@ -37,6 +37,8 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
+//#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #ifdef QT5
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRgb>
 #include </usr/include/x86_64-linux-gnu/qt5/QtGui/QRegion>
@@ -47,6 +49,7 @@
 #include <QtGui/QRegion>
 #include <QtGui/QBitmap>
 #endif
+//#pragma GCC diagnostic pop
 
 #define USER_CONF_PATH "userConfig.config"
 
@@ -1499,7 +1502,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 
                 if (this->_connector->_bufferTypeID == chunk.in_uint32_le()) {
                     
-                    int firstPartSize;
+                    int firstPartSize = 0;
                     uint32_t total_length(this->_connector->_length + 8);
                     StaticOutStream<PDU_MAX_SIZE> out_streamfirst;
                     

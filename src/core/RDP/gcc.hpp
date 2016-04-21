@@ -2305,7 +2305,7 @@ namespace GCC
             };
             uint32_t encryptionLevel;
             uint32_t serverRandomLen;
-            uint8_t serverRandom[32];
+            uint8_t serverRandom[SEC_RANDOM_SIZE];
 
             uint32_t serverCertLen;
 
@@ -2433,7 +2433,7 @@ namespace GCC
             , length(236)
             , encryptionMethod(0)
             , encryptionLevel(0) // crypt level 0 = none, 1 = low 2 = medium, 3 = high
-            , serverRandomLen(32)
+            , serverRandomLen(SEC_RANDOM_SIZE)
             , serverCertLen(184)
             , dwVersion(CERT_CHAIN_VERSION_1)
             , temporary(false)

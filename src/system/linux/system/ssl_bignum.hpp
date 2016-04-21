@@ -28,32 +28,56 @@
 class Bignum
 {
 public:
-    BIGNUM * n;
+    BIGNUM bn;
     Bignum(unsigned long w) 
     {
-        this->n = BN_new();
-        BN_set_word(this->n, w);
+        BN_init(&this->bn);
+        BN_set_word(&this->bn, w);
     }
-    Bignum(BIGNUM * bn) 
+    Bignum(const uint8_t * data, size_t len) 
     {
-        this->n = BN_dup(bn);
+        BN_init(&this->bn);
+        BN_bin2bn(data, len, &this->bn);
+    }
+    Bignum(const BIGNUM * bn) 
+    {
+        BN_init(&this->bn);
+        BN_copy(&this->bn, bn);
+    }
+    Bignum(const Bignum & bn) 
+    {
+        BN_init(&this->bn);
+        BN_copy(&this->bn, &bn.bn);
     }
     ~Bignum()
     {
-        BN_free(this->n);
-    }  
+        BN_free(&this->bn);
+    }
+    
+    unsigned long get_word()
+    {
+        return BN_get_word(&this->bn);
+    }
+    Bignum mod_exp(const Bignum & e, const Bignum & mod) const
+    {
+        BN_CTX *ctx = BN_CTX_new();
+        Bignum result(0UL);
+        BN_mod_exp(&result.bn, &this->bn, &e.bn, &mod.bn, ctx);
+        BN_CTX_free(ctx);
+        return result;
+    }
     Bignum operator+(const Bignum & b) const
     {
-        Bignum result(BN_dup(this->n));
-        BN_add(result.n, result.n, b.n);
+        Bignum result(b);
+        BN_add(&result.bn, &result.bn, &this->bn);
         return result;
     }
     bool operator!=(const Bignum & b) const
     {
-        return BN_cmp(this->n, b.n) != 0;
+        return BN_cmp(&this->bn, &b.bn) != 0;
     }
     bool operator==(const Bignum & b) const
     {
-        return BN_cmp(this->n, b.n) == 0;
+        return BN_cmp(&this->bn, &b.bn) == 0;
     }
 };
