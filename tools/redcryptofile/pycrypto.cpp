@@ -331,7 +331,7 @@ struct crypto_file_write
             ::memset(key_buf, '\0', blocksize);
             if (CRYPTO_KEY_LENGTH > blocksize) { // keys longer than blocksize are shortened
                 unsigned char keyhash[MD_HASH_LENGTH];
-                if ( ! ::MD_HASH_FUNC(static_cast<const unsigned char *>(hmac_key), CRYPTO_KEY_LENGTH, keyhash)) {
+                if ( ! ::MD_HASH_FUNC(hmac_key, CRYPTO_KEY_LENGTH, keyhash)) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not hash crypto key\n", ::getpid());
                     return -1;
                 }

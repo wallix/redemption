@@ -92,7 +92,7 @@ struct SurfaceCommandsCaps : public Capability {
         this->reserved = stream.in_uint32_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg) override {
         LOG(LOG_INFO, "%s SurfaceCommands caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "SurfaceCommands caps::cmdFlags %u", this->cmdFlags);
         LOG(LOG_INFO, "SurfaceCommands caps::reserved %u", this->reserved);

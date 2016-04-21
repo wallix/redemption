@@ -27,8 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "sashimi/log.hpp"
-#include "libcrypto.hpp"
+#include "utils/log.hpp"
+#include "sashimi/libcrypto.hpp"
 
 // test AES cipher
 
@@ -539,7 +539,7 @@ struct SshPrivateDSAKey {
                BIO_free(p);
             }
         };
-        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf((void*)b64_key, -1));
+        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf(b64_key, -1));
         this->dsa = PEM_read_bio_DSAPrivateKey(mem.get(), nullptr, nullptr, nullptr);
         if (this->dsa == nullptr) {
             LOG(LOG_INFO, "Parsing private key: %s", ERR_error_string(ERR_get_error(), nullptr));
@@ -559,7 +559,7 @@ struct SshPrivateRSAKey {
                BIO_free(p);
             }
         };
-        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf((void*)b64_key, -1));
+        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf(b64_key, -1));
         this->dsa = PEM_read_bio_RSAPrivateKey(mem.get(), nullptr, nullptr, nullptr);
         if (this->dsa == nullptr) {
             LOG(LOG_INFO, "Parsing private key: %s", ERR_error_string(ERR_get_error(), nullptr));

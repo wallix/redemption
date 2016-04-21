@@ -264,9 +264,15 @@ variant strict : :
     <cxxflags>-Wsign-conversion
 ;
 
-variant asan : debug :
+
+constant CXXFLAGS-debug :
     <define>REDASSERT_AS_ASSERT
     <define>_GLIBCXX_DEBUG
+    <cxxflags>-g
+;
+
+variant asan : debug :
+    $(CXXFLAGS-debug)
 #    <cxxflags>-fsanitize=address
 #    <cxxflags>-fsanitize=leak
 #    <cxxflags>-fno-omit-frame-pointer
@@ -302,11 +308,8 @@ project redemption
 
     <conditional>@defines
 
-    <variant>debug:<define>REDASSERT_AS_ASSERT
-    <variant>debug:<define>_GLIBCXX_DEBUG
-    <variant>debug:<cxxflags>-g
+    <variant>debug:$(CXXFLAGS-debug)
 
-    <cxxflags>-Wall
     <cxxflags>-std=c++11
 
 
@@ -1038,6 +1041,8 @@ explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
 obj test_show_data.o : tests/mod/rdp/test_show_data.cpp
     : <cxxflags>-fPIC ;
 
+obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp
+    : <cxxflags>-fPIC ;
 
 exe test_data_draw :
     bitmap_data_allocator.o

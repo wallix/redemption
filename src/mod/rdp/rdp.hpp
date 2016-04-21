@@ -2246,6 +2246,7 @@ public:
                             GCC::UserData::RecvFactory f(gcc_cr.payload);
                             switch (f.tag) {
                             case SC_CORE:
+//                            LOG(LOG_INFO, "=================== SC_CORE =============");
                                 {
                                     GCC::UserData::SCCore sc_core;
                                     sc_core.recv(f.payload);
@@ -2258,6 +2259,7 @@ public:
                                 }
                                 break;
                             case SC_SECURITY:
+                                LOG(LOG_INFO, "=================== SC_SECURITY =============");
                                 {
                                     GCC::UserData::SCSecurity sc_sec1;
                                     sc_sec1.recv(f.payload);
@@ -2274,12 +2276,11 @@ public:
                                     else {
 
                                         uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
-                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
-                                        memset(modulus, 0, sizeof(modulus));
-                                        uint8_t exponent[SEC_EXPONENT_SIZE];
-                                        memset(exponent, 0, sizeof(exponent));
+                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
+                                        uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
                                         memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
 
                                         // serverCertificate (variable): The variable-length certificate containing the
                                         //  server's public key information. The length in bytes is given by the
@@ -2288,6 +2289,8 @@ public:
 
                                         /* RSA info */
                                         if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
+//                                        LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_VERSION_1");
+
                                             memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
                                             memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
                                                    sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
@@ -2296,6 +2299,7 @@ public:
 
                                         }
                                         else {
+//                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
 
                                             uint32_t certcount = sc_sec1.x509.certCount;
                                             if (certcount < 2){
@@ -2307,11 +2311,11 @@ public:
                                             X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
                                             (void)cert_len;
 
-                                            TODO("CGR: Currently, we don't use the CA Certificate, we should"
-                                                 "*) Verify the server certificate (server_cert) with the CA certificate."
-                                                 "*) Store the CA Certificate with the hostname of the server we are connecting"
-                                                 " to as key, and compare it when we connect the next time, in order to prevent"
-                                                 " MITM-attacks.")
+                            TODO("CGR: Currently, we don't use the CA Certificate, we should"
+                                 "*) Verify the server certificate (server_cert) with the CA certificate."
+                                 "*) Store the CA Certificate with the hostname of the server we are connecting"
+                                 " to as key, and compare it when we connect the next time, in order to prevent"
+                                 " MITM-attacks.")
 
                                                 /* By some reason, Microsoft sets the OID of the Public RSA key to
                                                    the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
@@ -2320,10 +2324,13 @@ public:
                                                    lines of code that resets the OID and let's us extract the key. */
 
                                                 int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-                                            if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption)){
+                                            if ((nid == NID_md5WithRSAEncryption) 
+                                                || (nid == NID_shaWithRSAEncryption)){
                                                 ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
                                                 cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
                                             }
+
+//                                            LOG(LOG_INFO, "================= SC_SECURITY X509_get_pubkey");
 
                                             EVP_PKEY * epk = X509_get_pubkey(cert);
                                             if (nullptr == epk){
@@ -2331,7 +2338,6 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
 
-                                            TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                                             RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
                                             EVP_PKEY_free(epk);
                                             this->server_public_key_len = RSA_size(server_public_key);
@@ -2341,8 +2347,8 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
 
-                                            if ((this->server_public_key_len < SEC_MODULUS_SIZE) ||
-                                                (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                                            if ((this->server_public_key_len < SEC_MODULUS_SIZE)
+                                            ||  (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
                                                 LOG(LOG_ERR, "Wrong server public key size (%u bits)", this->server_public_key_len * 8);
                                                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                                             }
@@ -2353,8 +2359,8 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
                                             int len_e = BN_bn2bin(server_public_key->e, exponent);
-                                            reverseit(exponent, len_e);
                                             int len_n = BN_bn2bin(server_public_key->n, modulus);
+                                            reverseit(exponent, len_e);
                                             reverseit(modulus, len_n);
                                             RSA_free(server_public_key);
                                         }
@@ -2367,7 +2373,37 @@ public:
 
                                         ssllib ssl;
 
-                                        ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
+//                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
+//                                        hexdump(client_random, SEC_RANDOM_SIZE);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+//                                            static_cast<unsigned>(SEC_RANDOM_SIZE));
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len");
+//                                        hexdump(modulus, this->server_public_key_len);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len=%u",
+//                                            static_cast<unsigned>(this->server_public_key_len));
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent");
+//                                        hexdump(exponent, SEC_EXPONENT_SIZE);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
+//                                            static_cast<unsigned>(SEC_EXPONENT_SIZE));
+
+                                        ssl.rsa_encrypt(
+                                            this->client_crypt_random,
+                                            SEC_RANDOM_SIZE,
+                                            client_random,
+                                            this->server_public_key_len,
+                                            modulus,
+                                            SEC_EXPONENT_SIZE,
+                                            exponent);
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY client_crypt_random");
+//                                        hexdump(this->client_crypt_random, sizeof(this->client_crypt_random));
+//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+//                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
+
+                                            
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);
                                         if (sc_sec1.encryptionMethod == 1){
@@ -2379,6 +2415,8 @@ public:
                                 }
                                 break;
                             case SC_NET:
+//                            LOG(LOG_INFO, "=================== SC_NET =============");
+                            
                                 {
                                     GCC::UserData::SCNet sc_net;
                                     sc_net.recv(f.payload, this->bogus_sc_net_size);
@@ -6362,7 +6400,7 @@ public:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void send_disconnect_ultimatum() {
+    void send_disconnect_ultimatum() override {
         if (this->verbose & 1){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }

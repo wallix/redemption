@@ -1,0 +1,79 @@
+
+
+path-constant SRCDIR : ../../src ;
+path-constant INCLUDEDIR : ./include ;
+
+project redjs
+    : requirements
+    <include>$(SRCDIR)
+    <include>$(SRCDIR)/system/linux
+    <include>$(SRCDIR)/core
+    <include>$(SRCDIR)/mod
+    <include>$(SRCDIR)/front
+    <include>$(SRCDIR)/acl
+    <include>$(SRCDIR)/capture
+    <include>$(SRCDIR)/keyboard
+    <include>$(SRCDIR)/keyboard/reversed_keymaps
+    <include>$(SRCDIR)/regex
+    <include>$(SRCDIR)/headers
+    <include>$(SRCDIR)/main
+    #<include>modules/includes 
+    <include>$(SRCDIR)/utils
+    <include>$(SRCDIR)/system/linux/system
+    <include>src
+    <include>$(INCLUDEDIR)
+    <cxxflags>-std=c++11
+    <cxxflags>-Wall
+    <cxxflags>-O2
+    : default-build release
+    ;
+
+using emscripten ;
+
+#install client_rdp_JS
+#    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+#    : <location>./sandbox
+#    ;
+    
+objjs test_rdp_client_test_card_JS_SDL.bc 
+	: src/test_rdp_client_test_card_JS_SDL.cpp 
+	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+	;
+
+objjs test_rdp_client_test_card_JS_natif.bc 
+	: src/test_rdp_client_test_card_JS_natif.cpp 
+	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+	;
+
+objjs bitmap_data_allocator.bc 
+	: $(SRCDIR)/utils/bitmap_data_allocator.cpp 
+	: <cxxflags>-g3 
+	  <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+	;
+
+exejs client_rdp_JS_SDL.js 
+     : 
+        test_rdp_client_test_card_JS_SDL.bc 
+        bitmap_data_allocator.bc
+     :  
+        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+        <cxxflags>-g3 
+	#<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
+     ;
+
+exejs client_rdp_JS_natif.js 
+     : 
+        test_rdp_client_test_card_JS_natif.bc 
+        bitmap_data_allocator.bc
+     :  
+        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+        <cxxflags>-g3 
+	#<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
+     ;
+
+actions nothing { }
+
+make client_rdp_JS_natif.html : client_rdp_JS_natif.js : @nothing ;   
+
+make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ; 
+

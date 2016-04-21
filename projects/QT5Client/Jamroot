@@ -17,6 +17,7 @@ path-constant TOP : . ;
 constant SRCDIR : ../../src ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
+constant INCLUDEDIR : ../../include ;
 
 
 # Returns environment value if it exists or default otherwise.
@@ -244,6 +245,8 @@ project redemption
     <include>/usr/include/x86_64-linux-gnu/qt5
     <include>src
     <include>$(SRCDIR)/system/linux
+    <include>$(INCLUDEDIR)
+
     <include>$(SRCDIR)/core
     <include>$(SRCDIR)/mod
     <include>$(SRCDIR)/front

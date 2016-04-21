@@ -37,7 +37,7 @@ enum {
 };
 
 /* difference caches */
-class PointerCache {
+class PointerCache : noncopyable {
     int pointer_cache_entries;
 
     /* pointer */
@@ -50,8 +50,6 @@ public:
     Pointer Pointers[MAX_POINTER_COUNT];
 
 public:
-    REDEMPTION_NON_COPYABLE(PointerCache);
-
     explicit PointerCache(int pointer_cache_entries = 0)
     : pointer_cache_entries(pointer_cache_entries)
     {}

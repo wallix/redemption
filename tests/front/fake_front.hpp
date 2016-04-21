@@ -33,7 +33,7 @@
 
 class FakeFront;
 namespace {
-    using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverter>;
+    using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverterAccess>;
 }
 
 class FakeFront : public FakeFrontBase
@@ -170,7 +170,7 @@ public:
         int fd = ::mkostemps(tmpname, 4, O_WRONLY | O_CREAT);
         FILE * f = fdopen(fd, "wb");
         ::dump_png24( f, this->gd.data(), this->gd.width(), this->gd.height()
-                    , this->gd.rowsize(), false);
+                    , this->gd.rowsize(), true);
         ::fclose(f);
     }
 

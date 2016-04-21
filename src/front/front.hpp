@@ -45,6 +45,7 @@
 #include "core/RDP/slowpath.hpp"
 
 #include "system/ssl_calls.hpp"
+#include "system/ssl_lib.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
@@ -104,9 +105,9 @@
 
 #include "utils/timeout.hpp"
 #include "utils/underlying_cast.hpp"
+#include "utils/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
-#include "gdi/utils/non_null.hpp"
 
 #include <memory>
 
@@ -443,19 +444,19 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverted : gdi::GraphicProxy<
-            GraphicConverted<ColorConverter>,
+        struct GraphicConverter : gdi::GraphicProxy<
+            GraphicConverter<ColorConverter>,
             gdi::GraphicApi,
-            gdi::GraphicColorConverter
+            gdi::GraphicColorConverterAccess
         > {
             friend gdi::GraphicCoreAccess;
 
-            GraphicConverted(
+            GraphicConverter(
                 gdi::GraphicDepth depth,
                 Graphics::PrivateGraphicsUpdatePDU & graphics,
                 ColorConverter const & color_converter
             )
-            : GraphicConverted::base_type(depth)
+            : GraphicConverter::base_type(depth)
             , color_converter(color_converter)
             , graphics(graphics)
             {}
@@ -475,7 +476,7 @@ private:
         template<class Dec, class Enc>
         void build_graphics(Dec const & dec, Enc const & enc) {
             using color_converter_t = color_converter<Dec, Enc>;
-            using Drawable = GraphicConverted<color_converter_t>;
+            using Drawable = GraphicConverter<color_converter_t>;
             this->gd_converted = std::make_unique<Drawable>(
                 gdi::GraphicDepth::from_bpp(Dec::bpp),
                 this->graphics_update_pdu(),
@@ -521,19 +522,20 @@ private:
     }
 
     static gdi::GraphicApi & null_gd() {
-        struct NullGd final
-        : gdi::GraphicBase<NullGd>
-        {};
-        static NullGd gd;
+        static gdi::BlackoutGraphic gd;
         return gd;
     }
 
-    gdi::utils::non_null<gdi::GraphicApi*> gd = &null_gd();
-    gdi::utils::non_null<gdi::GraphicApi*> graphics_update = &null_gd();
+    non_null_ptr<gdi::GraphicApi> gd = &null_gd();
+    non_null_ptr<gdi::GraphicApi> graphics_update = &null_gd();
+
+    void set_gd(gdi::GraphicApi * new_gd) {
+        this->gd = new_gd;
+        this->graphics_update = this->graphics_update_disabled ? &null_gd() : new_gd;
+    }
 
     void set_gd(gdi::GraphicApi & new_gd) {
-        this->gd = &new_gd;
-        this->graphics_update = this->graphics_update_disabled ? &null_gd() : &new_gd;
+        this->set_gd(&new_gd);
     }
 
 public:
@@ -733,7 +735,8 @@ public:
         break;
         }
 
-        this->event.set(0);
+        this->event.set(500000);
+        this->event.object_and_time = true;
     }
 
     ~Front() override {
@@ -891,7 +894,7 @@ public:
         this->capture->get_capture_event().set();
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
-            this->set_gd(*this->capture->get_graphic_api());
+            this->set_gd(this->capture->get_graphic_api());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
@@ -922,7 +925,7 @@ public:
         this->capture->resume_capture(now);
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
-            this->set_gd(*this->capture->get_graphic_api());
+            this->set_gd(this->capture->get_graphic_api());
         }
         else {
             this->set_gd(null_gd());
@@ -1175,10 +1178,11 @@ public:
             throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
-            this->event.set(200000);
+            this->event.set(500000);
             break;
         default:
             this->event.reset();
+            this->event.object_and_time = false;
             break;
         }
 
@@ -1703,7 +1707,7 @@ public:
             // subsequent RDP traffic.
 
             // From this point, all subsequent RDP traffic can be encrypted and a security
-            // header is include " with the data if encryption is in force (the Client Info
+            // header is included with the data if encryption is in force (the Client Info
             // and licensing PDUs are an exception in that they always have a security
             // header). The Security Header follows the X.224 and MCS Headers and indicates
             // whether the attached data is encrypted.
@@ -1741,41 +1745,19 @@ public:
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::SecExchangePacket_Recv sec(mcs.payload);
 
-                TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
-                uint8_t client_random[64];
-                memset(client_random, 0, 64);
+                uint8_t client_random[64] = {};
                 {
-                    uint8_t l_out[64]; memset(l_out, 0, 64);
-                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
-                    uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
-                    uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
-
-                    BN_CTX* ctx = BN_CTX_new();
-                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn(l_mod, 64, &lmod);
-                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn(l_exp, 64, &lexp);
-                    BIGNUM lin; BN_init(&lin);  BN_bin2bn(l_in, 64, &lin);
-                    BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-
-                    int rv = BN_bn2bin(&lout, l_out);
-                    if (rv <= 64) {
-                        reverseit(l_out, rv);
-                        memcpy(client_random, l_out, 64);
-                    }
-                    BN_free(&lin);
-                    BN_free(&lout);
-                    BN_free(&lexp);
-                    BN_free(&lmod);
-                    BN_CTX_free(ctx);
+                ssllib ssl;
+                ssl.ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
                 }
-
-                // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+                // beware order of parameters for key generation (decrypt/encrypt) 
+                // is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
-                ssllib ssl;
                 if (this->encrypt.encryptionMethod == 1) {
+                    ssllib ssl;
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
-
                 this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
                 this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
             }
@@ -2693,7 +2675,7 @@ private:
 
         this->input_event_disabled     = disable_input_event;
         this->graphics_update_disabled = disable_graphics_update;
-        this->set_gd(*this->gd);
+        this->set_gd(this->gd.get());
 
         return need_full_screen_update;
     }
@@ -4032,6 +4014,34 @@ protected:
 
     void draw_impl(RDPMem3Blt const & cmd, Rect const & clip, Bitmap const & bitmap) {
         this->priv_draw_memblt(cmd, clip, bitmap);
+    }
+
+    void draw_impl(RDPPatBlt const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDPPatBlt new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip);
+            }
+            else {
+              this->graphics_update->draw(cmd, clip);
+            }
+        }
+    }
+
+    void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                RDP::RDPMultiPatBlt new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip);
+            }
+            else {
+              this->graphics_update->draw(cmd, clip);
+            }
+        }
     }
 
     void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {

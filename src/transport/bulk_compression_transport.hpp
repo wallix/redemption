@@ -47,7 +47,7 @@ public:
     , uncompressed_data_size(0) {}
 
 private:
-    virtual void do_recv(char ** pbuffer, size_t len) {
+    virtual void do_recv(char ** pbuffer, size_t len) override {
         char * temp_buffer = *pbuffer;
         size_t temp_length = len;
 
@@ -126,7 +126,7 @@ public:
     , verbose_compression(verbose_compression) {}
 
 private:
-    virtual void do_send(const char * const buffer, size_t len) {
+    virtual void do_send(const char * const buffer, size_t len) override {
         const char * temp_buffer = buffer;
         size_t       temp_length = len;
 
@@ -171,7 +171,7 @@ private:
     }
 
 public:
-    virtual bool next() {
+    virtual bool next() override {
         this->reset_compressor = true;
 
         this->mppc_enc.~rdp_mppc_61_enc();
@@ -181,7 +181,7 @@ public:
         return this->target_transport.next();
     }
 
-    virtual void timestamp(timeval now) {
+    virtual void timestamp(timeval now) override {
         this->target_transport.timestamp(now);
     }
 };  // class BulkCompressionOutTransport

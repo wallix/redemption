@@ -255,14 +255,9 @@ project redemption
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
     <include>$(SRCDIR)/system/linux
-    <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/mod
-    <include>$(SRCDIR)/front
-    <include>$(SRCDIR)/acl
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/regex
     <include>$(SRCDIR)/headers
 #    <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
@@ -890,6 +885,8 @@ test-canonical utils/netutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
 test-canonical utils/rdtsc.hpp ;
 test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 
 test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 
@@ -1234,34 +1231,15 @@ install local-install-sashimi
     : <location>/usr/lib
     ;
 
-obj sashimi_error : $(SRCDIR)/sashimi/error.cpp     :
-    ;
-
-obj sashimi_pki : $(SRCDIR)/sashimi/pki.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
-obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
-obj sashimi_log : $(SRCDIR)/sashimi/log.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
-obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
-obj sashimi_libssh : $(SRCDIR)/sashimi/libssh.cpp     :
-    <include>$(SRCDIR)/sashimi
-    ;
-
+obj sashimi_error : $(SRCDIR)/sashimi/error.cpp ;
+obj sashimi_pki : $(SRCDIR)/sashimi/pki.cpp ;
+obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp ;
+obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp ;
+obj sashimi_libssh : $(SRCDIR)/sashimi/libssh.cpp ;
 
 lib sashimi :
     sashimi_pki
     sashimi_channels
-    sashimi_log
     sashimi_sftp
     sashimi_libssh
     sashimi_error
@@ -1285,23 +1263,21 @@ lib sashimi :
 unit-test test_buffer : 
     $(SRCDIR)/sashimi/tests/buffer.cpp 
     sashimi_error 
-    sashimi_log 
     libboost_unit_test 
     :
-    <include>$(SRCDIR)/sashimi
     $(TEST_DEPENDENCIES)
     ;
 
 unit-test test_crypto : 
     $(SRCDIR)/sashimi/tests/test_crypto.cpp 
     sashimi_error 
-    sashimi_log 
     crypto
     libboost_unit_test 
     :
-    <include>$(SRCDIR)/sashimi
     $(TEST_DEPENDENCIES)
     ;
+
+test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
 
 test-canonical acl/mm_api.hpp ;
 test-canonical core/activity_checker.hpp ;
