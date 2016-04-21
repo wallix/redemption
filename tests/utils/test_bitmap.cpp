@@ -4514,6 +4514,15 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Bitmap bmp2(bpp, bpp, &palette332, 368, 10, compressed, sizeof(compressed), true);
     Drawable gd(368, 10);
     gd.mem_blt(Rect(0, 0, 368, 10), bmp2, 0, 0);
+
+    Bitmap bitmap_0_;
+
+    Bitmap bitmap_1_(bitmap_0_);
+
+    Bitmap bitmap_2_ = bitmap_1_;
+
+
+
 }
 
 
