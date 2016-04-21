@@ -70,6 +70,7 @@
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "transparentrecorder.hpp"
 
@@ -2013,7 +2014,9 @@ public:
                                     cs_core.supportedColorDepths = 15;
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
                                 }
-                                cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+                                if (this->cs_monitor.monitorCount) {
+                                    cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+                                }
 
                                 uint16_t hostlen = strlen(hostname);
                                 uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
