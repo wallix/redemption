@@ -170,9 +170,6 @@ public:
 
 
 
-
-
-
     //bool setClientInfo() ;
 
     //void writeClientInfo() ;
@@ -308,8 +305,8 @@ public:
 
         switch (cmd.rop) {
 
-            case 0x00:                                      //EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
-                                                    //rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
+            case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
+                                                    rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
                 break;
 /*
             case 0x22: // TODO
