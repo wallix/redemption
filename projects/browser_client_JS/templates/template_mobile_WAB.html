@@ -35,6 +35,23 @@
 <script src="js/wprdp.js?v=1.2-beta1" type="text/javascript"></script>
 <script src="js/wprdpsc.js?v=1.2-beta1" type="text/javascript"></script>
 <script type="text/javascript">
+	
+		
+	    var n1 = 0;
+
+	    function startTimer() {
+		var d1 = new Date();
+		n1 = d1.getTime();
+	    }
+
+	    function endTimer() {
+		var d2 = new Date();
+		var n2 = d2.getTime(); 
+		console.log(n2 - n1);
+	    }
+
+	    
+
             var wsBase = "<%=wsUri%>"; // socket URI
 			var protocol = (window.location.protocol == "https:" ? "wss:" : "ws:");
             var wsBase = protocol + "//" + window.location.host + window.location.pathname + "/ws";
@@ -1032,6 +1049,7 @@
             } 
         </script>
 </head>
+
 <body id="wrapper">
 	<!-- NavBar -->
 	<nav id="extracommands" class="navbar navbar-default navbar-static-top">
@@ -1126,9 +1144,9 @@
 	<noscript>
 		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
 	</noscript>
+	
+	<script src='draw.js'></script>
 
-    <!--<script src='/home/cmoroldo/Bureau/redemption/projects/browser_client/src/draw.js'></script>-->
-<script src='draw.js'></script>
     <script type='text/javascript'>
 	      var Module = {
 		canvas: (function() {
@@ -1141,7 +1159,7 @@
     </script>
 
 	  {{{ SCRIPT }}}
-
+	
 </body>
 </html>
 
