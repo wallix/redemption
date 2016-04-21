@@ -1744,18 +1744,20 @@ public:
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::SecExchangePacket_Recv sec(mcs.payload);
-                ssllib ssl;
 
                 uint8_t client_random[64] = {};
+                {
+                ssllib ssl;
                 ssl.ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
+                }
                 // beware order of parameters for key generation (decrypt/encrypt) 
                 // is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
                 if (this->encrypt.encryptionMethod == 1) {
+                    ssllib ssl;
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
-
                 this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
                 this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
             }

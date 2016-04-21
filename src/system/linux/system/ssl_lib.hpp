@@ -65,22 +65,15 @@ class ssllib
         uint8_t l_mod[64]; rmemcpy(l_mod, mod, mod_len);
         uint8_t l_exp[64]; rmemcpy(l_exp, exp, exp_len);
 
-        BN_CTX* ctx = BN_CTX_new();
-        BIGNUM lmod; BN_init(&lmod); BN_bin2bn(l_mod, mod_len, &lmod);
-        BIGNUM lexp; BN_init(&lexp); BN_bin2bn(l_exp, exp_len, &lexp);
-        BIGNUM lin; BN_init(&lin);  BN_bin2bn(l_in, in_len, &lin);
-        BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-
-        int rv = BN_bn2bin(&lout, l_out);
+        Bignum lmod(l_mod, mod_len);
+        Bignum lexp(l_exp, exp_len);
+        Bignum lin(l_in, in_len);
+        Bignum lout = lin.mod_exp(lexp, lmod);
+        int rv = BN_bn2bin(&lout.bn, l_out);
         if (rv <= 64) {
             reverseit(l_out, rv);
             memcpy(client_random, l_out, 64);
         }
-        BN_free(&lin);
-        BN_free(&lout);
-        BN_free(&lexp);
-        BN_free(&lmod);
-        BN_CTX_free(ctx);
     }
 
 
