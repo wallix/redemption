@@ -35,8 +35,13 @@ using emscripten ;
 #    : <location>./sandbox
 #    ;
     
-objjs test_rdp_client_test_card_JS.bc 
-	: src/test_rdp_client_test_card_JS.cpp 
+objjs test_rdp_client_test_card_JS_SDL.bc 
+	: src/test_rdp_client_test_card_JS_SDL.cpp 
+	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+	;
+
+objjs test_rdp_client_test_card_JS_natif.bc 
+	: src/test_rdp_client_test_card_JS_natif.cpp 
 	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
 	;
 
@@ -46,17 +51,29 @@ objjs bitmap_data_allocator.bc
 	  <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
 	;
 
-exejs client_rdp_JS.js 
+exejs client_rdp_JS_SDL.js 
      : 
-        test_rdp_client_test_card_JS.bc 
+        test_rdp_client_test_card_JS_SDL.bc 
         bitmap_data_allocator.bc
      :  
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>-g3 
-	#<cxxflags>-s EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
+	#<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
+     ;
+
+exejs client_rdp_JS_natif.js 
+     : 
+        test_rdp_client_test_card_JS_natif.bc 
+        bitmap_data_allocator.bc
+     :  
+        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+        <cxxflags>-g3 
+	#<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
      ;
 
 actions nothing { }
 
-make client_rdp_JS.html : client_rdp_JS.js : @nothing ;    
+make client_rdp_JS_natif.html : client_rdp_JS_natif.js : @nothing ;   
+
+make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ; 
 

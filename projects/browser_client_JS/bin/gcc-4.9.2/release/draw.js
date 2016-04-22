@@ -1,20 +1,18 @@
 
 
+
 function Drawable() {
-
     this.ccnt = 0;
-
     this.canvas = document.getElementById("canvas");
     this.cctx = this.canvas.getContext('2d');
-
 }
+
 
 
 Drawable.prototype._ctxS = function(){
     this.cctx.save();
     this.ccnt += 1;
 }
-
 
 Drawable.prototype._ctxR = function() {
     this.cctx.restore();
@@ -58,48 +56,94 @@ Drawable.prototype.opaqueRect = function(x, y, w, h, c) {
     this._ctxR();
 }
 
-
-Drawable.prototype.rDPScrBlt = function(sx, sy, x, y, w, h) {
-    /*this._ctxS();
-    if (this._sROP(rop)) {
-        if (this._ckclp(x, y) && this._ckclp(x + w, y + h)) {
-            // No clipping necessary
-            this.cctx.putImageData(this.cctx.getImageData(sx,
-                    sy, w, h), x, y);
-        } else {
-            // Clipping necessary
-            this.cctx.putImageData(this.cctx.getImageData(sx,
-                    sy, w, h), 0, 0);
-            //this.cctx.drawImage(this.bstore, 0, 0, w, h, x, y,
-                    //w, h);
-        }
-    }
-    this._ctxR();*/
+Drawable.prototype.lineTo = function(x1, y1, x2, y2, r, g, b) {
+    this._ctxS();
+    this.cctx.beginPath();
+    this.cctx.moveTo(x1,y1);
+    this.cctx.lineTo(x2,y2);
+    this.cctx.fillStyle = "rgba("+r+", "+g+", "+b+", 255)";
+    this.cctx.stroke();
+    this._ctxR();
 }
 
-
-Drawable.prototype.bitmap = function(x, y, w, h, data) {
+Drawable.prototype.rDPScrBlt = function(sx, sy, dx, dy, w, h) {
     this._ctxS();
+    this.cctx.putImageData(this.cctx.getImageData(sx,
+                    sy, w, h), dx+1, dy+1);
+    this._ctxR();
+}
 
-    /*var u8_2 = new Uint8Array(atob( data).split("").map(function(c) {
-    return c.charCodeAt(0);
-    }));*/
-    //console.log(data);
-    //var b64encoded = btoa(String.fromCharCode.apply(null, data));
-    /*
-    var b64encoded = String.fromCharCode.apply(null, data);
+Drawable.prototype.rDPScrBlt_Invert = function(sx, sy, dx, dy, w, h) {
+    this._ctxS();
+    var imgData=this.cctx.getImageData(sx, sy, w, h);
 
-    var img = new Image();
+    var size = w * h;
 
-    img.src = "data:image/jpeg;base64," + b64encoded;
+    for (var i = 0; i < size; i++) {
+        imgData.data[i+0]= imgData.data[i+0] ^ 0xffffffff;
+        imgData.data[i+1]= imgData.data[i+1] ^ 0xffffffff;
+        imgData.data[i+2]= imgData.data[i+2] ^ 0xffffffff;
+        imgData.data[i+3]= 255;
+    }
 
-    img.onload = function () {
-        this.cctx.drawImage(img, 0, 0, w, h, x, y, w, h);
-    };
-    img.onerror = function (stuff) {
-        console.log("Img Onerror:", stuff);
-    };*/
+    this.cctx.putImageData(imgData, dx+1, dy+1);
+    this._ctxR();
+}
 
+Drawable.prototype.RDPPatBlt_0xF0 = function(dx, dy, w, h, r, g, b) {
+    this._ctxS();
+    var imgData=this.cctx.createImageData(w, h);
+
+    var dw = w*4;
+    var shift = 0;
+    for (var y = 0; y < h; y++) {
+        shift = (y%2)*4;
+        for (var x = 0; x < dw; x += 8) {
+            var i = y*dw + x + shift;
+            imgData.data[i+0]= b;
+            imgData.data[i+1]= g;
+            imgData.data[i+2]= r;
+            imgData.data[i+3]= 255;
+        }
+    }
+
+    this.cctx.putImageData(imgData, dx, dy);
+    this._ctxR();
+}
+
+Drawable.prototype.RDPPatBlt_0x5A = function(dx, dy, w, h, r_back, g_back, b_back, r_fore, g_fore, b_fore) {
+    this._ctxS();
+    var imgData=this.cctx.createImageData(w, h);
+
+    var dw = w*4;
+    var shift = 0;
+    for (var y = 0; y < h; y++) {
+        shift = (y%2)*4;
+        for (var x = 0; x < dw; x += 8) {
+            var i = y*dw + x + shift;
+            imgData.data[i+0]= b_back ^ imgData.data[i+0];
+            imgData.data[i+1]= g_back ^ imgData.data[i+1];
+            imgData.data[i+2]= r_back ^ imgData.data[i+2];
+            imgData.data[i+3]= 255;
+        }
+    }
+    for (var y = 0; y < h; y++) {
+        shift = (y%2)*4;
+        for (var x = 1; x < dw; x += 8) {
+            var i = y*dw + x + shift;
+            imgData.data[i+0]= b_fore ^ imgData.data[i+0];
+            imgData.data[i+1]= g_fore ^ imgData.data[i+1];
+            imgData.data[i+2]= r_fore ^ imgData.data[i+2];
+            imgData.data[i+3]= 255;
+        }
+    }
+
+    this.cctx.putImageData(imgData, dx, dy);
+    this._ctxR();
+}
+
+Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
+    this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
     var dw = w*4;
     var i = 0;
@@ -114,11 +158,41 @@ Drawable.prototype.bitmap = function(x, y, w, h, data) {
             imgData.data[i+3]= 255;
         }
     }
-    this.cctx.putImageData(imgData, x, y-1, -3, 1, w, h+1);
+    this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
+    this._ctxR();
+}
 
+Drawable.prototype.rDPMem3Blt_0xB8 = function(x, y, w, h, data, shift, back_color) {
+    this._ctxS();
+    var imgData=this.cctx.createImageData(w, h+1);
+    var dw = w*4;
+    var i = 0;
+    var j = 0;
+    for (var dy=0; dy<h+1; dy++) {
+        for (var dx=0; dx<dw; dx+=4) {
+            i = dy*dw + dx;
+            j = (h-dy)*dw + dx;
+
+            var r = data[j+2];
+            var g = data[j+1];
+            var b = data[j+0];
+
+            if ( (r + (g << 8) + (b << 16)) != back_color) {
+                imgData.data[i+0]= r;
+                imgData.data[i+1]= g;
+                imgData.data[i+2]= b;
+                imgData.data[i+3]= 255;
+            }
+        }
+    }
+    this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
     this._ctxR();
 }
 
 
 
 var drawable = new Drawable();
+
+
+
+

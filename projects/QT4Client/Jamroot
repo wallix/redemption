@@ -17,6 +17,7 @@ path-constant TOP : . ;
 constant SRCDIR : ../../src ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
+constant INCLUDEDIR : ../../include ;
 
 
 # Returns environment value if it exists or default otherwise.
@@ -242,10 +243,6 @@ project redemption
     : requirements
     <include>$(SRCDIR)
     <include>$(SRCDIR)/system/linux
-    <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/mod
-    <include>$(SRCDIR)/front
-    <include>$(SRCDIR)/acl
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
@@ -253,6 +250,7 @@ project redemption
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
+    <include>$(INCLUDEDIR)
 
     <conditional>@defines
 

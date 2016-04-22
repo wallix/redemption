@@ -77,7 +77,7 @@
 // ./../../emsdk_portable/emscripten/master/em++ -O2 tests/client_mods/test_rdp_client_test_card_JS.cpp -o bin/gcc-4.9.2/release/client_rdp_JS.html -I src/ -I src/utils -I src/core -std=c++11 -I src/configs/autogen -I src/configs/variant -I src/configs/include -I src/mod -I src/front -I src/acl -I src/capture -I src/keyboard -I src/keyboard/reversed_keymaps -I src/regex -I src/headers -I src/main -I tests -I modules/includes -I src/system/JS && iceweasel file:///home/cmoroldo/Bureau/redemption/bin/gcc-4.9.2/release/client_rdp_JS.html
 
 
-// bjam client_rdp_JS.js |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client/bin/gcc-4.9.2/release/client_rdp_JS.html
+// bjam client_rdp_JS.js |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/bin/gcc-4.9.2/release/client_rdp_JS.html
 
 
 
@@ -88,7 +88,7 @@
 // . ./emsdk_env.sh
 #include "../../utils/colors.hpp"
 
-
+/*
 extern "C" {
     SDL_Surface* SDL_CreateRGBSurfaceFrom(void*  pixels,
                                           int    width,
@@ -99,25 +99,18 @@ extern "C" {
                                           Uint32 Gmask,
                                           Uint32 Bmask,
                                           Uint32 Amask)
-                                        {
-                                            return SDL_CreateRGBSurfaceFrom(pixels,
-                                                                            width,
-                                                                            height,
-                                                                            depth,
-                                                                            pitch,
-                                                                            Rmask,
-                                                                            Gmask,
-                                                                            Bmask,
-                                                                            Amask);
-                                        }
-}
+        {
+            return &((SDL_Surface)EM_ASM_({SDL_CreateRGBSurfaceFrom($0    , $1   , $2    , $3   , $4   , $5   , $6   , $7   , $8);},
+                                                                    pixels, width, height, depth, pitch, Rmask, Gmask, Bmask, Amask));
+        }
+}*/
 
 
 class Front_JS_SDL : public FrontAPI
 {
     enum uint32_t {
         INVERT_MASK = 0xffffffff,
-        NATIVE_MASK = 0x00000000
+        NO_MASK     = 0x00000000
     };
 
 private:
@@ -296,7 +289,7 @@ public:
         Bitmap bitmapBpp(32, bitmap);
         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
         const uint8_t * bitMapData = bitmapBpp.data();
-
+/*
         SDL_Surface* image = SDL_CreateRGBSurfaceFrom(reinterpret_cast<const void *>(bitMapData), mincx, drect.cy, 32, 4,  0,  0,  0, 0);
 
         SDL_Rect position;
@@ -304,8 +297,8 @@ public:
         position.y = drect.y;
 
         SDL_BlitSurface(image, NULL, this->_browser._screen, &position);
+*/
 
-/*
         SDL_LockSurface(this->_browser._screen); // if (SDL_MUSTLOCK(this->_browser._screen))
         int yStart(drect.cy + drect.y-1);
         for (int y = 0; y <  drect.cy; y++) {
@@ -315,7 +308,7 @@ public:
                     bitMapData, srcIndice);
             }
         }
-        SDL_UnlockSurface(this->_browser._screen); // if (SDL_MUSTLOCK(this->_browser._screen))*/
+        SDL_UnlockSurface(this->_browser._screen); // if (SDL_MUSTLOCK(this->_browser._screen))
 
     }
 
@@ -474,10 +467,10 @@ public:
             case 0x99:  // nothing to change
                 break;
 
-            case 0xCC: this->draw_MemBlt(rect, bitmap, cmd.srcx + (rect.x - cmd.rect.x), cmd.srcy + (rect.y - cmd.rect.y), NATIVE_MASK);
+            case 0xCC: this->draw_MemBlt(rect, bitmap, cmd.srcx + (rect.x - cmd.rect.x), cmd.srcy + (rect.y - cmd.rect.y), NO_MASK);
                 break;
 
-            case 0xEE: this->draw_MemBlt(rect, bitmap, cmd.srcx + (rect.x - cmd.rect.x), cmd.srcy + (rect.y - cmd.rect.y), NATIVE_MASK);
+            case 0xEE: this->draw_MemBlt(rect, bitmap, cmd.srcx + (rect.x - cmd.rect.x), cmd.srcy + (rect.y - cmd.rect.y), NO_MASK);
                 break;
 
             case 0xFF: {SDL_Rect trect = {rect.y, rect.x, rect.cx, rect.cy};
@@ -632,7 +625,6 @@ public:
 
         float err = 0.0;
         const float e1    = dy/dx;
-        const float e2    = -1;
 
         const int ystep = (y1 < y2) ? 1 : -1;
         int y = (int)y1;
@@ -652,7 +644,7 @@ public:
 
             if(err >= 0.5)
             {
-                //err += e2;
+                err -= 1;
                 y += ystep;
             }
         }
@@ -826,67 +818,6 @@ public:
 };
 
 
-//Front_JS_SDL front(0);
-
-/*
-void eventLoop() {
-    SDL_Event     event;
-    SDL_PollEvent(&event);
-
-    switch(event.type)
-    {
-        case SDL_QUIT: SDL_FreeSurface(front.getScreen());
-                       SDL_Quit();
-        break;
-
-        case SDL_KEYDOWN: //printf("Key Down\n");
-        break;
-
-        case SDL_KEYUP : //printf("Key Up\n");
-        break;
-
-        case SDL_MOUSEMOTION: //printf("Mouse Motion\n");
-        break;
-
-        case SDL_MOUSEBUTTONDOWN: //printf("Mouse Button Down\n");
-
-            //  Buttons
-            if (event.button.y > front._info.height) {
-                if (event.button.x <= front._info.width/2) {
-                    if (event.button.x >= front._info.width/4) {
-                        //  1 CTRL + ALT + DEL
-                    } else {
-                        //  2 Refresh
-                    }
-                } else {
-                    if (event.button.x <= 3*front._info.width/4) {
-                        //  3 Options
-                    } else {
-                        //  4 Disconnect
-                    }
-                }
-
-            //  Mouse click
-            } else {
-
-            }
-        break;
-
-        case SDL_MOUSEBUTTONUP : //printf("Mouse Button Up\n");
-        break;
-
-        case SDL_MOUSEWHEEL : //printf("Mouse Wheel\n");
-        break;
-
-        default:
-        break;
-    }
-
-    event.type = 0;
-
-    SDL_Flip(front.getScreen());
-}
-*/
 
 
 
