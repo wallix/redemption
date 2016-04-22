@@ -591,13 +591,13 @@ public:
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
-                        "Please allow the clipboard redirection in Remote Desktop Services settings of the target.");
+                        "Please allow the drive redirection in Remote Desktop Services settings of the target.");
             }
             else if (!this->clipboard_initialized) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Clipboard Virtual Channel is unavailable. "
-                        "Please allow the drive redirection in Remote Desktop Services settings of the target.");
+                        "Please allow the clipboard redirection in Remote Desktop Services settings of the target.");
             }
             else if (!this->drive_ready) {
                 LOG(LOG_ERR,
@@ -612,9 +612,16 @@ public:
                         "Maybe something blocks it on the target. "
                         "You must also ensure that the temporary directory has enough free space.");
             }
+            else if (!this->copy_paste_loop_counter) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Session Probe launch cycle was interrupted. "
+                        "It is possible that the timeout duration is too short.");
+            }
             else {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
+                        "Session Probe failed to launch for unknonw reason. "
                         "clipboard_monitor_ready=%s format_data_requested=%s",
                     (this->clipboard_monitor_ready ? "yes" : "no"),
                     (this->format_data_requested ? "yes" : "no"));
@@ -638,6 +645,8 @@ private:
 //    }
 
     void do_state_enter() {
+        this->copy_paste_loop_counter++;
+
         if (!this->format_data_requested) {
             this->state = State::RUN_WIN_D_WIN_DOWN;
 

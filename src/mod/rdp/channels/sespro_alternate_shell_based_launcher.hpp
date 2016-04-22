@@ -125,7 +125,7 @@ public:
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
-                        "Please allow the clipboard redirection in Remote Desktop Services settings of the target.");
+                        "Please allow the drive redirection in Remote Desktop Services settings of the target.");
             }
             else if (!this->image_readed) {
                 LOG(LOG_ERR,
