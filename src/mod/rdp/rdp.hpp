@@ -1068,6 +1068,11 @@ public:
             cvc.set_session_probe_launcher(
                 this->session_probe_launcher.get());
 
+            FileSystemVirtualChannel& fsvc =
+                this->get_file_system_virtual_channel();
+            fsvc.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
             this->file_system_drive_manager.set_session_probe_launcher(
                 this->session_probe_launcher.get());
 
@@ -2324,7 +2329,7 @@ public:
                                                    lines of code that resets the OID and let's us extract the key. */
 
                                                 int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-                                            if ((nid == NID_md5WithRSAEncryption) 
+                                            if ((nid == NID_md5WithRSAEncryption)
                                                 || (nid == NID_shaWithRSAEncryption)){
                                                 ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
                                                 cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
@@ -2403,7 +2408,7 @@ public:
 //                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
 //                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
 
-                                            
+
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);
                                         if (sc_sec1.encryptionMethod == 1){
@@ -2416,7 +2421,7 @@ public:
                                 break;
                             case SC_NET:
 //                            LOG(LOG_INFO, "=================== SC_NET =============");
-                            
+
                                 {
                                     GCC::UserData::SCNet sc_net;
                                     sc_net.recv(f.payload, this->bogus_sc_net_size);

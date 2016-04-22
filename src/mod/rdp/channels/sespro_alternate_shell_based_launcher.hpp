@@ -28,6 +28,10 @@ class SessionProbeAlternateShellBasedLauncher : public SessionProbeLauncher {
 private:
     SessionProbeVirtualChannel* channel = nullptr;
 
+    bool drive_redirection_initialized = false;
+
+    bool image_readed = false;
+
     bool stopped = false;
 
     uint32_t verbose;
@@ -59,6 +63,17 @@ public:
         return false;
     }
 
+    virtual bool on_drive_redirection_initialize() override {
+        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+            LOG(LOG_INFO,
+                "SessionProbeAlternateShellBasedLauncher :=> on_drive_redirection_initialize");
+        }
+
+        this->drive_redirection_initialized = true;
+
+        return false;
+    }
+
     bool on_event() override { return false; }
 
     bool on_image_read(uint64_t offset, uint32_t length) override {
@@ -70,6 +85,8 @@ public:
         if (this->stopped) {
             return false;
         }
+
+        this->image_readed = true;
 
         if (this->channel) {
             this->channel->give_additional_launch_time();
@@ -95,13 +112,36 @@ public:
         this->channel = static_cast<SessionProbeVirtualChannel*>(channel);
     }
 
-    void stop() override {
+    void stop(bool bLaunchSuccessful) override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> stop");
         }
 
         this->stopped = true;
+
+        if (!bLaunchSuccessful) {
+            if (!this->drive_redirection_initialized) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "File System Virtual Channel is unavailable. "
+                        "Please allow the clipboard redirection in Remote Desktop Services settings of the target.");
+            }
+            else if (!this->image_readed) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Session Probe is not launched. "
+                        "Maybe something blocks it on the target. "
+                        "Is the target operating system a Microsoft server products? "
+                        "The Command Prompt should be published as RemoteApp, and should accept any command line parameters."
+                        "You must also ensure that the temporary directory has enough free space.");
+            }
+            else {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Session Probe failed to launch for unknonw reason.");
+            }
+        }
     }
 };
 

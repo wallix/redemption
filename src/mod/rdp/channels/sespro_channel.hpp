@@ -237,7 +237,7 @@ public:
                     "Session Probe is not ready yet!");
 
             if (this->session_probe_stop_launch_sequence_notifier) {
-                this->session_probe_stop_launch_sequence_notifier->stop();
+                this->session_probe_stop_launch_sequence_notifier->stop(false);
                 this->session_probe_stop_launch_sequence_notifier = nullptr;
             }
 
@@ -384,7 +384,7 @@ public:
             }
 
             if (this->session_probe_stop_launch_sequence_notifier) {
-                this->session_probe_stop_launch_sequence_notifier->stop();
+                this->session_probe_stop_launch_sequence_notifier->stop(true);
                 this->session_probe_stop_launch_sequence_notifier = nullptr;
             }
 
