@@ -13,80 +13,6 @@ from ctypes import CFUNCTYPE, c_ulong, c_ulonglong, c_void_p, c_int, c_char_p, c
 #                )
 # a return type of None means void
 
-class ssh_client_callbacks_struct(Structure):
-    _fields_ = [
-        ('size', c_ulong),
-        ('userdata', py_object),
-        ('auth_none_reply_client_cb',
-            CFUNCTYPE(None,
-                c_int, py_object)),
-        ('auth_function',
-            CFUNCTYPE(c_int,
-                c_char_p, c_char_p, c_uint32, c_int, c_int, py_object)),
-        ('connect_status_function', 
-            CFUNCTYPE(None,
-                py_object, c_float)),
-        ('global_request_function', 
-            CFUNCTYPE(None,
-                c_void_p, c_int, c_int, c_char_p, c_uint32, py_object)),
-        ('channel_open_request_x11_function', 
-            CFUNCTYPE(c_void_p,
-                c_void_p, c_char_p, c_int, c_uint32, c_uint32, c_uint32, py_object)),
-        ('channel_open_request_auth_agent_function', 
-            CFUNCTYPE(c_void_p,
-                c_void_p, py_object))
-    ]
-
-class ssh_channel_callbacks_struct(Structure):
-    _fields_ = [
-        ('size', c_ulong),
-        ('userdata', py_object),
-        ('channel_data_function',
-            CFUNCTYPE(c_int,
-                c_void_p, c_void_p, c_void_p, c_uint, c_int, py_object)),
-        ('channel_eof_function', 
-            CFUNCTYPE(None,
-                c_void_p, c_void_p, py_object)),
-        ('channel_close_function', 
-            CFUNCTYPE(None,
-                c_void_p, c_void_p, py_object)),
-        ('channel_signal_function', 
-            CFUNCTYPE(None,
-                c_void_p, c_void_p, c_char_p, py_object)),
-        ('channel_exit_status_function', 
-            CFUNCTYPE(None,
-                c_void_p, c_void_p, c_int, py_object)),
-        ('channel_exit_signal_function', 
-            CFUNCTYPE(None, 
-                c_void_p, c_void_p, c_char_p, c_int, c_char_p, c_char_p, py_object)),
-        ('channel_pty_request_function', 
-            CFUNCTYPE(c_int, 
-                c_void_p, c_void_p, c_char_p, c_int, c_int, c_int, c_int, py_object)),
-        ('channel_shell_request_function', 
-            CFUNCTYPE(c_int, 
-                c_void_p, c_void_p, py_object)),
-        ('channel_auth_agent_req_function', 
-            CFUNCTYPE(None,
-                c_void_p, c_void_p, py_object)),
-        ('channel_x11_req_function', 
-            CFUNCTYPE(None, 
-                c_void_p, c_void_p, c_int, c_char_p, c_char_p, c_uint, py_object)),
-        ('channel_pty_window_change_function', 
-            CFUNCTYPE(c_int, 
-                c_void_p, c_void_p, c_int, c_int, c_int, c_int, py_object)),
-        ('channel_exec_request_function', 
-            CFUNCTYPE(c_int, 
-                c_void_p, c_void_p, c_char_p, py_object)),
-        ('channel_env_request_function', 
-            CFUNCTYPE(c_int, 
-                c_void_p, c_void_p, c_char_p, c_char_p, py_object)),
-        ('channel_subsystem_request_function', 
-            CFUNCTYPE(c_int, 
-                c_void_p, c_void_p, c_char_p, py_object)),
-        ('channel_open_x11_server_status_function', 
-            CFUNCTYPE(None,
-                c_void_p, c_void_p, c_int, py_object))
-        ]
 
 #the event_callback used with poll events
 event_cb = CFUNCTYPE(c_int, 
@@ -139,7 +65,6 @@ class ssh_server_callbacks_struct(Structure):
     ]
 
 CB_SERVER_SESSION_FUNCS = {
-
     'connect_status_server_cb': (
         lambda userargp, statusp:
             userargp.cb_connectStatus(statusp)
@@ -148,7 +73,6 @@ CB_SERVER_SESSION_FUNCS = {
         lambda sessionp, gtype, want_reply, bind_address, bind_port, userargp:
             userargp.cb_globalRequest(gtype, want_reply, bind_address, bind_port)
     ),
-
     'auth_password_server_cb': (
         lambda sessionp, userp, passwordp, userargp:
             userargp.cb_authPassword(userp, str(passwordp))
@@ -193,6 +117,189 @@ CB_SERVER_SESSION_FUNCS = {
                     destination, destination_port, originator, originator_port)
     )
 }
+
+
+class ssh_client_callbacks_struct(Structure):
+    _fields_ = [
+        ('size', c_ulong),
+        ('userdata', py_object),
+        ('auth_none_reply_client_cb',
+            CFUNCTYPE(None,
+                c_int, py_object)),
+        ('auth_function',
+            CFUNCTYPE(c_int,
+                c_char_p, c_char_p, c_uint32, c_int, c_int, py_object)),
+        ('connect_status_function', 
+            CFUNCTYPE(None,
+                py_object, c_float)),
+        ('global_request_function', 
+            CFUNCTYPE(None,
+                c_void_p, c_int, c_int, c_char_p, c_uint32, py_object)),
+        ('channel_open_request_x11_function', 
+            CFUNCTYPE(c_void_p,
+                c_void_p, c_char_p, c_int, c_uint32, c_uint32, c_uint32, py_object)),
+        ('channel_open_request_auth_agent_function', 
+            CFUNCTYPE(c_void_p,
+                c_void_p, py_object))
+    ]
+
+CB_CLIENT_SESSION_FUNCS = {
+    'auth_none_reply_client_cb': (
+        lambda status, userargp:
+            userargp.cb_auth_none_reply_client(status)
+    ),
+
+    'auth_function': (
+        lambda promptp, bufp, length, echo, verify, userargp:
+            userargp.auth(promptp, bufp, length, echo, verify)
+    ),
+    'connect_status_function': (
+        lambda userargp, statusp:
+            userargp.connectStatus(statusp)
+    ),
+    'global_request_function': (
+        lambda sessionp, gtype, want_reply, bind_address, bind_port, userargp:
+            userargp.globalRequest(gtype, want_reply, bind_address, bind_port)
+    ),
+    'channel_open_request_x11_function': (
+        lambda sessionp, originator, originator_port, sender, window, packet_size, userargp:
+            userargp.channelOpenX11Request(str(originator), originator_port, sender, window, packet_size)
+    ),
+    'channel_open_request_auth_agent_function': (
+        lambda sessionp, userargp:
+            userargp.channelOpenAuthAgentRequest()
+    )
+}
+
+class ssh_channel_callbacks_struct(Structure):
+    _fields_ = [
+        ('size', c_ulong),
+        ('userdata', py_object),
+        ('channel_data_function',
+            CFUNCTYPE(c_int,
+                c_void_p, c_void_p, c_void_p, c_uint, c_int, py_object)),
+        ('channel_eof_function', 
+            CFUNCTYPE(None,
+                c_void_p, c_void_p, py_object)),
+        ('channel_close_function', 
+            CFUNCTYPE(None,
+                c_void_p, c_void_p, py_object)),
+        ('channel_signal_function', 
+            CFUNCTYPE(None,
+                c_void_p, c_void_p, c_char_p, py_object)),
+        ('channel_exit_status_function', 
+            CFUNCTYPE(None,
+                c_void_p, c_void_p, c_int, py_object)),
+        ('channel_exit_signal_function', 
+            CFUNCTYPE(None, 
+                c_void_p, c_void_p, c_char_p, c_int, c_char_p, c_char_p, py_object)),
+        ('channel_pty_request_function', 
+            CFUNCTYPE(c_int, 
+                c_void_p, c_void_p, c_char_p, c_int, c_int, c_int, c_int, py_object)),
+        ('channel_shell_request_function', 
+            CFUNCTYPE(c_int, 
+                c_void_p, c_void_p, py_object)),
+        ('channel_auth_agent_req_function', 
+            CFUNCTYPE(None,
+                c_void_p, c_void_p, py_object)),
+        ('channel_x11_req_function', 
+            CFUNCTYPE(None, 
+                c_void_p, c_void_p, c_int, c_char_p, c_char_p, c_uint, py_object)),
+        ('channel_pty_window_change_function', 
+            CFUNCTYPE(c_int, 
+                c_void_p, c_void_p, c_int, c_int, c_int, c_int, py_object)),
+        ('channel_exec_request_function', 
+            CFUNCTYPE(c_int, 
+                c_void_p, c_void_p, c_char_p, py_object)),
+        ('channel_env_request_function', 
+            CFUNCTYPE(c_int, 
+                c_void_p, c_void_p, c_char_p, c_char_p, py_object)),
+        ('channel_subsystem_request_function', 
+            CFUNCTYPE(c_int, 
+                c_void_p, c_void_p, c_char_p, py_object)),
+        ('channel_open_x11_server_status_function', 
+            CFUNCTYPE(None,
+                c_void_p, c_void_p, c_int, py_object))
+        ]
+
+CB_CHANNEL_FUNCS = {
+    'channel_data_function': (
+        lambda sessionp, channelp, datap, length, is_stderr, userargp:
+            (userargp.cb_data_stdout(ctypes.string_at(datap, length))
+            if not is_stderr
+            else userargp.cb_data_stderr(ctypes.string_at(datap, length)))
+    ),
+
+    'channel_eof_function': (
+        lambda sessionp, channelp, userargp:
+            userargp.cb_eof()
+    ),
+
+    'channel_close_function': (
+        lambda sessionp, channelp, userargp:
+            userargp.cb_close()
+    ),
+
+    'channel_signal_function': (
+        lambda sessionp, channelp, signalp, userargp:
+            userargp.cb_signal(signalp)
+    ),
+
+    'channel_exit_signal_function': (
+        lambda sessionp, channelp, signalp, corep, errmsgp, langp, userargp:
+            userargp.cb_exitSignal(signalp, corep, errmsgp, langp)
+    ),
+
+    'channel_exit_status_function': (
+        lambda sessionp, channelp, status, userargp:
+            userargp.cb_exitStatus(status)
+    ),
+
+    'channel_pty_request_function': (
+        lambda sessionp, channelp, term, width, height, pxwidth, pxheight, userargp:
+            userargp.cb_requestPty(term, width, height, pxwidth, pxheight)
+    ),
+
+    'channel_shell_request_function': (
+        lambda sessionp, channelp, userargp:
+            userargp.cb_requestShell()
+    ),
+
+    'channel_auth_agent_req_function': (
+        lambda sessionp, channelp, userargp:
+            userargp.cb_requestAuthAgent()
+    ),
+
+    'channel_x11_req_function': (
+        lambda sessionp, channelp, single_connection, auth_protocol, auth_cookie, screen_number, userargp:
+            userargp.cb_requestX11(single_connection, auth_protocol, auth_cookie, screen_number)
+    ),
+
+    'channel_pty_window_change_function': (
+        lambda sessionp, channelp, width, height, pxwidth, pxheight, userargp:
+            userargp.cb_ptyWindowChange(width, height, pxwidth, pxheight)
+    ),
+
+    'channel_exec_request_function': (
+        lambda sessionp, channelp, command, userargp:
+            userargp.cb_requestExec(command)
+    ),
+
+    'channel_env_request_function': (
+        lambda sessionp, channelp, env_name, env_value, userargp:
+            userargp.cb_requestEnv(env_name, env_value)
+    ),
+
+    'channel_subsystem_request_function': (
+        lambda sessionp, channelp, subsystem, userargp:
+            userargp.cb_requestSubsystem(subsystem)
+    ),
+    'channel_open_x11_server_status_function': (
+        lambda sessionp, channelp, status, userargp:
+            userargp.cb_open_x11_server_status(status)
+    )
+}
+
 
 try:
     libpath = ctypes.util.find_library('sashimi')
@@ -575,116 +682,6 @@ SSH_READ_PENDING = 0x02
 SSH_CLOSED_ERROR = 0x04
 SSH_WRITE_PENDING = 0x08
 # Python 2.7 compatibility layer
-
-CB_CHANNEL_FUNCS = {
-    'channel_data_function': (
-        lambda sessionp, channelp, datap, length, is_stderr, userargp:
-            (userargp.cb_data_stdout(ctypes.string_at(datap, length))
-            if not is_stderr
-            else userargp.cb_data_stderr(ctypes.string_at(datap, length)))
-    ),
-
-    'channel_eof_function': (
-        lambda sessionp, channelp, userargp:
-            userargp.cb_eof()
-    ),
-
-    'channel_close_function': (
-        lambda sessionp, channelp, userargp:
-            userargp.cb_close()
-    ),
-
-    'channel_signal_function': (
-        lambda sessionp, channelp, signalp, userargp:
-            userargp.cb_signal(signalp)
-    ),
-
-    'channel_exit_signal_function': (
-        lambda sessionp, channelp, signalp, corep, errmsgp, langp, userargp:
-            userargp.cb_exitSignal(signalp, corep, errmsgp, langp)
-    ),
-
-    'channel_exit_status_function': (
-        lambda sessionp, channelp, status, userargp:
-            userargp.cb_exitStatus(status)
-    ),
-
-    'channel_pty_request_function': (
-        lambda sessionp, channelp, term, width, height, pxwidth, pxheight, userargp:
-            userargp.cb_requestPty(term, width, height, pxwidth, pxheight)
-    ),
-
-    'channel_shell_request_function': (
-        lambda sessionp, channelp, userargp:
-            userargp.cb_requestShell()
-    ),
-
-    'channel_auth_agent_req_function': (
-        lambda sessionp, channelp, userargp:
-            userargp.cb_requestAuthAgent()
-    ),
-
-    'channel_x11_req_function': (
-        lambda sessionp, channelp, single_connection, auth_protocol, auth_cookie, screen_number, userargp:
-            userargp.cb_requestX11(single_connection, auth_protocol, auth_cookie, screen_number)
-    ),
-
-    'channel_pty_window_change_function': (
-        lambda sessionp, channelp, width, height, pxwidth, pxheight, userargp:
-            userargp.cb_ptyWindowChange(width, height, pxwidth, pxheight)
-    ),
-
-    'channel_exec_request_function': (
-        lambda sessionp, channelp, command, userargp:
-            userargp.cb_requestExec(command)
-    ),
-
-    'channel_env_request_function': (
-        lambda sessionp, channelp, env_name, env_value, userargp:
-            userargp.cb_requestEnv(env_name, env_value)
-    ),
-
-    'channel_subsystem_request_function': (
-        lambda sessionp, channelp, subsystem, userargp:
-            userargp.cb_requestSubsystem(subsystem)
-    ),
-    'channel_open_x11_server_status_function': (
-        lambda sessionp, channelp, status, userargp:
-            userargp.cb_openX11Acknowledged(status)
-    )
-}
-
-CB_CLIENT_SESSION_FUNCS = {
-    # include/libssh/libssh.h
-    # typedef int (*ssh_auth_callback) (const char *prompt, char *buf, size_t len,
-    #       int echo, int verify, void *userdata);
-    'auth_none_reply_client_cb': (
-        lambda status, userargp:
-            userargp.cb_auth_none_reply_client(status)
-    ),
-
-    'auth_function': (
-        lambda promptp, bufp, length, echo, verify, userargp:
-            userargp.auth(promptp, bufp, length, echo, verify)
-    ),
-    'connect_status_function': (
-        lambda userargp, statusp:
-            userargp.connectStatus(statusp)
-    ),
-    'global_request_function': (
-        lambda sessionp, gtype, want_reply, bind_address, bind_port, userargp:
-            userargp.globalRequest(gtype, want_reply, bind_address, bind_port)
-    ),
-    'channel_open_request_x11_function': (
-        lambda sessionp, originator, originator_port, sender, window, packet_size, userargp:
-            userargp.channelOpenX11Request(str(originator), originator_port, sender, window, packet_size)
-    ),
-    'channel_open_request_auth_agent_function': (
-        lambda sessionp, userargp:
-            userargp.channelOpenAuthAgentRequest()
-    )
-}
-
 
 def buildCallbacks(api_cb_struct, cb_methods, userdata):
     callbacks = api_cb_struct()
