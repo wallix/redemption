@@ -27,12 +27,6 @@
 #include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
-#include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -57,18 +51,29 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <boost/algorithm/string.hpp>
+
 #include "core/RDP/pointer.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/capabilities/glyphcache.hpp"
+#include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "core/client_info.hpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include "keymaps/Qt4_ScanCode_KeyMap.hpp"
 #include <QtGui/QImage>
+#pragma GCC diagnostic pop
 #endif
 
 class Form_Qt;
@@ -197,15 +202,15 @@ public:
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatShortName;   
+    std::string          _requestedFormatShortName;
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
     size_t               _bufferRDPClipboardChannelSizeTotal;
     int                  _bufferRDPCLipboardMetaFilePic_width;
     int                  _bufferRDPCLipboardMetaFilePic_height;
     int                  _bufferRDPClipboardMetaFilePicBPP;
-    
-    
+
+
     enum : int {
         COMMAND_VALID = 15
       , NAME_GOTTEN   =  1
@@ -220,43 +225,37 @@ public:
 
     void writeClientInfo() override;
 
-    virtual void flush() override;
-
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override;
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override;
-
-    virtual void send_global_palette() override;
 
     virtual void begin_update() override;
 
     virtual void end_update() override;
 
-    virtual void set_mod_palette(const BGRPalette & palette) override;
-
-    virtual void server_set_pointer(const Pointer & cursor) override;
+    virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override;
 
     virtual int server_resize(int width, int height, int bpp) override;
-    
+
     void send_buffer_to_clipboard();
-    
+
     void process_server_clipboard_data(int flags, InStream & chunk);
-    
+
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
-    
+
     std::string HTMLtoText(const std::string & html);
-    
+
     void send_to_clipboard_Buffer(InStream & chunk);
 
     void send_textBuffer_to_clipboard(bool isTextHtml);
-    
+
     void send_imageBuffer_to_clipboard();
-    
+
     void empty_buffer() override;
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
@@ -292,7 +291,7 @@ public:
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) override;
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override;
 
@@ -304,7 +303,7 @@ public:
 
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override;
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override;
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override;
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override;
 
