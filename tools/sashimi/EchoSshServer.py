@@ -53,7 +53,11 @@ class EchoChannel(object):
         self.libssh_channel = pysshct.lib.ssh_new_channel(
             session.libssh_session, self.callbacks)
 
-    # API checked
+    def __del__(self):
+        if self.libssh_channel is not None:
+            pysshct.lib.ssh_channel_free_server(self.session.libssh_session, self.libssh_channel)
+
+    # CHANNEL API
     def cb_data_stdout(self, data):
         Logger().info("@@@%s.cb_data_stdout(%s)" %
             (self.__class__.__name__, data))
@@ -61,31 +65,37 @@ class EchoChannel(object):
             self.session.libssh_session,
             self.libssh_channel, data, len(data))
 
-    # API checked
+    # CHANNEL API
+    def cb_data_stderr(self, data):
+        Logger().info("@@@%s.cb_data_stderr(%s)" %
+            (self.__class__.__name__, data))
+        return len(data)
+
+    # CHANNEL API
     def cb_eof(self):
         Logger().info("@@%s.cb_eof" % (self.__class__.__name__))
         return 0
 
-    # API checked
+    # CHANNEL API
     def cb_close(self):
         Logger().info("@@%s.cb_close" % (self.__class__.__name__))
         return 0
 
-    # API checked
+    # CHANNEL API
     def cb_signal(self, signal):
         Logger().info("@@%s.cb_signal()"  % (self.__class__.__name__))
 
-    # API checked
+    # CHANNEL API
     def cb_exitSignal(self, signalp, corep, errmsgp, langp):
         Logger().info("@@%s.cb_exitSignal(%s, %s, %s, %s)"  % (
             self.__class__.__name__, signalp, corep, errmsgp, langp))
 
-    # API checked
+    # CHANNEL API
     def cb_exitStatus(self, status):
         Logger().info("@@%s.cb_exitStatus()"  % (
             self.__class__.__name__, status))
 
-    # API checked
+    # CHANNEL API
     def cb_requestPty(self, term, width, height, pxwidth, pxheight):
         Logger().info("@@@%s.cb_requestPty(%s, %s, %s, %s, %s)" %
             (self.__class__.__name__,
@@ -98,25 +108,25 @@ class EchoChannel(object):
         self.pty_requested = True
         return pysshct.SSH_OK
 
-    # API checked
+    # CHANNEL API
     def cb_requestShell(self):
         Logger().info("@@@%s.cb_requestShell()" %
             (self.__class__.__name__,))
         return pysshct.SSH_OK
 
-    # API checked
+    # CHANNEL API
     def cb_requestAuthAgent(self):
         Logger().info("@@@%s.cb_requestAuthAgent()" % (self.__class__.__name__,))
         return pysshct.SSH_OK
 
-    # API checked
+    # CHANNEL API
     def cb_requestX11(self, single_conn, auth_proto, auth_cookie, screen_number):
         Logger().info("@@@%s.cb_requestX11(%s, %s, %s, %s)" % (
             self.__class__.__name__,
             single_conn, auth_proto, auth_cookie, screen_number))
         return pysshct.SSH_OK
 
-    # API checked
+    # CHANNEL API
     def cb_ptyWindowChange(self, width, height, pxwidth, pxheight):
         Logger().info("@@@%s.cb_ptyWindowChange(%s, %s, %s, %s)" %
             (self.__class__.__name__,
@@ -126,13 +136,13 @@ class EchoChannel(object):
         self.pixelwidth = pxwidth
         self.pixelheight = pxheight
 
-    # API checked
+    # CHANNEL API
     def cb_requestExec(self, command):
         Logger().info("@@@%s.cb_requestExec(%s)" %
             (self.__class__.__name__, command))
         return pysshct.SSH_OK
 
-    # API checked
+    # CHANNEL API
     def cb_requestEnv(self, env_name, env_value):
         Logger().info("@@@%s.cb_requestEnv(%s=%s)" %
             (self.__class__.__name__, env_name, env_value))
@@ -149,50 +159,6 @@ class EchoChannel(object):
         Logger().info("@@@%s.cb_requestSubsystem(%s)" %
             (self.__class__.__name__, status))
         return pysshct.SSH_ERROR
-
-
-    def isEof(self):
-        Logger().info("@@%s.isEof" % (self.__class__.__name__))
-        rc = pysshct.lib.ssh_channel_is_eof_server(self.session.libssh_session, self.libssh_channel)
-        return rc != 0
-
-    def sendEof(self):
-        Logger().info("@@%s.sendEof" % (self.__class__.__name__))
-        return pysshct.lib.ssh_channel_send_eof_server(self.session.libssh_session, self.libssh_channel)
-
-    def isOpen_server(self):
-        Logger().info("@@%s.isOpen_server" % (self.__class__.__name__))
-        rc = pysshct.lib.ssh_channel_is_open_server(self.session.libssh_session, self.libssh_channel)
-        return rc != 0
-
-    def sendExitStatus(self, status):
-        Logger().info("@@%s.sendExitStatus(%s)" % (self.__class__.__name__, status))
-        return pysshct.lib.ssh_channel_request_send_exit_status_server(
-            self.session.libssh_session, self.libssh_channel, status)
-
-    def close(self):
-        Logger().info("@@%s.close" % (self.__class__.__name__))
-        pysshct.lib.ssh_channel_close_server(self.session.libssh_session, self.libssh_channel)
-
-    def write_stderr_server(self, data):
-        return pysshct.lib.ssh_channel_write_stderr_server(self.session.libssh_session, self.libssh_channel, data, len(data))
-
-    def write_stdout_server(self, data):
-        return pysshct.lib.ssh_channel_write_server(self.session.libssh_session, self.libssh_channel, data, len(data))
-
-    def __del__(self):
-        if self.libssh_channel is not None:
-            pysshct.lib.ssh_channel_free_server(self.session.libssh_session, self.libssh_channel)
-
-    def cb_data_stderr(self, data):
-        Logger().info("@@@%s.cb_data_stderr(%s)" %
-            (self.__class__.__name__, data))
-        return len(data)
-
-    def cb_wakeup(self):
-        Logger().info("@@@%s.cb_wakeup(%s)" %
-            (self.__class__.__name__))
-        return
 
 class SSHServer(object):
     """
@@ -252,63 +218,38 @@ class SSHServer(object):
     def Log(self, priority, message):
         Logger().info("[sashimi] %s" % message)
 
+    # SERVER SESSION API
     def cb_connectStatus(self, status):
         Logger().info("@@%s.cb_connectStatus(%s)" % (
                     self.__class__.__name__,
                     status))
 
+    # SERVER SESSION API
     def cb_globalRequest(self, gtype, want_reply, bind_address, bind_port):
         Logger().info("@@%s.cb_globalRequest(%s, %s, %s, %s)" % (
                     self.__class__.__name__,
                     gtype, want_reply, bind_address, bind_port))
         return pysshct.SSH_ERROR
 
-    def cb_serviceRequest(self, service):
-        Logger().info("@@%s.cb_serviceRequest(%s)" % (
-            self.__class__.__name__, service))
-        return pysshct.SSH_OK
+    # SERVER SESSION API
+    def cb_authPassword(self, username, password):
+        Logger().info("@@%s.cb_authPassword(%s, %s)" % (self.__class__.__name__, username, password))
+        return pysshct.SSH_AUTH_SUCCESS
 
-    def verify_target_host(self):
-        Logger().info("@@%s.verify_target_host()" % (
-            self.__class__.__name__))
+    # SERVER SESSION API
+    def cb_authNone(self, username):
+        Logger().info("@@%s.cb_authNone(%s)" % (self.__class__.__name__, username))
+        pysshct.lib.ssh_set_auth_methods_server(self.libssh_session, self.authmethods)
+        return pysshct.SSH_AUTH_DENIED
 
-    def managePassthrough(self, password):
-        Logger().info("@@%s.managePassthrough()" % (
-            self.__class__.__name__))
-
-    def manageChallenge(self):
-        Logger().info("@@%s.manageChallenge(%s)" % (
-            self.__class__.__name__, service))
-
-    def manageKbdIntPassword(self):
-        Logger().info("@@%s.manageKbdIntPassword(%s)" % (
-            self.__class__.__name__))
-
-    def getInteractiveAnswers(self):
-        Logger().info("@@%s.getInteractiveAnswers()" % (
-            self.__class__.__name__))
-
+    # SERVER SESSION API
     def cb_authInteractive(self, username, kbdint_response):
         Logger().info("@@%s.cb_authInteractive(%s,%s)" % (
             self.__class__.__name__,
             username,
             kbdint_response))
 
-    # Server Session Callback API
-    # ===========================
-    def cb_authNone(self, username):
-        Logger().info("@@%s.cb_authNone(%s)" % (self.__class__.__name__, username))
-        pysshct.lib.ssh_set_auth_methods_server(self.libssh_session, self.authmethods)
-        return pysshct.SSH_AUTH_DENIED
-
-    def cb_authPassword(self, username, password):
-        Logger().info("@@%s.cb_authPassword(%s, %s)" % (self.__class__.__name__, username, password))
-        return pysshct.SSH_AUTH_SUCCESS
-
-    def cb_authPubkey(self, username, key, sig_state):
-        Logger().info("@@%s.cb_authPubkey(%s, %s)" % self.__class__.__name__, key, sig_state)
-        return pysshct.SSH_AUTH_DENIED
-
+    # SERVER SESSION API
     def cb_authGssapiMic(self, username, principal):
         Logger().info("@@%s.cb_authGssapiMic(%s, %s)" % (
                         self.__class__.__name__,
@@ -316,51 +257,32 @@ class SSHServer(object):
                         principal))
         return pysshct.SSH_AUTH_DENIED
 
+    # SERVER SESSION API
+    def cb_authPubkey(self, username, key, sig_state):
+        Logger().info("@@%s.cb_authPubkey(%s, %s)" % self.__class__.__name__, key, sig_state)
+        return pysshct.SSH_AUTH_DENIED
+
+    # SERVER SESSION API
+    def cb_serviceRequest(self, service):
+        Logger().info("@@%s.cb_serviceRequest(%s)" % (
+            self.__class__.__name__, service))
+        return pysshct.SSH_OK
+
+    # SERVER SESSION API
     def cb_channelOpenSessionRequest(self):
         Logger().info("@@%s.cb_channelOpenSessionRequest()" % self.__class__.__name__)
         channel = EchoChannel(self)
         return channel.libssh_channel
 
+    # SERVER SESSION API
     def cb_channelOpenDirectTCPIPRequest(self, dest, dest_port, orig, orig_port):
         Logger().info("@@%s.cb_channelOpenDirectTCPIPRequest(%s:%s, %s:%s)" % (
             self.__class__.__name__, dest, dest_port, orig, orig_port))
 
+    # SERVER SESSION API
     def channelOpenForwardedTCPIPRequest(self, dest, dest_port, orig, orig_port):
         Logger().info("@@%s.channelOpenForwardedTCPIPRequest(%s:%s, %s:%s)" % (
             self.__class__.__name__, dest, dest_port, orig, orig_port))
-
-    def get_targetsession(self, channel, subprotocol):
-        Logger().info("@@%s.get_targetsession(%s, %s)" % (
-            self.__class__.__name__, channel, subprotocol))
-
-        return self.target_session, "OK"
-
-    def interactiveShellChannel(self, channel, target):
-        Logger().info("@@%s.interactiveShellChannel(%s, %s)" % (
-            self.__class__.__name__, channel, target))
-
-        return True, "OK"
-
-    def check_timeframe(self):
-        Logger().info("@@%s.check_timeframe()" % (
-            self.__class__.__name__))
-        return (time.time() < self.wabengine_proxy.deconnection_epoch)
-
-    def _window_change_handler(self):
-        Logger().info("@@%s._window_change_handler()" % (
-            self.__class__.__name__))
-        return True
-
-    def get_real_target(self):
-        Logger().info("@@%s.get_real_target()" % (
-            self.__class__.__name__))
-
-    def start(self):
-        pass
-
-    def check_access_allowed(self, sub_protocol, right_protocol, right_subprotocols):
-        Logger().info("@@%s.check_access_allowed()" % (
-            self.__class__.__name__))
 
 def serve():
     import signal
@@ -380,7 +302,6 @@ def serve():
                         signal.signal(signal.SIGCHLD, signal.SIG_DFL)
                         s.close()
                         server = SSHServer(client_socket, client_addr, host_key)
-                        server.start()
                         sys.exit(0)
                     else:
                         client_socket.close()
