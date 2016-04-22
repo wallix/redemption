@@ -1,7 +1,7 @@
 #ifndef HEADER_OPENSSL_C_H
 # define HEADER_OPENSSL_C_H
 
-#include "sha_c.h"
+#include "ossl_typ_c.h"
 #include <pthread.h>
 
 # ifdef  __cplusplus
@@ -18,6 +18,12 @@ extern "C" {
 # define SHA_LONG unsigned int
 # define SHA_LBLOCK      16
 # define SHA_DIGEST_LENGTH 20
+
+
+# define SHA224_DIGEST_LENGTH    28
+# define SHA256_DIGEST_LENGTH    32
+# define SHA384_DIGEST_LENGTH    48
+# define SHA512_DIGEST_LENGTH    64
 
 typedef struct SHAstate_st {
     SHA_LONG h0, h1, h2, h3, h4;
@@ -308,6 +314,9 @@ struct bn_gencb_st
 };
 
 
+
+BN_CTX *BN_CTX_new(void);
+void BN_CTX_free(BN_CTX *c);
 
 /*************************************************************/
 /*                                                           */
@@ -1483,6 +1492,8 @@ typedef struct GENERAL_NAME_st {
     } d;
 } GENERAL_NAME;
 
+typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
+
 typedef struct GENERAL_SUBTREE_st {
     GENERAL_NAME *base;
     ASN1_INTEGER *minimum;
@@ -1639,6 +1650,15 @@ struct X509_POLICY_CACHE_st {
     long map_skip;
 };
 
+typedef struct X509_extension_st {
+    ASN1_OBJECT *object;
+    ASN1_BOOLEAN critical;
+    ASN1_OCTET_STRING value;
+} X509_EXTENSION;
+
+typedef STACK_OF(X509_EXTENSION) X509_EXTENSIONS;
+
+
 /*************************************************************/
 /*                                                           */
 /*                         BIO                               */
@@ -1750,6 +1770,353 @@ typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
 /*************************************************************/
 /*                                                           */
+/*                        STATEM                             */
+/*                                                           */
+/*************************************************************/
+
+/* Message flow states */
+typedef enum {
+    /* No handshake in progress */
+    MSG_FLOW_UNINITED,
+    /* A permanent error with this connection */
+    MSG_FLOW_ERROR,
+    /* We are about to renegotiate */
+    MSG_FLOW_RENEGOTIATE,
+    /* We are reading messages */
+    MSG_FLOW_READING,
+    /* We are writing messages */
+    MSG_FLOW_WRITING,
+    /* Handshake has finished */
+    MSG_FLOW_FINISHED
+} MSG_FLOW_STATE;
+
+
+/*
+ * Valid return codes used for functions performing work prior to or after
+ * sending or receiving a message
+ */
+typedef enum {
+    /* Something went wrong */
+    WORK_ERROR,
+    /* We're done working and there shouldn't be anything else to do after */
+    WORK_FINISHED_STOP,
+    /* We're done working move onto the next thing */
+    WORK_FINISHED_CONTINUE,
+    /* We're working on phase A */
+    WORK_MORE_A,
+    /* We're working on phase B */
+    WORK_MORE_B
+} WORK_STATE;
+
+/* Read states */
+typedef enum {
+    READ_STATE_HEADER,
+    READ_STATE_BODY,
+    READ_STATE_POST_PROCESS
+} READ_STATE;
+
+/* Write states */
+typedef enum {
+    WRITE_STATE_TRANSITION,
+    WRITE_STATE_PRE_WORK,
+    WRITE_STATE_SEND,
+    WRITE_STATE_POST_WORK
+} WRITE_STATE;
+
+
+/*
+ * The valid handshake states (one for each type message sent and one for each
+ * type of message received). There are also two "special" states:
+ * TLS = TLS or DTLS state
+ * DTLS = DTLS specific state
+ * CR/SR = Client Read/Server Read
+ * CW/SW = Client Write/Server Write
+ *
+ * The "special" states are:
+ * TLS_ST_BEFORE = No handshake has been initiated yet
+ * TLS_ST_OK = A handshake has been successfully completed
+ */
+typedef enum {
+    TLS_ST_BEFORE,
+    TLS_ST_OK,
+    DTLS_ST_CR_HELLO_VERIFY_REQUEST,
+    TLS_ST_CR_SRVR_HELLO,
+    TLS_ST_CR_CERT,
+    TLS_ST_CR_CERT_STATUS,
+    TLS_ST_CR_KEY_EXCH,
+    TLS_ST_CR_CERT_REQ,
+    TLS_ST_CR_SRVR_DONE,
+    TLS_ST_CR_SESSION_TICKET,
+    TLS_ST_CR_CHANGE,
+    TLS_ST_CR_FINISHED,
+    TLS_ST_CW_CLNT_HELLO,
+    TLS_ST_CW_CERT,
+    TLS_ST_CW_KEY_EXCH,
+    TLS_ST_CW_CERT_VRFY,
+    TLS_ST_CW_CHANGE,
+    TLS_ST_CW_NEXT_PROTO,
+    TLS_ST_CW_FINISHED,
+    TLS_ST_SW_HELLO_REQ,
+    TLS_ST_SR_CLNT_HELLO,
+    DTLS_ST_SW_HELLO_VERIFY_REQUEST,
+    TLS_ST_SW_SRVR_HELLO,
+    TLS_ST_SW_CERT,
+    TLS_ST_SW_KEY_EXCH,
+    TLS_ST_SW_CERT_REQ,
+    TLS_ST_SW_SRVR_DONE,
+    TLS_ST_SR_CERT,
+    TLS_ST_SR_KEY_EXCH,
+    TLS_ST_SR_CERT_VRFY,
+    TLS_ST_SR_NEXT_PROTO,
+    TLS_ST_SR_CHANGE,
+    TLS_ST_SR_FINISHED,
+    TLS_ST_SW_SESSION_TICKET,
+    TLS_ST_SW_CERT_STATUS,
+    TLS_ST_SW_CHANGE,
+    TLS_ST_SW_FINISHED
+} OSSL_HANDSHAKE_STATE;
+
+
+ /* This structure should be considered "opaque" to anything outside of the
+   state machine. No non-state machine code should be accessing the members
+   of this structure.                                                       
+ */
+struct ossl_statem_st {
+    MSG_FLOW_STATE state;
+    WRITE_STATE write_state;
+    WORK_STATE write_state_work;
+    READ_STATE read_state;
+    WORK_STATE read_state_work;
+    OSSL_HANDSHAKE_STATE hand_state;
+    int in_init;
+    int read_state_first_init;
+
+    /* true when we are actually in SSL_accept() or SSL_connect() */
+    int in_handshake;
+
+    /* Should we skip the CertificateVerify message? */
+    unsigned int no_cert_verify;
+
+    int use_timer;
+#ifndef OPENSSL_NO_SCTP
+    int in_sctp_read_sock;
+#endif
+};
+typedef struct ossl_statem_st OSSL_STATEM;
+
+
+
+/*************************************************************/
+/*                                                           */
+/*                       RECORD                              */
+/*                                                           */
+/*************************************************************/
+
+/* The maximum number of encrypt/decrypt pipelines we can support */
+# define SSL_MAX_PIPELINES  32
+
+#define SEQ_NUM_SIZE 8
+
+typedef struct ssl3_buffer_st {
+    /* at least SSL3_RT_MAX_PACKET_SIZE bytes, see ssl3_setup_buffers() */
+    unsigned char *buf;
+    /* default buffer size (or 0 if no default set) */
+    size_t default_len;
+    /* buffer size */
+    size_t len;
+    /* where to 'copy from' */
+    int offset;
+    /* how many bytes left */
+    int left;
+} SSL3_BUFFER;
+
+
+typedef struct dtls_record_layer_st {
+    /*
+     * The current data and handshake epoch.  This is initially
+     * undefined, and starts at zero once the initial handshake is
+     * completed
+     */
+    unsigned short r_epoch;
+    unsigned short w_epoch;
+
+    /* records being received in the current epoch */
+    DTLS1_BITMAP bitmap;
+    /* renegotiation starts a new set of sequence numbers */
+    DTLS1_BITMAP next_bitmap;
+
+    /* Received handshake records (processed and unprocessed) */
+    record_pqueue unprocessed_rcds;
+    record_pqueue processed_rcds;
+    /*
+     * Buffered application records. Only for records between CCS and
+     * Finished to prevent either protocol violation or unnecessary message
+     * loss.
+     */
+    record_pqueue buffered_app_data;
+    /*
+     * storage for Alert/Handshake protocol data received but not yet
+     * processed by ssl3_read_bytes:
+     */
+    unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
+    unsigned int alert_fragment_len;
+    unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
+    unsigned int handshake_fragment_len;
+
+    /* save last and current sequence numbers for retransmissions */
+    unsigned char last_write_sequence[8];
+    unsigned char curr_write_sequence[8];
+} DTLS_RECORD_LAYER;
+
+typedef struct ssl3_record_st {
+    /* Record layer version */
+    /* r */
+    int rec_version;
+
+    /* type of record */
+    /* r */
+    int type;
+
+    /* How many bytes available */
+    /* rw */
+    unsigned int length;
+
+    /*
+     * How many bytes were available before padding was removed? This is used
+     * to implement the MAC check in constant time for CBC records.
+     */
+    /* rw */
+    unsigned int orig_len;
+
+    /* read/write offset into 'buf' */
+    /* r */
+    unsigned int off;
+
+    /* pointer to the record data */
+    /* rw */
+    unsigned char *data;
+
+    /* where the decode bytes are */
+    /* rw */
+    unsigned char *input;
+
+    /* only used with decompression - malloc()ed */
+    /* r */
+    unsigned char *comp;
+
+    /* epoch number, needed by DTLS1 */
+    /* r */
+    unsigned long epoch;
+
+    /* sequence number, needed by DTLS1 */
+    /* r */
+    unsigned char seq_num[SEQ_NUM_SIZE];
+} SSL3_RECORD;
+
+typedef struct record_layer_st {
+    /* The parent SSL structure */
+    SSL *s;
+    /*
+     * Read as many input bytes as possible (for
+     * non-blocking reads)
+     */
+    int read_ahead;
+    /* where we are when reading */
+    int rstate;
+
+    /* How many pipelines can be used to read data */
+    unsigned int numrpipes;
+    /* How many pipelines can be used to write data */
+    unsigned int numwpipes;
+    /* read IO goes into here */
+    SSL3_BUFFER rbuf;
+    /* write IO goes into here */
+    SSL3_BUFFER wbuf[SSL_MAX_PIPELINES];
+    /* each decoded record goes in here */
+    SSL3_RECORD rrec[SSL_MAX_PIPELINES];
+
+    /* used internally to point at a raw packet */
+    unsigned char *packet;
+    unsigned int packet_length;
+
+    /* number of bytes sent so far */
+    unsigned int wnum;
+
+    /*
+     * storage for Alert/Handshake protocol data received but not yet
+     * processed by ssl3_read_bytes:
+     */
+    unsigned char alert_fragment[2];
+    unsigned int alert_fragment_len;
+    unsigned char handshake_fragment[4];
+    unsigned int handshake_fragment_len;
+
+    /* partial write - check the numbers match */
+    /* number bytes written */
+    int wpend_tot;
+    int wpend_type;
+    /* number of bytes submitted */
+    int wpend_ret;
+    const unsigned char *wpend_buf;
+
+    unsigned char read_sequence[SEQ_NUM_SIZE];
+    unsigned char write_sequence[SEQ_NUM_SIZE];
+    
+    DTLS_RECORD_LAYER *d;
+} RECORD_LAYER;
+
+
+
+/*************************************************************/
+/*                                                           */
+/*                        ASYNC                              */
+/*                                                           */
+/*************************************************************/
+
+typedef struct async_job_st ASYNC_JOB;
+typedef struct async_wait_ctx_st ASYNC_WAIT_CTX;
+
+
+struct async_job_st {
+    async_fibre fibrectx;
+    int (*func) (void *);
+    void *funcargs;
+    int ret;
+    int status;
+    ASYNC_WAIT_CTX *waitctx;
+};
+
+struct async_wait_ctx_st {
+    struct fd_lookup_st *fds;
+    size_t numadd;
+    size_t numdel;
+};
+
+/*************************************************************/
+/*                                                           */
+/*                         TLS                               */
+/*                                                           */
+/*************************************************************/
+typedef int (*tls_session_ticket_ext_cb_fn) (SSL *s,
+                                             const unsigned char *data,
+                                             int len, void *arg);
+typedef int (*tls_session_secret_cb_fn) (SSL *s, void *secret,
+                                         int *secret_len,
+                                         STACK_OF(SSL_CIPHER) *peer_ciphers,
+                                         const SSL_CIPHER **cipher, void *arg);
+
+typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
+
+/* TLS Session Ticket extension struct */
+struct tls_session_ticket_ext_st {
+    unsigned short length;
+    void *data;
+};
+
+
+
+/*************************************************************/
+/*                                                           */
 /*                         SSL                               */
 /*                                                           */
 /*************************************************************/
@@ -1763,9 +2130,6 @@ typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
 
 
-typedef struct ssl_method_st SSL_METHOD;
-
-typedef struct ssl_cipher_st SSL_CIPHER;
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
     uint32_t valid;
@@ -1923,6 +2287,62 @@ struct ssl_session_st {
 
 typedef int (*GEN_SESSION_CB) (const SSL *ssl, unsigned char *id,
                                unsigned int *id_len);
+/*
+ * A callback for verifying that the received SCTs are sufficient.
+ * Expected to return 1 if they are sufficient, otherwise 0.
+ * May return a negative integer if an error occurs.
+ * A connection should be aborted if the SCTs are deemed insufficient.
+ */
+typedef int(*ssl_ct_validation_cb)(const CT_POLICY_EVAL_CTX *ctx,
+                                   const STACK_OF(SCT) *scts, void *arg);
+
+typedef struct srp_ctx_st {
+    /* param for all the callbacks */
+    void *SRP_cb_arg;
+    /* set client Hello login callback */
+    int (*TLS_ext_srp_username_callback) (SSL *, int *, void *);
+    /* set SRP N/g param callback for verification */
+    int (*SRP_verify_param_callback) (SSL *, void *);
+    /* set SRP client passwd callback */
+    char *(*SRP_give_srp_client_pwd_callback) (SSL *, void *);
+    char *login;
+    BIGNUM *N, *g, *s, *B, *A;
+    BIGNUM *a, *b, *v;
+    char *info;
+    int strength;
+    unsigned long srp_Mask;
+} SRP_CTX;
+
+
+typedef struct danetls_record_st {
+    uint8_t usage;
+    uint8_t selector;
+    uint8_t mtype;
+    unsigned char *data;
+    size_t dlen;
+    EVP_PKEY *spki;
+} danetls_record;
+
+/*
+ * Per connection DANE state
+ */
+struct ssl_dane_st {
+    struct dane_ctx_st *dctx;
+    STACK_OF(danetls_record) *trecs;
+    STACK_OF(X509) *certs;      /* DANE-TA(2) Cert(0) Full(0) certs */
+    danetls_record *mtlsa;      /* Matching TLSA record */
+    X509           *mcert;      /* DANE matched cert */
+    uint32_t        umask;      /* Usages present */
+    int             mdpth;      /* Depth of matched cert */
+    int             pdpth;      /* Depth of PKIX trust */
+};
+
+
+struct dane_ctx_st {
+    const EVP_MD  **mdevp;      /* mtype -> digest */
+    uint8_t        *mdord;      /* mtype -> preference */
+    uint8_t         mdmax;      /* highest supported mtype */
+};
 
 
 struct ssl_ctx_st {
@@ -2195,7 +2615,12 @@ struct ssl_ctx_st {
     CRYPTO_RWLOCK *lock;
 };
 
-typedef struct ssl_cipher_st SSL_CIPHER;
+/* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
+typedef struct srtp_protection_profile_st {
+    const char *name;
+    unsigned long id;
+} SRTP_PROTECTION_PROFILE;
+
 struct ssl_st {
     /*
      * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
@@ -2500,7 +2925,8 @@ struct AUTHORITY_KEYID_st {
 /*                        CT_LOG                             */
 /*                                                           */
 /*************************************************************/
-
+/* All hashes are SHA256 in v1 of Certificate Transparency */
+# define CT_V1_HASHLEN SHA256_DIGEST_LENGTH
 /*
  * Information about a CT log server.
  */
@@ -2518,7 +2944,40 @@ struct ctlog_store_st {
     STACK_OF(CTLOG) *logs;
 };
 
+/* Context when evaluating whether a Certificate Transparency policy is met */
+struct ct_policy_eval_ctx_st {
+    X509 *cert;
+    X509 *issuer;
+    CTLOG_STORE *log_store;
+};
 
+
+/*************************************************************/
+/*                                                           */
+/*                        BUFFER                             */
+/*                                                           */
+/*************************************************************/
+struct buf_mem_st {
+    size_t length;              /* current number of bytes */
+    char *data;
+    size_t max;                 /* size of buffer */
+    unsigned long flags;
+};
+
+
+/*************************************************************/
+/*                                                           */
+/*                         COMP                              */
+/*                                                           */
+/*************************************************************/
+struct comp_ctx_st {
+    struct comp_method_st *meth;
+    unsigned long compress_in;
+    unsigned long compress_out;
+    unsigned long expand_in;
+    unsigned long expand_out;
+    void* data;
+};
 
 
 
