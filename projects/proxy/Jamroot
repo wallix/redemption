@@ -1231,7 +1231,7 @@ install local-install-sashimi
     : <location>/usr/lib
     ;
 
-obj sashimi_error : $(SRCDIR)/sashimi/error.cpp ;
+obj sashimi_error : $(SRCDIR)/sashimi/ssh_error.cpp ;
 obj sashimi_pki : $(SRCDIR)/sashimi/pki.cpp ;
 obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp ;
 obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp ;
