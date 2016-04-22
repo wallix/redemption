@@ -18,6 +18,7 @@ constant SRCDIR : ../../src ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 constant INCLUDEDIR : ../../include ;
+constant SYSTEMDIR : ../../src/system/linux ;
 
 
 # Returns environment value if it exists or default otherwise.
@@ -244,17 +245,17 @@ project redemption
     <include>$(SRCDIR)
     <include>/usr/include/x86_64-linux-gnu/qt5
     <include>src
-    <include>$(SRCDIR)/system/linux
+    <include>$(SYSTEMDIR)
     <include>$(INCLUDEDIR)
 
-    <include>$(SRCDIR)/core
-    <include>$(SRCDIR)/mod
-    <include>$(SRCDIR)/front
-    <include>$(SRCDIR)/acl
+#    <include>$(SRCDIR)/core
+#    <include>$(SRCDIR)/mod
+#    <include>$(SRCDIR)/front
+#    <include>$(SRCDIR)/acl
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/regex
+#    <include>$(SRCDIR)/regex
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes

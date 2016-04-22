@@ -18,6 +18,7 @@ constant SRCDIR : ../../src ;
 constant INCLUDEDIR : ../../include ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
+constant SYSTEMDIR : ../../src/system/linux ;
 
 #echo "toolset" [ feature.get-values toolset ] ;
 
@@ -254,7 +255,7 @@ project redemption
     : requirements
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
-    <include>$(SRCDIR)/system/linux
+    <include>$(SYSTEMDIR)
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
@@ -887,6 +888,7 @@ test-canonical utils/rdtsc.hpp ;
 test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
 
 test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 
@@ -1231,7 +1233,7 @@ install local-install-sashimi
     : <location>/usr/lib
     ;
 
-obj sashimi_error : $(SRCDIR)/sashimi/error.cpp ;
+obj sashimi_error : $(SRCDIR)/sashimi/ssh_error.cpp ;
 obj sashimi_pki : $(SRCDIR)/sashimi/pki.cpp ;
 obj sashimi_channels : $(SRCDIR)/sashimi/channels.cpp ;
 obj sashimi_sftp : $(SRCDIR)/sashimi/sftp.cpp ;
@@ -1276,8 +1278,6 @@ unit-test test_crypto :
     :
     $(TEST_DEPENDENCIES)
     ;
-
-test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
 
 test-canonical acl/mm_api.hpp ;
 test-canonical core/activity_checker.hpp ;
