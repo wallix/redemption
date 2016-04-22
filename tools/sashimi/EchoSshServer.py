@@ -240,7 +240,9 @@ class SSHServer(object):
     # SERVER SESSION API
     def cb_authPassword(self, username, password):
         Logger.info("@@%s.cb_authPassword(%s, %s)" % (self.__class__.__name__, username, password))
-        return pysshct.SSH_AUTH_SUCCESS
+        if username == "good" and password == "good":
+            return pysshct.SSH_AUTH_SUCCESS
+        return pysshct.SSH_AUTH_DENIED
 
     # SERVER SESSION API
     def cb_authNone(self, username):
