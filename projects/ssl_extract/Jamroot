@@ -14,11 +14,11 @@ import modules : poke ;
 #variant lenny : release ;
 
 path-constant TOP : . ;
-constant SYSTEMDIR : src/system/linux ;
 constant SRCDIR : ../../src ;
 constant INCLUDEDIR : ../../include ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
+constant SYSTEMDIR : ../../src/system/linux ;
 
 #echo "toolset" [ feature.get-values toolset ] ;
 
