@@ -24,6 +24,7 @@
 #include "core/front_api.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/strutils.hpp"
 
 #include <deque>
@@ -823,6 +824,8 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
     } device_redirection_manager;
 
     FrontAPI& front;
+
+    SessionProbeLauncher* drive_redirection_initialize_notifier = nullptr;
 
 public:
     struct Params : public BaseVirtualChannel::Params
@@ -1995,6 +1998,12 @@ public:
     bool process_server_client_id_confirm(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        if (this->drive_redirection_initialize_notifier) {
+            if (!this->drive_redirection_initialize_notifier->on_drive_redirection_initialize()) {
+                this->drive_redirection_initialize_notifier = nullptr;
+            }
+        }
+
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender())
             return true;
@@ -2515,6 +2524,10 @@ public:
                 chunk_data_length);
         }
     }   // process_server_message
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->drive_redirection_initialize_notifier = launcher;
+    }
 };  // class FileSystemVirtualChannel
 
 #endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP

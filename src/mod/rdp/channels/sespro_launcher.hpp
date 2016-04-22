@@ -36,6 +36,8 @@ public:
 
     virtual bool on_drive_access() = 0;
 
+    virtual bool on_drive_redirection_initialize() = 0;
+
     virtual bool on_event() = 0;
 
     virtual bool on_image_read(uint64_t offset, uint32_t length) = 0;
@@ -54,7 +56,7 @@ public:
     virtual void set_session_probe_virtual_channel(
         BaseVirtualChannel* channel) = 0;
 
-    virtual void stop() = 0;
+    virtual void stop(bool bLaunchSuccessful) = 0;
 };
 
 #endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP
