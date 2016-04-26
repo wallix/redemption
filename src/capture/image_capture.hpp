@@ -75,6 +75,7 @@ private:
                 this->breakpoint(now);
                 this->start_capture = now;
                 const_cast<Drawable&>(this->drawable).clear_mouse();
+
                 return microseconds(interval - duration % interval);
             }
             else {

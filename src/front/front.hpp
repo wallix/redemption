@@ -765,8 +765,13 @@ public:
 
         this->mod_bpp = bpp;
 
-        this->set_gd(this->orders.initialize_drawable(
-            this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb));
+        {
+            auto & gd_orders = this->orders.initialize_drawable(
+                this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb);
+            if (!this->capture) {
+                this->set_gd(gd_orders);
+            }
+        }
 
         if (bpp == 8) {
             this->palette_sent = false;
@@ -926,9 +931,6 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
-        }
-        else {
-            this->set_gd(null_gd());
         }
     }
 
@@ -1750,7 +1752,7 @@ public:
                 ssllib ssl;
                 ssl.ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
                 }
-                // beware order of parameters for key generation (decrypt/encrypt) 
+                // beware order of parameters for key generation (decrypt/encrypt)
                 // is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
@@ -4017,45 +4019,15 @@ protected:
     }
 
     void draw_impl(RDPPatBlt const & cmd, Rect const & clip) {
-        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
-            if (this->updatable_cache_brush(cmd.brush)) {
-                RDPPatBlt new_cmd = cmd;
-                // this change the brush and send it to to remote cache
-                this->update_cache_brush(new_cmd.brush);
-                this->graphics_update->draw(new_cmd, clip);
-            }
-            else {
-              this->graphics_update->draw(cmd, clip);
-            }
-        }
+        this->priv_draw_and_update_cache_brush(cmd, clip);
     }
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) {
-        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
-            if (this->updatable_cache_brush(cmd.brush)) {
-                RDP::RDPMultiPatBlt new_cmd = cmd;
-                // this change the brush and send it to to remote cache
-                this->update_cache_brush(new_cmd.brush);
-                this->graphics_update->draw(new_cmd, clip);
-            }
-            else {
-              this->graphics_update->draw(cmd, clip);
-            }
-        }
+        this->priv_draw_and_update_cache_brush(cmd, clip);
     }
 
     void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
-        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
-            if (this->updatable_cache_brush(cmd.brush)) {
-                RDPGlyphIndex new_cmd = cmd;
-                // this change the brush and send it to to remote cache
-                this->update_cache_brush(new_cmd.brush);
-                this->graphics_update->draw(new_cmd, clip, gly_cache);
-            }
-            else {
-                this->graphics_update->draw(cmd, clip, gly_cache);
-            }
-        }
+        this->priv_draw_and_update_cache_brush(cmd, clip, gly_cache);
     }
 
     void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
@@ -4097,6 +4069,21 @@ protected:
     }
 
 private:
+    template<class Cmd, class... Args>
+    void priv_draw_and_update_cache_brush(Cmd const & cmd, Rect const & clip, Args const & ... args) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                Cmd new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip, args...);
+            }
+            else {
+              this->graphics_update->draw(cmd, clip, args...);
+            }
+        }
+    }
+
     void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64) {

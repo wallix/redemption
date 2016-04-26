@@ -102,8 +102,8 @@ public:
         if (this->trans_builder.enable_rt) {
             this->enable_rt_display = ini.get<cfg::video::rt_display>();
             apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-            apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
             apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
+            apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
         }
         else {
             apis_register.capture_list.push_back(this->ic);
