@@ -63,227 +63,178 @@ class SslMd5
     }
 };
 
+static const uint32_t SslMd5_direct_tab[64] = {
+    0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+    0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+    0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+    0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+    0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c, 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+    0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+    0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+    0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+};
 
 
 class SslMd5_direct
 {
-    struct MD5CTX {
-        uint32_t count[2];
-        uint32_t state[4];
-        uint32_t buffer[16];
-    }
-    md5;
+    /* public domain md5 implementation based on rfc1321 and libtomcrypt */
 
-    /*
-       Initialise the MD5 context.
-    */
-    void MD5Init_direct (MD5CTX* context) {
-       context->count[0] = 0;
-       context->count[1] = 0;
+    struct md5 {
+	    uint64_t len;    /* processed message length */
+	    uint32_t h[4];   /* hash state */
+	    uint8_t buf[64]; /* message block buffer */
+    } md5;
 
-       context->state[0] = 0x67452301;              /* Load magic constants. */
-       context->state[1] = 0xefcdab89;
-       context->state[2] = 0x98badcfe;
-       context->state[3] = 0x10325476;
-    }
+    static uint32_t rol(uint32_t n, int k) { return (n << k) | (n >> (32-k)); }
+    #define F(x,y,z) (z ^ (x & (y ^ z)))
+    #define G(x,y,z) (y ^ (z & (y ^ x)))
+    #define H(x,y,z) (x ^ y ^ z)
+    #define I(x,y,z) (y ^ (x | ~z))
+    #define FF(a,b,c,d,w,s,t) a += F(b,c,d) + w + t; a = rol(a,s) + b
+    #define GG(a,b,c,d,w,s,t) a += G(b,c,d) + w + t; a = rol(a,s) + b
+    #define HH(a,b,c,d,w,s,t) a += H(b,c,d) + w + t; a = rol(a,s) + b
+    #define II(a,b,c,d,w,s,t) a += I(b,c,d) + w + t; a = rol(a,s) + b
 
-    static uint64_t ROTATE_LEFT(uint32_t x, uint32_t n) 
+    static void processblock(struct md5 *s, const uint8_t *buf)
     {
-        return ((x << n) | (x >> (32-n)));
+	    uint32_t i, W[16], a, b, c, d;
+
+	    for (i = 0; i < 16; i++) {
+		    W[i] = buf[4*i];
+		    W[i] |= (uint32_t)buf[4*i+1]<<8;
+		    W[i] |= (uint32_t)buf[4*i+2]<<16;
+		    W[i] |= (uint32_t)buf[4*i+3]<<24;
+	    }
+
+	    a = s->h[0];
+	    b = s->h[1];
+	    c = s->h[2];
+	    d = s->h[3];
+
+	    i = 0;
+	    FF(a,b,c,d, W[i],  7, 0xd76aa478); i++;
+	    FF(d,a,b,c, W[i], 12, 0xe8c7b756); i++;
+	    FF(c,d,a,b, W[i], 17, 0x242070db); i++;
+	    FF(b,c,d,a, W[i], 22, 0xc1bdceee); i++;
+	    FF(a,b,c,d, W[i],  7, 0xf57c0faf); i++;
+	    FF(d,a,b,c, W[i], 12, 0x4787c62a); i++;
+	    FF(c,d,a,b, W[i], 17, 0xa8304613); i++;
+	    FF(b,c,d,a, W[i], 22, 0xfd469501); i++;
+	    FF(a,b,c,d, W[i],  7, 0x698098d8); i++;
+	    FF(d,a,b,c, W[i], 12, 0x8b44f7af); i++;
+	    FF(c,d,a,b, W[i], 17, 0xffff5bb1); i++;
+	    FF(b,c,d,a, W[i], 22, 0x895cd7be); i++;
+	    FF(a,b,c,d, W[i],  7, 0x6b901122); i++;
+	    FF(d,a,b,c, W[i], 12, 0xfd987193); i++;
+	    FF(c,d,a,b, W[i], 17, 0xa679438e); i++;
+	    FF(b,c,d,a, W[i], 22, 0x49b40821); i++;
+
+	    while (i < 32) {
+		    GG(a,b,c,d, W[(5*i+1)%16],  5, SslMd5_direct_tab[i]); i++;
+		    GG(d,a,b,c, W[(5*i+1)%16],  9, SslMd5_direct_tab[i]); i++;
+		    GG(c,d,a,b, W[(5*i+1)%16], 14, SslMd5_direct_tab[i]); i++;
+		    GG(b,c,d,a, W[(5*i+1)%16], 20, SslMd5_direct_tab[i]); i++;
+	    }
+	    while (i < 48) {
+		    HH(a,b,c,d, W[(3*i+5)%16],  4, SslMd5_direct_tab[i]); i++;
+		    HH(d,a,b,c, W[(3*i+5)%16], 11, SslMd5_direct_tab[i]); i++;
+		    HH(c,d,a,b, W[(3*i+5)%16], 16, SslMd5_direct_tab[i]); i++;
+		    HH(b,c,d,a, W[(3*i+5)%16], 23, SslMd5_direct_tab[i]); i++;
+	    }
+	    while (i < 64) {
+		    II(a,b,c,d, W[7*i%16],  6, SslMd5_direct_tab[i]); i++;
+		    II(d,a,b,c, W[7*i%16], 10, SslMd5_direct_tab[i]); i++;
+		    II(c,d,a,b, W[7*i%16], 15, SslMd5_direct_tab[i]); i++;
+		    II(b,c,d,a, W[7*i%16], 21, SslMd5_direct_tab[i]); i++;
+	    }
+
+	    s->h[0] += a;
+	    s->h[1] += b;
+	    s->h[2] += c;
+	    s->h[3] += d;
     }
 
-    static uint64_t F(uint32_t x, uint32_t y, uint32_t z) { return (z ^ (x & (y ^ z))); }
-    static uint64_t G(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (z & (x ^ y))); }
-    static uint64_t H(uint32_t x, uint32_t y, uint32_t z) { return (x ^ y ^ z); }
-    static uint64_t I(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (x | ~z)); }
-
-    static void FF(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac)
+    static void pad(struct md5 *s)
     {
-        (a) += F (b, c, d) + (x) + (uint32_t)(ac); (a) = ROTATE_LEFT (a, s); (a) += (b); 
+	    unsigned r = s->len % 64;
+
+	    s->buf[r++] = 0x80;
+	    if (r > 56) {
+		    memset(s->buf + r, 0, 64 - r);
+		    r = 0;
+		    processblock(s, s->buf);
+	    }
+	    memset(s->buf + r, 0, 56 - r);
+	    s->len *= 8;
+	    s->buf[56] = s->len;
+	    s->buf[57] = s->len >> 8;
+	    s->buf[58] = s->len >> 16;
+	    s->buf[59] = s->len >> 24;
+	    s->buf[60] = s->len >> 32;
+	    s->buf[61] = s->len >> 40;
+	    s->buf[62] = s->len >> 48;
+	    s->buf[63] = s->len >> 56;
+	    processblock(s, s->buf);
     }
 
-    static void GG(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac)
+    static void md5_init(struct md5 *s)
     {
-        (a) += G (b, c, d) + (x) + (uint32_t)(ac); (a) = ROTATE_LEFT (a, s); (a) += (b);
+	    s->len = 0;
+	    s->h[0] = 0x67452301;
+	    s->h[1] = 0xefcdab89;
+	    s->h[2] = 0x98badcfe;
+	    s->h[3] = 0x10325476;
     }
 
-    static void HH(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac)
+    static void md5_sum(struct md5 *s, uint8_t *md)
     {
-        (a) += H (b, c, d) + (x) + (uint32_t)(ac); (a) = ROTATE_LEFT (a, s); (a) += (b);
+	    int i;
+
+	    pad(s);
+	    for (i = 0; i < 4; i++) {
+		    md[4*i] = s->h[i];
+		    md[4*i+1] = s->h[i] >> 8;
+		    md[4*i+2] = s->h[i] >> 16;
+		    md[4*i+3] = s->h[i] >> 24;
+	    }
     }
 
-    static void II(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, uint32_t s, uint32_t ac)
+    static void md5_update(struct md5 *s, const void *m, unsigned long len)
     {
-        (a) += I (b, c, d) + (x) + (uint32_t)(ac); (a) = ROTATE_LEFT (a, s); (a) += (b);
-    }
+	    const uint8_t *p = reinterpret_cast<const uint8_t*>(m);
+	    unsigned r = s->len % 64;
 
-    static void __MD5Transform_direct(uint32_t state[4], const uint8_t *in, int repeat) {
-       const uint32_t *x;
-
-       uint32_t  a = state[0];
-       uint32_t  b = state[1];
-       uint32_t  c = state[2];
-       uint32_t  d = state[3];
-
-       for ( ; repeat; repeat--) {
-            uint32_t tempBuffer[16];
-            if ((long)in & 3) {
-                memcpy(tempBuffer, in, 64);
-                x = tempBuffer;
-            }
-            else {
-                x = (const uint32_t *) in;
-            }
-
-            FF (a, b, c, d, x[ 0],  7, 0xd76aa478); /*  1 */     /* Round 1 */
-            FF (d, a, b, c, x[ 1], 12, 0xe8c7b756); /*  2 */
-            FF (c, d, a, b, x[ 2], 17, 0x242070db); /*  3 */
-            FF (b, c, d, a, x[ 3], 22, 0xc1bdceee); /*  4 */
-            FF (a, b, c, d, x[ 4],  7, 0xf57c0faf); /*  5 */
-            FF (d, a, b, c, x[ 5], 12, 0x4787c62a); /*  6 */
-            FF (c, d, a, b, x[ 6], 17, 0xa8304613); /*  7 */
-            FF (b, c, d, a, x[ 7], 22, 0xfd469501); /*  8 */
-            FF (a, b, c, d, x[ 8],  7, 0x698098d8); /*  9 */
-            FF (d, a, b, c, x[ 9], 12, 0x8b44f7af); /* 10 */
-            FF (c, d, a, b, x[10], 17, 0xffff5bb1); /* 11 */
-            FF (b, c, d, a, x[11], 22, 0x895cd7be); /* 12 */
-            FF (a, b, c, d, x[12],  7, 0x6b901122); /* 13 */
-            FF (d, a, b, c, x[13], 12, 0xfd987193); /* 14 */
-            FF (c, d, a, b, x[14], 17, 0xa679438e); /* 15 */
-            FF (b, c, d, a, x[15], 22, 0x49b40821); /* 16 */
-
-            GG (a, b, c, d, x[ 1],  5, 0xf61e2562); /* 17 */     /* Round 2 */
-            GG (d, a, b, c, x[ 6],  9, 0xc040b340); /* 18 */
-            GG (c, d, a, b, x[11], 14, 0x265e5a51); /* 19 */
-            GG (b, c, d, a, x[ 0], 20, 0xe9b6c7aa); /* 20 */
-            GG (a, b, c, d, x[ 5],  5, 0xd62f105d); /* 21 */
-            GG (d, a, b, c, x[10],  9, 0x02441453); /* 22 */
-            GG (c, d, a, b, x[15], 14, 0xd8a1e681); /* 23 */
-            GG (b, c, d, a, x[ 4], 20, 0xe7d3fbc8); /* 24 */
-            GG (a, b, c, d, x[ 9],  5, 0x21e1cde6); /* 25 */
-            GG (d, a, b, c, x[14],  9, 0xc33707d6); /* 26 */
-            GG (c, d, a, b, x[ 3], 14, 0xf4d50d87); /* 27 */
-            GG (b, c, d, a, x[ 8], 20, 0x455a14ed); /* 28 */
-            GG (a, b, c, d, x[13],  5, 0xa9e3e905); /* 29 */
-            GG (d, a, b, c, x[ 2],  9, 0xfcefa3f8); /* 30 */
-            GG (c, d, a, b, x[ 7], 14, 0x676f02d9); /* 31 */
-            GG (b, c, d, a, x[12], 20, 0x8d2a4c8a); /* 32 */
-
-            HH (a, b, c, d, x[ 5],  4, 0xfffa3942); /* 33 */     /* Round 3 */
-            HH (d, a, b, c, x[ 8], 11, 0x8771f681); /* 34 */
-            HH (c, d, a, b, x[11], 16, 0x6d9d6122); /* 35 */
-            HH (b, c, d, a, x[14], 23, 0xfde5380c); /* 36 */
-            HH (a, b, c, d, x[ 1],  4, 0xa4beea44); /* 37 */
-            HH (d, a, b, c, x[ 4], 11, 0x4bdecfa9); /* 38 */
-            HH (c, d, a, b, x[ 7], 16, 0xf6bb4b60); /* 39 */
-            HH (b, c, d, a, x[10], 23, 0xbebfbc70); /* 40 */
-            HH (a, b, c, d, x[13],  4, 0x289b7ec6); /* 41 */
-            HH (d, a, b, c, x[ 0], 11, 0xeaa127fa); /* 42 */
-            HH (c, d, a, b, x[ 3], 16, 0xd4ef3085); /* 43 */
-            HH (b, c, d, a, x[ 6], 23, 0x04881d05); /* 44 */
-            HH (a, b, c, d, x[ 9],  4, 0xd9d4d039); /* 45 */
-            HH (d, a, b, c, x[12], 11, 0xe6db99e5); /* 46 */
-            HH (c, d, a, b, x[15], 16, 0x1fa27cf8); /* 47 */
-            HH (b, c, d, a, x[ 2], 23, 0xc4ac5665); /* 48 */
-
-            II (a, b, c, d, x[ 0],  6, 0xf4292244); /* 49 */     /* Round 4 */
-            II (d, a, b, c, x[ 7], 10, 0x432aff97); /* 50 */
-            II (c, d, a, b, x[14], 15, 0xab9423a7); /* 51 */
-            II (b, c, d, a, x[ 5], 21, 0xfc93a039); /* 52 */
-            II (a, b, c, d, x[12],  6, 0x655b59c3); /* 53 */
-            II (d, a, b, c, x[ 3], 10, 0x8f0ccc92); /* 54 */
-            II (c, d, a, b, x[10], 15, 0xffeff47d); /* 55 */
-            II (b, c, d, a, x[ 1], 21, 0x85845dd1); /* 56 */
-            II (a, b, c, d, x[ 8],  6, 0x6fa87e4f); /* 57 */
-            II (d, a, b, c, x[15], 10, 0xfe2ce6e0); /* 58 */
-            II (c, d, a, b, x[ 6], 15, 0xa3014314); /* 59 */
-            II (b, c, d, a, x[13], 21, 0x4e0811a1); /* 60 */
-            II (a, b, c, d, x[ 4],  6, 0xf7537e82); /* 61 */
-            II (d, a, b, c, x[11], 10, 0xbd3af235); /* 62 */
-            II (c, d, a, b, x[ 2], 15, 0x2ad7d2bb); /* 63 */
-            II (b, c, d, a, x[ 9], 21, 0xeb86d391); /* 64 */
-
-            state[0] = a = a + state[0];
-            state[1] = b = b + state[1];
-            state[2] = c = c + state[2];
-            state[3] = d = d + state[3];
-
-            in += 64;
-        }
-    }
-
-
-    /*
-       MD5 block update operation:
-       Process another sub-string of the message and update the context.
-    */
-    static inline void MD5Update_direct(MD5CTX *context, const uint8_t *input, size_t inputBytes) {
-        int i;
-        int len;
-
-        /* Compute number of bytes mod 64 */
-        int byteIndex = (context->count[0] >> 3) & 0x3F;
-
-        /* Update number of bits: count += 8 * inputBytes */
-        if ((context->count[0] += inputBytes << 3) < (inputBytes << 3)){
-            context->count[1]++;
-        }
-        context->count[1] += (inputBytes >> (32-3));
-        unsigned int partLen = (64 - byteIndex);
-
-        /* Transform as many times as possible. */
-        if (inputBytes >= partLen) {
-            memcpy (context->buffer + byteIndex, input, partLen);
-            __MD5Transform_direct (context->state, (const uint8_t *) context->buffer, 1);
-            len = (inputBytes - partLen) / 64;
-            __MD5Transform_direct(context->state, &input[partLen], len);
-            i = partLen + 64 * len;
-            byteIndex = 0;
-        } else {
-            i = 0;
-        }
-
-        /* Buffer remaining input */
-        memcpy (&context->buffer[byteIndex], &input[i], inputBytes - i);
-    }
-
-    static inline void MD5Final_direct(uint8_t digest[16], MD5CTX* context) {
-       static uint8_t finalBlock[64];
-
-       uint32_t bits[2];
-       int      byteIndex;
-       int      finalBlockLength;
-
-       byteIndex = (context->count[0] >> 3) & 0x3F;
-       finalBlockLength = ((byteIndex < 56) ? 56 : 120) - byteIndex;
-       finalBlock[0] = 0x80;
-       memcpy(bits, context->count, 8);
-       MD5Update_direct (context, finalBlock, finalBlockLength);
-       MD5Update_direct (context, (const uint8_t *) bits, 8);
-       memcpy (digest, context->state, 16);
-       memset(context, 0, sizeof(*context));
+	    s->len += len;
+	    if (r) {
+		    if (len < 64 - r) {
+			    memcpy(s->buf + r, p, len);
+			    return;
+		    }
+		    memcpy(s->buf + r, p, 64 - r);
+		    len -= 64 - r;
+		    p += 64 - r;
+		    processblock(s, s->buf);
+	    }
+	    for (; len >= 64; len -= 64, p += 64)
+		    processblock(s, p);
+	    memcpy(s->buf, p, len);
     }
 
     public:
     SslMd5_direct()
     {
-        MD5Init_direct(&this->md5);
+        SslMd5_direct::md5_init(&this->md5);
     }
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        MD5Update_direct(&this->md5, data, data_size);
+        SslMd5_direct::md5_update(&this->md5, data, data_size);
     }
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
-        if (MD5_DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[MD5_DIGEST_LENGTH];
-            MD5Final_direct(tmp, &this->md5);
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
-        MD5Final_direct(out_data, &this->md5);
+        assert(MD5_DIGEST_LENGTH == out_data_size);
+        SslMd5_direct::md5_sum(&this->md5, out_data);
     }
 };
 

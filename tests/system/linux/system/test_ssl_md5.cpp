@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestSslMd5)
 
         md.update(data, sizeof(data));
         md.final(sig, sizeof(sig));
-        // hexdump96_c(sig, sizeof(sig));
+        //hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
                                  "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2"
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestSslMd5)
         md.update(data + 256, 128);
         md.update(data + 384, 128);
         md.final(sig, sizeof(sig));
-        // hexdump96_c(sig, sizeof(sig));
+        //hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
                                  "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2"
@@ -209,7 +209,9 @@ BOOST_AUTO_TEST_CASE(TestSslMd5_direct)
 
         md.update(data, sizeof(data));
         md.final(sig, sizeof(sig));
-        // hexdump96_c(sig, sizeof(sig));
+        hexdump96_c(sig, sizeof(sig));
+        hexdump96_c("\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2"
+                    "\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc", sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
                                  "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2"
@@ -226,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestSslMd5_direct)
         md.update(data + 256, 128);
         md.update(data + 384, 128);
         md.final(sig, sizeof(sig));
-        // hexdump96_c(sig, sizeof(sig));
+        hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
                                  "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2"
