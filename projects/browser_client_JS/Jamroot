@@ -24,7 +24,7 @@ project redjs
     <include>$(INCLUDEDIR)
     <cxxflags>-std=c++11
     <cxxflags>-Wall
-    <cxxflags>-O1
+    #<cxxflags>-O1
     : default-build release
     ;
 
@@ -78,7 +78,7 @@ exejs client_rdp_JS_natif.js
      :  
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>-g3 
-	#<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_mousePressEventG']\""
+	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_mousePressEventG']\""
      ;
 
 
