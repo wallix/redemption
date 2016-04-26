@@ -615,7 +615,9 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void mousePressEvent(int x, int y, int button) {}
+    void mousePressEvent(int x, int y, int button) {
+        EM_ASM_({ console.log($0 + ' ' + $1 + ' ' + $2); }, x, y, button);
+    }
 
     void mouseReleaseEvent(int x, int y, int button) {}
 /*
