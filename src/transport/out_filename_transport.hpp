@@ -456,7 +456,6 @@ namespace transbuf {
 //                LOG(LOG_ERR, "iv randomization failed for crypto file=%s\n", filename);
 //                return -1;
 //            }
-
             return this->encrypt.open(this->file, trace_key, this->cctx, iv);
         }
 
