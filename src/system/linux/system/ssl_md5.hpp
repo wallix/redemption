@@ -63,18 +63,6 @@ class SslMd5
     }
 };
 
-static const uint32_t SslMd5_direct_tab[64] = {
-    0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
-    0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
-    0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
-    0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
-    0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c, 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
-    0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
-    0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
-    0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
-};
-
-
 class SslMd5_direct
 {
     /* public domain md5 implementation based on rfc1321 and libtomcrypt */
@@ -99,54 +87,86 @@ class SslMd5_direct
     {
 	    uint32_t i, W[16], a, b, c, d;
 
-	    for (i = 0; i < 16; i++) {
-		    W[i] = buf[4*i];
-		    W[i] |= (uint32_t)buf[4*i+1]<<8;
-		    W[i] |= (uint32_t)buf[4*i+2]<<16;
-		    W[i] |= (uint32_t)buf[4*i+3]<<24;
-	    }
+        for (i = 0; i < 16; i++) {
+            W[i] = buf[4*i];
+            W[i] |= static_cast<uint32_t>(buf[4*i+1]<<8);
+            W[i] |= static_cast<uint32_t>(buf[4*i+2]<<16);
+            W[i] |= static_cast<uint32_t>(buf[4*i+3]<<24);
+        }
 
-	    a = s->h[0];
-	    b = s->h[1];
-	    c = s->h[2];
-	    d = s->h[3];
+        a = s->h[0];
+        b = s->h[1];
+        c = s->h[2];
+        d = s->h[3];
 
-	    i = 0;
-	    FF(a,b,c,d, W[i],  7, 0xd76aa478); i++;
-	    FF(d,a,b,c, W[i], 12, 0xe8c7b756); i++;
-	    FF(c,d,a,b, W[i], 17, 0x242070db); i++;
-	    FF(b,c,d,a, W[i], 22, 0xc1bdceee); i++;
-	    FF(a,b,c,d, W[i],  7, 0xf57c0faf); i++;
-	    FF(d,a,b,c, W[i], 12, 0x4787c62a); i++;
-	    FF(c,d,a,b, W[i], 17, 0xa8304613); i++;
-	    FF(b,c,d,a, W[i], 22, 0xfd469501); i++;
-	    FF(a,b,c,d, W[i],  7, 0x698098d8); i++;
-	    FF(d,a,b,c, W[i], 12, 0x8b44f7af); i++;
-	    FF(c,d,a,b, W[i], 17, 0xffff5bb1); i++;
-	    FF(b,c,d,a, W[i], 22, 0x895cd7be); i++;
-	    FF(a,b,c,d, W[i],  7, 0x6b901122); i++;
-	    FF(d,a,b,c, W[i], 12, 0xfd987193); i++;
-	    FF(c,d,a,b, W[i], 17, 0xa679438e); i++;
-	    FF(b,c,d,a, W[i], 22, 0x49b40821); i++;
+        i = 0;
+        FF(a,b,c,d, W[i],  7, 0xd76aa478); i++;
+        FF(d,a,b,c, W[i], 12, 0xe8c7b756); i++;
+        FF(c,d,a,b, W[i], 17, 0x242070db); i++;
+        FF(b,c,d,a, W[i], 22, 0xc1bdceee); i++;
+        FF(a,b,c,d, W[i],  7, 0xf57c0faf); i++;
+        FF(d,a,b,c, W[i], 12, 0x4787c62a); i++;
+        FF(c,d,a,b, W[i], 17, 0xa8304613); i++;
+        FF(b,c,d,a, W[i], 22, 0xfd469501); i++;
+        FF(a,b,c,d, W[i],  7, 0x698098d8); i++;
+        FF(d,a,b,c, W[i], 12, 0x8b44f7af); i++;
+        FF(c,d,a,b, W[i], 17, 0xffff5bb1); i++;
+        FF(b,c,d,a, W[i], 22, 0x895cd7be); i++;
+        FF(a,b,c,d, W[i],  7, 0x6b901122); i++;
+        FF(d,a,b,c, W[i], 12, 0xfd987193); i++;
+        FF(c,d,a,b, W[i], 17, 0xa679438e); i++;
+        FF(b,c,d,a, W[i], 22, 0x49b40821); i++;
 
-	    while (i < 32) {
-		    GG(a,b,c,d, W[(5*i+1)%16],  5, SslMd5_direct_tab[i]); i++;
-		    GG(d,a,b,c, W[(5*i+1)%16],  9, SslMd5_direct_tab[i]); i++;
-		    GG(c,d,a,b, W[(5*i+1)%16], 14, SslMd5_direct_tab[i]); i++;
-		    GG(b,c,d,a, W[(5*i+1)%16], 20, SslMd5_direct_tab[i]); i++;
-	    }
-	    while (i < 48) {
-		    HH(a,b,c,d, W[(3*i+5)%16],  4, SslMd5_direct_tab[i]); i++;
-		    HH(d,a,b,c, W[(3*i+5)%16], 11, SslMd5_direct_tab[i]); i++;
-		    HH(c,d,a,b, W[(3*i+5)%16], 16, SslMd5_direct_tab[i]); i++;
-		    HH(b,c,d,a, W[(3*i+5)%16], 23, SslMd5_direct_tab[i]); i++;
-	    }
-	    while (i < 64) {
-		    II(a,b,c,d, W[7*i%16],  6, SslMd5_direct_tab[i]); i++;
-		    II(d,a,b,c, W[7*i%16], 10, SslMd5_direct_tab[i]); i++;
-		    II(c,d,a,b, W[7*i%16], 15, SslMd5_direct_tab[i]); i++;
-		    II(b,c,d,a, W[7*i%16], 21, SslMd5_direct_tab[i]); i++;
-	    }
+        GG(a,b,c,d, W[(5*i+1)%16],  5, 0xf61e2562); i++;
+        GG(d,a,b,c, W[(5*i+1)%16],  9, 0xc040b340); i++;
+        GG(c,d,a,b, W[(5*i+1)%16], 14, 0x265e5a51); i++;
+        GG(b,c,d,a, W[(5*i+1)%16], 20, 0xe9b6c7aa); i++;
+        GG(a,b,c,d, W[(5*i+1)%16],  5, 0xd62f105d); i++;
+        GG(d,a,b,c, W[(5*i+1)%16],  9, 0x02441453); i++;
+        GG(c,d,a,b, W[(5*i+1)%16], 14, 0xd8a1e681); i++;
+        GG(b,c,d,a, W[(5*i+1)%16], 20, 0xe7d3fbc8); i++;
+        GG(a,b,c,d, W[(5*i+1)%16],  5, 0x21e1cde6); i++;
+        GG(d,a,b,c, W[(5*i+1)%16],  9, 0xc33707d6); i++;
+        GG(c,d,a,b, W[(5*i+1)%16], 14, 0xf4d50d87); i++;
+        GG(b,c,d,a, W[(5*i+1)%16], 20, 0x455a14ed); i++;
+        GG(a,b,c,d, W[(5*i+1)%16],  5, 0xa9e3e905); i++;
+        GG(d,a,b,c, W[(5*i+1)%16],  9, 0xfcefa3f8); i++;
+        GG(c,d,a,b, W[(5*i+1)%16], 14, 0x676f02d9); i++;
+        GG(b,c,d,a, W[(5*i+1)%16], 20, 0x8d2a4c8a); i++;
+
+        HH(a,b,c,d, W[(3*i+5)%16],  4, 0xfffa3942); i++;
+        HH(d,a,b,c, W[(3*i+5)%16], 11, 0x8771f681); i++;
+        HH(c,d,a,b, W[(3*i+5)%16], 16, 0x6d9d6122); i++;
+        HH(b,c,d,a, W[(3*i+5)%16], 23, 0xfde5380c); i++;
+        HH(a,b,c,d, W[(3*i+5)%16],  4, 0xa4beea44); i++;
+        HH(d,a,b,c, W[(3*i+5)%16], 11, 0x4bdecfa9); i++;
+        HH(c,d,a,b, W[(3*i+5)%16], 16, 0xf6bb4b60); i++;
+        HH(b,c,d,a, W[(3*i+5)%16], 23, 0xbebfbc70); i++;
+        HH(a,b,c,d, W[(3*i+5)%16],  4, 0x289b7ec6); i++;
+        HH(d,a,b,c, W[(3*i+5)%16], 11, 0xeaa127fa); i++;
+        HH(c,d,a,b, W[(3*i+5)%16], 16, 0xd4ef3085); i++;
+        HH(b,c,d,a, W[(3*i+5)%16], 23, 0x04881d05); i++;
+        HH(a,b,c,d, W[(3*i+5)%16],  4, 0xd9d4d039); i++;
+        HH(d,a,b,c, W[(3*i+5)%16], 11, 0xe6db99e5); i++;
+        HH(c,d,a,b, W[(3*i+5)%16], 16, 0x1fa27cf8); i++;
+        HH(b,c,d,a, W[(3*i+5)%16], 23, 0xc4ac5665); i++;
+
+        II(a,b,c,d, W[7*i%16],  6, 0xf4292244); i++;
+        II(d,a,b,c, W[7*i%16], 10, 0x432aff97); i++;
+        II(c,d,a,b, W[7*i%16], 15, 0xab9423a7); i++;
+        II(b,c,d,a, W[7*i%16], 21, 0xfc93a039); i++;
+        II(a,b,c,d, W[7*i%16],  6, 0x655b59c3); i++;
+        II(d,a,b,c, W[7*i%16], 10, 0x8f0ccc92); i++;
+        II(c,d,a,b, W[7*i%16], 15, 0xffeff47d); i++;
+        II(b,c,d,a, W[7*i%16], 21, 0x85845dd1); i++;
+        II(a,b,c,d, W[7*i%16],  6, 0x6fa87e4f); i++;
+        II(d,a,b,c, W[7*i%16], 10, 0xfe2ce6e0); i++;
+        II(c,d,a,b, W[7*i%16], 15, 0xa3014314); i++;
+        II(b,c,d,a, W[7*i%16], 21,  0x4e0811a1); i++;
+        II(a,b,c,d, W[7*i%16],  6, 0xf7537e82); i++;
+        II(d,a,b,c, W[7*i%16], 10, 0xbd3af235); i++;
+        II(c,d,a,b, W[7*i%16], 15, 0x2ad7d2bb); i++;
+        II(b,c,d,a, W[7*i%16], 21, 0xeb86d391); i++;
 
 	    s->h[0] += a;
 	    s->h[1] += b;
