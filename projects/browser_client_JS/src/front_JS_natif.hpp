@@ -615,9 +615,9 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void mousePressEvent(int x, int y,  int button) {}
+    void mousePressEvent(int x, int y, int button) {}
 
-    void mouseReleaseEvent(int x, int y,  int button) {}
+    void mouseReleaseEvent(int x, int y, int button) {}
 /*
     void keyPressEvent(QKeyEvent *e) override {}
 

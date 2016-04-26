@@ -4302,12 +4302,12 @@ public:
         this->send_palette();
     }
 
-    void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const override {
-        proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
+    uint8_t get_order_cap(int idx) const override {
+        return this->client_order_caps.orderSupport[idx];
     }
 
-    void intersect_order_caps_ex(OrderCaps & order_caps) const override {
-        order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
+    uint16_t get_order_caps_ex_flags() const override {
+        return this->client_order_caps.orderSupportExFlags;
     }
 
     bool check_and_reset_activity() override {

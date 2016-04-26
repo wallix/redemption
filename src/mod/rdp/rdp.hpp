@@ -3753,29 +3753,40 @@ public:
 
                 // intersect with client order capabilities
                 // which may not be supported by clients.
-                this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
+                
+                enum OrdersIndexes idxs[] = {
+                      TS_NEG_DSTBLT_INDEX
+                    , TS_NEG_PATBLT_INDEX
+                    , TS_NEG_SCRBLT_INDEX
+                    , TS_NEG_MEMBLT_INDEX
+                    , TS_NEG_MEM3BLT_INDEX
+//                    , TS_NEG_DRAWNINEGRID_INDEX
+                    , TS_NEG_LINETO_INDEX
+//                    , TS_NEG_MULTI_DRAWNINEGRID_INDEX
+//                    , TS_NEG_SAVEBITMAP_INDEX
+                    , TS_NEG_MULTIDSTBLT_INDEX
+                    , TS_NEG_MULTIPATBLT_INDEX
+                    , TS_NEG_MULTISCRBLT_INDEX
+                    , TS_NEG_MULTIOPAQUERECT_INDEX
+//                    , TS_NEG_FAST_INDEX_INDEX
+                    , TS_NEG_POLYGON_SC_INDEX
+                    , TS_NEG_POLYGON_CB_INDEX
+                    , TS_NEG_POLYLINE_INDEX
+//                    , TS_NEG_FAST_GLYPH_INDEX
+                    , TS_NEG_ELLIPSE_SC_INDEX
+                    , TS_NEG_ELLIPSE_CB_INDEX
+                    , TS_NEG_INDEX_INDEX
+                };
+                
+                for (auto idx : idxs){
+                    order_caps.orderSupport[idx] &= this->front.get_order_cap(idx);
+                }
 
-                this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTISCRBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MEMBLT_INDEX,             order_caps.orderSupport);
                 if ((this->verbose & 1) && (!order_caps.orderSupport[TS_NEG_MEMBLT_INDEX])) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
-                this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,           order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
 
-                this->front.intersect_order_caps_ex(order_caps);
+                order_caps.orderSupportExFlags &= this->front.get_order_caps_ex_flags();
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
                 //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
@@ -3786,7 +3797,6 @@ public:
                     order_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(order_caps);
-
 
                 BmpCacheCaps bmpcache_caps;
                 bmpcache_caps.cache0Entries         = 0x258;
