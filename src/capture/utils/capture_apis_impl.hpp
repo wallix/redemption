@@ -45,7 +45,22 @@ struct CaptureApisImpl
         , capture_event{}
         {}
 
-        std::chrono::microseconds snapshot(
+        void set_drawable(Drawable * drawable) {
+            this->drawable = drawable;
+        }
+
+        MouseTrace const & mouse_trace() const noexcept {
+            return this->mouse_info;
+        }
+
+        wait_obj & get_capture_event() {
+            return this->capture_event;
+        }
+
+        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
+
+    private:
+        std::chrono::microseconds do_snapshot(
             timeval const & now,
             int cursor_x, int cursor_y,
             bool ignore_frame_in_timeval
@@ -68,35 +83,20 @@ struct CaptureApisImpl
             return time;
         }
 
-        void pause_capture(const timeval& now) override {
+        void do_pause_capture(const timeval& now) override {
             for (gdi::CaptureApi & cap : this->caps) {
                 cap.pause_capture(now);
             }
             this->capture_event.reset();
         }
 
-        void resume_capture(const timeval& now) override {
+        void do_resume_capture(const timeval& now) override {
             for (gdi::CaptureApi & cap : this->caps) {
                 cap.resume_capture(now);
             }
             this->capture_event.set();
         }
 
-        void set_drawable(Drawable * drawable) {
-            this->drawable = drawable;
-        }
-
-        MouseTrace const & mouse_trace() const noexcept {
-            return this->mouse_info;
-        }
-
-        wait_obj & get_capture_event() {
-            return this->capture_event;
-        }
-
-        std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
-
-    private:
         Drawable * drawable = nullptr;
         MouseTrace mouse_info;
         wait_obj capture_event;
