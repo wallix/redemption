@@ -32,8 +32,12 @@
 //#define LOGPRINT
 
 //#include "path/to/file.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+
+BOOST_AUTO_TEST_CASE(TestVirtualChannelDataSender)
 {
     BOOST_CHECK(true);
+
+    
 }

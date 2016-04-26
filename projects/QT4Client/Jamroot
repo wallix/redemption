@@ -246,7 +246,6 @@ project redemption
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/regex
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes

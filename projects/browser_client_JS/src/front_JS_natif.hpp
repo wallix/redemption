@@ -76,7 +76,7 @@
 
 
 
-// bjam client_rdp_JS.js |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/bin/gcc-4.9.2/release/client_rdp_JS.html
+// bjam client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
 
 
 
@@ -174,7 +174,10 @@ public:
 
     //void writeClientInfo() ;
 
-    //virtual void flush() override {}
+    void setClientInfo(ClientInfo & info) {
+        this->_info = info;
+        this->_mod_bpp = this->_info.bpp;
+    }
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->_cl;
@@ -188,9 +191,9 @@ public:
 
     virtual void end_update() override {}
 
-    virtual void setmod_palette(const BGRPalette & palette) {}
+    //virtual void setmod_palette(const BGRPalette & palette) {}
 
-    virtual void update_pointer_position(uint16_t x, uint16_t y) {}
+    virtual void update_pointer_position(uint16_t x, uint16_t y) override {}
 
     virtual int server_resize(int width, int height, int bpp) override {
         return 0;
@@ -308,50 +311,53 @@ public:
             case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
                                                     rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
                 break;
-/*
+
             case 0x22: // TODO
             {
-                       const uint8_t * srcData = bitmap.data();
                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
-                       int lenx = srcy + rect.cy;
-                       int leny = srcx+ rect.cx;
-                       SDL_LockSurface(this->_browser._screen);
-                       for (int y = srcy; y < leny; y++) {
-                           for (int x = srcx; x < lenx; x++) {
-                               Uint32 & destPixel = *((Uint32*)this->_browser._screen->pixels + ((y + rect.y) * this->_info.width)+ x + rect.x);
-                               destPixel = destPixel & ~(srcData[((y - srcy + rect.y) * this->_info.width) + x + rect.x - srcx]);
-                           }
-                       }
-                       SDL_UnlockSurface(this->_browser._screen); // if (SDL_MUSTLOCK(this->_browser._screen))
+
+                       Bitmap bitmapBpp(32, bitmap);
+                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                       EM_ASM_({drawable.rDPMemBlt_0x22($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
             }
             break;
 
-            case 0x55:  //this->draw_MemBlt(rect, bitmap, cmd.srcx + (rect.x - cmd.rect.x), cmd.srcy + (rect.y - cmd.rect.y), INVERT_MASK);
+            case 0x55: // TODO
+            {
+                       int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                       int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+                       Bitmap bitmapBpp(32, bitmap);
+                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                       EM_ASM_({drawable.rDPMemBlt_0x55($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+            }
                 break;
 
             case 0x66: // TODO
             {
-                       const uint8_t * srcData = bitmap.data();
                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
-                       int lenx = srcy + rect.cy;
-                       int leny = srcx+ rect.cx;
-                       SDL_LockSurface(this->_browser._screen);
-                       for (int y = srcy; y < leny; y++) {
-                           for (int x = srcx; x < lenx; x++) {
-                               Uint32 & destPixel = *((Uint32*)this->_browser._screen->pixels + ((y + rect.y) * this->_info.width)+ x + rect.x);
-                               destPixel = destPixel ^ srcData[((y - srcy + rect.y) * rect.cx) + x + rect.x - srcx];
-                           }
-                       }
-                       SDL_UnlockSurface(this->_browser._screen); // if (SDL_MUSTLOCK(this->_browser._screen))
+
+                       Bitmap bitmapBpp(32, bitmap);
+                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                       EM_ASM_({drawable.rDPMemBlt_0x66($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
             }
-            break;*/
+            break;
 
             case 0x99:  // nothing to change
                 break;
 
-            case 0xCC:
+            case 0xCC: // TODO
             {
                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
@@ -360,13 +366,13 @@ public:
                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
-                       EM_ASM_({drawable.bitmap($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6);},
-                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0);
+                       EM_ASM_({drawable.rDPMemBlt($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
 
             }
                 break;
 
-            case 0xEE:
+            case 0xEE: // TODO
             {
                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
@@ -375,8 +381,8 @@ public:
                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
-                       EM_ASM_({drawable.bitmap($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6);},
-                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0);
+                       EM_ASM_({drawable.rDPMemBlt($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
             }
                 break;
 
@@ -469,7 +475,7 @@ public:
 
 
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        const Rect rect = clip.intersect(this->_info.width, this->_info.height);
+        //const Rect rect = clip.intersect(this->_info.width, this->_info.height);
         uint32_t color = (uint32_t)color_decode_opaquerect(cmd.back_color, this->_mod_bpp, BGRPalette::classic_332());
         uint8_t b(color >> 16);
         uint8_t g(color >> 8);
@@ -583,8 +589,18 @@ public:
     , _fps(30)
     , _mod_bpp(this->_info.bpp)
     , mod_palette(BGRPalette::classic_332())
+    {
+        //this->_to_client_sender._front = this;
+    }
 
-    //, _browser(this)
+    Front_JS_Natif(int verb)
+    : FrontAPI(false, false)
+    , verbose((uint32_t)verb)
+    , _port(0)
+    , _callback(nullptr)
+    , _fps(30)
+    , _mod_bpp(32)
+    , mod_palette(BGRPalette::classic_332())
     {
         //this->_to_client_sender._front = this;
     }
@@ -598,11 +614,11 @@ public:
     //------------------------
     //      CONTROLLERS
     //------------------------
+
+    void mousePressEvent(int x, int y,  int button) {}
+
+    void mouseReleaseEvent(int x, int y,  int button) {}
 /*
-    void mousePressEvent(QMouseEvent *e) override {}
-
-    void mouseReleaseEvent(QMouseEvent *e) override {}
-
     void keyPressEvent(QKeyEvent *e) override {}
 
     void keyReleaseEvent(QKeyEvent *e) override {}
@@ -648,9 +664,10 @@ public:
     //--------------------------------
 
 
-
 };
 
+
+Front_JS_Natif front(0);
 
 
 

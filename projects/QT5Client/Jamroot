@@ -248,14 +248,9 @@ project redemption
     <include>$(SYSTEMDIR)
     <include>$(INCLUDEDIR)
 
-#    <include>$(SRCDIR)/core
-#    <include>$(SRCDIR)/mod
-#    <include>$(SRCDIR)/front
-#    <include>$(SRCDIR)/acl
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/keyboard
     <include>$(SRCDIR)/keyboard/reversed_keymaps
-#    <include>$(SRCDIR)/regex
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes

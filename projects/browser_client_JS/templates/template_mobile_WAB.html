@@ -1134,9 +1134,9 @@
 	    	</div><!-- /.modal-content -->
 	  	</div><!-- /.modal-dialog -->
 	</div><!-- /.modal -->
-
+	
 	<div class="emscripten_border">
-      		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px"></canvas>
+      		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px" ></canvas>
     	</div>
     </div>
 	<div id="dvLoading"
@@ -1144,8 +1144,6 @@
 	<noscript>
 		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
 	</noscript>
-	
-	<script src='draw.js'></script>
 
     <script type='text/javascript'>
 	      var Module = {
@@ -1157,9 +1155,12 @@
 	      };
 
     </script>
+    
 
 	  {{{ SCRIPT }}}
-	
+
+
+    <script src='src/draw.js'></script>
 </body>
 </html>
 
