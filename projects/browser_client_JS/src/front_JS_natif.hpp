@@ -614,14 +614,14 @@ public:
     //------------------------
 
     void mousePressEvent(int x, int y, int button) {
-        EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
-    }
-
-    void mouseReleaseEvent(int x, int y, int button) {
         EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
-    void mouseMoveEvent(int x, int y, int button) {
+    void mouseReleaseEvent(int x, int y, int button) {
+        EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
+    }
+
+    void mouseMoveEvent(int x, int y) {
         EM_ASM_({ console.log('Move ' + $0 + ' ' + $1); }, x, y);
     }
 /*
@@ -635,7 +635,7 @@ public:
 
     void connexionPressed() override {}
 
-    void connexionReleased() override {}
+    void connexionReleased() override {} 
 
     void RefreshPressed() override {}
 
