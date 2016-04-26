@@ -30,10 +30,34 @@ project redjs
 
 using emscripten ;
 
+actions nothing { } ;
+
+install pentamino
+    : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
+    : <location>./sandbox
+    ;
+
+objjs penta.bc 
+    : 
+    src/ftests/penta.cpp 
+    : 
+    <cxxflags>-g3 
+    ;
+
+js pentamino.js : penta.bc : 
+    <cxxflags>-g3
+    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+    <cxxflags>"--shell-file templates/penta_template.html"
+ ;
+
+make pentamino.html : pentamino.js : nothing ;
+
 #install client_rdp_JS
 #    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
 #    : <location>./sandbox
 #    ;
+    
+
     
 objjs test_rdp_client_test_card_JS.bc 
 	: src/test_rdp_client_test_card_JS.cpp 
@@ -54,8 +78,6 @@ js client_rdp_JS.js
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>-g3 
      ;
-
-actions nothing { }
 
 make client_rdp_JS.html : client_rdp_JS.js : @nothing ;    
 
