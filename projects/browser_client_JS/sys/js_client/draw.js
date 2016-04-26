@@ -6,7 +6,8 @@ function Drawable() {
     this.ccnt = 0;
     this.canvas = document.getElementById("canvas");
     this.cctx = this.canvas.getContext('2d');
-
+    this.mouseX = 0;
+    this.mouseY = 0;
 
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -16,9 +17,19 @@ function Drawable() {
     //------------------------
 
     this.canvas.addEventListener("mousedown", function(event) {
-        _mousePressEvent(event.pageX - canvas_.offsetLeft,
-                          event.pageY - canvas_.offsetTop,
-                          event.buttons);
+        _mousePressEvent(this.mouseX, this.mouseY,
+                         event.buttons);
+    });
+
+    this.canvas.addEventListener("onmouseup", function(event) {
+        _mouseReleaseEvent(this.mouseX, this.mouseY,
+                           event.buttons);
+    });
+
+    this.canvas.addEventListener("onmousemove", function(event) {
+        this.mouseX = event.pageX - canvas_.offsetLeft;
+        this.mouseY = event.pageY - canvas_.offsetTop;
+        _mouseReleaseEvent(this.mouseX, this.mouseY);
     });
 }
 

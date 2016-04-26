@@ -64,7 +64,7 @@
 
 #include "core/RDP/pointer.hpp"
 #include "front_api.hpp"
-#include "channel_list.hpp" 
+#include "channel_list.hpp"
 #include "mod_api.hpp"
 #include "bitmap_without_png.hpp"
 #include "RDP/caches/glyphcache.hpp"
@@ -614,11 +614,15 @@ public:
     //------------------------
 
     void mousePressEvent(int x, int y, int button) {
-        EM_ASM_({ console.log($0 + ' ' + $1 + ' ' + $2); }, x, y, button);
+        EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
     void mouseReleaseEvent(int x, int y, int button) {
-        EM_ASM_({ console.log($0 + ' ' + $1 + ' ' + $2); }, x, y, button);
+        EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
+    }
+
+    void mouseMoveEvent(int x, int y, int button) {
+        EM_ASM_({ console.log('Move ' + $0 + ' ' + $1); }, x, y);
     }
 /*
     void keyPressEvent(QKeyEvent *e) override {}
