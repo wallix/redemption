@@ -62,6 +62,8 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
     const std::string& alternate_shell;
 
     bool drive_ready = false;
+    bool drive_redirection_initialized = false;
+    bool image_readed = false;
     bool clipboard_initialized = false;
     bool clipboard_monitor_ready = false;
 
@@ -74,6 +76,8 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
 
     const uint64_t long_delay  = 500000;
     const uint64_t short_delay = 50000;
+
+    unsigned int copy_paste_loop_counter = 0;
 
     uint32_t verbose;
 
@@ -136,6 +140,17 @@ public:
         this->drive_ready = true;
 
         this->do_state_start();
+
+        return false;
+    }
+
+    virtual bool on_drive_redirection_initialize() override {
+        if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+            LOG(LOG_INFO,
+                "SessionProbeClipboardBasedLauncher :=> on_drive_redirection_initialize");
+        }
+
+        this->drive_redirection_initialized = true;
 
         return false;
     }
@@ -262,7 +277,10 @@ public:
             break;
 
             case State::CLIPBOARD:
-                this->do_state_clipboard();
+//                this->do_state_clipboard();
+                this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
+
+                this->event.set(this->short_delay);
             break;
 
             case State::CLIPBOARD_CTRL_A_CTRL_DOWN:
@@ -368,15 +386,16 @@ public:
                                                  SlowPath::KBDFLAGS_RELEASE,
                                              keymap);
 
-                this->state = State::CLIPBOARD;
+                this->state = State::ENTER;
 
                 this->event.set(this->long_delay);
             break;
 
             case State::ENTER:
-                this->state = State::ENTER_DOWN;
+//                this->state = State::ENTER_DOWN;
 
-                this->event.set(this->short_delay);
+//                this->event.set(this->short_delay);
+                this->do_state_enter();
             break;
 
             case State::ENTER_DOWN:
@@ -425,6 +444,8 @@ public:
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_image_read");
         }
+
+        this->image_readed = true;
 
         if (this->state == State::STOP) {
             return false;
@@ -555,7 +576,7 @@ public:
         this->sesprob_channel = static_cast<SessionProbeVirtualChannel*>(channel);
     }
 
-    virtual void stop() override {
+    virtual void stop(bool bLaunchSuccessful) override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> stop");
@@ -564,21 +585,79 @@ public:
         this->state = State::STOP;
 
         this->event.object_and_time = false;
+
+        if (!bLaunchSuccessful) {
+            if (!this->drive_redirection_initialized) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "File System Virtual Channel is unavailable. "
+                        "Please allow the drive redirection in Remote Desktop Services settings of the target.");
+            }
+            else if (!this->clipboard_initialized) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Clipboard Virtual Channel is unavailable. "
+                        "Please allow the clipboard redirection in Remote Desktop Services settings of the target.");
+            }
+            else if (!this->drive_ready) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Drive of Session Probe is not ready yet. "
+                        "Is the target operation system a Windows Server 2008 R2 or more recent?");
+            }
+            else if (!this->image_readed) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Session Probe is not launched. "
+                        "Maybe something blocks it on the target. "
+                        "You must also ensure that the temporary directory has enough free space.");
+            }
+            else if (!this->copy_paste_loop_counter) {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Session Probe launch cycle was interrupted. "
+                        "It is possible that the timeout duration is too short.");
+            }
+            else {
+                LOG(LOG_ERR,
+                    "SessionProbeClipboardBasedLauncher :=> "
+                        "Session Probe failed to launch for unknonw reason. "
+                        "clipboard_monitor_ready=%s format_data_requested=%s",
+                    (this->clipboard_monitor_ready ? "yes" : "no"),
+                    (this->format_data_requested ? "yes" : "no"));
+            }
+        }
     }
 
 private:
-    void do_state_clipboard() {
+//    void do_state_clipboard() {
+//        if (!this->format_data_requested) {
+//            this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
+//
+//            this->event.set(this->short_delay);
+//
+//            return;
+//        }
+//
+//        this->state = State::ENTER;
+//
+//        this->event.set(this->long_delay);
+//    }
+
+    void do_state_enter() {
+        this->copy_paste_loop_counter++;
+
         if (!this->format_data_requested) {
-            this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
+            this->state = State::RUN_WIN_D_WIN_DOWN;
 
             this->event.set(this->short_delay);
 
             return;
         }
 
-        this->state = State::ENTER;
+        this->state = State::ENTER_DOWN;
 
-        this->event.set(this->long_delay);
+        this->event.set(this->short_delay);
     }
 
     void do_state_start() {

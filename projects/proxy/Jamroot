@@ -889,6 +889,7 @@ test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>cry
 test-canonical system/linux/system/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
+"test-canonical system/linux/system/ssl_md5.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 
 test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 
