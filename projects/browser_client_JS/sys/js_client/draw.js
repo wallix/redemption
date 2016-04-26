@@ -16,7 +16,7 @@ function Drawable() {
     //------------------------
 
     this.canvas.addEventListener("mousedown", function(event) {
-        _mousePressEventG(event.pageX - canvas_.offsetLeft,
+        _mousePressEvent(event.pageX - canvas_.offsetLeft,
                           event.pageY - canvas_.offsetTop,
                           event.buttons);
     });
@@ -300,6 +300,6 @@ Drawable.prototype.rDPMem3Blt_0xB8 = function(x, y, w, h, data, shift, back_colo
 
 var drawable = new Drawable();
 
-_run_main();
+//_run_main();
 
 

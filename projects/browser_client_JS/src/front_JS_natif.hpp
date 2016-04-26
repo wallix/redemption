@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Clément Moroldo
+   Author(s): Clément Moroldo
 */
 
 #ifndef FRONT_QT_NATIF_HPP
@@ -64,7 +64,7 @@
 
 #include "core/RDP/pointer.hpp"
 #include "front_api.hpp"
-#include "channel_list.hpp"
+#include "channel_list.hpp" 
 #include "mod_api.hpp"
 #include "bitmap_without_png.hpp"
 #include "RDP/caches/glyphcache.hpp"
@@ -184,8 +184,6 @@ public:
     }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
-
-    //virtual void send_global_palette() override {}
 
     virtual void begin_update() override {}
 
@@ -619,7 +617,9 @@ public:
         EM_ASM_({ console.log($0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
-    void mouseReleaseEvent(int x, int y, int button) {}
+    void mouseReleaseEvent(int x, int y, int button) {
+        EM_ASM_({ console.log($0 + ' ' + $1 + ' ' + $2); }, x, y, button);
+    }
 /*
     void keyPressEvent(QKeyEvent *e) override {}
 

@@ -1145,6 +1145,8 @@
 		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
 	</noscript>
 
+   <script src='draw.js'></script>
+
     <script type='text/javascript'>
 	      var Module = {
 		canvas: (function() {
@@ -1159,7 +1161,12 @@
 	  {{{ SCRIPT }}}
 
 
-    <script src='draw.js'></script>
+    <script type='text/javascript'>
+	      window.onload = function() {
+			_run_main();
+	      };
+    </script>
+
 </body>
 </html>
 
