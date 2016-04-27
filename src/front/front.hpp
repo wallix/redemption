@@ -125,6 +125,7 @@ public:
         , CAPTURE_STATE_STOPED
     } capture_state;
     Capture * capture;
+    size_t capture_orders_index = ~size_t{};
 
 private:
     struct Graphics
@@ -768,7 +769,12 @@ public:
         {
             auto & gd_orders = this->orders.initialize_drawable(
                 this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb);
-            if (!this->capture) {
+            if (this->capture) {
+                if (this->capture_orders_index != ~size_t{}) {
+                    this->capture->updated_graphic(gd_orders, this->capture_orders_index);
+                }
+            }
+            else {
                 this->set_gd(gd_orders);
             }
         }
@@ -900,7 +906,7 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
-            this->capture->add_graphic(this->orders.graphics_update_pdu());
+            this->capture_orders_index = this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
         this->update_keyboard_input_mask_state();

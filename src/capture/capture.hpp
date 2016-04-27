@@ -278,9 +278,20 @@ public:
         return this->graphic_api;
     }
 
-    void add_graphic(gdi::GraphicApi & gd) {
+    /// \return index in the graphic list or ~size_t{} if graphic is disabled
+    size_t add_graphic(gdi::GraphicApi & gd) {
         if (this->graphic_api) {
             this->get_apis_register().graphic_list->push_back(gd);
+            // TODO
+            this->gd->start();
+            return this->get_apis_register().graphic_list->size() - 1u;
+        }
+        return ~size_t{};
+    }
+
+    void updated_graphic(gdi::GraphicApi & gd, size_t i) {
+        if (this->graphic_api) {
+            this->get_apis_register().graphic_list->operator[](i) = gd;
             // TODO
             this->gd->start();
         }
