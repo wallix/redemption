@@ -3577,6 +3577,10 @@ public:
                     this->front.disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
                 }
+
+                if (e.id == ERR_LIC) {
+                    throw;
+                }
             }
         }
 
@@ -3753,7 +3757,7 @@ public:
 
                 // intersect with client order capabilities
                 // which may not be supported by clients.
-                
+
                 enum OrdersIndexes idxs[] = {
                       TS_NEG_DSTBLT_INDEX
                     , TS_NEG_PATBLT_INDEX
@@ -3777,7 +3781,7 @@ public:
                     , TS_NEG_ELLIPSE_CB_INDEX
                     , TS_NEG_INDEX_INDEX
                 };
-                
+
                 for (auto idx : idxs){
                     order_caps.orderSupport[idx] &= this->front.get_order_cap(idx);
                 }

@@ -328,6 +328,7 @@ project redemption
     <toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
 
@@ -343,6 +344,7 @@ project redemption
     <variant>release,<toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5.2-release)
     <variant>release,<toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5.2-release)
     <variant>release,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2-release)
+    <variant>release,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5.2-release)
     <variant>release,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-release)
     <variant>release,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6-release)
 

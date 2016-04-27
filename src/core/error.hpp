@@ -319,7 +319,7 @@ enum error_type {
     ERR_SSL_CALL_SHA1_INIT_FAILED,
     ERR_SSL_CALL_SHA1_UPDATE_FAILED,
     ERR_SSL_CALL_SHA1_FINAL_FAILED,
-    
+
     ERR_SSH_PARSE_PRIVATE_DSA_KEY,
     ERR_SSH_PARSE_PRIVATE_RSA_KEY
 };
@@ -373,6 +373,9 @@ public:
             return "Keep alive has been missed, connection may be dead or slow";
         case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
+
+        case ERR_LIC:
+            return "An error occurred during the licensing protocol";
 
         default:
             {
