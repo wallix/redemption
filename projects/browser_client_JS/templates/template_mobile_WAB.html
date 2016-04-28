@@ -1133,10 +1133,13 @@
 		      	</div>
 	    	</div><!-- /.modal-content -->
 	  	</div><!-- /.modal-dialog -->
-	</div><!-- /.modal -->
+	</div><!--  /.modal -->
 	
 	<div class="emscripten_border">
-      		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px" ></canvas>
+      		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px" onclick="setFocuxOnText()" onmouseenter="setFocuxOnText()" ></canvas>
+		<div style ="width: 0; overflow: hidden;">
+			<input id="hidden_input_text" style="opacity: 0"/> <!--  -->
+		</div>
     	</div>
     </div>
 	<div id="dvLoading"
@@ -1144,7 +1147,7 @@
 	<noscript>
 		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
 	</noscript>
-
+   <script src='wprdpsc.js'></script>
    <script src='draw.js'></script>
 
     <script type='text/javascript'>
@@ -1169,10 +1172,4 @@
 
 </body>
 </html>
-
-
-
-
-
-
 

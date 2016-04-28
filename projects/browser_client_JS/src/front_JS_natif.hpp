@@ -18,8 +18,8 @@
    Author(s): Clément Moroldo
 */
 
-#ifndef FRONT_QT_NATIF_HPP
-#define FRONT_QT_NATIF_HPP
+#ifndef FRONT_JS_NATIF_HPP
+#define FRONT_JS_NATIF_HPP
 
 #include <stdio.h>
 #include <openssl/ssl.h>
@@ -72,9 +72,8 @@
 #include "RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "client_info.hpp"
-
-
-
+#include "keylayouts_r.hpp"
+#include "../../utils/colors.hpp"
 
 // bjam client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
 
@@ -85,7 +84,7 @@
 
 // source emsdk_env.sh
 // . ./emsdk_env.sh
-#include "../../utils/colors.hpp"
+
 
 
 
@@ -166,8 +165,7 @@ public:
     int                  _bufferRDPCLipboardMetaFilePic_width;
     int                  _bufferRDPCLipboardMetaFilePic_height;
     int                  _bufferRDPClipboardMetaFilePicBPP;
-
-
+    const Keylayout_r  * _keylayout;
 
 
     //bool setClientInfo() ;
@@ -177,6 +175,33 @@ public:
     void setClientInfo(ClientInfo & info) {
         this->_info = info;
         this->_mod_bpp = this->_info.bpp;
+        this->setKeyboardLayout(this->_info.keylayout);
+    }
+
+    void setKeyboardLayout(int LCID) {
+        bool found = false;
+        for (uint8_t i = 0 ; i < KEYLAYOUTS_LIST_SIZE; i++) {
+            if (keylayoutsList[i]->LCID == LCID){
+                this->_keylayout = keylayoutsList[i];
+                found = true;
+                break;
+            }
+        }
+        if (!found){
+            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
+            this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
+        }
+/*
+        this->_layoutMods[NO_MOD                              ] = this->_keylayout->getnoMod();
+        this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout->getshift();
+        this->_layoutMods[ALTGR_MOD                           ] = this->_keylayout->getaltGr();
+        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = this->_keylayout->getshiftAltGr();
+        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = this->_keylayout->getcapslock_noMod();
+        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = this->_keylayout->getcapslock_shift();
+        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = this->_keylayout->getcapslock_altGr();
+        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = this->_keylayout->getcapslock_shiftAltGr();
+        this->_layoutMods[CTRL_MOD                            ] = this->_keylayout->getctrl();*/
+
     }
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -188,8 +213,6 @@ public:
     virtual void begin_update() override {}
 
     virtual void end_update() override {}
-
-    //virtual void setmod_palette(const BGRPalette & palette) {}
 
     virtual void update_pointer_position(uint16_t x, uint16_t y) override {}
 
@@ -578,19 +601,6 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    Front_JS_Natif(ClientInfo & info,  int verb)
-    : FrontAPI(false, false)
-    , verbose((uint32_t)verb)
-    , _info(info)
-    , _port(0)
-    , _callback(nullptr)
-    , _fps(30)
-    , _mod_bpp(this->_info.bpp)
-    , mod_palette(BGRPalette::classic_332())
-    {
-        //this->_to_client_sender._front = this;
-    }
-
     Front_JS_Natif(int verb)
     : FrontAPI(false, false)
     , verbose((uint32_t)verb)
@@ -622,20 +632,23 @@ public:
     }
 
     void mouseMoveEvent(int x, int y) {
-        EM_ASM_({ console.log('Move ' + $0 + ' ' + $1); }, x, y);
+        EM_ASM_({ console.log('Move '); }, x, y);
     }
+
+    void keyPressEvent(int code) {
+        EM_ASM_({ console.log('KeyPressed ' + $0); }, this->_keylayout->getnoMod()->at(code));
+    }
+
+    void keyReleaseEvent(char code) {
+        EM_ASM_({ console.log('KeyRelease ' + $0); }, code);
+    }
+
 /*
-    void keyPressEvent(QKeyEvent *e) override {}
-
-    void keyReleaseEvent(QKeyEvent *e) override {}
-
     void wheelEvent(QWheelEvent *e) override {}
-
-    bool eventFilter(QObject *obj, QEvent *e) override {}
 
     void connexionPressed() override {}
 
-    void connexionReleased() override {} 
+    void connexionReleased() override {}
 
     void RefreshPressed() override {}
 
@@ -689,9 +702,9 @@ int main(int argc, char** argv){
     info.width = 800;
     info.height = 600;
 
-    front.init_front(info);
+    front.setClientInfo(info);
 
-    emscripten_set_main_loop(eventLoop, front._fps, 0);
+    //emscripten_set_main_loop(eventLoop, front._fps, 0);
 
     return 0;
 }*/

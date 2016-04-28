@@ -2,44 +2,112 @@
 
 
 
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+//------------------------
+//  KEYBOARD CONTROLLERS
+//------------------------
+
+var textField_ = document.getElementById("hidden_input_text");
+
+function setFocuxOnText() {
+    textField_.focus();
+    console.log('focusOn');
+}
+
+var textLength = 0;
+
+textField_.addEventListener("keyup", function(event) {
+    var str  = textField_.value;
+    var size = str.length;
+
+    switch (event.keyCode) {
+
+        case 8:  console.log('Backspace ' + size);
+                 if (size == 0) {
+                    extLength = 0;
+                 } else {
+                    extLength = size;
+                 }
+        break;
+
+        case 13: console.log('Entrer');
+                 textField_.value = "";
+                 extLength = 0;
+        break;
+
+        default: if (textLength < size) {
+                    _keyPressEvent(str.charCodeAt(size-1));
+                    extLength = size;
+                 } else if (textLength > size || size == 0) {
+                    console.log('Backspace_vide ' + textLength + ' ' + size);
+                    extLength = size;
+                 }
+        break;
+
+    }
+});
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+//------------------------
+//   CURSOR CONTROLLERS
+//------------------------
+
 var canvas_ = document.getElementById("canvas");
 
+canvas_.addEventListener("mouseup", function(event) {
+    _mouseReleaseEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+});
 
+canvas_.addEventListener("mousedown", function(event) {
+    _mousePressEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+});
+
+canvas_.addEventListener("mousemove", function(event) {
+    _mouseMoveEvent(event.pageX - canvas_.offsetLeft,
+                    event.pageY - canvas_.offsetTop);
+});
+/*
+canvas_.addEventListener("click", function(event) {
+    _mousePressEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+    _mouseReleaseEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+});
+
+canvas_.addEventListener("touchmove", function(event) {
+    _mouseMoveEvent(event.pageX - canvas_.offsetLeft,
+                    event.pageY - canvas_.offsetTop);
+});*/
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+//------------------------
+//  Draw Factorizations
+//------------------------
 
 function Drawable() {
     this.ccnt = 0;
     this.canvas = document.getElementById("canvas");
     this.cctx = this.canvas.getContext('2d');
-
-
-
-    /////////////////////////////////////////////////////////////////////////////////////
-
-    //------------------------
-    //      CONTROLLERS
-    //------------------------
-
-    this.canvas.addEventListener("mouseup", function(event) {
-        _mouseReleaseEvent(event.pageX - canvas_.offsetLeft,
-                           event.pageY - canvas_.offsetTop,
-                           event.buttons);
-    });
-
-    this.canvas.addEventListener("mousedown", function(event) {
-        _mousePressEvent(event.pageX - canvas_.offsetLeft,
-                         event.pageY - canvas_.offsetTop,
-                         event.buttons);
-    });
-
-    this.canvas.addEventListener("mousemove", function(event) {
-        _mouseMoveEvent(event.pageX - canvas_.offsetLeft,
-                        event.pageY - canvas_.offsetTop);
-    });
-
-
 }
-
-
 
 Drawable.prototype._ctxS = function(){
     this.cctx.save();
@@ -79,6 +147,8 @@ Drawable.prototype._color2s = function(c, bpp) {
     return 'rgba' + '(' + cb[0] + ',' + cb[1] + ',' + cb[2] + ','
             + ((0.0 + cb[3]) / 255) + ')';
 }
+
+
 
 
 

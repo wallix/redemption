@@ -98,7 +98,7 @@ exejs client_rdp_JS_natif.js
         bitmap_data_allocator.bc
      :  
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
-	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent']\""
+	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_keyPressEvent']\""
      ;
 
 
