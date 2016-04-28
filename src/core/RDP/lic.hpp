@@ -3092,6 +3092,13 @@ namespace LIC
 //            || (this->validClientMessage.wBlobType != 4)
             || (this->validClientMessage.wBlobLen != 0)
             || stream.in_remain()){
+                LOG(LOG_ERR,
+                    "Licence ErrorAlert_Recv : "
+                        "dwErrorCode=%u dwStateTransition=%u wBlobType=%u wBlobLen=%u",
+                    this->validClientMessage.dwErrorCode,
+                    this->validClientMessage.dwStateTransition,
+                    static_cast<uint32_t>(this->validClientMessage.wBlobType),
+                    static_cast<uint32_t>(this->validClientMessage.wBlobLen));
                 throw Error(ERR_LIC);
             }
         }

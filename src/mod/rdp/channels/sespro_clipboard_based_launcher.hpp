@@ -591,37 +591,37 @@ public:
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
-                        "Please allow the drive redirection in Remote Desktop Services settings of the target.");
+                        "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
             }
             else if (!this->clipboard_initialized) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Clipboard Virtual Channel is unavailable. "
-                        "Please allow the clipboard redirection in Remote Desktop Services settings of the target.");
+                        "Please allow the clipboard redirection in the Remote Desktop Services settings of the target.");
             }
             else if (!this->drive_ready) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Drive of Session Probe is not ready yet. "
-                        "Is the target operation system a Windows Server 2008 R2 or more recent?");
+                        "Is the target running under Windows Server 2008 R2 or more recent version?");
             }
             else if (!this->image_readed) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Session Probe is not launched. "
                         "Maybe something blocks it on the target. "
-                        "You must also ensure that the temporary directory has enough free space.");
+                        "Please also check the temporary directory to ensure there is enough free space.");
             }
             else if (!this->copy_paste_loop_counter) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
-                        "Session Probe launch cycle was interrupted. "
-                        "It is possible that the timeout duration is too short.");
+                        "Session Probe launch cycle has been interrupted. "
+                        "The launch timeout duration may be too short.");
             }
             else {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
-                        "Session Probe failed to launch for unknonw reason. "
+                        "Session Probe launch has failed for unknown reason. "
                         "clipboard_monitor_ready=%s format_data_requested=%s",
                     (this->clipboard_monitor_ready ? "yes" : "no"),
                     (this->format_data_requested ? "yes" : "no"));

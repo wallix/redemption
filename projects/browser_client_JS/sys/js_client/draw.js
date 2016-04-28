@@ -1,36 +1,113 @@
 
 
-//var rdp_mouse_down = Module.cwrap('mousePressEventG', null, ['number', 'number', 'number']);
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+//------------------------
+//  KEYBOARD CONTROLLERS
+//------------------------
+
+var textField_ = document.getElementById("hidden_input_text");
+
+function setFocuxOnText() {
+    textField_.focus();
+    console.log('focusOn');
+}
+
+var textLength = 0;
+
+textField_.addEventListener("keyup", function(event) {
+    var str  = textField_.value;
+    var size = str.length;
+
+    switch (event.keyCode) {
+
+        case 8:  console.log('Backspace ' + size);
+                 if (size == 0) {
+                    extLength = 0;
+                 } else {
+                    extLength = size;
+                 }
+        break;
+
+        case 13: console.log('Entrer');
+                 textField_.value = "";
+                 extLength = 0;
+        break;
+
+        default: if (textLength < size) {
+                    _keyPressEvent(str.charCodeAt(size-1));
+                    extLength = size;
+                 } else if (textLength > size || size == 0) {
+                    console.log('Backspace_vide ' + textLength + ' ' + size);
+                    extLength = size;
+                 }
+        break;
+
+    }
+});
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+//------------------------
+//   CURSOR CONTROLLERS
+//------------------------
+
+var canvas_ = document.getElementById("canvas");
+
+canvas_.addEventListener("mouseup", function(event) {
+    _mouseReleaseEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+});
+
+canvas_.addEventListener("mousedown", function(event) {
+    _mousePressEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+});
+
+canvas_.addEventListener("mousemove", function(event) {
+    _mouseMoveEvent(event.pageX - canvas_.offsetLeft,
+                    event.pageY - canvas_.offsetTop);
+});
+/*
+canvas_.addEventListener("click", function(event) {
+    _mousePressEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+    _mouseReleaseEvent(event.pageX - canvas_.offsetLeft,
+                        event.pageY - canvas_.offsetTop,
+                        event.buttons);
+});
+
+canvas_.addEventListener("touchmove", function(event) {
+    _mouseMoveEvent(event.pageX - canvas_.offsetLeft,
+                    event.pageY - canvas_.offsetTop);
+});*/
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+//------------------------
+//  Draw Factorizations
+//------------------------
 
 function Drawable() {
     this.ccnt = 0;
     this.canvas = document.getElementById("canvas");
     this.cctx = this.canvas.getContext('2d');
-
-
-
-    /////////////////////////////////////////////////////////////////////////////////////
-
-    //------------------------
-    //      CONTROLLERS
-    //------------------------
-
-    //this.
-    this.canvas.addEventListener("mousedown", function(event) {
-        var canvas = document.getElementById("canvas");
-        var x = event.pageX - canvas.offsetLeft;
-        var y = event.pageY - canvas.offsetTop;
-        console.log(x +" "+ y + " " + event.buttons);
-
-        _mousePressEventG(); //x, y, event.buttons);
-
-        //this.rdp_mouse_down(x, y, event.buttons);
-    });
-
-
 }
-
 
 Drawable.prototype._ctxS = function(){
     this.cctx.save();
@@ -70,6 +147,8 @@ Drawable.prototype._color2s = function(c, bpp) {
     return 'rgba' + '(' + cb[0] + ',' + cb[1] + ',' + cb[2] + ','
             + ((0.0 + cb[3]) / 255) + ')';
 }
+
+
 
 
 
@@ -307,7 +386,6 @@ Drawable.prototype.rDPMem3Blt_0xB8 = function(x, y, w, h, data, shift, back_colo
 
 
 var drawable = new Drawable();
-
 
 
 

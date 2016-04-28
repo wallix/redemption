@@ -3577,6 +3577,10 @@ public:
                     this->front.disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
                 }
+
+                if (e.id == ERR_LIC) {
+                    throw;
+                }
             }
         }
 

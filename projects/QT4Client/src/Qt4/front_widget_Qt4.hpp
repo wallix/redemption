@@ -202,7 +202,7 @@ public:
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
 
-        for (int i = 0; i < Qt_ScanCode_KeyMap::KEYLAYOUTS_LIST_SIZE; i++) {
+        for (int i = 0; i < KEYLAYOUTS_LIST_SIZE; i++) {
             this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
         }
         int indexLanguage = this->_languageComboBox.findData(this->_front->_info.keylayout);
