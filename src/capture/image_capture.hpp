@@ -45,7 +45,23 @@ public:
 
     using DrawableToFile::zoom;
 
-    std::chrono::microseconds snapshot(
+    void breakpoint(const timeval & now)
+    {
+        tm ptm;
+        localtime_r(&now.tv_sec, &ptm);
+        const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
+        this->flush_png();
+        const_cast<Drawable&>(this->drawable).clear_timestamp();
+    }
+
+private:
+    void flush_png()
+    {
+        this->flush();
+        this->trans.next();
+    }
+
+    std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         using std::chrono::microseconds;
@@ -57,9 +73,10 @@ public:
                 || (duration >= interval * 3 / 2)) {
                 const_cast<Drawable&>(this->drawable).trace_mouse();
                 this->breakpoint(now);
-                this->start_capture = addusectimeval(interval, this->start_capture);
+                this->start_capture = now;
                 const_cast<Drawable&>(this->drawable).clear_mouse();
-                return microseconds(interval - difftimeval(now, this->start_capture));
+
+                return microseconds(interval - duration % interval);
             }
             else {
                 // Wait 0.3 x frame_interval.
@@ -69,7 +86,7 @@ public:
         return microseconds(interval - duration);
     }
 
-    void pause_capture(timeval const & now) override {
+    void do_pause_capture(timeval const & now) override {
         // Draw Pause message
         time_t rawtime = now.tv_sec;
         tm ptm;
@@ -78,26 +95,6 @@ public:
         this->flush_png();
         const_cast<Drawable&>(this->drawable).clear_pausetimestamp();
         this->start_capture = now;
-    }
-
-    void resume_capture(timeval const & now) override {
-    }
-
-private:
-    void flush_png()
-    {
-        this->flush();
-        this->trans.next();
-    }
-
-public:
-    void breakpoint(const timeval & now)
-    {
-        tm ptm;
-        localtime_r(&now.tv_sec, &ptm);
-        const_cast<Drawable&>(this->drawable).trace_timestamp(ptm);
-        this->flush_png();
-        const_cast<Drawable&>(this->drawable).clear_timestamp();
     }
 };
 

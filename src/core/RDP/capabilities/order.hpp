@@ -281,7 +281,7 @@ enum {
 };
 
 
-enum {
+enum OrdersIndexes {
       TS_NEG_DSTBLT_INDEX = 0x00
     , TS_NEG_PATBLT_INDEX = 0x01
     , TS_NEG_SCRBLT_INDEX = 0x02

@@ -25,6 +25,8 @@
 
 #include <chrono>
 
+#include <cassert>
+
 
 struct timeval;
 class Inifile;
@@ -35,14 +37,36 @@ struct CaptureApi : private noncopyable
 {
     virtual ~CaptureApi() = default;
 
-    virtual std::chrono::microseconds snapshot(
+    std::chrono::microseconds snapshot(
+        timeval const & now,
+        int cursor_x, int cursor_y,
+        bool ignore_frame_in_timeval
+    ) {
+        // assert(now >= previous);
+        auto next_duration = this->do_snapshot(now, cursor_x, cursor_x, ignore_frame_in_timeval);
+        assert(next_duration.count() >= 0);
+        return next_duration;
+    }
+
+    void pause_capture(timeval const & now) {
+        // assert(now >= previous);
+        this->do_pause_capture(now);
+    }
+
+    void resume_capture(timeval const & now) {
+        // assert(now >= previous);
+        this->do_resume_capture(now);
+    }
+
+private:
+    virtual std::chrono::microseconds do_snapshot(
         timeval const & now,
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) = 0;
 
-    virtual void pause_capture(timeval const &) {}
-    virtual void resume_capture(timeval const &) {}
+    virtual void do_pause_capture(timeval const &) {}
+    virtual void do_resume_capture(timeval const &) {}
 };
 
 
