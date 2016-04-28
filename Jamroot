@@ -381,6 +381,8 @@ project redemption
     <variant>debug,<toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5-sanitize)
     <variant>debug,<toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5-sanitize)
     <variant>debug,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.3:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5-sanitize)
     <variant>debug,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-sanitize)
     <variant>debug,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-sanitize)
     <variant>debug,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-sanitize)
@@ -393,6 +395,8 @@ project redemption
     <variant>sanitize,<toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5-sanitize)
     <variant>sanitize,<toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5-sanitize)
     <variant>sanitize,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.3:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5-sanitize)
     <variant>sanitize,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-sanitize)
     <variant>sanitize,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-sanitize)
     <variant>sanitize,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-sanitize)
@@ -1099,7 +1103,10 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp : $(TEST_DEPEN
 
 unit-test test_finally : tests/utils/test_finally.cpp : $(TEST_DEPENDENCIES) ;
 
-unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+
+
+unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp : $(TEST_DEPENDENCIES) ;
 
 
 explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #

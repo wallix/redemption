@@ -125,7 +125,6 @@ public:
         , CAPTURE_STATE_STOPED
     } capture_state;
     Capture * capture;
-    size_t capture_orders_index = ~size_t{};
 
 private:
     struct Graphics
@@ -179,7 +178,11 @@ private:
               , verbose
             )
             , client_order_caps(client_order_caps)
-            {}
+            {
+                this->set_depths(gdi::GraphicDepth::from_bpp(bpp));
+            }
+
+            using GraphicsUpdatePDU::set_depths;
 
             using GraphicsUpdatePDU::draw;
 
@@ -767,12 +770,12 @@ public:
         this->mod_bpp = bpp;
 
         {
-            auto & gd_orders = this->orders.initialize_drawable(
-                this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb);
+            gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(
+                this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb
+            );
+
             if (this->capture) {
-                if (this->capture_orders_index != ~size_t{}) {
-                    this->capture->updated_graphic(gd_orders, this->capture_orders_index);
-                }
+                this->capture->set_order_bpp(this->mod_bpp);
             }
             else {
                 this->set_gd(gd_orders);
@@ -895,10 +898,12 @@ public:
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
         TODO("remove this after unifying capture interface");
         bool full_video = false;
-        this->capture = new Capture(now, width, height, this->capture_bpp, this->capture_bpp
-                                   , true, false, authentifier
-                                   , ini, this->gen, this->cctx
-                                   , full_video);
+        this->capture = new Capture(
+            now, width, height, this->mod_bpp, this->capture_bpp
+          , true, false, authentifier
+          , ini, this->gen, this->cctx
+          , full_video
+        );
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
@@ -906,7 +911,7 @@ public:
         this->capture_state = CAPTURE_STATE_STARTED;
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
-            this->capture_orders_index = this->capture->add_graphic(this->orders.graphics_update_pdu());
+            this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
         this->update_keyboard_input_mask_state();

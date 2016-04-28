@@ -186,6 +186,15 @@ private:
         this->dispatch_if(bool_<Enc16 && Dec::bpp == 16>{}, this->rng_by_bpp.rng16(), cmd, args...);
         this->dispatch_if(bool_<Enc24 && Dec::bpp == 24>{}, this->rng_by_bpp.rng24(), cmd, args...);
 
+        if (Enc8 + Enc15 + Enc16 + Enc24 == 1 && !(
+            (Enc8  && Dec::bpp == 8)
+         || (Enc15 && Dec::bpp == 15)
+         || (Enc16 && Dec::bpp == 16)
+         || (Enc24 && Dec::bpp == 24)
+        )) {
+            return ;
+        }
+
         auto new_cmd = cmd;
         this->encode_cmd_color(this->decoder(), new_cmd);
 
