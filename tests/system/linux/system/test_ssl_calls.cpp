@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include "system/ssl_calls.hpp"
+#include "system/ssl_md4.hpp"
 
 // uint8_t data[512];
 
