@@ -454,6 +454,7 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     RedirectionInfo & redir_info;
 
     const bool bogus_sc_net_size;
+    const bool bogus_linux_cursor;
 
     std::string real_alternate_shell;
     std::string real_working_dir;
@@ -740,6 +741,7 @@ public:
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
+        , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
@@ -6091,11 +6093,13 @@ public:
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
 
-            for (unsigned i = 0 ; i < mlen; i++) {
-                uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
-                uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
-                data_data[i]    = new_data_data;
-                mask_data[i]    = new_mask_data;
+            if (this->bogus_linux_cursor) {
+                for (unsigned i = 0 ; i < mlen; i++) {
+                    uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                    uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                    data_data[i]    = new_data_data;
+                    mask_data[i]    = new_mask_data;
+                }
             }
 
             TODO("move that into cursor")

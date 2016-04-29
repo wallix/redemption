@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include "system/ssl_calls.hpp"
+#include "system/ssl_md4.hpp"
 
 // uint8_t data[512];
 
@@ -813,7 +814,6 @@ BOOST_AUTO_TEST_CASE(TestNTLMAUTH)
                              ServerSealKey,
                              sizeof(ServerSealKey)),
                       0);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestAES)

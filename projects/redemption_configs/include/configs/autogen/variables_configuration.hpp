@@ -1353,6 +1353,15 @@ namespace cfg {
             type value{1};
         };
 
+        // Needed to get the old behavior of cursor rendering.
+        struct bogus_linux_cursor {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{0};
+        };
+
         // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
         struct proxy_managed_drives {
             static constexpr ::configs::VariableProperties properties() {
@@ -2101,6 +2110,7 @@ struct mod_rdp
 , cfg::mod_rdp::server_redirection_support
 , cfg::mod_rdp::redir_info
 , cfg::mod_rdp::bogus_sc_net_size
+, cfg::mod_rdp::bogus_linux_cursor
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel
 , cfg::mod_rdp::auth_channel

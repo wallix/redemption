@@ -117,6 +117,7 @@ struct ModRDPParams {
     bool server_redirection_support;
 
     bool bogus_sc_net_size;
+    bool bogus_linux_cursor;
 
     const char * proxy_managed_drives;
 
@@ -219,6 +220,7 @@ struct ModRDPParams {
         , server_redirection_support(false)
 
         , bogus_sc_net_size(true)
+        , bogus_linux_cursor(false)
 
         , proxy_managed_drives("")
 
@@ -390,6 +392,9 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams bogus_linux_cursor=%s",                  (this->bogus_linux_cursor ? "yes" : "no"));
 
         LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
 

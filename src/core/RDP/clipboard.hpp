@@ -728,6 +728,11 @@ struct FormatListPDU : public CliprdrHeader {
         }
     }
 
+    void emit_empty(OutStream & stream) {
+        this->dataLen_ = 0;
+        CliprdrHeader::emit(stream);
+    }
+
     void recv(InStream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
 
