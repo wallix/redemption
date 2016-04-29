@@ -58,22 +58,13 @@ private:
         template<class Cmd, class... Ts>
         void draw_impl(Cmd const & cmd, Ts const & ... args)
         {
-            this->draw_impl2(1, cmd, args...);
-        }
-
-        template<class Cmd, class... Ts>
-        auto draw_impl2(int, Cmd const & cmd, Ts const & ... args)
-        // avoid some virtual call
-        -> decltype(void(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, std::declval<Cmd&>())))
-        {
-            assert(bool(this->cmd_color_distributor));
-            this->cmd_color_distributor->draw(cmd, args...);
-        }
-
-        template<class Cmd, class... Ts>
-        void draw_impl2(unsigned, Cmd const & cmd, Ts const & ... args)
-        {
-            Graphic::base_type::draw_impl(cmd, args...);
+            if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
+                assert(bool(this->cmd_color_distributor));
+                this->cmd_color_distributor->draw(cmd, args...);
+            }
+            else {
+                Graphic::base_type::draw_impl(cmd, args...);
+            }
         }
 
         void draw_impl(RDP::FrameMarker const & cmd) {
