@@ -64,4 +64,9 @@ auto make_range(Cont & cont) -> range<decltype(begin(cont))> {
     return {begin(cont), end(cont)};
 }
 
+template<class It>
+range<It> make_range(It first, It last) {
+    return {first, last};
+}
+
 #endif

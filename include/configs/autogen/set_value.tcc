@@ -293,6 +293,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "bogus_sc_net_size")) {
             ::configs::parse(static_cast<cfg::mod_rdp::bogus_sc_net_size&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "bogus_linux_cursor")) {
+            ::configs::parse(static_cast<cfg::mod_rdp::bogus_linux_cursor&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "proxy_managed_drives")) {
             ::configs::parse(static_cast<cfg::mod_rdp::proxy_managed_drives&>(this->variables).value, value);
         }

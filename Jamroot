@@ -212,6 +212,12 @@ constant CXXFLAGS-GCC-6 :
 ;
 
 
+constant CXXFLAGS-GCC-6.1 :
+    $(CXXFLAGS-GCC-6.1)
+    <cxxflags>-Wmisleading-indentation
+;
+
+
 
 rule empty_rule ( properties * ) {
     local defs ;
@@ -253,6 +259,11 @@ constant CXXFLAGS-GCC-6-release :
 ;
 
 
+constant CXXFLAGS-GCC-6.1-release :
+    $(CXXFLAGS-GCC-6-release)
+;
+
+
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
 
 lib gcov : : <name>gcov : ;
@@ -271,6 +282,25 @@ constant CXXFLAGS-debug :
     <cxxflags>-g
 ;
 
+constant CXXFLAGS-debug :
+    <define>REDASSERT_AS_ASSERT
+    <define>_GLIBCXX_DEBUG
+    <cxxflags>-g
+;
+
+constant CXXFLAGS-GCC-5-sanitize :
+    <cxxflags>-fsanitize=bounds
+;
+
+constant CXXFLAGS-GCC-6-sanitize :
+    <cxxflags>-fsanitize=undefined
+;
+
+constant CXXFLAGS-GCC-6.1-sanitize :
+    <cxxflags>-fsanitize=bounds-strict
+;
+
+
 variant asan : debug :
     $(CXXFLAGS-debug)
 #    <cxxflags>-fsanitize=address
@@ -279,12 +309,23 @@ variant asan : debug :
 #    <linkflags>-lasan
 #    <define>CXX_ENABLE_ASAN
 ;
+
+variant sanitize : release :
+    <cxxflags>-g
+;
+
 constant LIB_SAN_DEPENDENCY :
     <variant>asan:<library>libasan
     <variant>asan:<cxxflags>-fsanitize=address
 #    <variant>asan:<cxxflags>-fsanitize=leak
     <variant>asan:<cxxflags>-fno-omit-frame-pointer
     <variant>asan:<define>CXX_ENABLE_ASAN
+
+    <variant>sanitize:<library>libasan
+    <variant>sanitize:<cxxflags>-fsanitize=address
+#    <variant>asan:<cxxflags>-fsanitize=leak
+    <variant>sanitize:<cxxflags>-fno-omit-frame-pointer
+    <variant>sanitize:<define>CXX_ENABLE_ASAN
 ;
 
 project redemption
@@ -308,12 +349,12 @@ project redemption
 
     <conditional>@defines
 
-    <variant>debug:$(CXXFLAGS-debug)
-
     <cxxflags>-std=c++11
 
 
     $(CXXFLAGS-COMMON)
+    <variant>debug:$(CXXFLAGS-debug)
+
     <toolset>clang:$(CXXFLAGS-CLANG)
     <toolset>gcc-4.8:$(CXXFLAGS-GCC-4.8)
     <toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9)
@@ -330,7 +371,36 @@ project redemption
     <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
-    <toolset>gcc-6.1:$(CXXFLAGS-GCC-6)
+    <toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1)
+    <toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1)
+
+    <variant>debug,<toolset>gcc-5.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.3:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>debug,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-sanitize)
+    <variant>debug,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-sanitize)
+    <variant>debug,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-sanitize)
+
+    <variant>sanitize,<toolset>gcc-5.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.1.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.2.0:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.2.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.2.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.3:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>sanitize,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-sanitize)
+    <variant>sanitize,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-sanitize)
+    <variant>sanitize,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-sanitize)
 
     <variant>release,<toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9-release)
     <variant>release,<toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9-release)
@@ -346,7 +416,8 @@ project redemption
     <variant>release,<toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2-release)
     <variant>release,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5.2-release)
     <variant>release,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-release)
-    <variant>release,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6-release)
+    <variant>release,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-release)
+    <variant>release,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-release)
 
 #    <cxxflags>-fpie
     <cxxflags>-fPIC
@@ -1035,6 +1106,9 @@ unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp : $(TEST_DEPEN
 unit-test test_finally : tests/utils/test_finally.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+
+
+unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp : $(TEST_DEPENDENCIES) ;
 
 
 explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
