@@ -83,7 +83,7 @@ class SslSha1
         }
     }
 };
-
+/*
 class SslSha256
 {
     SHA256_CTX sha256;
@@ -189,7 +189,7 @@ class SslRC4
         RC4(&this->rc4, data_size, indata, outdata);
     }
 };
-
+*/
 class SslAES
 {
     AES_KEY e_key;
@@ -373,3 +373,105 @@ class SslHMAC_Md5
 };
 
 
+class SslHMAC
+{
+    HMAC_CTX hmac;
+
+    public:
+
+    template<typename T>
+    SslHMAC_Md5(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_CTX_init(&this->hmac);
+        int res = 0;
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), nullptr);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
+    }
+
+    ~SslHMAC_Md5()
+    {
+        HMAC_CTX_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        int res = 0;
+        res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        int res = 0;
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            res = HMAC_Final(&this->hmac, tmp, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+    }
+};
+
+
+
+/* Function: hmac_md5 */
+
+template<typename T>
+void hmac_md5(unsigned char* text, int text_len, unsigned char* key, int key_len, caddr_t digest)
+{
+    T algo;
+    unsigned char k_ipad[65]; /* inner padding - key XORd with ipad */
+    unsigned char k_opad[65]; /* outer padding - key XORd with opad */
+    unsigned char tk[16];
+    int i;
+    /* if key is longer than 64 bytes reset it to key=MD5(key) */
+    if (key_len > 64) {
+        MD5_CTX      tctx;
+        MD5Init(&tctx);
+        MD5Update(&tctx, key, key_len);
+        MD5Final(tk, &tctx);
+
+        key = tk;
+        key_len = 16;
+    }
+    /* the HMAC_MD5 transform looks like:
+    * MD5(K XOR opad, MD5(K XOR ipad, text))
+    * where K is an n byte key
+    * ipad is the byte 0x36 repeated 64 times
+    * opad is the byte 0x5c repeated 64 times
+    * and text is the data being protected
+    */
+    /* start out by storing key in pads */
+    bzero( k_ipad, sizeof k_ipad);
+    bzero( k_opad, sizeof k_opad);
+    bcopy( key, k_ipad, key_len);
+    bcopy( key, k_opad, key_len);
+
+    /* XOR key with ipad and opad values */
+    for (i=0; i<64; i++) {
+        k_ipad[i] ^= 0x36;
+        k_opad[i] ^= 0x5c;
+    }
+    /* perform inner MD5 */
+    MD5Init(&context);               /* init context for 1st pass */
+    MD5Update(&context, k_ipad, 64)      /* start with inner pad */
+    MD5Update(&context, text, text_len); /* then text of datagram */
+    MD5Final(digest, &context);          /* finish up 1st pass */
+    /* perform outer MD5 */
+    MD5Init(&context);               /* init context for 2nd pass */
+    MD5Update(&context, k_opad, 64); /* start with outer pad */
+    MD5Update(&context, digest, 16); /* then results of 1st hash */
+    MD5Final(digest, &context);      /* finish up 2nd pass */
+}
