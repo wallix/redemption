@@ -76,7 +76,7 @@ private:
                 this->start_capture = now;
                 const_cast<Drawable&>(this->drawable).clear_mouse();
 
-                return microseconds(interval - duration % interval);
+                return microseconds(interval ? interval - duration % interval : 0u);
             }
             else {
                 // Wait 0.3 x frame_interval.

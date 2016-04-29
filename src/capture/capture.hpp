@@ -286,6 +286,12 @@ public:
         }
     }
 
+    void set_order_bpp(uint8_t order_bpp) {
+        if (this->graphic_api) {
+            this->gd->update_order_bpp(order_bpp);
+        }
+    }
+
     void set_pointer_display() /*override*/ {
         if (this->gd) {
             this->gd->rdp_drawable().show_mouse_cursor(false);

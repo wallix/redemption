@@ -395,7 +395,9 @@ public:
     }
 
     void receive() {
-        LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
+        }
         try {
             this->acl_serial.incoming();
 
@@ -422,7 +424,9 @@ public:
     }
 
     void ask_acl() {
-        LOG(LOG_INFO, "Ask acl\n");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "Ask acl\n");
+        }
         this->acl_serial.send_acl_data();
     }
 
