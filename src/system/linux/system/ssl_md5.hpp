@@ -190,27 +190,27 @@ class SslMd5_direct
 	    s->h[3] += d;
     }
 
-    static void pad(struct md5 *s)
+    void pad()
     {
-	    unsigned r = s->len % 64;
+	    unsigned r = this->md5.len % 64;
 
-	    s->buf[r++] = 0x80;
+	    this->md5.buf[r++] = 0x80;
 	    if (r > 56) {
-		    memset(s->buf + r, 0, 64 - r);
+		    memset(this->md5.buf + r, 0, 64 - r);
 		    r = 0;
-		    processblock(s, s->buf);
+		    processblock(&this->md5, this->md5.buf);
 	    }
-	    memset(s->buf + r, 0, 56 - r);
-	    s->len *= 8;
-	    s->buf[56] = s->len;
-	    s->buf[57] = s->len >> 8;
-	    s->buf[58] = s->len >> 16;
-	    s->buf[59] = s->len >> 24;
-	    s->buf[60] = s->len >> 32;
-	    s->buf[61] = s->len >> 40;
-	    s->buf[62] = s->len >> 48;
-	    s->buf[63] = s->len >> 56;
-	    processblock(s, s->buf);
+	    memset(this->md5.buf + r, 0, 56 - r);
+	    this->md5.len *= 8;
+	    this->md5.buf[56] = this->md5.len;
+	    this->md5.buf[57] = this->md5.len >> 8;
+	    this->md5.buf[58] = this->md5.len >> 16;
+	    this->md5.buf[59] = this->md5.len >> 24;
+	    this->md5.buf[60] = this->md5.len >> 32;
+	    this->md5.buf[61] = this->md5.len >> 40;
+	    this->md5.buf[62] = this->md5.len >> 48;
+	    this->md5.buf[63] = this->md5.len >> 56;
+	    processblock(&this->md5, this->md5.buf);
     }
 
     static void md5_init(struct md5 *s)
@@ -222,16 +222,16 @@ class SslMd5_direct
 	    s->h[3] = 0x10325476;
     }
 
-    static void md5_sum(struct md5 *s, uint8_t *md)
+    void md5_sum(uint8_t *md)
     {
 	    int i;
 
-	    pad(s);
+	    this->pad();
 	    for (i = 0; i < 4; i++) {
-		    md[4*i] = s->h[i];
-		    md[4*i+1] = s->h[i] >> 8;
-		    md[4*i+2] = s->h[i] >> 16;
-		    md[4*i+3] = s->h[i] >> 24;
+		    md[4*i] = this->md5.h[i];
+		    md[4*i+1] = this->md5.h[i] >> 8;
+		    md[4*i+2] = this->md5.h[i] >> 16;
+		    md[4*i+3] = this->md5.h[i] >> 24;
 	    }
     }
 
@@ -270,7 +270,7 @@ class SslMd5_direct
     void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(MD5_DIGEST_LENGTH == out_data_size);
-        SslMd5_direct::md5_sum(&this->md5, out_data);
+        this->md5_sum(out_data);
     }
 };
 
