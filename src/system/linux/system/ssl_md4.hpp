@@ -71,9 +71,9 @@ class SslMd4_direct
     /* public domain md4 implementation based on rfc1321 and libtomcrypt */
 
     struct md4 {
-	    uint32_t total[2];   /* number of bytes processed */
-	    uint32_t state[4];   /* intermediate digest state */
-	    unsigned char buffer[64]; /* data block being processed  */
+        uint32_t total[2];   /* number of bytes processed */
+        uint32_t state[4];   /* intermediate digest state */
+        unsigned char buffer[64]; /* data block being processed  */
     } md4;
 
 
@@ -87,109 +87,109 @@ class SslMd4_direct
             | ( static_cast<uint32_t>( b[i + 3] << 24) );
     }
 
-   static void P_1(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
-       a += ( (b & c) | ((~b) & d) ) + x;
-       a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
-   }
+    static void P_1(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
+        a += ( (b & c) | ((~b) & d) ) + x;
+        a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
+    }
 
-   static void P_2(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
-       a += ( (b & c) | (b & d) | (c & d) ) + x + 0x5A827999;
-       a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
-   }
+    static void P_2(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
+        a += ( (b & c) | (b & d) | (c & d) ) + x + 0x5A827999;
+        a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
+    }
 
-   static void P_3(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
-       a += ( (b ^ c ^ d) ) + x + 0x6ED9EBA1;
-       a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
-   }
+    static void P_3(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
+        a += ( (b ^ c ^ d) ) + x + 0x6ED9EBA1;
+        a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
+    }
 
 
     static void processblock(struct md4 *s, const uint8_t *buf)
     {
-	    uint32_t X[16], A, B, C, D;
+        uint32_t X[16], A, B, C, D;
 
-       GET_UINT32_LE( X[ 0], buf,  0 );
-       GET_UINT32_LE( X[ 1], buf,  4 );
-       GET_UINT32_LE( X[ 2], buf,  8 );
-       GET_UINT32_LE( X[ 3], buf, 12 );
-       GET_UINT32_LE( X[ 4], buf, 16 );
-       GET_UINT32_LE( X[ 5], buf, 20 );
-       GET_UINT32_LE( X[ 6], buf, 24 );
-       GET_UINT32_LE( X[ 7], buf, 28 );
-       GET_UINT32_LE( X[ 8], buf, 32 );
-       GET_UINT32_LE( X[ 9], buf, 36 );
-       GET_UINT32_LE( X[10], buf, 40 );
-       GET_UINT32_LE( X[11], buf, 44 );
-       GET_UINT32_LE( X[12], buf, 48 );
-       GET_UINT32_LE( X[13], buf, 52 );
-       GET_UINT32_LE( X[14], buf, 56 );
-       GET_UINT32_LE( X[15], buf, 60 );
-
-
-       A = s->state[0];
-       B = s->state[1];
-       C = s->state[2];
-       D = s->state[3];
+        GET_UINT32_LE( X[ 0], buf,  0 );
+        GET_UINT32_LE( X[ 1], buf,  4 );
+        GET_UINT32_LE( X[ 2], buf,  8 );
+        GET_UINT32_LE( X[ 3], buf, 12 );
+        GET_UINT32_LE( X[ 4], buf, 16 );
+        GET_UINT32_LE( X[ 5], buf, 20 );
+        GET_UINT32_LE( X[ 6], buf, 24 );
+        GET_UINT32_LE( X[ 7], buf, 28 );
+        GET_UINT32_LE( X[ 8], buf, 32 );
+        GET_UINT32_LE( X[ 9], buf, 36 );
+        GET_UINT32_LE( X[10], buf, 40 );
+        GET_UINT32_LE( X[11], buf, 44 );
+        GET_UINT32_LE( X[12], buf, 48 );
+        GET_UINT32_LE( X[13], buf, 52 );
+        GET_UINT32_LE( X[14], buf, 56 );
+        GET_UINT32_LE( X[15], buf, 60 );
 
 
-       P_1( A, B, C, D, X[ 0],  3 );
-       P_1( D, A, B, C, X[ 1],  7 );
-       P_1( C, D, A, B, X[ 2], 11 );
-       P_1( B, C, D, A, X[ 3], 19 );
-       P_1( A, B, C, D, X[ 4],  3 );
-       P_1( D, A, B, C, X[ 5],  7 );
-       P_1( C, D, A, B, X[ 6], 11 );
-       P_1( B, C, D, A, X[ 7], 19 );
-       P_1( A, B, C, D, X[ 8],  3 );
-       P_1( D, A, B, C, X[ 9],  7 );
-       P_1( C, D, A, B, X[10], 11 );
-       P_1( B, C, D, A, X[11], 19 );
-       P_1( A, B, C, D, X[12],  3 );
-       P_1( D, A, B, C, X[13],  7 );
-       P_1( C, D, A, B, X[14], 11 );
-       P_1( B, C, D, A, X[15], 19 );
+        A = s->state[0];
+        B = s->state[1];
+        C = s->state[2];
+        D = s->state[3];
 
 
-       P_2( A, B, C, D, X[ 0],  3 );
-       P_2( D, A, B, C, X[ 4],  5 );
-       P_2( C, D, A, B, X[ 8],  9 );
-       P_2( B, C, D, A, X[12], 13 );
-       P_2( A, B, C, D, X[ 1],  3 );
-       P_2( D, A, B, C, X[ 5],  5 );
-       P_2( C, D, A, B, X[ 9],  9 );
-       P_2( B, C, D, A, X[13], 13 );
-       P_2( A, B, C, D, X[ 2],  3 );
-       P_2( D, A, B, C, X[ 6],  5 );
-       P_2( C, D, A, B, X[10],  9 );
-       P_2( B, C, D, A, X[14], 13 );
-       P_2( A, B, C, D, X[ 3],  3 );
-       P_2( D, A, B, C, X[ 7],  5 );
-       P_2( C, D, A, B, X[11],  9 );
-       P_2( B, C, D, A, X[15], 13 );
+        P_1( A, B, C, D, X[ 0],  3 );
+        P_1( D, A, B, C, X[ 1],  7 );
+        P_1( C, D, A, B, X[ 2], 11 );
+        P_1( B, C, D, A, X[ 3], 19 );
+        P_1( A, B, C, D, X[ 4],  3 );
+        P_1( D, A, B, C, X[ 5],  7 );
+        P_1( C, D, A, B, X[ 6], 11 );
+        P_1( B, C, D, A, X[ 7], 19 );
+        P_1( A, B, C, D, X[ 8],  3 );
+        P_1( D, A, B, C, X[ 9],  7 );
+        P_1( C, D, A, B, X[10], 11 );
+        P_1( B, C, D, A, X[11], 19 );
+        P_1( A, B, C, D, X[12],  3 );
+        P_1( D, A, B, C, X[13],  7 );
+        P_1( C, D, A, B, X[14], 11 );
+        P_1( B, C, D, A, X[15], 19 );
 
 
-       P_3( A, B, C, D, X[ 0],  3 );
-       P_3( D, A, B, C, X[ 8],  9 );
-       P_3( C, D, A, B, X[ 4], 11 );
-       P_3( B, C, D, A, X[12], 15 );
-       P_3( A, B, C, D, X[ 2],  3 );
-       P_3( D, A, B, C, X[10],  9 );
-       P_3( C, D, A, B, X[ 6], 11 );
-       P_3( B, C, D, A, X[14], 15 );
-       P_3( A, B, C, D, X[ 1],  3 );
-       P_3( D, A, B, C, X[ 9],  9 );
-       P_3( C, D, A, B, X[ 5], 11 );
-       P_3( B, C, D, A, X[13], 15 );
-       P_3( A, B, C, D, X[ 3],  3 );
-       P_3( D, A, B, C, X[11],  9 );
-       P_3( C, D, A, B, X[ 7], 11 );
-       P_3( B, C, D, A, X[15], 15 );
+        P_2( A, B, C, D, X[ 0],  3 );
+        P_2( D, A, B, C, X[ 4],  5 );
+        P_2( C, D, A, B, X[ 8],  9 );
+        P_2( B, C, D, A, X[12], 13 );
+        P_2( A, B, C, D, X[ 1],  3 );
+        P_2( D, A, B, C, X[ 5],  5 );
+        P_2( C, D, A, B, X[ 9],  9 );
+        P_2( B, C, D, A, X[13], 13 );
+        P_2( A, B, C, D, X[ 2],  3 );
+        P_2( D, A, B, C, X[ 6],  5 );
+        P_2( C, D, A, B, X[10],  9 );
+        P_2( B, C, D, A, X[14], 13 );
+        P_2( A, B, C, D, X[ 3],  3 );
+        P_2( D, A, B, C, X[ 7],  5 );
+        P_2( C, D, A, B, X[11],  9 );
+        P_2( B, C, D, A, X[15], 13 );
 
 
-       s->state[0] += A;
-       s->state[1] += B;
-       s->state[2] += C;
-       s->state[3] += D;
-   }
+        P_3( A, B, C, D, X[ 0],  3 );
+        P_3( D, A, B, C, X[ 8],  9 );
+        P_3( C, D, A, B, X[ 4], 11 );
+        P_3( B, C, D, A, X[12], 15 );
+        P_3( A, B, C, D, X[ 2],  3 );
+        P_3( D, A, B, C, X[10],  9 );
+        P_3( C, D, A, B, X[ 6], 11 );
+        P_3( B, C, D, A, X[14], 15 );
+        P_3( A, B, C, D, X[ 1],  3 );
+        P_3( D, A, B, C, X[ 9],  9 );
+        P_3( C, D, A, B, X[ 5], 11 );
+        P_3( B, C, D, A, X[13], 15 );
+        P_3( A, B, C, D, X[ 3],  3 );
+        P_3( D, A, B, C, X[11],  9 );
+        P_3( C, D, A, B, X[ 7], 11 );
+        P_3( B, C, D, A, X[15], 15 );
+
+
+        s->state[0] += A;
+        s->state[1] += B;
+        s->state[2] += C;
+        s->state[3] += D;
+    }
 
     static void MD4_init(struct md4 *s)
     {
@@ -218,7 +218,7 @@ class SslMd4_direct
         unsigned char msglen[8];
 
         high = ( s->total[0] >> 29 )
-             | ( s->total[1] <<  3 );
+                | ( s->total[1] <<  3 );
         low  = ( s->total[0] <<  3 );
 
         PUT_UINT32_LE( low,  msglen, 0 );
@@ -229,7 +229,7 @@ class SslMd4_direct
 
         const unsigned char md4_padding[64] =
         {
-         0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -250,7 +250,7 @@ class SslMd4_direct
         size_t fill;
         uint32_t left;
 
-       if( len == 0 )
+        if( len == 0 )
             return;
 
         left = s->total[0] & 0x3F;
