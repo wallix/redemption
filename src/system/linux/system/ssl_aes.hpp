@@ -36,7 +36,11 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 
+enum {
+    AES_KEY_SIZE_128 = 16
+};
 
+/*
 class SslAES
 {
     AES_KEY e_key;
@@ -69,7 +73,7 @@ class SslAES
                     const uint8_t * const indata, uint8_t * const outdata) {
        AES_cbc_encrypt(indata, outdata, data_size, &(this->d_key), ivec, AES_DECRYPT);
     }
-};
+};*/
 
 
 
@@ -80,6 +84,7 @@ class SslAES_direct
     AES_KEY e_key;
     AES_KEY d_key;
 
+    
 
     void AES_set_encrypt_key(const uint8_t * const key, size_t key_size, AES_KEY & aes_key) {
 
@@ -89,15 +94,92 @@ class SslAES_direct
 
     }
 
-    void AES_cbc_encrypt(const uint8_t * const indata, uint8_t * const outdata, size_t data_size, AES_KEY & aes_key, uint8_t *  ivec, int direction_crypt) {
 
+    void AES_cbc_decrypt(uint8_t* output, const uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv) {
+        uintptr_t i;
+        uint8_t remainders = length % KEYLEN; /* Remaining bytes in the last non-full block */
+
+        BlockCopy(output, input);
+        state = (state_t*)output;
+
+        // Skip the key expansion if key is passed as 0
+        if(0 != key)
+        {
+            Key = key;
+            KeyExpansion();
+        }
+
+        // If iv is passed as 0, we continue to encrypt without re-setting the Iv
+        if(iv != 0)
+        {
+            Iv = (uint8_t*)iv;
+        }
+
+        for(i = 0; i < length; i += KEYLEN)
+        {
+            BlockCopy(output, input);
+            state = (state_t*)output;
+            InvCipher();
+            XorWithIv(output);
+            Iv = input;
+            input += KEYLEN;
+            output += KEYLEN;
+        }
+
+        if(remainders)
+        {
+            BlockCopy(output, input);
+            memset(output+remainders, 0, KEYLEN - remainders); /* add 0-padding */
+            state = (state_t*)output;
+            InvCipher();
+        }
     }
+
+    void AES_cbc_encrypt(uint8_t* output, const uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv) {
+        uintptr_t i;
+        uint8_t remainders = length % KEYLEN; /* Remaining bytes in the last non-full block */
+
+        BlockCopy(output, input);
+        state = (state_t*)output;
+
+        // Skip the key expansion if key is passed as 0
+        if(0 != key)
+        {
+            Key = key;
+            KeyExpansion();
+        }
+
+        if(iv != 0)
+        {
+            Iv = (uint8_t*)iv;
+        }
+
+        for(i = 0; i < length; i += KEYLEN)
+        {
+            XorWithIv(input);
+            BlockCopy(output, input);
+            state = (state_t*)output;
+            Cipher();
+            Iv = output;
+            input += KEYLEN;
+            output += KEYLEN;
+        }
+
+        if(remainders)
+        {
+            BlockCopy(output, input);
+            memset(output + remainders, 0, KEYLEN - remainders); /* add 0-padding */
+            state = (state_t*)output;
+            Cipher();
+        }
+    }
+
 
 
     public:
     SslAES_direct(){}
 
-    void set_key_direct(const uint8_t * const key,  size_t key_size)
+    void set_key(const uint8_t * const key,  size_t key_size)
     {
         if ((key_size != 16) &&
             (key_size != 24) &&
@@ -110,14 +192,14 @@ class SslAES_direct
         this->AES_set_decrypt_key(key, key_size * 8, &(this->d_key));
     }
 
-    void crypt_cbc_direct(size_t data_size, uint8_t * ivec,
-                  const uint8_t * const indata, uint8_t * const outdata) {
-       this->AES_cbc_encrypt(indata, outdata, data_size, &(this->e_key), ivec, AES_ENCRYPT);
+    void crypt_cbc(size_t data_size, uint8_t * ivec,
+                  const uint8_t * const indata, uint8_t * outdata) {
+       this->AES_cbc_encrypt(outdata, indata, data_size, &(this->e_key), ivec);
     }
 
-    void decrypt_cbc_direct(size_t data_size, uint8_t * ivec,
+    void decrypt_cbc(size_t data_size, uint8_t * ivec,
                     const uint8_t * const indata, uint8_t * const outdata) {
-       this->AES_cbc_encrypt(indata, outdata, data_size, &(this->d_key), ivec, AES_DECRYPT);
+       this->AES_cbc_decrypt(outdata, indata, data_size, &(this->d_key), ivec, AES_DECRYPT);
     }
 };
 

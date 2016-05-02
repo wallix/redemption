@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include "system/ssl_calls.hpp"
+#include "system/ssl_md4.hpp"
 
 // uint8_t data[512];
 
@@ -329,8 +330,26 @@ BOOST_AUTO_TEST_CASE(TestSslMd4)
                           0);
     }
 
+
     {
         SslMd4 md;
+
+        md.update(data, 128);
+        md.update(data + 128, 128);
+        md.update(data + 256, 128);
+        md.update(data + 384, 128);
+        md.final(sig, sizeof(sig));
+        // hexdump96_c(sig, sizeof(sig));
+
+        BOOST_CHECK_EQUAL(memcmp(sig,
+                                 "\x33\xce\xe5\xdd\x0b\x6f\x3a\xf7"
+                                 "\xd9\xa4\xa1\x9a\xbc\x1b\xc6\x58",
+                                 sizeof(sig)),
+                          0);
+    }
+
+    {
+        SslMd4_direct md;
 
         md.update(data, 128);
         md.update(data + 128, 128);

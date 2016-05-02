@@ -36,6 +36,8 @@
 
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
+#include <strings.h>
+
 
 enum {
     SEC_RANDOM_SIZE   = 32,
@@ -372,10 +374,63 @@ class SslHMAC_Md5
     }
 };
 
-// Function: hmac_md5
+
+class SslHMAC
+{
+    HMAC_CTX hmac;
+
+    public:
+
+    template<typename T>
+    SslHMAC(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_CTX_init(&this->hmac);
+        int res = 0;
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), nullptr);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
+    }
+
+    ~SslHMAC()
+    {
+        HMAC_CTX_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        int res = 0;
+        res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        int res = 0;
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            res = HMAC_Final(&this->hmac, tmp, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+    }
+};
+
+
+// Function: hmac_md5_direct
 
 //template<typename T>
-//void hmac_md5(unsigned char* text, int text_len, unsigned char* key, int key_len, caddr_t digest)
+//void hmac_md5_direct(unsigned char* text, int text_len, unsigned char* key, int key_len, caddr_t digest)
 //{
 //    T algo;
 //    unsigned char k_ipad[65]; // inner padding - key XORd with ipad
@@ -417,7 +472,8 @@ class SslHMAC_Md5
 //    MD5Final(digest, &context);          // finish up 1st pass
 //    /* perform outer MD5 */
 //    MD5Init(&context);               // init context for 2nd pass
-//    MD5Update(&context, k_opad, 64); // start with outer pad 
+//    MD5Update(&context, k_opad, 64); // start with outer pad
 //    MD5Update(&context, digest, 16); // then results of 1st hash
 //    MD5Final(digest, &context);      // finish up 2nd pass
 //}
+
