@@ -21,14 +21,15 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestSSLSHA1
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
 // #define LOGNULL
 
 #include <stdio.h>
-#include "system/ssl_calls.hpp"
+#include "system/ssl_sha1.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestSslSha1)
 {
@@ -133,4 +134,16 @@ BOOST_AUTO_TEST_CASE(TestSslSha1)
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
