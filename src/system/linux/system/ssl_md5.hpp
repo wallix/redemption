@@ -68,9 +68,9 @@ class SslMd5_direct
     /* public domain md5 implementation based on rfc1321 and libtomcrypt */
 
     struct md5 {
-	    uint64_t len;    /* processed message length */
-	    uint32_t h[4];   /* hash state */
-	    uint8_t buf[64]; /* message block buffer */
+        uint64_t len;    /* processed message length */
+        uint32_t h[4];   /* hash state */
+        uint8_t buf[64]; /* message block buffer */
     } md5;
 
     static uint32_t rol(uint32_t n, int k) { return (n << k) | (n >> (32-k)); }
@@ -95,7 +95,7 @@ class SslMd5_direct
         return rol(a + I(b,c,d) + w + t, s) + b;
     }
 
-    static void processblock(struct md5 *s, const uint8_t *buf)
+    void processblock(const uint8_t *buf)
     {
         uint32_t W[16];
 
@@ -107,10 +107,10 @@ class SslMd5_direct
                  | static_cast<uint32_t>(buf[4*i+3]<<24);
         }
 
-        uint32_t a = s->h[0];
-        uint32_t b = s->h[1];
-        uint32_t c = s->h[2];
-        uint32_t d = s->h[3];
+        uint32_t a = this->md5.h[0];
+        uint32_t b = this->md5.h[1];
+        uint32_t c = this->md5.h[2];
+        uint32_t d = this->md5.h[3];
 
         i = 0;
         a = FF(a,b,c,d, W[i],  7, 0xd76aa478); i++;
@@ -190,82 +190,82 @@ class SslMd5_direct
         c = II(c,d,a,b, W[7*i%16], 15, 0x2ad7d2bb); i++;
         b = II(b,c,d,a, W[7*i%16], 21, 0xeb86d391); i++;
 
-        s->h[0] += a;
-        s->h[1] += b;
-        s->h[2] += c;
-        s->h[3] += d;
+        this->md5.h[0] += a;
+        this->md5.h[1] += b;
+        this->md5.h[2] += c;
+        this->md5.h[3] += d;
     }
 
     void pad()
     {
-	    unsigned r = this->md5.len % 64;
+        unsigned r = this->md5.len % 64;
 
-	    this->md5.buf[r++] = 0x80;
-	    if (r > 56) {
-		    memset(this->md5.buf + r, 0, 64 - r);
-		    r = 0;
-		    processblock(&this->md5, this->md5.buf);
-	    }
-	    memset(this->md5.buf + r, 0, 56 - r);
-	    this->md5.len *= 8;
-	    this->md5.buf[56] = this->md5.len;
-	    this->md5.buf[57] = this->md5.len >> 8;
-	    this->md5.buf[58] = this->md5.len >> 16;
-	    this->md5.buf[59] = this->md5.len >> 24;
-	    this->md5.buf[60] = this->md5.len >> 32;
-	    this->md5.buf[61] = this->md5.len >> 40;
-	    this->md5.buf[62] = this->md5.len >> 48;
-	    this->md5.buf[63] = this->md5.len >> 56;
-	    processblock(&this->md5, this->md5.buf);
+        this->md5.buf[r++] = 0x80;
+        if (r > 56) {
+            memset(this->md5.buf + r, 0, 64 - r);
+            r = 0;
+            this->processblock(this->md5.buf);
+        }
+        memset(this->md5.buf + r, 0, 56 - r);
+        this->md5.len *= 8;
+        this->md5.buf[56] = this->md5.len;
+        this->md5.buf[57] = this->md5.len >> 8;
+        this->md5.buf[58] = this->md5.len >> 16;
+        this->md5.buf[59] = this->md5.len >> 24;
+        this->md5.buf[60] = this->md5.len >> 32;
+        this->md5.buf[61] = this->md5.len >> 40;
+        this->md5.buf[62] = this->md5.len >> 48;
+        this->md5.buf[63] = this->md5.len >> 56;
+        this->processblock(this->md5.buf);
     }
 
-    static void md5_init(struct md5 *s)
+    void md5_init()
     {
-	    s->len = 0;
-	    s->h[0] = 0x67452301;
-	    s->h[1] = 0xefcdab89;
-	    s->h[2] = 0x98badcfe;
-	    s->h[3] = 0x10325476;
+        this->md5.len = 0;
+        this->md5.h[0] = 0x67452301;
+        this->md5.h[1] = 0xefcdab89;
+        this->md5.h[2] = 0x98badcfe;
+        this->md5.h[3] = 0x10325476;
     }
 
     void md5_sum(uint8_t *md)
     {
-	    int i;
+        int i;
 
-	    this->pad();
-	    for (i = 0; i < 4; i++) {
-		    md[4*i] = this->md5.h[i];
-		    md[4*i+1] = this->md5.h[i] >> 8;
-		    md[4*i+2] = this->md5.h[i] >> 16;
-		    md[4*i+3] = this->md5.h[i] >> 24;
-	    }
+        this->pad();
+        for (i = 0; i < 4; i++) {
+            md[4*i] = this->md5.h[i];
+            md[4*i+1] = this->md5.h[i] >> 8;
+            md[4*i+2] = this->md5.h[i] >> 16;
+            md[4*i+3] = this->md5.h[i] >> 24;
+        }
     }
 
     void md5_update(const void *m, unsigned long len)
     {
-	    const uint8_t *p = reinterpret_cast<const uint8_t*>(m);
-	    unsigned r = this->md5.len % 64;
+        const uint8_t *p = reinterpret_cast<const uint8_t*>(m);
+        unsigned r = this->md5.len % 64;
 
-	    this->md5.len += len;
-	    if (r) {
-		    if (len < 64 - r) {
-			    memcpy(this->md5.buf + r, p, len);
-			    return;
-		    }
-		    memcpy(this->md5.buf + r, p, 64 - r);
-		    len -= 64 - r;
-		    p += 64 - r;
-		    processblock(&this->md5, this->md5.buf);
-	    }
-	    for (; len >= 64; len -= 64, p += 64)
-		    processblock(&this->md5, p);
-	    memcpy(this->md5.buf, p, len);
+        this->md5.len += len;
+        if (r) {
+            if (len < 64 - r) {
+                memcpy(this->md5.buf + r, p, len);
+                return;
+            }
+            memcpy(this->md5.buf + r, p, 64 - r);
+            len -= 64 - r;
+            p += 64 - r;
+            this->processblock(this->md5.buf);
+        }
+        for (; len >= 64; len -= 64, p += 64)
+            this->processblock(p);
+        memcpy(this->md5.buf, p, len);
     }
 
     public:
     SslMd5_direct()
     {
-        SslMd5_direct::md5_init(&this->md5);
+        this->md5_init();
     }
 
     void update(const uint8_t * const data, size_t data_size)
