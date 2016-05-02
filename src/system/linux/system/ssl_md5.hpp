@@ -30,6 +30,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <arpa/inet.h> // for ntohl
+
 
 #include "core/error.hpp"
 #include "openssl_crypto.hpp"
@@ -99,12 +101,24 @@ class SslMd5_direct
     {
         uint32_t W[16];
 
-        uint32_t i;
-        for (i = 0; i < 16; i++) {
-            W[i] = buf[4*i]
-                 | static_cast<uint32_t>(buf[4*i+1]<<8)
-                 | static_cast<uint32_t>(buf[4*i+2]<<16)
-                 | static_cast<uint32_t>(buf[4*i+3]<<24);
+        memcpy(W, buf, sizeof(W));
+        if (ntohl(1) == 1){
+            W[0] = ntohl(W[0]);
+            W[1] = ntohl(W[1]);
+            W[2] = ntohl(W[2]);
+            W[3] = ntohl(W[3]);
+            W[4] = ntohl(W[4]);
+            W[5] = ntohl(W[5]);
+            W[6] = ntohl(W[6]);
+            W[7] = ntohl(W[7]);
+            W[8] = ntohl(W[8]);
+            W[9] = ntohl(W[9]);
+            W[10] = ntohl(W[10]);
+            W[11] = ntohl(W[11]);
+            W[12] = ntohl(W[12]);
+            W[13] = ntohl(W[13]);
+            W[14] = ntohl(W[14]);
+            W[15] = ntohl(W[15]);
         }
 
         uint32_t a = this->md5.h[0];
@@ -112,7 +126,7 @@ class SslMd5_direct
         uint32_t c = this->md5.h[2];
         uint32_t d = this->md5.h[3];
 
-        i = 0;
+        uint32_t i = 0;
         a = FF(a,b,c,d, W[i],  7, 0xd76aa478); i++;
         d = FF(d,a,b,c, W[i], 12, 0xe8c7b756); i++;
         c = FF(c,d,a,b, W[i], 17, 0x242070db); i++;
@@ -241,9 +255,9 @@ class SslMd5_direct
         }
     }
 
-    void md5_update(const void *m, unsigned long len)
+    void md5_update(const uint8_t *m, unsigned long len)
     {
-        const uint8_t *p = reinterpret_cast<const uint8_t*>(m);
+        const uint8_t *p = m;
         unsigned r = this->md5.len % 64;
 
         this->md5.len += len;
@@ -257,8 +271,9 @@ class SslMd5_direct
             p += 64 - r;
             this->processblock(this->md5.buf);
         }
-        for (; len >= 64; len -= 64, p += 64)
+        for (; len >= 64; len -= 64, p += 64){
             this->processblock(p);
+        }
         memcpy(this->md5.buf, p, len);
     }
 
