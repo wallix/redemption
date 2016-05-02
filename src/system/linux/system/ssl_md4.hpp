@@ -66,7 +66,7 @@ class SslMd4
 
 
 
-class SslMD4_direct
+class SslMd4_direct
 {
     /* public domain md4 implementation based on rfc1321 and libtomcrypt */
 
@@ -192,14 +192,6 @@ class SslMD4_direct
        s->state[3] += D;
    }
 
-    static constexpr unsigned char md4_padding[64] =
-    {
-     0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
-
     static void MD4_init(struct md4 *s)
     {
         memset( s, 0, sizeof(md4) );
@@ -226,7 +218,7 @@ class SslMD4_direct
 
     static void MD4_final(struct md4 *s, uint8_t *md)
     {
-	    uint32_t last, padn;
+        uint32_t last, padn;
         uint32_t high, low;
         unsigned char msglen[8];
 
@@ -240,7 +232,15 @@ class SslMD4_direct
         last = s->total[0] & 0x3F;
         padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
 
-        MD4_update( s, static_cast<const unsigned char *> (md4_padding), padn );
+        const unsigned char md4_padding[64] =
+        {
+         0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        };
+
+        MD4_update( s, md4_padding, padn );
         MD4_update( s, msglen, 8 );
 
         PUT_UINT32_LE( s->state[0], md,  0 );
@@ -254,7 +254,7 @@ class SslMD4_direct
 
     static void MD4_update(struct md4 *s, const uint8_t *m, unsigned long len)
     {
-	    size_t fill;
+        size_t fill;
         uint32_t left;
 
        if( len == 0 )
@@ -294,20 +294,20 @@ class SslMD4_direct
     }
 
     public:
-    SslMD4_direct()
+    SslMd4_direct()
     {
-        SslMD4_direct::MD4_init(&this->md4);
+        SslMd4_direct::MD4_init(&this->md4);
     }
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        SslMD4_direct::MD4_update(&this->md4, data, data_size);
+        SslMd4_direct::MD4_update(&this->md4, data, data_size);
     }
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(MD4_DIGEST_LENGTH == out_data_size);
-        SslMD4_direct::MD4_final(&this->md4, out_data);
+        SslMd4_direct::MD4_final(&this->md4, out_data);
     }
 };
 
