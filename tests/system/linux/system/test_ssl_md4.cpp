@@ -21,14 +21,13 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestMD4
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
 // #define LOGNULL
 
 #include <stdio.h>
-//#include "system/ssl_calls.hpp"
 #include "system/ssl_md4.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSslMd4)

@@ -36,7 +36,6 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 
-/*
 class SslMd4
 {
     MD4_CTX md4;
@@ -62,8 +61,7 @@ class SslMd4
         }
         MD4_Final(out_data, &this->md4);
     }
-};*/
-
+};
 
 
 class SslMd4_direct
