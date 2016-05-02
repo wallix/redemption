@@ -382,7 +382,7 @@ class SslHMAC
     public:
 
     template<typename T>
-    SslHMAC_Md5(const uint8_t * const key, size_t key_size)
+    SslHMAC(const uint8_t * const key, size_t key_size)
     {
         HMAC_CTX_init(&this->hmac);
         int res = 0;
@@ -392,7 +392,7 @@ class SslHMAC
         }
     }
 
-    ~SslHMAC_Md5()
+    ~SslHMAC()
     {
         HMAC_CTX_cleanup(&this->hmac);
     }

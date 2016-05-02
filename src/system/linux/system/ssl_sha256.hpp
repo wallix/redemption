@@ -39,7 +39,7 @@
 
 
 #define SHA256_DIGEST_LENGTH 256
-/*
+
 class SslSha256
 {
     SHA256_CTX sha256;
@@ -72,7 +72,7 @@ class SslSha256
             throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
         }
     }
-};*/
+};
 
 
 #define ROTLEFT(a,b) (((a) << (b)) | ((a) >> (32-(b))))

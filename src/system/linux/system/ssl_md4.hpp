@@ -36,7 +36,7 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 
-
+/*
 class SslMd4
 {
     MD4_CTX md4;
@@ -62,7 +62,7 @@ class SslMd4
         }
         MD4_Final(out_data, &this->md4);
     }
-};
+};*/
 
 
 
@@ -79,13 +79,29 @@ class SslMd4_direct
 
     //static uint32_t rol(uint32_t n, int k) { return (n << k) | (n >> (32-k)); }
 
-    #define GET_UINT32_LE(n,b,i)                            \
-    {                                                       \
-        (n) = ( static_cast<uint32_t>( (b)[(i)    ])       )             \
-            | ( static_cast<uint32_t>( (b)[(i) + 1] <<  8) )             \
-            | ( static_cast<uint32_t>( (b)[(i) + 2] << 16) )             \
-            | ( static_cast<uint32_t>( (b)[(i) + 3] << 24) );            \
+    static void GET_UINT32_LE(uint32_t & n,const uint8_t * b, int i)
+    {
+        n = (   static_cast<uint32_t>( b[i   ])       )
+            | ( static_cast<uint32_t>( b[i + 1] <<  8) )
+            | ( static_cast<uint32_t>( b[i + 2] << 16) )
+            | ( static_cast<uint32_t>( b[i + 3] << 24) );
     }
+
+   static void P_1(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
+       a += ( (b & c) | ((~b) & d) ) + x;
+       a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
+   }
+
+   static void P_2(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
+       a += ( (b & c) | (b & d) | (c & d) ) + x + 0x5A827999;
+       a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
+   }
+
+   static void P_3(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
+       a += ( (b ^ c ^ d) ) + x + 0x6ED9EBA1;
+       a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
+   }
+
 
     static void processblock(struct md4 *s, const uint8_t *buf)
     {
@@ -108,83 +124,66 @@ class SslMd4_direct
        GET_UINT32_LE( X[14], buf, 56 );
        GET_UINT32_LE( X[15], buf, 60 );
 
-   #undef GET_UINT32_LE
-
-   #define S(x,n) ((x << n) | ((x & 0xFFFFFFFF) >> (32 - n)))
 
        A = s->state[0];
        B = s->state[1];
        C = s->state[2];
        D = s->state[3];
 
-   #define F(x, y, z) ((x & y) | ((~x) & z))
-   #define P(a,b,c,d,x,s) { a += F(b,c,d) + x; a = S(a,s); }
 
-       P( A, B, C, D, X[ 0],  3 );
-       P( D, A, B, C, X[ 1],  7 );
-       P( C, D, A, B, X[ 2], 11 );
-       P( B, C, D, A, X[ 3], 19 );
-       P( A, B, C, D, X[ 4],  3 );
-       P( D, A, B, C, X[ 5],  7 );
-       P( C, D, A, B, X[ 6], 11 );
-       P( B, C, D, A, X[ 7], 19 );
-       P( A, B, C, D, X[ 8],  3 );
-       P( D, A, B, C, X[ 9],  7 );
-       P( C, D, A, B, X[10], 11 );
-       P( B, C, D, A, X[11], 19 );
-       P( A, B, C, D, X[12],  3 );
-       P( D, A, B, C, X[13],  7 );
-       P( C, D, A, B, X[14], 11 );
-       P( B, C, D, A, X[15], 19 );
+       P_1( A, B, C, D, X[ 0],  3 );
+       P_1( D, A, B, C, X[ 1],  7 );
+       P_1( C, D, A, B, X[ 2], 11 );
+       P_1( B, C, D, A, X[ 3], 19 );
+       P_1( A, B, C, D, X[ 4],  3 );
+       P_1( D, A, B, C, X[ 5],  7 );
+       P_1( C, D, A, B, X[ 6], 11 );
+       P_1( B, C, D, A, X[ 7], 19 );
+       P_1( A, B, C, D, X[ 8],  3 );
+       P_1( D, A, B, C, X[ 9],  7 );
+       P_1( C, D, A, B, X[10], 11 );
+       P_1( B, C, D, A, X[11], 19 );
+       P_1( A, B, C, D, X[12],  3 );
+       P_1( D, A, B, C, X[13],  7 );
+       P_1( C, D, A, B, X[14], 11 );
+       P_1( B, C, D, A, X[15], 19 );
 
-   #undef P
-   #undef F
 
-   #define F(x,y,z) ((x & y) | (x & z) | (y & z))
-   #define P(a,b,c,d,x,s) { a += F(b,c,d) + x + 0x5A827999; a = S(a,s); }
+       P_2( A, B, C, D, X[ 0],  3 );
+       P_2( D, A, B, C, X[ 4],  5 );
+       P_2( C, D, A, B, X[ 8],  9 );
+       P_2( B, C, D, A, X[12], 13 );
+       P_2( A, B, C, D, X[ 1],  3 );
+       P_2( D, A, B, C, X[ 5],  5 );
+       P_2( C, D, A, B, X[ 9],  9 );
+       P_2( B, C, D, A, X[13], 13 );
+       P_2( A, B, C, D, X[ 2],  3 );
+       P_2( D, A, B, C, X[ 6],  5 );
+       P_2( C, D, A, B, X[10],  9 );
+       P_2( B, C, D, A, X[14], 13 );
+       P_2( A, B, C, D, X[ 3],  3 );
+       P_2( D, A, B, C, X[ 7],  5 );
+       P_2( C, D, A, B, X[11],  9 );
+       P_2( B, C, D, A, X[15], 13 );
 
-       P( A, B, C, D, X[ 0],  3 );
-       P( D, A, B, C, X[ 4],  5 );
-       P( C, D, A, B, X[ 8],  9 );
-       P( B, C, D, A, X[12], 13 );
-       P( A, B, C, D, X[ 1],  3 );
-       P( D, A, B, C, X[ 5],  5 );
-       P( C, D, A, B, X[ 9],  9 );
-       P( B, C, D, A, X[13], 13 );
-       P( A, B, C, D, X[ 2],  3 );
-       P( D, A, B, C, X[ 6],  5 );
-       P( C, D, A, B, X[10],  9 );
-       P( B, C, D, A, X[14], 13 );
-       P( A, B, C, D, X[ 3],  3 );
-       P( D, A, B, C, X[ 7],  5 );
-       P( C, D, A, B, X[11],  9 );
-       P( B, C, D, A, X[15], 13 );
 
-   #undef P
-   #undef F
+       P_3( A, B, C, D, X[ 0],  3 );
+       P_3( D, A, B, C, X[ 8],  9 );
+       P_3( C, D, A, B, X[ 4], 11 );
+       P_3( B, C, D, A, X[12], 15 );
+       P_3( A, B, C, D, X[ 2],  3 );
+       P_3( D, A, B, C, X[10],  9 );
+       P_3( C, D, A, B, X[ 6], 11 );
+       P_3( B, C, D, A, X[14], 15 );
+       P_3( A, B, C, D, X[ 1],  3 );
+       P_3( D, A, B, C, X[ 9],  9 );
+       P_3( C, D, A, B, X[ 5], 11 );
+       P_3( B, C, D, A, X[13], 15 );
+       P_3( A, B, C, D, X[ 3],  3 );
+       P_3( D, A, B, C, X[11],  9 );
+       P_3( C, D, A, B, X[ 7], 11 );
+       P_3( B, C, D, A, X[15], 15 );
 
-   #define F(x,y,z) (x ^ y ^ z)
-   #define P(a,b,c,d,x,s) { a += F(b,c,d) + x + 0x6ED9EBA1; a = S(a,s); }
-
-       P( A, B, C, D, X[ 0],  3 );
-       P( D, A, B, C, X[ 8],  9 );
-       P( C, D, A, B, X[ 4], 11 );
-       P( B, C, D, A, X[12], 15 );
-       P( A, B, C, D, X[ 2],  3 );
-       P( D, A, B, C, X[10],  9 );
-       P( C, D, A, B, X[ 6], 11 );
-       P( B, C, D, A, X[14], 15 );
-       P( A, B, C, D, X[ 1],  3 );
-       P( D, A, B, C, X[ 9],  9 );
-       P( C, D, A, B, X[ 5], 11 );
-       P( B, C, D, A, X[13], 15 );
-       P( A, B, C, D, X[ 3],  3 );
-       P( D, A, B, C, X[11],  9 );
-       P( C, D, A, B, X[ 7], 11 );
-       P( B, C, D, A, X[15], 15 );
-
-   #undef F
-   #undef P
 
        s->state[0] += A;
        s->state[1] += B;
@@ -205,16 +204,12 @@ class SslMd4_direct
         s->state[3] = 0x10325476;
     }
 
-
-    #ifndef PUT_UINT32_LE
-    #define PUT_UINT32_LE(n,b,i)                                    \
-    {                                                               \
-        (b)[(i)    ] = static_cast<unsigned char> ( ( (n)       ) & 0xFF );    \
-        (b)[(i) + 1] = static_cast<unsigned char> ( ( (n) >>  8 ) & 0xFF );    \
-        (b)[(i) + 2] = static_cast<unsigned char> ( ( (n) >> 16 ) & 0xFF );    \
-        (b)[(i) + 3] = static_cast<unsigned char> ( ( (n) >> 24 ) & 0xFF );    \
+    static void PUT_UINT32_LE(uint32_t n, unsigned char * b, int i) {
+        b[i    ] = static_cast<unsigned char> ( ( n       ) & 0xFF );
+        b[i + 1] = static_cast<unsigned char> ( ( n >>  8 ) & 0xFF );
+        b[i + 2] = static_cast<unsigned char> ( ( n >> 16 ) & 0xFF );
+        b[i + 3] = static_cast<unsigned char> ( ( n >> 24 ) & 0xFF );
     }
-    #endif
 
     static void MD4_final(struct md4 *s, uint8_t *md)
     {
@@ -248,8 +243,6 @@ class SslMd4_direct
         PUT_UINT32_LE( s->state[2], md,  8 );
         PUT_UINT32_LE( s->state[3], md, 12 );
     }
-
-    #undef PUT_UINT32_LE
 
 
     static void MD4_update(struct md4 *s, const uint8_t *m, unsigned long len)
