@@ -125,21 +125,21 @@ public:
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "File System Virtual Channel is unavailable. "
-                        "Please allow the drive redirection in Remote Desktop Services settings of the target.");
+                        "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
             }
             else if (!this->image_readed) {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
                         "Session Probe is not launched. "
                         "Maybe something blocks it on the target. "
-                        "Is the target operating system a Microsoft server products? "
-                        "The Command Prompt should be published as RemoteApp, and should accept any command line parameters."
-                        "You must also ensure that the temporary directory has enough free space.");
+                        "Is the target running under Microsoft Server products? "
+                        "The Command Prompt should be published as the RemoteApp program and accept any command-line parameters."
+                        "Please also check the temporary directory to ensure there is enough free space.");
             }
             else {
                 LOG(LOG_ERR,
                     "SessionProbeClipboardBasedLauncher :=> "
-                        "Session Probe failed to launch for unknonw reason.");
+                        "Session Probe launch has failed for unknown reason.");
             }
         }
     }

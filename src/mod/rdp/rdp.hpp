@@ -454,6 +454,7 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     RedirectionInfo & redir_info;
 
     const bool bogus_sc_net_size;
+    const bool bogus_linux_cursor;
 
     std::string real_alternate_shell;
     std::string real_working_dir;
@@ -740,6 +741,7 @@ public:
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
+        , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
@@ -3577,6 +3579,10 @@ public:
                     this->front.disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
                 }
+
+                if (e.id == ERR_LIC) {
+                    throw;
+                }
             }
         }
 
@@ -3753,29 +3759,40 @@ public:
 
                 // intersect with client order capabilities
                 // which may not be supported by clients.
-                this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
 
-                this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTISCRBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MEMBLT_INDEX,             order_caps.orderSupport);
+                enum OrdersIndexes idxs[] = {
+                      TS_NEG_DSTBLT_INDEX
+                    , TS_NEG_PATBLT_INDEX
+                    , TS_NEG_SCRBLT_INDEX
+                    , TS_NEG_MEMBLT_INDEX
+                    , TS_NEG_MEM3BLT_INDEX
+//                    , TS_NEG_DRAWNINEGRID_INDEX
+                    , TS_NEG_LINETO_INDEX
+//                    , TS_NEG_MULTI_DRAWNINEGRID_INDEX
+//                    , TS_NEG_SAVEBITMAP_INDEX
+                    , TS_NEG_MULTIDSTBLT_INDEX
+                    , TS_NEG_MULTIPATBLT_INDEX
+                    , TS_NEG_MULTISCRBLT_INDEX
+                    , TS_NEG_MULTIOPAQUERECT_INDEX
+//                    , TS_NEG_FAST_INDEX_INDEX
+                    , TS_NEG_POLYGON_SC_INDEX
+                    , TS_NEG_POLYGON_CB_INDEX
+                    , TS_NEG_POLYLINE_INDEX
+//                    , TS_NEG_FAST_GLYPH_INDEX
+                    , TS_NEG_ELLIPSE_SC_INDEX
+                    , TS_NEG_ELLIPSE_CB_INDEX
+                    , TS_NEG_INDEX_INDEX
+                };
+
+                for (auto idx : idxs){
+                    order_caps.orderSupport[idx] &= this->front.get_order_cap(idx);
+                }
+
                 if ((this->verbose & 1) && (!order_caps.orderSupport[TS_NEG_MEMBLT_INDEX])) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
-                this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,           order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
 
-                this->front.intersect_order_caps_ex(order_caps);
+                order_caps.orderSupportExFlags &= this->front.get_order_caps_ex_flags();
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
                 //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
@@ -3786,7 +3803,6 @@ public:
                     order_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(order_caps);
-
 
                 BmpCacheCaps bmpcache_caps;
                 bmpcache_caps.cache0Entries         = 0x258;
@@ -6077,11 +6093,13 @@ public:
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
 
-            for (unsigned i = 0 ; i < mlen; i++) {
-                uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
-                uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
-                data_data[i]    = new_data_data;
-                mask_data[i]    = new_mask_data;
+            if (this->bogus_linux_cursor) {
+                for (unsigned i = 0 ; i < mlen; i++) {
+                    uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                    uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                    data_data[i]    = new_data_data;
+                    mask_data[i]    = new_mask_data;
+                }
             }
 
             TODO("move that into cursor")

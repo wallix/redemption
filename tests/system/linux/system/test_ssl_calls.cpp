@@ -813,7 +813,6 @@ BOOST_AUTO_TEST_CASE(TestNTLMAUTH)
                              ServerSealKey,
                              sizeof(ServerSealKey)),
                       0);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestAES)

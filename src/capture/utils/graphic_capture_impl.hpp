@@ -29,6 +29,7 @@
 #include "gdi/capture_api.hpp"
 #include "utils/range.hpp"
 
+
 class GraphicCaptureImpl
 {
 private:
@@ -57,22 +58,13 @@ private:
         template<class Cmd, class... Ts>
         void draw_impl(Cmd const & cmd, Ts const & ... args)
         {
-            this->draw_impl2(1, cmd, args...);
-        }
-
-        template<class Cmd, class... Ts>
-        auto draw_impl2(int, Cmd const & cmd, Ts const & ... args)
-        // avoid some virtual call
-        -> decltype(void(gdi::GraphicCmdColor::encode_cmd_color(decode_color15{}, std::declval<Cmd&>(cmd))))
-        {
-            assert(bool(this->cmd_color_distributor));
-            this->cmd_color_distributor->draw(cmd, args...);
-        }
-
-        template<class Cmd, class... Ts>
-        void draw_impl2(unsigned, Cmd const & cmd, Ts const & ... args)
-        {
-            Graphic::base_type::draw_impl(cmd, args...);
+            if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
+                assert(bool(this->cmd_color_distributor));
+                this->cmd_color_distributor->draw(cmd, args...);
+            }
+            else {
+                Graphic::base_type::draw_impl(cmd, args...);
+            }
         }
 
         void draw_impl(RDP::FrameMarker const & cmd) {
@@ -112,7 +104,7 @@ private:
         }
     };
 
-    static PtrColorConverter choose_color_converter(std::vector<GdRef> gds, uint8_t order_bpp) {
+    static PtrColorConverter choose_color_converter(std::vector<GdRef> & gds, uint8_t order_bpp) {
         auto const order_depth = gdi::GraphicDepth::from_bpp(order_bpp);
         assert(order_depth.is_defined());
         std::sort(gds.begin(), gds.end(), [order_depth](gdi::GraphicApi const & a, gdi::GraphicApi const & b) {
@@ -158,13 +150,13 @@ private:
     }
 
     template<class CmdColorDistributor>
-    struct GraphicConverted : gdi::GraphicBase<GraphicConverted<CmdColorDistributor>>
+    struct GraphicsConverter : gdi::GraphicBase<GraphicsConverter<CmdColorDistributor>>
     {
         friend gdi::GraphicCoreAccess;
 
         CmdColorDistributor distributor;
 
-        GraphicConverted(CmdColorDistributor distributor)
+        GraphicsConverter(CmdColorDistributor distributor)
         : distributor(distributor)
         {}
 
@@ -177,7 +169,7 @@ private:
     template<class Dec, bool e8, bool e15, bool e16, bool e24>
     static PtrColorConverter make_converter(Dec dec, RngByBpp const & rng_by_bpp) {
         using ColorConv = gdi::GraphicCmdColorDistributor<RngByBpp, Dec, e8, e15, e16, e24>;
-        return PtrColorConverter{new GraphicConverted<ColorConv>{{rng_by_bpp, dec}}};
+        return PtrColorConverter{new GraphicsConverter<ColorConv>{{rng_by_bpp, dec}}};
     }
 
     template<class Dec, bool... Bools, class... Bool>
@@ -198,7 +190,7 @@ public:
     using GraphicApi = Graphic;
 
     GraphicCaptureImpl(uint16_t width, uint16_t height, uint8_t order_bpp, MouseTrace const & mouse)
-    : graphic_api(gdi::GraphicDepth::depth24(), mouse)
+    : graphic_api(gdi::GraphicDepth::unspecified(), mouse)
     , drawable(width, height, order_bpp)
     , order_bpp(order_bpp)
     {
@@ -207,6 +199,14 @@ public:
     void attach_apis(ApisRegister & apis_register, const Inifile &) {
         assert(apis_register.graphic_list);
         apis_register.graphic_list->push_back(this->drawable);
+    }
+
+    void update_order_bpp(uint8_t order_bpp) {
+        if (this->order_bpp != order_bpp) {
+            this->order_bpp = order_bpp;
+            this->drawable.set_depths(gdi::GraphicDepth::from_bpp(order_bpp));
+            this->start();
+        }
     }
 
     void start() {

@@ -52,7 +52,7 @@ struct non_null_ptr
 
 
     T * get() const noexcept { return this->ptr_; }
-    T & operator*() const noexcept { return this->ptr_; }
+    T & operator*() const noexcept { return *this->ptr_; }
     T * operator->() const noexcept { return this->ptr_; }
 
 private:

@@ -412,7 +412,17 @@ public:
         return true;
     }
 
-    std::chrono::microseconds snapshot(
+    void flush() {
+        if (this->kbd_stream.get_offset()) {
+            LOG(LOG_INFO, R"x(type="KBD input" data="%*s")x",
+                int(this->kbd_stream.get_offset()),
+                reinterpret_cast<char const *>(this->kbd_stream.get_data()));
+            this->kbd_stream.rewind();
+        }
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
         const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override {
         std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
@@ -427,15 +437,6 @@ public:
         this->last_snapshot = now;
 
         return time_to_wait;
-    }
-
-    void flush() {
-        if (this->kbd_stream.get_offset()) {
-            LOG(LOG_INFO, R"x(type="KBD input" data="%*s")x",
-                int(this->kbd_stream.get_offset()),
-                reinterpret_cast<char const *>(this->kbd_stream.get_data()));
-            this->kbd_stream.rewind();
-        }
     }
 };
 

@@ -44,7 +44,7 @@ class Logger(object):
     def trace(s):  print "Trace: %s" % s
 
 try:
-    from sshng import pysshct
+    import pysshct
 except Exception, e:
     Logger.info("Error importing sashimi lib %s" % traceback.format_exc(e))
 

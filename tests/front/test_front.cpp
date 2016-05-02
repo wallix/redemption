@@ -528,6 +528,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
     BOOST_CHECK(rdp_handshake_timeout_exception_raised);
 }
 
+/*
 BOOST_AUTO_TEST_CASE(TestFront3)
 {
     try {
@@ -757,3 +758,4 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         LOG(LOG_INFO, "Exiting on Exception");
     };
 }
+*/
