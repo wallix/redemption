@@ -553,17 +553,10 @@ static void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
         unsigned char c[64];
         u_int32_t l[16];
     } CHAR64LONG16;
-    #ifdef SHA1HANDSOFF
     CHAR64LONG16 block[1];  /* use array to appear as a pointer */
         memcpy(block, buffer, 64);
-    #else
-        /* The following had better never be used because it causes the
-         * pointer-to-const buffer to be cast into a pointer to non-const.
-         * And the result is written through.  I threw a "const" in, hoping
-         * this will cause a diagnostic.
-         */
-    CHAR64LONG16* block = reinterpret_cast<const CHAR64LONG16*>(buffer);
-    #endif
+
+
         /* Copy context->state[] to working vars */
         a = state[0];
         b = state[1];
@@ -654,7 +647,7 @@ static void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 
 
         for (i = 0; i < 8; i++) {
-            finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
+            finalcount[i] = static_cast<unsigned char>((context->count[(i >= 4 ? 0 : 1)]
              >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
         }
 
@@ -666,7 +659,7 @@ static void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
         }
         SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
         for (i = 0; i < 20; i++) {
-            digest[i] = (unsigned char)
+            digest[i] = static_cast<unsigned char>
              ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
         }
         /* Wipe variables */
@@ -690,7 +683,7 @@ static void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
     {   
         SslSha1_direct::SHA1Final(digest, &this->sha1);
     }
-    
+
 // #endif
 
 };
