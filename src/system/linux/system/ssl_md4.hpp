@@ -37,12 +37,12 @@
 #include "utils/bitfu.hpp"
 
 
-/*class SslMd4
+class SslMd4
 {
-    md4_CTX md4;
+    MD4_CTX md4;
 
     public:
-    Sslmd4()
+    SslMd4()
     {
         MD4_Init(&this->md4);
     }
@@ -56,17 +56,17 @@
     {
         if (MD4_DIGEST_LENGTH > out_data_size){
             uint8_t tmp[MD4_DIGEST_LENGTH];
-            md4_Final(tmp, &this->md4);
+            MD4_Final(tmp, &this->md4);
             memcpy(out_data, tmp, out_data_size);
             return;
         }
-        md4_Final(out_data, &this->md4);
+        MD4_Final(out_data, &this->md4);
     }
-};*/
+};
 
 
 
-class Sslmd4_direct
+class SslMD4_direct
 {
     /* public domain md4 implementation based on rfc1321 and libtomcrypt */
 
@@ -200,11 +200,11 @@ class Sslmd4_direct
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
 
-    static void md4_init(struct md4 *s)
+    static void MD4_init(struct md4 *s)
     {
-	    memset( s, 0, sizeof(md4) );
+        memset( s, 0, sizeof(md4) );
 
-	    s->total[0] = 0;
+        s->total[0] = 0;
         s->total[1] = 0;
 
         s->state[0] = 0x67452301;
@@ -224,7 +224,7 @@ class Sslmd4_direct
     }
     #endif
 
-    static void md4_final(struct md4 *s, uint8_t *md)
+    static void MD4_final(struct md4 *s, uint8_t *md)
     {
 	    uint32_t last, padn;
         uint32_t high, low;
@@ -240,8 +240,8 @@ class Sslmd4_direct
         last = s->total[0] & 0x3F;
         padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
 
-        md4_update( s, static_cast<const unsigned char *> (md4_padding), padn );
-        md4_update( s, msglen, 8 );
+        MD4_update( s, static_cast<const unsigned char *> (md4_padding), padn );
+        MD4_update( s, msglen, 8 );
 
         PUT_UINT32_LE( s->state[0], md,  0 );
         PUT_UINT32_LE( s->state[1], md,  4 );
@@ -252,7 +252,7 @@ class Sslmd4_direct
     #undef PUT_UINT32_LE
 
 
-    static void md4_update(struct md4 *s, const uint8_t *m, unsigned long len)
+    static void MD4_update(struct md4 *s, const uint8_t *m, unsigned long len)
     {
 	    size_t fill;
         uint32_t left;
@@ -294,20 +294,20 @@ class Sslmd4_direct
     }
 
     public:
-    Sslmd4_direct()
+    SslMD4_direct()
     {
-        Sslmd4_direct::md4_init(&this->md4);
+        SslMD4_direct::MD4_init(&this->md4);
     }
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        Sslmd4_direct::md4_update(&this->md4, data, data_size);
+        SslMD4_direct::MD4_update(&this->md4, data, data_size);
     }
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(MD4_DIGEST_LENGTH == out_data_size);
-        Sslmd4_direct::md4_final(&this->md4, out_data);
+        SslMD4_direct::MD4_final(&this->md4, out_data);
     }
 };
 

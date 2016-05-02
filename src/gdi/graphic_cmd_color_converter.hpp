@@ -99,6 +99,28 @@ public:
     -> decltype(encode_cmd_color_(enc, std::declval<typename abort_const_cmd<Cmd>::type&>())) {
         encode_cmd_color_(enc, cmd);
     }
+
+private:
+    template<class Cmd>
+    static auto is_encodable_(int, Cmd & cmd) -> decltype(cmd_color(cmd), std::true_type());
+
+    template<class Cmd>
+    static auto is_encodable_(int, Cmd & cmd) -> decltype(cmd_color2(cmd), std::true_type());
+
+    template<class Cmd>
+    static std::false_type is_encodable_(char, Cmd & cmd);
+
+public:
+    template<class Cmd>
+    static auto is_encodable_cmd_color(Cmd const & cmd)
+    -> decltype(is_encodable_(1, std::declval<Cmd&>())) {
+        return {};
+    }
+
+    template<class Cmd>
+    struct is_encodable_cmd_color_trait
+    : decltype(is_encodable_(1, std::declval<Cmd&>()))
+    {};
 };
 
 
@@ -141,9 +163,9 @@ private:
 
 
     template<class Mut, class Enc, class Range, class Cmd, class... Ts>
-    auto encode_if(int, Mut is_mut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
+    auto encode_if(int, Mut is_imut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
     -> decltype(cmd_color(cmd), void()) {
-        if (!is_mut) {
+        if (!is_imut) {
             this->cmd_color(cmd) = enc(this->cmd_color(cmd));
             this->dispatch_if(true_{}, rng, cmd, args...);
         }
@@ -155,9 +177,9 @@ private:
     }
 
     template<class Mut, class Enc, class Range, class Cmd, class... Ts>
-    auto encode_if(int, Mut is_mut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
+    auto encode_if(int, Mut is_imut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
     -> decltype(cmd_color2(cmd), void()) {
-        if (!is_mut) {
+        if (!is_imut) {
             this->cmd_color1(cmd) = enc(this->cmd_color1(cmd));
             this->cmd_color2(cmd) = enc(this->cmd_color2(cmd));
             this->dispatch_if(true_{}, rng, cmd, args...);
@@ -179,8 +201,8 @@ private:
     Dec const & decoder() const { return static_cast<Dec const&>(*this); }
 
     template<class Cmd, class... Ts>
-    auto encode_cmd(int, Cmd const & cmd, Ts const & ... args) const
-    -> decltype(this->encode_cmd_color(this->decoder(), std::declval<Cmd&>())) {
+    typename std::enable_if<GraphicCmdColor::is_encodable_cmd_color_trait<Cmd>::value>::type
+    encode_cmd(int, Cmd const & cmd, Ts const & ... args) const {
         this->dispatch_if(bool_<Enc8  && Dec::bpp == 8 >{}, this->rng_by_bpp.rng8 (), cmd, args...);
         this->dispatch_if(bool_<Enc15 && Dec::bpp == 15>{}, this->rng_by_bpp.rng15(), cmd, args...);
         this->dispatch_if(bool_<Enc16 && Dec::bpp == 16>{}, this->rng_by_bpp.rng16(), cmd, args...);

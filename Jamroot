@@ -282,12 +282,6 @@ constant CXXFLAGS-debug :
     <cxxflags>-g
 ;
 
-constant CXXFLAGS-debug :
-    <define>REDASSERT_AS_ASSERT
-    <define>_GLIBCXX_DEBUG
-    <cxxflags>-g
-;
-
 constant CXXFLAGS-GCC-5-sanitize :
     <cxxflags>-fsanitize=bounds
 ;

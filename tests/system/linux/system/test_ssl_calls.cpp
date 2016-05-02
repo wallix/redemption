@@ -29,7 +29,6 @@
 
 #include <stdio.h>
 #include "system/ssl_calls.hpp"
-#include "system/ssl_md4.hpp"
 
 // uint8_t data[512];
 
@@ -329,6 +328,7 @@ BOOST_AUTO_TEST_CASE(TestSslMd4)
                                  sizeof(sig)),
                           0);
     }
+    
 
     {
         SslMd4 md;

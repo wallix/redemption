@@ -58,11 +58,11 @@ struct RngByBpp
     }
 };
 
-template<bool e15, bool e16, bool e24, class Dec>
+template<bool has_enc15, bool has_enc16, bool has_enc24, class Dec>
 Color4 get_colors(Dec dec, uint32_t color) {
     Color4 colors {};
     RngByBpp rng_by_bpp{colors};
-    gdi::GraphicCmdColorDistributor<RngByBpp, Dec, false, e15, e16, e24>{
+    gdi::GraphicCmdColorDistributor<RngByBpp, Dec, false, has_enc15, has_enc16, has_enc24>{
         rng_by_bpp, dec
     }(RDPOpaqueRect({}, color), Rect{});
     return colors;
@@ -71,6 +71,9 @@ Color4 get_colors(Dec dec, uint32_t color) {
 
 BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
 {
+    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color_trait<RDPOpaqueRect>::value, true);
+    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color_trait<GlyphCache>::value, false);
+
     decode_color15_opaquerect dec15;
     decode_color16_opaquerect dec16;
     decode_color24_opaquerect dec24;

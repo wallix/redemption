@@ -10,3 +10,7 @@ function: lower_case
 ## Interface
 
 Use the non-virtual interface pattern (NVI).
+
+## Header Guards
+
+With `#pragma once`.
