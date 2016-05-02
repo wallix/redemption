@@ -134,6 +134,27 @@ BOOST_AUTO_TEST_CASE(TestSslMd5)
 
 }
 
+BOOST_AUTO_TEST_CASE(TestSslHmacMd5)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Md5 hmac(key, sizeof(key) - 1);
+
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg) - 1);
+
+    uint8_t sig[16];
+    hmac.final(sig, sizeof(sig));
+    // hexdump96_c(sig, sizeof(sig));
+    BOOST_CHECK_EQUAL(memcmp(sig,
+                             "\x80\x07\x07\x13\x46\x3e\x77\x49"
+                             "\xb9\x0c\x2d\xc2\x49\x11\xe2\x75",
+                             sizeof(sig)),
+                      0);
+}
+
+
 BOOST_AUTO_TEST_CASE(TestSslMd5_direct)
 {
     uint8_t sig[16];
@@ -237,5 +258,89 @@ BOOST_AUTO_TEST_CASE(TestSslMd5_direct)
                           0);
     }
 
+}
+
+// 1. Append zeros to the left end of K to create a b-bit string K+ (for example, if K is of length 160 bits and b = 512, then K will be appended with 44 zero bytes 0x00).
+
+//2. XOR (bitwise exclusive OR) K+ with ipad to produce the b-bit block Si.
+
+//3. Append M to Si.
+
+//4. Apply H to the stream generated in Step 3.
+
+//5. XOR K+ with opad to produce the b-bit block So.
+
+//6. Append the hash result from Step 4 to So.
+
+//7. Apply H to the stream generated in Step 6 and output the result.
+
+class SslHMAC_Md5_direct
+{
+    HMAC_CTX hmac;
+
+    public:
+    SslHMAC_Md5_direct(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_CTX_init(&this->hmac);
+        int res = 0;
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), nullptr);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
+    }
+
+    ~SslHMAC_Md5_direct()
+    {
+        HMAC_CTX_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        int res = 0;
+        res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        int res = 0;
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            res = HMAC_Final(&this->hmac, tmp, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+    }
+};
+
+
+BOOST_AUTO_TEST_CASE(TestSslHmacMd5_direct)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Md5_direct hmac(key, sizeof(key) - 1);
+
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg) - 1);
+
+    uint8_t sig[16];
+    hmac.final(sig, sizeof(sig));
+    // hexdump96_c(sig, sizeof(sig));
+    BOOST_CHECK_EQUAL(memcmp(sig,
+                             "\x80\x07\x07\x13\x46\x3e\x77\x49"
+                             "\xb9\x0c\x2d\xc2\x49\x11\xe2\x75",
+                             sizeof(sig)),
+                      0);
 }
 

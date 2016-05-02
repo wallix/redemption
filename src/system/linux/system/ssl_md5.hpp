@@ -74,14 +74,30 @@ class SslMd5_direct
     } md5;
 
     static uint32_t rol(uint32_t n, int k) { return (n << k) | (n >> (32-k)); }
-    #define F(x,y,z) (z ^ (x & (y ^ z)))
-    #define G(x,y,z) (y ^ (z & (y ^ x)))
-    #define H(x,y,z) (x ^ y ^ z)
-    #define I(x,y,z) (y ^ (x | ~z))
-    #define FF(a,b,c,d,w,s,t) a += F(b,c,d) + w + t; a = rol(a,s) + b
-    #define GG(a,b,c,d,w,s,t) a += G(b,c,d) + w + t; a = rol(a,s) + b
-    #define HH(a,b,c,d,w,s,t) a += H(b,c,d) + w + t; a = rol(a,s) + b
-    #define II(a,b,c,d,w,s,t) a += I(b,c,d) + w + t; a = rol(a,s) + b
+    static uint32_t F(uint32_t x, uint32_t  y, uint32_t z) { return (z ^ (x & (y ^ z))); }
+    static uint32_t G(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (z & (y ^ x))); }
+    static uint32_t H(uint32_t x, uint32_t y, uint32_t z) { return (x ^ y ^ z); }
+    static uint32_t I(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (x | ~z)); }
+    static void FF(uint32_t & a, uint32_t b, uint32_t c, uint32_t  d, uint32_t w, uint32_t s, uint32_t t) 
+    { 
+        a += F(b,c,d) + w + t;
+        a = rol(a,s) + b;
+    }
+    static void GG(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t w, uint32_t s, uint32_t t)
+    {
+        a += G(b,c,d) + w + t;
+        a = rol(a,s) + b;
+    }
+    static void HH(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t w, uint32_t s, uint32_t t)
+    {
+        a += H(b,c,d) + w + t;
+        a = rol(a,s) + b;
+    }
+    static void II(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t w, uint32_t s, uint32_t t)
+    {
+        a += I(b,c,d) + w + t;
+        a = rol(a,s) + b;
+    }
 
     static void processblock(struct md5 *s, const uint8_t *buf)
     {
@@ -255,6 +271,56 @@ class SslMd5_direct
     {
         assert(MD5_DIGEST_LENGTH == out_data_size);
         SslMd5_direct::md5_sum(&this->md5, out_data);
+    }
+};
+
+
+class SslHMAC_Md5
+{
+    HMAC_CTX hmac;
+
+    public:
+    SslHMAC_Md5(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_CTX_init(&this->hmac);
+        int res = 0;
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), nullptr);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
+    }
+
+    ~SslHMAC_Md5()
+    {
+        HMAC_CTX_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        int res = 0;
+        res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        int res = 0;
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            res = HMAC_Final(&this->hmac, tmp, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
     }
 };
 

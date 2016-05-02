@@ -33,10 +33,6 @@
 
 #include "core/error.hpp"
 #include "openssl_crypto.hpp"
-#include "utils/log.hpp"
-#include "utils/bitfu.hpp"
-
-
 
 class SslSha256
 {
