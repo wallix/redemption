@@ -429,7 +429,7 @@ class SslHMAC
 /* Function: hmac_md5 */
 
 template<typename T>
-void hmac_md5(unsigned char* text, int text_len, unsigned char* key, int key_len, caddr_t digest)
+void hmac_md5(unsigned char* text, size_t text_len, unsigned char* key, int key_len, unsigned char* digest, size_t digest_len)
 {
     T algo;
     unsigned char k_ipad[65]; /* inner padding - key XORd with ipad */
@@ -438,13 +438,18 @@ void hmac_md5(unsigned char* text, int text_len, unsigned char* key, int key_len
     int i;
     /* if key is longer than 64 bytes reset it to key=MD5(key) */
     if (key_len > 64) {
-        MD5_CTX      tctx;
-        MD5Init(&tctx);
-        MD5Update(&tctx, key, key_len);
-        MD5Final(tk, &tctx);
+
+        algo.update(key, key_len);
+        algo.final(tk, 16);
+
+        //MD5_CTX      tctx;
+        //MD5Init(&tctx);
+        //MD5Update(&tctx, key, key_len);
+        //MD5Final(tk, &tctx);
 
         key = tk;
         key_len = 16;
+
     }
     /* the HMAC_MD5 transform looks like:
     * MD5(K XOR opad, MD5(K XOR ipad, text))

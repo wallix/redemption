@@ -299,12 +299,12 @@ class Sslmd4_direct
         Sslmd4_direct::md4_init(&this->md4);
     }
 
-    void update_direct(const uint8_t * const data, size_t data_size)
+    void update(const uint8_t * const data, size_t data_size)
     {
         Sslmd4_direct::md4_update(&this->md4, data, data_size);
     }
 
-    void final_direct(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(MD4_DIGEST_LENGTH == out_data_size);
         Sslmd4_direct::md4_final(&this->md4, out_data);
