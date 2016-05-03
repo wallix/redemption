@@ -37,6 +37,8 @@ class Cover:
             if self.verbose > 1:
                 print("================= Parsing etags for %s ===============" % module)
             for line in open(ftags):
+                if re.match(r'^\s*,', line):
+                    continue
                 if re.match(r'^.*(TODO|REDOC|BODY)', line):
                     continue
                 res = re.match(r'^(.*[(].*)\x7F.*\x01(\d+)[,].*$', line)

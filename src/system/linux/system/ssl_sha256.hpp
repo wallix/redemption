@@ -33,13 +33,7 @@
 
 #include "core/error.hpp"
 #include "openssl_crypto.hpp"
-#include "utils/log.hpp"
-#include "utils/bitfu.hpp"
 
-
-
-#define SHA256_DIGEST_LENGTH 256
-/*
 class SslSha256
 {
     SHA256_CTX sha256;
@@ -72,8 +66,7 @@ class SslSha256
             throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
         }
     }
-};*/
-
+};
 
 #define ROTLEFT(a,b) (((a) << (b)) | ((a) >> (32-(b))))
 #define ROTRIGHT(a,b) (((a) >> (b)) | ((a) << (32-(b))))
@@ -86,35 +79,34 @@ class SslSha256
 #define SIG1(x) (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10))
 
 
-class Sslsha256_direct
+class SslSha256_direct
 {
     /* public domain sha256 implementation based on rfc1321 and libtomcrypt */
 
     struct sha256 {
-	    uint32_t datalen;          /*!< number of bytes processed  */
+        uint32_t datalen;          /*!< number of bytes processed  */
         uint32_t state[8];          /*!< intermediate digest state  */
         unsigned char data[64];   /*!< data block being processed */
-        uint32_t bitlen;
+        uint64_t bitlen;
     } sha256;
-
 
     //static uint32_t ror(uint32_t n, int k) { return (n >> k) | (n << (32-k)); }
 
-    static const WORD k[64] = {
-        0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
-        0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
-        0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
-        0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
-        0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
-        0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
-        0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
-        0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
-    };
-
-
     static void processblock(struct sha256 *s, const uint8_t *buf)
     {
-	    WORD a, b, c, d, e, f, g, h, i, j, t1, t2, m[64];
+    
+        static const unsigned k[64] = {
+            0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+            0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+            0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+            0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+            0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+            0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+            0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+            0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+        };
+
+        unsigned a, b, c, d, e, f, g, h, i, j, t1, t2, m[64];
 
         for (i = 0, j = 0; i < 16; ++i, j += 4)
             m[i] = (buf[j] << 24) | (buf[j + 1] << 16) | (buf[j + 2] << 8) | (buf[j + 3]);
@@ -169,7 +161,7 @@ class Sslsha256_direct
 
     static void sha256_final(struct sha256 *s, uint8_t *md)
     {
-        WORD i;
+        unsigned i;
 
         i = s->datalen;
 
@@ -183,7 +175,7 @@ class Sslsha256_direct
             s->data[i++] = 0x80;
             while (i < 64)
                 s->data[i++] = 0x00;
-            this->processblock(s, s->data);
+            SslSha256_direct::processblock(s, s->data);
             memset(s->data, 0, 56);
         }
 
@@ -197,7 +189,7 @@ class Sslsha256_direct
         s->data[58] = s->bitlen >> 40;
         s->data[57] = s->bitlen >> 48;
         s->data[56] = s->bitlen >> 56;
-        this->processblock(s, s->data);
+        SslSha256_direct::processblock(s, s->data);
 
         // Since this implementation uses little endian byte ordering and SHA uses big endian,
         // reverse all the bytes when copying the final state to the output hash.
@@ -216,13 +208,13 @@ class Sslsha256_direct
 
     static void sha256_update(struct sha256 *s, const uint8_t *m, unsigned long len)
     {
-        WORD i;
+        unsigned i;
 
         for (i = 0; i < len; ++i) {
-            s->data[ctx->datalen] = m[i];
+            s->data[s->datalen] = m[i];
             s->datalen++;
             if (s->datalen == 64) {
-                this->processblock(s, s->data);
+                SslSha256_direct::processblock(s, s->data);
                 s->bitlen += 512;
                 s->datalen = 0;
             }
@@ -231,20 +223,70 @@ class Sslsha256_direct
 
 
     public:
-    Sslsha256_direct()
+    SslSha256_direct()
     {
-        Sslsha256_direct::sha256_init(&this->sha256);
+        SslSha256_direct::sha256_init(&this->sha256);
     }
 
-    void update_direct(const uint8_t * const data, size_t data_size)
+    void update(const uint8_t * const data, size_t data_size)
     {
-        Sslsha256_direct::sha256_update(&this->sha256, data, data_size);
+        SslSha256_direct::sha256_update(&this->sha256, data, data_size);
     }
 
-    void final_direct(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(SHA256_DIGEST_LENGTH == out_data_size);
-        Sslsha256_direct::sha256_final(&this->sha256, out_data);
+        SslSha256_direct::sha256_final(&this->sha256, out_data);
     }
 };
+
+class SslHMAC_Sha256
+{
+    HMAC_CTX hmac;
+
+    public:
+    SslHMAC_Sha256(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_CTX_init(&this->hmac);
+        int res = 0;
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_sha256(), nullptr);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
+    }
+
+    ~SslHMAC_Sha256()
+    {
+        HMAC_CTX_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        int res = 0;
+        res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        int res = 0;
+        if (SHA256_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[SHA256_DIGEST_LENGTH];
+            res = HMAC_Final(&this->hmac, tmp, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+    }
+};
+
 
