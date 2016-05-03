@@ -296,6 +296,81 @@ class SslMd5_direct
 };
 
 
+// the HMAC_MD5 transform looks like:
+// MD5(K XOR opad, MD5(K XOR ipad, text))
+// where K is an n byte key
+// ipad is the byte 0x36 repeated 64 times
+// opad is the byte 0x5c repeated 64 times
+// and text is the data being protected
+
+class SslHMAC_Md5_direct
+{
+    uint8_t k_ipad[64]; 
+    uint8_t k_opad[64]; 
+    SslMd5_direct context;
+
+    public:
+    SslHMAC_Md5_direct(const uint8_t * const key, size_t key_len)
+        : k_ipad{
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
+         },
+         k_opad{
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+         }
+    {
+         const uint8_t * k = key;
+         if (key_len > 64) {
+             unsigned char digest[MD5_DIGEST_LENGTH];
+             SslMd5_direct md5;
+             md5.update(digest, MD5_DIGEST_LENGTH);
+             md5.final(digest, MD5_DIGEST_LENGTH);
+             key_len = MD5_DIGEST_LENGTH;
+             k = key;
+         }
+         size_t i;
+         for (i = 0; i < key_len; i++){
+            k_ipad[i] ^= k[i];
+            k_opad[i] ^= k[i];
+         }
+         context.update(k_ipad, 64);
+    }
+
+    ~SslHMAC_Md5_direct()
+    {
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        context.update(data, data_size);
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        assert(MD5_DIGEST_LENGTH == out_data_size);
+        context.final(out_data, MD5_DIGEST_LENGTH);
+
+        SslMd5_direct md5;
+        md5.update(this->k_opad, 64);
+        md5.update(out_data, MD5_DIGEST_LENGTH);
+        md5.final(out_data, MD5_DIGEST_LENGTH);
+    }
+};
+
+
 class SslHMAC_Md5
 {
     HMAC_CTX hmac;

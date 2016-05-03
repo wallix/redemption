@@ -260,189 +260,23 @@ BOOST_AUTO_TEST_CASE(TestSslMd5_direct)
 
 }
 
-//// 1. Append zeros to the left end of K to create a b-bit string K+ (for example, if K is of length 160 bits and b = 512, then K will be appended with 44 zero bytes 0x00).
+BOOST_AUTO_TEST_CASE(TestSslHmacMd5_direct)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Md5_direct hmac(key, sizeof(key) - 1);
 
-////2. XOR (bitwise exclusive OR) K+ with ipad to produce the b-bit block Si.
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg) - 1);
 
-////3. Append M to Si.
-
-////4. Apply H to the stream generated in Step 3.
-
-////5. XOR K+ with opad to produce the b-bit block So.
-
-////6. Append the hash result from Step 4 to So.
-
-////7. Apply H to the stream generated in Step 6 and output the result.
-
-//class SslHMAC_Md5_direct
-//{
-
-//         uint8_t k_ipad[65] = {
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
-//         }; 
-//         // outer padding - key XORd with opad
-//         uint8_t k_opad[65] = {
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//         }; 
-//    
-//    SslMd5 context;
-//    uint8_t hmac[16];
-
-//    public:
-//    SslHMAC_Md5_direct(const uint8_t * const key, size_t key_len)
-//        : k_ipad{
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-//            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
-//         },
-//         k_opad{
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-//         }
-//    {
-//         if (key_len > 64) {
-//             unsigned char tk[16];
-//             SslMd5    tctx;
-//             tctx.update(key, key_len);
-//             tctx.final(tk, 16);
-//             key = tk;
-//             key_len = 16;
-//             int i;
-//             for (i = 0; i < 16; i++){
-//                k_ipad[i] ^= tk[i];
-//                k_opad[i] ^= tk[i];
-//             }
-//         }
-//         else {
-//             int i;
-//             for (i = 0; i < key_len; i++){
-//                k_ipad[i] ^= tk[i];
-//                k_opad[i] ^= tk[i];
-//             }
-//        }         
-//    }
-
-//    ~SslHMAC_Md5_direct()
-//    {
-//    }
-
-//    void update(const uint8_t * const data, size_t data_size)
-//    {
-//        int res = 0;
-//        res = HMAC_Update(&this->hmac, data, data_size);
-//        if (res == 0) {
-//            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
-//        }
-//    }
-
-//    void final(uint8_t * out_data, size_t out_data_size)
-//    {
-//        unsigned int len = 0;
-//        int res = 0;
-//        if (MD5_DIGEST_LENGTH > out_data_size){
-//            uint8_t tmp[MD5_DIGEST_LENGTH];
-//            res = HMAC_Final(&this->hmac, tmp, &len);
-//            if (res == 0) {
-//                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-//            }
-//            memcpy(out_data, tmp, out_data_size);
-//            return;
-//        }
-//        res = HMAC_Final(&this->hmac, out_data, &len);
-//        if (res == 0) {
-//            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-//        }
-//    }
-//};
-
-//{
-//         uint8_t block[64];
-//         SslMd5 context;
-//         // inner padding - key XORd with ipad
-//         // if key is longer than 64 bytes reset it to key = MD5(key)
-//         if (key_len > 64) {
-//             unsigned char tk[16];
-//             SslMd5    tctx;
-//             tctx.update(key, key_len);
-//             tctx.final(tk, 16);
-//             key = tk;
-//             key_len = 16;
-//             int i;
-//             for (i = 0; i < 16; i++){
-//                k_ipad[i] ^= tk[i];
-//                k_opad[i] ^= tk[i];
-//             }
-//         }
-//         else {
-//             int i;
-//             for (i = 0; i < key_len; i++){
-//                k_ipad[i] ^= tk[i];
-//                k_opad[i] ^= tk[i];
-//             }
-//        }         
-//         // the HMAC_MD5 transform looks like:
-//         // MD5(K XOR opad, MD5(K XOR ipad, text))
-//         // where K is an n byte key
-//         // ipad is the byte 0x36 repeated 64 times
-//         // opad is the byte 0x5c repeated 64 times
-//         // and text is the data being protected
-
-//             // perform inner MD5
-//             SslMd5 a_md5;               // init context for 1st pass
-//             a_md5.update(k_ipad, 64);    // start with inner pad
-//             a_md5.update(text, text_len); // then text of datagram */
-//             a_md5.final(digest);          // finish up 1st pass */
-
-//             // perform outer MD5
-//             SslMD5 b_md5;             // init context for 2nd pass
-//             b_md5.update(k_opad, 64); // start with outer pad
-//             b_md5.update(digest, 16); // then results of 1st hash
-//             b_md5.final(digest);      // finish up 2nd pass
-//}
-
-
-//BOOST_AUTO_TEST_CASE(TestSslHmacMd5_direct)
-//{
-//    const uint8_t key[] = "key";
-//    // const uint8_t key[] = "";
-//    SslHMAC_Md5_direct hmac(key, sizeof(key) - 1);
-
-//    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
-//    // const uint8_t msg[] = "";
-//    hmac.update(msg, sizeof(msg) - 1);
-
-//    uint8_t sig[16];
-//    hmac.final(sig, sizeof(sig));
-//    // hexdump96_c(sig, sizeof(sig));
-//    BOOST_CHECK_EQUAL(memcmp(sig,
-//                             "\x80\x07\x07\x13\x46\x3e\x77\x49"
-//                             "\xb9\x0c\x2d\xc2\x49\x11\xe2\x75",
-//                             sizeof(sig)),
-//                      0);
-//}
+    uint8_t sig[16];
+    hmac.final(sig, sizeof(sig));
+    // hexdump96_c(sig, sizeof(sig));
+    BOOST_CHECK_EQUAL(memcmp(sig,
+                             "\x80\x07\x07\x13\x46\x3e\x77\x49"
+                             "\xb9\x0c\x2d\xc2\x49\x11\xe2\x75",
+                             sizeof(sig)),
+                      0);
+}
 
