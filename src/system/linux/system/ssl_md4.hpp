@@ -77,12 +77,12 @@ class SslMd4_direct
         {}
     } md4;
 
-    static void GET_UINT32_LE(uint32_t & n,const uint8_t * b, int i)
+    static uint32_t UINT32_LE(const uint8_t * b)
     {
-        n = (   static_cast<uint32_t>( b[i   ])       )
-            | ( static_cast<uint32_t>( b[i + 1] <<  8) )
-            | ( static_cast<uint32_t>( b[i + 2] << 16) )
-            | ( static_cast<uint32_t>( b[i + 3] << 24) );
+        return ( static_cast<uint32_t>( b[0])     )
+             | ( static_cast<uint32_t>( b[1] <<  8) )
+             | ( static_cast<uint32_t>( b[2] << 16) )
+             | ( static_cast<uint32_t>( b[3] << 24) );
     }
 
     static void P_1(uint32_t & a, uint32_t b, uint32_t c, uint32_t d, uint32_t x, int s) {
@@ -104,23 +104,22 @@ class SslMd4_direct
     {
         uint32_t X[16], A, B, C, D;
 
-        GET_UINT32_LE( X[ 0], buf,  0 );
-        GET_UINT32_LE( X[ 1], buf,  4 );
-        GET_UINT32_LE( X[ 2], buf,  8 );
-        GET_UINT32_LE( X[ 3], buf, 12 );
-        GET_UINT32_LE( X[ 4], buf, 16 );
-        GET_UINT32_LE( X[ 5], buf, 20 );
-        GET_UINT32_LE( X[ 6], buf, 24 );
-        GET_UINT32_LE( X[ 7], buf, 28 );
-        GET_UINT32_LE( X[ 8], buf, 32 );
-        GET_UINT32_LE( X[ 9], buf, 36 );
-        GET_UINT32_LE( X[10], buf, 40 );
-        GET_UINT32_LE( X[11], buf, 44 );
-        GET_UINT32_LE( X[12], buf, 48 );
-        GET_UINT32_LE( X[13], buf, 52 );
-        GET_UINT32_LE( X[14], buf, 56 );
-        GET_UINT32_LE( X[15], buf, 60 );
-
+        X[ 0] = UINT32_LE(buf +  0 );
+        X[ 1] = UINT32_LE(buf +  4 );
+        X[ 2] = UINT32_LE(buf +  8 );
+        X[ 3] = UINT32_LE(buf + 12 );
+        X[ 4] = UINT32_LE(buf + 16 );
+        X[ 5] = UINT32_LE(buf + 20 );
+        X[ 6] = UINT32_LE(buf + 24 );
+        X[ 7] = UINT32_LE(buf + 28 );
+        X[ 8] = UINT32_LE(buf + 32 );
+        X[ 9] = UINT32_LE(buf + 36 );
+        X[10] = UINT32_LE(buf + 40 );
+        X[11] = UINT32_LE(buf + 44 );
+        X[12] = UINT32_LE(buf + 48 );
+        X[13] = UINT32_LE(buf + 52 );
+        X[14] = UINT32_LE(buf + 56 );
+        X[15] = UINT32_LE(buf + 60 );
 
         A = s->state[0];
         B = s->state[1];
