@@ -97,29 +97,34 @@ class SslMd5_direct
         return rol(a + I(b,c,d) + w + t, s) + b;
     }
 
+    static uint32_t UINT32_LE(const uint8_t * b)
+    {
+        return ( static_cast<uint32_t>( b[0])     )
+             | ( static_cast<uint32_t>( b[1] <<  8) )
+             | ( static_cast<uint32_t>( b[2] << 16) )
+             | ( static_cast<uint32_t>( b[3] << 24) );
+    }
+
     void processblock(const uint8_t *buf)
     {
         uint32_t W[16];
 
-        memcpy(W, buf, sizeof(W));
-        if (ntohl(1) == 1){
-            W[0] = ntohl(W[0]);
-            W[1] = ntohl(W[1]);
-            W[2] = ntohl(W[2]);
-            W[3] = ntohl(W[3]);
-            W[4] = ntohl(W[4]);
-            W[5] = ntohl(W[5]);
-            W[6] = ntohl(W[6]);
-            W[7] = ntohl(W[7]);
-            W[8] = ntohl(W[8]);
-            W[9] = ntohl(W[9]);
-            W[10] = ntohl(W[10]);
-            W[11] = ntohl(W[11]);
-            W[12] = ntohl(W[12]);
-            W[13] = ntohl(W[13]);
-            W[14] = ntohl(W[14]);
-            W[15] = ntohl(W[15]);
-        }
+        W[ 0] = UINT32_LE(buf + 0);
+        W[ 1] = UINT32_LE(buf + 4);
+        W[ 2] = UINT32_LE(buf + 8);
+        W[ 3] = UINT32_LE(buf + 12);
+        W[ 4] = UINT32_LE(buf + 16);
+        W[ 5] = UINT32_LE(buf + 20);
+        W[ 6] = UINT32_LE(buf + 24);
+        W[ 7] = UINT32_LE(buf + 28);
+        W[ 8] = UINT32_LE(buf + 32);
+        W[ 9] = UINT32_LE(buf + 36);
+        W[10] = UINT32_LE(buf + 40);
+        W[11] = UINT32_LE(buf + 44);
+        W[12] = UINT32_LE(buf + 48);
+        W[13] = UINT32_LE(buf + 52);
+        W[14] = UINT32_LE(buf + 56);
+        W[15] = UINT32_LE(buf + 60);
 
         uint32_t a = this->md5.h[0];
         uint32_t b = this->md5.h[1];
