@@ -133,6 +133,27 @@ BOOST_AUTO_TEST_CASE(TestSslMd4)
 
 }
 
+BOOST_AUTO_TEST_CASE(TestSslHmacMd4)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Md4 hmac(key, sizeof(key) - 1);
+
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg) - 1);
+
+    uint8_t sig[16];
+    hmac.final(sig, sizeof(sig));
+    hexdump96_c(sig, sizeof(sig));
+    BOOST_CHECK_EQUAL(memcmp(sig,
+                        "\x8d\x33\x66\xc4\x40\xa9\xc6\x51"
+                        "\x24\xab\x0b\x5f\x4c\xa2\x73\x38",
+                        sizeof(sig)),
+                      0);
+}
+
+
 BOOST_AUTO_TEST_CASE(TestSslMd4_direct)
 {
     uint8_t sig[16];
@@ -234,5 +255,25 @@ BOOST_AUTO_TEST_CASE(TestSslMd4_direct)
                           0);
     }
 
+}
+
+BOOST_AUTO_TEST_CASE(TestSslHmacMd4_direct)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Md4_direct hmac(key, sizeof(key) - 1);
+
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg) - 1);
+
+    uint8_t sig[16];
+    hmac.final(sig, sizeof(sig));
+    hexdump96_c(sig, sizeof(sig));
+    BOOST_CHECK_EQUAL(memcmp(sig,
+                        "\x8d\x33\x66\xc4\x40\xa9\xc6\x51"
+                        "\x24\xab\x0b\x5f\x4c\xa2\x73\x38",
+                        sizeof(sig)),
+                      0);
 }
 
