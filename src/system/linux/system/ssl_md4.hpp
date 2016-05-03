@@ -126,7 +126,6 @@ class SslMd4_direct
         C = s->state[2];
         D = s->state[3];
 
-
         P_1( A, B, C, D, X[ 0],  3 );
         P_1( D, A, B, C, X[ 1],  7 );
         P_1( C, D, A, B, X[ 2], 11 );
@@ -190,11 +189,11 @@ class SslMd4_direct
     {
     }
 
-    static void PUT_UINT32_LE(uint32_t n, unsigned char * b, int i) {
-        b[i    ] = static_cast<unsigned char> ( ( n       ) & 0xFF );
-        b[i + 1] = static_cast<unsigned char> ( ( n >>  8 ) & 0xFF );
-        b[i + 2] = static_cast<unsigned char> ( ( n >> 16 ) & 0xFF );
-        b[i + 3] = static_cast<unsigned char> ( ( n >> 24 ) & 0xFF );
+    static void PUT_UINT32_LE(uint32_t n, unsigned char * b) {
+        b[0] = static_cast<unsigned char> ( ( n       ) & 0xFF );
+        b[1] = static_cast<unsigned char> ( ( n >>  8 ) & 0xFF );
+        b[2] = static_cast<unsigned char> ( ( n >> 16 ) & 0xFF );
+        b[3] = static_cast<unsigned char> ( ( n >> 24 ) & 0xFF );
     }
 
     void MD4_final(uint8_t *md)
@@ -207,8 +206,8 @@ class SslMd4_direct
                 | ( this->md4.total[1] <<  3 );
         low  = ( this->md4.total[0] <<  3 );
 
-        PUT_UINT32_LE( low,  msglen, 0 );
-        PUT_UINT32_LE( high, msglen, 4 );
+        PUT_UINT32_LE( low,  msglen + 0 );
+        PUT_UINT32_LE( high, msglen + 4 );
 
         last = this->md4.total[0] & 0x3F;
         padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
@@ -224,10 +223,10 @@ class SslMd4_direct
         this->MD4_update(md4_padding, padn );
         this->MD4_update(msglen, 8 );
 
-        PUT_UINT32_LE(this->md4.state[0], md,  0 );
-        PUT_UINT32_LE(this->md4.state[1], md,  4 );
-        PUT_UINT32_LE(this->md4.state[2], md,  8 );
-        PUT_UINT32_LE(this->md4.state[3], md, 12 );
+        PUT_UINT32_LE(this->md4.state[0], md +  0 );
+        PUT_UINT32_LE(this->md4.state[1], md +  4 );
+        PUT_UINT32_LE(this->md4.state[2], md +  8 );
+        PUT_UINT32_LE(this->md4.state[3], md + 12 );
     }
 
 
