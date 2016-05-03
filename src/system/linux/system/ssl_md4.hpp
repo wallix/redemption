@@ -66,16 +66,16 @@ class SslMd4
 
 class SslMd4_direct
 {
-    /* public domain md4 implementation based on rfc1321 and libtomcrypt */
-
     struct md4 {
-        uint32_t total[2];   /* number of bytes processed */
-        uint32_t state[4];   /* intermediate digest state */
-        unsigned char buffer[64]; /* data block being processed  */
+        uint32_t total[2];
+        uint32_t state[4];
+        unsigned char buffer[64];
+        md4()
+            : total{}
+            , state{0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476}
+            , buffer{}
+        {}
     } md4;
-
-
-    //static uint32_t rol(uint32_t n, int k) { return (n << k) | (n >> (32-k)); }
 
     static void GET_UINT32_LE(uint32_t & n,const uint8_t * b, int i)
     {
@@ -99,7 +99,6 @@ class SslMd4_direct
         a += ( (b ^ c ^ d) ) + x + 0x6ED9EBA1;
         a = (a << s) | ((a & 0xFFFFFFFF) >> (32 - s));
     }
-
 
     static void processblock(struct md4 *s, const uint8_t *buf)
     {
@@ -182,24 +181,14 @@ class SslMd4_direct
         P_3( C, D, A, B, X[ 7], 11 );
         P_3( B, C, D, A, X[15], 15 );
 
-
         s->state[0] += A;
         s->state[1] += B;
         s->state[2] += C;
         s->state[3] += D;
     }
 
-    static void MD4_init(struct md4 *s)
+    void MD4_init()
     {
-        memset( s, 0, sizeof(md4) );
-
-        s->total[0] = 0;
-        s->total[1] = 0;
-
-        s->state[0] = 0x67452301;
-        s->state[1] = 0xEFCDAB89;
-        s->state[2] = 0x98BADCFE;
-        s->state[3] = 0x10325476;
     }
 
     static void PUT_UINT32_LE(uint32_t n, unsigned char * b, int i) {
@@ -209,20 +198,20 @@ class SslMd4_direct
         b[i + 3] = static_cast<unsigned char> ( ( n >> 24 ) & 0xFF );
     }
 
-    static void MD4_final(struct md4 *s, uint8_t *md)
+    void MD4_final(uint8_t *md)
     {
         uint32_t last, padn;
         uint32_t high, low;
         unsigned char msglen[8];
 
-        high = ( s->total[0] >> 29 )
-                | ( s->total[1] <<  3 );
-        low  = ( s->total[0] <<  3 );
+        high = ( this->md4.total[0] >> 29 )
+                | ( this->md4.total[1] <<  3 );
+        low  = ( this->md4.total[0] <<  3 );
 
         PUT_UINT32_LE( low,  msglen, 0 );
         PUT_UINT32_LE( high, msglen, 4 );
 
-        last = s->total[0] & 0x3F;
+        last = this->md4.total[0] & 0x3F;
         padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
 
         const unsigned char md4_padding[64] =
@@ -233,17 +222,17 @@ class SslMd4_direct
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
 
-        MD4_update( s, md4_padding, padn );
-        MD4_update( s, msglen, 8 );
+        this->MD4_update(md4_padding, padn );
+        this->MD4_update(msglen, 8 );
 
-        PUT_UINT32_LE( s->state[0], md,  0 );
-        PUT_UINT32_LE( s->state[1], md,  4 );
-        PUT_UINT32_LE( s->state[2], md,  8 );
-        PUT_UINT32_LE( s->state[3], md, 12 );
+        PUT_UINT32_LE(this->md4.state[0], md,  0 );
+        PUT_UINT32_LE(this->md4.state[1], md,  4 );
+        PUT_UINT32_LE(this->md4.state[2], md,  8 );
+        PUT_UINT32_LE(this->md4.state[3], md, 12 );
     }
 
 
-    static void MD4_update(struct md4 *s, const uint8_t *m, unsigned long len)
+    void MD4_update(const uint8_t *m, unsigned long len)
     {
         size_t fill;
         uint32_t left;
@@ -251,20 +240,20 @@ class SslMd4_direct
         if( len == 0 )
             return;
 
-        left = s->total[0] & 0x3F;
+        left = this->md4.total[0] & 0x3F;
         fill = 64 - left;
 
-        s->total[0] += static_cast<uint32_t> (len);
-        s->total[0] &= 0xFFFFFFFF;
+        this->md4.total[0] += static_cast<uint32_t> (len);
+        this->md4.total[0] &= 0xFFFFFFFF;
 
-        if( s->total[0] < static_cast<uint32_t> (len) )
-            s->total[1]++;
+        if( this->md4.total[0] < static_cast<uint32_t> (len) )
+            this->md4.total[1]++;
 
         if( left && len >= fill )
         {
-            memcpy( static_cast<void *>(s->buffer + left),
+            memcpy( static_cast<void *>(this->md4.buffer + left),
                     (m), fill );
-            processblock( s, s->buffer );
+            processblock(&this->md4, this->md4.buffer );
             m += fill;
             len  -= fill;
             left = 0;
@@ -272,33 +261,32 @@ class SslMd4_direct
 
         while( len >= 64 )
         {
-            processblock( s, m );
+            processblock(&this->md4, m );
             m += 64;
             len  -= 64;
         }
 
         if( len > 0 )
         {
-            memcpy( static_cast<void *> (s->buffer + left),
-                    (m), len );
+            memcpy(static_cast<void *> (this->md4.buffer + left), m, len);
         }
     }
 
     public:
     SslMd4_direct()
     {
-        SslMd4_direct::MD4_init(&this->md4);
+        this->MD4_init();
     }
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        SslMd4_direct::MD4_update(&this->md4, data, data_size);
+        this->MD4_update(data, data_size);
     }
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(MD4_DIGEST_LENGTH == out_data_size);
-        SslMd4_direct::MD4_final(&this->md4, out_data);
+        this->MD4_final(out_data);
     }
 };
 
