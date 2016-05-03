@@ -79,8 +79,7 @@ class SslMd4_direct
 
     //static uint32_t rol(uint32_t n, int k) { return (n << k) | (n >> (32-k)); }
 
-    static void GET_UINT32_LE(uint32_t & n,const uint8_t * b, int i)
-    {
+    static void GET_UINT32_LE(uint32_t & n,const uint8_t * b, int i) {
         n = (   static_cast<uint32_t>( b[i   ])       )
             | ( static_cast<uint32_t>( b[i + 1] <<  8) )
             | ( static_cast<uint32_t>( b[i + 2] << 16) )
