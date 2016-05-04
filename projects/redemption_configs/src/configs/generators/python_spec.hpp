@@ -241,7 +241,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         || std::is_convertible<decltype(val), std::string>::value;
 
         this->out() << "option(";
-        for (auto s : config_spec::enum_option<T>::value) {
+        for (auto s : config_spec::enum_option<T>::values()) {
             if (is_str) {
                 this->out() << "'";
             }

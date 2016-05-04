@@ -133,8 +133,8 @@ void config_spec_definition(Writer && W)
 #ifdef IN_IDE_PARSER
     // for coloration...
     struct {
-        void member();
-        void section();
+        void member(...);
+        void section(char const * name, closure_section);
         void sep();
     } W;
 #endif
