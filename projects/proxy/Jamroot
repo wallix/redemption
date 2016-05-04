@@ -262,6 +262,7 @@ project redemption
     <include>$(SRCDIR)/headers
 #    <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
+    <include>$(TESTDIR)
     <include>/usr/include
 
     <conditional>@defines

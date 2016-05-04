@@ -87,19 +87,15 @@ rule defines ( properties * )
 }
 
 path-constant SRCDIR : ../../src ;
-path-constant INCLUDEDIR : ./include ;
-path-constant SYSTEMDIR : ./src/system/emscripten/system ;
+path-constant INCLUDEDIR : ../../include ;
+path-constant SYSTEMDIR : ./system ;
+path-constant TESTDIR : ../../tests ;
+path-constant TESTSDIR : ./tests ;
 
 project redjs
     : requirements
     <include>$(SRCDIR)
-    <include>$(INCLUDEDIR)
-    <include>$(SYSTEMDIR)
-    <include>$(SRCDIR)/capture
-    <include>$(SRCDIR)/keyboard
-    <include>$(SRCDIR)/keyboard/reversed_keymaps
-    <include>$(SRCDIR)/headers
-    <include>$(INCLUDEDIR)
+    <include>$(TESTSDIR)
 
     <conditional>@defines
 
@@ -117,6 +113,6 @@ install test_utf
     : <location>./sandbox
     ;
 
-exejs test_utf.js : tests/utils/test_utf.cpp ;
+exejs test_utf.js : $(TESTDIR)/utils/test_utf.cpp ;
 
 

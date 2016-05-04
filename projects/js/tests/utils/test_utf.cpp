@@ -25,54 +25,14 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestUtf
-//#include <boost/test/auto_unit_test.hpp>
+#include "redemption_unit_tests.hpp"
 
 //#define LOGNULL
 #define LOGPRINT
 
-#include <stdio.h>
-
 #include "utils/cast.hpp"
 #include "utils/utf.hpp"
 
-#include <vector>
-
-#define BOOST_AUTO_TEST_CASE(name) void name(); \
-struct TEST_ ## name {\
-    TEST_ ## name() {\
-        TESTS.add({STRINGIFY(name), &name});\
-    }\
-} TEST_ ## name;\
-\
-void name()
-
-
-
-#define BOOST_CHECK_EQUAL(x, y) if ((x)!=(y)) { printf("Test Failed at %d ", __LINE__); }
-
-#ifdef BOOST_AUTO_TEST_MAIN
-struct TESTS {
-    struct item {
-        const char * name;
-        void (*fn)();
-    };
-    std::vector<item> tests;
-    void add(item item){
-        this->tests.push_back(item);
-    }
-} TESTS;
-
-#define STRINGIFY(x) #x 
-#define MODULE_NAME(x) printf("Running test suite " STRINGIFY(x) "\n");
-
-int main(){
-    MODULE_NAME(BOOST_TEST_MODULE);
-    for (auto& item: TESTS.tests){
-        printf("Running test %s\n", item.name);
-        item.fn();
-    }
-}    
-#endif
 
 BOOST_AUTO_TEST_CASE(TestUTF8Len_2)
 {
