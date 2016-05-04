@@ -32,7 +32,7 @@ arguments_size(Ts const &...){ return {}; }
 #include <iosfwd>
 #include <cstdio>
 #include <cstdlib>
-#include "underlying_cast.hpp"
+#include "utils/underlying_cast.hpp"
 #include "configs/c_str_buf.hpp"
 
 #define MK_ENUM_IO(E)                                    \

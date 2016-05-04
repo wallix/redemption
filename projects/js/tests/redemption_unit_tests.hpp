@@ -42,6 +42,7 @@ std::cout << "Got (" << (x) << ") expected (" << (y) << ") \n";\
 
 #define BOOST_CHECK(x) if (!(x)) { printf("Test Failed at %d\n", __LINE__); }
 #define BOOST_REQUIRE_EQUAL(x, y) if ((x)!=(y)) { printf("Test Failed at %d\n", __LINE__); }
+#define BOOST_REQUIRE_NE(x, y) if ((x)==(y)) { printf("Test Failed at %d\n", __LINE__); }
 
 #ifdef BOOST_AUTO_TEST_MAIN
 struct TESTS {

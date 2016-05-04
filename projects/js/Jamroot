@@ -14,11 +14,12 @@ import modules : poke ;
 #variant lenny : release ;
 
 path-constant TOP : . ;
-constant SRCDIR : ../../src ;
-constant INCLUDEDIR : ../../include ;
-constant TESTDIR : tests ;
-constant MODULEDIR : ../../modules ;
-constant SYSTEMDIR : ../../src/system/linux ;
+path-constant MODULEDIR : ../../modules ;
+path-constant SRCDIR : ../../src ;
+path-constant INCLUDEDIR : ./include ;
+path-constant SYSTEMDIR : ./system ;
+path-constant TESTDIR : ../../tests ;
+path-constant TESTSDIR : ./tests ;
 
 #echo "toolset" [ feature.get-values toolset ] ;
 
@@ -86,15 +87,11 @@ rule defines ( properties * )
     return $(defs) ;
 }
 
-path-constant SRCDIR : ../../src ;
-path-constant INCLUDEDIR : ../../include ;
-path-constant SYSTEMDIR : ./system ;
-path-constant TESTDIR : ../../tests ;
-path-constant TESTSDIR : ./tests ;
 
 project redjs
     : requirements
     <include>$(SRCDIR)
+    <include>$(INCLUDEDIR)
     <include>$(TESTSDIR)
 
     <conditional>@defines
@@ -108,17 +105,70 @@ project redjs
 
 using emscripten ;
 
-install test_utf
-    : [ glob ./sys/tests/* ] test_utf.js
-    : <location>./sandbox
-    ;
+actions nodejs
+{
+    echo "Running nodejs tests for $(>) -> $(<)" ;
+    /usr/bin/nodejs sandbox/$(>:B).js
+    #echo check test result and create target file if test suceed
+}
 
-exejs test_utf.js : $(TESTDIR)/utils/test_utf.cpp ;
+rule test-run ( target : sources + : tested ? : requirements * )
+{
+#    ECHO " TEST RUN" ;
+    sources = $(TESTDIR)/$(sources) ;
+    local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
+    local basepath = "" ;
+    local path = $(sources[0]:P) ;
+    while $(path) != $(TESTDIR) {
+        basepath = $(path:B)/$(basepath) ;
+        path = $(path:P) ;
+    }
+
+    ECHO "base = $(base)" ;
+    ECHO "sources = $(sources)" ;
+    ECHO "target = $(target)" ;
+    ECHO "requirements = $(requirements)" ;
+
+    install $(target)
+        : [ glob ./sys/tests/* ] $(target).js
+        : <location>./sandbox
+        ;
+
+    exejs $(target).js : $(sources) : $(requirements) ;
+
+    make nodejs_$(target) : $(target) : @nodejs ;
+
+}
+
+
+rule test-canonical ( base : requirements * )
+{
+    #basetarget = $(base:B) ;
+    #base = $(base:P) ;
+    #echo "base=" $(base) ;
+    #while "$(base)" != "" {
+    #    basetarget = $(base:B)_$(basetarget) ;
+    #    base = $(base:P) ;
+    #}
+    #target = test_$(basetarget) ;
+    
+    target = test_$(base:B) ;
+    source = $(base:P)/test_$(base:B).cpp ;
+    tested = $(base) ;
+
+    #echo "target=" $(target) ;
+    #echo "source=" $(source) ;
+    #echo "tested=" $(tested) ;
+
+    
+    test-run $(target) : $(source) : $(tested) : $(requirements) ;
+}
+
 
 
 ### Acl tests
 ### @{
-#test-canonical acl/acl_serializer.hpp ;
+test-canonical acl/acl_serializer.hpp : <cxxflags>-DFIXTURES_PATH=\\\"$(FIXTURES_PATH)\\\" ;
 #test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
 #test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
 #test-canonical acl/auth_api.hpp ;
@@ -157,7 +207,7 @@ exejs test_utf.js : $(TESTDIR)/utils/test_utf.cpp ;
 ### @}
 
 #test-canonical utils/stream.hpp ;
-#test-canonical utils/utf.hpp ;
+test-canonical utils/utf.hpp ;
 #test-canonical utils/rect.hpp ;
 #test-canonical utils/ellipse.hpp ;
 #test-canonical utils/drawable.hpp : <library>bitmap <library>png <library>crypto ;
@@ -368,7 +418,6 @@ exejs test_utf.js : $(TESTDIR)/utils/test_utf.cpp ;
 #    : <library>png <library>z <covflag>nocover
 #    ;
 
-##test-run test_convert_bitmap : test_convert_bitmap.cpp : <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
 #test-canonical mod/rdp/rdp.hpp 
 #    : <library>bitmap <library>krb5 
 #      <library>gssglue <library>png 
