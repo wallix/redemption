@@ -19,8 +19,7 @@ project redjs
     <include>$(SRCDIR)/main
     #<include>modules/includes 
     <include>$(SRCDIR)/utils
-    <include>$(SRCDIR)/system/linux/system
-    <include>src
+    <include>src/system/linux/system
     <include>$(INCLUDEDIR)
     <cxxflags>-std=c++11
     <cxxflags>-Wall

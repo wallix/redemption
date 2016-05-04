@@ -18,14 +18,22 @@
 *   Author(s): Jonathan Poelen
 */
 
+
+#ifndef aaaaaaa
+#define aaaaaaa
+#include <type_traits>
+template<class... Ts>
+constexpr std::integral_constant<std::size_t, sizeof...(Ts)>
+arguments_size(Ts const &...){ return {}; }
+#endif
+
 #ifndef MK_ENUM_IO
 
 #include <iosfwd>
 #include <cstdio>
 #include <cstdlib>
-#include "utils/underlying_cast.hpp"
+#include "underlying_cast.hpp"
 #include "configs/c_str_buf.hpp"
-#include <initializer_list>
 
 #define MK_ENUM_IO(E)                                    \
     template<class Ch, class Tr>                         \
@@ -71,14 +79,14 @@
 #ifdef IN_IDE_PARSER
 # define ENUM_OPTION(Enum, X, ...)
 #else
-# define ENUM_OPTION(Enum, X, ...)                        \
-    template<class T> struct enum_option<Enum, T> {       \
-        static constexpr std::array<                      \
-            std::decay<decltype(X)>::type,                \
-            ::configs::mpl_count_elements(X, __VA_ARGS__) \
-        > values() { return {{X, __VA_ARGS__}}; }         \
-        using type = std::true_type;                      \
-    }
+# define ENUM_OPTION(Enum, X, ...)                       \
+    template<class T> struct enum_option<Enum, T> {      \
+        static constexpr const std::decay<decltype(X)>::type value[decltype(arguments_size(X, __VA_ARGS__))::value] = {X, __VA_ARGS__};                        \
+        using type = std::true_type;                     \
+    };                                                   \
+//    template<class T> constexpr const                    \
+//    std::decay<decltype(X)>::type[decltype(arguments_size(X, __VA_ARGS__))::value] \
+//    enum_option<Enum, T>::value
 #endif
 
 #define MK_ENUM_FIELD(Enum, ...)                               \
@@ -115,8 +123,6 @@
 #ifndef REDEMPTION_SRC_CONFIGS_MK_ENUM_DEF_HPP
 #define REDEMPTION_SRC_CONFIGS_MK_ENUM_DEF_HPP
 
-#include <array>
-
 namespace configs
 {
     template<class E, class = void>
@@ -124,18 +130,13 @@ namespace configs
     { using type = std::false_type; };
 
     template<class E>
-    typename std::remove_reference<decltype(*enum_option<E>::values().begin())>::type
+    decltype(*enum_option<E>::value.begin())
     enum_to_option(E e) {
-        return *(enum_option<E>::values().begin() + underlying_cast(e));
+        return *(enum_option<E>::value.begin() + underlying_cast(e));
     }
 
     template<class T>
     char const * get_enum_name(T) = delete;
-
-    template<class... Ts>
-    constexpr std::size_t mpl_count_elements(Ts const & ...) {
-        return sizeof...(Ts);
-    }
 }
 
 #endif
