@@ -75,16 +75,14 @@
 #ifdef IN_IDE_PARSER
 # define ENUM_OPTION(Enum, X, ...)
 #else
-# define ENUM_OPTION(Enum, X, ...)                       \
-    template<class T> struct enum_option<Enum, T> {      \
-        static constexpr const std::initializer_list<    \
-            std::decay<decltype(X)>::type                \
-        > value {X, __VA_ARGS__};                        \
-        using type = std::true_type;                     \
-    };                                                   \
-    template<class T> constexpr const                    \
-    std::initializer_list<std::decay<decltype(X)>::type> \
-    enum_option<Enum, T>::value
+# define ENUM_OPTION(Enum, X, ...)                        \
+    template<class T> struct enum_option<Enum, T> {       \
+        static constexpr std::array<                      \
+            std::decay<decltype(X)>::type,                \
+            ::configs::mpl_count_elements(X, __VA_ARGS__) \
+        > values() { return {{X, __VA_ARGS__}}; }         \
+        using type = std::true_type;                      \
+    }
 #endif
 
 #define MK_ENUM_FIELD(Enum, ...)                               \
@@ -121,6 +119,8 @@
 #ifndef REDEMPTION_SRC_CONFIGS_MK_ENUM_DEF_HPP
 #define REDEMPTION_SRC_CONFIGS_MK_ENUM_DEF_HPP
 
+#include <array>
+
 namespace configs
 {
     template<class E, class = void>
@@ -128,13 +128,18 @@ namespace configs
     { using type = std::false_type; };
 
     template<class E>
-    decltype(*enum_option<E>::value.begin())
+    typename std::remove_reference<decltype(*enum_option<E>::values().begin())>::type
     enum_to_option(E e) {
-        return *(enum_option<E>::value.begin() + underlying_cast(e));
+        return *(enum_option<E>::values().begin() + underlying_cast(e));
     }
 
     template<class T>
     char const * get_enum_name(T) = delete;
+
+    template<class... Ts>
+    constexpr std::size_t mpl_count_elements(Ts const & ...) {
+        return sizeof...(Ts);
+    }
 }
 
 #endif
