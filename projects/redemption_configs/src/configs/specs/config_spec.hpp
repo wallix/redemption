@@ -338,7 +338,7 @@ void config_spec_definition(Writer && W)
         }, set(true), r);
         W.member(H, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(H, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
-        W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
+        W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false), r);
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
         W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set("cmd /k"));
 
