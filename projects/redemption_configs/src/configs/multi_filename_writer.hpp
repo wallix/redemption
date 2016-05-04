@@ -33,7 +33,7 @@ struct MultiFilenameWriter
 
     template<class Fn>
     MultiFilenameWriter & then(const char * new_filename, Fn fn) {
-        if (!err) {
+        if (!this->err) {
             const char * filename = this->filename;
             if (new_filename && *new_filename && strcmp(this->filename, new_filename)) {
                 this->of.close();

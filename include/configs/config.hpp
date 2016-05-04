@@ -205,15 +205,15 @@ private:
     template<class T>
     struct Field : FieldBase
     {
-        void parse(configs::VariablesConfiguration & variables, char const * value) override final {
+        void parse(configs::VariablesConfiguration & variables, char const * value) final {
             ::configs::parse(static_cast<T&>(variables).value, value);
         }
 
-        int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const override final {
+        int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const final {
             return ::configs::copy_val(static_cast<T const &>(variables).value, buff, n);
         }
 
-        char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final {
+        char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const final {
             return ::configs::c_str(
                 const_cast<configs::CStrBuf<typename T::type> &>(
                     static_cast<configs::CStrBuf<typename T::type> const &>(
