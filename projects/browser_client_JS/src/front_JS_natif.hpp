@@ -623,6 +623,12 @@ public:
     //      CONTROLLERS
     //------------------------
 
+    void sendRDPScanCode(int code) {
+        try {
+            EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
+        } catch (const Error & e) { }
+    }
+
     void mousePressEvent(int x, int y, int button) {
         EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
@@ -636,7 +642,98 @@ public:
     }
 
     void keyPressEvent(int code) {
-        EM_ASM_({ console.log('KeyPressed ' + $0); }, this->_keylayout->getnoMod()->at(code));
+
+        if (code < 0) {
+            code += 256;
+        }
+
+        switch (code) {
+
+            //-----------------------
+            //  Keylayout SHIFT MOD
+            //-----------------------
+            case 168 : /* ¨ */ /* send shift down*/
+                               this->sendRDPScanCode(this->_keylayout->deadkeys.at(code));
+                               /* send shift up*/
+                            break;
+            case 37  : /* % */
+            case 43  : /* + */
+            case 46  : /* . */
+            case 63  : /* ? */
+            case 65  : /* A */
+            case 90  : /* Z */
+            case 69  : /* E */
+            case 82  : /* R */
+            case 84  : /* T */
+            case 89  : /* Y */
+            case 85  : /* U */
+            case 73  : /* I */
+            case 79  : /* O */
+            case 80  : /* P */
+            case 81  : /* Q */
+            case 83  : /* S */
+            case 68  : /* D */
+            case 70  : /* F */
+            case 71  : /* G */
+            case 72  : /* H */
+            case 74  : /* J */
+            case 75  : /* K */
+            case 76  : /* L */
+            case 77  : /* M */
+            case 87  : /* W */
+            case 88  : /* X */
+            case 67  : /* C */
+            case 86  : /* V */
+            case 66  : /* B */
+            case 78  : /* N */
+            case 162 : /* > */
+            case 163 : /* £ */
+            case 167 : /* § */
+            case 176 : /* ° */
+            case 181 : /* µ */ /* send shift down*/
+                               this->sendRDPScanCode(this->_keylayout->getshift()->at(code));
+                               /* send shift up*/
+                            break;
+
+
+            //-----------------------
+            //  Keylayout ALTGR MOD
+            //-----------------------
+            case 96  : /* ` */ /* send altgr down*/
+                              this->sendRDPScanCode(this->_keylayout->deadkeys.at(code));
+                              /* send altgr up*/
+                            break;
+            case 35  : /* # */
+            case 64  : /* @ */
+            case 91  : /* [ */
+            case 92  : /* \ */
+            case 93  : /* ] */
+            case 123 : /* { */
+            case 124 : /* | */
+            case 125 : /* } */
+            case 126 : /* ~ */
+            case 234 : /* ê */ /* send altgr down*/
+                               this->sendRDPScanCode(this->_keylayout->getaltGr()->at(code));
+                               /* send altgr up*/
+                            break;
+
+
+            //-----------------------
+            //   Keylayout NO MOD
+            //-----------------------
+            case 94  : /* ^ */ this->sendRDPScanCode(this->_keylayout->deadkeys.at(code));
+                            break;
+            case 47  : /* / */ /* extended */
+            case 224 : /* à */
+            case 231 : /* ç */
+            case 232 : /* è */
+            case 233 : /* é */
+            case 249 : /* ù */ this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code));
+                            break;
+            default  :         this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code));
+                            break;
+        }
+
     }
 
     void keyReleaseEvent(char code) {

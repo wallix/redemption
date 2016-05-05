@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include "system/ssl_calls.hpp"
+#include "system/ssl_aes_test.hpp"
 
 BOOST_AUTO_TEST_CASE(TestAES)
 {
@@ -53,6 +54,50 @@ BOOST_AUTO_TEST_CASE(TestAES)
                              decrypted,
                              32),
                       0);
+
+    {
+        //SslAES_direct aes;
+
+        aes_context ctx;
+
+        uint8_t key24[] = "clef très très secrete\0v";
+        uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
+        uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
+
+        uint8_t inbuf[1024]= "secret très confidentiel\x00\x00\x00\x00\x00\x00\x00\x00";
+        uint8_t outbuf[1024] = {};
+        uint8_t decrypted[1024] = {};
+
+        std::cout <<  "1" <<  std::endl;
+        aes_setkey_enc(&ctx, key24, 24);
+        std::cout <<  "2" <<  std::endl;
+        aes_setkey_dec(&ctx, key24, 24);
+        std::cout <<  "3" <<  std::endl;
+
+        aes_crypt_cbc(&ctx, 1, 32, iv, inbuf, outbuf);
+        std::cout <<  "4" <<  std::endl;
+        aes_crypt_cbc(&ctx, 0, 32, iv, outbuf, decrypted);
+
+        //aes.set_key(key24, key24, 24);
+
+        //aes.crypt_cbc(32, iv, inbuf, outbuf);
+
+        /*BOOST_CHECK_EQUAL(outbuf[0], 0x90);
+        BOOST_CHECK_EQUAL(outbuf[1], 0x2b);
+        BOOST_CHECK_EQUAL(outbuf[2], 0x1f);
+        BOOST_CHECK_EQUAL(outbuf[3], 0x14);
+        BOOST_CHECK_EQUAL(outbuf[4], 0xc3);
+        BOOST_CHECK_EQUAL(outbuf[5], 0x7b);
+        BOOST_CHECK_EQUAL(outbuf[6], 0x1f);*/
+
+        //aes.decrypt_cbc(32, iv2, outbuf, decrypted);
+        std::cout <<  "5" <<  std::endl;
+
+        BOOST_CHECK_EQUAL(memcmp(inbuf,
+                                decrypted,
+                                32),
+                        0);
+    }
 
 }
 

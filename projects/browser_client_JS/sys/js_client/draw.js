@@ -38,10 +38,12 @@ textField_.addEventListener("keyup", function(event) {
         break;
 
         default: if (textLength < size) {
-                    _keyPressEvent(str.charCodeAt(size-1));
+                    var char = str.charCodeAt(size-1);
+                    console.log(char);
+                    _keyPressEvent(char);
                     extLength = size;
                  } else if (textLength > size || size == 0) {
-                    console.log('Backspace_vide ' + textLength + ' ' + size);
+                    //console.log('Backspace_vide ' + textLength + ' ' + size);
                     extLength = size;
                  }
         break;

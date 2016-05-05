@@ -77,6 +77,7 @@ class SslMd4_direct
         {}
     } md4;
 
+
     static uint32_t UINT32_LE(const uint8_t * b)
     {
         return ( static_cast<uint32_t>( b[0])     )
@@ -298,8 +299,8 @@ class SslMd4_direct
 
 class SslHMAC_Md4_direct
 {
-    uint8_t k_ipad[64]; 
-    uint8_t k_opad[64]; 
+    uint8_t k_ipad[64];
+    uint8_t k_opad[64];
     SslMd4_direct context;
 
     public:
