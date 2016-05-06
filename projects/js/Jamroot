@@ -108,8 +108,10 @@ using emscripten ;
 actions nodejs
 {
     echo "Running nodejs tests for $(>) -> $(<)" ;
-    /usr/bin/nodejs sandbox/$(>:B).js
-    #echo check test result and create target file if test suceed
+
+    if /usr/bin/nodejs sandbox/$(>:B).js ; then
+        touch $(<) 
+    fi;
 }
 
 rule test-run ( target : sources + : tested ? : requirements * )
@@ -136,8 +138,7 @@ rule test-run ( target : sources + : tested ? : requirements * )
 
     exejs $(target).js : $(sources) : $(requirements) ;
 
-    make nodejs_$(target) : $(target) : @nodejs ;
-
+    make test$(target) : $(target) : @nodejs ;
 }
 
 
@@ -152,7 +153,7 @@ rule test-canonical ( base : requirements * )
     #}
     #target = test_$(basetarget) ;
     
-    target = test_$(base:B) ;
+    target = _$(base:B) ;
     source = $(base:P)/test_$(base:B).cpp ;
     tested = $(base) ;
 
