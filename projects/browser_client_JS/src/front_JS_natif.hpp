@@ -167,6 +167,11 @@ public:
     int                  _bufferRDPClipboardMetaFilePicBPP;
     const Keylayout_r  * _keylayout;
 
+    enum: int {
+        KBD_FLAGS_EXTENDED = 0x0100,
+        KBD_FLAGS          = 0
+    };
+
 
     //bool setClientInfo() ;
 
@@ -623,7 +628,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void sendRDPScanCode(int code) {
+    void sendRDPScanCode(int code,  int flag) {
         try {
             EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
         } catch (const Error & e) { }
@@ -643,6 +648,8 @@ public:
 
     void keyPressEvent(int code) {
 
+        int flag = 0;
+
         if (code < 0) {
             code += 256;
         }
@@ -653,7 +660,7 @@ public:
             //  Keylayout SHIFT MOD
             //-----------------------
             case 168 : /* ¨ */ /* send shift down*/
-                               this->sendRDPScanCode(this->_keylayout->deadkeys.at(code));
+                               this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
                                /* send shift up*/
                             break;
             case 37  : /* % */
@@ -691,7 +698,7 @@ public:
             case 167 : /* § */
             case 176 : /* ° */
             case 181 : /* µ */ /* send shift down*/
-                               this->sendRDPScanCode(this->_keylayout->getshift()->at(code));
+                               this->sendRDPScanCode(this->_keylayout->getshift()->at(code), flag);
                                /* send shift up*/
                             break;
 
@@ -700,7 +707,7 @@ public:
             //  Keylayout ALTGR MOD
             //-----------------------
             case 96  : /* ` */ /* send altgr down*/
-                              this->sendRDPScanCode(this->_keylayout->deadkeys.at(code));
+                              this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
                               /* send altgr up*/
                             break;
             case 35  : /* # */
@@ -713,7 +720,7 @@ public:
             case 125 : /* } */
             case 126 : /* ~ */
             case 234 : /* ê */ /* send altgr down*/
-                               this->sendRDPScanCode(this->_keylayout->getaltGr()->at(code));
+                               this->sendRDPScanCode(this->_keylayout->getaltGr()->at(code), flag);
                                /* send altgr up*/
                             break;
 
@@ -721,16 +728,16 @@ public:
             //-----------------------
             //   Keylayout NO MOD
             //-----------------------
-            case 94  : /* ^ */ this->sendRDPScanCode(this->_keylayout->deadkeys.at(code));
+            case 94  : /* ^ */ this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
                             break;
-            case 47  : /* / */ /* extended */
+            case 47  : /* / */ flag = KBD_FLAGS_EXTENDED;
             case 224 : /* à */
             case 231 : /* ç */
             case 232 : /* è */
             case 233 : /* é */
-            case 249 : /* ù */ this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code));
+            case 249 : /* ù */ this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code), flag);
                             break;
-            default  :         this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code));
+            default  :         this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code), flag);
                             break;
         }
 
