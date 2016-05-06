@@ -41,6 +41,7 @@ TESTS.failure++;} else { TESTS.success++;}
 
 
 #define BOOST_CHECK(x) if (!(x)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
+#define BOOST_REQUIRE(x) if (!(x)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 #define BOOST_REQUIRE_EQUAL(x, y) if ((x)!=(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 #define BOOST_REQUIRE_NE(x, y) if ((x)==(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 

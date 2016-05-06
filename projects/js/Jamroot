@@ -178,8 +178,8 @@ test-canonical acl/acl_serializer.hpp : <cxxflags>-DFIXTURES_PATH=\\\"$(FIXTURES
 
 ### Capture tests
 ### @{
-#test-canonical capture/ChunkToFile.hpp ;
-#test-canonical capture/new_kbdcapture.hpp ;
+#test-canonical capture/ChunkToFile.hpp : <library>z ;
+test-canonical capture/new_kbdcapture.hpp ;
 #test-canonical capture/RDPChunkedDevice.hpp ;
 #test-canonical capture/send_wrm_chunk.hpp ;
 #test-canonical capture/transparentchunk.hpp ;
