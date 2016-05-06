@@ -976,7 +976,6 @@ unit-test test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_Alternat
 
 
 unit-test test_libpng : tests/test_libpng.cpp : $(TEST_DEPENDENCIES) <library>png <library>z ;
-#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp : $(TEST_DEPENDENCIES) <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
 unit-test test_rdp : tests/mod/rdp/test_rdp.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>z <library>dl <library>openssl ;
 unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>openssl <library>dl <library>krb5 <library>gssglue ;

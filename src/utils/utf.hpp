@@ -815,7 +815,6 @@ static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
 }
 
 static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * latin1_target, size_t latin1_len) {
-    const uint16_t * utf16_source = reinterpret_cast<const uint16_t *>(utf16_source_);
 
     utf16_len &= ~1;
 
@@ -856,11 +855,10 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
         return false;
     };
 
-    const uint16_t * current_utf16_source  = utf16_source;
-          uint8_t  * current_latin1_target = latin1_target;
+    uint8_t  * current_latin1_target = latin1_target;
     for (size_t remaining_utf16_len = utf16_len / 2, remaining_latin1_len = latin1_len;
-         remaining_utf16_len && remaining_latin1_len; current_utf16_source++, remaining_utf16_len--) {
-        if (converter(*current_utf16_source, current_latin1_target)) {
+         remaining_utf16_len && remaining_latin1_len; utf16_source_+=2, remaining_utf16_len--) {
+        if (converter(utf16_source_[1]*256+utf16_source_[0], current_latin1_target)) {
             current_latin1_target++;
             remaining_latin1_len--;
         }

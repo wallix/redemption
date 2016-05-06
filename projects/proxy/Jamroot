@@ -896,7 +896,7 @@ test-canonical system/linux/system/ssl_rc4.hpp : <library>openssl <library>crypt
 test-canonical system/linux/system/ssl_sha1.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha256.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha512.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+#test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 
 test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 
@@ -938,11 +938,6 @@ test-canonical transport/buffer/buffering_buf.hpp ;
 test-canonical transport/buffer/checksum_buf.hpp : <library>crypto <library>dl <library>z ;
 ## @}
 
-
-
-#test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
-#test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
-
 test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
@@ -970,7 +965,6 @@ test-run test_libpng
     : <library>png <library>z <covflag>nocover
     ;
 
-#test-run test_convert_bitmap : test_convert_bitmap.cpp : <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
 test-canonical mod/rdp/rdp.hpp 
     : <library>bitmap <library>krb5 
       <library>gssglue <library>png 
@@ -1074,11 +1068,11 @@ test-run test_mstsc_client_rdp50bulk
       <covflag>nocover
     ;
 
-if [ SHELL false ] {
+if [ SHELL true ] {
 
 test-run test_keymap2 
     : test_keymap2.cpp 
-    : keymap2.hpp 
+    : keyboard/keymap2.hpp 
     ;
     
 test-run test_keymapSym 

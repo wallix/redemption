@@ -37,11 +37,13 @@ void name()
 #define BOOST_CHECK_EQUAL(x, y) if ((x)!=(y)) {\
 std::cout << "Test Failed at " << __LINE__ << "\n";\
 std::cout << "Got (" << (x) << ") expected (" << (y) << ") \n";\
-}\
+TESTS.failure++;} else { TESTS.success++;}
 
 
-#define BOOST_CHECK(x) if (!(x)) { printf("Test Failed at %d\n", __LINE__); }
-#define BOOST_REQUIRE_EQUAL(x, y) if ((x)!=(y)) { printf("Test Failed at %d\n", __LINE__); }
+#define BOOST_CHECK(x) if (!(x)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
+#define BOOST_REQUIRE(x) if (!(x)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
+#define BOOST_REQUIRE_EQUAL(x, y) if ((x)!=(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
+#define BOOST_REQUIRE_NE(x, y) if ((x)==(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 
 #ifdef BOOST_AUTO_TEST_MAIN
 struct TESTS {
@@ -50,6 +52,11 @@ struct TESTS {
         void (*fn)();
     };
     std::vector<item> tests;
+    int success;
+    int failure;
+
+    TESTS() : tests{}, success(0), failure(0) {}
+
     void add(item item){
         this->tests.push_back(item);
     }
@@ -64,6 +71,12 @@ int main(){
         printf("Running test %s\n", item.name);
         item.fn();
     }
+    printf("%d tests succeeded, %d tests failed\n", 
+        TESTS.success, TESTS.failure);
+    if (TESTS.failure > 0) {
+        return -1;
+    }
+    return 0;
 }    
 #endif
 
