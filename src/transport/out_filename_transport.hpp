@@ -195,10 +195,10 @@ namespace transfil {
 
             // Compress
             // TODO: check this
-            char compressed_buf[65536];
+            uint8_t compressed_buf[65536];
             //char compressed_buf[compressed_buf_sz];
             size_t compressed_buf_sz = ::snappy_max_compressed_length(this->pos);
-            snappy_status status = snappy_compress(this->buf, this->pos, compressed_buf, &compressed_buf_sz);
+            snappy_status status = snappy_compress(this->buf, this->pos, reinterpret_cast<char*>(compressed_buf), &compressed_buf_sz);
 
             switch (status)
             {
@@ -217,13 +217,34 @@ namespace transfil {
 
             // Encrypt
             unsigned char ciphered_buf[4 + 65536];
-            //char ciphered_buf[ciphered_buf_sz];
             uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
+            
+            /* Encrypt src_buf into dst_buf. 
+               Update dst_sz with encrypted output size
+             */
             {
-                const unsigned char * src_buf = reinterpret_cast<unsigned char*>(compressed_buf);
-                if (this->xaes_encrypt(src_buf, compressed_buf_sz, ciphered_buf + 4, &ciphered_buf_sz)) {
+                const unsigned char *src_buf = compressed_buf;
+                uint32_t src_sz = compressed_buf_sz;
+                unsigned char *dst_buf = ciphered_buf + 4;
+                uint32_t *dst_sz = &ciphered_buf_sz;
+
+                int safe_size = *dst_sz;
+                int remaining_size = 0;
+
+                /* allows reusing of ectx for multiple encryption cycles */
+                if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
                     return -1;
                 }
+                if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
+                    return -1;
+                }
+                if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
+                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
+                    return -1;
+                }
+                *dst_sz = safe_size + remaining_size;
             }
 
             ciphered_buf[0] = ciphered_buf_sz & 0xFF;
@@ -367,30 +388,6 @@ namespace transfil {
             return err < ssize_t(len) ? (err < 0 ? err : -1) : 0;
         }
 
-        /* Encrypt src_buf into dst_buf. Update dst_sz with encrypted output size
-         * Return 0 on success, negative value on error
-         */
-        int xaes_encrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-        {
-            int safe_size = *dst_sz;
-            int remaining_size = 0;
-
-            /* allows reusing of ectx for multiple encryption cycles */
-            if (EVP_EncryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare encryption context!\n", getpid());
-                return -1;
-            }
-            if (EVP_EncryptUpdate(&this->ectx, dst_buf, &safe_size, src_buf, src_sz) != 1) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could encrypt data!\n", getpid());
-                return -1;
-            }
-            if (EVP_EncryptFinal_ex(&this->ectx, dst_buf + safe_size, &remaining_size) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish encryption!\n", getpid());
-                return -1;
-            }
-            *dst_sz = safe_size + remaining_size;
-            return 0;
-        }
 
         /* Update hash context with new data.
          * Returns 0 on success, -1 on error
