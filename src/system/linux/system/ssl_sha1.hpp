@@ -36,8 +36,6 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 
-//#include <endian.h>
-
 class SslSha1
 {
     SHA_CTX sha1;
@@ -79,13 +77,6 @@ class SslSha1
 
 class SslSha1_direct
 {
-#undef LITTLE_ENDIAN
-#undef BIG_ENDIAN
-    enum: int {
-        LITTLE_ENDIAN = 0,
-        BIG_ENDIAN    = 1
-    };
-
     struct sha1 {
         uint32_t state[5];
         uint32_t count[2];
@@ -94,12 +85,7 @@ class SslSha1_direct
 
     typedef union {
         unsigned char c[64];
-        uint32_t l[16];
     } CHAR64LONG16;
-
-
-    int endian = LITTLE_ENDIAN;
-
 
 
     uint32_t rol(uint32_t value, int bits) {
@@ -125,9 +111,19 @@ class SslSha1_direct
             + block->c[j+3];
     }
 
+    uint32_t blk1(int j, CHAR64LONG16 * block) {
+        return  (block->c[j+3] << 24) 
+            + (block->c[j+2] << 16) 
+            + (block->c[j+1] << 8) 
+            + block->c[j+0];
+    }
+
     uint32_t block_xor(unsigned i, CHAR64LONG16 * block)
     {
-        return block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15];
+        return blk1(((i+13)&15)*4, block) 
+            ^ blk1(((i+8)&15)*4, block) 
+            ^ blk1(((i+2)&15)*4, block)  
+            ^ blk1(((i+0)&15)*4, block);
     }
 
     /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
