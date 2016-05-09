@@ -119,15 +119,10 @@ class SslSha1_direct
     }
 
     uint32_t blk0(int j, CHAR64LONG16 * block) {
-        uint8_t a = block->c[j+0];
-        uint8_t b = block->c[j+1];
-        uint8_t c = block->c[j+2];
-        uint8_t d = block->c[j+3];
-        block->c[j+0] = d;
-        block->c[j+1] = c;
-        block->c[j+2] = b;
-        block->c[j+3] = a;
-        return  (a << 24) + (b << 16) + (c << 8) + d;
+        return  (block->c[j+0] << 24) 
+            + (block->c[j+1] << 16) 
+            + (block->c[j+2] << 8) 
+            + block->c[j+3];
     }
 
     uint32_t block_xor(unsigned i, CHAR64LONG16 * block)
@@ -137,27 +132,27 @@ class SslSha1_direct
 
     /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
     void R0(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
-        z += ((w&(x^y))^y) + blk0(i*4, block) + 0x5A827999 + ( (v << 5) | (v >> 27) );
+        z += ((w&(x^y))^y) + PUT_UINT32(i*4, blk0(i*4, block), block) + 0x5A827999 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
     void R1(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
-        z+=((w&(x^y))^y)+(PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block))+0x5A827999 + ( (v << 5) | (v >> 27) );
+        z+=((w&(x^y))^y)+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0x5A827999 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
     void R2(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
-        z+=(w^x^y)+(block->l[i&15] = rol(block_xor(i, block),1))+0x6ED9EBA1 + ( (v << 5) | (v >> 27) );
+        z+=(w^x^y)+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0x6ED9EBA1 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
     void R3(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
-        z+=(((w|x)&y)|(w&x))+(block->l[i&15] = rol(block_xor(i, block),1))+0x8F1BBCDC + ( (v << 5) | (v >> 27) );
+        z+=(((w|x)&y)|(w&x))+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0x8F1BBCDC + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
     void R4(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
-        z+=(w^x^y)+(block->l[i&15] = rol(block_xor(i, block),1))+0xCA62C1D6 + ( (v << 5) | (v >> 27) );
+        z+=(w^x^y)+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0xCA62C1D6 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
