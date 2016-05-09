@@ -174,7 +174,9 @@ public:
 
     enum: int {
         SCANCODE_ALTGR = 0x38,
-        SCANCODE_SHIFT = 0x36
+        SCANCODE_SHIFT = 0x36,
+        SCANCODE_ENTER = 0x1C,
+        SCANCODE_B_SPC = 0x0E
     };
 
 
@@ -633,13 +635,13 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void sendRDPScanCode(int code,  int flag) {
+    /*void sendRDPScanCode(int code,  int flag) {
         try {
             EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
             //  this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_DOWN, 0, &(this->_keymap));
             //  this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap))
         } catch (const Error & e) { }
-    }
+    }*/
 
     void mousePressEvent(int x, int y, int button) {
         int flag = 0;
@@ -670,7 +672,7 @@ public:
         //this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
     }
 
-    void keyPressEvent(int code) {
+    void charPressed(int code) {
 
         int flag = 0;
 
@@ -678,14 +680,18 @@ public:
             code += 256;
         }
 
+        EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
+
         switch (code) {
 
             //-----------------------
             //  Keylayout SHIFT MOD
             //-----------------------
-            case 168 : /* ¨ */ // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
-                               this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
-                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+            case 168 : /* ¨ */ code = this->_keylayout->deadkeys.at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
             case 37  : /* % */
             case 43  : /* + */
@@ -721,18 +727,22 @@ public:
             case 163 : /* £ */
             case 167 : /* § */
             case 176 : /* ° */
-            case 181 : /* µ */ // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
-                               this->sendRDPScanCode(this->_keylayout->getshift()->at(code), flag);
-                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+            case 181 : /* µ */ code = this->_keylayout->getshift()->at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
 
 
             //-----------------------
             //  Keylayout ALTGR MOD
             //-----------------------
-            case 96  : /* ` */ // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
-                              this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
-                              // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+            case 96  : /* ` */ code = this->_keylayout->deadkeys.at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
             case 35  : /* # */
             case 64  : /* @ */
@@ -743,16 +753,20 @@ public:
             case 124 : /* | */
             case 125 : /* } */
             case 126 : /* ~ */
-            case 234 : /* ê */ // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
-                               this->sendRDPScanCode(this->_keylayout->getaltGr()->at(code), flag);
-                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+            case 234 : /* ê */ code = this->_keylayout->getaltGr()->at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
 
 
             //-----------------------
             //   Keylayout NO MOD
             //-----------------------
-            case 94  : /* ^ */ this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
+            case 94  : /* ^ */ code = this->_keylayout->deadkeys.at(code);
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
                             break;
             case 47  : /* / */ flag = KBD_FLAGS_EXTENDED;
             case 224 : /* à */
@@ -760,15 +774,15 @@ public:
             case 232 : /* è */
             case 233 : /* é */
             case 249 : /* ù */
-            default  :         this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code), flag);
+            default  :         code = this->_keylayout->getnoMod()->at(code);
+                               // this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap))
                             break;
         }
 
+        EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
     }
 
-    void keyReleaseEvent(char code) {
-        EM_ASM_({ console.log('KeyRelease ' + $0); }, code);
-    }
 
 /*
     void wheelEvent(QWheelEvent *e) override {}
@@ -815,6 +829,34 @@ public:
 
 Front_JS_Natif front(0);
 
+extern "C" void mousePressEvent(int x, int y, int button) {
+    front.mousePressEvent(x, y, button);
+}
+
+extern "C" void mouseReleaseEvent(int x, int y, int button) {
+    front.mouseReleaseEvent(x, y, button);
+}
+
+extern "C" void mouseMoveEvent(int x, int y) {
+    front.mouseMoveEvent(x, y);
+}
+
+extern "C" void charPressed(char code) {
+    front.charPressed(code);
+}
+
+extern "C" void enterPressed() {
+    //this->_callback->rdp_input_scancode(SCANCODE_ENTER, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0, &(this->_keymap));
+    //this->_callback->rdp_input_scancode(SCANCODE_ENTER, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+    EM_ASM_({ console.log('Enter'); }, 0);
+}
+
+extern "C" void backspacePressed() {
+    //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+    //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+    EM_ASM_({ console.log('Backspace'); }, 0);
+
+}
 
 
 
