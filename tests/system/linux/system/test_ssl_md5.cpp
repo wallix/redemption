@@ -22,7 +22,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestSSLMD5
-#include <boost/test/auto_unit_test.hpp>
+#include <redemption_unit_tests.hpp>
 
 #define LOGPRINT
 // #define LOGNULL

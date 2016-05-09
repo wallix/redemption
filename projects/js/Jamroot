@@ -17,8 +17,9 @@ path-constant TOP : . ;
 path-constant MODULEDIR : ../../modules ;
 path-constant SRCDIR : ../../src ;
 path-constant INCLUDEDIR : ../../include ;
-path-constant SYSTEMDIR : ./system ;
+path-constant SYSTEMDIR : ../../src/system/emscripten ;
 path-constant TESTDIR : ../../tests ;
+path-constant SYSTEMTESTDIR : ../../tests/system/emscripten ;
 path-constant TESTSDIR : ./tests ;
 
 #echo "toolset" [ feature.get-values toolset ] ;
@@ -93,6 +94,7 @@ project redjs
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
     <include>$(TESTSDIR)
+    <include>$(SYSTEMDIR)
 
     <conditional>@defines
 
@@ -129,33 +131,66 @@ exejs pentamino.js : penta.bc :
 
 make pentamino.html : pentamino.js : @nothing ;
 
-install client_rdp_JS
-    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+
+actions nothing { }
+
+make pentamino.html : pentamino.js : nothing ;
+make pentamino.html.mem : pentamino.js : @nothing ;   
+
+install client_rdp_JS_natif
+    : [ glob ./sys/js_client/* ] client_rdp_JS_natif.js client_rdp_JS_natif.html client_rdp_JS_natif.html.mem
     : <location>./sandbox
     ;
 
+install client_rdp_JS_SDL
+    : [ glob ./sys/js_client/* ] client_rdp_JS_SDL.js client_rdp_JS_SDL.html client_rdp_JS_SDL.html.mem
+    : <location>./sandbox
+    ;
+
+
     
-objjs test_rdp_client_test_card_JS.bc 
-	: src/test_rdp_client_test_card_JS.cpp 
-	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
-	;
+objjs test_rdp_client_test_card_JS_SDL.bc 
+    : src/test_rdp_client_test_card_JS_SDL.cpp 
+    : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+    ;
+
+objjs test_rdp_client_test_card_JS_natif.bc 
+    : src/test_rdp_client_test_card_JS_natif.cpp 
+    : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+    ;
 
 objjs bitmap_data_allocator.bc 
-	: $(SRCDIR)/utils/bitmap_data_allocator.cpp 
-	: <cxxflags>-g3 
-	  <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
-	;
+    : $(SRCDIR)/utils/bitmap_data_allocator.cpp 
+    : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+    ;
 
-exejs client_rdp_JS.js 
+
+exejs client_rdp_JS_SDL.js 
      : 
-        test_rdp_client_test_card_JS.bc 
+        test_rdp_client_test_card_JS_SDL.bc 
         bitmap_data_allocator.bc
      :  
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
-        <cxxflags>-g3 
+        <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEventG']\""
+        <cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
      ;
 
-make client_rdp_JS.html : client_rdp_JS.js : @nothing ;    
+exejs client_rdp_JS_natif.js 
+     : 
+        test_rdp_client_test_card_JS_natif.bc 
+        bitmap_data_allocator.bc
+     :  
+        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+        <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_keyPressEvent']\""
+     ;
+
+
+make client_rdp_JS_natif.html : client_rdp_JS_natif.js : @nothing ;
+make client_rdp_JS_natif.html.mem : client_rdp_JS_natif.js : @nothing ;      
+
+make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ; 
+make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;   
+
 
 
 actions nodejs
@@ -170,41 +205,68 @@ actions nodejs
 rule test-run ( target : sources + : tested ? : requirements * )
 {
 #    ECHO " TEST RUN" ;
-    sources = $(TESTDIR)/$(sources) ;
-    local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
-    local basepath = "" ;
-    local path = $(sources[0]:P) ;
-    while $(path) != $(TESTDIR) {
-        basepath = $(path:B)/$(basepath) ;
-        path = $(path:P) ;
+    if $(sources:P) != "system" {
+        sources = $(TESTDIR)/$(sources) ;
+        local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
+        local basepath = "" ;
+        local path = $(sources[0]:P) ;
+        while $(path) != $(TESTDIR) 
+        && $(path) != $(TESTDIR) {
+            basepath = $(path:B)/$(basepath) ;
+            path = $(path:P) ;
+        }
+
+        ECHO "base = $(base)" ;
+        ECHO "sources = $(sources)" ;
+        ECHO "target = $(target)" ;
+        ECHO "requirements = $(requirements)" ;
+
+        install $(target)
+            : [ glob ./sys/tests/* ] $(target).js
+            : <location>./sandbox
+            ;
+
+        exejs $(target).js : $(sources) : $(requirements) ;
+
+        make test$(target) : $(target) : @nodejs ;
     }
+    else {
+        sources = $(SYSTEMTESTDIR)/$(sources) ;
+        local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
+        local basepath = "" ;
+        local path = $(sources[0]:P) ;
+        while $(path) != $(SYSTEMTESTDIR) 
+        && $(path) != $(SYSTEMTESTDIR) {
+            basepath = $(path:B)/$(basepath) ;
+            path = $(path:P) ;
+        }
 
-    ECHO "base = $(base)" ;
-    ECHO "sources = $(sources)" ;
-    ECHO "target = $(target)" ;
-    ECHO "requirements = $(requirements)" ;
+        ECHO "base = $(base)" ;
+        ECHO "sources = $(sources)" ;
+        ECHO "target = $(target)" ;
+        ECHO "requirements = $(requirements)" ;
 
-    install $(target)
-        : [ glob ./sys/tests/* ] $(target).js
-        : <location>./sandbox
-        ;
+        install $(target)
+            : [ glob ./sys/tests/* ] $(target).js
+            : <location>./sandbox
+            ;
 
-    exejs $(target).js : $(sources) : $(requirements) ;
+        exejs $(target).js : $(sources) : $(requirements) ;
 
-    make test$(target) : $(target) : @nodejs ;
+        make test$(target) : $(target) : @nodejs ;
+    }
 }
 
 
 rule test-canonical ( base : requirements * )
 {
-    #basetarget = $(base:B) ;
-    #base = $(base:P) ;
-    #echo "base=" $(base) ;
-    #while "$(base)" != "" {
-    #    basetarget = $(base:B)_$(basetarget) ;
-    #    base = $(base:P) ;
-    #}
-    #target = test_$(basetarget) ;
+#    basedir = $(base:P) ;
+#    basetopdir = $(base:B) ;
+#    #echo "base=" $(base) ;
+#    while "$(basedir)" != "" {
+#        basetopdir = $(base:B) ;
+#        basedir = $(basedir:P) ;
+#    }
     
     target = _$(base:B) ;
     source = $(base:P)/test_$(base:B).cpp ;
@@ -392,7 +454,7 @@ test-canonical utils/utf.hpp ;
 #test-canonical system/linux/system/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 #test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 #test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
-#test-canonical system/linux/system/ssl_md5.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/ssl_md5.hpp ;
 #test-canonical system/linux/system/ssl_md4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 #test-canonical system/linux/system/ssl_rc4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 #test-canonical system/linux/system/ssl_sha1.hpp : <library>openssl <library>crypto <library>dl <library>z ;
