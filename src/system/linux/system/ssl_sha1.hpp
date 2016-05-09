@@ -150,10 +150,8 @@ class SslSha1_direct
 
 
     /* Hash a single 512-bit block. This is the core of the algorithm. */
-
     void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
     {
-
         uint32_t a, b, c, d, e;
 
         unsigned char block[64];
@@ -198,7 +196,6 @@ class SslSha1_direct
 
 
     /* SHA1Init - Initialize new context */
-
     void SHA1Init(struct sha1* context)
     {
         /* SHA1 initialization constants */
@@ -212,7 +209,6 @@ class SslSha1_direct
 
 
     /* Run your data through this. */
-
     void SHA1Update(struct sha1* context, const unsigned char* data, uint32_t len)
     {
     uint32_t i;
@@ -237,7 +233,6 @@ class SslSha1_direct
 
 
     /* Add padding and return the message digest. */
-
     void SHA1Final(unsigned char digest[20], struct sha1* context)
     {
     unsigned i;

@@ -67,15 +67,7 @@ class SslSha512
 };
 
 
-#define ROTLEFT(a,b) (((a) << (b)) | ((a) >> (32-(b))))
-#define ROTRIGHT(a,b) (((a) >> (b)) | ((a) << (32-(b))))
 
-#define CH(x,y,z) (((x) & (y)) ^ (~(x) & (z)))
-#define MAJ(x,y,z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
-#define EP0(x) (ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22))
-#define EP1(x) (ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25))
-#define SIG0(x) (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3))
-#define SIG1(x) (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10))
 
 
 class SslSha512_direct
@@ -86,13 +78,33 @@ class SslSha512_direct
         uint8_t buf[128]; /* message block buffer */
     } sha512;
 
-    static uint64_t ror(uint64_t n, int k) { return (n >> k) | (n << (64-k)); }
-    #define Ch(x,y,z)  (z ^ (x & (y ^ z)))
-    #define Maj(x,y,z) ((x & y) | (z & (x | y)))
-    #define S0(x)      (ror(x,28) ^ ror(x,34) ^ ror(x,39))
-    #define S1(x)      (ror(x,14) ^ ror(x,18) ^ ror(x,41))
-    #define R0(x)      (ror(x,1) ^ ror(x,8) ^ (x>>7))
-    #define R1(x)      (ror(x,19) ^ ror(x,61) ^ (x>>6))
+    static uint64_t ror(uint64_t n, int k) {
+        return (n >> k) | (n << (64-k));
+    }
+
+    static uint64_t Ch(uint64_t x,uint64_t y,uint64_t z) {
+        return z ^ (x & (y ^ z));
+    }
+
+    static uint64_t Maj(uint64_t x,uint64_t y,uint64_t z) {
+        return (x & y) | (z & (x | y));
+    }
+
+    static uint64_t S0(uint64_t x) {
+        return ror(x,28) ^ ror(x,34) ^ ror(x,39);
+    }
+
+    static uint64_t S1(uint64_t x) {
+        return ror(x,14) ^ ror(x,18) ^ ror(x,41);
+    }
+
+    static uint64_t R0(uint64_t x) {
+        return ror(x,1) ^ ror(x,8) ^ (x>>7);
+    }
+
+    static uint64_t R1(uint64_t x) {
+        return ror(x,19) ^ ror(x,61) ^ (x>>6);
+    }
 
 
     static void processblock(struct sha512 *s, const uint8_t *buf)
