@@ -129,11 +129,10 @@ exejs pentamino.js : penta.bc :
 
 make pentamino.html : pentamino.js : @nothing ;
 
-#install client_rdp_JS
-#    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
-#    : <location>./sandbox
-#    ;
-    
+install client_rdp_JS
+    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+    : <location>./sandbox
+    ;
 
     
 objjs test_rdp_client_test_card_JS.bc 
