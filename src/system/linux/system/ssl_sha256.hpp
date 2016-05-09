@@ -83,31 +83,31 @@ class SslSha256_direct
         uint64_t bitlen;
     } sha256;
 
-    unsigned ROTRIGHT(unsigned a, int b) {
+    static unsigned ROTRIGHT(unsigned a, int b) {
     return ((a) >> (b)) | ((a) << (32-(b)));
     }
 
-    unsigned CH(unsigned x,unsigned y,unsigned z) {
+    static unsigned CH(unsigned x,unsigned y,unsigned z) {
         return ((x) & (y)) ^ (~(x) & (z));
     }
 
-    unsigned MAJ(unsigned x,unsigned y,unsigned z) {
+    static unsigned MAJ(unsigned x,unsigned y,unsigned z) {
         return ((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z));
     }
 
-    unsigned EP0(unsigned x) {
+    static unsigned EP0(unsigned x) {
         return ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22);
     }
 
-    unsigned EP1(unsigned x) {
+    static unsigned EP1(unsigned x) {
         return ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25);
     }
 
-    unsigned SIG0(unsigned x) {
+    static unsigned SIG0(unsigned x) {
         return ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ (x >> 3);
     }
 
-    unsigned SIG1(unsigned x) {
+    static unsigned SIG1(unsigned x) {
         return ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ (x >> 10);
     }
 
