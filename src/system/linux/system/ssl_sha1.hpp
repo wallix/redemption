@@ -87,14 +87,14 @@ class SslSha1_direct
     };
 
     struct sha1 {
-        u_int32_t state[5];
-        u_int32_t count[2];
+        uint32_t state[5];
+        uint32_t count[2];
         unsigned char buffer[64];
     } sha1;
 
     typedef union {
         unsigned char c[64];
-        u_int32_t l[16];
+        uint32_t l[16];
     } CHAR64LONG16;
 
 
@@ -102,51 +102,72 @@ class SslSha1_direct
 
 
 
-    u_int32_t rol(u_int32_t value, int bits) {
+    uint32_t rol(uint32_t value, int bits) {
         return ( (value << bits) | (value >> (32 - bits)) );
     }
 
-    u_int32_t blk0(int i, CHAR64LONG16 * block) {
-        if (this->endian == LITTLE_ENDIAN) {
-            return (block->l[i] = ( ((block->l[i] << 24) | (block->l[i] >> 8)) & 0xFF00FF00 ) |( ((block->l[i] << 8) | (block->l[i] >> 24)) & 0x00FF00FF ) );
-        } else {
-            return block->l[i];
-        }
+    uint32_t PUT_UINT32(int j, uint32_t value, CHAR64LONG16 * block) {
+        uint8_t a = (value >> 24) & 0xFF;
+        uint8_t b = (value >> 16) & 0xFF;
+        uint8_t c = (value >> 8) & 0xFF;
+        uint8_t d = value & 0xFF;
+        block->c[j+0] = d;
+        block->c[j+1] = c;
+        block->c[j+2] = b;
+        block->c[j+3] = a;
+        return value;
+    }
+
+    uint32_t blk0(int j, CHAR64LONG16 * block) {
+        uint8_t a = block->c[j+0];
+        uint8_t b = block->c[j+1];
+        uint8_t c = block->c[j+2];
+        uint8_t d = block->c[j+3];
+        block->c[j+0] = d;
+        block->c[j+1] = c;
+        block->c[j+2] = b;
+        block->c[j+3] = a;
+        return  (a << 24) + (b << 16) + (c << 8) + d;
+    }
+
+    uint32_t block_xor(unsigned i, CHAR64LONG16 * block)
+    {
+        return block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15];
     }
 
     /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
-    void R0(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
-        z += ((w&(x^y))^y) + blk0(i, block) + 0x5A827999 + ( (v << 5) | (v >> 27) );
+    void R0(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
+        z += ((w&(x^y))^y) + blk0(i*4, block) + 0x5A827999 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    void R1(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
-        z+=((w&(x^y))^y)+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0x5A827999 + ( (v << 5) | (v >> 27) );
+    void R1(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
+        z+=((w&(x^y))^y)+(PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block))+0x5A827999 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    void R2(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
-        z+=(w^x^y)+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0x6ED9EBA1 + ( (v << 5) | (v >> 27) );
+    void R2(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
+        z+=(w^x^y)+(block->l[i&15] = rol(block_xor(i, block),1))+0x6ED9EBA1 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    void R3(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
-        z+=(((w|x)&y)|(w&x))+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0x8F1BBCDC + ( (v << 5) | (v >> 27) );
+    void R3(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
+        z+=(((w|x)&y)|(w&x))+(block->l[i&15] = rol(block_xor(i, block),1))+0x8F1BBCDC + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    void R4(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
-        z+=(w^x^y)+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0xCA62C1D6 + ( (v << 5) | (v >> 27) );
+    void R4(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, CHAR64LONG16 * block) {
+        z+=(w^x^y)+(block->l[i&15] = rol(block_xor(i, block),1))+0xCA62C1D6 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
 
     /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-    void SHA1Transform(u_int32_t state[5], const unsigned char buffer[64])
+    void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
     {
 
-        u_int32_t a, b, c, d, e;
+        uint32_t a, b, c, d, e;
         CHAR64LONG16 block[1];  /* use array to appear as a pointer */
 
         memcpy(block, buffer, 64);
@@ -209,10 +230,10 @@ class SslSha1_direct
 
     /* Run your data through this. */
 
-    void SHA1Update(struct sha1* context, const unsigned char* data, u_int32_t len)
+    void SHA1Update(struct sha1* context, const unsigned char* data, uint32_t len)
     {
-    u_int32_t i;
-    u_int32_t j;
+    uint32_t i;
+    uint32_t j;
 
         j = context->count[0];
         if ((context->count[0] += len << 3) < j)
