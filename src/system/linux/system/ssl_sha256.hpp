@@ -68,15 +68,8 @@ class SslSha256
     }
 };
 
-#define ROTLEFT(a,b) (((a) << (b)) | ((a) >> (32-(b))))
-#define ROTRIGHT(a,b) (((a) >> (b)) | ((a) << (32-(b))))
+//#define ROTLEFT(a,b) (((a) << (b)) | ((a) >> (32-(b))))
 
-#define CH(x,y,z) (((x) & (y)) ^ (~(x) & (z)))
-#define MAJ(x,y,z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
-#define EP0(x) (ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22))
-#define EP1(x) (ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25))
-#define SIG0(x) (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3))
-#define SIG1(x) (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10))
 
 
 class SslSha256_direct
@@ -90,11 +83,39 @@ class SslSha256_direct
         uint64_t bitlen;
     } sha256;
 
+    unsigned ROTRIGHT(unsigned a, int b) {
+    return ((a) >> (b)) | ((a) << (32-(b)));
+    }
+
+    unsigned CH(unsigned x,unsigned y,unsigned z) {
+        return ((x) & (y)) ^ (~(x) & (z));
+    }
+
+    unsigned MAJ(unsigned x,unsigned y,unsigned z) {
+        return ((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z));
+    }
+
+    unsigned EP0(unsigned x) {
+        return ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22);
+    }
+
+    unsigned EP1(unsigned x) {
+        return ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25);
+    }
+
+    unsigned SIG0(unsigned x) {
+        return ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ (x >> 3);
+    }
+
+    unsigned SIG1(unsigned x) {
+        return ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ (x >> 10);
+    }
+
     //static uint32_t ror(uint32_t n, int k) { return (n >> k) | (n << (32-k)); }
 
     static void processblock(struct sha256 *s, const uint8_t *buf)
     {
-    
+
         static const unsigned k[64] = {
             0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
             0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,

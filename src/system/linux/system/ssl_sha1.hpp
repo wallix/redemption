@@ -36,7 +36,7 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 
-#include <endian.h>
+//#include <endian.h>
 
 class SslSha1
 {
@@ -72,143 +72,83 @@ class SslSha1
     }
 };
 
-# define SHA_LONG unsigned int
-# define SHA_LBLOCK      16
-# define SHA_CBLOCK      (SHA_LBLOCK*4)/* SHA treats input data as a
-                                        * contiguous array of 32 bit wide
-                                        * big-endian values. */
-
-#define INIT_DATA_h0 0x67452301UL
-#define INIT_DATA_h1 0xefcdab89UL
-#define INIT_DATA_h2 0x98badcfeUL
-#define INIT_DATA_h3 0x10325476UL
-#define INIT_DATA_h4 0xc3d2e1f0UL
 
 
-
-# define BODY_00_15(i,a,b,c,d,e,f,xi) \
-        (f)=xi+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
-        (b)=ROTATE((b),30);
-
-# define BODY_16_19(i,a,b,c,d,e,f,xi,xa,xb,xc,xd) \
-        Xupdate(f,xi,xa,xb,xc,xd); \
-        (f)+=(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
-        (b)=ROTATE((b),30);
-
-# define BODY_20_31(i,a,b,c,d,e,f,xi,xa,xb,xc,xd) \
-        Xupdate(f,xi,xa,xb,xc,xd); \
-        (f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
-        (b)=ROTATE((b),30);
-
-# define BODY_32_39(i,a,b,c,d,e,f,xa,xb,xc,xd) \
-        Xupdate(f,xa,xa,xb,xc,xd); \
-        (f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
-        (b)=ROTATE((b),30);
-
-# define BODY_40_59(i,a,b,c,d,e,f,xa,xb,xc,xd) \
-        Xupdate(f,xa,xa,xb,xc,xd); \
-        (f)+=(e)+K_40_59+ROTATE((a),5)+F_40_59((b),(c),(d)); \
-        (b)=ROTATE((b),30);
-
-# define BODY_60_79(i,a,b,c,d,e,f,xa,xb,xc,xd) \
-        Xupdate(f,xa,xa,xb,xc,xd); \
-        (f)=xa+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
-        (b)=ROTATE((b),30);
-
-
-# ifndef HOST_l2c
-#  define HOST_l2c(l,c)   (*((c)++)=(unsigned char)(((l)>>24)&0xff),      \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff),      \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff),      \
-                         *((c)++)=(unsigned char)(((l)    )&0xff),      \
-                         l)
-# endif       
-
-#define HASH_MAKE_STRING(c,s)   do {    \
-        unsigned long ll;               \
-        ll=(c)->h0; (void)HOST_l2c(ll,(s));     \
-        ll=(c)->h1; (void)HOST_l2c(ll,(s));     \
-        ll=(c)->h2; (void)HOST_l2c(ll,(s));     \
-        ll=(c)->h3; (void)HOST_l2c(ll,(s));     \
-        ll=(c)->h4; (void)HOST_l2c(ll,(s));     \
-        } while (0)                        
-
-
-#ifndef MD32_REG_T
-# if defined(__alpha) || defined(__sparcv9) || defined(__mips)
-#  define MD32_REG_T long
-/*
- * This comment was originaly written for MD5, which is why it
- * discusses A-D. But it basically applies to all 32-bit digests,
- * which is why it was moved to common header file.
- *
- * In case you wonder why A-D are declared as long and not
- * as MD5_LONG. Doing so results in slight performance
- * boost on LP64 architectures. The catch is we don't
- * really care if 32 MSBs of a 64-bit register get polluted
- * with eventual overflows as we *save* only 32 LSBs in
- * *either* case. Now declaring 'em long excuses the compiler
- * from keeping 32 MSBs zeroed resulting in 13% performance
- * improvement under SPARC Solaris7/64 and 5% under AlphaLinux.
- * Well, to be honest it should say that this *prevents*
- * performance degradation.
- *                              <appro@fy.chalmers.se>
- */
-# else
-/*
- * Above is not absolute and there are LP64 compilers that
- * generate better code if MD32_REG_T is defined int. The above
- * pre-processor condition reflects the circumstances under which
- * the conclusion was made and is subject to further extension.
- *                              <appro@fy.chalmers.se>
- */
-#  define MD32_REG_T int
-# endif
-#endif
 
 
 
 class SslSha1_direct
 {
+#undef LITTLE_ENDIAN
+#undef BIG_ENDIAN
+    enum: int {
+        LITTLE_ENDIAN = 0,
+        BIG_ENDIAN    = 1
+    };
+
     struct sha1 {
         u_int32_t state[5];
         u_int32_t count[2];
         unsigned char buffer[64];
     } sha1;
 
-    #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
+    typedef union {
+        unsigned char c[64];
+        u_int32_t l[16];
+    } CHAR64LONG16;
 
-    /* blk0() and blk() perform the initial expand. */
-    /* I got the idea of expanding during the round function from SSLeay */
-    #if BYTE_ORDER == LITTLE_ENDIAN
-    #define blk0(i) (block->l[i] = (rol(block->l[i],24)&0xFF00FF00) \
-        |(rol(block->l[i],8)&0x00FF00FF))
-    #elif BYTE_ORDER == BIG_ENDIAN
-    #define blk0(i) block->l[i]
-    #else
-    #error "Endianness not defined!"
-    #endif
-    #define blk(i) (block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] \
-        ^block->l[(i+2)&15]^block->l[i&15],1))
+
+    int endian = LITTLE_ENDIAN;
+
+
+
+    u_int32_t rol(u_int32_t value, int bits) {
+        return ( (value << bits) | (value >> (32 - bits)) );
+    }
+
+    u_int32_t blk0(int i, CHAR64LONG16 * block) {
+        if (this->endian == LITTLE_ENDIAN) {
+            return (block->l[i] = ( ((block->l[i] << 24) | (block->l[i] >> 8)) & 0xFF00FF00 ) |( ((block->l[i] << 8) | (block->l[i] >> 24)) & 0x00FF00FF ) );
+        } else {
+            return block->l[i];
+        }
+    }
 
     /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
-    #define R0(v,w,x,y,z,i) z+=((w&(x^y))^y)+blk0(i)+0x5A827999+rol(v,5);w=rol(w,30);
-    #define R1(v,w,x,y,z,i) z+=((w&(x^y))^y)+blk(i)+0x5A827999+rol(v,5);w=rol(w,30);
-    #define R2(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0x6ED9EBA1+rol(v,5);w=rol(w,30);
-    #define R3(v,w,x,y,z,i) z+=(((w|x)&y)|(w&x))+blk(i)+0x8F1BBCDC+rol(v,5);w=rol(w,30);
-    #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
+    void R0(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
+        z += ((w&(x^y))^y) + blk0(i, block) + 0x5A827999 + ( (v << 5) | (v >> 27) );
+        w = (w << 30) | (w >> 2);
+    }
+
+    void R1(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
+        z+=((w&(x^y))^y)+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0x5A827999 + ( (v << 5) | (v >> 27) );
+        w = (w << 30) | (w >> 2);
+    }
+
+    void R2(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
+        z+=(w^x^y)+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0x6ED9EBA1 + ( (v << 5) | (v >> 27) );
+        w = (w << 30) | (w >> 2);
+    }
+
+    void R3(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
+        z+=(((w|x)&y)|(w&x))+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0x8F1BBCDC + ( (v << 5) | (v >> 27) );
+        w = (w << 30) | (w >> 2);
+    }
+
+    void R4(u_int32_t v, u_int32_t & w, u_int32_t x, u_int32_t y, u_int32_t & z, int i, CHAR64LONG16 * block) {
+        z+=(w^x^y)+(block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] ^ block->l[(i+2)&15]^block->l[i&15],1))+0xCA62C1D6 + ( (v << 5) | (v >> 27) );
+        w = (w << 30) | (w >> 2);
+    }
 
 
     /* Hash a single 512-bit block. This is the core of the algorithm. */
 
     void SHA1Transform(u_int32_t state[5], const unsigned char buffer[64])
     {
-    u_int32_t a, b, c, d, e;
-    typedef union {
-        unsigned char c[64];
-        u_int32_t l[16];
-    } CHAR64LONG16;
-    CHAR64LONG16 block[1];  /* use array to appear as a pointer */
+
+        u_int32_t a, b, c, d, e;
+        CHAR64LONG16 block[1];  /* use array to appear as a pointer */
+
         memcpy(block, buffer, 64);
 
 
@@ -219,26 +159,26 @@ class SslSha1_direct
         d = state[3];
         e = state[4];
         /* 4 rounds of 20 operations each. Loop unrolled. */
-        R0(a,b,c,d,e, 0); R0(e,a,b,c,d, 1); R0(d,e,a,b,c, 2); R0(c,d,e,a,b, 3);
-        R0(b,c,d,e,a, 4); R0(a,b,c,d,e, 5); R0(e,a,b,c,d, 6); R0(d,e,a,b,c, 7);
-        R0(c,d,e,a,b, 8); R0(b,c,d,e,a, 9); R0(a,b,c,d,e,10); R0(e,a,b,c,d,11);
-        R0(d,e,a,b,c,12); R0(c,d,e,a,b,13); R0(b,c,d,e,a,14); R0(a,b,c,d,e,15);
-        R1(e,a,b,c,d,16); R1(d,e,a,b,c,17); R1(c,d,e,a,b,18); R1(b,c,d,e,a,19);
-        R2(a,b,c,d,e,20); R2(e,a,b,c,d,21); R2(d,e,a,b,c,22); R2(c,d,e,a,b,23);
-        R2(b,c,d,e,a,24); R2(a,b,c,d,e,25); R2(e,a,b,c,d,26); R2(d,e,a,b,c,27);
-        R2(c,d,e,a,b,28); R2(b,c,d,e,a,29); R2(a,b,c,d,e,30); R2(e,a,b,c,d,31);
-        R2(d,e,a,b,c,32); R2(c,d,e,a,b,33); R2(b,c,d,e,a,34); R2(a,b,c,d,e,35);
-        R2(e,a,b,c,d,36); R2(d,e,a,b,c,37); R2(c,d,e,a,b,38); R2(b,c,d,e,a,39);
-        R3(a,b,c,d,e,40); R3(e,a,b,c,d,41); R3(d,e,a,b,c,42); R3(c,d,e,a,b,43);
-        R3(b,c,d,e,a,44); R3(a,b,c,d,e,45); R3(e,a,b,c,d,46); R3(d,e,a,b,c,47);
-        R3(c,d,e,a,b,48); R3(b,c,d,e,a,49); R3(a,b,c,d,e,50); R3(e,a,b,c,d,51);
-        R3(d,e,a,b,c,52); R3(c,d,e,a,b,53); R3(b,c,d,e,a,54); R3(a,b,c,d,e,55);
-        R3(e,a,b,c,d,56); R3(d,e,a,b,c,57); R3(c,d,e,a,b,58); R3(b,c,d,e,a,59);
-        R4(a,b,c,d,e,60); R4(e,a,b,c,d,61); R4(d,e,a,b,c,62); R4(c,d,e,a,b,63);
-        R4(b,c,d,e,a,64); R4(a,b,c,d,e,65); R4(e,a,b,c,d,66); R4(d,e,a,b,c,67);
-        R4(c,d,e,a,b,68); R4(b,c,d,e,a,69); R4(a,b,c,d,e,70); R4(e,a,b,c,d,71);
-        R4(d,e,a,b,c,72); R4(c,d,e,a,b,73); R4(b,c,d,e,a,74); R4(a,b,c,d,e,75);
-        R4(e,a,b,c,d,76); R4(d,e,a,b,c,77); R4(c,d,e,a,b,78); R4(b,c,d,e,a,79);
+        R0(a,b,c,d,e, 0, block); R0(e,a,b,c,d, 1, block); R0(d,e,a,b,c, 2, block); R0(c,d,e,a,b, 3, block);
+        R0(b,c,d,e,a, 4, block); R0(a,b,c,d,e, 5, block); R0(e,a,b,c,d, 6, block); R0(d,e,a,b,c, 7, block);
+        R0(c,d,e,a,b, 8, block); R0(b,c,d,e,a, 9, block); R0(a,b,c,d,e,10, block); R0(e,a,b,c,d,11, block);
+        R0(d,e,a,b,c,12, block); R0(c,d,e,a,b,13, block); R0(b,c,d,e,a,14, block); R0(a,b,c,d,e,15, block);
+        R1(e,a,b,c,d,16, block); R1(d,e,a,b,c,17, block); R1(c,d,e,a,b,18, block); R1(b,c,d,e,a,19, block);
+        R2(a,b,c,d,e,20, block); R2(e,a,b,c,d,21, block); R2(d,e,a,b,c,22, block); R2(c,d,e,a,b,23, block);
+        R2(b,c,d,e,a,24, block); R2(a,b,c,d,e,25, block); R2(e,a,b,c,d,26, block); R2(d,e,a,b,c,27, block);
+        R2(c,d,e,a,b,28, block); R2(b,c,d,e,a,29, block); R2(a,b,c,d,e,30, block); R2(e,a,b,c,d,31, block);
+        R2(d,e,a,b,c,32, block); R2(c,d,e,a,b,33, block); R2(b,c,d,e,a,34, block); R2(a,b,c,d,e,35, block);
+        R2(e,a,b,c,d,36, block); R2(d,e,a,b,c,37, block); R2(c,d,e,a,b,38, block); R2(b,c,d,e,a,39, block);
+        R3(a,b,c,d,e,40, block); R3(e,a,b,c,d,41, block); R3(d,e,a,b,c,42, block); R3(c,d,e,a,b,43, block);
+        R3(b,c,d,e,a,44, block); R3(a,b,c,d,e,45, block); R3(e,a,b,c,d,46, block); R3(d,e,a,b,c,47, block);
+        R3(c,d,e,a,b,48, block); R3(b,c,d,e,a,49, block); R3(a,b,c,d,e,50, block); R3(e,a,b,c,d,51, block);
+        R3(d,e,a,b,c,52, block); R3(c,d,e,a,b,53, block); R3(b,c,d,e,a,54, block); R3(a,b,c,d,e,55, block);
+        R3(e,a,b,c,d,56, block); R3(d,e,a,b,c,57, block); R3(c,d,e,a,b,58, block); R3(b,c,d,e,a,59, block);
+        R4(a,b,c,d,e,60, block); R4(e,a,b,c,d,61, block); R4(d,e,a,b,c,62, block); R4(c,d,e,a,b,63, block);
+        R4(b,c,d,e,a,64, block); R4(a,b,c,d,e,65, block); R4(e,a,b,c,d,66, block); R4(d,e,a,b,c,67, block);
+        R4(c,d,e,a,b,68, block); R4(b,c,d,e,a,69, block); R4(a,b,c,d,e,70, block); R4(e,a,b,c,d,71, block);
+        R4(d,e,a,b,c,72, block); R4(c,d,e,a,b,73, block); R4(b,c,d,e,a,74, block); R4(a,b,c,d,e,75, block);
+        R4(e,a,b,c,d,76, block); R4(d,e,a,b,c,77, block); R4(c,d,e,a,b,78, block); R4(b,c,d,e,a,79, block);
         /* Add the working vars back into context.state[] */
         state[0] += a;
         state[1] += b;
@@ -335,7 +275,7 @@ class SslSha1_direct
     }
 
     void final(unsigned char digest[20], size_t data_size)
-    {   
+    {
         SslSha1_direct::SHA1Final(digest, &this->sha1);
     }
 };

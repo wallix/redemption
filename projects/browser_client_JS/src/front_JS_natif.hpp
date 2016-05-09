@@ -22,7 +22,7 @@
 #define FRONT_JS_NATIF_HPP
 
 #include <stdio.h>
-#include <openssl/ssl.h>
+//#include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
 //#include <SDL/SDL.h>
@@ -170,6 +170,11 @@ public:
     enum: int {
         KBD_FLAGS_EXTENDED = 0x0100,
         KBD_FLAGS          = 0
+    };
+
+    enum: int {
+        SCANCODE_ALTGR = 0x38,
+        SCANCODE_SHIFT = 0x36
     };
 
 
@@ -631,19 +636,38 @@ public:
     void sendRDPScanCode(int code,  int flag) {
         try {
             EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
+            //  this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_DOWN, 0, &(this->_keymap));
+            //  this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap))
         } catch (const Error & e) { }
     }
 
     void mousePressEvent(int x, int y, int button) {
+        int flag = 0;
+        switch (button) {
+            case 1: flag = MOUSE_FLAG_BUTTON1; break;
+            case 2: flag = MOUSE_FLAG_BUTTON2; break;
+            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            default: break;
+        }
+        //  this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, x, y, &(this->_keymap));
         EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
     void mouseReleaseEvent(int x, int y, int button) {
+        int flag = 0;
+        switch (button) {
+            case 1: flag = MOUSE_FLAG_BUTTON1; break;
+            case 2: flag = MOUSE_FLAG_BUTTON2; break;
+            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            default: break;
+        }
+        //  this->_callback->rdp_input_mouse(flag, x, y, &(this->_keymap));
         EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
     void mouseMoveEvent(int x, int y) {
         EM_ASM_({ console.log('Move '); }, x, y);
+        //this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
     }
 
     void keyPressEvent(int code) {
@@ -659,9 +683,9 @@ public:
             //-----------------------
             //  Keylayout SHIFT MOD
             //-----------------------
-            case 168 : /* ¨ */ /* send shift down*/
+            case 168 : /* ¨ */ // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
                                this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
-                               /* send shift up*/
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
             case 37  : /* % */
             case 43  : /* + */
@@ -697,18 +721,18 @@ public:
             case 163 : /* £ */
             case 167 : /* § */
             case 176 : /* ° */
-            case 181 : /* µ */ /* send shift down*/
+            case 181 : /* µ */ // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
                                this->sendRDPScanCode(this->_keylayout->getshift()->at(code), flag);
-                               /* send shift up*/
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
 
 
             //-----------------------
             //  Keylayout ALTGR MOD
             //-----------------------
-            case 96  : /* ` */ /* send altgr down*/
+            case 96  : /* ` */ // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
                               this->sendRDPScanCode(this->_keylayout->deadkeys.at(code), flag);
-                              /* send altgr up*/
+                              // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
             case 35  : /* # */
             case 64  : /* @ */
@@ -719,9 +743,9 @@ public:
             case 124 : /* | */
             case 125 : /* } */
             case 126 : /* ~ */
-            case 234 : /* ê */ /* send altgr down*/
+            case 234 : /* ê */ // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
                                this->sendRDPScanCode(this->_keylayout->getaltGr()->at(code), flag);
-                               /* send altgr up*/
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
                             break;
 
 
@@ -735,8 +759,7 @@ public:
             case 231 : /* ç */
             case 232 : /* è */
             case 233 : /* é */
-            case 249 : /* ù */ this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code), flag);
-                            break;
+            case 249 : /* ù */
             default  :         this->sendRDPScanCode(this->_keylayout->getnoMod()->at(code), flag);
                             break;
         }

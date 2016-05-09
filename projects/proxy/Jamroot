@@ -896,7 +896,7 @@ test-canonical system/linux/system/ssl_rc4.hpp : <library>openssl <library>crypt
 test-canonical system/linux/system/ssl_sha1.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha256.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha512.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-#test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 
 test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 

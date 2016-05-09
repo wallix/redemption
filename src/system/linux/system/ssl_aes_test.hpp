@@ -77,29 +77,28 @@ typedef struct
 aes_context;
 
 
-
-
-
-
-
-
-
-
-
-
 /*
- * 32-bit integer manipulation macros (little endian)
- */
-
-
-
 static void GET_UINT32_LE(uint32_t & n,const uint8_t * b, int i) {
-    std::cout <<  "13 bis" << std::endl;
+std::cout <<  "4" <<  std::endl;
+        uint32_t b0 = b[i    ];
+        uint32_t b1 = b[i + 1];
+        uint32_t b2 = b[i + 2];
+        uint32_t b3 = b[i + 3];
+        n = (b0)
+            | ( b1 <<  8 )
+            | ( b2 << 16 )
+            | ( b3 << 24 );
+
+    }
+
+*/
+static void GET_UINT32_LE(uint32_t & n,const uint8_t * b, int i) {
+
         n = (   static_cast<uint32_t>( b[i   ])       )
             | ( static_cast<uint32_t>( b[i + 1] <<  8) )
             | ( static_cast<uint32_t>( b[i + 2] << 16) )
             | ( static_cast<uint32_t>( b[i + 3] << 24) );
-            std::cout <<  "14 bis" << std::endl;
+
     }
 
 static void PUT_UINT32_LE(uint32_t n, unsigned char * b, int i) {
@@ -732,14 +731,11 @@ int aes_crypt_ecb( aes_context *ctx,
                     unsigned char output[16] )
 {
     int i;
-    std::cout <<  "9 bis" << std::endl;
     uint32_t *RK, X0, X1, X2, X3, Y0, Y1, Y2, Y3;
-std::cout <<  "10 bis" << std::endl;
 #if defined(POLARSSL_AESNI_C) && defined(POLARSSL_HAVE_X86_64)
     if( aesni_supports( POLARSSL_AESNI_AES ) )
         return( aesni_crypt_ecb( ctx, mode, input, output ) );
 #endif
-std::cout <<  "11 bis" << std::endl;
 #if defined(POLARSSL_PADLOCK_C) && defined(POLARSSL_HAVE_X86)
     if( aes_padlock_ace )
     {
@@ -759,7 +755,9 @@ std::cout <<  "11 bis" << std::endl;
     std::cout <<  "15 bis" << std::endl;
     X0 ^= *RK++;
     std::cout <<  "16 bis" << std::endl;
-    GET_UINT32_LE( X1, input,  4 ); X1 ^= *RK++;
+    GET_UINT32_LE( X1, input,  4 );
+    std::cout <<  "17 bis" << std::endl;
+    X1 ^= *RK++;
     GET_UINT32_LE( X2, input,  8 ); X2 ^= *RK++;
     GET_UINT32_LE( X3, input, 12 ); X3 ^= *RK++;
 

@@ -1,7 +1,7 @@
 
 
 path-constant SRCDIR : ../../src ;
-path-constant INCLUDEDIR : ./include ;
+path-constant INCLUDEDIR : ../../include ;
 
 project redjs
     : requirements
@@ -17,7 +17,6 @@ project redjs
     <include>$(SRCDIR)/regex
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
-    #<include>modules/includes 
     <include>$(SRCDIR)/utils
     <include>$(SRCDIR)/system/linux/system
     <include>src
