@@ -107,11 +107,15 @@ class SslSha1_direct
     }
 
     u_int32_t blk0(int i, CHAR64LONG16 * block) {
-        if (this->endian == LITTLE_ENDIAN) {
-            return (block->l[i] = ( ((block->l[i] << 24) | (block->l[i] >> 8)) & 0xFF00FF00 ) |( ((block->l[i] << 8) | (block->l[i] >> 24)) & 0x00FF00FF ) );
+       if (this->endian == LITTLE_ENDIAN) {
+            return block->l[i] = ( ((block->l[i] << 24) | (block->l[i] >> 8)) & 0xFF00FF00 ) |( ((block->l[i] << 8) | (block->l[i] >> 24)) & 0x00FF00FF ) ;
         } else {
             return block->l[i];
         }
+/*
+        i *=  4;
+
+        return block->c[i-3] | (block->c[i-2] << 8) |  (block->c[i-1] << 16) |  (block->c[i] << 24);*/
     }
 
     /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
