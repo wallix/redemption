@@ -16,7 +16,7 @@ import modules : poke ;
 path-constant TOP : . ;
 path-constant MODULEDIR : ../../modules ;
 path-constant SRCDIR : ../../src ;
-path-constant INCLUDEDIR : ./include ;
+path-constant INCLUDEDIR : ../../include ;
 path-constant SYSTEMDIR : ./system ;
 path-constant TESTDIR : ../../tests ;
 path-constant TESTSDIR : ./tests ;
@@ -104,6 +104,60 @@ project redjs
     ;
 
 using emscripten ;
+
+actions nothing 
+{
+}
+
+install pentamino
+    : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
+    : <location>./sandbox
+    ;
+
+objjs penta.bc 
+    : 
+    src/ftests/penta.cpp 
+    : 
+    <cxxflags>-g3 
+    ;
+
+exejs pentamino.js : penta.bc : 
+    <cxxflags>-g3
+    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+    <cxxflags>"--shell-file templates/penta_template.html"
+ ;
+
+make pentamino.html : pentamino.js : @nothing ;
+
+#install client_rdp_JS
+#    : [ glob ./sys/client_rdp_JS/* ] client_rdp_JS.js client_rdp_JS.html
+#    : <location>./sandbox
+#    ;
+    
+
+    
+objjs test_rdp_client_test_card_JS.bc 
+	: src/test_rdp_client_test_card_JS.cpp 
+	: <cxxflags>-g3 <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+	;
+
+objjs bitmap_data_allocator.bc 
+	: $(SRCDIR)/utils/bitmap_data_allocator.cpp 
+	: <cxxflags>-g3 
+	  <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+	;
+
+exejs client_rdp_JS.js 
+     : 
+        test_rdp_client_test_card_JS.bc 
+        bitmap_data_allocator.bc
+     :  
+        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+        <cxxflags>-g3 
+     ;
+
+make client_rdp_JS.html : client_rdp_JS.js : @nothing ;    
+
 
 actions nodejs
 {

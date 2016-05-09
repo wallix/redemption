@@ -38,13 +38,12 @@
 
 
 
-/*
 class SslAES
 {
     AES_KEY e_key;
     AES_KEY d_key;
 
-//    uint8_t iv;
+    uint8_t iv;
 
     public:
     SslAES(){}
@@ -71,9 +70,9 @@ class SslAES
                     const uint8_t * const indata, uint8_t * const outdata) {
        AES_cbc_encrypt(indata, outdata, data_size, &(this->d_key), ivec, AES_DECRYPT);
     }
-};*/
+};
 
-
+#ifdef UNDEFINED
 
 #define AES_ENCRYPT     1
 #define AES_DECRYPT     0
@@ -105,13 +104,18 @@ class SslAES
 class SslAES_direct
 {
 
-    typedef struct
+    typedef struct Aes_context
     {
         int nr;                     /*!<  number of rounds  */
         uint32_t *rk;               /*!<  AES round keys    */
         uint32_t buf[68];           /*!<  unaligned data    */
-    }
-    aes_context;
+        Aes_context() 
+            : nr(0)
+            , rk(nullptr)
+            , buf{} 
+        {
+        }
+    } aes_context;
 
     aes_context ctx;
 
@@ -874,4 +878,4 @@ uint32_t RT3[256] = { RT };
     }
 };
 
-
+#endif
