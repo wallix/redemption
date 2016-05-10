@@ -30,6 +30,7 @@
 
 #include "core/RDP/share.hpp"
 #include "system/ssl_cryptcontext.hpp"
+#include "system/ssl_sha1.hpp"
 
 namespace SEC
 {
@@ -908,7 +909,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("A", 1);
+                uint8_t A[1] = {0x41U}; // "A"
+                sha1.update(A, sizeof(A));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -922,7 +924,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("BB", 2);
+                uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
+                sha1.update(BB, sizeof(BB));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -936,7 +939,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("CCC", 3);
+                uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
+                sha1.update(CCC, sizeof(CCC));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -951,7 +955,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("A", 1);
+                uint8_t A[1] = {0x41U}; // "A"
+                sha1.update(A, sizeof(A));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
@@ -965,7 +970,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("BB", 2);
+                uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
+                sha1.update(BB, sizeof(BB));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
@@ -979,7 +985,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("CCC", 3);
+                uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
+                sha1.update(CCC, sizeof(CCC));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
@@ -1393,7 +1400,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("A", 1);
+                uint8_t A[1] = {0x41U}; // "A"
+                sha1.update(A, sizeof(A));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -1407,7 +1415,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("BB", 2);
+                uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
+                sha1.update(BB, sizeof(BB));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -1421,7 +1430,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("CCC", 3);
+                uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
+                sha1.update(CCC, sizeof(CCC));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -1436,7 +1446,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("X", 1);
+                uint8_t X[1] = {0x58U}; // "X"
+                sha1.update(X, sizeof(X));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -1450,7 +1461,8 @@ enum {
             {
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("YY", 2);
+                uint8_t YY[2] = {0x59U, 0x59U}; // "YY"
+                sha1.update(YY, sizeof(YY));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
@@ -1462,9 +1474,11 @@ enum {
                 md5.final(this->blob1, MD5_DIGEST_LENGTH);
             }
             {
+            
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
-                sha1.update("ZZZ", 3);
+                uint8_t ZZZ[3] = {0x5AU, 0x5AU, 0x5AU}; // "ZZZ"
+                sha1.update(ZZZ, sizeof(ZZZ));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);

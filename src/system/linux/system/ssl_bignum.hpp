@@ -66,6 +66,12 @@ public:
         BN_CTX_free(ctx);
         return result;
     }
+
+    size_t get_bin(uint8_t * out, size_t out_len)
+    {
+        return BN_bn2bin(&this->bn, out);
+    }
+
     Bignum operator+(const Bignum & b) const
     {
         Bignum result(b);
