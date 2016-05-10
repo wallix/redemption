@@ -244,7 +244,29 @@ BOOST_AUTO_TEST_CASE(TestSslSha1_direct)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestSslHmacSHA1)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Sha1 hmac(key, sizeof(key)-1);
 
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg)-1);
+
+    uint8_t sig[SHA_DIGEST_LENGTH];
+    hmac.final(sig, SHA_DIGEST_LENGTH);
+
+    BOOST_CHECK_EQUAL(SHA_DIGEST_LENGTH, 32);
+
+    BOOST_CHECK_EQUAL(memcmp(sig,
+                             "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
+                             "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8",
+                             SHA_DIGEST_LENGTH),
+                      0);
+    // hexdump96_c(sigstream.get_data(), sigstream.size());
+
+}
 
 
 
