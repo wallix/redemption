@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA1)
     uint8_t sig[SHA_DIGEST_LENGTH];
     hmac.final(sig, SHA_DIGEST_LENGTH);
 
-    BOOST_CHECK_EQUAL(SHA_DIGEST_LENGTH, 32);
+    BOOST_CHECK_EQUAL(SHA_DIGEST_LENGTH, 20);
 
     BOOST_CHECK_EQUAL(memcmp(sig,
                              "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
