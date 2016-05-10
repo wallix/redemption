@@ -169,7 +169,6 @@ public:
 
     enum: int {
         KBD_FLAGS_EXTENDED = 0x0100,
-        KBD_FLAGS          = 0
     };
 
     enum: int {
@@ -203,16 +202,6 @@ public:
             std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
-/*
-        this->_layoutMods[NO_MOD                              ] = this->_keylayout->getnoMod();
-        this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout->getshift();
-        this->_layoutMods[ALTGR_MOD                           ] = this->_keylayout->getaltGr();
-        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = this->_keylayout->getshiftAltGr();
-        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = this->_keylayout->getcapslock_noMod();
-        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = this->_keylayout->getcapslock_shift();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = this->_keylayout->getcapslock_altGr();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = this->_keylayout->getcapslock_shiftAltGr();
-        this->_layoutMods[CTRL_MOD                            ] = this->_keylayout->getctrl();*/
 
     }
 
