@@ -635,14 +635,6 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    /*void sendRDPScanCode(int code,  int flag) {
-        try {
-            EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
-            //  this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_DOWN, 0, &(this->_keymap));
-            //  this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap))
-        } catch (const Error & e) { }
-    }*/
-
     void mousePressEvent(int x, int y, int button) {
         int flag = 0;
         switch (button) {

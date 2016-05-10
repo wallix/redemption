@@ -455,11 +455,11 @@ test-canonical utils/utf.hpp ;
 #test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 #test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
 test-canonical system/ssl_md5.hpp ;
-#test-canonical system/linux/system/ssl_md4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-#test-canonical system/linux/system/ssl_rc4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-#test-canonical system/linux/system/ssl_sha1.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-#test-canonical system/linux/system/ssl_sha256.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-#test-canonical system/linux/system/ssl_sha512.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/ssl_md4.hpp ;
+test-canonical system/ssl_rc4.hpp ;
+test-canonical system/ssl_sha1.hpp ;
+test-canonical system/ssl_sha256.hpp ;
+test-canonical system/ssl_sha512.hpp ;
 #test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 
 #test-run test_strings : test_strings.cpp : : <covflag>nocover ;
