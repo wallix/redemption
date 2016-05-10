@@ -29,7 +29,6 @@
 #include <cinttypes>
 
 #include "core/RDP/share.hpp"
-#include "system/ssl_calls.hpp"
 #include "system/ssl_cryptcontext.hpp"
 
 namespace SEC
