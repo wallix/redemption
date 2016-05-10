@@ -38,7 +38,7 @@
 #include "utils/bitfu.hpp"
 #include <strings.h>
 
-
+/*
 class SslMd5
 {
     MD5_CTX md5;
@@ -64,9 +64,9 @@ class SslMd5
         }
         MD5_Final(out_data, &this->md5);
     }
-};
+};*/
 
-class SslMd4
+/*class SslMd4
 {
     MD4_CTX md4;
 
@@ -91,10 +91,10 @@ class SslMd4
         }
         MD4_Final(out_data, &this->md4);
     }
-};
+};*/
 
 
-class SslRC4
+/*class SslRC4
 {
     RC4_KEY rc4;
 
@@ -109,7 +109,7 @@ class SslRC4
     void crypt(size_t data_size, const uint8_t * const indata, uint8_t * const outdata){
         RC4(&this->rc4, data_size, indata, outdata);
     }
-};
+};*/
 
 class SslAES
 {
@@ -145,7 +145,7 @@ class SslAES
     }
 };
 
-class SslHMAC_Md5
+/*class SslHMAC_Md5
 {
     HMAC_CTX hmac;
 
@@ -192,10 +192,10 @@ class SslHMAC_Md5
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
     }
-};
+};*/
 
 
-class SslHMAC
+/*class SslHMAC
 {
     HMAC_CTX hmac;
 
@@ -244,6 +244,6 @@ class SslHMAC
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
     }
-};
+};*/
 
 
