@@ -51,7 +51,7 @@ class ssllib
         }
 
         size_t outlen = mod_exp(out, out_len, inr, in_len, modulus, modulus_size, exponent, exponent_size);
-       
+
         reverseit(out, outlen);
 
         if (outlen < modulus_size){
@@ -59,9 +59,9 @@ class ssllib
         }
     }
 
-    static void ssl_xxxxxx(uint8_t * client_random, 
-                           uint32_t in_len, const uint8_t * in, 
-                           uint32_t mod_len, const uint8_t * mod, 
+    static void ssl_xxxxxx(uint8_t * client_random,
+                           uint32_t in_len, const uint8_t * in,
+                           uint32_t mod_len, const uint8_t * mod,
                            uint32_t exp_len, const uint8_t * exp)
     {
         uint8_t l_out[64] = {};

@@ -804,8 +804,8 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-
 };
+
 
 
 Front_JS_Natif front(0);
@@ -836,7 +836,6 @@ extern "C" void backspacePressed() {
     //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
     //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
     EM_ASM_({ console.log('Backspace'); }, 0);
-
 }
 
 

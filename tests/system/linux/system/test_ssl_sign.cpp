@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include "system/ssl_sign.hpp"
+#include "system/ssl_calls.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestSslHmacSign)
