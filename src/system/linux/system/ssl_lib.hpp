@@ -24,6 +24,7 @@
 #include "utils/bitfu.hpp"
 #include "system/ssl_modexp.hpp"
 
+
 enum {
     SEC_RANDOM_SIZE   = 32,
     SEC_MODULUS_SIZE  = 64,
