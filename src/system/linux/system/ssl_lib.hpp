@@ -21,7 +21,9 @@
 
 #pragma once
 
+#include "utils/bitfu.hpp"
 #include "system/ssl_modexp.hpp"
+
 
 enum {
     SEC_RANDOM_SIZE   = 32,
