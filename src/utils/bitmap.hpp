@@ -49,11 +49,13 @@
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
-#include "system/ssl_calls.hpp"
+//#include "system/ssl_calls.hpp"
 #include "utils/rect.hpp"
 #include "bitmap_data_allocator.hpp"
 
 #include "array_view.hpp"
+
+#include "system/ssl_sha1.hpp"
 
 using std::size_t;
 
