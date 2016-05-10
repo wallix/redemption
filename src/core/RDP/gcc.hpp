@@ -33,6 +33,7 @@
 #include "utils/stream.hpp"
 #include "core/RDP/out_per_bstream.hpp"
 #include "system/ssl_calls.hpp"
+#include "system/ssl_lib.hpp"
 
 #include <cinttypes>
 

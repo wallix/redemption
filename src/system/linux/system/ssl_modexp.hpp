@@ -14,49 +14,24 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2016
+   Copyright (C) Wallix 2016
    Author(s): Christophe Grosjean
-
-   BigNum Headers
 
 */
 
 #pragma once
 
-class Bignum
+#include "system/ssl_bignum.hpp"
+
+static inline size_t mod_exp(uint8_t * out, size_t out_len,
+               const uint8_t * inr, size_t in_len,
+               const uint8_t * modulus, size_t modulus_size,
+               const uint8_t * exponent, size_t exponent_size)
 {
-public:
-    Bignum(unsigned long w) 
-    {
-    }
-    Bignum(const uint8_t * data, size_t len) 
-    {
-    }
-    Bignum(const Bignum & bn) 
-    {
-    }
-    ~Bignum()
-    {
-    }
-    
-    unsigned long get_word()
-    {
-        return 0UL;
-    }
-    Bignum mod_exp(const Bignum & e, const Bignum & mod) const
-    {
-        return Bignum(0UL);
-    }
-    Bignum operator+(const Bignum & b) const
-    {
-        return Bignum(0UL);
-    }
-    bool operator!=(const Bignum & b) const
-    {
-        return true;
-    }
-    bool operator==(const Bignum & b) const
-    {
-        return true;
-    }
-};
+    Bignum mod(modulus, modulus_size);
+    Bignum exp(exponent, exponent_size);
+    Bignum x(inr, in_len);
+    Bignum y = x.mod_exp(exp, mod); 
+    return y.get_bin(out, out_len);
+}
+
