@@ -107,9 +107,7 @@ project redjs
 
 using emscripten ;
 
-actions nothing 
-{
-}
+actions nothing { }
 
 install pentamino
     : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
@@ -128,11 +126,6 @@ exejs pentamino.js : penta.bc :
     <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
     <cxxflags>"--shell-file templates/penta_template.html"
  ;
-
-make pentamino.html : pentamino.js : @nothing ;
-
-
-actions nothing { }
 
 make pentamino.html : pentamino.js : nothing ;
 make pentamino.html.mem : pentamino.js : @nothing ;   
