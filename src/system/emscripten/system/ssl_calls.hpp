@@ -31,8 +31,13 @@
 #include <cstring>
 #include <cassert>
 
+#include "ssl_sha1.hpp"
+#include "ssl_sha256.hpp"
+#include "ssl_md5.hpp"
+#include "ssl_md4.hpp"
+#include "ssl_rc4.hpp"
+
 #include "core/error.hpp"
-#include "openssl_crypto.hpp"
 
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
@@ -47,132 +52,6 @@ enum {
     SEC_EXPONENT_SIZE =  4
 };
 
-/*class SslSha1
-{
-    SHA_CTX sha1;
-
-    public:
-    SslSha1()
-    {
-        int res = 0;
-        res = SHA1_Init(&this->sha1);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
-        }
-    }
-
-    void update(const char * const data,  size_t data_size)
-    {
-        this->update(reinterpret_cast<const uint8_t * const>(data), data_size);
-    }
-
-    void update(const uint8_t * const data,  size_t data_size)
-    {
-        int res = 0;
-        res = SHA1_Update(&this->sha1, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
-        }
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        assert(SHA_DIGEST_LENGTH == out_data_size);
-        int res = 0;
-        res = SHA1_Final(out_data, &this->sha1);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
-        }
-    }
-};*/
-
-class SslSha256
-{
-    SHA256_CTX sha256;
-
-    public:
-    SslSha256()
-    {
-        int res = 0;
-        res = SHA256_Init(&this->sha256);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
-        }
-    }
-
-    void update(const uint8_t * const data,  size_t data_size)
-    {
-        int res = 0;
-        res = SHA256_Update(&this->sha256, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
-        }
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        assert(SHA256_DIGEST_LENGTH == out_data_size);
-        int res = 0;
-        res = SHA256_Final(out_data, &this->sha256);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
-        }
-    }
-};
-
-class SslMd5
-{
-    MD5_CTX md5;
-
-    public:
-    SslMd5()
-    {
-        MD5_Init(&this->md5);
-    }
-
-    void update(const uint8_t * const data, size_t data_size)
-    {
-        MD5_Update(&this->md5, data, data_size);
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        if (MD5_DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[MD5_DIGEST_LENGTH];
-            MD5_Final(tmp, &this->md5);
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
-        MD5_Final(out_data, &this->md5);
-    }
-};
-
-class SslMd4
-{
-    MD4_CTX md4;
-
-    public:
-    SslMd4()
-    {
-        MD4_Init(&this->md4);
-    }
-
-    void update(const uint8_t * const data, size_t data_size)
-    {
-        MD4_Update(&this->md4, data, data_size);
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        if (MD4_DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[MD4_DIGEST_LENGTH];
-            MD4_Final(tmp, &this->md4);
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
-        MD4_Final(out_data, &this->md4);
-    }
-};
 
 
 class SslRC4
