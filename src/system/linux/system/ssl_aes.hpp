@@ -72,7 +72,7 @@ class SslAES
     }
 };
 
-#ifdef UNDEFINED
+
 
 #define AES_ENCRYPT     1
 #define AES_DECRYPT     0
@@ -109,10 +109,10 @@ class SslAES_direct
         int nr;                     /*!<  number of rounds  */
         uint32_t *rk;               /*!<  AES round keys    */
         uint32_t buf[68];           /*!<  unaligned data    */
-        Aes_context() 
+        Aes_context()
             : nr(0)
             , rk(nullptr)
-            , buf{} 
+            , buf{}
         {
         }
     } aes_context;
@@ -877,5 +877,3 @@ uint32_t RT3[256] = { RT };
        this->aes_crypt_cbc(&this->ctx, AES_DECRYPT, data_size, ivec, outdata, indata);
     }
 };
-
-#endif
