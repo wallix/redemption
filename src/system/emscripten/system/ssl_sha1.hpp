@@ -36,7 +36,9 @@
 #include "utils/bitfu.hpp"
 
 
-
+enum: int {
+	SHA_DIGEST_LENGTH = 20
+};	
 
 
 
@@ -276,11 +278,11 @@ class SslHMAC_Sha1_direct
     {
          const uint8_t * k = key;
          if (key_len > 64) {
-             unsigned char digest[SHA1_DIGEST_LENGTH];
+             unsigned char digest[SHA_DIGEST_LENGTH];
              SslSha1_direct sha1;
-             sha1.update(digest, SHA1_DIGEST_LENGTH);
-             sha1.final(digest, SHA1_DIGEST_LENGTH);
-             key_len = SHA1_DIGEST_LENGTH;
+             sha1.update(digest, SHA_DIGEST_LENGTH);
+             sha1.final(digest, SHA_DIGEST_LENGTH);
+             key_len = SHA_DIGEST_LENGTH;
              k = key;
          }
          size_t i;
@@ -302,13 +304,13 @@ class SslHMAC_Sha1_direct
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
-        assert(SHA1_DIGEST_LENGTH == out_data_size);
-        context.final(out_data, SHA1_DIGEST_LENGTH);
+        assert(SHA_DIGEST_LENGTH == out_data_size);
+        context.final(out_data, SHA_DIGEST_LENGTH);
 
         SslSha1_direct sha1;
         sha1.update(this->k_opad, 64);
-        sha1.update(out_data, SHA1_DIGEST_LENGTH);
-        sha1.final(out_data, SHA1_DIGEST_LENGTH);
+        sha1.update(out_data, SHA_DIGEST_LENGTH);
+        sha1.final(out_data, SHA_DIGEST_LENGTH);
     }
 };
 
