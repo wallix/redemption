@@ -21,13 +21,26 @@
 
 #pragma once
 
+#include "utils/bitfu.hpp"
 #include "system/ssl_modexp.hpp"
+
+
+enum {
+    SEC_RANDOM_SIZE   = 32,
+    SEC_MODULUS_SIZE  = 64,
+    SEC_MAX_MODULUS_SIZE  = /*256*/512,
+    SEC_PADDING_SIZE  =  8,
+    SEC_EXPONENT_SIZE =  4
+};
+
 
 class ssllib
 {
     public:
-    static void rsa_encrypt(uint32_t out_len, uint8_t * out, uint32_t in_len, uint8_t * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
+    static void rsa_encrypt(uint8_t * out, uint32_t in_len, uint8_t * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
     {
+        TODO("check out buffer size");
+        size_t out_len = 64;
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
 
         reverseit(modulus, modulus_size);
@@ -37,15 +50,14 @@ class ssllib
             inr[in_len-1-i] = in[i];
         }
 
-        size_t outlen = mod_exp(out, out_len, inr, in_len, modulus_modulus_size, exponent, exponent_size);
+        size_t outlen = mod_exp(out, out_len, inr, in_len, modulus, modulus_size, exponent, exponent_size);
        
         reverseit(out, outlen);
 
-        if (outlen < static_cast<int>(modulus_size)){
+        if (outlen < modulus_size){
             memset(out + outlen, 0, modulus_size - outlen);
         }
     }
-
 
     static void ssl_xxxxxx(uint8_t * client_random, 
                            uint32_t in_len, const uint8_t * in, 
@@ -57,7 +69,7 @@ class ssllib
         uint8_t l_mod[64]; rmemcpy(l_mod, mod, mod_len);
         uint8_t l_exp[64]; rmemcpy(l_exp, exp, exp_len);
 
-        size_t outlen = mod_exp(out, 64, l_in, in_len, l_mod, mod_len, l_exp, exp_len);
+        size_t outlen = mod_exp(l_out, 64, l_in, in_len, l_mod, mod_len, l_exp, exp_len);
 
         if (outlen <= 64) {
             reverseit(l_out, outlen);
