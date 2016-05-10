@@ -804,8 +804,8 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-
 };
+
 
 
 Front_JS_Natif front(0);
