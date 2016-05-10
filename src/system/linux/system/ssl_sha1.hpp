@@ -330,14 +330,14 @@ class SslHMAC_Sha1
 };
 
 
-class SslHMAC_Md4_direct
+class SslHMAC_Sha1_direct
 {
     uint8_t k_ipad[64];
     uint8_t k_opad[64];
-    SslMd4_direct context;
+    SslSha1_direct context;
 
     public:
-    SslHMAC_Md4_direct(const uint8_t * const key, size_t key_len)
+    SslHMAC_Sha1_direct(const uint8_t * const key, size_t key_len)
         : k_ipad{
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
@@ -361,11 +361,11 @@ class SslHMAC_Md4_direct
     {
          const uint8_t * k = key;
          if (key_len > 64) {
-             unsigned char digest[MD4_DIGEST_LENGTH];
-             SslMd4_direct md4;
-             md4.update(digest, MD4_DIGEST_LENGTH);
-             md4.final(digest, MD4_DIGEST_LENGTH);
-             key_len = MD4_DIGEST_LENGTH;
+             unsigned char digest[SHA_DIGEST_LENGTH];
+             SslSha1_direct sha1;
+             sha1.update(digest, SHA_DIGEST_LENGTH);
+             sha1.final(digest, SHA_DIGEST_LENGTH);
+             key_len = SHA_DIGEST_LENGTH;
              k = key;
          }
          size_t i;
@@ -376,7 +376,7 @@ class SslHMAC_Md4_direct
          context.update(k_ipad, 64);
     }
 
-    ~SslHMAC_Md4_direct()
+    ~SslHMAC_Sha1_direct()
     {
     }
 
@@ -387,13 +387,13 @@ class SslHMAC_Md4_direct
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
-        assert(MD4_DIGEST_LENGTH == out_data_size);
-        context.final(out_data, MD4_DIGEST_LENGTH);
+        assert(SHA1_DIGEST_LENGTH == out_data_size);
+        context.final(out_data, SHA_DIGEST_LENGTH);
 
-        SslMd4_direct md4;
-        md4.update(this->k_opad, 64);
-        md4.update(out_data, MD4_DIGEST_LENGTH);
-        md4.final(out_data, MD4_DIGEST_LENGTH);
+        SslSha1_direct sha1;
+        sha1.update(this->k_opad, 64);
+        sha1.update(out_data, SHA_DIGEST_LENGTH);
+        sha1.final(out_data, SHA_DIGEST_LENGTH);
     }
 };
 

@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha256_direct)
 
 }
 
-/*
+
 BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
 {
     const uint8_t key[] = "key";
@@ -271,5 +271,5 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
                       0);
     // hexdump96_c(sigstream.get_data(), sigstream.size());
 
-}*/
+}
 
