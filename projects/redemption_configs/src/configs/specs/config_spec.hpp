@@ -133,8 +133,8 @@ void config_spec_definition(Writer && W)
 #ifdef IN_IDE_PARSER
     // for coloration...
     struct {
-        void member();
-        void section();
+        void member(...);
+        void section(char const * name, closure_section);
         void sep();
     } W;
 #endif
@@ -301,6 +301,8 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, str_authid{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
+        W.member(A, type_<bool>(), "bogus_linux_cursor", desc{"Needed to get the old behavior of cursor rendering."}, set(false));
+        W.sep();
         W.member(A, type_<StringList>(), "proxy_managed_drives", r);
         W.sep();
         W.member(H, type_<bool>(), "ignore_auth_channel", set(false), r);
@@ -336,7 +338,7 @@ void config_spec_definition(Writer && W)
         }, set(true), r);
         W.member(H, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(H, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
-        W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
+        W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false), r);
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
         W.member(H, type_<StaticString<512>>(), "session_probe_alternate_shell", set("cmd /k"));
 

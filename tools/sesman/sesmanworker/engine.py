@@ -34,8 +34,8 @@ except Exception, e:
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
     except Exception, e:
-        # Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
-        Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
+        Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
+        #Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
 import time
 import socket

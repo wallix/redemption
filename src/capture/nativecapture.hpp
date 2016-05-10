@@ -78,7 +78,20 @@ public:
         }
     }
 
-    std::chrono::microseconds snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval) override {
+    // toggles externally genareted breakpoint.
+    void external_breakpoint() override {
+        this->recorder.breakpoint();
+    }
+
+    void external_time(const timeval & now) override {
+        this->recorder.sync();
+        this->recorder.timestamp(now);
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
+        const timeval & now, int x, int y, bool ignore_frame_in_timeval
+    ) override {
         if (difftimeval(now, this->start_native_capture)
                 >= this->inter_frame_interval_native_capture) {
             this->recorder.timestamp(now);
@@ -95,16 +108,6 @@ public:
             this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
         }
         return std::chrono::microseconds{this->time_to_wait};
-    }
-
-    // toggles externally genareted breakpoint.
-    void external_breakpoint() override {
-        this->recorder.breakpoint();
-    }
-
-    void external_time(const timeval & now) override {
-        this->recorder.sync();
-        this->recorder.timestamp(now);
     }
 };
 

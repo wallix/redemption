@@ -25,7 +25,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestLul
-#include <boost/test/auto_unit_test.hpp>
+#include <redemption_unit_tests.hpp>
 
 //#define LOGNULL
 #define LOGPRINT
@@ -741,11 +741,11 @@ BOOST_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
 
     const size_t number_of_characters = sizeof(utf16_src) / 2;
 
-    uint8_t latin1_dst[32];
+    uint8_t latin1_dst[32] = {};
 
-    BOOST_CHECK_EQUAL(
-        UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst)),
-        number_of_characters);
+    auto x = UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst));
+
+    BOOST_CHECK_EQUAL(x, number_of_characters);
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(latin1_dst)), "100 \x80");
 }

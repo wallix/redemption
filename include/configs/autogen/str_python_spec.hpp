@@ -290,6 +290,11 @@
 "#_advanced\n"
 "bogus_sc_net_size = boolean(default=True)\n\n"
 
+"# Needed to get the old behavior of cursor rendering.\n"
+
+"#_advanced\n"
+"bogus_linux_cursor = boolean(default=False)\n\n"
+
 "#_advanced\n"
 "proxy_managed_drives = string_list(default=list())\n\n"
 

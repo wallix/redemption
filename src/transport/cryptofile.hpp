@@ -140,6 +140,7 @@ class CryptoContext {
     void reset_mode()
     {
         this->master_key_loaded = false;
+        this->hmac_key_loaded = false;
     }
 
     CryptoContext(Random & gen, const Inifile & ini)

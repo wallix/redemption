@@ -378,6 +378,9 @@ public:
         case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
             return "Unsupported client display monitor layout";
 
+        case ERR_LIC:
+            return "An error occurred during the licensing protocol";
+
         default:
             {
                 int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);

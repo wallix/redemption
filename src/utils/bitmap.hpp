@@ -49,11 +49,13 @@
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
-#include "system/ssl_calls.hpp"
+//#include "system/ssl_calls.hpp"
 #include "utils/rect.hpp"
 #include "bitmap_data_allocator.hpp"
 
 #include "array_view.hpp"
+
+#include "system/ssl_sha1.hpp"
 
 using std::size_t;
 
@@ -301,6 +303,7 @@ public:
 
     //Bitmap(uint8_t bpp, uint16_t cx, uint16_t cy, const BGRPalette * palette);
 
+    // TODO("session color depth is only used for selection of compression60, should not be povided as first parameter");
     Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
            uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
            bool compressed = false)

@@ -126,6 +126,30 @@ private:
     uint8_t depth_;
 };
 
+constexpr bool operator == (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+    return depth1.id() == depth2.id();
+}
+
+constexpr bool operator < (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+    return depth1.id() < depth2.id();
+}
+
+constexpr bool operator != (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+    return !(depth1 == depth2);
+}
+
+constexpr bool operator > (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+    return (depth2 < depth1);
+}
+
+constexpr bool operator <= (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+    return !(depth2 < depth1);
+}
+
+constexpr bool operator >= (GraphicDepth const & depth1, GraphicDepth const & depth2) {
+    return !(depth1 < depth2);
+}
+
 
 struct GraphicApi : private noncopyable
 {
@@ -467,6 +491,11 @@ class BlackoutGraphic final : public GraphicBase<BlackoutGraphic>
 
     template<class... Args>
     void draw_impl(Args const & ...) {}
+
+    using base_type_ = GraphicBase<BlackoutGraphic>;
+
+public:
+    using base_type_::base_type_;
 };
 
 }

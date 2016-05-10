@@ -65,9 +65,9 @@ class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
     public:
     virtual wait_obj& get_event() { return this->event; }
 
-    // TODO("RZ : Move these methods in OrderCaps class.")
-    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {}
-    virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {}
+    // TODO("RZ : Move these methods in OrderCaps class, give more generic access to front order caps?")
+    virtual uint8_t get_order_cap(int idx) const { return 0xFF; }
+    virtual uint16_t get_order_caps_ex_flags() const { return 0xFFFF; }
 
     ////////////////////////////////
     // Used by transparent proxy.

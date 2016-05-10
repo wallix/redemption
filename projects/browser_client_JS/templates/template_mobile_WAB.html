@@ -35,6 +35,23 @@
 <script src="js/wprdp.js?v=1.2-beta1" type="text/javascript"></script>
 <script src="js/wprdpsc.js?v=1.2-beta1" type="text/javascript"></script>
 <script type="text/javascript">
+	
+		
+	    var n1 = 0;
+
+	    function startTimer() {
+		var d1 = new Date();
+		n1 = d1.getTime();
+	    }
+
+	    function endTimer() {
+		var d2 = new Date();
+		var n2 = d2.getTime(); 
+		console.log(n2 - n1);
+	    }
+
+	    
+
             var wsBase = "<%=wsUri%>"; // socket URI
 			var protocol = (window.location.protocol == "https:" ? "wss:" : "ws:");
             var wsBase = protocol + "//" + window.location.host + window.location.pathname + "/ws";
@@ -1032,6 +1049,7 @@
             } 
         </script>
 </head>
+
 <body id="wrapper">
 	<!-- NavBar -->
 	<nav id="extracommands" class="navbar navbar-default navbar-static-top">
@@ -1115,10 +1133,13 @@
 		      	</div>
 	    	</div><!-- /.modal-content -->
 	  	</div><!-- /.modal-dialog -->
-	</div><!-- /.modal -->
-
+	</div><!--  /.modal -->
+	
 	<div class="emscripten_border">
-      		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px"></canvas>
+      		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px" onclick="setFocuxOnText()" onmouseenter="setFocuxOnText()" ></canvas>
+		<div style ="width: 0; overflow: hidden;">
+			<input id="hidden_input_text" style="opacity: 0"/> <!--  -->
+		</div>
     	</div>
     </div>
 	<div id="dvLoading"
@@ -1126,28 +1147,29 @@
 	<noscript>
 		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
 	</noscript>
+   <script src='wprdpsc.js'></script>
+   <script src='draw.js'></script>
 
-    <!--<script src='/home/cmoroldo/Bureau/redemption/projects/browser_client/src/draw.js'></script>-->
-<script src='draw.js'></script>
     <script type='text/javascript'>
 	      var Module = {
 		canvas: (function() {
 		  var canvas = document.getElementById('canvas');
-		  //canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
 		  return canvas;
 		})(),
 	      };
 
     </script>
+    
 
 	  {{{ SCRIPT }}}
 
+
+    <script type='text/javascript'>
+	      window.onload = function() {
+			_run_main();
+	      };
+    </script>
+
 </body>
 </html>
-
-
-
-
-
-
 

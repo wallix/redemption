@@ -102,8 +102,8 @@ public:
         if (this->trans_builder.enable_rt) {
             this->enable_rt_display = ini.get<cfg::video::rt_display>();
             apis_register.capture_list.push_back(static_cast<gdi::CaptureApi&>(*this));
-            apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
             apis_register.graphic_snapshot_list->push_back(static_cast<gdi::CaptureApi&>(*this));
+            apis_register.update_config_capture_list.push_back(static_cast<gdi::UpdateConfigCaptureApi&>(*this));
         }
         else {
             apis_register.capture_list.push_back(this->ic);
@@ -128,12 +128,16 @@ private:
             return ;
         }
 
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable real time: %d", int(this->enable_rt_display));
+        }
+
         if (!this->enable_rt_display) {
             this->trans_builder.unlink_all_png();
         }
     }
 
-    std::chrono::microseconds snapshot(
+    std::chrono::microseconds do_snapshot(
         timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override {
         if (this->enable_rt_display) {
@@ -142,13 +146,13 @@ private:
         return this->png_interval;
     }
 
-    void pause_capture(timeval const & now) override {
+    void do_pause_capture(timeval const & now) override {
         if (this->enable_rt_display) {
             this->ic.pause_capture(now);
         }
     }
 
-    void resume_capture(timeval const & now) override {
+    void do_resume_capture(timeval const & now) override {
         if (this->enable_rt_display) {
             this->ic.resume_capture(now);
         }

@@ -32,8 +32,13 @@
 //#define LOGPRINT
 
 //#include "path/to/file.hpp"
+#include "utils/bitmap_data_allocator.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
     BOOST_CHECK(true);
+
+
+    aux_::BmpMemAlloc bmpMemAlloc;
 }

@@ -207,24 +207,8 @@ public:
         return this->capture_api.get_capture_event();
     }
 
-    void pause_capture(timeval const & now) override {
-        this->capture_api.pause_capture(now);
-    }
-
-    void resume_capture(timeval const & now) override {
-        this->capture_api.resume_capture(now);
-    }
-
     void update_config(const Inifile & ini) override {
         this->update_config_capture_api.update_config(ini);
-    }
-
-    std::chrono::microseconds snapshot(
-        const timeval & now,
-        int x, int y,
-        bool ignore_frame_in_timeval
-    ) override {
-        return this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
     bool kbd_input(const timeval & now, uint32_t uchar) override {
@@ -240,6 +224,22 @@ public:
     }
 
 private:
+    std::chrono::microseconds do_snapshot(
+        const timeval & now,
+        int x, int y,
+        bool ignore_frame_in_timeval
+    ) override {
+        return this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
+    }
+
+    void do_pause_capture(timeval const & now) override {
+        this->capture_api.pause_capture(now);
+    }
+
+    void do_resume_capture(timeval const & now) override {
+        this->capture_api.resume_capture(now);
+    }
+
     friend gdi::GraphicCoreAccess;
 
     template<class... Ts>
@@ -283,6 +283,12 @@ public:
             this->get_apis_register().graphic_list->push_back(gd);
             // TODO
             this->gd->start();
+        }
+    }
+
+    void set_order_bpp(uint8_t order_bpp) {
+        if (this->graphic_api) {
+            this->gd->update_order_bpp(order_bpp);
         }
     }
 

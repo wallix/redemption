@@ -179,13 +179,13 @@ public:
     }
 
 private:
-    std::chrono::microseconds snapshot(
+    std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         return this->nc.snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    void resume_capture(const timeval& now) override {
+    void do_resume_capture(const timeval& now) override {
         this->trans_variant.trans->next();
         this->send_timestamp_chunk(now, true);
     }

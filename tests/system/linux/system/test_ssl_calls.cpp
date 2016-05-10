@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestSslCalls
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -329,6 +329,7 @@ BOOST_AUTO_TEST_CASE(TestSslMd4)
                           0);
     }
 
+
     {
         SslMd4 md;
 
@@ -345,7 +346,6 @@ BOOST_AUTO_TEST_CASE(TestSslMd4)
                                  sizeof(sig)),
                           0);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(TestSslRc4)
@@ -551,27 +551,6 @@ BOOST_AUTO_TEST_CASE(TestSslHmacMd5)
     BOOST_CHECK_EQUAL(memcmp(sig,
                              "\x80\x07\x07\x13\x46\x3e\x77\x49"
                              "\xb9\x0c\x2d\xc2\x49\x11\xe2\x75",
-                             sizeof(sig)),
-                      0);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestSslHmacSign)
-{
-    const uint8_t key[] = "key";
-    // const uint8_t key[] = "";
-    Sign hmac(key, sizeof(key) - 1);
-
-    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
-    // const uint8_t msg[] = "";
-    hmac.update(msg, sizeof(msg) - 1);
-
-    uint8_t sig[16];
-    hmac.final(sig, sizeof(sig));
-    // hexdump96_c(sig, sizeof(sig));
-    BOOST_CHECK_EQUAL(memcmp(sig,
-                             "\x10\xfb\x60\x2c\xef\xe7\xe0\x0b"
-                             "\x91\xc2\xe2\x12\x39\x80\xe1\x94",
                              sizeof(sig)),
                       0);
 }
@@ -834,32 +813,35 @@ BOOST_AUTO_TEST_CASE(TestNTLMAUTH)
                              ServerSealKey,
                              sizeof(ServerSealKey)),
                       0);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestAES)
 {
-    SslAES aes;
+    {
+        SslAES aes;
 
-    uint8_t key24[] = "clef très très secrete";
-    uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
-    uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
+        uint8_t key24[] = "clef très très secrete\0v";
+        uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
+        uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
 
-    uint8_t inbuf[1024]= "secret très confidentiel\x00\x00\x00\x00\x00\x00\x00\x00";
-    uint8_t outbuf[1024] = {};
-    uint8_t decrypted[1024] = {};
+        uint8_t inbuf[1024]= "secret très confidentiel\x00\x00\x00\x00\x00\x00\x00\x00";
+        uint8_t outbuf[1024] = {};
+        uint8_t decrypted[1024] = {};
 
 
-    aes.set_key(key24, 24);
+        aes.set_key(key24, 16);
 
-    aes.crypt_cbc(32, iv, inbuf, outbuf);
+        aes.crypt_cbc(32, iv, inbuf, outbuf);
 
-    aes.decrypt_cbc(32, iv2, outbuf, decrypted);
+        aes.decrypt_cbc(32, iv2, outbuf, decrypted);
 
-    BOOST_CHECK_EQUAL(memcmp(inbuf,
-                             decrypted,
-                             32),
-                      0);
+        BOOST_CHECK_EQUAL(memcmp(inbuf,
+                                decrypted,
+                                32),
+                        0);
+    }
+
+
 
 }
 

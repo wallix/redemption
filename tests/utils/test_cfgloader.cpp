@@ -32,8 +32,11 @@
 //#define LOGPRINT
 
 //#include "path/to/file.hpp"
+#include "utils/cfgloader.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+
+BOOST_AUTO_TEST_CASE(TestCfgloader)
 {
     BOOST_CHECK(true);
+
 }
