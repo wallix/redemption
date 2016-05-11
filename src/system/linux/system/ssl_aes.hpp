@@ -123,7 +123,7 @@ class SslAES_direct
 
     int aes_init_done;
 
-    unsigned char FSb[256] =
+    uint32_t FSb[256] =
     {
         0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
         0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -159,7 +159,7 @@ class SslAES_direct
         0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
     };
 
-    unsigned char RSb[256] =
+    uint8_t RSb[256] =
     {
         0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38,
         0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
@@ -391,9 +391,10 @@ uint32_t RT3[256] = { RT };
 #define MUL(x,y) ( ( x && y ) ? pow[(log[x]+log[y]) % 255] : 0 )
 
     void aes_gen_tables( void ) {
-        int i, x, y, z;
-        int pow[256];
-        int log[256];
+        unsigned i, x, y, z;
+
+        unsigned pow[256];
+        unsigned log[256];
 
         /*
         * compute pow and log tables over GF(2^8)
@@ -430,8 +431,8 @@ uint32_t RT3[256] = { RT };
             x ^= y; y = ( (y << 1) | (y >> 7) ) & 0xFF;
             x ^= y ^ 0x63;
 
-            FSb[i] = (unsigned char) x;
-            RSb[x] = (unsigned char) i;
+            FSb[i] = (uint32_t) x;
+            RSb[x] = (uint32_t) i;
         }
 
         /*

@@ -122,6 +122,7 @@ objjs penta.bc
     ;
 
 exejs pentamino.js : penta.bc : 
+    <cxxflags>-O2
     <cxxflags>-g3
     <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
     <cxxflags>"--shell-file templates/penta_template.html"
@@ -163,9 +164,10 @@ exejs client_rdp_JS_SDL.js
         test_rdp_client_test_card_JS_SDL.bc 
         bitmap_data_allocator.bc
      :  
+        <cxxflags>-O2
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEventG']\""
-        <cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
+        <cxxflags>-s\ EXPORTED_FUNCTIONS="[]"
      ;
 
 exejs client_rdp_JS_natif.js 
@@ -173,6 +175,7 @@ exejs client_rdp_JS_natif.js
         test_rdp_client_test_card_JS_natif.bc 
         bitmap_data_allocator.bc
      :  
+        <cxxflags>-O2
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_keyPressEvent']\""
      ;
@@ -435,7 +438,7 @@ test-canonical utils/utf.hpp ;
 #    : <library>bitmap <library>png <covflag>nocover
 #    ;
 
-#test-canonical utils/colors.hpp ;
+test-canonical utils/colors.hpp ;
 #test-canonical utils/d3des.hpp ;
 #test-canonical utils/difftimeval.hpp ;
 #test-canonical utils/genrandom.hpp ;

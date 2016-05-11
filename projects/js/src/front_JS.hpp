@@ -23,11 +23,15 @@
 #define FRONT_QT_HPP
 
 #include <stdio.h>
-#include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
 #include <SDL/SDL.h>
 #include <math.h>
+//#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
+//#include <boost/algorithm/string.hpp>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -56,22 +60,16 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
-//#include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <string>
-//#include <boost/algorithm/string.hpp>
-
 #include "core/RDP/pointer.hpp"
-#include "front_api.hpp"
-#include "channel_list.hpp"
-#include "mod_api.hpp"
+#include "core/front_api.hpp"
+#include "core/channel_list.hpp"
+#include "mod/mod_api.hpp"
 #include "bitmap_without_png.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 //#include "core/RDP/capabilities/glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "keymap2.hpp"
-#include "client_info.hpp"
+#include "keyboard/keymap2.hpp"
+#include "core/client_info.hpp"
 
 
 // ./../../emsdk_portable/emscripten/master/em++ -O2 tests/client_mods/test_rdp_client_test_card_JS.cpp -o bin/gcc-4.9.2/release/client_rdp_JS.html -I src/ -I src/utils -I src/core -std=c++11 -I src/configs/autogen -I src/configs/variant -I src/configs/include -I src/mod -I src/front -I src/acl -I src/capture -I src/keyboard -I src/keyboard/reversed_keymaps -I src/regex -I src/headers -I src/main -I tests -I modules/includes -I src/system/JS && iceweasel file:///home/cmoroldo/Bureau/redemption/bin/gcc-4.9.2/release/client_rdp_JS.html

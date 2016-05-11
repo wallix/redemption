@@ -40,8 +40,13 @@ BOOST_AUTO_TEST_CASE(TestAES)
     {
         SslAES aes;
 
-        uint8_t key24[] = "clef très très secrete\0v";
+        // very secret key
+        uint8_t key24[] = {0, 1, 2, 3, 4, 5, 6, 7,
+                           8, 9, 10, 11, 12, 13, 14, 15,
+                           16, 17, 18, 19, 20, 21, 22, 23};
+        // init vector not secret
         uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
+        // init vector not secret
         uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
 
         uint8_t inbuf[1024]= "secret très confidentiel\x00\x00\x00\x00\x00\x00\x00\x00";
@@ -56,9 +61,7 @@ BOOST_AUTO_TEST_CASE(TestAES)
         aes.decrypt_cbc(32, iv2, outbuf, decrypted);
 
 
-        BOOST_CHECK_EQUAL(memcmp(inbuf,
-                                decrypted,
-                                32),
+        BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 32),
                         0);
     }
 
