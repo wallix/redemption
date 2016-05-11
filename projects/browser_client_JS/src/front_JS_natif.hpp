@@ -21,11 +21,11 @@
 #ifndef FRONT_JS_NATIF_HPP
 #define FRONT_JS_NATIF_HPP
 
+
 #include <stdio.h>
 #include <iostream>
 #include <stdint.h>
 #include <math.h>
-
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -154,14 +154,14 @@ public:
     StaticOutStream<256> _decoded_data;    // currently not initialised
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
-    uint32_t             _requestedFormatId;
-    std::string          _requestedFormatShortName;
-    uint8_t            * _bufferRDPClipboardChannel;
-    size_t               _bufferRDPClipboardChannelSize;
-    size_t               _bufferRDPClipboardChannelSizeTotal;
-    int                  _bufferRDPCLipboardMetaFilePic_width;
-    int                  _bufferRDPCLipboardMetaFilePic_height;
-    int                  _bufferRDPClipboardMetaFilePicBPP;
+    //uint32_t             _requestedFormatId;
+    //std::string          _requestedFormatShortName;
+    //uint8_t            * _bufferRDPClipboardChannel;
+    //size_t               _bufferRDPClipboardChannelSize;
+    //size_t               _bufferRDPClipboardChannelSizeTotal;
+    //int                  _bufferRDPCLipboardMetaFilePic_width;
+    //int                  _bufferRDPCLipboardMetaFilePic_height;
+    //int                  _bufferRDPClipboardMetaFilePicBPP;
     const Keylayout_r  * _keylayout;
 
     enum: int {
