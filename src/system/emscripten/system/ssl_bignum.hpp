@@ -38,7 +38,12 @@ public:
     ~Bignum()
     {
     }
-    
+
+    size_t get_bin(uint8_t * out, size_t out_len)
+    {
+        return out_len;
+    }
+
     unsigned long get_word()
     {
         return 0UL;
