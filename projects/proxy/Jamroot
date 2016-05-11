@@ -667,11 +667,16 @@ actions cover
 rule test-run ( target : sources + : tested ? : requirements * )
 {
 #    ECHO " TEST RUN" ;
-    sources = $(TESTDIR)/$(sources) ;
+    local ROOT_TEST_DIR = $(TESTDIR) ;
+    if $(sources:P) = "system" {
+        ROOT_TEST_DIR = $(SYSTEMTESTDIR) ;
+    }
+    sources = $(ROOT_TEST_DIR)/$(sources) ;
+
     local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
     local basepath = "" ;
     local path = $(sources[0]:P) ;
-    while $(path) != $(TESTDIR) {
+    while $(path) != $(ROOT_TEST_DIR) {
         basepath = $(path:B)/$(basepath) ;
         path = $(path:P) ;
     }

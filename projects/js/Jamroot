@@ -199,56 +199,34 @@ actions nodejs
 rule test-run ( target : sources + : tested ? : requirements * )
 {
 #    ECHO " TEST RUN" ;
+
+    local ROOT_TEST_DIR = $(SYSTEMTESTDIR) ;
     if $(sources:P) != "system" {
-        sources = $(TESTDIR)/$(sources) ;
-        local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
-        local basepath = "" ;
-        local path = $(sources[0]:P) ;
-        while $(path) != $(TESTDIR) 
-        && $(path) != $(TESTDIR) {
-            basepath = $(path:B)/$(basepath) ;
-            path = $(path:P) ;
-        }
-
-        ECHO "base = $(base)" ;
-        ECHO "sources = $(sources)" ;
-        ECHO "target = $(target)" ;
-        ECHO "requirements = $(requirements)" ;
-
-        install $(target)
-            : [ glob ./sys/tests/* ] $(target).js
-            : <location>./sandbox
-            ;
-
-        exejs $(target).js : $(sources) : $(requirements) ;
-
-        make test$(target) : $(target) : @nodejs ;
+        ROOT_TEST_DIR = $(TESTDIR) ;
     }
-    else {
-        sources = $(SYSTEMTESTDIR)/$(sources) ;
-        local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
-        local basepath = "" ;
-        local path = $(sources[0]:P) ;
-        while $(path) != $(SYSTEMTESTDIR) 
-        && $(path) != $(SYSTEMTESTDIR) {
-            basepath = $(path:B)/$(basepath) ;
-            path = $(path:P) ;
-        }
 
-        ECHO "base = $(base)" ;
-        ECHO "sources = $(sources)" ;
-        ECHO "target = $(target)" ;
-        ECHO "requirements = $(requirements)" ;
-
-        install $(target)
-            : [ glob ./sys/tests/* ] $(target).js
-            : <location>./sandbox
-            ;
-
-        exejs $(target).js : $(sources) : $(requirements) ;
-
-        make test$(target) : $(target) : @nodejs ;
+    sources = $(ROOT_TEST_DIR)/$(sources) ;
+    local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
+    local basepath = "" ;
+    local path = $(sources[0]:P) ;
+    while $(path) != $(ROOT_TEST_DIR) {
+        basepath = $(path:B)/$(basepath) ;
+        path = $(path:P) ;
     }
+
+    ECHO "base = $(base)" ;
+    ECHO "sources = $(sources)" ;
+    ECHO "target = $(target)" ;
+    ECHO "requirements = $(requirements)" ;
+
+    install $(target)
+        : [ glob ./sys/tests/* ] $(target).js
+        : <location>./sandbox
+        ;
+
+    exejs $(target).js : $(sources) : $(requirements) ;
+
+    make test$(target) : $(target) : @nodejs ;
 }
 
 
