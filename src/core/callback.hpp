@@ -30,7 +30,7 @@
 #include "utils/rect.hpp"
 
 class InStream;
-class Keymap2;
+struct Keymap2;
 
 enum {
     RDP_INPUT_SYNCHRONIZE          = 0,
@@ -93,7 +93,7 @@ struct Callback : RdpInput
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
     virtual void send_auth_channel_data(const char * data) {}
-    
+
     virtual void send_disconnect_ultimatum() {}
 };
 

@@ -70,9 +70,9 @@ class SslRC4_direct
 
 	void RC4_set_key(struct rc4 *key, int len, const unsigned char *data)
 	{
-	    register RC4_INT tmp;
-	    register int id1, id2;
-	    register RC4_INT *d;
+	    RC4_INT tmp;
+	    int id1, id2;
+	    RC4_INT *d;
 	    unsigned int i;
 
 	    d = &(key->data[0]);
@@ -109,8 +109,8 @@ class SslRC4_direct
 	void RC4(struct rc4 *key, size_t len, const unsigned char *indata,
 	         unsigned char *outdata)
 	{
-	    register RC4_INT *d;
-	    register RC4_INT x, y, tx, ty;
+	    RC4_INT *d;
+	    RC4_INT x, y, tx, ty;
 	    size_t i;
 
 	    x = key->x;

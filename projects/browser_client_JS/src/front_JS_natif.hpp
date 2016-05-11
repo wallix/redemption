@@ -199,7 +199,7 @@ public:
             }
         }
         if (!found){
-            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
+            //std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
 
@@ -529,7 +529,6 @@ public:
             case 0xB8: // TODO
                 {
                     Bitmap bitmapBpp(32, bitmap);
-                    const uint8_t * bitMapData = bitmapBpp.data();
 
                     EM_ASM_({drawable.rDPMem3Blt_0xB8($0    , $1    , $2   , $3   , HEAPU8.subarray($4, $4 + $5),  $6,  $7);},
                                                       rect.x, rect.y, rect.cx, rect.cy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, cmd.back_color);
