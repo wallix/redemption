@@ -80,20 +80,20 @@ class SslAES
 #ifndef GET_UINT32_LE
 #define GET_UINT32_LE(n,b,i)                            \
 {                                                       \
-    (n) = ( (uint32_t) (b)[(i)    ]       )             \
-        | ( (uint32_t) (b)[(i) + 1] <<  8 )             \
-        | ( (uint32_t) (b)[(i) + 2] << 16 )             \
-        | ( (uint32_t) (b)[(i) + 3] << 24 );            \
+    (n) = ( static_cast<uint32_t>( (b)[(i)    ])       )             \
+        | ( static_cast<uint32_t>( (b)[(i) + 1]) <<  8 )             \
+        | ( static_cast<uint32_t>( (b)[(i) + 2]) << 16 )             \
+        | ( static_cast<uint32_t>( (b)[(i) + 3]) << 24 );            \
 }
 #endif
 
 #ifndef PUT_UINT32_LE
 #define PUT_UINT32_LE(n,b,i)                            \
 {                                                       \
-    (b)[(i)    ] = (unsigned char) ( (n)       );       \
-    (b)[(i) + 1] = (unsigned char) ( (n) >>  8 );       \
-    (b)[(i) + 2] = (unsigned char) ( (n) >> 16 );       \
-    (b)[(i) + 3] = (unsigned char) ( (n) >> 24 );       \
+    (b)[(i)    ] = static_cast<uint8_t>( (n)       );       \
+    (b)[(i) + 1] = static_cast<uint8_t>( (n) >>  8 );       \
+    (b)[(i) + 2] = static_cast<uint8_t>( (n) >> 16 );       \
+    (b)[(i) + 3] = static_cast<uint8_t>( (n) >> 24 );       \
 }
 #endif
 
@@ -411,7 +411,7 @@ uint32_t RT3[256] = { RT };
         */
         for( i = 0, x = 1; i < 10; i++ )
         {
-            RCON[i] = (uint32_t) x;
+            RCON[i] = static_cast<uint32_t>(x);
             x = XTIME( x ) & 0xFF;
         }
 
@@ -431,8 +431,8 @@ uint32_t RT3[256] = { RT };
             x ^= y; y = ( (y << 1) | (y >> 7) ) & 0xFF;
             x ^= y ^ 0x63;
 
-            FSb[i] = (uint32_t) x;
-            RSb[x] = (uint32_t) i;
+            FSb[i] = static_cast<uint32_t>( x);
+            RSb[x] = static_cast<uint32_t>( i);
         }
 
         /*
@@ -444,10 +444,10 @@ uint32_t RT3[256] = { RT };
             y = XTIME( x ) & 0xFF;
             z =  ( y ^ x ) & 0xFF;
 
-            FT0[i] = ( (uint32_t) y       ) ^
-                    ( (uint32_t) x <<  8 ) ^
-                    ( (uint32_t) x << 16 ) ^
-                    ( (uint32_t) z << 24 );
+            FT0[i] = ( static_cast<uint32_t>( y)       ) ^
+                    ( static_cast<uint32_t>( x) <<  8 ) ^
+                    ( static_cast<uint32_t>( x) << 16 ) ^
+                    ( static_cast<uint32_t>( z) << 24 );
 
             FT1[i] = ROTL8( FT0[i] );
             FT2[i] = ROTL8( FT1[i] );
@@ -455,10 +455,10 @@ uint32_t RT3[256] = { RT };
 
             x = RSb[i];
 
-            RT0[i] = ( (uint32_t) MUL( 0x0E, x )       ) ^
-                    ( (uint32_t) MUL( 0x09, x ) <<  8 ) ^
-                    ( (uint32_t) MUL( 0x0D, x ) << 16 ) ^
-                    ( (uint32_t) MUL( 0x0B, x ) << 24 );
+            RT0[i] = ( static_cast<uint32_t>( MUL( 0x0E, x ))       ) ^
+                    ( static_cast<uint32_t>( MUL( 0x09, x )) <<  8 ) ^
+                    ( static_cast<uint32_t>( MUL( 0x0D, x )) << 16 ) ^
+                    ( static_cast<uint32_t>( MUL( 0x0B, x )) << 24 );
 
             RT1[i] = ROTL8( RT0[i] );
             RT2[i] = ROTL8( RT1[i] );
@@ -508,10 +508,10 @@ uint32_t RT3[256] = { RT };
 
                 for( i = 0; i < 10; i++, RK += 4 ) {
                     RK[4]  = RK[0] ^ RCON[i] ^
-                    ( (uint32_t) FSb[ ( RK[3] >>  8 ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( RK[3] >> 16 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( RK[3] >> 24 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( RK[3]       ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( RK[3] >>  8 ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[3] >> 16 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[3] >> 24 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[3]       ) & 0xFF ]) << 24 );
 
                     RK[5]  = RK[1] ^ RK[4];
                     RK[6]  = RK[2] ^ RK[5];
@@ -523,10 +523,10 @@ uint32_t RT3[256] = { RT };
 
                 for( i = 0; i < 8; i++, RK += 6 ) {
                     RK[6]  = RK[0] ^ RCON[i] ^
-                    ( (uint32_t) FSb[ ( RK[5] >>  8 ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( RK[5] >> 16 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( RK[5] >> 24 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( RK[5]       ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( RK[5] >>  8 ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[5] >> 16 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[5] >> 24 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[5]       ) & 0xFF ]) << 24 );
 
                     RK[7]  = RK[1] ^ RK[6];
                     RK[8]  = RK[2] ^ RK[7];
@@ -540,20 +540,20 @@ uint32_t RT3[256] = { RT };
 
                 for( i = 0; i < 7; i++, RK += 8 ) {
                     RK[8]  = RK[0] ^ RCON[i] ^
-                    ( (uint32_t) FSb[ ( RK[7] >>  8 ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( RK[7] >> 16 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( RK[7] >> 24 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( RK[7]       ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( RK[7] >>  8 ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[7] >> 16 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[7] >> 24 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[7]       ) & 0xFF ]) << 24 );
 
                     RK[9]  = RK[1] ^ RK[8];
                     RK[10] = RK[2] ^ RK[9];
                     RK[11] = RK[3] ^ RK[10];
 
                     RK[12] = RK[4] ^
-                    ( (uint32_t) FSb[ ( RK[11]       ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( RK[11] >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( RK[11] >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( RK[11] >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( RK[11]       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[11] >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[11] >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( RK[11] >> 24 ) & 0xFF ]) << 24 );
 
                     RK[13] = RK[5] ^ RK[12];
                     RK[14] = RK[6] ^ RK[13];
@@ -726,28 +726,28 @@ uint32_t RT3[256] = { RT };
             AES_RROUND( Y0, Y1, Y2, Y3, X0, X1, X2, X3 );
 
             X0 = *RK++ ^ \
-                    ( (uint32_t) RSb[ ( Y0       ) & 0xFF ]       ) ^
-                    ( (uint32_t) RSb[ ( Y3 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) RSb[ ( Y2 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) RSb[ ( Y1 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( RSb[ ( Y0       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y3 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y2 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y1 >> 24 ) & 0xFF ]) << 24 );
 
             X1 = *RK++ ^ \
-                    ( (uint32_t) RSb[ ( Y1       ) & 0xFF ]       ) ^
-                    ( (uint32_t) RSb[ ( Y0 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) RSb[ ( Y3 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) RSb[ ( Y2 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( RSb[ ( Y1       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y0 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y3 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y2 >> 24 ) & 0xFF ]) << 24 );
 
             X2 = *RK++ ^ \
-                    ( (uint32_t) RSb[ ( Y2       ) & 0xFF ]       ) ^
-                    ( (uint32_t) RSb[ ( Y1 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) RSb[ ( Y0 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) RSb[ ( Y3 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( RSb[ ( Y2       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y1 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y0 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y3 >> 24 ) & 0xFF ]) << 24 );
 
             X3 = *RK++ ^ \
-                    ( (uint32_t) RSb[ ( Y3       ) & 0xFF ]       ) ^
-                    ( (uint32_t) RSb[ ( Y2 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) RSb[ ( Y1 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) RSb[ ( Y0 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( RSb[ ( Y3       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y2 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y1 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( RSb[ ( Y0 >> 24 ) & 0xFF ]) << 24 );
         }
         else /* AES_ENCRYPT */
         {
@@ -760,28 +760,28 @@ uint32_t RT3[256] = { RT };
             AES_FROUND( Y0, Y1, Y2, Y3, X0, X1, X2, X3 );
 
             X0 = *RK++ ^ \
-                    ( (uint32_t) FSb[ ( Y0       ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( Y1 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( Y2 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( Y3 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( Y0       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y1 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y2 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y3 >> 24 ) & 0xFF ]) << 24 );
 
             X1 = *RK++ ^ \
-                    ( (uint32_t) FSb[ ( Y1       ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( Y2 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( Y3 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( Y0 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( Y1       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y2 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y3 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y0 >> 24 ) & 0xFF ]) << 24 );
 
             X2 = *RK++ ^ \
-                    ( (uint32_t) FSb[ ( Y2       ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( Y3 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( Y0 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( Y1 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( Y2       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y3 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y0 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y1 >> 24 ) & 0xFF ]) << 24 );
 
             X3 = *RK++ ^ \
-                    ( (uint32_t) FSb[ ( Y3       ) & 0xFF ]       ) ^
-                    ( (uint32_t) FSb[ ( Y0 >>  8 ) & 0xFF ] <<  8 ) ^
-                    ( (uint32_t) FSb[ ( Y1 >> 16 ) & 0xFF ] << 16 ) ^
-                    ( (uint32_t) FSb[ ( Y2 >> 24 ) & 0xFF ] << 24 );
+                    ( static_cast<uint32_t>( FSb[ ( Y3       ) & 0xFF ])       ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y0 >>  8 ) & 0xFF ]) <<  8 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y1 >> 16 ) & 0xFF ]) << 16 ) ^
+                    ( static_cast<uint32_t>( FSb[ ( Y2 >> 24 ) & 0xFF ]) << 24 );
         }
 
         PUT_UINT32_LE( X0, output,  0 );
@@ -824,7 +824,7 @@ uint32_t RT3[256] = { RT };
                 aes_crypt_ecb( ctx, mode, input, output );
 
                 for( i = 0; i < 16; i++ )
-                    output[i] = (unsigned char)( output[i] ^ iv[i] );
+                    output[i] = static_cast<uint8_t>( output[i] ^ iv[i] );
 
                 memcpy( iv, temp, 16 );
 
@@ -838,7 +838,7 @@ uint32_t RT3[256] = { RT };
             while( length > 0 )
             {
                 for( i = 0; i < 16; i++ )
-                    output[i] = (unsigned char)( input[i] ^ iv[i] );
+                    output[i] = static_cast<uint8_t>( input[i] ^ iv[i] );
 
                 aes_crypt_ecb( ctx, mode, output, output );
                 memcpy( iv, output, 16 );

@@ -20,7 +20,6 @@ path-constant INCLUDEDIR : ../../include ;
 path-constant SYSTEMDIR : ../../src/system/emscripten ;
 path-constant TESTDIR : ../../tests ;
 path-constant SYSTEMTESTDIR : ../../tests/system/emscripten ;
-path-constant TESTSDIR : ./tests ;
 
 #echo "toolset" [ feature.get-values toolset ] ;
 
@@ -93,7 +92,6 @@ project redjs
     : requirements
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
-    <include>$(TESTSDIR)
     <include>$(SYSTEMDIR)
 
     <conditional>@defines
