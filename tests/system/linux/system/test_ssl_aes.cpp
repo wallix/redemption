@@ -45,24 +45,26 @@ BOOST_AUTO_TEST_CASE(TestAES)
                            8, 9, 10, 11, 12, 13, 14, 15,
                            16, 17, 18, 19, 20, 21, 22, 23};
         // init vector not secret
-        uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
+        uint8_t iv24[] = {0, 1, 2, 3, 4, 5, 6, 7,
+                           8, 9, 10, 11, 12, 13, 14, 15,
+                           16, 17, 18, 19, 20, 21, 22, 23};;
         // init vector not secret
-        uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
+        uint8_t iv24d[] = {0, 1, 2, 3, 4, 5, 6, 7,
+                           8, 9, 10, 11, 12, 13, 14, 15,
+                           16, 17, 18, 19, 20, 21, 22, 23};;
 
-        uint8_t inbuf[1024]= "secret très confidentiel\x00\x00\x00\x00\x00\x00\x00\x00";
+        uint8_t inbuf[1024]= {3, 1, 4, 1, 5, 9, 2, 6}; // message to hide
         uint8_t outbuf[1024] = {};
         uint8_t decrypted[1024] = {};
 
-
         aes.set_key(key24, 16);
 
-        aes.crypt_cbc(32, iv, inbuf, outbuf);
+        aes.crypt_cbc(32, iv24, inbuf, outbuf);
 
-        aes.decrypt_cbc(32, iv2, outbuf, decrypted);
+        aes.decrypt_cbc(32, iv24d, outbuf, decrypted);
 
 
-        BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 32),
-                        0);
+        BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 32), 0);
     }
 
 }
