@@ -22,10 +22,8 @@
 #define FRONT_JS_NATIF_HPP
 
 #include <stdio.h>
-//#include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
-//#include <SDL/SDL.h>
 #include <math.h>
 
 
