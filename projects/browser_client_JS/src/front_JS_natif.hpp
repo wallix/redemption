@@ -169,7 +169,6 @@ public:
 
     enum: int {
         KBD_FLAGS_EXTENDED = 0x0100,
-        KBD_FLAGS          = 0
     };
 
     enum: int {
@@ -200,19 +199,9 @@ public:
             }
         }
         if (!found){
-            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
+            //std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
-/*
-        this->_layoutMods[NO_MOD                              ] = this->_keylayout->getnoMod();
-        this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout->getshift();
-        this->_layoutMods[ALTGR_MOD                           ] = this->_keylayout->getaltGr();
-        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = this->_keylayout->getshiftAltGr();
-        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = this->_keylayout->getcapslock_noMod();
-        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = this->_keylayout->getcapslock_shift();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = this->_keylayout->getcapslock_altGr();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = this->_keylayout->getcapslock_shiftAltGr();
-        this->_layoutMods[CTRL_MOD                            ] = this->_keylayout->getctrl();*/
 
     }
 
@@ -540,7 +529,6 @@ public:
             case 0xB8: // TODO
                 {
                     Bitmap bitmapBpp(32, bitmap);
-                    const uint8_t * bitMapData = bitmapBpp.data();
 
                     EM_ASM_({drawable.rDPMem3Blt_0xB8($0    , $1    , $2   , $3   , HEAPU8.subarray($4, $4 + $5),  $6,  $7);},
                                                       rect.x, rect.y, rect.cx, rect.cy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, cmd.back_color);
@@ -815,8 +803,8 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-
 };
+
 
 
 Front_JS_Natif front(0);
@@ -847,7 +835,6 @@ extern "C" void backspacePressed() {
     //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
     //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
     EM_ASM_({ console.log('Backspace'); }, 0);
-
 }
 
 

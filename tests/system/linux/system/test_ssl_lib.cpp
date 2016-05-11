@@ -28,6 +28,7 @@
 // #define LOGNULL
 
 #include <stdio.h>
+#include "utils/log.hpp"
 #include "system/ssl_lib.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/gcc.hpp"

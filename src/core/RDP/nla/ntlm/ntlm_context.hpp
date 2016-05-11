@@ -21,7 +21,7 @@
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
 #define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
 
-#include "system/ssl_calls.hpp"
+//#include "system/ssl_calls.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
@@ -31,6 +31,10 @@
 #include "core/RDP/nla/ntlm/ntlm_message_challenge.hpp"
 #include "core/RDP/nla/ntlm/ntlm_message_authenticate.hpp"
 #include "core/RDP/nla/sspi.hpp"
+
+#include "system/ssl_md5.hpp"
+#include "system/ssl_rc4.hpp"
+#include "system/ssl_md4.hpp"
 
 enum NtlmState {
     NTLM_STATE_INITIAL,

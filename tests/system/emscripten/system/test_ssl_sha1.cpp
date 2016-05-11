@@ -31,6 +31,8 @@
 #include "system/ssl_sha1.hpp"
 
 
+
+
 BOOST_AUTO_TEST_CASE(TestSslSha1)
 {
     uint8_t sig[20];
@@ -244,7 +246,28 @@ BOOST_AUTO_TEST_CASE(TestSslSha1_direct)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestSslHmacSHA1_direct)
+{
+    const uint8_t key[] = "key";
+    // const uint8_t key[] = "";
+    SslHMAC_Sha1_direct hmac(key, sizeof(key)-1);
 
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg)-1);
+
+    uint8_t sig[SHA_DIGEST_LENGTH];
+    hmac.final(sig, SHA_DIGEST_LENGTH);
+
+    BOOST_CHECK_EQUAL(SHA_DIGEST_LENGTH, 20);
+
+    BOOST_CHECK_EQUAL(memcmp(sig,
+                             "\xde\x7c\x9b\x85\xb8\xb7\x8a\xa6\xbc\x8a\x7a\x36\xf7\x0a\x90\x70\x1c\x9d\xb4\xd9",
+                             SHA_DIGEST_LENGTH),
+                      0);
+    hexdump96_c(sig, sizeof(sig));
+
+}
 
 
 

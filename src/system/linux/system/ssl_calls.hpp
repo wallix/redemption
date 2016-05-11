@@ -38,88 +38,7 @@
 #include "utils/bitfu.hpp"
 #include <strings.h>
 
-
-enum {
-    SEC_RANDOM_SIZE   = 32,
-    SEC_MODULUS_SIZE  = 64,
-    SEC_MAX_MODULUS_SIZE  = /*256*/512,
-    SEC_PADDING_SIZE  =  8,
-    SEC_EXPONENT_SIZE =  4
-};
-
-/*class SslSha1
-{
-    SHA_CTX sha1;
-
-    public:
-    SslSha1()
-    {
-        int res = 0;
-        res = SHA1_Init(&this->sha1);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
-        }
-    }
-
-    void update(const char * const data,  size_t data_size)
-    {
-        this->update(reinterpret_cast<const uint8_t * const>(data), data_size);
-    }
-
-    void update(const uint8_t * const data,  size_t data_size)
-    {
-        int res = 0;
-        res = SHA1_Update(&this->sha1, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
-        }
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        assert(SHA_DIGEST_LENGTH == out_data_size);
-        int res = 0;
-        res = SHA1_Final(out_data, &this->sha1);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
-        }
-    }
-};*/
-
-class SslSha256
-{
-    SHA256_CTX sha256;
-
-    public:
-    SslSha256()
-    {
-        int res = 0;
-        res = SHA256_Init(&this->sha256);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
-        }
-    }
-
-    void update(const uint8_t * const data,  size_t data_size)
-    {
-        int res = 0;
-        res = SHA256_Update(&this->sha256, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
-        }
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        assert(SHA256_DIGEST_LENGTH == out_data_size);
-        int res = 0;
-        res = SHA256_Final(out_data, &this->sha256);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
-        }
-    }
-};
-
+/*
 class SslMd5
 {
     MD5_CTX md5;
@@ -145,9 +64,9 @@ class SslMd5
         }
         MD5_Final(out_data, &this->md5);
     }
-};
+};*/
 
-class SslMd4
+/*class SslMd4
 {
     MD4_CTX md4;
 
@@ -172,10 +91,10 @@ class SslMd4
         }
         MD4_Final(out_data, &this->md4);
     }
-};
+};*/
 
 
-class SslRC4
+/*class SslRC4
 {
     RC4_KEY rc4;
 
@@ -190,7 +109,7 @@ class SslRC4
     void crypt(size_t data_size, const uint8_t * const indata, uint8_t * const outdata){
         RC4(&this->rc4, data_size, indata, outdata);
     }
-};
+};*/
 
 class SslAES
 {
@@ -226,106 +145,7 @@ class SslAES
     }
 };
 
-class SslHMAC_Sha1
-{
-    HMAC_CTX hmac;
-
-    public:
-    SslHMAC_Sha1(const uint8_t * const key, size_t key_size)
-    {
-        HMAC_CTX_init(&this->hmac);
-        int res = 0;
-        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_sha1(), nullptr);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
-        }
-    }
-
-    ~SslHMAC_Sha1()
-    {
-        HMAC_CTX_cleanup(&this->hmac);
-    }
-
-    void update(const uint8_t * const data, size_t data_size)
-    {
-        int res = 0;
-        res = HMAC_Update(&this->hmac, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
-        }
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        unsigned int len = 0;
-        int res = 0;
-        if (SHA_DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[SHA_DIGEST_LENGTH];
-            res = HMAC_Final(&this->hmac, tmp, &len);
-            if (res == 0) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
-        res = HMAC_Final(&this->hmac, out_data, &len);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-        }
-    }
-};
-
-class SslHMAC_Sha256
-{
-    HMAC_CTX hmac;
-
-    public:
-    SslHMAC_Sha256(const uint8_t * const key, size_t key_size)
-    {
-        HMAC_CTX_init(&this->hmac);
-        int res = 0;
-        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_sha256(), nullptr);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
-        }
-    }
-
-    ~SslHMAC_Sha256()
-    {
-        HMAC_CTX_cleanup(&this->hmac);
-    }
-
-    void update(const uint8_t * const data, size_t data_size)
-    {
-        int res = 0;
-        res = HMAC_Update(&this->hmac, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
-        }
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        unsigned int len = 0;
-        int res = 0;
-        if (SHA256_DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[SHA256_DIGEST_LENGTH];
-            res = HMAC_Final(&this->hmac, tmp, &len);
-            if (res == 0) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
-        res = HMAC_Final(&this->hmac, out_data, &len);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-        }
-    }
-};
-
-
-class SslHMAC_Md5
+/*class SslHMAC_Md5
 {
     HMAC_CTX hmac;
 
@@ -372,10 +192,10 @@ class SslHMAC_Md5
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
     }
-};
+};*/
 
 
-class SslHMAC
+/*class SslHMAC
 {
     HMAC_CTX hmac;
 
@@ -424,6 +244,6 @@ class SslHMAC
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
     }
-};
+};*/
 
 

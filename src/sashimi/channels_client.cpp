@@ -21,12 +21,14 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
+#include "system/ssl_md5.hpp"
+
 
 // les cibles devraient toutes avoir une session cible, même celles gérées par FD => remplace fd_poll
 void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
 {
     syslog(LOG_INFO, "%s --- fd=%d revent=%u", __FUNCTION__, fd_poll->x_fd, revents);
-            
+
     if (!fd_poll->lock){
         syslog(LOG_INFO, "%s polling CLIENT (FD) not locked", __FUNCTION__);
         /* avoid having any event caught during callback */
@@ -103,7 +105,7 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
  * @param[in]  session  The SSH session to use.
  */
 void ssh_disconnect_client(SshClientSession * client_session) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     if (client_session->socket != NULL && client_session->socket->fd_in != SSH_INVALID_SOCKET) {
         client_session->out_buffer->out_uint8(SSH_MSG_DISCONNECT);
@@ -142,9 +144,9 @@ void ssh_disconnect_client(SshClientSession * client_session) {
 //      byte      SSH_MSG_UNIMPLEMENTED
 //      uint32    packet sequence number of rejected message
 
-void ssh_send_unimplemented_client(SshClientSession * client_session) 
+void ssh_send_unimplemented_client(SshClientSession * client_session)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_ERR,"Can't do anything with packet type %d",client_session->in_packet_type);
     client_session->out_buffer->out_uint8(SSH_MSG_UNIMPLEMENTED);
     client_session->out_buffer->out_uint32_be(client_session->recv_seq-1);
@@ -153,7 +155,7 @@ void ssh_send_unimplemented_client(SshClientSession * client_session)
 
 static inline void handle_ssh_packet_unimplemented_client(SshClientSession * client_session, ssh_buffer_struct* packet, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t seq = client_session->in_buffer->in_uint32_be();
     syslog(LOG_ERR, "Received SSH_MSG_UNIMPLEMENTED (sequence number %d)", seq);
 }
@@ -194,13 +196,13 @@ static inline void handle_ssh_packet_unimplemented_client(SshClientSession * cli
 
 int ssh_send_debug_client(SshClientSession * client_session, const char *message, int always_display)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     client_session->out_buffer->out_uint8(SSH_MSG_DEBUG);
     client_session->out_buffer->out_uint8(always_display);
     client_session->out_buffer->out_length_prefixed_cstr(message);
     /* Empty language tag */
     client_session->out_buffer->out_uint32_be(0);
-    client_session->packet_send();  
+    client_session->packet_send();
     return SSH_OK;
 }
 
@@ -208,7 +210,7 @@ int ssh_send_debug_client(SshClientSession * client_session, const char *message
 
 static inline void handle_ssh_packet_disconnect_client(SshClientSession * client_session, ssh_buffer_struct* packet, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t code = packet->in_uint32_be();
     // TODO: error should be read directly from stream
     // and should be filtered to avoid some attacks
@@ -226,7 +228,7 @@ static inline void handle_ssh_packet_disconnect_client(SshClientSession * client
 // SSH_MSG_SERVICE_REQUEST
 static inline void handle_ssh_packet_service_request_client(SshClientSession * client_session, ssh_buffer_struct* packet, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     // SSH_REQUEST_SERVICE
     char * service = packet->in_strdup_cstr();
     syslog(LOG_INFO, "Received a SERVICE_REQUEST for service %s", service);
@@ -235,7 +237,7 @@ static inline void handle_ssh_packet_service_request_client(SshClientSession * c
 
 static inline int handle_ssh_packet_service_accept_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet, void *user)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     (void)packet;
     (void)type;
     (void)user;
@@ -667,17 +669,17 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
 // TODO: do one function for server the other for client
 static inline int ssh_packet_kexinit_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     if (client_session->session_state == SSH_SESSION_STATE_AUTHENTICATED){
         syslog(LOG_WARNING, "Other side initiating key re-exchange");
-    } 
+    }
     else if(client_session->session_state != SSH_SESSION_STATE_INITIAL_KEX){
         ssh_set_error(client_session->error,  SSH_FATAL,"SSH_KEXINIT received in wrong state");
         client_session->session_state = SSH_SESSION_STATE_ERROR;
         return SSH_PACKET_USED;
     }
-    
+
     if (packet->buffer_get_data(client_session->next_crypto->server_kex.cookie,16) != 16) {
         ssh_set_error(client_session->error,  SSH_FATAL, "ssh_packet_kexinit_client: no cookie in packet");
         client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -702,25 +704,25 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
     client_session->dh_handshake_state = DH_STATE_INIT;
     client_session->client_callbacks->connect_status_function(client_session->client_callbacks->userdata, 0.6f);
 
-    syslog(LOG_INFO, "kex algos: %s", 
+    syslog(LOG_INFO, "kex algos: %s",
         client_session->next_crypto->server_kex.methods[SSH_KEX].cstr());
-    syslog(LOG_INFO, "server host key algo: %s", 
+    syslog(LOG_INFO, "server host key algo: %s",
         client_session->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr());
-    syslog(LOG_INFO, "encryption client->server: %s", 
+    syslog(LOG_INFO, "encryption client->server: %s",
         client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr());
-    syslog(LOG_INFO, "encryption server->client: %s", 
+    syslog(LOG_INFO, "encryption server->client: %s",
         client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr());
-    syslog(LOG_INFO, "mac algo client->server: %s", 
+    syslog(LOG_INFO, "mac algo client->server: %s",
         client_session->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr());
-    syslog(LOG_INFO, "mac algo server->client: %s", 
+    syslog(LOG_INFO, "mac algo server->client: %s",
         client_session->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr());
-    syslog(LOG_INFO, "compression algo client->server: %s", 
+    syslog(LOG_INFO, "compression algo client->server: %s",
         client_session->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr());
-    syslog(LOG_INFO, "compression algo server->client: %s", 
+    syslog(LOG_INFO, "compression algo server->client: %s",
         client_session->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr());
-    syslog(LOG_INFO, "languages client->server: %s", 
+    syslog(LOG_INFO, "languages client->server: %s",
         client_session->next_crypto->server_kex.methods[SSH_LANG_C_S].cstr());
-    syslog(LOG_INFO, "languages server->client: %s", 
+    syslog(LOG_INFO, "languages server->client: %s",
         client_session->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr());
 
     RAND_pseudo_bytes(client_session->next_crypto->client_kex.cookie, 16);
@@ -744,45 +746,45 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
     syslog(LOG_INFO,"Initialising client methods");
 
-    client_session->next_crypto->client_kex.methods[SSH_KEX] = 
+    client_session->next_crypto->client_kex.methods[SSH_KEX] =
         (client_session->opts.wanted_methods[SSH_KEX] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_KEX] 
+            ?client_session->opts.wanted_methods[SSH_KEX]
             :default_methods[SSH_KEX];
-    client_session->next_crypto->client_kex.methods[SSH_HOSTKEYS] = 
+    client_session->next_crypto->client_kex.methods[SSH_HOSTKEYS] =
         (client_session->opts.wanted_methods[SSH_HOSTKEYS] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_HOSTKEYS] 
+            ?client_session->opts.wanted_methods[SSH_HOSTKEYS]
             :default_methods[SSH_HOSTKEYS];
     client_session->next_crypto->client_kex.methods[SSH_CRYPT_C_S] =
         (client_session->opts.wanted_methods[SSH_CRYPT_C_S] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_CRYPT_C_S] 
+            ?client_session->opts.wanted_methods[SSH_CRYPT_C_S]
             :default_methods[SSH_CRYPT_C_S];
     client_session->next_crypto->client_kex.methods[SSH_CRYPT_S_C] =
         (client_session->opts.wanted_methods[SSH_CRYPT_S_C] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_CRYPT_S_C] 
+            ?client_session->opts.wanted_methods[SSH_CRYPT_S_C]
             :default_methods[SSH_CRYPT_S_C];
     client_session->next_crypto->client_kex.methods[SSH_MAC_C_S] =
         (client_session->opts.wanted_methods[SSH_MAC_C_S] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_MAC_C_S] 
+            ?client_session->opts.wanted_methods[SSH_MAC_C_S]
             :default_methods[SSH_MAC_C_S];
     client_session->next_crypto->client_kex.methods[SSH_MAC_S_C] =
         (client_session->opts.wanted_methods[SSH_MAC_S_C] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_MAC_S_C] 
+            ?client_session->opts.wanted_methods[SSH_MAC_S_C]
             :default_methods[SSH_MAC_S_C];
     client_session->next_crypto->client_kex.methods[SSH_COMP_C_S] =
         (client_session->opts.wanted_methods[SSH_COMP_C_S] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_COMP_C_S] 
+            ?client_session->opts.wanted_methods[SSH_COMP_C_S]
             :default_methods[SSH_COMP_C_S];
     client_session->next_crypto->client_kex.methods[SSH_COMP_S_C] =
         (client_session->opts.wanted_methods[SSH_COMP_S_C] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_COMP_S_C] 
+            ?client_session->opts.wanted_methods[SSH_COMP_S_C]
             :default_methods[SSH_COMP_S_C];
     client_session->next_crypto->client_kex.methods[SSH_LANG_S_C] =
         (client_session->opts.wanted_methods[SSH_LANG_S_C] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_LANG_S_C] 
+            ?client_session->opts.wanted_methods[SSH_LANG_S_C]
             :default_methods[SSH_LANG_S_C];
     client_session->next_crypto->client_kex.methods[SSH_LANG_C_S] =
         (client_session->opts.wanted_methods[SSH_LANG_C_S] != nullptr)
-            ?client_session->opts.wanted_methods[SSH_LANG_C_S] 
+            ?client_session->opts.wanted_methods[SSH_LANG_C_S]
             :default_methods[SSH_LANG_C_S];
 
     client_session->next_crypto->kex_methods[SSH_KEX] = find_matching(
@@ -804,13 +806,13 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
     // and use it there and whenever necessary
     if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group1-sha1") == 0){
       client_session->next_crypto->kex_type = SSH_KEX_DH_GROUP1_SHA1;
-    } 
+    }
     else if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group14-sha1") == 0){
       client_session->next_crypto->kex_type = SSH_KEX_DH_GROUP14_SHA1;
-    } 
+    }
     else if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "ecdh-sha2-nistp256") == 0){
       client_session->next_crypto->kex_type = SSH_KEX_ECDH_SHA2_NISTP256;
-    } 
+    }
     else if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "curve25519-sha256@libssh.org") == 0){
       client_session->next_crypto->kex_type = SSH_KEX_CURVE25519_SHA256_LIBSSH_ORG;
     }
@@ -822,8 +824,8 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
     if (client_session->next_crypto->kex_methods[SSH_HOSTKEYS].size == 0){
         ssh_set_error(client_session->error, SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-            "server host key algo", 
-            client_session->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(), 
+            "server host key algo",
+            client_session->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
         client_session->socket->close();
         client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -831,28 +833,28 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
     }
 
     client_session->next_crypto->kex_methods[SSH_CRYPT_C_S] = find_matching(
-            client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(), 
+            client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr(),
             ',');
 
     if (client_session->next_crypto->kex_methods[SSH_CRYPT_C_S].size == 0){
         ssh_set_error(client_session->error, SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-            "encryption client->server", 
-            client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(), 
+            "encryption client->server",
+            client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr());
         client_session->socket->close();
         client_session->session_state = SSH_SESSION_STATE_ERROR;
         return SSH_PACKET_USED;
     }
     client_session->next_crypto->kex_methods[SSH_CRYPT_S_C] = find_matching(
-        client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(), 
+        client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
         client_session->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr(),
         ',');
 
     if (client_session->next_crypto->kex_methods[SSH_CRYPT_S_C].size == 0){
         ssh_set_error(client_session->error, SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-            "encryption server->client", 
-            client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(), 
+            "encryption server->client",
+            client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr());
         client_session->socket->close();
         client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -866,8 +868,8 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
     if (client_session->next_crypto->kex_methods[SSH_MAC_C_S].size == 0){
         ssh_set_error(client_session->error, SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-            "mac algo client->server", 
-            client_session->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(), 
+            "mac algo client->server",
+            client_session->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr());
         client_session->socket->close();
         client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -881,8 +883,8 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
     if (client_session->next_crypto->kex_methods[SSH_MAC_S_C].size == 0){
         ssh_set_error(client_session->error, SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-            "mac algo server->client", 
-            client_session->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(), 
+            "mac algo server->client",
+            client_session->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr());
         client_session->socket->close();
         client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -895,8 +897,8 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
     if (client_session->next_crypto->kex_methods[SSH_COMP_C_S].size == 0){
         ssh_set_error(client_session->error,SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-            "compression algo client->server", 
-            client_session->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(), 
+            "compression algo client->server",
+            client_session->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr());
         client_session->socket->close();
         client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -909,8 +911,8 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
 
     if (client_session->next_crypto->kex_methods[SSH_COMP_S_C].size == 0){
         ssh_set_error(client_session->error,SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-            "compression algo server->client", 
-            client_session->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(), 
+            "compression algo server->client",
+            client_session->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(),
             client_session->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr());
         client_session->socket->close();
         client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -924,30 +926,30 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
     client_session->next_crypto->kex_methods[SSH_LANG_S_C] = find_matching(
         client_session->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr(),
         client_session->next_crypto->client_kex.methods[SSH_LANG_S_C].cstr(),
-        ',');   
+        ',');
 
     client_session->out_buffer->out_uint8(SSH_MSG_KEXINIT);
     client_session->out_buffer->out_blob(client_session->next_crypto->client_kex.cookie, 16);
 
-    syslog(LOG_INFO, "kex algos: %s", 
+    syslog(LOG_INFO, "kex algos: %s",
         client_session->next_crypto->client_kex.methods[SSH_KEX].cstr());
-    syslog(LOG_INFO, "server host key algo: %s", 
+    syslog(LOG_INFO, "server host key algo: %s",
         client_session->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
-    syslog(LOG_INFO, "encryption client->server: %s", 
+    syslog(LOG_INFO, "encryption client->server: %s",
         client_session->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr());
-    syslog(LOG_INFO, "encryption server->client: %s", 
+    syslog(LOG_INFO, "encryption server->client: %s",
         client_session->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr());
-    syslog(LOG_INFO, "mac algo client->server: %s", 
+    syslog(LOG_INFO, "mac algo client->server: %s",
         client_session->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr());
-    syslog(LOG_INFO, "mac algo server->client: %s", 
+    syslog(LOG_INFO, "mac algo server->client: %s",
         client_session->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr());
-    syslog(LOG_INFO, "compression algo client->server: %s", 
+    syslog(LOG_INFO, "compression algo client->server: %s",
         client_session->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr());
-    syslog(LOG_INFO, "compression algo server->client: %s", 
+    syslog(LOG_INFO, "compression algo server->client: %s",
         client_session->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr());
-    syslog(LOG_INFO, "languages client->server: %s", 
+    syslog(LOG_INFO, "languages client->server: %s",
         client_session->next_crypto->client_kex.methods[SSH_LANG_C_S].cstr());
-    syslog(LOG_INFO, "languages server->client: %s", 
+    syslog(LOG_INFO, "languages server->client: %s",
         client_session->next_crypto->client_kex.methods[SSH_LANG_S_C].cstr());
 
     client_session->out_buffer->out_sshstring(client_session->next_crypto->client_kex.methods[SSH_KEX]);
@@ -994,9 +996,9 @@ static inline int ssh_packet_kexinit_client(SshClientSession * client_session, s
  * @warning this function returning is no proof that DH handshake is
  * completed
  */
-static int dh_handshake_client(SshClientSession * client_session, error_struct & error) 
+static int dh_handshake_client(SshClientSession * client_session, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     switch (client_session->dh_handshake_state) {
     case DH_STATE_INIT:
         switch(client_session->next_crypto->kex_type){
@@ -1005,7 +1007,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
             client_session->next_crypto->x = BN_new();
             BN_rand(client_session->next_crypto->x, 128, 0, -1);
 
-            // TODO: see how to simplify bignum ctx allocation    
+            // TODO: see how to simplify bignum ctx allocation
             BN_CTX* ctx = BN_CTX_new();
             client_session->next_crypto->e = BN_new();
             BIGNUM * g = BN_new();
@@ -1032,7 +1034,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
 
             BN_clear_free(g);
             BN_CTX_free(ctx);
-            
+
             {
                 unsigned int len3 = BN_num_bytes(client_session->next_crypto->e);
                 unsigned int bits3 = BN_num_bits(client_session->next_crypto->e);
@@ -1056,7 +1058,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
             client_session->next_crypto->x = BN_new();
             BN_rand(client_session->next_crypto->x, 128, 0, -1);
 
-            // TODO: see how to simplify bignum ctx allocation    
+            // TODO: see how to simplify bignum ctx allocation
             BN_CTX* ctx = BN_CTX_new();
             client_session->next_crypto->e = BN_new();
             BIGNUM * g = BN_new();
@@ -1093,7 +1095,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
 
             BN_clear_free(g);
             BN_CTX_free(ctx);
-            
+
             {
                 unsigned int len3 = BN_num_bytes(client_session->next_crypto->e);
                 unsigned int bits3 = BN_num_bits(client_session->next_crypto->e);
@@ -1128,13 +1130,13 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
             int len = EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, ctx);
 
             client_session->next_crypto->ecdh.client_pubkey = SSHString(len);
-            EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED, 
+            EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED,
                                client_session->next_crypto->ecdh.client_pubkey.data.get(), len, ctx);
             BN_CTX_free(ctx);
 
             client_session->out_buffer->out_uint8(SSH_MSG_KEX_ECDH_INIT);
             client_session->out_buffer->out_uint32_be(client_session->next_crypto->ecdh.client_pubkey.size);
-            client_session->out_buffer->out_blob(client_session->next_crypto->ecdh.client_pubkey.data.get(), 
+            client_session->out_buffer->out_blob(client_session->next_crypto->ecdh.client_pubkey.data.get(),
                                           client_session->next_crypto->ecdh.client_pubkey.size);
 
             client_session->packet_send();
@@ -1175,7 +1177,7 @@ static int dh_handshake_client(SshClientSession * client_session, error_struct &
 
 
 static void ssh_connection_callback_client(SshClientSession * client_session, error_struct & error){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     switch(client_session->session_state){
         case SSH_SESSION_STATE_NONE:
         case SSH_SESSION_STATE_CONNECTING:
@@ -1196,7 +1198,7 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
 
                 client_session->next_crypto->server_kex.methods[SSH_KEX] = "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
                 client_session->next_crypto->server_kex.methods[SSH_HOSTKEYS] = "ecdsa-sha2-nistp256,ssh-rsa,ssh-dss";
-                
+
                 client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
                 client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
                 client_session->next_crypto->server_kex.methods[SSH_MAC_C_S] = "hmac-sha1";
@@ -1211,25 +1213,25 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             }
 
 
-            syslog(LOG_INFO, "kex algos: %s", 
+            syslog(LOG_INFO, "kex algos: %s",
                 client_session->next_crypto->server_kex.methods[SSH_KEX].cstr());
-            syslog(LOG_INFO, "server host key algo: %s", 
+            syslog(LOG_INFO, "server host key algo: %s",
                 client_session->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr());
-            syslog(LOG_INFO, "encryption client->server: %s", 
+            syslog(LOG_INFO, "encryption client->server: %s",
                 client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr());
-            syslog(LOG_INFO, "encryption server->client: %s", 
+            syslog(LOG_INFO, "encryption server->client: %s",
                 client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr());
-            syslog(LOG_INFO, "mac algo client->server: %s", 
+            syslog(LOG_INFO, "mac algo client->server: %s",
                 client_session->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr());
-            syslog(LOG_INFO, "mac algo server->client: %s", 
+            syslog(LOG_INFO, "mac algo server->client: %s",
                 client_session->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr());
-            syslog(LOG_INFO, "compression algo client->server: %s", 
+            syslog(LOG_INFO, "compression algo client->server: %s",
                 client_session->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr());
-            syslog(LOG_INFO, "compression algo server->client: %s", 
+            syslog(LOG_INFO, "compression algo server->client: %s",
                 client_session->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr());
-            syslog(LOG_INFO, "languages client->server: %s", 
+            syslog(LOG_INFO, "languages client->server: %s",
                 client_session->next_crypto->server_kex.methods[SSH_LANG_C_S].cstr());
-            syslog(LOG_INFO, "languages server->client: %s", 
+            syslog(LOG_INFO, "languages server->client: %s",
                 client_session->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr());
 
 
@@ -1253,13 +1255,13 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             // and use it there and whenever necessary
             if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group1-sha1") == 0){
               client_session->next_crypto->kex_type = SSH_KEX_DH_GROUP1_SHA1;
-            } 
+            }
             else if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "diffie-hellman-group14-sha1") == 0){
               client_session->next_crypto->kex_type = SSH_KEX_DH_GROUP14_SHA1;
-            } 
+            }
             else if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "ecdh-sha2-nistp256") == 0){
               client_session->next_crypto->kex_type = SSH_KEX_ECDH_SHA2_NISTP256;
-            } 
+            }
             else if(strcmp(client_session->next_crypto->kex_methods[SSH_KEX].cstr(), "curve25519-sha256@libssh.org") == 0){
               client_session->next_crypto->kex_type = SSH_KEX_CURVE25519_SHA256_LIBSSH_ORG;
             }
@@ -1284,8 +1286,8 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
 
             if (client_session->next_crypto->kex_methods[SSH_HOSTKEYS].size == 0){
                 ssh_set_error(client_session->error, SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-                    "server host key algo", 
-                    client_session->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(), 
+                    "server host key algo",
+                    client_session->next_crypto->server_kex.methods[SSH_HOSTKEYS].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
                 client_session->socket->close();
                 client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -1293,29 +1295,29 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             }
 
             client_session->next_crypto->kex_methods[SSH_CRYPT_C_S] = find_matching(
-                    client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(), 
+                    client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr(),
                     ',');
 
             if (client_session->next_crypto->kex_methods[SSH_CRYPT_C_S].size == 0){
                 ssh_set_error(client_session->error, SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
-                    "encryption client->server", 
-                    client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(), 
+                    "encryption client->server",
+                    client_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr());
                 client_session->socket->close();
                 client_session->session_state = SSH_SESSION_STATE_ERROR;
                 return;
             }
             client_session->next_crypto->kex_methods[SSH_CRYPT_S_C] = find_matching(
-                client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(), 
+                client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
                 client_session->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr(),
                 ',');
 
             if (client_session->next_crypto->kex_methods[SSH_CRYPT_S_C].size == 0){
                 ssh_set_error(client_session->error, SSH_FATAL,"kex error : no match for method %s: server [%s], client [%s]",
-                    "mac algo server->client", 
-                    client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(), 
+                    "mac algo server->client",
+                    client_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr());
                 client_session->socket->close();
                 client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -1330,8 +1332,8 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             if (client_session->next_crypto->kex_methods[SSH_MAC_C_S].size == 0){
                 ssh_set_error(client_session->error, SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
-                    "mac algo client->server", 
-                    client_session->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(), 
+                    "mac algo client->server",
+                    client_session->next_crypto->server_kex.methods[SSH_MAC_C_S].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr());
                 client_session->socket->close();
                 client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -1346,8 +1348,8 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             if (client_session->next_crypto->kex_methods[SSH_MAC_S_C].size == 0){
                 ssh_set_error(client_session->error, SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
-                    "mac algo server->client", 
-                    client_session->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(), 
+                    "mac algo server->client",
+                    client_session->next_crypto->server_kex.methods[SSH_MAC_S_C].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr());
                 client_session->socket->close();
                 client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -1361,8 +1363,8 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             if (client_session->next_crypto->kex_methods[SSH_COMP_C_S].size == 0){
                 ssh_set_error(client_session->error,SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
-                    "compression algo client->server", 
-                    client_session->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(), 
+                    "compression algo client->server",
+                    client_session->next_crypto->server_kex.methods[SSH_COMP_C_S].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr());
                 client_session->socket->close();
                 client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -1376,8 +1378,8 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             if (client_session->next_crypto->kex_methods[SSH_COMP_S_C].size == 0){
                 ssh_set_error(client_session->error,SSH_FATAL,
                     "kex error : no match for method %s: server [%s], client [%s]",
-                    "compression algo server->client", 
-                    client_session->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(), 
+                    "compression algo server->client",
+                    client_session->next_crypto->server_kex.methods[SSH_COMP_S_C].cstr(),
                     client_session->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr());
                 client_session->socket->close();
                 client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -1391,32 +1393,32 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
             client_session->next_crypto->kex_methods[SSH_LANG_S_C] = find_matching(
                 client_session->next_crypto->server_kex.methods[SSH_LANG_S_C].cstr(),
                 client_session->next_crypto->client_kex.methods[SSH_LANG_S_C].cstr(),
-                ',');   
+                ',');
 
             client_session->out_buffer->out_uint8(SSH_MSG_KEXINIT);
             client_session->out_buffer->out_blob(client_session->next_crypto->client_kex.cookie, 16);
 
-            syslog(LOG_INFO, "kex algos: %s", 
+            syslog(LOG_INFO, "kex algos: %s",
                 client_session->next_crypto->client_kex.methods[SSH_KEX].cstr());
-            syslog(LOG_INFO, "server host key algo: %s", 
+            syslog(LOG_INFO, "server host key algo: %s",
                 client_session->next_crypto->client_kex.methods[SSH_HOSTKEYS].cstr());
-            syslog(LOG_INFO, "encryption client->server: %s", 
+            syslog(LOG_INFO, "encryption client->server: %s",
                 client_session->next_crypto->client_kex.methods[SSH_CRYPT_C_S].cstr());
-            syslog(LOG_INFO, "encryption server->client: %s", 
+            syslog(LOG_INFO, "encryption server->client: %s",
                 client_session->next_crypto->client_kex.methods[SSH_CRYPT_S_C].cstr());
-            syslog(LOG_INFO, "mac algo client->server: %s", 
+            syslog(LOG_INFO, "mac algo client->server: %s",
                 client_session->next_crypto->client_kex.methods[SSH_MAC_C_S].cstr());
-            syslog(LOG_INFO, "mac algo server->client: %s", 
+            syslog(LOG_INFO, "mac algo server->client: %s",
                 client_session->next_crypto->client_kex.methods[SSH_MAC_S_C].cstr());
-            syslog(LOG_INFO, "compression algo client->server: %s", 
+            syslog(LOG_INFO, "compression algo client->server: %s",
                 client_session->next_crypto->client_kex.methods[SSH_COMP_C_S].cstr());
-            syslog(LOG_INFO, "compression algo server->client: %s", 
+            syslog(LOG_INFO, "compression algo server->client: %s",
                 client_session->next_crypto->client_kex.methods[SSH_COMP_S_C].cstr());
-            syslog(LOG_INFO, "languages client->server: %s", 
+            syslog(LOG_INFO, "languages client->server: %s",
                 client_session->next_crypto->client_kex.methods[SSH_LANG_C_S].cstr());
-            syslog(LOG_INFO, "languages server->client: %s", 
+            syslog(LOG_INFO, "languages server->client: %s",
                 client_session->next_crypto->client_kex.methods[SSH_LANG_S_C].cstr());
-            
+
 
             client_session->out_buffer->out_sshstring(client_session->next_crypto->client_kex.methods[SSH_KEX]);
             client_session->out_buffer->out_sshstring(client_session->next_crypto->client_kex.methods[SSH_HOSTKEYS]);
@@ -1483,7 +1485,7 @@ static void ssh_connection_callback_client(SshClientSession * client_session, er
 
 static void handle_signal_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char * sig = packet->in_strdup_cstr();
     syslog(LOG_INFO,
       "SSH_MSG_CHANNEL_REQUEST '%s' <%s> for channel %s wr=%d",
@@ -1500,7 +1502,7 @@ static void handle_signal_request_client(SshClientSession * client_session, ssh_
 
 static inline void handle_exit_signal_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char * sig = packet->in_strdup_cstr();
     uint8_t i = packet->in_uint8();
     const char *core = i?"(core dumped)":"";
@@ -1525,7 +1527,7 @@ static inline void handle_exit_signal_request_client(SshClientSession * client_s
 
 static inline void handle_auth_agent_req_at_openssh_dot_com_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO,
       "SSH_MSG_CHANNEL_REQUEST '%s' <> for channel %s wr=%d",
       "auth-agent-req@openssh.com", channel->show(), want_reply);
@@ -1545,7 +1547,7 @@ static inline void handle_auth_agent_req_at_openssh_dot_com_request_client(SshCl
 
 static inline void handle_pty_req_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char * TERM = packet->in_strdup_cstr();
     uint32_t width = packet->in_uint32_be();
     uint32_t height = packet->in_uint32_be();
@@ -1584,22 +1586,22 @@ static inline void handle_pty_req_request_client(SshClientSession * client_sessi
 
 static inline void handle_window_change_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t width = packet->in_uint32_be();
     uint32_t height = packet->in_uint32_be();
     uint32_t pxwidth = packet->in_uint32_be();
-    uint32_t pxheight = packet->in_uint32_be(); 
+    uint32_t pxheight = packet->in_uint32_be();
 
     syslog(LOG_INFO,
       "SSH_MSG_CHANNEL_REQUEST '%s' <%d, %d, %d, %d> for channel %s wr=%d",
-      "window-change", static_cast<int>(width), static_cast<int>(height), static_cast<int>(pxwidth), static_cast<int>(pxheight), 
+      "window-change", static_cast<int>(width), static_cast<int>(height), static_cast<int>(pxwidth), static_cast<int>(pxheight),
       channel->show(), want_reply);
 }
 
 
 static inline void handle_subsystem_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char *subsystem = packet->in_strdup_cstr();
 
     syslog(LOG_INFO,
@@ -1623,7 +1625,7 @@ static inline void handle_subsystem_request_client(SshClientSession * client_ses
 
 static inline void handle_shell_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO,
       "SSH_MSG_CHANNEL_REQUEST '%s' <> for channel %s wr=%d",
       "shell", channel->show(), want_reply);
@@ -1633,7 +1635,7 @@ static inline void handle_shell_request_client(SshClientSession * client_session
 
 static inline void handle_exec_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char * command = packet->in_strdup_cstr();
 
     syslog(LOG_INFO,
@@ -1666,7 +1668,7 @@ static inline void handle_exec_request_client(SshClientSession * client_session,
 
 static inline void handle_env_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char * var_name = packet->in_strdup_cstr();
     char * var_value = packet->in_strdup_cstr();
 
@@ -1681,7 +1683,7 @@ static inline void handle_env_request_client(SshClientSession * client_session, 
 
 static inline void handle_x11_req_request_client(SshClientSession * client_session, ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO,
       "Received a %s channel_request for channel (%d:%d) (want_reply=%hhd)",
       "x11-req", channel->local_channel, channel->remote_channel, want_reply);
@@ -1698,8 +1700,8 @@ static inline void handle_x11_req_request_client(SshClientSession * client_sessi
 
 void SshClientSession::handle_channel_rcv_request_client(ssh_buffer_struct* packet, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-//    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+//    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = this->ssh_channel_from_local(chan);
@@ -1714,12 +1716,12 @@ void SshClientSession::handle_channel_rcv_request_client(ssh_buffer_struct* pack
     const char * request = packet->in_strdup_cstr();
     uint8_t request_code = get_request_code(request);
     if (request_code == REQUEST_STRING_UNKNOWN){
-      syslog(LOG_INFO, "%s --- Unknown channel request %s %s", 
-        __FUNCTION__, request, channel->show());    
+      syslog(LOG_INFO, "%s --- Unknown channel request %s %s",
+        __FUNCTION__, request, channel->show());
       return;
     }
     delete request;
-    
+
     uint8_t want_reply = packet->in_uint8();
 
     switch (request_code){
@@ -1764,7 +1766,7 @@ void SshClientSession::handle_channel_rcv_request_client(ssh_buffer_struct* pack
 
 static inline void handle_channel_open_session_request_client(SshClientSession * client_session, ssh_buffer_struct * packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     // SSH_REQUEST_CHANNEL_OPEN SSH_CHANNEL_SESSION;
     syslog(LOG_INFO, "Clients wants to open a %s channel", "session");
     /* uint32_t sender = */ packet->in_uint32_be();
@@ -1775,7 +1777,7 @@ static inline void handle_channel_open_session_request_client(SshClientSession *
 
 void handle_channel_open_direct_tcpip_request_client(SshClientSession * client_session, ssh_buffer_struct * packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     // SSH_REQUEST_CHANNEL_OPEN SSH_CHANNEL_DIRECT_TCPIP
     syslog(LOG_INFO, "Clients wants to open a %s channel", "direct-tcpip");
     /* uint32_t sender = */ packet->in_uint32_be();
@@ -1795,7 +1797,7 @@ void handle_channel_open_direct_tcpip_request_client(SshClientSession * client_s
 
 static inline void handle_channel_open_forwarded_tcpip_request_client(SshClientSession * client_session, ssh_buffer_struct * packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     // SSH_REQUEST_CHANNEL_OPEN SSH_CHANNEL_FORWARDED_TCPIP
     syslog(LOG_INFO, "Clients wants to open a %s channel", "forwarded-tcpip");
     /* uint32_t sender = */      (void)packet->in_uint32_be();
@@ -1812,7 +1814,7 @@ static inline void handle_channel_open_forwarded_tcpip_request_client(SshClientS
 
 static inline void handle_channel_open_x11_request_client(SshClientSession * client_session, ssh_buffer_struct * packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     // SSH_REQUEST_CHANNEL_OPEN SSH_CHANNEL_X11
     syslog(LOG_INFO, "Clients wants to open a %s channel", "x11");
     uint32_t sender = packet->in_uint32_be();
@@ -1839,7 +1841,7 @@ static inline void handle_channel_open_x11_request_client(SshClientSession * cli
 
 static inline void handle_channel_open_auth_agent_request_client(SshClientSession * client_session, ssh_buffer_struct * packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     // SSH_REQUEST_CHANNEL_OPEN SSH_CHANNEL_X11
     syslog(LOG_INFO, "Client wants to open a %s channel", "auth-agent@openssh.com");
     uint32_t sender = packet->in_uint32_be();
@@ -1982,36 +1984,36 @@ static inline void handle_channel_open_auth_agent_request_client(SshClientSessio
 
 static inline int handle_channel_open_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     char * type_c = packet->in_strdup_cstr();
-    syslog(LOG_INFO, "%s --- channel type = %s", __FUNCTION__, type_c);    
+    syslog(LOG_INFO, "%s --- channel type = %s", __FUNCTION__, type_c);
     uint8_t channel_open_code = get_channel_open_request_code(type_c);
     delete type_c;
-  
+
     switch (channel_open_code) {
     case REQUEST_STRING_CHANNEL_OPEN_SESSION:
-        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_SESSION", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_SESSION", __FUNCTION__);
         handle_channel_open_session_request_client(client_session, packet);
     break;
     case REQUEST_STRING_CHANNEL_OPEN_DIRECT_TCPIP:
-        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_DIRECT_TCPIP", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_DIRECT_TCPIP", __FUNCTION__);
         handle_channel_open_direct_tcpip_request_client(client_session, packet);
     break;
     case REQUEST_STRING_CHANNEL_OPEN_FORWARDED_TCPIP:
-        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_FORWARDED_TCPIP", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_FORWARDED_TCPIP", __FUNCTION__);
         handle_channel_open_forwarded_tcpip_request_client(client_session, packet);
     break;
     case REQUEST_STRING_CHANNEL_OPEN_X11:
-        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_X11", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_X11", __FUNCTION__);
         handle_channel_open_x11_request_client(client_session, packet);
     break;
     case REQUEST_STRING_CHANNEL_OPEN_AUTH_AGENT:
-        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_AUTH_AGENT", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_AUTH_AGENT", __FUNCTION__);
         handle_channel_open_auth_agent_request_client(client_session, packet);
     break;
     case REQUEST_STRING_CHANNEL_OPEN_UNKNOWN:
-        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_UNKNOWN", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- REQUEST_CHANNEL_OPEN_UNKNOWN", __FUNCTION__);
     default:
     break;
     }
@@ -2053,9 +2055,9 @@ static inline int handle_channel_open_client(SshClientSession * client_session, 
 // SSH_PACKET_CALLBACK(ssh_packet_dh_reply)
 static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO,"Received SSH_KEXDH_REPLY");
-    if(client_session->session_state != SSH_SESSION_STATE_DH 
+    if(client_session->session_state != SSH_SESSION_STATE_DH
     && client_session->dh_handshake_state != DH_STATE_INIT_SENT){
         ssh_set_error(client_session->error,  SSH_FATAL,"ssh_packet_dh_reply_client called in wrong state : %d:%d",
             client_session->session_state, client_session->dh_handshake_state);
@@ -2080,7 +2082,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         }
         client_session->next_crypto->server_pubkey = SSHString(tmp_server_pubkey_len);
         packet->buffer_get_data(client_session->next_crypto->server_pubkey.data.get(),tmp_server_pubkey_len);
-    
+
         if (sizeof(uint32_t) > packet->in_remain()){
             ssh_set_error(client_session->error, SSH_FATAL, "Cannot import f number");
             client_session->session_state = SSH_SESSION_STATE_ERROR;
@@ -2113,7 +2115,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         packet->buffer_get_data(tmp_dh_server_signature.data.get(),tmp_dh_server_signature_len);
 
         client_session->next_crypto->dh_server_signature = std::move(tmp_dh_server_signature);
-        
+
         BN_CTX* ctx = BN_CTX_new();
         client_session->next_crypto->k = BN_new();
         /* the server and clients don't use the same numbers */
@@ -2152,7 +2154,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         }
         SSHString tmp_server_pubkey(tmp_server_pubkey_len);
         packet->buffer_get_data(tmp_server_pubkey.data.get(),tmp_server_pubkey_len);
-    
+
         client_session->next_crypto->server_pubkey = std::move(tmp_server_pubkey);
 
         if (sizeof(uint32_t) > packet->in_remain()){
@@ -2186,7 +2188,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         packet->buffer_get_data(tmp_dh_server_signature.data.get(),tmp_dh_server_signature_len);
 
         client_session->next_crypto->dh_server_signature = std::move(tmp_dh_server_signature);
-        
+
         BN_CTX* ctx = BN_CTX_new();
         client_session->next_crypto->k = BN_new();
 
@@ -2248,9 +2250,9 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
             return SSH_PACKET_USED;
         }
         client_session->next_crypto->ecdh.server_pubkey = SSHString(tmp_ecdh_server_pubkey_len);
-        packet->buffer_get_data(client_session->next_crypto->ecdh.server_pubkey.data.get(), 
+        packet->buffer_get_data(client_session->next_crypto->ecdh.server_pubkey.data.get(),
                                 client_session->next_crypto->ecdh.server_pubkey.size);
-        
+
         if (sizeof(uint32_t) > packet->in_remain()) {
             client_session->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
@@ -2263,7 +2265,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         SSHString tmp_dh_server_signature(tmp_dh_server_signature_len);
         packet->buffer_get_data(tmp_dh_server_signature.data.get(),tmp_dh_server_signature_len);
         client_session->next_crypto->dh_server_signature = std::move(tmp_dh_server_signature);
-        
+
         /* TODO: verify signature now instead of waiting for NEWKEYS */
         if (client_session->next_crypto->ecdh.build_k(client_session->next_crypto->k, client_session->next_crypto->ecdh.server_pubkey) < 0) {
             ssh_set_error(client_session->error, SSH_FATAL, "Cannot build k number");
@@ -2288,7 +2290,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         }
         SSHString tmp_server_pubkey(tmp_server_pubkey_len);
         packet->buffer_get_data(tmp_server_pubkey.data.get(),tmp_server_pubkey_len);
-        
+
         client_session->next_crypto->server_pubkey = std::move(tmp_server_pubkey);
 
         if (sizeof(uint32_t) > packet->in_remain()){
@@ -2301,7 +2303,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
             client_session->session_state = SSH_SESSION_STATE_ERROR;
             return SSH_PACKET_USED;
         }
-        
+
 
         if (q_s_string_len != CURVE25519_PUBKEY_SIZE){
             ssh_set_error(client_session->error, SSH_FATAL, "Incorrect size for server Curve25519 public key: %d",
@@ -2324,7 +2326,7 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
         packet->buffer_get_data(tmp_dh_server_signature.data.get(),tmp_dh_server_signature_len);
 
         client_session->next_crypto->dh_server_signature = std::move(tmp_dh_server_signature);
-        client_session->next_crypto->curve_25519.build_k(client_session->next_crypto->k, 
+        client_session->next_crypto->curve_25519.build_k(client_session->next_crypto->k,
                                                client_session->next_crypto->curve_25519.server_pubkey);
     }
     break;
@@ -2344,9 +2346,9 @@ static inline int ssh_packet_dh_reply_client(SshClientSession * client_session, 
 // SSH_PACKET_CALLBACK(ssh_packet_newkeys)
 static inline int ssh_packet_newkeys_client(SshClientSession * client_session, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, "Received SSH_MSG_NEWKEYS");
-    if (client_session->session_state != SSH_SESSION_STATE_DH 
+    if (client_session->session_state != SSH_SESSION_STATE_DH
     && client_session->dh_handshake_state != DH_STATE_NEWKEYS_SENT){
         ssh_set_error(error,  SSH_FATAL,"ssh_packet_newkeys called in wrong state : %d:%d",
         client_session->session_state, client_session->dh_handshake_state);
@@ -2381,7 +2383,7 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
     if (strcmp(client_session->next_crypto->kex_methods[SSH_COMP_S_C].cstr(), "zlib@openssh.com") == 0) {
         client_session->next_crypto->delayed_compress_in = 1;
     }
-     
+
     if (client_session->next_crypto->generate_session_keys_client(client_session->session_id, error) < 0) {
         client_session->session_state=SSH_SESSION_STATE_ERROR;
         return SSH_PACKET_USED;
@@ -2411,7 +2413,7 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
             if (a == nullptr) { // last
                 if (strcmp(remaining_list, object) != 0) {
                     // definitely not found
-                    ssh_set_error(error, 
+                    ssh_set_error(error,
                                   SSH_FATAL,
                                   "Public key from server (%s) doesn't match user "
                                   "preference (%s)",
@@ -2466,10 +2468,10 @@ static inline int ssh_packet_newkeys_client(SshClientSession * client_session, e
 
 int ssh_auth_reply_denied_client(SshClientSession * client_session)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     char methods[256] = {0};
-    uint32_t auth_methods_flags = 
+    uint32_t auth_methods_flags =
         (client_session->auth_methods == 0)?(SSH_AUTH_METHOD_PUBLICKEY|SSH_AUTH_METHOD_PASSWORD)
         :
         client_session->auth_methods & (
@@ -2482,22 +2484,22 @@ int ssh_auth_reply_denied_client(SshClientSession * client_session)
 
     bool coma = false;
     if (auth_methods_flags & SSH_AUTH_METHOD_PUBLICKEY){
-        strcat(methods, "publickey"); 
+        strcat(methods, "publickey");
         coma = true;
     }
     if (auth_methods_flags & SSH_AUTH_METHOD_GSSAPI_MIC){
         if (coma) { strcat(methods, ","); }
-        strcat(methods, "gssapi-with-mic"); 
+        strcat(methods, "gssapi-with-mic");
         coma = true;
     }
     if (auth_methods_flags & SSH_AUTH_METHOD_INTERACTIVE){
         if (coma) { strcat(methods, ","); }
-        strcat(methods, "keyboard-interactive"); 
+        strcat(methods, "keyboard-interactive");
         coma = true;
     }
     if (auth_methods_flags & SSH_AUTH_METHOD_PASSWORD){
         if (coma) { strcat(methods, ","); }
-        strcat(methods, "password"); 
+        strcat(methods, "password");
         coma = true;
     }
     if (auth_methods_flags & SSH_AUTH_METHOD_HOSTBASED){
@@ -2520,7 +2522,7 @@ int ssh_auth_reply_denied_client(SshClientSession * client_session)
  * @brief handles an user authentication using GSSAPI
  */
 static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_session, const char *user, uint32_t n_oid, SSHString * oids[]){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char service_name[]="host";
     gss_buffer_desc name_buf;
     gss_name_t server_name; /* local server fqdn */
@@ -2620,7 +2622,7 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
         gss_display_status(&dummy, maj_stat3, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
         syslog(LOG_WARNING, "GSSAPI(%s): %s", "acquiring creds", static_cast<char *>(buffer.value));
 
-        
+
         ssh_auth_reply_denied_client(client_session);
         return SSH_ERROR;
     }
@@ -2661,21 +2663,21 @@ static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_se
     client_session->gssapi->user = strdup(user);
     client_session->gssapi->service = service_name;
     client_session->gssapi->state = SSH_GSSAPI_STATE_RCV_TOKEN;
-    
+
     client_session->out_buffer->out_uint8(SSH_MSG_USERAUTH_GSSAPI_RESPONSE);
     client_session->out_buffer->out_uint32_be(oids[i]->size);
     client_session->out_buffer->out_blob(oids[i]->data.get(), oids[i]->size);
     client_session->packet_send();
-    
+
     return SSH_OK;
 }
-    
+
 
 /** @internal
  * @frees a gssapi context
  */
 static void ssh_gssapi_free_client(SshClientSession * client_session){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     OM_uint32 min;
     if (client_session->gssapi == nullptr)
         return;
@@ -2693,10 +2695,10 @@ static void ssh_gssapi_free_client(SshClientSession * client_session){
 }
 
 static inline ssh_buffer_struct* ssh_gssapi_build_mic_client(SshClientSession * client_session, ssh_buffer_struct * mic_buffer){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     SSHString str(static_cast<uint32_t>(client_session->current_crypto->digest_len));
     memcpy(str.data.get(), client_session->session_id, client_session->current_crypto->digest_len);
-    
+
     mic_buffer->out_uint32_be(str.size);
     mic_buffer->out_blob(str.data.get(), str.size);
 
@@ -2711,7 +2713,7 @@ static inline ssh_buffer_struct* ssh_gssapi_build_mic_client(SshClientSession * 
 // SSH_PACKET_CALLBACK(ssh_packet_userauth_gssapi_mic)
 static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet, void *user)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     OM_uint32 maj_stat, min_stat;
     gss_buffer_desc mic_buf = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc mic_token_buf = GSS_C_EMPTY_BUFFER;
@@ -2721,7 +2723,7 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
     ssh_buffer_struct * mic_buffer = nullptr;
 
     syslog(LOG_INFO,"Received SSH_MSG_USERAUTH_GSSAPI_MIC");
-    
+
     if (sizeof(uint32_t) > packet->in_remain()) {
         ssh_auth_reply_denied_client(client_session);
         ssh_gssapi_free_client(client_session);
@@ -2769,7 +2771,7 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
     mic_token_buf.value = mic_token.data.get();
 
     maj_stat = gss_verify_mic(&min_stat, client_session->gssapi->ctx, &mic_buf, &mic_token_buf, nullptr);
-    
+
     {
         gss_buffer_desc buffer;
         OM_uint32 dummy;
@@ -2786,7 +2788,7 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
         syslog(LOG_INFO, "GSSAPI(%s): %s", "verifying MIC (min stat)", static_cast<char *>(buffer.value));
     }
 
-    
+
     if (maj_stat == GSS_S_DEFECTIVE_TOKEN || GSS_ERROR(maj_stat)) {
         ssh_auth_reply_denied_client(client_session);
         ssh_gssapi_free_client(client_session);
@@ -2805,8 +2807,8 @@ static inline int ssh_packet_userauth_gssapi_mic_client(SshClientSession * clien
 
 
 static int ssh_gssapi_send_auth_mic_client(SshClientSession * client_session, SSHString *oid_set[], int n_oid){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    client_session->out_buffer->out_uint8(SSH_MSG_USERAUTH_REQUEST); 
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    client_session->out_buffer->out_uint8(SSH_MSG_USERAUTH_REQUEST);
     client_session->out_buffer->out_length_prefixed_cstr(client_session->opts.username); /* username */
     client_session->out_buffer->out_length_prefixed_cstr("ssh-connection");  /* service */
     client_session->out_buffer->out_length_prefixed_cstr("gssapi-with-mic"); /* method */
@@ -2824,7 +2826,7 @@ static int ssh_gssapi_send_auth_mic_client(SshClientSession * client_session, SS
 }
 
 static int ssh_gssapi_send_mic_client(SshClientSession * client_session){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     OM_uint32 maj_stat, min_stat;
     gss_buffer_desc mic_buf = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc mic_token_buf = GSS_C_EMPTY_BUFFER;
@@ -2868,7 +2870,7 @@ static int ssh_gssapi_send_mic_client(SshClientSession * client_session){
 // SSH_PACKET_CALLBACK(ssh_packet_userauth_gssapi_token_client)
 static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     OM_uint32 min_stat;
     gss_buffer_desc input_token;
     gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
@@ -2877,7 +2879,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         ssh_set_error(client_session->error,  SSH_FATAL, "Received SSH_MSG_USERAUTH_GSSAPI_TOKEN in invalid state");
         return SSH_PACKET_USED;
     }
-    
+
     if (sizeof(uint32_t) > packet->in_remain()) {
         gss_buffer_desc buffer;
         OM_uint32 dummy;
@@ -2919,7 +2921,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
     hexa[j>0?(j-1):0] = 0;
     syslog(LOG_INFO, "GSSAPI Token : %s",hexa);
     delete hexa;
-    
+
     input_token.length = token.size;
     input_token.value = token.data.get();
     OM_uint32 maj_stat1 = gss_init_sec_context(&min_stat,
@@ -2943,7 +2945,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         OM_uint32 message_context;
         gss_display_status(&dummy, maj_stat1,GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
         syslog(LOG_INFO, "GSSAPI(%s): %s", "Gssapi error", static_cast<char *>(buffer.value));
-        
+
         ssh_gssapi_free_client(client_session);
         client_session->gssapi=nullptr;
         return SSH_PACKET_USED;
@@ -2991,7 +2993,7 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
 static inline int ssh_packet_userauth_info_response_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
     // SSH_REQUEST_AUTH SSH_AUTH_METHOD_INTERACTIVE
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t i;
 
 //    int kbdint_response = 1;
@@ -3041,7 +3043,7 @@ static inline int ssh_packet_userauth_info_response_client(SshClientSession * cl
 // TODO: we should have some callback to notify the server banner has been recieved
 static inline int ssh_packet_userauth_banner_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_DEBUG, "Received SSH_USERAUTH_BANNER packet");
     if (sizeof(uint32_t) > packet->in_remain()) {
         // ERRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -3051,7 +3053,7 @@ static inline int ssh_packet_userauth_banner_client(SshClientSession * client_se
         // ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
     SSHString banner(banner_len);
-    
+
     packet->buffer_get_data(banner.data.get(),banner_len);
     client_session->banner = std::move(banner);
 
@@ -3144,7 +3146,7 @@ static inline int ssh_packet_userauth_banner_client(SshClientSession * client_se
 // SSH_PACKET_CALLBACK(ssh_packet_channel_open_fail)
 static inline int ssh_packet_channel_open_fail_client(SshClientSession * client_session, ssh_channel_struct * channel, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t code =  packet->in_uint32_be();
 
     if (sizeof(uint32_t) > packet->in_remain()) {
@@ -3172,9 +3174,9 @@ static inline int ssh_packet_channel_open_fail_client(SshClientSession * client_
 
 
 /* decompression */
-static z_stream *initdecompress_client(SshClientSession * client_session) 
+static z_stream *initdecompress_client(SshClientSession * client_session)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int status;
 
     z_stream *stream = static_cast<z_stream_s*>(malloc(sizeof(z_stream)));
@@ -3194,9 +3196,9 @@ static z_stream *initdecompress_client(SshClientSession * client_session)
     return stream;
 }
 
-static ssh_buffer_struct* gzip_decompress_client(SshClientSession * client_session, ssh_buffer_struct* source, size_t maxlen) 
+static ssh_buffer_struct* gzip_decompress_client(SshClientSession * client_session, ssh_buffer_struct* source, size_t maxlen)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     z_stream *zin = static_cast<z_stream_s*>(client_session->current_crypto->compress_in_ctx);
     void *in_ptr = source->get_pos_ptr();
     unsigned long in_size = source->in_remain();
@@ -3248,7 +3250,7 @@ static ssh_buffer_struct* gzip_decompress_client(SshClientSession * client_sessi
 
 static int decompress_buffer_client(SshClientSession * client_session,ssh_buffer_struct* buf, size_t maxlen)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     ssh_buffer_struct* dest = gzip_decompress_client(client_session,buf, maxlen);
     if (dest == nullptr) {
         return -1;
@@ -3288,8 +3290,8 @@ static int decompress_buffer_client(SshClientSession * client_session,ssh_buffer
  *                      to be done again.
  */
 static inline int global_request_client(SshClientSession * client_session, const char *request, ssh_buffer_struct* buffer, int reply) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    syslog(LOG_INFO, "> GLOBAL_REQUEST %s", request);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    syslog(LOG_INFO, "> GLOBAL_REQUEST %s", request);
     int rc;
 
     if (client_session->global_req_state == SSH_CHANNEL_REQ_STATE_NONE){
@@ -3325,7 +3327,7 @@ static inline int global_request_client(SshClientSession * client_session, const
             rc = SSH_OK;
             break;
         }
-        
+
         // Waiting for input
         dopoll(client_session->ctx, (client_session->flags&SSH_SESSION_FLAG_BLOCKING)?SSH_TIMEOUT_INFINITE:SSH_TIMEOUT_NONBLOCKING);
 
@@ -3388,7 +3390,7 @@ static inline int global_request_client(SshClientSession * client_session, const
  *                      SSH_AGAIN if in nonblocking mode and call has
  *                      to be done again.
  **/
-int ssh_forward_listen_client(SshClientSession * client_session, const char *address, int port, int *bound_port) 
+int ssh_forward_listen_client(SshClientSession * client_session, const char *address, int port, int *bound_port)
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     // TODO: check how and when this function is called to ensure we are actually in NONE
@@ -3428,9 +3430,9 @@ int ssh_forward_listen_client(SshClientSession * client_session, const char *add
  *                      SSH_AGAIN if in nonblocking mode and call has
  *                      to be done again.
  */
-int ssh_forward_cancel_client(SshClientSession * client_session, const char *address, int port) 
+int ssh_forward_cancel_client(SshClientSession * client_session, const char *address, int port)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     // TODO: check how and when this function is called to ensure we are actually in NONE
     // state when calling it. See how to manage non blocking (in global request)
@@ -3458,7 +3460,7 @@ int ssh_forward_cancel_client(SshClientSession * client_session, const char *add
  // SSH_PACKET_CALLBACK(ssh_packet_userauth_info_request)
 static inline int ssh_packet_userauth_info_request_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet, void *user)
 {
-  syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+  syslog(LOG_INFO, "%s ---", __FUNCTION__);
   uint32_t i;
   (void)user;
   (void)type;
@@ -3505,7 +3507,7 @@ static inline int ssh_packet_userauth_info_request_client(SshClientSession * cli
 
     if (client_session->kbdint == nullptr) {
         client_session->kbdint = new ssh_kbdint_struct();
-    } 
+    }
     else {
         ssh_kbdint_clean(client_session->kbdint);
     }
@@ -3565,7 +3567,7 @@ static inline int ssh_packet_userauth_info_request_client(SshClientSession * cli
         // TODO : check memory allocation
         memcpy(client_session->kbdint->prompts[i], tmp2.data.get(), tmp2.size);
         client_session->kbdint->prompts[i][tmp2.size] = 0;
-        
+
     }
     client_session->auth_state=SSH_AUTH_STATE_INFO;
 
@@ -3576,7 +3578,7 @@ static inline int ssh_packet_userauth_info_request_client(SshClientSession * cli
 // SSH_PACKET_CALLBACK(ssh_packet_userauth_gssapi_response)
 int ssh_packet_userauth_gssapi_response_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet, void *user)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     gss_uint32 maj_stat, min_stat;
     gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
@@ -3588,7 +3590,7 @@ int ssh_packet_userauth_gssapi_response_client(SshClientSession * client_session
         ssh_set_error(client_session->error,  SSH_FATAL, "Invalid state in ssh_packet_userauth_gssapi_response");
         return SSH_PACKET_USED;
     }
-    
+
     if (sizeof(uint32_t) > packet->in_remain()) {
         ssh_set_error(client_session->error,  SSH_FATAL, "parse error");
         return SSH_PACKET_USED;
@@ -3662,7 +3664,7 @@ int ssh_packet_userauth_gssapi_response_client(SshClientSession * client_session
  // SSH_PACKET_CALLBACK(ssh_packet_userauth_pk_ok)
 static inline int ssh_packet_userauth_pk_ok_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet, void *user)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int rc;
 
   syslog(LOG_INFO, "Received SSH_USERAUTH_PK_OK/INFO_REQUEST/GSSAPI_RESPONSE");
@@ -3695,7 +3697,7 @@ static inline int ssh_packet_userauth_pk_ok_client(SshClientSession * client_ses
  // SSH_PACKET_CALLBACK(ssh_packet_userauth_success)
 static inline int ssh_packet_userauth_success_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
   (void)packet;
   (void)type;
 
@@ -3729,7 +3731,7 @@ static inline int ssh_packet_userauth_success_client(SshClientSession * client_s
  // SSH_PACKET_CALLBACK(ssh_packet_userauth_failure)
 static inline int ssh_packet_userauth_failure_client(SshClientSession * client_session, uint8_t type, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     char *auth_methods = nullptr;
     uint8_t partial = 0;
     (void) type;
@@ -3758,7 +3760,7 @@ static inline int ssh_packet_userauth_failure_client(SshClientSession * client_s
         syslog(LOG_INFO,
             "Partial success. Authentication that can continue: %s",
             auth_methods);
-    } 
+    }
     else {
         client_session->auth_state=SSH_AUTH_STATE_FAILED;
         syslog(LOG_INFO,
@@ -3794,7 +3796,7 @@ static inline int ssh_packet_userauth_failure_client(SshClientSession * client_s
 
 static inline int ssh2_msg_channel_open_confirmation_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_WARNING,"Received SSH_MSG_CHANNEL_OPEN_CONFIRMATION");
 
     uint32_t chan = packet->in_uint32_be();
@@ -3830,12 +3832,12 @@ static inline int ssh2_msg_channel_open_confirmation_client(SshClientSession * c
 
 static inline int channel_rcv_data_stderr_client(SshClientSession * client_session, ssh_buffer_struct* packet, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
     if (channel == nullptr) {
-        ssh_set_error(error, SSH_FATAL, 
+        ssh_set_error(error, SSH_FATAL,
             "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
 
@@ -3908,12 +3910,12 @@ static inline int channel_rcv_data_stderr_client(SshClientSession * client_sessi
 // SSH_PACKET_CALLBACK(channel_rcv_data)
 static inline int channel_rcv_data_client(SshClientSession * client_session, ssh_buffer_struct* packet, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
     if (channel == nullptr) {
-        ssh_set_error(error, SSH_FATAL, 
+        ssh_set_error(error, SSH_FATAL,
             "Server specified invalid channel %lu", static_cast<long unsigned int>(ntohl(chan)));
         syslog(LOG_INFO, "%s", ssh_get_error(&error));
         return SSH_PACKET_USED;
@@ -3983,7 +3985,7 @@ static inline int channel_rcv_data_client(SshClientSession * client_session, ssh
 // SSH_PACKET_CALLBACK(channel_rcv_close)
 static inline int channel_rcv_close_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
@@ -4024,7 +4026,7 @@ static inline int channel_rcv_close_client(SshClientSession * client_session, ss
     }
     syslog(LOG_INFO,
             "Return from user channel_close function");
-    
+
     channel->flags |= SSH_CHANNEL_FLAG_CLOSED_REMOTE;
     if(channel->flags & SSH_CHANNEL_FLAG_FREED_LOCAL){
         for (unsigned i = 0; i < client_session->nbchannels ; i++){
@@ -4042,7 +4044,7 @@ static inline int channel_rcv_close_client(SshClientSession * client_session, ss
 
 // SSH_PACKET_CALLBACK(channel_rcv_change_window)
 static inline int channel_rcv_change_window_client(SshClientSession * client_session, ssh_buffer_struct* packet, error_struct & error)
-{   
+{
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t chan = packet->in_uint32_be();
     ssh_channel channel = client_session->ssh_channel_from_local(chan);
@@ -4062,7 +4064,7 @@ static inline int channel_rcv_change_window_client(SshClientSession * client_ses
 int ssh_packet_global_request_client(SshClientSession * client_session, ssh_buffer_struct* packet)
 {
     // SSH_REQUEST_GLOBAL
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int rc = SSH_PACKET_USED;
     char * request = packet->in_strdup_cstr();
     uint8_t want_reply = packet->in_uint8();
@@ -4076,12 +4078,12 @@ int ssh_packet_global_request_client(SshClientSession * client_session, ssh_buff
     return rc;
 }
 
-//  sshd has an application-level keepalive, 
-// controlled by ClientAliveInterval and ClientAliveCountMax.  It is these 
-// that generate the "keepalive@openssh.com" messages and these that you 
+//  sshd has an application-level keepalive,
+// controlled by ClientAliveInterval and ClientAliveCountMax.  It is these
+// that generate the "keepalive@openssh.com" messages and these that you
 // need to change in your case, (in addition to KeepAlive).
 
-//	Later versions (3.8 and up) also have the client-side equivalent 
+//	Later versions (3.8 and up) also have the client-side equivalent
 // (ServerAliveInterval and ServerAliveCountMax).
 
 
@@ -4095,7 +4097,7 @@ int ssh_packet_global_request_client(SshClientSession * client_session, ssh_buff
  */
 int SshClientSession::handle_received_data_client(const void *data, size_t receivedlen)
 {
-    syslog(LOG_INFO, "%s ---", __PRETTY_FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __PRETTY_FUNCTION__);
     syslog(LOG_INFO, "%s <<<<<<<<<<<<<<<<< %s ", __FUNCTION__, this->show());
 
     unsigned int blocksize = (this->current_crypto ?
@@ -4138,7 +4140,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 
             if (this->in_buffer) {
                 delete this->in_buffer;
-            } 
+            }
             this->in_buffer = new ssh_buffer_struct;
             memcpy(buffer, data, blocksize);
             processed += blocksize;
@@ -4160,7 +4162,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
             this->in_buffer->out_blob(buffer, blocksize);
 
             if (this->in_packet_len > MAX_PACKET_LEN) {
-                ssh_set_error(this->error, 
+                ssh_set_error(this->error,
                               SSH_FATAL,
                               "read_packet(): Packet len larger than allowed max (%.4x, %u > %u)",
                               this->in_packet_len, this->in_packet_len, MAX_PACKET_LEN);
@@ -4232,7 +4234,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
             padding = this->in_buffer->in_uint8();
 
             if (padding > this->in_buffer->in_remain()) {
-                ssh_set_error(this->error, 
+                ssh_set_error(this->error,
                               SSH_FATAL,
                               "Invalid padding: %d (%d left)",
                               padding,
@@ -4269,24 +4271,24 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 //                    this->in_packet_type, this->in_packet_len, padding, compsize, payloadsize);
 
             {
-                syslog(LOG_INFO, "%s --- PACKET TYPE = %d", __FUNCTION__, this->in_packet_type);    
+                syslog(LOG_INFO, "%s --- PACKET TYPE = %d", __FUNCTION__, this->in_packet_type);
                 switch (this->in_packet_type) {
                 case SSH_MSG_DISCONNECT:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_DISCONNECT", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_DISCONNECT", __FUNCTION__);
                     handle_ssh_packet_disconnect_client(this, this->in_buffer, this->error);
                 break;
                 case SSH_MSG_IGNORE:
-                    syslog(LOG_INFO, "%s --- ssh2_msg_ignore", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- ssh2_msg_ignore", __FUNCTION__);
                 break;
                 case SSH_MSG_UNIMPLEMENTED:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_UNIMPLEMENTED", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_UNIMPLEMENTED", __FUNCTION__);
                     handle_ssh_packet_unimplemented_client(this, this->in_buffer, this->error);
                 break;
                 case SSH_MSG_DEBUG:
-                    syslog(LOG_INFO, "%s --- ssh2_msg_debug", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- ssh2_msg_debug", __FUNCTION__);
                 break;
                 case SSH_MSG_SERVICE_REQUEST:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_SERVICE_REQUEST", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_SERVICE_REQUEST", __FUNCTION__);
                     handle_ssh_packet_service_request_client(this, this->in_buffer, this->error);
                 break;
                 case SSH_MSG_SERVICE_ACCEPT:
@@ -4295,15 +4297,15 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                     handle_ssh_packet_service_accept_client(this, this->in_packet_type, this->in_buffer, this);
                 //    this->flags &= ~SSH_SESSION_FLAG_BLOCKING;
                 break;
-                
-              
+
+
                 case SSH_MSG_KEXINIT:
                     // Comment above means that messages are restricted until MSG_NEWKEYS have been received
-                    syslog(LOG_INFO, "%s --- SSH_MSG_KEXINIT", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_KEXINIT", __FUNCTION__);
                     ssh_packet_kexinit_client(this, this->in_buffer);
                 break;
                 case SSH_MSG_NEWKEYS:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_NEWKEYS", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_NEWKEYS", __FUNCTION__);
                     ssh_packet_newkeys_client(this, this->error);
                 break;
 
@@ -4314,7 +4316,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 
 // Implies This message can be received Server side only
                 case SSH_MSG_KEXDH_INIT:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_KEXDH_INIT", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_KEXDH_INIT", __FUNCTION__);
                     // ssh_packet_kexdh_init_client(this, this->in_buffer);
                 break;
 
@@ -4328,28 +4330,28 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
 // Implies This message can be received Client side only
 
                 case SSH_MSG_KEXDH_REPLY:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_KEXDH_REPLY", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_KEXDH_REPLY", __FUNCTION__);
                     ssh_packet_dh_reply_client(this, this->in_buffer);
                 break;
-                
+
                 case SSH_MSG_USERAUTH_REQUEST:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_REQUEST -- should never be received by client", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_REQUEST -- should never be received by client", __FUNCTION__);
                 break;
                 case SSH_MSG_USERAUTH_FAILURE:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_FAILURE", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_FAILURE", __FUNCTION__);
                     // HERE
                     ssh_packet_userauth_failure_client(this, this->in_packet_type, this->in_buffer);
                 break;
                 case SSH_MSG_USERAUTH_SUCCESS:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_SUCCESS", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_SUCCESS", __FUNCTION__);
                     ssh_packet_userauth_success_client(this, this->in_packet_type, this->in_buffer);
                 break;
                 case SSH_MSG_USERAUTH_BANNER:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_BANNER", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_BANNER", __FUNCTION__);
                     ssh_packet_userauth_banner_client(this, this->in_buffer);
                 break;
                 case SSH_MSG_USERAUTH_PK_OK:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_PK_OK", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_PK_OK", __FUNCTION__);
                     // HERE
                     ssh_packet_userauth_pk_ok_client(this, this->in_packet_type, this->in_buffer, this);
                 break;
@@ -4362,39 +4364,39 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                         ssh_packet_userauth_gssapi_token_client(this, this->in_buffer);
                     }
                     else {
-                        syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_INFO_RESPONSE", __FUNCTION__);    
+                        syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_INFO_RESPONSE", __FUNCTION__);
                         ssh_packet_userauth_info_response_client(this, this->in_buffer);
                     }
                 break;
                 case SSH_MSG_USERAUTH_GSSAPI_MIC:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_GSSAPI_MIC", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_USERAUTH_GSSAPI_MIC", __FUNCTION__);
                     // HERE
                     ssh_packet_userauth_gssapi_mic_client(this, this->in_packet_type, this->in_buffer, this);
                 break;
                 case SSH_MSG_GLOBAL_REQUEST:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_GLOBAL_REQUEST", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_GLOBAL_REQUEST", __FUNCTION__);
                     ssh_packet_global_request_client(this, this->in_buffer);
                 break;
                 case SSH_MSG_REQUEST_SUCCESS:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_REQUEST_SUCCESS", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_REQUEST_SUCCESS", __FUNCTION__);
                     if(this->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING){
                         syslog(LOG_ERR, "SSH_REQUEST_SUCCESS received in incorrect state %d",
                             this->global_req_state);
-                    } 
+                    }
                     this->global_req_state=SSH_CHANNEL_REQ_STATE_ACCEPTED;
                 break;
                 case SSH_MSG_REQUEST_FAILURE:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_REQUEST_FAILURE", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_REQUEST_FAILURE", __FUNCTION__);
                     if(this->global_req_state != SSH_CHANNEL_REQ_STATE_PENDING){
                         syslog(LOG_ERR, "SSH_REQUEST_DENIED received in incorrect state %d",
                             this->global_req_state);
-                    } 
+                    }
                     this->global_req_state = SSH_CHANNEL_REQ_STATE_DENIED;
                 break;
                 case SSH_MSG_CHANNEL_OPEN:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_OPEN", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_OPEN", __FUNCTION__);
                     if (this->session_state != SSH_SESSION_STATE_AUTHENTICATED){
-                        ssh_set_error(this->error,  SSH_FATAL, 
+                        ssh_set_error(this->error,  SSH_FATAL,
                         "Invalid state when receiving channel open request (must be authenticated)");
                         this->session_state = SSH_SESSION_STATE_ERROR;
                         return processed;
@@ -4402,11 +4404,11 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                     handle_channel_open_client(this, this->in_buffer);
                 break;
                 case SSH_MSG_CHANNEL_OPEN_CONFIRMATION:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_OPEN_CONFIRMATION", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_OPEN_CONFIRMATION", __FUNCTION__);
                     ssh2_msg_channel_open_confirmation_client(this, this->in_buffer);
                 break;
                 case SSH_MSG_CHANNEL_OPEN_FAILURE:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_OPEN_FAILURE", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_OPEN_FAILURE", __FUNCTION__);
                     {
                         uint32_t chan = this->in_buffer->in_uint32_be();
                         ssh_channel channel = this->ssh_channel_from_local(chan);
@@ -4422,26 +4424,26 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                 }
                 break;
                 case SSH_MSG_CHANNEL_WINDOW_ADJUST:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_WINDOW_ADJUST", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_WINDOW_ADJUST", __FUNCTION__);
                     channel_rcv_change_window_client(this, this->in_buffer, this->error);
                 break;
                 case SSH_MSG_CHANNEL_DATA:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_DATA", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_DATA", __FUNCTION__);
                     channel_rcv_data_client(this, this->in_buffer, this->error);
                 break;
                 case SSH_MSG_CHANNEL_EXTENDED_DATA:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_EXTENDED_DATA", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_EXTENDED_DATA", __FUNCTION__);
                     channel_rcv_data_stderr_client(this, this->in_buffer, this->error);
                 break;
                 case SSH_MSG_CHANNEL_EOF:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_EOF", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_EOF", __FUNCTION__);
                     this->handle_channel_rcv_eof_client(this->in_buffer);
                 break;
                 case SSH_MSG_CHANNEL_CLOSE:
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_CLOSE", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_CLOSE", __FUNCTION__);
                     channel_rcv_close_client(this, this->in_buffer);
 //                    this->session_state = SSH_SESSION_STATE_ERROR; // breaks agent forwarding
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_CLOSE DONE", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_CLOSE DONE", __FUNCTION__);
                 break;
                 case SSH_MSG_CHANNEL_REQUEST:
 //                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_REQUEST", __FUNCTION__);
@@ -4458,11 +4460,11 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                     } else {
                         channel->request_state=SSH_CHANNEL_REQ_STATE_ACCEPTED;
                     }
-                }    
+                }
                 break;
                 case SSH_MSG_CHANNEL_FAILURE:
                 {
-                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_FAILURE", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s --- SSH_MSG_CHANNEL_FAILURE", __FUNCTION__);
                     uint32_t chan = this->in_buffer->in_uint32_be();
                     ssh_channel channel = this->ssh_channel_from_local(chan);
                     if(channel->request_state != SSH_CHANNEL_REQ_STATE_PENDING){
@@ -4478,7 +4480,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
                 break;
                 }
             }
-            syslog(LOG_INFO, "Packet used processed=%d receivedLen=%d", 
+            syslog(LOG_INFO, "Packet used processed=%d receivedLen=%d",
                 static_cast<int>(processed), static_cast<int>(receivedlen));
 
             this->packet_state = PACKET_STATE_INIT;
@@ -4503,7 +4505,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
     }
     syslog(LOG_INFO, "%s OTHER ", __FUNCTION__);
 
-    ssh_set_error(this->error, 
+    ssh_set_error(this->error,
                   SSH_FATAL,
                   "Invalid state into packet_read2(): %d",
                   this->packet_state);
@@ -4531,10 +4533,10 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
  *          SSH_ERROR   on failure
  */
 int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_callback pw_cb, void *pw_userdata) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_WARNING, "ssh_event_add_fd = %u", fd);
 
-    
+
     if(ctx == nullptr || pw_cb == nullptr || fd == SSH_INVALID_SOCKET) {
         syslog(LOG_WARNING, "ssh_event_add_fd failed = %u", fd);
         return SSH_ERROR;
@@ -4543,13 +4545,13 @@ int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_ca
     syslog(LOG_WARNING, "new poll handle for poll_out FDWCALLBACK");
     ctx->fd_poll = new ssh_poll_handle_fd_struct(fd, pw_cb, pw_userdata);
     ctx->target_session = nullptr;
-        
+
     return SSH_OK;
 }
 
- 
+
 void ssh_event_set_session_client(ssh_poll_ctx_struct * ctx, SshClientSession * client_session) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     ctx->target_session = client_session;
 }
 
@@ -4568,7 +4570,7 @@ void ssh_event_set_session_client(ssh_poll_ctx_struct * ctx, SshClientSession * 
  */
 
 static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * client_session) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     enum ssh_auth_e rc = SSH_AUTH_ERROR;
 
     if ((client_session->flags & SSH_SESSION_FLAG_BLOCKING)){
@@ -4589,9 +4591,9 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
             struct timeval now;
             gettimeofday(&now, nullptr);
             long ms =   (now.tv_sec - start.tv_sec) * 1000
-                    + (now.tv_usec < start.tv_usec) * 1000 
+                    + (now.tv_usec < start.tv_usec) * 1000
                     + (now.tv_usec - start.tv_usec) / 1000;
-      
+
             if (ms >= timeout)
             {
                 if (client_session->auth_state == SSH_AUTH_STATE_NONE
@@ -4625,7 +4627,7 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
             || client_session->auth_state == SSH_AUTH_STATE_GSSAPI_MIC_SENT){
           return SSH_AUTH_AGAIN;
         }
-    }    
+    }
 
     switch(client_session->auth_state) {
         case SSH_AUTH_STATE_ERROR:
@@ -4644,7 +4646,7 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
         case SSH_AUTH_STATE_SUCCESS:
             rc = SSH_AUTH_SUCCESS;
             break;
-        case SSH_AUTH_STATE_KBDINT_SENT:    
+        case SSH_AUTH_STATE_KBDINT_SENT:
         case SSH_AUTH_STATE_GSSAPI_REQUEST_SENT:
         case SSH_AUTH_STATE_GSSAPI_TOKEN:
         case SSH_AUTH_STATE_GSSAPI_MIC_SENT:
@@ -4715,7 +4717,7 @@ static enum ssh_auth_e ssh_userauth_get_response_client(SshClientSession * clien
 static inline int ssh_send_service_request_client(SshClientSession * client_session, const char *service) {
     // THIS FUNCTION IS CURRENTLY BLOCKING (expecting answer)
 
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);  
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     client_session->out_buffer->out_uint8(SSH_MSG_SERVICE_REQUEST);
     client_session->out_buffer->out_length_prefixed_cstr(service);
@@ -4787,21 +4789,21 @@ int ssh_userauth_list_client(SshClientSession * client_session, error_struct * e
  */
 ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, const char *username, const ssh_key_struct *pubkey)
 {
-    syslog(LOG_INFO, "%s %s ---", __FUNCTION__, client_session->show());    
+    syslog(LOG_INFO, "%s %s ---", __FUNCTION__, client_session->show());
     ssh_auth_e rc = SSH_AUTH_ERROR;
 
-    syslog(LOG_INFO, "%s A ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s A ---", __FUNCTION__);
 
     if (pubkey == nullptr || !(pubkey->flags & SSH_KEY_FLAG_PUBLIC)) {
         syslog(LOG_INFO, "%s Invalid pubkey", __FUNCTION__);
         ssh_set_error(client_session->error,  SSH_FATAL, "Invalid pubkey");
         return SSH_AUTH_ERROR;
     }
-    syslog(LOG_INFO, "%s B ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s B ---", __FUNCTION__);
 
     switch(client_session->pending_call_state) {
         case SSH_PENDING_CALL_NONE:
-            syslog(LOG_INFO, "%s C ---", __FUNCTION__);    
+            syslog(LOG_INFO, "%s C ---", __FUNCTION__);
             syslog(LOG_INFO, "%s SSH_PENDING_CALL_NONE", __FUNCTION__);
             switch (ssh_send_service_request_client(client_session, "ssh-userauth")){
             case SSH_AGAIN:
@@ -4825,7 +4827,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
                 // TODO : check username
                 client_session->out_buffer->out_length_prefixed_cstr(str_username);
             }
-            syslog(LOG_INFO, "%s D ---", __FUNCTION__);    
+            syslog(LOG_INFO, "%s D ---", __FUNCTION__);
 
             client_session->out_buffer->out_length_prefixed_cstr("ssh-connection"); /* service */
             client_session->out_buffer->out_length_prefixed_cstr("publickey"); /* method */
@@ -4871,7 +4873,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
                         syslog(LOG_INFO, "%s SSH_KEYTYPE_ECDSA", __FUNCTION__);
                         ssh_buffer_struct buffer;
                         buffer.out_length_prefixed_cstr(pubkey->type_c());
-                        
+
                         buffer.out_length_prefixed_cstr(
                             (pubkey->ecdsa_nid == NID_X9_62_prime256v1) ? "nistp256" :
                             (pubkey->ecdsa_nid == NID_secp384r1)        ? "nistp384" :
@@ -4909,7 +4911,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
             syslog(LOG_INFO, "%s building msg SSH_MSG_USERAUTH_REQUEST -> packetsend : SSH_PENDING_CALL_AUTH_OFFER_PUBKEY", __FUNCTION__);
 
             client_session->packet_send();
-            syslog(LOG_INFO, "%s packet_send -> TO FALLBACK ---", __FUNCTION__);    
+            syslog(LOG_INFO, "%s packet_send -> TO FALLBACK ---", __FUNCTION__);
         case SSH_PENDING_CALL_AUTH_OFFER_PUBKEY:
             syslog(LOG_INFO, "%s SSH_PENDING_CALL_OFFER_PUBKEY -> waiting response", __FUNCTION__);
             switch (ssh_userauth_get_response_client(client_session)){
@@ -4935,17 +4937,17 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
             case SSH_AUTH_INFO:
                 syslog(LOG_INFO, "%s SSH_PENDING_CALL_OFFER_PUBKEY -> got response AUTH_INFO", __FUNCTION__);
                 client_session->pending_call_state = SSH_PENDING_CALL_NONE;
-                return SSH_AUTH_INFO;                
+                return SSH_AUTH_INFO;
             }
             break;
         default:
-            syslog(LOG_INFO, "%s F ---", __FUNCTION__);    
+            syslog(LOG_INFO, "%s F ---", __FUNCTION__);
             syslog(LOG_INFO, "%s Wrong state during pending SSH call", __FUNCTION__);
             ssh_set_error(client_session->error, SSH_FATAL, "Wrong state during pending SSH call");
-            syslog(LOG_INFO, "%s done SSH_ERROR ---", __FUNCTION__);    
+            syslog(LOG_INFO, "%s done SSH_ERROR ---", __FUNCTION__);
             return SSH_AUTH_ERROR;
     }
-    syslog(LOG_INFO, "%s G ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s G ---", __FUNCTION__);
     return rc;
 }
 
@@ -5060,7 +5062,7 @@ ssh_auth_e ssh_userauth_try_publickey_client(SshClientSession * client_session, 
  * before you connect to the server.
  */
 int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSession * front_session, const char *username, error_struct * error) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, "%s session=%p front_session=%p username=%p agent=%p---",
         __FUNCTION__,
         static_cast<void*>(client_session),
@@ -5069,11 +5071,11 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
         static_cast<void*>(client_session->agent));
 
     if (!client_session->agent) {
-        syslog(LOG_INFO, "No agent in session %s ---", __FUNCTION__);    
+        syslog(LOG_INFO, "No agent in session %s ---", __FUNCTION__);
         return SSH_AUTH_DENIED;
     }
     if (!client_session->agent->agent_is_running(client_session)) {
-        syslog(LOG_INFO, "agent not running %s ---", __FUNCTION__);    
+        syslog(LOG_INFO, "agent not running %s ---", __FUNCTION__);
         return SSH_AUTH_DENIED;
     }
 
@@ -5096,39 +5098,39 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
         switch (client_session->agent_state->state)
         {
         case SSH_AGENT_STATE_NONE:
-            syslog(LOG_INFO, "SSH_AGENT_STATE_NONE %s ---", __FUNCTION__);    
+            syslog(LOG_INFO, "SSH_AGENT_STATE_NONE %s ---", __FUNCTION__);
             syslog(LOG_DEBUG, "Trying identity %s", client_session->agent_state->comment);
         case SSH_AGENT_STATE_PUBKEY:
         {
-            syslog(LOG_INFO, "SSH_AGENT_STATE_PUBKEY %s ---", __FUNCTION__);    
+            syslog(LOG_INFO, "SSH_AGENT_STATE_PUBKEY %s ---", __FUNCTION__);
             enum ssh_auth_e rc = ssh_userauth_try_publickey_client(client_session, username, client_session->agent_state->pubkey);
             switch (rc){
             case SSH_AUTH_ERROR:
-                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_ERROR ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_ERROR ---", __FUNCTION__);
 //                free(client_session->agent_state->comment);
                 ssh_key_free(client_session->agent_state->pubkey);
                 delete client_session->agent_state;
                 client_session->agent_state = nullptr;
                 return SSH_AUTH_ERROR;
             case SSH_AUTH_AGAIN:
-                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_AGAIN ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_AGAIN ---", __FUNCTION__);
                 return SSH_AUTH_AGAIN;
             case SSH_AUTH_SUCCESS:
-                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_SUCCESS ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_SUCCESS ---", __FUNCTION__);
                 syslog(LOG_DEBUG, "Public key of %s accepted by server", client_session->agent_state->comment);
                 client_session->agent_state->state = SSH_AGENT_STATE_AUTH;
                 continue;
             break;
             case SSH_AUTH_INFO:
-                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_INFO ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_INFO ---", __FUNCTION__);
                 client_session->agent_state->state = SSH_AGENT_STATE_PUBKEY;
                 return SSH_AUTH_AGAIN;
             case SSH_AUTH_PARTIAL:
-                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_PARTIAL ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_PARTIAL ---", __FUNCTION__);
                 client_session->agent_state->state = SSH_AGENT_STATE_PUBKEY;
                 return SSH_AUTH_AGAIN;
             case SSH_AUTH_DENIED:
-                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_DENIED ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s SSH_AGENT_STATE : try_publickey said AUTH_DENIED ---", __FUNCTION__);
                 syslog(LOG_DEBUG, "Public key of %s refused by server", client_session->agent_state->comment);
                 free(client_session->agent_state->comment);
                 ssh_key_free(client_session->agent_state->pubkey);
@@ -5148,13 +5150,13 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
             switch(client_session->pending_call_state) {
             case SSH_PENDING_CALL_NONE:
             {
-                syslog(LOG_INFO, "A: %s %s--- ", __FUNCTION__, username);    
+                syslog(LOG_INFO, "A: %s %s--- ", __FUNCTION__, username);
                 int rc = ssh_send_service_request_client(client_session, "ssh-userauth");
                 if (rc == SSH_AGAIN) {
-                    syslog(LOG_INFO, "B: %s ---", __FUNCTION__);    
+                    syslog(LOG_INFO, "B: %s ---", __FUNCTION__);
                     return SSH_AUTH_AGAIN;
                 } else if (rc == SSH_ERROR) {
-                    syslog(LOG_INFO, "C: %s ---", __FUNCTION__);    
+                    syslog(LOG_INFO, "C: %s ---", __FUNCTION__);
                     syslog(LOG_WARNING,
                         "Failed to request \"ssh-userauth\" service");
                     free(client_session->agent_state->comment);
@@ -5198,7 +5200,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                         syslog(LOG_INFO, "%s SSH_KEYTYPE_ECDSA", __FUNCTION__);
                         ssh_buffer_struct buffer;
                         buffer.out_length_prefixed_cstr(pubkey->type_c());
-                        
+
                         buffer.out_length_prefixed_cstr(
                             (pubkey->ecdsa_nid == NID_X9_62_prime256v1) ? "nistp256" :
                             (pubkey->ecdsa_nid == NID_secp384r1)        ? "nistp384" :
@@ -5242,7 +5244,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
 
                 /* sign the buffer with the private key */
                 struct ssh_crypto_struct *crypto = client_session->current_crypto
-                                                 ? client_session->current_crypto 
+                                                 ? client_session->current_crypto
                                                  : client_session->next_crypto
                                                  ;
 
@@ -5273,7 +5275,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
 
                 /* send the request */
                 if (client_session->agent->agent_talk_channel_server(front_session, &(*request), reply, front_session->error) < 0) {
-                    syslog(LOG_INFO, "%s back from agent talk channel 1 error ---", __FUNCTION__);    
+                    syslog(LOG_INFO, "%s back from agent talk channel 1 error ---", __FUNCTION__);
 
                     delete reply;
                     free(client_session->agent_state->comment);
@@ -5282,12 +5284,12 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                     client_session->agent_state = nullptr;
                     return SSH_AUTH_ERROR;
                 }
-                syslog(LOG_INFO, "%s back from agent talk channel 1 ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s back from agent talk channel 1 ---", __FUNCTION__);
 
                 /* check if reply is valid */
                 type = reply->in_uint8();
 
-                syslog(LOG_INFO, "%s back from agent talk channel 2 type=%u ---", __FUNCTION__, type);    
+                syslog(LOG_INFO, "%s back from agent talk channel 2 type=%u ---", __FUNCTION__, type);
 
                 switch (type){
                 case SSH2_AGENT_SIGN_RESPONSE:
@@ -5320,7 +5322,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                 SSHString sig_blob(sig_blob_len);
                 reply->buffer_get_data(sig_blob.data.get(),sig_blob_len);
 
-                syslog(LOG_INFO, "%s back from agent talk channel 3 sig_blob_len =%u ---", __FUNCTION__, sig_blob_len);    
+                syslog(LOG_INFO, "%s back from agent talk channel 3 sig_blob_len =%u ---", __FUNCTION__, sig_blob_len);
 
 
                 delete reply;
@@ -5336,15 +5338,15 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
                     return rc;
                 }
                 client_session->pending_call_state = SSH_PENDING_CALL_NONE;
-                syslog(LOG_INFO, "J: %s ---", __FUNCTION__);    
+                syslog(LOG_INFO, "J: %s ---", __FUNCTION__);
                 return rc;
             }
             case SSH_PENDING_CALL_AUTH_AGENT:
             {
-                syslog(LOG_INFO, "K: %s ---", __FUNCTION__);    
+                syslog(LOG_INFO, "K: %s ---", __FUNCTION__);
                 int rc = ssh_userauth_get_response_client(client_session);
                 client_session->pending_call_state = SSH_PENDING_CALL_NONE;
-                syslog(LOG_INFO, "L: %s ---", __FUNCTION__);    
+                syslog(LOG_INFO, "L: %s ---", __FUNCTION__);
                 switch (rc){
                 case SSH_AUTH_AGAIN:
                     return SSH_AUTH_AGAIN;
@@ -5377,7 +5379,7 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
             }
         }
         default:;
-            syslog(LOG_INFO, "SSH_AGENT_STATE ???? DEFAULT %s ---", __FUNCTION__);    
+            syslog(LOG_INFO, "SSH_AGENT_STATE ???? DEFAULT %s ---", __FUNCTION__);
 
             // Should not happen
         }
@@ -5423,10 +5425,10 @@ int ssh_userauth_agent_client(SshClientSession * client_session, SshServerSessio
  */
 int ssh_userauth_password_client(SshClientSession * client_session,
                           const char *username,
-                          const char *password, 
+                          const char *password,
                           error_struct * error) {
     int rc;
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     switch(client_session->pending_call_state) {
         case SSH_PENDING_CALL_NONE:
@@ -5437,7 +5439,7 @@ int ssh_userauth_password_client(SshClientSession * client_session,
                 client_session->pending_call_state = SSH_PENDING_CALL_NONE;
             }
         default:
-            ssh_set_error(client_session->error, 
+            ssh_set_error(client_session->error,
                           SSH_FATAL,
                           "Wrong state during pending SSH call");
             return SSH_ERROR;
@@ -5493,14 +5495,14 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
                                     const char *username,
                                     const char *submethods)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int rc;
     switch (client_session->pending_call_state){
     case SSH_PENDING_CALL_NONE:
         rc = ssh_send_service_request_client(client_session, "ssh-userauth");
         if (rc == SSH_AGAIN) {
             return SSH_AUTH_AGAIN;
-        } 
+        }
         else if (rc == SSH_ERROR) {
             syslog(LOG_WARNING, "Failed to request \"ssh-userauth\" service");
             return SSH_AUTH_ERROR;
@@ -5561,7 +5563,7 @@ static int ssh_userauth_kbdint_init_client(SshClientSession * client_session,
  */
 static int ssh_userauth_kbdint_send_client(SshClientSession * client_session)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t i;
     int rc;
     if (client_session->pending_call_state == SSH_PENDING_CALL_AUTH_KBDINT_SEND){
@@ -5628,7 +5630,7 @@ static int ssh_userauth_kbdint_send_client(SshClientSession * client_session)
  * @see ssh_userauth_kbdint_setanswer()
  */
 int ssh_userauth_kbdint_client(SshClientSession * client_session, const char *user, const char *submethods, error_struct * error) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int rc = SSH_AUTH_ERROR;
 
     if (client_session == nullptr) {
@@ -5671,7 +5673,7 @@ int ssh_userauth_kbdint_client(SshClientSession * client_session, const char *us
  * @returns             The number of prompts.
  */
 int ssh_userauth_kbdint_getnprompts_client(SshClientSession * client_session) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if(client_session==nullptr){
         return SSH_ERROR;
     }
@@ -5687,7 +5689,7 @@ int ssh_userauth_kbdint_getnprompts_client(SshClientSession * client_session) {
  */
 static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_set *valid_oids)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     OM_uint32 maj_stat, min_stat, lifetime;
     gss_OID_set actual_mechs;
     gss_buffer_desc namebuf;
@@ -5779,7 +5781,7 @@ static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_se
  */
 int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int i;
     gss_OID_set selected; /* oid selected for authentication */
     OM_uint32 maj_stat;
@@ -5811,7 +5813,7 @@ int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
         gss_display_status(&dummy, maj_stat,GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
         syslog(LOG_WARNING, "GSSAPI(%s): %s", "importing name", static_cast<char *>(buffer.value));
 
-        
+
         return SSH_PACKET_USED;
     }
 
@@ -5865,7 +5867,7 @@ int ssh_gssapi_auth_mic_client(SshClientSession * client_session)
  *                            later.
  */
 int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct * error) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 	int rc = SSH_AUTH_DENIED;
 
 	switch(client_session->pending_call_state) {
@@ -5895,7 +5897,7 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
 	    }
 	    return rc;
 	default:
-		ssh_set_error(client_session->error, 
+		ssh_set_error(client_session->error,
 				SSH_FATAL,
 				"Wrong state during pending SSH call");
 		return SSH_ERROR;
@@ -5922,14 +5924,14 @@ int ssh_userauth_gssapi_client(SshClientSession * client_session, error_struct *
  *
  * @return              0 on success, < 0 on error.
  */
-int ssh_userauth_kbdint_setanswer_client(SshClientSession * client_session, unsigned int i, const char *answer, error_struct * error) 
+int ssh_userauth_kbdint_setanswer_client(SshClientSession * client_session, unsigned int i, const char *answer, error_struct * error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (client_session == nullptr){
         return -1;
     }
-    if (answer == nullptr 
-    || client_session->kbdint == nullptr 
+    if (answer == nullptr
+    || client_session->kbdint == nullptr
     || i >= client_session->kbdint->nprompts){
         ssh_set_error(client_session->error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
@@ -5976,9 +5978,9 @@ int ssh_userauth_kbdint_setanswer_client(SshClientSession * client_session, unsi
  *   if (echo) ...
  * @endcode
  */
-const char *ssh_userauth_kbdint_getprompt_client(SshClientSession * client_session, unsigned int i, char *echo, error_struct * error) 
+const char *ssh_userauth_kbdint_getprompt_client(SshClientSession * client_session, unsigned int i, char *echo, error_struct * error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (client_session == nullptr){
         return nullptr;
     }
@@ -6012,14 +6014,14 @@ const char *ssh_userauth_kbdint_getprompt_client(SshClientSession * client_sessi
  *                      to be done again.
  *
  */
- 
+
  // TODO: this is client session only ?
- 
-int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channel channel) 
+
+int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channel channel)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int err = SSH_ERROR;
-    
+
     if(channel == nullptr) {
         return SSH_ERROR;
     }
@@ -6027,8 +6029,8 @@ int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channe
     if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_NOT_OPEN){
         return SSH_ERROR;
     }
-    
-    channel->channel_open(client_session->new_channel_id(), 
+
+    channel->channel_open(client_session->new_channel_id(),
         "session", CHANNEL_MAX_PACKET, CHANNEL_INITIAL_WINDOW, client_session->out_buffer);
 
     client_session->packet_send();
@@ -6040,7 +6042,7 @@ int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channe
     err = SSH_OK;
     while(1) {
         // Waiting for input
-        dopoll(client_session->ctx, (client_session->flags & SSH_SESSION_FLAG_BLOCKING) 
+        dopoll(client_session->ctx, (client_session->flags & SSH_SESSION_FLAG_BLOCKING)
             ? SSH_TIMEOUT_INFINITE
             : SSH_TIMEOUT_NONBLOCKING);
 
@@ -6090,7 +6092,7 @@ int ssh_sessionchannel_open_client(SshClientSession * client_session, ssh_channe
  *          use channel_read and channel_write for this.
  */
 int ssh_channel_open_forward_client(SshClientSession * client_session, ssh_channel channel, const char *remotehost, int remoteport, const char *sourcehost, int localport) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int err = SSH_ERROR;
 
     if(channel == nullptr) {
@@ -6105,7 +6107,7 @@ int ssh_channel_open_forward_client(SshClientSession * client_session, ssh_chann
     if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_NOT_OPEN){
         return SSH_ERROR;
     }
-    channel->channel_open(client_session->new_channel_id(), 
+    channel->channel_open(client_session->new_channel_id(),
         "direct-tcpip", CHANNEL_MAX_PACKET, CHANNEL_INITIAL_WINDOW, client_session->out_buffer);
 
     client_session->out_buffer->out_length_prefixed_cstr(remotehost);
@@ -6137,7 +6139,7 @@ int ssh_channel_open_forward_client(SshClientSession * client_session, ssh_chann
         }
 
         // Waiting for input
-        dopoll(client_session->ctx, (client_session->flags&SSH_SESSION_FLAG_BLOCKING) 
+        dopoll(client_session->ctx, (client_session->flags&SSH_SESSION_FLAG_BLOCKING)
             ? SSH_TIMEOUT_INFINITE
             : SSH_TIMEOUT_NONBLOCKING);
 
@@ -6195,7 +6197,7 @@ int ssh_channel_open_forward_client(SshClientSession * client_session, ssh_chann
 
 
 int ssh_channel_send_eof_client(SshClientSession * client_session, ssh_channel channel){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int err = SSH_ERROR;
 
     if(channel == nullptr) {
@@ -6228,7 +6230,7 @@ int ssh_channel_send_eof_client(SshClientSession * client_session, ssh_channel c
             syslog(LOG_WARNING, "handle_packets early exit : no socket");
             err = SSH_ERROR;
             break;
-        }        
+        }
 
         // Waiting for input
         dopoll(client_session->ctx, SSH_TIMEOUT_INFINITE);
@@ -6256,7 +6258,7 @@ int ssh_channel_send_eof_client(SshClientSession * client_session, ssh_channel c
  * @see ssh_channel_is_eof()
  */
 int ssh_channel_close_client(SshClientSession * client_session, ssh_channel channel){
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int err = 0;
 
     if(channel == nullptr) {
@@ -6301,8 +6303,8 @@ int ssh_channel_close_client(SshClientSession * client_session, ssh_channel chan
             err = SSH_ERROR;
             break;
         }
-        
-        // Waiting for input        
+
+        // Waiting for input
         dopoll(client_session->ctx, SSH_TIMEOUT_INFINITE);
         if (client_session->session_state == SSH_SESSION_STATE_ERROR) {
             break;
@@ -6320,7 +6322,7 @@ int ssh_channel_close_client(SshClientSession * client_session, ssh_channel chan
  * @warning Any data unread on this channel will be lost.
  */
 void ssh_channel_free_client(SshClientSession * client_session, ssh_channel channel) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (channel->state == ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN) {
         ssh_channel_close_client(client_session, channel);
     }
@@ -6353,21 +6355,21 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
 {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     ssh_key_struct *key;
-    
+
     ssh_buffer_struct buffer;
 
     syslog(LOG_INFO, "%s --- A", __FUNCTION__);
 
-    buffer.out_blob(client_session->current_crypto->server_pubkey.data.get(), 
+    buffer.out_blob(client_session->current_crypto->server_pubkey.data.get(),
                     client_session->current_crypto->server_pubkey.size);
-                    
+
     syslog(LOG_INFO, "%s --- B", __FUNCTION__);
-                    
+
     ssh_pki_import_pubkey_blob(buffer, &key);
-    
+
     syslog(LOG_INFO, "%s --- C", __FUNCTION__);
-    
-    
+
+
     SSHString blob(0);
 
     syslog(LOG_INFO, "%s --- D", __FUNCTION__);
@@ -6405,7 +6407,7 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
             syslog(LOG_INFO, "%s SSH_KEYTYPE_ECDSA", __FUNCTION__);
             ssh_buffer_struct buffer;
             buffer.out_length_prefixed_cstr(key->type_c());
-            
+
             buffer.out_length_prefixed_cstr(
                 (key->ecdsa_nid == NID_X9_62_prime256v1) ? "nistp256" :
                 (key->ecdsa_nid == NID_secp384r1)        ? "nistp384" :
@@ -6476,12 +6478,12 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
  */
 int ssh_set_agent_channel_client(SshClientSession * client_session, ssh_channel channel)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (!client_session){
         return SSH_ERROR;
     }
     if (!client_session->agent){
-        syslog(LOG_INFO, "NO AGENT %s ---", __FUNCTION__);    
+        syslog(LOG_INFO, "NO AGENT %s ---", __FUNCTION__);
         ssh_set_error(client_session->error,  SSH_REQUEST_DENIED, "Session has no active agent");
         return SSH_ERROR;
     }
@@ -6497,16 +6499,16 @@ int ssh_set_agent_channel_client(SshClientSession * client_session, ssh_channel 
  */
 void ssh_gssapi_set_creds_client(SshClientSession * client_session, const ssh_gssapi_creds creds)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (client_session->gssapi == nullptr){
         client_session->gssapi = new ssh_gssapi_struct;
     }
     client_session->gssapi->client.client_deleg_creds = static_cast<gss_cred_id_t>(creds);
 }
 
-int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channel channel, const char *name, const char *value) 
+int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channel channel, const char *name, const char *value)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_ENV <%s=%s> %s", name, value, channel->show());
     int rc = SSH_ERROR;
 
@@ -6576,10 +6578,10 @@ int ssh_channel_request_env_client(SshClientSession * client_session, ssh_channe
  *                      SSH_AGAIN if in nonblocking mode and call has
  *                      to be done again.
  */
-int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channel channel, int single_connection, const char *protocol, const char *cookie, int screen_number) 
+int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channel channel, int single_connection, const char *protocol, const char *cookie, int screen_number)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_X11 <%s %s> %s", 
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_X11 <%s %s> %s",
         protocol, cookie, channel->show());
     if(channel == nullptr) {
         return SSH_ERROR;
@@ -6589,7 +6591,7 @@ int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channe
     case SSH_CHANNEL_REQ_STATE_NONE:
     {
         uint8_t want_reply = 1;
-        
+
         client_session->out_buffer->out_uint8(SSH_MSG_CHANNEL_REQUEST);
         client_session->out_buffer->out_uint32_be(channel->remote_channel);
         client_session->out_buffer->out_length_prefixed_cstr("x11-req");
@@ -6669,10 +6671,10 @@ int ssh_channel_request_x11_client(SshClientSession * client_session, ssh_channe
  * @return              SSH_OK on success, SSH_ERROR if an error occurred
  *                      (including attempts to send signal via SSH-v1 session).
  */
-int ssh_channel_request_send_signal_client(SshClientSession * client_session, ssh_channel channel, const char *sig) 
+int ssh_channel_request_send_signal_client(SshClientSession * client_session, ssh_channel channel, const char *sig)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    syslog(LOG_INFO, ">>>>>>>>>>> CHANNEL_REQUEST_SEND_SIGNAL %s", channel->show());    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    syslog(LOG_INFO, ">>>>>>>>>>> CHANNEL_REQUEST_SEND_SIGNAL %s", channel->show());
     int rc = SSH_ERROR;
 
     if(channel == nullptr) {
@@ -6709,7 +6711,7 @@ int ssh_channel_request_send_signal_client(SshClientSession * client_session, ss
         break;
     }
     rc = channel->channel_request(client_session);
-    
+
     return rc;
 }
 
@@ -6726,14 +6728,14 @@ int ssh_channel_request_send_signal_client(SshClientSession * client_session, ss
  *          time (not 100% threadsafe).
  */
 int ssh_channel_change_pty_size_client(SshClientSession * client_session, ssh_channel channel, int cols, int rows) {
-    syslog(LOG_INFO, "%s --- (%d, %d)", __FUNCTION__, cols, rows);    
+    syslog(LOG_INFO, "%s --- (%d, %d)", __FUNCTION__, cols, rows);
     int rc = SSH_ERROR;
 
     switch(channel->request_state){
     case SSH_CHANNEL_REQ_STATE_NONE:
     {
         uint8_t want_reply = 0;
-        
+
         client_session->out_buffer->out_uint8(SSH_MSG_CHANNEL_REQUEST);
         client_session->out_buffer->out_uint32_be(channel->remote_channel);
         client_session->out_buffer->out_length_prefixed_cstr("window-change");
@@ -6779,7 +6781,7 @@ int ssh_channel_change_pty_size_client(SshClientSession * client_session, ssh_ch
  *
  */
 int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_channel channel, const char *cmd) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_EXEC <%s> %s", cmd, channel->show());
     int rc = SSH_ERROR;
 
@@ -6795,7 +6797,7 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
     case SSH_CHANNEL_REQ_STATE_NONE:
     {
         uint8_t want_reply = 1;
-        
+
         client_session->out_buffer->out_uint8(SSH_MSG_CHANNEL_REQUEST);
         client_session->out_buffer->out_uint32_be(channel->remote_channel);
         client_session->out_buffer->out_length_prefixed_cstr("exec");
@@ -6816,7 +6818,7 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
     default:
         ;
     }
-        
+
     return channel->channel_request(client_session);
 }
 
@@ -6837,10 +6839,10 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
  *                      SSH_AGAIN if in nonblocking mode and call has
  *                      to be done again.
  */
-int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_channel channel, const char *terminal, int col, int row) 
+int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_channel channel, const char *terminal, int col, int row)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_PTY_SIZE <%s, %d, %d> %s", terminal, col, row, channel->show());    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    syslog(LOG_INFO, ">>>>>>>>>>>> CHANNEL_REQUEST_PTY_SIZE <%s, %d, %d> %s", terminal, col, row, channel->show());
 
     if(channel == nullptr) {
         return SSH_ERROR;
@@ -6854,8 +6856,8 @@ int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_c
     switch(channel->request_state){
     case SSH_CHANNEL_REQ_STATE_NONE:
     {
-        uint8_t want_reply = 1;        
-        
+        uint8_t want_reply = 1;
+
         client_session->out_buffer->out_uint8(SSH_MSG_CHANNEL_REQUEST);
         client_session->out_buffer->out_uint32_be(channel->remote_channel);
         client_session->out_buffer->out_length_prefixed_cstr("pty-req");
@@ -6901,9 +6903,9 @@ int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_c
  * @return              The number of bytes written, SSH_ERROR on error.
  *
  */
-int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_t *data, uint32_t len) 
+int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_t *data, uint32_t len)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if(channel == nullptr) {
         syslog(LOG_WARNING, "Invalid channel");
         return SSH_ERROR;
@@ -6918,7 +6920,7 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
         return SSH_ERROR;
     }
 
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     uint32_t origlen = len;
 
     /*    syslog(LOG_INFO, "channel write len=%d", len);*/
@@ -6937,45 +6939,45 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
         return SSH_ERROR;
     }
 
-    if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN 
+    if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN
     || channel->delayed_close != 0) {
         syslog(LOG_INFO, "Remote channel is closed");
         ssh_set_error(this->error, SSH_REQUEST_DENIED, "Remote channel is closed");
         return SSH_ERROR;
     }
-    
+
     if (this->session_state == SSH_SESSION_STATE_ERROR){
         return SSH_ERROR;
     }
-    
+
     while (len > 0) {
         while (channel->remote_window == 0) {
             if (this->session_state == SSH_SESSION_STATE_ERROR){
                 syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
-            syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
+            syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d",
                 this->session_state, static_cast<int>(channel->state));
             if (this->socket == nullptr){
                 return SSH_ERROR;
             }
-            
+
             // Waiting for input
             dopoll(this->ctx, (this->flags&SSH_SESSION_FLAG_BLOCKING)?SSH_TIMEOUT_INFINITE:SSH_TIMEOUT_NONBLOCKING);
-            
-            if (this->session_state == SSH_SESSION_STATE_ERROR 
+
+            if (this->session_state == SSH_SESSION_STATE_ERROR
             || this->session_state == SSH_SESSION_STATE_ERROR){
                 syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
         }
-        
+
         uint32_t effectivelen = len > channel->remote_window ? channel->remote_window : len;
         if (effectivelen > maxpacketlen) {
             effectivelen = maxpacketlen;
         }
 
-        // TODO: datas are buffered in channel buffer but sent only if remote window 
+        // TODO: datas are buffered in channel buffer but sent only if remote window
         // has enough free space. Channels can say if they have enough room to store data.
         // construction of message and sending will be done later (in polling).
 
@@ -7009,9 +7011,9 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
  * @return              The number of bytes written, SSH_ERROR on error.
  *
  */
-int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const uint8_t *data, uint32_t len) 
+int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const uint8_t *data, uint32_t len)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if(channel == nullptr) {
         syslog(LOG_WARNING, "Invalid channel");
         return SSH_ERROR;
@@ -7044,13 +7046,13 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
         return SSH_ERROR;
     }
 
-    if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN 
+    if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN
     || channel->delayed_close != 0) {
         syslog(LOG_INFO, "Remote channel is closed");
         ssh_set_error(this->error, SSH_REQUEST_DENIED, "Remote channel is closed");
         return SSH_ERROR;
     }
-    
+
     if (this->session_state == SSH_SESSION_STATE_ERROR){
         return SSH_ERROR;
     }
@@ -7061,7 +7063,7 @@ int SshClientSession::ssh_channel_write_stderr_client(ssh_channel channel, const
                 syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }
-            syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
+            syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d",
                 this->session_state, static_cast<int>(channel->state));
             if (this->socket == nullptr){
                 return SSH_ERROR;

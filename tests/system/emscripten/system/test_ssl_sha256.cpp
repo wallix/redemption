@@ -269,7 +269,8 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
                              "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8",
                              SHA256_DIGEST_LENGTH),
                       0);
-    // hexdump96_c(sigstream.get_data(), sigstream.size());
+    //hexdump96_c(sig, sizeof(sig));
 
 }
+
 

@@ -387,7 +387,7 @@ class SslHMAC_Sha1_direct
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
-        assert(SHA1_DIGEST_LENGTH == out_data_size);
+        assert(SHA_DIGEST_LENGTH == out_data_size);
         context.final(out_data, SHA_DIGEST_LENGTH);
 
         SslSha1_direct sha1;

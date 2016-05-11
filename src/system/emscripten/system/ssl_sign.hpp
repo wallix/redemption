@@ -21,7 +21,9 @@
 
 #pragma once
 
-#include "system/ssl_calls.hpp"
+#include "system/ssl_md5.hpp"
+#include "system/ssl_rc4.hpp"
+#include "system/ssl_md4.hpp"
 
 /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
 class Sign
