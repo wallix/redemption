@@ -1451,6 +1451,11 @@ public:
             return;
         }
 
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::empty_client_clipboard");
+        }
+
         // Format List PDU.
         {
             RDPECLIP::FormatListPDU format_list_pdu;
@@ -1465,6 +1470,12 @@ public:
             const uint32_t chunk_data_length = total_length;
 
             this->send_message_to_client(
+                total_length,
+                flags,
+                chunk_data,
+                chunk_data_length);
+
+            this->send_message_to_server(
                 total_length,
                 flags,
                 chunk_data,

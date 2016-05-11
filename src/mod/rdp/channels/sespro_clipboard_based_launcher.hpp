@@ -277,7 +277,6 @@ public:
             break;
 
             case State::CLIPBOARD:
-//                this->do_state_clipboard();
                 this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
 
                 this->event.set(this->short_delay);
@@ -392,9 +391,6 @@ public:
             break;
 
             case State::ENTER:
-//                this->state = State::ENTER_DOWN;
-
-//                this->event.set(this->short_delay);
                 this->do_state_enter();
             break;
 
@@ -491,10 +487,6 @@ public:
         if (this->sesprob_channel) {
             this->sesprob_channel->give_additional_launch_time();
         }
-
-//        if (this->state == State::CLIPBOARD) {
-//            this->do_state_clipboard();
-//        }
 
         return false;
     }
@@ -642,20 +634,6 @@ public:
     }
 
 private:
-//    void do_state_clipboard() {
-//        if (!this->format_data_requested) {
-//            this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
-//
-//            this->event.set(this->short_delay);
-//
-//            return;
-//        }
-//
-//        this->state = State::ENTER;
-//
-//        this->event.set(this->long_delay);
-//    }
-
     void do_state_enter() {
         this->copy_paste_loop_counter++;
 
