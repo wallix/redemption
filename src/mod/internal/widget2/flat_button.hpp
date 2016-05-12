@@ -24,7 +24,7 @@
 
 #include "widget.hpp"
 #include "label.hpp"
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp"
 
 class WidgetFlatButton : public Widget2
 {

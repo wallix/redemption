@@ -93,6 +93,7 @@ project redjs
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
     <include>$(SYSTEMDIR)
+    <include>$(TESTDIR)
 
     <conditional>@defines
 
@@ -259,7 +260,7 @@ rule test-canonical ( base : requirements * )
 test-canonical acl/acl_serializer.hpp : <cxxflags>-DFIXTURES_PATH=\\\"$(FIXTURES_PATH)\\\" ;
 #test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
 #test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
-#test-canonical acl/auth_api.hpp ;
+test-canonical acl/auth_api.hpp ;
 
 ### @}
 
@@ -267,13 +268,13 @@ test-canonical acl/acl_serializer.hpp : <cxxflags>-DFIXTURES_PATH=\\\"$(FIXTURES
 ### @{
 #test-canonical capture/ChunkToFile.hpp : <library>z ;
 test-canonical capture/new_kbdcapture.hpp ;
-#test-canonical capture/RDPChunkedDevice.hpp ;
-#test-canonical capture/send_wrm_chunk.hpp ;
-#test-canonical capture/transparentchunk.hpp ;
-#test-canonical capture/transparentplayer.hpp ;
-#test-canonical capture/transparentrecorder.hpp ;
-#test-canonical capture/utils/save_state_chunk.hpp ;
-#test-canonical capture/wrm_label.hpp ;
+test-canonical capture/RDPChunkedDevice.hpp ;
+test-canonical capture/send_wrm_chunk.hpp ;
+test-canonical capture/transparentchunk.hpp ;
+test-canonical capture/transparentplayer.hpp ;
+test-canonical capture/transparentrecorder.hpp ;
+test-canonical capture/utils/save_state_chunk.hpp ;
+test-canonical capture/wrm_label.hpp ;
 #test-canonical capture/FileToChunk.hpp : <library>png ;
 #test-canonical capture/image_capture.hpp : <library>bitmap <library>png ;
 #test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>png <library>snappy <library>crypto ;
@@ -287,107 +288,107 @@ test-canonical capture/new_kbdcapture.hpp ;
 
 ### Test facility functions or classes
 ### @{
-#test-canonical utils/iter.hpp ;
-#test-canonical utils/noncopyable.hpp ;
-#test-canonical utils/splitter.hpp ;
-#test-canonical utils/algostring.hpp ;
-#test-canonical utils/make_unique.hpp ;
+test-canonical utils/iter.hpp ;
+test-canonical utils/noncopyable.hpp ;
+test-canonical utils/splitter.hpp ;
+test-canonical utils/algostring.hpp ;
+test-canonical utils/make_unique.hpp ;
 ### @}
 
-#test-canonical utils/stream.hpp ;
+test-canonical utils/stream.hpp ;
 test-canonical utils/utf.hpp ;
-#test-canonical utils/rect.hpp ;
-#test-canonical utils/ellipse.hpp ;
+test-canonical utils/rect.hpp ; 
+test-canonical utils/ellipse.hpp ;
 #test-canonical utils/drawable.hpp : <library>bitmap <library>png <library>crypto ;
-#test-canonical utils/region.hpp ;
-#test-canonical utils/bitfu.hpp ;
-#test-canonical utils/parse.hpp ;
-#test-canonical utils/parser.hpp ;
-#test-canonical utils/fileutils.hpp ;
-#test-canonical utils/parse_ip_conntrack.hpp ;
-#test-canonical core/RDP/x224.hpp ;
-#test-canonical core/RDP/out_per_bstream.hpp ;
-#test-canonical core/RDP/mcs.hpp ;
-#test-canonical core/RDP/mppc.hpp ;
-#test-canonical core/RDP/mppc_40.hpp ;
-#test-canonical core/RDP/mppc_50.hpp ;
-#test-canonical core/RDP/mppc_60.hpp ;
-#test-canonical core/RDP/mppc_61.hpp ;
+test-canonical utils/region.hpp ;
+test-canonical utils/bitfu.hpp ;
+test-canonical utils/parse.hpp ;
+test-canonical utils/parser.hpp ;
+#test-canonical utils/fileutils.hpp ; # 7 errors
+test-canonical utils/parse_ip_conntrack.hpp ;
+test-canonical core/RDP/x224.hpp ;
+test-canonical core/RDP/out_per_bstream.hpp ;
+test-canonical core/RDP/mcs.hpp ;
+test-canonical core/RDP/mppc.hpp ;
+test-canonical core/RDP/mppc_40.hpp ;
+test-canonical core/RDP/mppc_50.hpp ;
+test-canonical core/RDP/mppc_60.hpp ;
+test-canonical core/RDP/mppc_61.hpp ;
 #test-canonical core/RDP/gcc.hpp : <library>dl <library>z <library>crypto ;
-#test-canonical core/RDP/sec.hpp : <library>crypto ;
-#test-canonical core/RDP/lic.hpp : <library>crypto ;
-#test-canonical core/RDP/share.hpp ;
-#test-canonical core/RDP/fastpath.hpp : <library>crypto ;
-#test-canonical core/RDP/slowpath.hpp ;
-#test-canonical core/RDP/clipboard.hpp ;
-#test-canonical core/FSCC/FileInformation.hpp ;
-#test-canonical core/RDP/channels/rdpdr.hpp ;
-#test-canonical core/callback.hpp ;
-#test-canonical core/channel_list.hpp ;
-#test-canonical core/check_files.hpp ;
-#test-canonical core/client_info.hpp ;
-#test-canonical utils/theme.hpp ;
-#test-canonical utils/confdescriptor.hpp ;
-#test-canonical core/error.hpp ;
+test-canonical core/RDP/sec.hpp ;
+test-canonical core/RDP/lic.hpp ;
+test-canonical core/RDP/share.hpp ;
+test-canonical core/RDP/fastpath.hpp ;
+test-canonical core/RDP/slowpath.hpp ;
+test-canonical core/RDP/clipboard.hpp ;
+test-canonical core/FSCC/FileInformation.hpp ;
+test-canonical core/RDP/channels/rdpdr.hpp ;
+test-canonical core/callback.hpp ;
+test-canonical core/channel_list.hpp ;
+test-canonical core/check_files.hpp ;
+test-canonical core/client_info.hpp ;
+#test-canonical utils/theme.hpp ; # 4 errors
+#test-canonical utils/confdescriptor.hpp ; #12 erreor
+test-canonical core/error.hpp ;
 #test-canonical core/font.hpp ;
-#test-canonical core/listen.hpp ;
-#test-canonical core/mainloop.hpp ;
+test-canonical core/listen.hpp ;
+test-canonical core/mainloop.hpp ;
 #test-canonical core/RDP/bitmapupdate.hpp : <library>bitmap <library>png <library>crypto ;
 #test-canonical core/RDP/caches/bmpcache.hpp : <library>bitmap <library>png <library>crypto ;
 #test-canonical core/RDP/caches/bmpcachepersister.hpp : <library>bitmap <library>crypto ;
-#test-canonical core/RDP/caches/brushcache.hpp ;
-#test-canonical core/RDP/caches/glyphcache.hpp ;
-#test-canonical core/RDP/caches/pointercache.hpp ;
-#test-canonical utils/redirection_info.hpp ;
+test-canonical core/RDP/caches/brushcache.hpp ;
+test-canonical core/RDP/caches/glyphcache.hpp ;
+test-canonical core/RDP/caches/pointercache.hpp ;
+test-canonical utils/redirection_info.hpp ;
 
 ### Capabilities tests
 ### @{
-#test-canonical core/RDP/capabilities/bitmapcodecs.hpp ;
-#test-canonical core/RDP/capabilities/activate.hpp ;
-#test-canonical core/RDP/capabilities/cap_bitmap.hpp ;
-#test-canonical core/RDP/capabilities/cap_bmpcache.hpp ;
-#test-canonical core/RDP/capabilities/bitmapcachehostsupport.hpp ;
-#test-canonical core/RDP/capabilities/cap_brushcache.hpp ;
-#test-canonical core/RDP/capabilities/compdesk.hpp ;
-#test-canonical core/RDP/capabilities/control.hpp ;
-#test-canonical core/RDP/capabilities/drawgdiplus.hpp ;
-#test-canonical core/RDP/capabilities/drawninegridcache.hpp ;
-#test-canonical core/RDP/capabilities/cap_font.hpp ;
-#test-canonical core/RDP/capabilities/frameacknowledge.hpp ;
-#test-canonical core/RDP/capabilities/general.hpp ;
-#test-canonical core/RDP/capabilities/cap_glyphcache.hpp ;
-#test-canonical core/RDP/capabilities/input.hpp ;
-#test-canonical core/RDP/capabilities/largepointer.hpp ;
-#test-canonical core/RDP/capabilities/multifragmentupdate.hpp ;
-#test-canonical core/RDP/capabilities/offscreencache.hpp ;
-#test-canonical core/RDP/capabilities/order.hpp ;
-##test-canonical core/RDP/capabilities/pointer.hpp ;
-#test-canonical core/RDP/capabilities/rail.hpp ;
-#test-canonical core/RDP/capabilities/cap_share.hpp ;
-#test-canonical core/RDP/capabilities/cap_sound.hpp ;
-#test-canonical core/RDP/capabilities/surfacecommands.hpp ;
-#test-canonical core/RDP/capabilities/window.hpp ;
-#test-canonical core/RDP/capabilities/bmpcache2.hpp ;
-#test-canonical core/RDP/capabilities/colcache.hpp ;
-#test-canonical core/RDP/capabilities/common.hpp ;
-#test-canonical core/RDP/capabilities/virchan.hpp ;
+test-canonical core/RDP/capabilities/bitmapcodecs.hpp ;
+test-canonical core/RDP/capabilities/activate.hpp ;
+test-canonical core/RDP/capabilities/cap_bitmap.hpp ;
+test-canonical core/RDP/capabilities/cap_bmpcache.hpp ;
+test-canonical core/RDP/capabilities/bitmapcachehostsupport.hpp ;
+test-canonical core/RDP/capabilities/cap_brushcache.hpp ;
+test-canonical core/RDP/capabilities/compdesk.hpp ;
+test-canonical core/RDP/capabilities/control.hpp ;
+test-canonical core/RDP/capabilities/drawgdiplus.hpp ;
+test-canonical core/RDP/capabilities/drawninegridcache.hpp ;
+test-canonical core/RDP/capabilities/cap_font.hpp ;
+test-canonical core/RDP/capabilities/frameacknowledge.hpp ;
+test-canonical core/RDP/capabilities/general.hpp ;
+test-canonical core/RDP/capabilities/cap_glyphcache.hpp ;
+test-canonical core/RDP/capabilities/input.hpp ;
+test-canonical core/RDP/capabilities/largepointer.hpp ;
+test-canonical core/RDP/capabilities/multifragmentupdate.hpp ;
+test-canonical core/RDP/capabilities/offscreencache.hpp ;
+test-canonical core/RDP/capabilities/order.hpp ;
+test-canonical core/RDP/capabilities/pointer.hpp ;
+test-canonical core/RDP/capabilities/rail.hpp ;
+test-canonical core/RDP/capabilities/cap_share.hpp ;
+test-canonical core/RDP/capabilities/cap_sound.hpp ;
+test-canonical core/RDP/capabilities/surfacecommands.hpp ;
+test-canonical core/RDP/capabilities/window.hpp ;
+test-canonical core/RDP/capabilities/bmpcache2.hpp ;
+test-canonical core/RDP/capabilities/colcache.hpp ;
+test-canonical core/RDP/capabilities/common.hpp ;
+test-canonical core/RDP/capabilities/virchan.hpp ;
 ### @}
 
-#test-canonical core/RDP/ServerRedirection.hpp ;
-#test-canonical core/RDP/GraphicUpdatePDU.hpp ;
-#test-canonical core/RDP/RefreshRectPDU.hpp : <library>crypto ;
-#test-canonical core/RDP/logon.hpp ;
+test-canonical core/RDP/ServerRedirection.hpp ;
+test-canonical core/RDP/GraphicUpdatePDU.hpp ;
+test-canonical core/RDP/RefreshRectPDU.hpp ;
+test-canonical core/RDP/logon.hpp ;
 #test-canonical core/RDP/nego.hpp : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
-#test-canonical core/RDP/orders/RDPOrdersCommon.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
+#test-canonical core/RDP/orders/RDPOrdersCommon.hpp ;      # 1 error
+test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
 #test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
-#test-canonical core/RDP/RDPSerializer.hpp ;
-#test-canonical core/RDP/remote_programs.hpp ;
-#test-canonical core/server.hpp ;
-#test-canonical core/session.hpp ;
-#test-canonical core/session_server.hpp ;
-#test-canonical core/wait_obj.hpp ;
+test-canonical core/RDP/RDPSerializer.hpp ;
+#test-canonical core/RDP/remote_programs.hpp ; # many failed
+test-canonical core/server.hpp ;
+test-canonical core/session.hpp ;
+test-canonical core/session_server.hpp ;
+#test-canonical core/wait_obj.hpp ; # error
 
 #test-run test_front : front/test_front.cpp : front/front.hpp 
 #    : <library>bitmap <library>openssl 
@@ -397,15 +398,15 @@ test-canonical utils/utf.hpp ;
 #      <library>dl <library>crypto 
 #    ;
 #    
-#test-canonical mod/mod_api.hpp ;
+test-canonical mod/mod_api.hpp ;
 #test-canonical mod/mod_osd.hpp : <library>bitmap <library>png ;
-#test-canonical mod/null/null.hpp ;
-#test-canonical mod/rdp/rdp_orders.hpp ;
-#test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ;
+test-canonical mod/null/null.hpp ;
+test-canonical mod/rdp/rdp_orders.hpp ;
+#test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ; # error
 #test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>png ;
 #test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
-#test-canonical mod/vnc/vnc.hpp ;
-#test-canonical mod/xup/xup.hpp ;
+#test-canonical mod/vnc/vnc.hpp ; # error
+test-canonical mod/xup/xup.hpp ;
 #test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
 
 #test-run test_bitmap_perf 
@@ -415,13 +416,13 @@ test-canonical utils/utf.hpp ;
 #    ;
 
 test-canonical utils/colors.hpp ;
-#test-canonical utils/d3des.hpp ;
-#test-canonical utils/difftimeval.hpp ;
-#test-canonical utils/genrandom.hpp ;
-#test-canonical utils/log.hpp ;
-#test-canonical utils/netutils.hpp ;
+test-canonical utils/d3des.hpp ;
+test-canonical utils/difftimeval.hpp ;
+test-canonical utils/genrandom.hpp ;
+test-canonical utils/log.hpp ;
+test-canonical utils/netutils.hpp ;
 #test-canonical utils/png.hpp : <library>png ;
-#test-canonical utils/rdtsc.hpp ;
+test-canonical utils/rdtsc.hpp ;
 #test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 #test-canonical system/linux/system/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 #test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
@@ -439,8 +440,8 @@ test-canonical system/ssl_sha512.hpp ;
 
 ### Transport tests
 ### @{
-#test-canonical transport/detail/meta_writer.hpp ;
-#test-canonical transport/detail/meta_opener.hpp ;
+#test-canonical transport/detail/meta_writer.hpp ; #  error
+#test-canonical transport/detail/meta_opener.hpp ; # error
 
 #test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 
@@ -451,18 +452,18 @@ test-canonical system/ssl_sha512.hpp ;
 #    ;
 
 #test-canonical transport/out_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
-#test-canonical transport/test_transport.hpp ;
-#test-canonical transport/count_transport.hpp ;
+test-canonical transport/test_transport.hpp ;
+test-canonical transport/count_transport.hpp ;
 #test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto <library>dl ;
-#test-canonical transport/in_file_transport.hpp ;
-#test-canonical transport/out_file_transport.hpp ;
+test-canonical transport/in_file_transport.hpp ;
+test-canonical transport/out_file_transport.hpp ;
 #test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
 #test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
-#test-canonical transport/bulk_compression_transport.hpp ;
+#test-canonical transport/bulk_compression_transport.hpp ; # 3 failed
 #test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 #test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 #test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
-##test-canonical transport/out_filename_sequence_transport.hpp ;
+test-canonical transport/out_filename_sequence_transport.hpp ;
 
 #test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
 ### @}
@@ -470,7 +471,7 @@ test-canonical system/ssl_sha512.hpp ;
 
 ### Buffer Transport tests
 ### @{
-#test-canonical transport/buffer/buffering_buf.hpp ;
+#test-canonical transport/buffer/buffering_buf.hpp ; # error
 #test-canonical transport/buffer/checksum_buf.hpp : <library>crypto <library>dl <library>z ;
 ### @}
 
@@ -479,7 +480,7 @@ test-canonical system/ssl_sha512.hpp ;
 #test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
-#test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ;
+#test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error 
 #test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
 #test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
 #test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
@@ -636,9 +637,9 @@ test-canonical system/ssl_sha512.hpp ;
 #test-canonical mod/internal/widget2/number_edit.hpp : <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/edit_valid.hpp : <library>png <library>crypto ;
 ## test-run test_radio_list : mod/internal/widget2/test_radio_list.cpp : <library>png <library>libboost_unit_test ;
-##test-canonical mod/internal/widget2/radio_list.hpp ;
+#test-canonical mod/internal/widget2/radio_list.hpp ; # error
 #test-canonical mod/internal/widget2/flat_dialog.hpp : <library>bitmap <library>png <library>crypto ;
-#test-canonical mod/internal/widget2/widget.hpp : <library>crypto ;
+test-canonical mod/internal/widget2/widget.hpp ;
 #test-canonical mod/internal/widget2/composite.hpp : <library>png <library>crypto ;
 
 ##test-run test_window_dialog : mod/internal/widget2/test_window_dialog.cpp : <library>png <library>z <library>crypto <library>dl ;
@@ -674,18 +675,18 @@ test-canonical system/ssl_sha512.hpp ;
 #test-canonical mod/internal/widget_test_mod.hpp : <library>png ;
 #test-canonical mod/internal/interactive_target_mod.hpp : <library>png <library>crypto ;
 #test-canonical mod/internal/bouncer2_mod.hpp : <library>png ;
-#test-canonical mod/internal/test_card_mod.hpp ;
-#test-canonical mod/internal/replay_mod.hpp ;
-#test-canonical mod/internal/internal_mod.hpp ;
+test-canonical mod/internal/test_card_mod.hpp ;
+test-canonical mod/internal/replay_mod.hpp ;
+test-canonical mod/internal/internal_mod.hpp ;
 #test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto ;
 ### @}
 
 ### Regex tests
 ### @{
-#test-canonical regex/regex_state.hpp ;
+test-canonical regex/regex_state.hpp ;
 #test-canonical regex/regex_parser.hpp ;
-#test-canonical regex/regex_st_automate.hpp ;
-#test-canonical regex/regex.hpp ;
+#test-canonical regex/regex_st_automate.hpp ; # warning
+#test-canonical regex/regex.hpp ; #20 errors
 
 ## test-run benchmark_regex_parser : benchmark/parser.cpp ;
 ## test-run benchmark_regex_search : benchmark/search.cpp ;
@@ -697,15 +698,15 @@ test-canonical system/ssl_sha512.hpp ;
 
 ### NLA TESTS
 ### @{
-#test-canonical core/RDP/nla/asn1/ber.hpp ;
+test-canonical core/RDP/nla/asn1/ber.hpp ;
 #test-canonical core/RDP/nla/credssp.hpp : <library>crypto ;
-#test-canonical core/RDP/nla/sspi.hpp ;
+test-canonical core/RDP/nla/sspi.hpp ;
 #test-canonical core/RDP/nla/nla.hpp : <library>dl <library>krb5 <library>gssglue <library>z <library>crypto ;
 
 ##alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
 #test-canonical core/RDP/nla/ntlm/ntlm_message_negotiate.hpp : <library>crypto ;
-#test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ;
+#test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ; # error
 #test-canonical core/RDP/nla/ntlm/ntlm_message_challenge.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_message_authenticate.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_context.hpp : <library>dl <library>z <library>crypto ;
@@ -721,81 +722,81 @@ test-canonical system/ssl_sha512.hpp ;
 #test-canonical mod/internal/widget2/flat_wait.hpp : <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/flat_form.hpp : <library>png <library>crypto ;
 ### @}
-#test-canonical utils/authorization_channels.hpp ;
-#test-canonical utils/pattutils.hpp ;
-#test-canonical utils/strutils.hpp ;
-#test-canonical utils/diffiehellman.hpp ;
-#test-canonical utils/finally.hpp ;
+#test-canonical utils/authorization_channels.hpp ; # warning
+test-canonical utils/pattutils.hpp ;
+test-canonical utils/strutils.hpp ;
+test-canonical utils/diffiehellman.hpp ;
+test-canonical utils/finally.hpp ;
 
-#test-canonical acl/mm_api.hpp ;
-#test-canonical core/activity_checker.hpp ;
-#test-canonical core/authid.hpp ;
-#test-canonical core/channel_names.hpp ;
-#test-canonical core/defines.hpp ;
-#test-canonical core/front_api.hpp ;
-#test-canonical core/RDP/autoreconnect.hpp ;
-#test-canonical core/RDP/capabilities.hpp ;
-#test-canonical core/RDP/mppc_unified_dec.hpp ;
-#test-canonical core/RDP/nla/ntlm/ntlm_message.hpp ;
-#test-canonical core/RDP/non_null_terminated_utf16_from_utf8.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp ;
-#test-canonical core/RDP/PersistentKeyListPDU.hpp ;
-#test-canonical core/RDP/pointer.hpp ;
-#test-canonical core/RDP/protocol.hpp ;
-#test-canonical core/RDP/SaveSessionInfoPDU.hpp ;
-#test-canonical core/server_notifier_api.hpp ;
-#test-canonical mod/internal/flat_selector2_mod.hpp ;
-#test-canonical mod/internal/flat_wait_mod.hpp ;
-#test-canonical mod/internal/transparent_replay_mod.hpp ;
-#test-canonical mod/internal/widget2/flat_vnc_authentification.hpp ;
-#test-canonical mod/internal/widget2/language_button.hpp ;
-#test-canonical mod/internal/widget2/layout.hpp ;
-#test-canonical mod/internal/widget2/notify_api.hpp ;
-#test-canonical mod/rdp/channels/base_channel.hpp ;
-#test-canonical mod/rdp/channels/rdpdr_file_system_drive_manager.hpp ;
-#test-canonical mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp ;
-#test-canonical mod/rdp/channels/sespro_channel.hpp ;
-#test-canonical mod/rdp/channels/sespro_clipboard_based_launcher.hpp ;
-#test-canonical mod/rdp/channels/sespro_launcher.hpp ;
-#test-canonical mod/rdp/rdp_log.hpp ;
-#test-canonical mod/rdp/rdp_params.hpp ;
-#test-canonical regex/regex_automate.hpp ;
-#test-canonical regex/regex_consumer.hpp ;
-#test-canonical regex/regex_states_value.hpp ;
-#test-canonical regex/regex_utils.hpp ;
-#test-canonical system/linux/system/openssl.hpp ;
-#test-canonical transport/buffer/file_buf.hpp ;
-#test-canonical transport/buffer/null_buf.hpp ;
-#test-canonical transport/detail/meta_hash.hpp ;
-#test-canonical transport/detail/no_param.hpp ;
-#test-canonical transport/filter/crypto_filter.hpp ;
-#test-canonical transport/mixin_transport.hpp ;
-#test-canonical utils/apps/app_decrypter.hpp ;
-#test-canonical utils/apps/app_proxy.hpp ;
-#test-canonical utils/apps/app_recorder.hpp ;
-#test-canonical utils/apps/app_verifier.hpp ;
-#test-canonical utils/apps/recording_progress.hpp ;
-#test-canonical utils/array.hpp ;
-#test-canonical utils/array_view.hpp ;
-#test-canonical utils/asynchronous_task_manager.hpp ;
-#test-canonical utils/bitmap_data_allocator.hpp ;
-#test-canonical utils/bytes_t.hpp ;
-#test-canonical utils/cast.hpp ;
-#test-canonical utils/cfgloader.hpp ;
-#test-canonical utils/exchange.hpp ;
-#test-canonical utils/fdbuf.hpp ;
-#test-canonical utils/get_printable_password.hpp ;
-#test-canonical utils/movable_noncopyable.hpp ;
-#test-canonical utils/outbound_connection_monitor_rules.hpp ;
-#test-canonical utils/range.hpp ;
-##test-canonical utils/server_certificate.hpp ;
-#test-canonical utils/socket_transport_utility.hpp ;
-#test-canonical utils/text_metrics.hpp ;
-#test-canonical utils/timeout.hpp ;
-#test-canonical utils/timeval_ops.hpp ;
-#test-canonical utils/underlying_cast.hpp ;
-#test-canonical utils/update_lock.hpp ;
-#test-canonical utils/urandom_read.hpp ;
-#test-canonical utils/virtual_channel_data_sender.hpp ;
-#test-canonical utils/winpr/pattern.hpp ;
+test-canonical acl/mm_api.hpp ;
+test-canonical core/activity_checker.hpp ;
+test-canonical core/authid.hpp ;
+test-canonical core/channel_names.hpp ;
+test-canonical core/defines.hpp ;
+test-canonical core/front_api.hpp ;
+test-canonical core/RDP/autoreconnect.hpp ;
+test-canonical core/RDP/capabilities.hpp ;
+test-canonical core/RDP/mppc_unified_dec.hpp ;
+test-canonical core/RDP/nla/ntlm/ntlm_message.hpp ;
+test-canonical core/RDP/non_null_terminated_utf16_from_utf8.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp ;
+test-canonical core/RDP/PersistentKeyListPDU.hpp ;
+test-canonical core/RDP/pointer.hpp ;
+test-canonical core/RDP/protocol.hpp ;
+test-canonical core/RDP/SaveSessionInfoPDU.hpp ;
+test-canonical core/server_notifier_api.hpp ;
+test-canonical mod/internal/flat_selector2_mod.hpp ;
+test-canonical mod/internal/flat_wait_mod.hpp ;
+test-canonical mod/internal/transparent_replay_mod.hpp ;
+test-canonical mod/internal/widget2/flat_vnc_authentification.hpp ;
+test-canonical mod/internal/widget2/language_button.hpp ;
+test-canonical mod/internal/widget2/layout.hpp ;
+test-canonical mod/internal/widget2/notify_api.hpp ;
+test-canonical mod/rdp/channels/base_channel.hpp ;
+test-canonical mod/rdp/channels/rdpdr_file_system_drive_manager.hpp ;
+test-canonical mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp ;
+test-canonical mod/rdp/channels/sespro_channel.hpp ;
+test-canonical mod/rdp/channels/sespro_clipboard_based_launcher.hpp ;
+test-canonical mod/rdp/channels/sespro_launcher.hpp ;
+test-canonical mod/rdp/rdp_log.hpp ;
+test-canonical mod/rdp/rdp_params.hpp ;
+test-canonical regex/regex_automate.hpp ;
+test-canonical regex/regex_consumer.hpp ;
+test-canonical regex/regex_states_value.hpp ;
+test-canonical regex/regex_utils.hpp ;
+test-canonical system/linux/system/openssl.hpp ;
+test-canonical transport/buffer/file_buf.hpp ;
+test-canonical transport/buffer/null_buf.hpp ;
+test-canonical transport/detail/meta_hash.hpp ;
+test-canonical transport/detail/no_param.hpp ;
+test-canonical transport/filter/crypto_filter.hpp ;
+test-canonical transport/mixin_transport.hpp ;
+test-canonical utils/apps/app_decrypter.hpp ;
+test-canonical utils/apps/app_proxy.hpp ;
+test-canonical utils/apps/app_recorder.hpp ;
+test-canonical utils/apps/app_verifier.hpp ;
+test-canonical utils/apps/recording_progress.hpp ;
+test-canonical utils/array.hpp ;
+test-canonical utils/array_view.hpp ;
+test-canonical utils/asynchronous_task_manager.hpp ;
+test-canonical utils/bitmap_data_allocator.hpp ;
+test-canonical utils/bytes_t.hpp ;
+test-canonical utils/cast.hpp ;
+test-canonical utils/cfgloader.hpp ;
+test-canonical utils/exchange.hpp ;
+test-canonical utils/fdbuf.hpp ;
+test-canonical utils/get_printable_password.hpp ;
+test-canonical utils/movable_noncopyable.hpp ;
+test-canonical utils/outbound_connection_monitor_rules.hpp ;
+test-canonical utils/range.hpp ;
+#test-canonical utils/server_certificate.hpp ; # error
+test-canonical utils/socket_transport_utility.hpp ;
+test-canonical utils/text_metrics.hpp ;
+test-canonical utils/timeout.hpp ;
+test-canonical utils/timeval_ops.hpp ;
+test-canonical utils/underlying_cast.hpp ;
+test-canonical utils/update_lock.hpp ;
+test-canonical utils/urandom_read.hpp ;
+test-canonical utils/virtual_channel_data_sender.hpp ;
+test-canonical utils/winpr/pattern.hpp ;
 
