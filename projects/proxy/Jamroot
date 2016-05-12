@@ -875,6 +875,7 @@ test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
 test-canonical mod/vnc/vnc.hpp ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
+#test-canonical utils/bitmap_with_png.hpp : <library>bitmap <library>png ; # error with ssl_sha1.hpp
 
 test-run test_bitmap_perf 
     : test_bitmap_perf.cpp 

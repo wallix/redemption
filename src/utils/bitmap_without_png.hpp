@@ -16,7 +16,7 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Javier Caverni, Martin Potier,
-              Meng Tan
+              Meng Tan, Clement Moroldo
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    This file implement the bitmap items data structure
@@ -35,7 +35,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "png_bitmap.hpp"
+#include "utils/png_bitmap.hpp"
 #include <string.h>
 
 #include <cerrno>
@@ -49,9 +49,12 @@
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
-#include "system/ssl_calls.hpp"
+//#include "system/ssl_calls.hpp"
 #include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
+
+#include "utils/array_view.hpp"
+#include "system/ssl_sha1.hpp"
 
 #ifndef FAR
 #  define FAR
@@ -110,6 +113,8 @@ class Bitmap
         {}
     };
 
+
+protected:
     class DataBitmap : DataBitmapBase
     {
         DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
@@ -181,7 +186,7 @@ class Bitmap
             return this->ptr_;
         }
 
-    private:
+    protected:
         uint8_t const * data_palette() const noexcept {
             //REDASSERT(this->bpp() == 8);
             return reinterpret_cast<uint8_t const*>(this) + palette_index;
@@ -246,11 +251,12 @@ class Bitmap
         }
     };
 
+public:
+
     DataBitmap * data_bitmap;
 
     void * operator new(size_t n) = delete;
 
-public:
     Bitmap() noexcept
     : data_bitmap(nullptr)
     {}
@@ -454,7 +460,7 @@ public:
         else {
             BGRPalette palette1{BGRPalette::no_init()};
 
-            // header for bmp file 
+            // header for bmp file
             struct bmp_header {
                 size_t size;
                 unsigned image_width;
@@ -536,7 +542,7 @@ public:
 
                 char type1[2];
 
-                // read file type 
+                // read file type
                 if (file.read(type1, 2) != 2) {
                     LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
                     this->load_error_bitmap();
@@ -550,7 +556,7 @@ public:
                     return ;
                 }
 
-                // read file size 
+                // read file size
                 TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.");
                 if (file.read(stream_data, 4) < 4){
                     LOG(LOG_ERR, "Widget_load: error read file size");
@@ -798,91 +804,17 @@ public:
         return this->data_bitmap->bmp_size();
     }
 
-    /*bool open_png_file(const char * filename) {
-        this->reset();
+    array_view<uint8_t const> data_compressed() const noexcept {
+        return {this->data_bitmap->compressed_data(), this->data_bitmap->compressed_size()};
+    }
 
-        png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
-                                                     nullptr, nullptr, nullptr);
-        if (!png_ptr) {
-            return false;
-        }
-
-        png_infop info_ptr = png_create_info_struct(png_ptr);
-        if (!info_ptr) {
-            png_destroy_read_struct(&png_ptr, nullptr, nullptr);
-            return false;
-        }
-        // this handle lib png errors for this call
-        if (setjmp(png_ptr->jmpbuf)) {
-            png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-            return false;
-        }
-
-        FILE * fd = fopen(filename, "rb");
-        if (!fd) {
-            png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-            return false;
-        }
-        png_init_io(png_ptr, fd);
-
-        png_read_info(png_ptr, info_ptr);
-
-        png_uint_32 width = png_get_image_width(png_ptr, info_ptr);
-        png_uint_32 height = png_get_image_height(png_ptr, info_ptr);
-        png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-        png_byte color_type = png_get_color_type(png_ptr, info_ptr);
-
-        if (color_type == PNG_COLOR_TYPE_PALETTE)
-            png_set_palette_to_rgb(png_ptr);
-
-        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-            png_set_gray_1_2_4_to_8(png_ptr);
-
-        if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-            png_set_tRNS_to_alpha(png_ptr);
-
-        if (bit_depth == 16)
-            png_set_strip_16(png_ptr);
-        else if (bit_depth < 8)
-            png_set_packing(png_ptr);
-
-        if (color_type == PNG_COLOR_TYPE_GRAY ||
-            color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-            png_set_gray_to_rgb(png_ptr);
-
-        if (color_type & PNG_COLOR_MASK_ALPHA) {
-            png_set_strip_alpha(png_ptr);
-        }
-        png_set_bgr(png_ptr);
-        png_read_update_info(png_ptr, info_ptr);
-
-        TODO("Looks like there's a shift when width is not divisible by 4");
-        png_uint_32 rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-        if (static_cast<uint16_t>(width) * 3 != rowbytes) {
-            LOG(LOG_ERR, "PNG Image has bad type");
-            png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-            return false;
-        }
-
-        this->data_bitmap = DataBitmap::construct_png(static_cast<uint16_t>(width), static_cast<uint16_t>(height));
-        png_bytep row = this->data_bitmap->get() + rowbytes * height - rowbytes;
-        png_bytep * row_pointers = new png_bytep[height];
-        for (uint i = 0; i < height; ++i) {
-            row_pointers[i] = row - i * rowbytes;
-        }
-        png_read_image(png_ptr, row_pointers);
-        png_read_end(png_ptr, info_ptr);
-        png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-        fclose(fd);
-        delete [] row_pointers;
-
-        // hexdump_d(this->data_bitmap->get(), this->bmp_size);
-
-        return true;
-    } // bool open_png_file(const char * filename)*/
+    bool has_data_compressed() const noexcept {
+        return this->data_bitmap->compressed_size();
+    }
 
 
-private:
+
+protected:
     //TODO("move that function to external definition")
     //const char * get_opcode(uint8_t opcode){
     //    enum {
@@ -1397,7 +1329,7 @@ public:
         }
     }
 
-private:
+protected:
     static inline void in_copy_color_plan(uint16_t src_cx, uint16_t src_cy, const uint8_t * & data,
          size_t & data_size, uint16_t cx, uint8_t * color_plane)
     {
@@ -2365,7 +2297,7 @@ public:
         //LOG(LOG_INFO, "compress_color_plane: exit");
     }
 
-private:
+protected:
     void compress60(OutStream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
@@ -2510,7 +2442,7 @@ public:
         }
     }
 
-private:
+protected:
     void load_error_bitmap() {
         const uint8_t errorbmp[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x2d, 0x2d, 0xb6, 0x30, 0x30, 0xb8, 0x20, 0x20, 0x80, 0x07, 0x07, 0x33, 0x00,  // ...--.00.  ...3.
