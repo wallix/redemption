@@ -34,9 +34,101 @@
 
 //#include <iostream>
 
+
+BOOST_AUTO_TEST_CASE(TestAES128_CBC)
+{
+    {
+        // very secret key
+        uint8_t key16[] = {0, 1, 2, 3, 4, 5, 6, 7,
+                           8, 9, 10, 11, 12, 13, 14, 15
+                          };
+        // init vector not secret
+        uint8_t iv[] = {
+                        0x00, 0x01, 0x02, 0x03,
+                        0x04, 0x05, 0x06, 0x07,
+                        0x08, 0x09, 0x10, 0x11,
+                        0x12, 0x13, 0x14, 0x15
+                    };
+
+        uint8_t inbuf[1024]= {3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6,
+                              3, 1, 4, 1, 5, 9, 2, 6
+
+                             }; // message to hide
+        uint8_t outbuf[1024] = {};
+
+        SslAes128_CBC aes(key16, iv, AES_ENCRYPT);
+        aes.crypt_cbc(32, inbuf, outbuf);
+
+//        hexdump_d(aes.tiv.iv, 16);
+
+        uint8_t updated_iv[] = {
+            0x32, 0xd4, 0xa1, 0x7b,
+            0x6e, 0x80, 0x01, 0x19,
+            0xc6, 0x05, 0x6c, 0xb1,
+            0xf5, 0xf1, 0xd5, 0x1f
+        };
+        BOOST_CHECK_EQUAL(memcmp(aes.tiv.iv, updated_iv, 16), 0);
+
+        aes.crypt_cbc(32, inbuf+32, outbuf+32);
+        aes.crypt_cbc(32, inbuf+64, outbuf+64);
+        aes.crypt_cbc(32, inbuf+96, outbuf+95);
+
+        uint8_t expected[] = { 
+/* 0000 */ 0x5c, 0xe3, 0x8b, 0xbe, 0xf5, 0xfc, 0x78, 0x86,
+           0x98, 0xe2, 0x34, 0xbc, 0x5b, 0xa2, 0xa5, 0x6b,
+/* 0010 */ 0x32, 0xd4, 0xa1, 0x7b, 0x6e, 0x80, 0x01, 0x19,
+           0xc6, 0x05, 0x6c, 0xb1, 0xf5, 0xf1, 0xd5, 0x1f,
+/* 0020 */ 0x8a, 0x9a, 0xbc, 0xa4, 0x6a, 0x5f, 0x05, 0x07, 
+           0xd1, 0xb4, 0x24, 0x2c, 0x95, 0x7b, 0xdb, 0x01,
+/* 0030 */ 0x4e, 0xbb, 0x14, 0x0a, 0xdd, 0x13, 0x09, 0xa3,
+           0x39, 0x62, 0x15, 0x58, 0x93, 0xfd, 0xf9, 0x10,
+/* 0040 */ 0x03, 0xcc, 0x2b, 0x7b, 0x36, 0x19, 0x40, 0x0b,
+           0x31, 0x98, 0x3c, 0x44, 0x2e, 0x75, 0xbc, 0xda,
+/* 0050 */ 0x82, 0xb0, 0xb1, 0x15, 0x14, 0x2d, 0xf5, 0x65,
+           0xf6, 0x98, 0x79, 0xe9, 0x61, 0x5d, 0xba, 0x15,
+/* 0060 */ 0x43, 0x37, 0xb8, 0x34, 0x6b, 0x29, 0x41, 0x28,
+           0x78, 0x9a, 0xfb, 0xd3, 0xaf, 0x90, 0x72, 0x1a,
+/* 0070 */ 0xcd, 0xe3, 0x84, 0x0c, 0x2a, 0xe7, 0x6d, 0x75,
+           0xa8, 0x02, 0x0c, 0x74, 0x55, 0x84, 0x50, 0x00
+        };
+        BOOST_CHECK_EQUAL(memcmp(outbuf, expected, 32), 0);
+
+//        hexdump_d(outbuf, 128);
+
+        uint8_t decrypted[1024] = {};
+
+        SslAes128_CBC aes2(key16, iv, AES_DECRYPT);
+        aes2.crypt_cbc(32, outbuf, decrypted);
+
+        BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 32), 0);
+
+        hexdump_d(decrypted, 32);
+        hexdump_d(inbuf, 32);
+
+    }
+
+}
+
+
 BOOST_AUTO_TEST_CASE(TestAES)
 {
-
     {
         SslAES aes;
 
@@ -45,24 +137,17 @@ BOOST_AUTO_TEST_CASE(TestAES)
                            8, 9, 10, 11, 12, 13, 14, 15,
                            16, 17, 18, 19, 20, 21, 22, 23};
         // init vector not secret
-        uint8_t iv24[] = {0, 1, 2, 3, 4, 5, 6, 7,
-                           8, 9, 10, 11, 12, 13, 14, 15,
-                           16, 17, 18, 19, 20, 21, 22, 23};;
+        uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
         // init vector not secret
-        uint8_t iv24d[] = {0, 1, 2, 3, 4, 5, 6, 7,
-                           8, 9, 10, 11, 12, 13, 14, 15,
-                           16, 17, 18, 19, 20, 21, 22, 23};;
+        uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
 
-        uint8_t inbuf[1024]= {3, 1, 4, 1, 5, 9, 2, 6}; // message to hide
+        uint8_t inbuf[1024]= "secret très confidentiel\x00\x00\x00\x00\x00\x00\x00\x00";
         uint8_t outbuf[1024] = {};
         uint8_t decrypted[1024] = {};
 
         aes.set_key(key24, 16);
-
-        aes.crypt_cbc(32, iv24, inbuf, outbuf);
-
-        aes.decrypt_cbc(32, iv24d, outbuf, decrypted);
-
+        aes.crypt_cbc(32, iv, inbuf, outbuf);
+        aes.decrypt_cbc(32, iv2, outbuf, decrypted);
 
         BOOST_CHECK_EQUAL(memcmp(inbuf, decrypted, 32), 0);
     }
