@@ -48,10 +48,10 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
-#include "stream.hpp"
-#include "ssl_calls.hpp"
-#include "rect.hpp"
-#include "bitmap_data_allocator.hpp"
+#include "utils/stream.hpp"
+#include "system/ssl_calls.hpp"
+#include "utils/rect.hpp"
+#include "utils/bitmap_data_allocator.hpp"
 
 #ifndef FAR
 #  define FAR
