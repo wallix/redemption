@@ -66,6 +66,66 @@ class SslAes128_CBC
     }
 };
 
+class SslAes192_CBC
+{
+    int mode; // AES_ENCRYPT or AES_DECRYPT
+    AES_KEY key;
+    
+    public:
+    struct t_iv {
+        uint8_t iv[16];
+    } tiv;
+
+    SslAes192_CBC(const uint8_t key[24], const uint8_t (& iv)[16], int mode)
+        : mode(mode)
+        , key([](const uint8_t key[24], int mode)-> const AES_KEY {
+            AES_KEY tmp_key;
+            (mode==AES_DECRYPT?AES_set_decrypt_key:AES_set_encrypt_key)(key, 192, &tmp_key);
+            return std::move(tmp_key);
+          }(key, mode))
+        , tiv([](const uint8_t (& iv)[16])-> const t_iv {
+            t_iv tmp;
+            memcpy(tmp.iv, iv, sizeof(tmp.iv));
+            return tmp;
+          }(iv))
+    {
+    }
+
+    void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out) {
+       AES_cbc_encrypt(in, out, data_size, &(this->key), this->tiv.iv, mode);
+    }
+};
+
+
+class SslAes256_CBC
+{
+    int mode; // AES_ENCRYPT or AES_DECRYPT
+    AES_KEY key;
+    
+    public:
+    struct t_iv {
+        uint8_t iv[16];
+    } tiv;
+
+    SslAes256_CBC(const uint8_t key[32], const uint8_t (& iv)[16], int mode)
+        : mode(mode)
+        , key([](const uint8_t key[32], int mode)-> const AES_KEY {
+            AES_KEY tmp_key;
+            (mode==AES_DECRYPT?AES_set_decrypt_key:AES_set_encrypt_key)(key, 256, &tmp_key);
+            return std::move(tmp_key);
+          }(key, mode))
+        , tiv([](const uint8_t (& iv)[16])-> const t_iv {
+            t_iv tmp;
+            memcpy(tmp.iv, iv, sizeof(tmp.iv));
+            return tmp;
+          }(iv))
+    {
+    }
+
+    void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out) {
+       AES_cbc_encrypt(in, out, data_size, &(this->key), this->tiv.iv, mode);
+    }
+};
 
 class SslAES
 {
