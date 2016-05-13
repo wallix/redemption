@@ -25,7 +25,7 @@
 #include "label.hpp"
 #include "widget.hpp"
 #include "edit.hpp"
-#include <keymap2.hpp>
+#include "keyboard/keymap2.hpp"
 
 class WidgetPassword : public WidgetEdit {
 public:

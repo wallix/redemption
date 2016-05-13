@@ -1,1 +1,1 @@
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"

@@ -262,7 +262,6 @@ project redemption
     <include>$(SRCDIR)/headers
 #    <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
-    <include>$(TESTDIR)
     <include>/usr/include
 
     <conditional>@defines
@@ -668,11 +667,16 @@ actions cover
 rule test-run ( target : sources + : tested ? : requirements * )
 {
 #    ECHO " TEST RUN" ;
-    sources = $(TESTDIR)/$(sources) ;
+    local ROOT_TEST_DIR = $(TESTDIR) ;
+    if $(sources:P) = "system" {
+        ROOT_TEST_DIR = $(SYSTEMTESTDIR) ;
+    }
+    sources = $(ROOT_TEST_DIR)/$(sources) ;
+
     local base = [ MATCH "test_(.*)$" : $(sources[0]:B) ] ;
     local basepath = "" ;
     local path = $(sources[0]:P) ;
-    while $(path) != $(TESTDIR) {
+    while $(path) != $(ROOT_TEST_DIR) {
         basepath = $(path:B)/$(basepath) ;
         path = $(path:P) ;
     }
@@ -871,6 +875,7 @@ test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
 test-canonical mod/vnc/vnc.hpp ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
+#test-canonical utils/bitmap_with_png.hpp : <library>bitmap <library>png ; # error with ssl_sha1.hpp
 
 test-run test_bitmap_perf 
     : test_bitmap_perf.cpp 
