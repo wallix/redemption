@@ -251,6 +251,9 @@ class SslAes128_CBC_direct
         uint8_t iv[16];
     } tiv;
 
+    uint8_t binKey[32];
+
+
     SslAes128_CBC_direct(const uint8_t key[16], const uint8_t (& iv)[16], uint8_t direction)
         : direction(direction)
         , KC(4) // 6, 8
@@ -262,32 +265,121 @@ class SslAes128_CBC_direct
             return tmp;
           }(iv))
     {
+
         unsigned blockLength = 128;
         keyInst.blockLen = blockLength;
         unsigned keyLength = 128;
-        makeKey(&keyInst, direction, keyLength, key);
-        cipherInst.blockLen = blockLength;
-        cipherInit(&cipherInst, MODE_CBC, tiv.iv);
+
+        memcpy(binKey, key, keyLength/8);
     }
 
     void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out) 
     {
         LOG(LOG_INFO, "crypt_cbc\n");
 
-        size_t i;
+        size_t i, j;
         unsigned blockLength = 128; 
+        unsigned keyLength = 128; 
+        keyInst.blockLen = blockLength;
 
-        for (i = 0 ; i < data_size ; i+=16){
-            // inBlock BlockLength
-            // cv blockLength
-            // binKey keyLength
-            blockEncrypt(&cipherInst, &keyInst, in + i*(blockLength/8), blockLength, out + i*(blockLength/8));
-//            memcpy(in + blockLength/8, cipherInst.IV, blockLength/8);
-            memcpy(cipherInst.IV, out + i*(blockLength/8), blockLength/8);
+        for (i = 0 ; i < data_size ; i+=(blockLength/8)){
+            makeKey(&keyInst, direction, keyLength, binKey);
+            cipherInst.blockLen = blockLength;
+            cipherInit(&cipherInst, MODE_CBC, tiv.iv);
+
+            uint8_t * outBlock = out + i;
+            const uint8_t * inBlock = in + i;
+            blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
+//            memcpy(inBlock, tiv.iv, blockLength/8);
+            memcpy(tiv.iv, outBlock, blockLength/8);
+
+            switch (keyLength) {
+            case 128:
+                for (j = 0; j < 128/8; j++) {
+                    binKey[j] ^= outBlock[j];
+                }
+                break;
+            case 192:
+                for (j = 0; j < 64/8; j++) {
+                    binKey[j] ^= inBlock[j + 64/8];
+                }
+                for (j = 0; j < 128/8; j++) {
+                    binKey[j + 64/8] ^= outBlock[j];
+                }
+                break;
+            case 256:
+                for (j = 0; j < 128/8; j++) {
+                    binKey[j] ^= inBlock[j];
+                }
+                for (j = 0; j < 128/8; j++) {
+                    binKey[j + 128/8] ^= outBlock[j];
+                }
+                break;
+            }
         }
-
-//       AES_cbc_encrypt(in, out, data_size, &(this->key), this->tiv.iv, mode);
     }
+
+
+//static void rijndaelCBC (const uint8_t binKey[256/8], int keyLength, 
+//                         const uint8_t binIv[256/8], 
+//                         const uint8_t inBlock[256/8], int blockLength, 
+//                         BYTE direction)
+//{
+//    int i, j, r, t;
+//    BYTE outBlock[256/8];
+//    keyInstance keyInst;
+//    cipherInstance cipherInst;
+
+//    for (i = 0; i < 400; i++) {
+//        /* prepare key: */
+//        keyInst.blockLen = blockLength;
+//        r = makeKey(&keyInst, direction, keyLength, binKey);
+//        /* do encryption/decryption: */
+//        if (direction == DIR_ENCRYPT) {
+//            cipherInst.blockLen = blockLength;
+//            cipherInit (&cipherInst, MODE_CBC, binIv);
+//            blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
+//            memcpy (inBlock, binIv, blockLength/8);
+//            memcpy (binIv, outBlock, blockLength/8);
+//        } else {
+//            cipherInst.blockLen = blockLength;
+//            cipherInit (&cipherInst, MODE_CBC, binIv);
+//            blockDecrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
+//            memcpy (binIv, inBlock, blockLength/8);
+//            memcpy (inBlock, outBlock, blockLength/8);
+//        }
+//        /* prepare new key: */
+//        switch (keyLength) {
+//        case 128:
+//            for (j = 0; j < 128/8; j++) {
+//                binKey[j] ^= outBlock[j];
+//            }
+//            break;
+//        case 192:
+//            for (j = 0; j < 64/8; j++) {
+//                if (direction == DIR_ENCRYPT)
+//                    binKey[j] ^= inBlock[j + 64/8];
+//                else
+//                    binKey[j] ^= binIv[j + 64/8];
+//            }
+//            for (j = 0; j < 128/8; j++) {
+//                binKey[j + 64/8] ^= outBlock[j];
+//            }
+//            break;
+//        case 256:
+//            for (j = 0; j < 128/8; j++) {
+//                if (direction == DIR_ENCRYPT)
+//                    binKey[j] ^= inBlock[j];
+//                else
+//                    binKey[j] ^= binIv[j];
+//            }
+//            for (j = 0; j < 128/8; j++) {
+//                binKey[j + 128/8] ^= outBlock[j];
+//            }
+//            break;
+//        }
+//    }
+//} 
 
 private:
 
@@ -484,7 +576,7 @@ private:
     int blockEncrypt(cipherInstance *cipher, keyInstance *key, const uint8_t *input, int inputLen, uint8_t *outBuffer)
     {
 
-        LOG(LOG_INFO, "blockEncrypt key=%p directeion=%d keyLe=%d\n", key, key->direction, key->keyLen);
+        LOG(LOG_INFO, "blockEncrypt key=%p directeion=%d keyLe=%d\n", (void*)key, key->direction, key->keyLen);
         int i, j, t, numBlocks;
         uint8_t block[4][MAXBC];
 
