@@ -27,7 +27,7 @@
 
 #include <cinttypes>
 
-#include "utils/bitmap.hpp"
+#include "utils/bitmap_without_png.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
 using std::size_t;

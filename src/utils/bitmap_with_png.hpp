@@ -30,6 +30,7 @@
 #ifndef _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
 #define _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
 
+#include "utils/png_bitmap.hpp"
 #include "utils/bitmap_without_png.hpp"
 
 #include "error.h"
@@ -39,35 +40,31 @@
 
 using std::size_t;
 
-class Bitmap_With_PNG : public Bitmap
+class Bitmap_PNG : public Bitmap
 {
 
 
 public:
-    Bitmap_With_PNG() noexcept
+    Bitmap_PNG() noexcept
     : Bitmap()
     {}
 
-    Bitmap_With_PNG(Bitmap&& bmp) noexcept
+    Bitmap_PNG(Bitmap&& bmp) noexcept
     : Bitmap(bmp)
     {
-        bmp.data_bitmap = nullptr;
     }
 
-    Bitmap_With_PNG(const Bitmap & other)
+    Bitmap_PNG(const Bitmap & other)
     : Bitmap(other)
     {
-        if (this->data_bitmap) {
-            this->data_bitmap->inc();
-        }
     }
 
-    ~Bitmap_With_PNG() {
+    ~Bitmap_PNG() {
         this->reset();
     }
 
     // TODO("session color depth is only used for selection of compression60, should not be povided as first parameter");
-    Bitmap_With_PNG(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
+    Bitmap_PNG(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
            uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
            bool compressed = false)
     : Bitmap(session_color_depth, bpp, palette,
@@ -76,19 +73,19 @@ public:
     {
     }
 
-    Bitmap_With_PNG(const Bitmap & src_bmp, const Rect & r)
+    Bitmap_PNG(const Bitmap & src_bmp, const Rect & r)
     : Bitmap(src_bmp, r)
     {
     }
 
     TODO("add palette support")
-    Bitmap_With_PNG(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
+    Bitmap_PNG(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
     : Bitmap(vnc_raw, vnc_cx, vnc_cy, vnc_bpp, tile)
     {
     }
 
     TODO("I could use some data provider lambda instead of filename")
-    explicit Bitmap_With_PNG(const char* filename)
+    explicit Bitmap_PNG(const char* filename)
     : Bitmap()
     {
         //LOG(LOG_INFO, "loading bitmap %s", filename);
@@ -503,12 +500,12 @@ public:
         return true;
     } // bool open_png_file(const char * filename)
 
-    Bitmap_With_PNG(uint8_t out_bpp, const Bitmap& bmp)
+    Bitmap_PNG(uint8_t out_bpp, const Bitmap& bmp)
     : Bitmap(out_bpp, bmp)
     {
     }
 
-    Bitmap_With_PNG(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
+    Bitmap_PNG(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
     : Bitmap(bpp, palette, cx, cy)
     {
 

@@ -35,7 +35,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "utils/png_bitmap.hpp"
 #include <string.h>
 
 #include <cerrno>
@@ -44,12 +43,10 @@
 #include <utility>
 #include <type_traits> // aligned_storage
 
-//#include "error.h"
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
-//#include "system/ssl_calls.hpp"
 #include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 
@@ -165,7 +162,7 @@ protected:
         void copy_sha1(uint8_t (&sig)[20]) const {
             if (!this->sha1_is_init_) {
                 this->sha1_is_init_ = true;
-                SslSha1 sha1;
+                SslSha1_direct sha1;
                 if (this->bpp_ == 8) {
                     sha1.update(this->data_palette(), sizeof(BGRPalette));
                 }

@@ -25,7 +25,7 @@
 #include <utility>
 #include <memory>
 
-#include "utils/bitmap.hpp"
+#include "utils/bitmap_without_png.hpp"
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
 #include "utils/ellipse.hpp"
