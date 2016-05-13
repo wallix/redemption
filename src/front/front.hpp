@@ -51,7 +51,7 @@
 #include "utils/region.hpp"
 #include "capture.hpp"
 #include "core/font.hpp"
-#include "utils/bitmap_without_png.hpp"
+#include "utils/bitmap_with_png.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/bmpcachepersister.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
