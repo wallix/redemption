@@ -22,8 +22,7 @@
     Front object (server), used to communicate with RDP client
 */
 
-#ifndef _REDEMPTION_FRONT_FRONT_HPP_
-#define _REDEMPTION_FRONT_FRONT_HPP_
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -51,7 +50,7 @@
 #include "utils/region.hpp"
 #include "capture.hpp"
 #include "core/font.hpp"
-#include "utils/bitmap_with_png.hpp"
+#include "utils/bitmap.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/bmpcachepersister.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
@@ -96,7 +95,7 @@
 
 #include "acl/auth_api.hpp"
 
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp"
 
 #include "core/RDP/mppc_40.hpp"
 #include "core/RDP/mppc_50.hpp"
@@ -4395,4 +4394,3 @@ private:
     }
 };
 
-#endif

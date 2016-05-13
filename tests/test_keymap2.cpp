@@ -31,7 +31,7 @@
 #define LOGNULL
 
 #include "utils/stream.hpp"
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp"
 
 BOOST_AUTO_TEST_CASE(TestKeymap)
 {

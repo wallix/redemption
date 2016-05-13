@@ -27,9 +27,7 @@
    color model.
 */
 
-#ifndef _REDEMPTION_PNG_BITMAP_HPP__
-#define _REDEMPTION_PNG_BITMAP_HPP__
-
+#pragma once
 
 #define PNG_LIBPNG_VER_STRING "1.2.50"
 
@@ -44,5 +42,3 @@
 
 #define PNG_INFO_tRNS 0x0010
 
-
-#endif

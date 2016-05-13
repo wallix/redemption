@@ -18,12 +18,11 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
+#pragma once
 
 #include "utils/log.hpp"
-#include "widget.hpp"
-#include "keymap2.hpp"
+#include "mod/internal/widget2/widget.hpp"
+#include "keyboard/keymap2.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
@@ -485,6 +484,3 @@ void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_wi
 
 }
 
-
-
-#endif

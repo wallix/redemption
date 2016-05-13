@@ -47,7 +47,7 @@
 #include "configs/config.hpp"
 #include "core/wait_obj.hpp"
 #include "transport/transport.hpp"
-#include "utils/bitmap_without_png.hpp"
+#include "utils/bitmap.hpp"
 
 #include "acl/authentifier.hpp"
 

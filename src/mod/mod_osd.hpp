@@ -46,7 +46,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "utils/bitmap_without_png.hpp"
+#include "utils/bitmap.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
 
