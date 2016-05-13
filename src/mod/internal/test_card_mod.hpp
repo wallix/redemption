@@ -28,8 +28,8 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "utils/bitmap.hpp"
-
+#include "utils/bitmap_without_png.hpp"
+ 
 class TestCardMod : public InternalMod
 {
     BGRPalette const & palette332 = BGRPalette::classic_332();
@@ -85,8 +85,8 @@ public:
 
         Rect winrect = this->get_screen_rect().shrink(30);
         this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
-        
-        
+
+
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.png");
 
         this->front.draw(RDPMemBlt(0,

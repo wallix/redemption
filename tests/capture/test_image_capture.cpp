@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     TestTransport trans("TestTransportPNG", "", 0, expected_red, sizeof(expected_red)-1);
     //int fd = open("TestTransportPNG.png", O_WRONLY|O_CREAT, 0777);
     //OutFileTransport trans(fd);
-    d.dump_png24(trans, true);
+    dump_png24(d.impl(), trans, true);
 }
 
 BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)

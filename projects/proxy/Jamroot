@@ -725,7 +725,7 @@ rule test-canonical ( base : requirements * )
 ## Acl tests
 ## @{
 test-canonical acl/acl_serializer.hpp ;
-test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
+test-canonical acl/authentifier.hpp : <library>crypto ;
 test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
 test-canonical acl/auth_api.hpp ;
 

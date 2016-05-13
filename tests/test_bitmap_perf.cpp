@@ -28,7 +28,7 @@
 
 #define LOGNULL
 
-#include "utils/bitmap.hpp"
+#include "utils/bitmap_without_png.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/rdtsc.hpp"
 
