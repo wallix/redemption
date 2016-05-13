@@ -33,28 +33,30 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
     enum class State {
         START,                          // 0
         RUN,
+        RUN_WIN_DOWN,
+        RUN_WIN_UP,
         RUN_WIN_D_WIN_DOWN,
-        RUN_WIN_D_D_DOWN,
+        RUN_WIN_D_D_DOWN,               // 5
         RUN_WIN_D_D_UP,
-        RUN_WIN_D_WIN_UP,               // 5
+        RUN_WIN_D_WIN_UP,
         RUN_WIN_R_WIN_DOWN,
         RUN_WIN_R_R_DOWN,
-        RUN_WIN_R_R_UP,
+        RUN_WIN_R_R_UP,                 // 10
         RUN_WIN_R_WIN_UP,
-        CLIPBOARD,                      // 10
+        CLIPBOARD,
         CLIPBOARD_CTRL_A_CTRL_DOWN,
         CLIPBOARD_CTRL_A_A_DOWN,
-        CLIPBOARD_CTRL_A_A_UP,
+        CLIPBOARD_CTRL_A_A_UP,          // 15
         CLIPBOARD_CTRL_A_CTRL_UP,
-        CLIPBOARD_CTRL_V_CTRL_DOWN,     // 15
+        CLIPBOARD_CTRL_V_CTRL_DOWN,
         CLIPBOARD_CTRL_V_V_DOWN,
         CLIPBOARD_CTRL_V_V_UP,
-        CLIPBOARD_CTRL_V_CTRL_UP,
+        CLIPBOARD_CTRL_V_CTRL_UP,       // 20
         ENTER,
-        ENTER_DOWN,                     // 20
+        ENTER_DOWN,
         ENTER_UP,
         WAIT,
-        STOP
+        STOP                            // 25
     } state = State::START;
 
     mod_api& mod;
@@ -166,6 +168,34 @@ public:
               Keymap2* keymap = nullptr;
 
         switch (this->state) {
+            case State::RUN_WIN_DOWN:
+                // Windows (down)
+                this->mod.rdp_input_scancode(91,
+                                             param2,
+                                             SlowPath::KBDFLAGS_EXTENDED,
+                                             param4,
+                                             keymap);
+
+                this->state = State::RUN_WIN_UP;
+
+                this->event.set(this->short_delay);
+            break;
+
+            case State::RUN_WIN_UP:
+                // Windows (up)
+                this->mod.rdp_input_scancode(91,
+                                             param2,
+                                             SlowPath::KBDFLAGS_EXTENDED |
+                                                 SlowPath::KBDFLAGS_DOWN |
+                                                 SlowPath::KBDFLAGS_RELEASE,
+                                             param4,
+                                             keymap);
+
+                this->state = State::RUN_WIN_D_WIN_DOWN;
+
+                this->event.set(this->short_delay);
+            break;
+
             case State::RUN_WIN_D_WIN_DOWN:
                 // Windows (down)
                 this->mod.rdp_input_scancode(91,
@@ -277,7 +307,6 @@ public:
             break;
 
             case State::CLIPBOARD:
-//                this->do_state_clipboard();
                 this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
 
                 this->event.set(this->short_delay);
@@ -392,9 +421,6 @@ public:
             break;
 
             case State::ENTER:
-//                this->state = State::ENTER_DOWN;
-
-//                this->event.set(this->short_delay);
                 this->do_state_enter();
             break;
 
@@ -491,10 +517,6 @@ public:
         if (this->sesprob_channel) {
             this->sesprob_channel->give_additional_launch_time();
         }
-
-//        if (this->state == State::CLIPBOARD) {
-//            this->do_state_clipboard();
-//        }
 
         return false;
     }
@@ -642,25 +664,11 @@ public:
     }
 
 private:
-//    void do_state_clipboard() {
-//        if (!this->format_data_requested) {
-//            this->state = State::CLIPBOARD_CTRL_A_CTRL_DOWN;
-//
-//            this->event.set(this->short_delay);
-//
-//            return;
-//        }
-//
-//        this->state = State::ENTER;
-//
-//        this->event.set(this->long_delay);
-//    }
-
     void do_state_enter() {
         this->copy_paste_loop_counter++;
 
         if (!this->format_data_requested) {
-            this->state = State::RUN_WIN_D_WIN_DOWN;
+            this->state = State::RUN_WIN_DOWN;
 
             this->event.set(this->short_delay);
 

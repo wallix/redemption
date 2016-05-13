@@ -21,13 +21,11 @@
 #ifndef FRONT_JS_NATIF_HPP
 #define FRONT_JS_NATIF_HPP
 
+
 #include <stdio.h>
-//#include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
-//#include <SDL/SDL.h>
 #include <math.h>
-
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -68,7 +66,6 @@
 #include "mod_api.hpp"
 #include "bitmap_without_png.hpp"
 #include "RDP/caches/glyphcache.hpp"
-//#include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "client_info.hpp"
@@ -157,14 +154,14 @@ public:
     StaticOutStream<256> _decoded_data;    // currently not initialised
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
-    uint32_t             _requestedFormatId;
-    std::string          _requestedFormatShortName;
-    uint8_t            * _bufferRDPClipboardChannel;
-    size_t               _bufferRDPClipboardChannelSize;
-    size_t               _bufferRDPClipboardChannelSizeTotal;
-    int                  _bufferRDPCLipboardMetaFilePic_width;
-    int                  _bufferRDPCLipboardMetaFilePic_height;
-    int                  _bufferRDPClipboardMetaFilePicBPP;
+    //uint32_t             _requestedFormatId;
+    //std::string          _requestedFormatShortName;
+    //uint8_t            * _bufferRDPClipboardChannel;
+    //size_t               _bufferRDPClipboardChannelSize;
+    //size_t               _bufferRDPClipboardChannelSizeTotal;
+    //int                  _bufferRDPCLipboardMetaFilePic_width;
+    //int                  _bufferRDPCLipboardMetaFilePic_height;
+    //int                  _bufferRDPClipboardMetaFilePicBPP;
     const Keylayout_r  * _keylayout;
 
     enum: int {
@@ -199,7 +196,7 @@ public:
             }
         }
         if (!found){
-            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
+            //std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
 
@@ -529,7 +526,6 @@ public:
             case 0xB8: // TODO
                 {
                     Bitmap bitmapBpp(32, bitmap);
-                    const uint8_t * bitMapData = bitmapBpp.data();
 
                     EM_ASM_({drawable.rDPMem3Blt_0xB8($0    , $1    , $2   , $3   , HEAPU8.subarray($4, $4 + $5),  $6,  $7);},
                                                       rect.x, rect.y, rect.cx, rect.cy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, cmd.back_color);

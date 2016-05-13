@@ -25,10 +25,10 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFrontRdesktopClient
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.
-#define LOGNULL
+#define LOGPRINT
 // Uncomment the code block below to generate testing data.
 //#define LOGPRINT
 

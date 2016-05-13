@@ -23,7 +23,7 @@
 #define REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_
 
 #include "widget.hpp"
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp"
 #include "utils/region.hpp"
 #include "utils/colors.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"

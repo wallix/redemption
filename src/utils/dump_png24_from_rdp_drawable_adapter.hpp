@@ -31,7 +31,7 @@ struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api  {
     DumpPng24FromRDPDrawableAdapter(RDPDrawable & drawable) : drawable(drawable) {}
 
     void dump_png24(Transport& trans, bool bgr) const override {
-        this->drawable.dump_png24(trans, bgr);
+      ::dump_png24(this->drawable.impl(), trans, bgr);
     }
 };
 

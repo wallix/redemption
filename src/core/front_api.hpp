@@ -30,13 +30,13 @@
 #include "core/wait_obj.hpp"
 #include "utils/array_view.hpp"
 
-class Capability;
+struct Capability;
 class InStream;
 class OrderCaps;
 
 namespace CHANNELS {
     class ChannelDefArray;
-    class ChannelDef;
+    struct ChannelDef;
 }
 
 class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {

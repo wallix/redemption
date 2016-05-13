@@ -23,12 +23,12 @@
 #define REDEMPTION_MOD_WIDGET2_IMAGE_HPP
 
 #include "widget.hpp"
-#include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
 class WidgetImage : public Widget2
 {
-    Bitmap bmp;
+    Bitmap_PNG bmp;
 
 public:
     WidgetImage(mod_api& drawable, int x, int y, const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)

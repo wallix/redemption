@@ -28,7 +28,7 @@
 #include "utils/noncopyable.hpp"
 
 
-class BGRPalette;
+struct BGRPalette;
 class RDPDestBlt;
 class RDPMultiDstBlt;
 class RDPPatBlt;
@@ -45,9 +45,9 @@ class RDPPolyline;
 class RDPEllipseSC;
 class RDPEllipseCB;
 
-class RDPBitmapData;
-class Pointer;
-class Rect;
+struct RDPBitmapData;
+struct Pointer;
+struct Rect;
 class Bitmap;
 class GlyphCache;
 

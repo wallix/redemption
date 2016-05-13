@@ -1474,7 +1474,7 @@ enum {
                 md5.final(this->blob1, MD5_DIGEST_LENGTH);
             }
             {
-            
+
                 uint8_t shasig[SHA_DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t ZZZ[3] = {0x5AU, 0x5AU, 0x5AU}; // "ZZZ"
