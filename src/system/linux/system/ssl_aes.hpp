@@ -269,7 +269,7 @@ class SslAes128_CBC_direct
         unsigned blockLength = 128;
         keyInst.blockLen = blockLength;
         unsigned keyLength = 128;
-
+        keyInst.keyLen = keyLength;
         memcpy(binKey, key, keyLength/8);
     }
 
@@ -280,42 +280,49 @@ class SslAes128_CBC_direct
         size_t i, j;
         unsigned blockLength = 128; 
         unsigned keyLength = 128; 
-        keyInst.blockLen = blockLength;
 
         for (i = 0 ; i < data_size ; i+=(blockLength/8)){
+            keyInst.blockLen = blockLength;
+            keyInst.keyLen = keyLength;
             makeKey(&keyInst, direction, keyLength, binKey);
+            uint8_t * outBlock = out + i;
+            const uint8_t * inBlock = in + i;
+
             cipherInst.blockLen = blockLength;
             cipherInit(&cipherInst, MODE_CBC, tiv.iv);
 
-            uint8_t * outBlock = out + i;
-            const uint8_t * inBlock = in + i;
-            blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
-//            memcpy(inBlock, tiv.iv, blockLength/8);
-            memcpy(tiv.iv, outBlock, blockLength/8);
-
-            switch (keyLength) {
-            case 128:
-                for (j = 0; j < 128/8; j++) {
-                    binKey[j] ^= outBlock[j];
-                }
-                break;
-            case 192:
-                for (j = 0; j < 64/8; j++) {
-                    binKey[j] ^= inBlock[j + 64/8];
-                }
-                for (j = 0; j < 128/8; j++) {
-                    binKey[j + 64/8] ^= outBlock[j];
-                }
-                break;
-            case 256:
-                for (j = 0; j < 128/8; j++) {
-                    binKey[j] ^= inBlock[j];
-                }
-                for (j = 0; j < 128/8; j++) {
-                    binKey[j + 128/8] ^= outBlock[j];
-                }
-                break;
+            if (direction == DIR_ENCRYPT){
+                blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
+                memcpy(tiv.iv, outBlock, blockLength/8);
             }
+            else {
+                blockDecrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
+                memcpy(tiv.iv, inBlock, blockLength/8);
+            }                        
+
+//            switch (keyLength) {
+//            case 128:
+//                for (j = 0; j < 128/8; j++) {
+//                    binKey[j] ^= outBlock[j];
+//                }
+//                break;
+//            case 192:
+//                for (j = 0; j < 64/8; j++) {
+//                    binKey[j] ^= tmpBlock[j + 64/8];
+//                }
+//                for (j = 0; j < 128/8; j++) {
+//                    binKey[j + 64/8] ^= outBlock[j];
+//                }
+//                break;
+//            case 256:
+//                for (j = 0; j < 128/8; j++) {
+//                    binKey[j] ^= tmpBlock[j];
+//                }
+//                for (j = 0; j < 128/8; j++) {
+//                    binKey[j + 128/8] ^= outBlock[j];
+//                }
+//                break;
+//            }
         }
     }
 
@@ -335,16 +342,13 @@ class SslAes128_CBC_direct
 //        keyInst.blockLen = blockLength;
 //        r = makeKey(&keyInst, direction, keyLength, binKey);
 //        /* do encryption/decryption: */
+//        cipherInst.blockLen = blockLength;
+//        cipherInit (&cipherInst, MODE_CBC, binIv);
+//        blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
 //        if (direction == DIR_ENCRYPT) {
-//            cipherInst.blockLen = blockLength;
-//            cipherInit (&cipherInst, MODE_CBC, binIv);
-//            blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
 //            memcpy (inBlock, binIv, blockLength/8);
 //            memcpy (binIv, outBlock, blockLength/8);
 //        } else {
-//            cipherInst.blockLen = blockLength;
-//            cipherInit (&cipherInst, MODE_CBC, binIv);
-//            blockDecrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
 //            memcpy (binIv, inBlock, blockLength/8);
 //            memcpy (inBlock, outBlock, blockLength/8);
 //        }
@@ -511,6 +515,78 @@ private:
             for(j = 0; j < BC; j++) a[i][j] = b[i][j];
     }
 
+
+    int rijndaelDecrypt (uint8_t a[4][MAXBC], int keyBits, int blockBits, uint8_t rk[MAXROUNDS+1][4][MAXBC])
+    {
+        const uint8_t Si[256] = {
+         82,   9, 106, 213,  48,  54, 165,  56, 191,  64, 163, 158, 129, 243, 215, 251, 
+        124, 227,  57, 130, 155,  47, 255, 135,  52, 142,  67,  68, 196, 222, 233, 203, 
+         84, 123, 148,  50, 166, 194,  35,  61, 238,  76, 149,  11,  66, 250, 195,  78, 
+          8,  46, 161, 102,  40, 217,  36, 178, 118,  91, 162,  73, 109, 139, 209,  37, 
+        114, 248, 246, 100, 134, 104, 152,  22, 212, 164,  92, 204,  93, 101, 182, 146, 
+        108, 112,  72,  80, 253, 237, 185, 218,  94,  21,  70,  87, 167, 141, 157, 132, 
+        144, 216, 171,   0, 140, 188, 211,  10, 247, 228,  88,   5, 184, 179,  69,   6, 
+        208,  44,  30, 143, 202,  63,  15,   2, 193, 175, 189,   3,   1,  19, 138, 107, 
+         58, 145,  17,  65,  79, 103, 220, 234, 151, 242, 207, 206, 240, 180, 230, 115, 
+        150, 172, 116,  34, 231, 173,  53, 133, 226, 249,  55, 232,  28, 117, 223, 110, 
+         71, 241,  26, 113,  29,  41, 197, 137, 111, 183,  98,  14, 170,  24, 190,  27, 
+        252,  86,  62,  75, 198, 210, 121,  32, 154, 219, 192, 254, 120, 205,  90, 244, 
+         31, 221, 168,  51, 136,   7, 199,  49, 177,  18,  16,  89,  39, 128, 236,  95, 
+         96,  81, 127, 169,  25, 181,  74,  13,  45, 229, 122, 159, 147, 201, 156, 239, 
+        160, 224,  59,  77, 174,  42, 245, 176, 200, 235, 187,  60, 131,  83, 153,  97, 
+         23,  43,   4, 126, 186, 119, 214,  38, 225, 105,  20,  99,  85,  33,  12, 125, 
+        };
+
+        int r, BC, ROUNDS;
+        
+        switch (blockBits) {
+        case 128: BC = 4; break;
+        case 192: BC = 6; break;
+        case 256: BC = 8; break;
+        default : return (-2);
+        }
+
+        switch (keyBits >= blockBits ? keyBits : blockBits) {
+        case 128: ROUNDS = 10; break;
+        case 192: ROUNDS = 12; break;
+        case 256: ROUNDS = 14; break;
+        default : return (-3); /* this cannot happen */
+        }
+
+        /* To decrypt: apply the inverse operations of the encrypt routine,
+         *             in opposite order
+         * 
+         * (KeyAddition is an involution: it 's equal to its inverse)
+         * (the inverse of Substitution with table S is Substitution with the inverse table of S)
+         * (the inverse of Shiftrow is Shiftrow over a suitable distance)
+         */
+
+            /* First the special round:
+         *   without InvMixColumn
+         *   with extra KeyAddition
+         */
+        KeyAddition(a,rk[ROUNDS],BC);
+        Substitution(a,Si,BC);
+        ShiftRow(a,1,BC);              
+        
+        /* ROUNDS-1 ordinary rounds
+         */
+        for(r = ROUNDS-1; r > 0; r--) {
+            KeyAddition(a,rk[r],BC);
+            InvMixColumn(a,BC);      
+            Substitution(a,Si,BC);
+            ShiftRow(a,1,BC);                
+        }
+        
+        /* End with the extra key addition
+         */
+        
+        KeyAddition(a,rk[0],BC);    
+
+        return 0;
+    }
+
+
     int rijndaelEncrypt (uint8_t a[4][MAXBC], int keyBits, int blockBits, uint8_t rk[MAXROUNDS+1][4][MAXBC])
     {
         /* Encryption of one block. 
@@ -573,10 +649,95 @@ private:
     }   
 
 
+    int blockDecrypt(cipherInstance *cipher,
+        keyInstance *key, const uint8_t *input, int inputLen, uint8_t *outBuffer)
+    {
+        int i, j, t, numBlocks;
+        uint8_t block[4][MAXBC];
+
+        if (cipher == NULL ||
+            key == NULL ||
+            key->direction == DIR_ENCRYPT ||
+            cipher->blockLen != key->blockLen) {
+            return BAD_CIPHER_STATE;
+        }
+
+            /* check parameter consistency: */
+            if (key == NULL ||
+                    key->direction != DIR_DECRYPT ||
+                    (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
+                    return BAD_KEY_MAT;
+            }
+            if (cipher == NULL ||
+                    (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
+                    (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
+                    return BAD_CIPHER_STATE;
+            }
+        
+
+        numBlocks = inputLen/cipher->blockLen;
+        
+        switch (cipher->mode) {
+        case MODE_ECB: 
+            for (i = 0; i < numBlocks; i++) {
+                for (j = 0; j < cipher->blockLen/32; j++) {
+                    for(t = 0; t < 4; t++)
+                    /* parse input stream into rectangular array */
+                        block[t][j] = input[4*j+t] & 0xFF;
+                }
+                rijndaelDecrypt (block, key->keyLen, cipher->blockLen, key->keySched);
+                for (j = 0; j < cipher->blockLen/32; j++) {
+                    /* parse rectangular array into output ciphertext uint8_ts */
+                    for(t = 0; t < 4; t++)
+                        outBuffer[4*j+t] = (uint8_t) block[t][j];
+                }
+            }
+            break;
+            
+        case MODE_CBC:
+            /* first block */
+            for (j = 0; j < cipher->blockLen/32; j++) {
+                for(t = 0; t < 4; t++)
+                /* parse input stream into rectangular array */
+                    block[t][j] = input[4*j+t] & 0xFF;
+            }
+            rijndaelDecrypt (block, key->keyLen, cipher->blockLen, key->keySched);
+            
+            for (j = 0; j < cipher->blockLen/32; j++) {
+                /* exor the IV and parse rectangular array into output ciphertext uint8_ts */
+                for(t = 0; t < 4; t++)
+                    outBuffer[4*j+t] = (uint8_t) (block[t][j] ^ cipher->IV[t+4*j]);
+            }
+            
+            /* next blocks */
+            for (i = 1; i < numBlocks; i++) {
+                for (j = 0; j < cipher->blockLen/32; j++) {
+                    for(t = 0; t < 4; t++)
+                    /* parse input stream into rectangular array */
+                        block[t][j] = input[cipher->blockLen/8+4*j+t] & 0xFF;
+                }
+                rijndaelDecrypt (block, key->keyLen, cipher->blockLen, key->keySched);
+                
+                for (j = 0; j < cipher->blockLen/32; j++) {
+                    /* exor previous ciphertext block and parse rectangular array 
+                           into output ciphertext uint8_ts */
+                    for(t = 0; t < 4; t++)
+                        outBuffer[cipher->blockLen/8+4*j+t] = (uint8_t) (block[t][j] ^ 
+                            input[4*j+t-4*cipher->blockLen/32]);
+                }
+            }
+            break;
+        
+        default: return BAD_CIPHER_STATE;
+        }
+        
+        return numBlocks*cipher->blockLen;
+    }
+
     int blockEncrypt(cipherInstance *cipher, keyInstance *key, const uint8_t *input, int inputLen, uint8_t *outBuffer)
     {
 
-        LOG(LOG_INFO, "blockEncrypt key=%p directeion=%d keyLe=%d\n", (void*)key, key->direction, key->keyLen);
+        LOG(LOG_INFO, "blockEncrypt key=%p direction=%d keyLen=%d\n", (void*)key, key->direction, key->keyLen);
         int i, j, t, numBlocks;
         uint8_t block[4][MAXBC];
 
@@ -585,14 +746,14 @@ private:
             if (key == NULL ||
                     key->direction != DIR_ENCRYPT ||
                     (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt error 1\n");
+                    LOG(LOG_INFO, "blockEncrypt BAD_KEY_MAT\n");
 
                     return BAD_KEY_MAT;
             }
             if (cipher == NULL ||
                     (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
                     (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt error 2\n");
+                    LOG(LOG_INFO, "blockEncrypt BAD_CIPHER_STATE\n");
                     return BAD_CIPHER_STATE;
             }
 
@@ -642,7 +803,7 @@ private:
             break;
         
         default: 
-            LOG(LOG_INFO, "BAD_CIPHER\n");
+            LOG(LOG_INFO, "blockEncrypt BAD_CIPHER\n");
             return BAD_CIPHER_STATE;
         }
         
@@ -656,6 +817,7 @@ private:
         if ((mode == MODE_ECB) || (mode == MODE_CBC) || (mode == MODE_CFB1)) {
             cipher->mode = mode;
         } else {
+            LOG(LOG_INFO, "cipherInit BAD_CIPHER_MODE");
             return BAD_CIPHER_MODE;
         }
         
@@ -663,6 +825,7 @@ private:
             cipher->IV[i] = iv[i];
         } 
 
+        LOG(LOG_INFO, "cipherInit OK");
         return TRUE;
     }
 
@@ -672,18 +835,21 @@ private:
         int i;
     
         if (key == NULL) {
+            LOG(LOG_INFO, "makeKey Error BAD_KEY_INSTANCE");
             return BAD_KEY_INSTANCE;
         }
 
         if ((direction == DIR_ENCRYPT) || (direction == DIR_DECRYPT)) {
             key->direction = direction;
         } else {
+            LOG(LOG_INFO, "makeKey Error BAD_KEY_DIR");
             return BAD_KEY_DIR;
         }
 
         if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) { 
             key->keyLen = keyLen;
         } else {
+            LOG(LOG_INFO, "makeKey Error BAD_KEY_MAT");
             return BAD_KEY_MAT;
         }
 
@@ -698,6 +864,7 @@ private:
     
         rijndaelKeySched(k, key->keyLen, key->blockLen, key->keySched);
     
+        LOG(LOG_INFO, "makeKey OK");
         return TRUE;
     }
     
