@@ -28,7 +28,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.
-#define LOGNULL
+#define LOGPRINT
 // Uncomment the code block below to generate testing data.
 //#define LOGPRINT
 

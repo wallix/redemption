@@ -257,10 +257,7 @@ project redemption
     <include>$(INCLUDEDIR)
     <include>$(SYSTEMDIR)
     <include>$(SRCDIR)/capture
-    <include>$(SRCDIR)/keyboard
-    <include>$(SRCDIR)/keyboard/reversed_keymaps
     <include>$(SRCDIR)/headers
-#    <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
     <include>/usr/include
 
@@ -349,6 +346,11 @@ actions gen_redcryptofile {
 }
 
 explicit pycryptofile redcryptofile.so ;
+
+obj dummypng :
+        $(SRCDIR)/utils/dummypng.cpp
+    :
+    ;
 
 lib pycryptofile :
         tools/redcryptofile/pycrypto.cpp
@@ -725,8 +727,8 @@ rule test-canonical ( base : requirements * )
 ## Acl tests
 ## @{
 test-canonical acl/acl_serializer.hpp ;
-test-canonical acl/authentifier.hpp : <library>crypto ;
-test-canonical acl/module_manager.hpp : <library>crypto ;
+test-canonical acl/authentifier.hpp : <library>crypto <library>dummypng ;
+test-canonical acl/module_manager.hpp : <library>crypto <library>dummypng ;
 test-canonical acl/auth_api.hpp ;
 
 ## @}

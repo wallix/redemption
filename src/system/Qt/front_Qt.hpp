@@ -64,11 +64,11 @@
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
-#include "utils/bitmap_without_png.hpp"
+#include "utils/bitmap.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
 #include "keymaps/Qt_ScanCode_KeyMap.hpp"
 

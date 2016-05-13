@@ -39,7 +39,7 @@
 #include "core/front_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
-#include "utils/bitmap_without_png.hpp"
+#include "utils/bitmap.hpp"
 
 struct xup_mod : public mod_api {
 

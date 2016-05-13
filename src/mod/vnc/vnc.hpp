@@ -21,8 +21,7 @@
    Vnc module
 */
 
-#ifndef _REDEMPTION_MOD_VNC_VNC_HPP_
-#define _REDEMPTION_MOD_VNC_VNC_HPP_
+#pragma once 
 
 #include "main/version.hpp"
 
@@ -30,7 +29,7 @@
 #include "mod/internal/widget2/flat_vnc_authentification.hpp"
 #include "mod/internal/widget2/notify_api.hpp"
 #include "mod/internal/internal_mod.hpp"
-#include "keymapSym.hpp"
+#include "keyboard/keymapSym.hpp"
 #include "utils/diffiehellman.hpp"
 #include "utils/d3des.hpp"
 #include "core/channel_list.hpp"
@@ -2790,4 +2789,3 @@ public:
     }
 };
 
-#endif
