@@ -8,13 +8,40 @@
 #define BOOST_TEST_MODULE TestModEx
 #include "system/redemption_unit_tests.hpp"
 
-#include "system/ssl_bignum.hpp"
+//#include "system/ssl_bignum.hpp"
 #include <openssl/bn.h>
+
 
 #include <iostream>
 //#define ll long long
 using namespace std; 
  
+
+
+
+
+
+/* 
+ * Function to calculate modulus of x raised to the power y 
+ */
+ /*
+int modular_exp(BIGNUM base, BIGNUM exponent, BIGNUM modulus)
+{
+    BIGNUM result = 1;
+    while (exponent > 0)
+    {
+        if (exponent % 2 == 1)
+            result = (result * base) % modulus;
+        exponent = exponent >> 1;
+        base = (base * base) % modulus;
+    }
+    return result;
+}
+*/
+
+
+
+
 
 /* fatal error */
 # define ERR_R_FATAL                             64
@@ -36,23 +63,14 @@ using namespace std;
                  (b) >  23 ? 3 : 1)
 
 
-# define osslargused(x)      (void)x
-
-static void *(*malloc_impl)(size_t, const char *, int)
-    = CRYPTO_malloc;
-
-    
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ret = NULL;
 
-    if (malloc_impl != NULL && malloc_impl != CRYPTO_malloc)
-        return malloc_impl(num, file, line);
-
     if (num <= 0)
         return NULL;
 
-    osslargused(file); osslargused(line);
+    (void)(file); (void)(line);
     ret = malloc(num);
     return ret;
 }
@@ -69,25 +87,33 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 
 # define OPENSSL_zalloc(num) CRYPTO_zalloc(num, __FILE__, __LINE__)
 
-
-/* 
- * Function to calculate modulus of x raised to the power y 
+/*
+ * This is an internal function that should not be used in applications. It
+ * ensures that 'b' has enough room for a 'words' word number and initialises
+ * any unused part of b->d with leading zeros. It is mostly used by the
+ * various BIGNUM routines. If there is an error, NULL is returned. If not,
+ * 'b' is returned.
  */
- /*
-int modular_exp(BIGNUM base, BIGNUM exponent, BIGNUM modulus)
-{
-    BIGNUM result = 1;
-    while (exponent > 0)
-    {
-        if (exponent % 2 == 1)
-            result = (result * base) % modulus;
-        exponent = exponent >> 1;
-        base = (base * base) % modulus;
-    }
-    return result;
-}
-*/
 
+BIGNUM *bn_expand2(BIGNUM *b, int words)
+{
+    bn_check_top(b);
+
+    if (words > b->dmax) {
+        BN_ULONG *a = bn_expand_internal(b, words);
+        if (!a)
+            return NULL;
+        if (b->d) {
+            memset(b->d, b->dmax * sizeof(b->d[0]));
+            bn_free_d(b);
+        }
+        b->d = a;
+        b->dmax = words;
+    }
+
+    bn_check_top(b);
+    return b;
+}
 
 
 int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
@@ -686,14 +712,13 @@ BOOST_AUTO_TEST_CASE(TestModEx)
     if (ctx == NULL)
         return;
 */
-    BIGNUM *a, *b, *c, *d, *e;
+    BIGNUM *a, *b, *c, *d;
 
 
     a = BN_new();
     b = BN_new();
     c = BN_new();
     d = BN_new();
-    e = BN_new();
 
     BN_one(a);
     BN_one(b);
