@@ -35,6 +35,7 @@
 #include "capture/image_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "mod/mod_osd.hpp"
+#include "utils/bitmap_with_png.hpp"
 
 struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
 {
@@ -94,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH "."
 #endif
-        mod_osd osd(mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
+        mod_osd osd(mod, Bitmap_PNG(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
 
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
