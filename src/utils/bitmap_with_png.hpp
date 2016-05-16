@@ -30,7 +30,8 @@
 #ifndef _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
 #define _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
 
-#include "utils/png_bitmap.hpp"
+//#include "utils/png_bitmap.hpp"
+#include "utils/png.hpp"
 #include "utils/bitmap.hpp"
 
 #include "error.h"
