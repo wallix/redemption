@@ -106,7 +106,10 @@ public:
 
         bool const enable_kbd
           = !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
-          || ini.get<cfg::session_log::enable_session_log>()
+          || (ini.get<cfg::session_log::enable_session_log>() &&
+              (ini.get<cfg::session_log::keyboard_input_masking_level>()
+               != ::configs::KeyboardInputMaskingLevel::fully_masked)
+             )
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
         ;

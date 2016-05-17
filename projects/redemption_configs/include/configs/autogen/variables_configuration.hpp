@@ -1730,12 +1730,13 @@ namespace cfg {
         //   0: keyboard input are not masked
         //   1: only passwords are masked
         //   2: passwords and unidentified texts are masked
+        //   3: keyboard input are fully masked
         struct keyboard_input_masking_level {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = ::configs::KeyboardInputMaskingLevel;
-            type value{static_cast< ::configs::KeyboardInputMaskingLevel>(2)};
+            type value{static_cast< ::configs::KeyboardInputMaskingLevel>(3)};
         };
     };
 
