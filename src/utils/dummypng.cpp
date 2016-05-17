@@ -18,19 +18,23 @@
    Author(s): Christophe Grosjean
 
    This file is a dummy stub for PNG functions.
-   Some tests have a dependency on some functions from libpng 
+   Some tests have a dependency on some functions from libpng
    (through inclusion of other inlined classes and functions)
    while never actually calling these. Depending on the compilation
-   optimisation flags model the references to these functions 
+   optimisation flags model the references to these functions
    may or may not be stripped before linking. When they are not stripped
    we need these dummy stubs to link with.
-   
+
 */
+
+#ifndef DUMMYPNG_HPP
+#define DUMMYPNG_HPP
+
 
 #include <stdlib.h>
 #include <png.h>
 
-void png_set_IHDR(png_structp png_ptr,
+[[ noreturn ]] void png_set_IHDR(png_structp png_ptr,
    png_infop info_ptr, png_uint_32 width, png_uint_32 height, int bit_depth,
    int color_type, int interlace_method, int compression_method,
    int filter_method)
@@ -40,28 +44,28 @@ void png_set_IHDR(png_structp png_ptr,
     abort();
 }
 
-void png_write_info(png_structp png_ptr, png_infop info_ptr)
+[[ noreturn ]] void png_write_info(png_structp png_ptr, png_infop info_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
     abort();
 }
 
-void png_write_row(png_structp png_ptr, png_bytep row)
+[[ noreturn ]] void png_write_row(png_structp png_ptr, png_bytep row)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
     abort();
 }
 
-void png_destroy_write_struct(png_structpp png_ptr_ptr, png_infopp info_ptr_ptr)
+[[ noreturn ]] void png_destroy_write_struct(png_structpp png_ptr_ptr, png_infopp info_ptr_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
     abort();
 }
 
-void png_write_end(png_structp png_ptr, png_infop info_ptr)
+[[ noreturn ]] void png_write_end(png_structp png_ptr, png_infop info_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
@@ -72,11 +76,11 @@ png_info* png_create_info_struct(png_structp png_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
-    abort();
+    //abort();
     return nullptr;
 }
 
-void png_set_write_fn(png_structp png_ptr,
+[[ noreturn ]] void png_set_write_fn(png_structp png_ptr,
         png_voidp io_ptr, png_rw_ptr write_data_fn, png_flush_ptr output_flush_fn)
 {
     // this is a stub, if this function is called we should link with
@@ -90,7 +94,8 @@ png_error_ptr error_fn, png_error_ptr warn_fn)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
-    abort();
+    //abort();
     return nullptr;
 }
 
+#endif

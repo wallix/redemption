@@ -25,6 +25,7 @@
 #include "transport/transport.hpp"
 #include "RDPChunkedDevice.hpp"
 #include "utils/compression_transport_wrapper.hpp"
+#include "utils/dummypng.cpp"
 
 class FileToChunk
 {
