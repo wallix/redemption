@@ -246,8 +246,6 @@ class SslAes128_CBC_direct
 
     void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out) 
     {
-        LOG(LOG_INFO, "crypt_cbc\n");
-
         size_t i;
         unsigned blockLength = 128; 
         unsigned keyLength = 128; 
@@ -270,91 +268,8 @@ class SslAes128_CBC_direct
                 blockDecrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
                 memcpy(tiv.iv, inBlock, blockLength/8);
             }                        
-
-//            switch (keyLength) {
-//            case 128:
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j] ^= outBlock[j];
-//                }
-//                break;
-//            case 192:
-//                for(j = 0; j < 64/8; j++) {
-//                    binKey[j] ^= tmpBlock[j + 64/8];
-//                }
-//                for (j = 0; j < 128/8; j++) {
-//                    binKey[j + 64/8] ^= outBlock[j];
-//                }
-//                break;
-//            case 256:
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j] ^= tmpBlock[j];
-//                }
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j + 128/8] ^= outBlock[j];
-//                }
-//                break;
-//            }
         }
     }
-
-
-//static void rijndaelCBC (const uint8_t binKey[256/8], int keyLength, 
-//                         const uint8_t binIv[256/8], 
-//                         const uint8_t inBlock[256/8], int blockLength, 
-//                         BYTE direction)
-//{
-//    int i, j, r, t;
-//    BYTE outBlock[256/8];
-//    keyInstance keyInst;
-//    cipherInstance cipherInst;
-
-//    for(i = 0; i < 400; i++) {
-//        /* prepare key: */
-//        keyInst.blockLen = blockLength;
-//        r = makeKey(&keyInst, direction, keyLength, binKey);
-//        /* do encryption/decryption: */
-//        cipherInst.blockLen = blockLength;
-//        cipherInit (&cipherInst, MODE_CBC, binIv);
-//        blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
-//        if (direction == DIR_ENCRYPT) {
-//            memcpy (inBlock, binIv, blockLength/8);
-//            memcpy (binIv, outBlock, blockLength/8);
-//        } else {
-//            memcpy (binIv, inBlock, blockLength/8);
-//            memcpy (inBlock, outBlock, blockLength/8);
-//        }
-//        /* prepare new key: */
-//        switch (keyLength) {
-//        case 128:
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j] ^= outBlock[j];
-//            }
-//            break;
-//        case 192:
-//            for(j = 0; j < 64/8; j++) {
-//                if (direction == DIR_ENCRYPT)
-//                    binKey[j] ^= inBlock[j + 64/8];
-//                else
-//                    binKey[j] ^= binIv[j + 64/8];
-//            }
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j + 64/8] ^= outBlock[j];
-//            }
-//            break;
-//        case 256:
-//            for(j = 0; j < 128/8; j++) {
-//                if (direction == DIR_ENCRYPT)
-//                    binKey[j] ^= inBlock[j];
-//                else
-//                    binKey[j] ^= binIv[j];
-//            }
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j + 128/8] ^= outBlock[j];
-//            }
-//            break;
-//        }
-//    }
-//} 
 
 private:
 
@@ -721,14 +636,11 @@ private:
             if (key == NULL ||
                     key->direction != DIR_ENCRYPT ||
                     (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt BAD_KEY_MAT\n");
-
                     return BAD_KEY_MAT;
             }
             if (cipher == NULL ||
                     (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
                     (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt BAD_CIPHER_STATE\n");
                     return BAD_CIPHER_STATE;
             }
 
@@ -755,8 +667,6 @@ private:
             break;
             
         case MODE_CBC:
-            LOG(LOG_INFO, "MODE_CBC\n");
-
             for(j = 0; j < cipher->blockLen/32; j++) {
                 for(t = 0; t < 4; t++){
                 /* parse initial value into rectangular array */
@@ -782,7 +692,6 @@ private:
             break;
         
         default: 
-            LOG(LOG_INFO, "blockEncrypt BAD_CIPHER\n");
             return BAD_CIPHER_STATE;
         }
         
@@ -797,7 +706,6 @@ private:
             cipher->mode = mode;
         } 
         else {
-            LOG(LOG_INFO, "cipherInit BAD_CIPHER_MODE");
             return BAD_CIPHER_MODE;
         }
         
@@ -805,7 +713,6 @@ private:
             cipher->IV[i] = iv[i];
         } 
 
-        LOG(LOG_INFO, "cipherInit OK");
         return TRUE;
     }
 
@@ -815,21 +722,18 @@ private:
         int i;
     
         if (key == NULL) {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_INSTANCE");
             return BAD_KEY_INSTANCE;
         }
 
         if ((direction == DIR_ENCRYPT) || (direction == DIR_DECRYPT)) {
             key->direction = direction;
         } else {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_DIR");
             return BAD_KEY_DIR;
         }
 
         if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) { 
             key->keyLen = keyLen;
         } else {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_MAT");
             return BAD_KEY_MAT;
         }
 
@@ -844,7 +748,6 @@ private:
     
         rijndaelKeySched(k, key->keyLen, key->blockLen, key->keySched);
     
-        LOG(LOG_INFO, "makeKey OK");
         return TRUE;
     }
     
@@ -980,8 +883,6 @@ class SslAes192_CBC_direct
 
     void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out) 
     {
-        LOG(LOG_INFO, "crypt_cbc\n");
-
         size_t i;
         unsigned blockLength = 128; 
         unsigned keyLength = 192; 
@@ -1004,91 +905,8 @@ class SslAes192_CBC_direct
                 blockDecrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
                 memcpy(tiv.iv, inBlock, blockLength/8);
             }                        
-
-//            switch (keyLength) {
-//            case 128:
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j] ^= outBlock[j];
-//                }
-//                break;
-//            case 192:
-//                for(j = 0; j < 64/8; j++) {
-//                    binKey[j] ^= tmpBlock[j + 64/8];
-//                }
-//                for (j = 0; j < 128/8; j++) {
-//                    binKey[j + 64/8] ^= outBlock[j];
-//                }
-//                break;
-//            case 256:
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j] ^= tmpBlock[j];
-//                }
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j + 128/8] ^= outBlock[j];
-//                }
-//                break;
-//            }
         }
     }
-
-
-//static void rijndaelCBC (const uint8_t binKey[256/8], int keyLength, 
-//                         const uint8_t binIv[256/8], 
-//                         const uint8_t inBlock[256/8], int blockLength, 
-//                         BYTE direction)
-//{
-//    int i, j, r, t;
-//    BYTE outBlock[256/8];
-//    keyInstance keyInst;
-//    cipherInstance cipherInst;
-
-//    for(i = 0; i < 400; i++) {
-//        /* prepare key: */
-//        keyInst.blockLen = blockLength;
-//        r = makeKey(&keyInst, direction, keyLength, binKey);
-//        /* do encryption/decryption: */
-//        cipherInst.blockLen = blockLength;
-//        cipherInit (&cipherInst, MODE_CBC, binIv);
-//        blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
-//        if (direction == DIR_ENCRYPT) {
-//            memcpy (inBlock, binIv, blockLength/8);
-//            memcpy (binIv, outBlock, blockLength/8);
-//        } else {
-//            memcpy (binIv, inBlock, blockLength/8);
-//            memcpy (inBlock, outBlock, blockLength/8);
-//        }
-//        /* prepare new key: */
-//        switch (keyLength) {
-//        case 128:
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j] ^= outBlock[j];
-//            }
-//            break;
-//        case 192:
-//            for(j = 0; j < 64/8; j++) {
-//                if (direction == DIR_ENCRYPT)
-//                    binKey[j] ^= inBlock[j + 64/8];
-//                else
-//                    binKey[j] ^= binIv[j + 64/8];
-//            }
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j + 64/8] ^= outBlock[j];
-//            }
-//            break;
-//        case 256:
-//            for(j = 0; j < 128/8; j++) {
-//                if (direction == DIR_ENCRYPT)
-//                    binKey[j] ^= inBlock[j];
-//                else
-//                    binKey[j] ^= binIv[j];
-//            }
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j + 128/8] ^= outBlock[j];
-//            }
-//            break;
-//        }
-//    }
-//} 
 
 private:
 
@@ -1455,14 +1273,11 @@ private:
             if (key == NULL ||
                     key->direction != DIR_ENCRYPT ||
                     (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt BAD_KEY_MAT\n");
-
                     return BAD_KEY_MAT;
             }
             if (cipher == NULL ||
                     (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
                     (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt BAD_CIPHER_STATE\n");
                     return BAD_CIPHER_STATE;
             }
 
@@ -1489,8 +1304,6 @@ private:
             break;
             
         case MODE_CBC:
-            LOG(LOG_INFO, "MODE_CBC\n");
-
             for(j = 0; j < cipher->blockLen/32; j++) {
                 for(t = 0; t < 4; t++){
                 /* parse initial value into rectangular array */
@@ -1516,7 +1329,6 @@ private:
             break;
         
         default: 
-            LOG(LOG_INFO, "blockEncrypt BAD_CIPHER\n");
             return BAD_CIPHER_STATE;
         }
         
@@ -1531,15 +1343,12 @@ private:
             cipher->mode = mode;
         } 
         else {
-            LOG(LOG_INFO, "cipherInit BAD_CIPHER_MODE");
             return BAD_CIPHER_MODE;
         }
         
          for(i = 0; i < cipher->blockLen/8; i++) {
             cipher->IV[i] = iv[i];
         } 
-
-        LOG(LOG_INFO, "cipherInit OK");
         return TRUE;
     }
 
@@ -1549,21 +1358,18 @@ private:
         int i;
     
         if (key == NULL) {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_INSTANCE");
             return BAD_KEY_INSTANCE;
         }
 
         if ((direction == DIR_ENCRYPT) || (direction == DIR_DECRYPT)) {
             key->direction = direction;
         } else {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_DIR");
             return BAD_KEY_DIR;
         }
 
         if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) { 
             key->keyLen = keyLen;
         } else {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_MAT");
             return BAD_KEY_MAT;
         }
 
@@ -1713,8 +1519,6 @@ class SslAes256_CBC_direct
 
     void crypt_cbc(size_t data_size, const uint8_t * const in, uint8_t * const out) 
     {
-        LOG(LOG_INFO, "crypt_cbc\n");
-
         size_t i;
         unsigned blockLength = 128; 
         unsigned keyLength = 256; 
@@ -2188,14 +1992,11 @@ private:
             if (key == NULL ||
                     key->direction != DIR_ENCRYPT ||
                     (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt BAD_KEY_MAT\n");
-
                     return BAD_KEY_MAT;
             }
             if (cipher == NULL ||
                     (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
                     (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
-                    LOG(LOG_INFO, "blockEncrypt BAD_CIPHER_STATE\n");
                     return BAD_CIPHER_STATE;
             }
 
@@ -2222,8 +2023,6 @@ private:
             break;
             
         case MODE_CBC:
-            LOG(LOG_INFO, "MODE_CBC\n");
-
             for(j = 0; j < cipher->blockLen/32; j++) {
                 for(t = 0; t < 4; t++){
                 /* parse initial value into rectangular array */
@@ -2249,7 +2048,6 @@ private:
             break;
         
         default: 
-            LOG(LOG_INFO, "blockEncrypt BAD_CIPHER\n");
             return BAD_CIPHER_STATE;
         }
         
@@ -2264,15 +2062,12 @@ private:
             cipher->mode = mode;
         } 
         else {
-            LOG(LOG_INFO, "cipherInit BAD_CIPHER_MODE");
             return BAD_CIPHER_MODE;
         }
         
          for(i = 0; i < cipher->blockLen/8; i++) {
             cipher->IV[i] = iv[i];
         } 
-
-        LOG(LOG_INFO, "cipherInit OK");
         return TRUE;
     }
 
@@ -2282,21 +2077,18 @@ private:
         int i;
     
         if (key == NULL) {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_INSTANCE");
             return BAD_KEY_INSTANCE;
         }
 
         if ((direction == DIR_ENCRYPT) || (direction == DIR_DECRYPT)) {
             key->direction = direction;
         } else {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_DIR");
             return BAD_KEY_DIR;
         }
 
         if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) { 
             key->keyLen = keyLen;
         } else {
-            LOG(LOG_INFO, "makeKey Error BAD_KEY_MAT");
             return BAD_KEY_MAT;
         }
 
@@ -2310,8 +2102,6 @@ private:
         }    
     
         rijndaelKeySched(k, key->keyLen, key->blockLen, key->keySched);
-    
-        LOG(LOG_INFO, "makeKey OK");
         return TRUE;
     }
     
