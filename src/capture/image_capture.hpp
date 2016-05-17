@@ -27,7 +27,6 @@
 #include "transport/transport.hpp"
 
 #include "gdi/capture_api.hpp"
-#include "utils/dummypng.cpp"
 
 class ImageCapture : private DrawableToFile, public gdi::CaptureApi
 {

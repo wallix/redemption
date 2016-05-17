@@ -27,10 +27,6 @@
 
 */
 
-#ifndef DUMMYPNG_HPP
-#define DUMMYPNG_HPP
-
-
 #include <stdlib.h>
 #include <png.h>
 
@@ -106,5 +102,3 @@ png_error_ptr error_fn, png_error_ptr warn_fn)
     //abort();
     return nullptr;
 }
-
-#endif
