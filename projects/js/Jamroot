@@ -405,7 +405,7 @@ test-canonical mod/rdp/rdp_orders.hpp ;
 #test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ; # error
 #test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>png ;
 #test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
-#test-canonical mod/vnc/vnc.hpp ; # error
+#test-canonical mod/vnc/vnc.hpp : <library>png ; 
 test-canonical mod/xup/xup.hpp ;
 #test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
 
@@ -459,7 +459,7 @@ test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/out_file_transport.hpp ;
 #test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
 #test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
-#test-canonical transport/bulk_compression_transport.hpp ; # 3 failed
+test-canonical transport/bulk_compression_transport.hpp ; 
 #test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 #test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 #test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
