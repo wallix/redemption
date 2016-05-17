@@ -31,6 +31,7 @@
 
 #include "utils/png.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
 #include "utils/drawable.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
@@ -3984,43 +3985,44 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
     }
 }
 
+// TODO: Move this one to bitmap_with_png.hpp
 BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     const BGRPalette & palette332 = BGRPalette::classic_332();
 
     int bpp = 8;
     const uint8_t * const data = nullptr;
-    Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
+    Bitmap_PNG bmp(bpp, bpp, &palette332, 0, 4, data, 0);
 
-    Bitmap::openfile_t res;
+    Bitmap_PNG::openfile_t res;
 
     // const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
     const char * filename = FIXTURES_PATH "/xrdp24b.bmp";
     res = bmp.check_file_type(filename);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_BMP);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_BMP);
 
     // const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
     const char * filename2 = FIXTURES_PATH "/xrdp24b.jpg";
     res = bmp.check_file_type(filename2);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
 
     // const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
     const char * filename3 = FIXTURES_PATH "/xrdp24b.png";
     res = bmp.check_file_type(filename3);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_PNG);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_PNG);
 
     res = bmp.check_file_type("wrong/access/directory/image.png");
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
 
     // res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
     res = bmp.check_file_type(FIXTURES_PATH "/cursor1.cur");
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
 
 
     bool boolres = bmp.open_png_file(filename3);
     BOOST_CHECK_EQUAL(boolres, true);
 
     try {
-        Bitmap file(filename);
+        Bitmap_PNG file(filename);
     }
     catch (const Error & e){
         // this test is not supposed to be executed
@@ -4028,14 +4030,14 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     }
 
     try {
-        Bitmap file(filename2);
+        Bitmap_PNG file(filename2);
     }
     catch (const Error & e){
         // this test is supposed to be executed
         BOOST_CHECK_EQUAL(ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, e.id);
     }
     try {
-        Bitmap file(filename3);
+        Bitmap_PNG file(filename3);
     }
     catch (const Error & e){
         // this test is not supposed to be executed
@@ -4312,7 +4314,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
 
     const char * filename = FIXTURES_PATH "/red_box_20x20.png";
 
-    Bitmap bmp(filename);
+    Bitmap_PNG bmp(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);

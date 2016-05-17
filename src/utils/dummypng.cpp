@@ -34,7 +34,10 @@
 #include <stdlib.h>
 #include <png.h>
 
-[[ noreturn ]] void png_set_IHDR(png_structp png_ptr,
+
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+
+ void png_set_IHDR(png_structp png_ptr,
    png_infop info_ptr, png_uint_32 width, png_uint_32 height, int bit_depth,
    int color_type, int interlace_method, int compression_method,
    int filter_method)
@@ -44,35 +47,40 @@
     abort();
 }
 
-[[ noreturn ]] void png_write_info(png_structp png_ptr, png_infop info_ptr)
+
+ void png_write_info(png_structp png_ptr, png_infop info_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
     abort();
 }
 
-[[ noreturn ]] void png_write_row(png_structp png_ptr, png_bytep row)
+
+void  png_write_row(png_structp png_ptr, png_bytep row)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
     abort();
 }
 
-[[ noreturn ]] void png_destroy_write_struct(png_structpp png_ptr_ptr, png_infopp info_ptr_ptr)
+
+void  png_destroy_write_struct(png_structpp png_ptr_ptr, png_infopp info_ptr_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
     abort();
 }
 
-[[ noreturn ]] void png_write_end(png_structp png_ptr, png_infop info_ptr)
+
+void  png_write_end(png_structp png_ptr, png_infop info_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
     abort();
 }
 
-png_info* png_create_info_struct(png_structp png_ptr)
+
+png_info*  png_create_info_struct(png_structp png_ptr)
 {
     // this is a stub, if this function is called we should link with
     // the real libpng instead of the dummypng stub
@@ -80,7 +88,8 @@ png_info* png_create_info_struct(png_structp png_ptr)
     return nullptr;
 }
 
-[[ noreturn ]] void png_set_write_fn(png_structp png_ptr,
+
+void  png_set_write_fn(png_structp png_ptr,
         png_voidp io_ptr, png_rw_ptr write_data_fn, png_flush_ptr output_flush_fn)
 {
     // this is a stub, if this function is called we should link with
@@ -89,7 +98,7 @@ png_info* png_create_info_struct(png_structp png_ptr)
 }
 
 
-png_struct* png_create_write_struct(png_const_charp user_png_ver, png_voidp error_ptr,
+png_struct*  png_create_write_struct(png_const_charp user_png_ver, png_voidp error_ptr,
 png_error_ptr error_fn, png_error_ptr warn_fn)
 {
     // this is a stub, if this function is called we should link with

@@ -744,13 +744,13 @@ test-canonical capture/transparentplayer.hpp ;
 test-canonical capture/transparentrecorder.hpp ;
 test-canonical capture/utils/save_state_chunk.hpp ;
 test-canonical capture/wrm_label.hpp ;
-test-canonical capture/FileToChunk.hpp ;
-test-canonical capture/image_capture.hpp : <library>bitmap ;
-test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>snappy <library>crypto ;
-test-canonical capture/GraphicToFile.hpp : <library>bitmap <library>snappy <library>crypto ;
-test-canonical capture/nativecapture.hpp : <library>bitmap <library>crypto <library>snappy ;
-test-canonical capture/chunked_image_transport.hpp : <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
-test-canonical capture/capture.hpp : <library>bitmap <library>crypto <library>dl <library>z <library>snappy ;
+test-canonical capture/FileToChunk.hpp : <library>png ;
+test-canonical capture/image_capture.hpp : <library>bitmap <library>png ;
+test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
+test-canonical capture/GraphicToFile.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
+test-canonical capture/nativecapture.hpp : <library>bitmap <library>crypto <library>snappy <library>png ;
+test-canonical capture/chunked_image_transport.hpp : <library>bitmap <library>png <library>z <library>snappy <library>crypto <library>png ;
+test-canonical capture/capture.hpp : <library>bitmap <library>crypto <library>dl <library>z <library>snappy <library>png ;
 test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
 
 ## @}
@@ -768,7 +768,7 @@ test-canonical utils/stream.hpp ;
 test-canonical utils/utf.hpp ;
 test-canonical utils/rect.hpp ;
 test-canonical utils/ellipse.hpp ;
-test-canonical utils/drawable.hpp : <library>bitmap  <library>crypto ;
+test-canonical utils/drawable.hpp : <library>bitmap  <library>crypto <library>png ;
 test-canonical utils/region.hpp ;
 test-canonical utils/bitfu.hpp ;
 test-canonical utils/parse.hpp ;
@@ -796,14 +796,14 @@ test-canonical core/callback.hpp ;
 test-canonical core/channel_list.hpp ;
 test-canonical core/check_files.hpp ;
 test-canonical core/client_info.hpp ;
-test-canonical utils/theme.hpp ;
+test-canonical utils/theme.hpp   ; 
 test-canonical utils/confdescriptor.hpp ;
 test-canonical core/error.hpp ;
 test-canonical core/font.hpp ;
 test-canonical core/listen.hpp ;
 test-canonical core/mainloop.hpp ;
-test-canonical core/RDP/bitmapupdate.hpp : <library>bitmap <library>crypto ;
-test-canonical core/RDP/caches/bmpcache.hpp : <library>bitmap <library>crypto ;
+test-canonical core/RDP/bitmapupdate.hpp : <library>bitmap <library>crypto <library>libpng ;
+test-canonical core/RDP/caches/bmpcache.hpp : <library>bitmap <library>crypto <library>png ;
 test-canonical core/RDP/caches/bmpcachepersister.hpp : <library>bitmap <library>crypto ;
 test-canonical core/RDP/caches/brushcache.hpp ;
 test-canonical core/RDP/caches/glyphcache.hpp ;
@@ -865,16 +865,17 @@ test-run test_front : front/test_front.cpp : front/front.hpp
       <library>krb5 <library>gssglue 
       <library>d3des 
       <library>dl <library>crypto 
+      <library>png
     ;
     
 test-canonical mod/mod_api.hpp ;
-test-canonical mod/mod_osd.hpp : <library>bitmap ;
+test-canonical mod/mod_osd.hpp : <library>bitmap <library>png ;
 test-canonical mod/null/null.hpp ;
 test-canonical mod/rdp/rdp_orders.hpp ;
 test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ;
-test-canonical mod/rdp/channels/cliprdr_channel.hpp ;
-test-canonical mod/rdp/channels/rdpdr_channel.hpp ;
-test-canonical mod/vnc/vnc.hpp ;
+test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>png ;
+test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
+test-canonical mod/vnc/vnc.hpp : <library>png ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
 test-canonical utils/bitmap_with_png.hpp : <library>bitmap <library>png ; 
