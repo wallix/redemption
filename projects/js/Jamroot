@@ -685,8 +685,8 @@ test-canonical mod/internal/internal_mod.hpp ;
 ### @{
 test-canonical regex/regex_state.hpp ;
 #test-canonical regex/regex_parser.hpp ;
-test-canonical regex/regex_st_automate.hpp ; # warning
-test-canonical regex/regex.hpp ; #20 errors
+test-canonical regex/regex_st_automate.hpp ; 
+test-canonical regex/regex.hpp ; 
 
 ## test-run benchmark_regex_parser : benchmark/parser.cpp ;
 ## test-run benchmark_regex_search : benchmark/search.cpp ;
@@ -722,7 +722,7 @@ test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ;
 #test-canonical mod/internal/widget2/flat_wait.hpp : <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/flat_form.hpp : <library>png <library>crypto ;
 ### @}
-#test-canonical utils/authorization_channels.hpp ; # warning
+test-canonical utils/authorization_channels.hpp ; 
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/strutils.hpp ;
 test-canonical utils/diffiehellman.hpp ;
