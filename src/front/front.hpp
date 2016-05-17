@@ -43,7 +43,6 @@
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/slowpath.hpp"
 
-#include "system/ssl_calls.hpp"
 #include "system/ssl_lib.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/rect.hpp"

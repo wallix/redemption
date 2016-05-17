@@ -327,8 +327,8 @@ test-canonical core/callback.hpp ;
 test-canonical core/channel_list.hpp ;
 test-canonical core/check_files.hpp ;
 test-canonical core/client_info.hpp ;
-#test-canonical utils/theme.hpp ; # 4 errors
-#test-canonical utils/confdescriptor.hpp ; #12 error
+#test-canonical utils/theme.hpp ; # error fixtures
+#test-canonical utils/confdescriptor.hpp ; # error fixtures
 test-canonical core/error.hpp ;
 #test-canonical core/font.hpp ;
 test-canonical core/listen.hpp ;
@@ -379,7 +379,7 @@ test-canonical core/RDP/GraphicUpdatePDU.hpp ;
 test-canonical core/RDP/RefreshRectPDU.hpp ;
 test-canonical core/RDP/logon.hpp ;
 #test-canonical core/RDP/nego.hpp : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
-#test-canonical core/RDP/orders/RDPOrdersCommon.hpp ;      # 1 error
+test-canonical core/RDP/orders/RDPOrdersCommon.hpp ; 
 test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
 #test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
