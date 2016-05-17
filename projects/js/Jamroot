@@ -480,7 +480,7 @@ test-canonical transport/out_filename_sequence_transport.hpp ;
 #test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
-#test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error 
+test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error 
 #test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
 #test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
 #test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
