@@ -481,25 +481,25 @@ test-canonical transport/out_filename_sequence_transport.hpp ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
 test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error 
-#test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryLineTo.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPolyline.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
+test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryLineTo.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolyline.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
 #test-canonical core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp : <library>bitmap <library>crypto ;
-#test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
-#test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
+test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
 
 #test-run test_libpng 
 #    : test_libpng.cpp 
