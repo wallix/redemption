@@ -28,7 +28,6 @@
 
 #include "gdi/capture_api.hpp"
 
-
 class ImageCapture : private DrawableToFile, public gdi::CaptureApi
 {
     timeval start_capture;
