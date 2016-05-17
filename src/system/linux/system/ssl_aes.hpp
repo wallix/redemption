@@ -209,11 +209,13 @@ typedef struct {
 
 class SslAes128_CBC_direct
 {
+    enum {
+        KC128 = 4
+    };
     int direction; // AES_direction::SSL_AES_ENCRYPT or AES_direction::SSL_AES_DECRYPT
     keyInstance keyInst;
     cipherInstance cipherInst;
     uint8_t keyMaterial[320];
-    unsigned KC;
     unsigned BC;
     unsigned ROUNDS;
     
@@ -227,7 +229,6 @@ class SslAes128_CBC_direct
 
     SslAes128_CBC_direct(const uint8_t key[16], const uint8_t (& iv)[16], AES_direction direction)
         : direction(static_cast<int>(direction))
-        , KC(4) // 6, 8
         , BC(4) // 4, 4
         , ROUNDS(10) // 12, 14
         , tiv([](const uint8_t (& iv)[16])-> const t_iv {
@@ -718,7 +719,7 @@ private:
 
     int makeKey(keyInstance *key, uint8_t direction, int keyLen, const uint8_t * binKey)
     {
-        uint8_t k[4][MAXKC];
+        uint8_t k[4][KC128];
         int i;
     
         if (key == NULL) {
@@ -751,21 +752,14 @@ private:
         return TRUE;
     }
     
-    int rijndaelKeySched (uint8_t k[4][MAXKC], int keyBits, int blockBits, uint8_t W[MAXROUNDS+1][4][MAXBC]) 
+    int rijndaelKeySched (uint8_t k[4][KC128], int keyBits, int blockBits, uint8_t W[MAXROUNDS+1][4][MAXBC]) 
     {
         /* Calculate the necessary round keys
          * The number of calculations depends on keyBits and blockBits
          */
-        int KC, BC, ROUNDS;
-        int i, j, t, rconpointer = 0;
-        uint8_t tk[4][MAXKC];   
-
-        switch (keyBits) {
-        case 128: KC = 4; break;
-        case 192: KC = 6; break;
-        case 256: KC = 8; break;
-        default : return (-1);
-        }
+        int BC, ROUNDS;
+        int i, t, rconpointer = 0;
+        uint8_t tk[4][KC128];   
 
         switch (blockBits) {
         case 128: BC = 4; break;
@@ -808,34 +802,36 @@ private:
         };
 
 
-        for(j = 0; j < KC; j++)
-            for(i = 0; i < 4; i++)
+        unsigned j = 0;
+        for(j = 0; j < KC128; j++){
+            for(i = 0; i < 4; i++){
                 tk[i][j] = k[i][j];
+            }
+        }
         t = 0;
         /* copy values into round key array */
-        for(j = 0; (j < KC) && (t < (ROUNDS+1)*BC); j++, t++)
+        for(j = 0; (j < KC128) && (t < (ROUNDS+1)*BC); j++, t++)
             for(i = 0; i < 4; i++) W[t / BC][i][t % BC] = tk[i][j];
             
         while (t < (ROUNDS+1)*BC) { /* while not enough round key material calculated */
             /* calculate new values */
-            for(i = 0; i < 4; i++)
-                tk[i][0] ^= S[tk[(i+1)%4][KC-1]];
+            for(i = 0; i < 4; i++){
+                tk[i][0] ^= S[tk[(i+1)%4][KC128-1]];
+            }
             tk[0][0] ^= rcon[rconpointer++];
 
-            if (KC != 8)
-                for(j = 1; j < KC; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
-            else {
-                for(j = 1; j < KC/2; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
-                for(i = 0; i < 4; i++) tk[i][KC/2] ^= S[tk[i][KC/2 - 1]];
-                for(j = KC/2 + 1; j < KC; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
+            for(j = 1; j < KC128; j++){
+                for(i = 0; i < 4; i++){
+                    tk[i][j] ^= tk[i][j-1];
+                }
+            }
+            /* copy values into round key array */
+            for(j = 0; (j < KC128) && (t < (ROUNDS+1)*BC); j++, t++){
+                for(i = 0; i < 4; i++){
+                     W[t / BC][i][t % BC] = tk[i][j];
+                }
+            }
         }
-        /* copy values into round key array */
-        for(j = 0; (j < KC) && (t < (ROUNDS+1)*BC); j++, t++)
-            for(i = 0; i < 4; i++) W[t / BC][i][t % BC] = tk[i][j];
-        }        
 
         return 0;
     }
@@ -850,7 +846,9 @@ class SslAes192_CBC_direct
     keyInstance keyInst;
     cipherInstance cipherInst;
     uint8_t keyMaterial[320];
-    unsigned KC;
+    enum {
+        KC192 = 6
+    };
     unsigned BC;
     unsigned ROUNDS;
     
@@ -864,7 +862,6 @@ class SslAes192_CBC_direct
 
     SslAes192_CBC_direct(const uint8_t key[24], const uint8_t (& iv)[16], AES_direction direction)
         : direction(static_cast<int>(direction))
-        , KC(6) // 4, 6, 8
         , BC(4) // 4, 4, 4
         , ROUNDS(12) // 10, 12, 14
         , tiv([](const uint8_t (& iv)[16])-> const t_iv {
@@ -1354,7 +1351,7 @@ private:
 
     int makeKey(keyInstance *key, uint8_t direction, int keyLen, const uint8_t * binKey)
     {
-        uint8_t k[4][MAXKC];
+        uint8_t k[4][KC192];
         int i;
     
         if (key == NULL) {
@@ -1387,21 +1384,14 @@ private:
         return TRUE;
     }
     
-    int rijndaelKeySched (uint8_t k[4][MAXKC], int keyBits, int blockBits, uint8_t W[MAXROUNDS+1][4][MAXBC]) 
+    int rijndaelKeySched (uint8_t k[4][KC192], int keyBits, int blockBits, uint8_t W[MAXROUNDS+1][4][MAXBC]) 
     {
         /* Calculate the necessary round keys
          * The number of calculations depends on keyBits and blockBits
          */
-        int KC, BC, ROUNDS;
+        int BC, ROUNDS;
         int i, j, t, rconpointer = 0;
-        uint8_t tk[4][MAXKC];   
-
-        switch (keyBits) {
-        case 128: KC = 4; break;
-        case 192: KC = 6; break;
-        case 256: KC = 8; break;
-        default : return (-1);
-        }
+        uint8_t tk[4][KC192];   
 
         switch (blockBits) {
         case 128: BC = 4; break;
@@ -1444,33 +1434,35 @@ private:
         };
 
 
-        for(j = 0; j < KC; j++)
+        for(j = 0; j < KC192; j++)
             for(i = 0; i < 4; i++)
                 tk[i][j] = k[i][j];
         t = 0;
         /* copy values into round key array */
-        for(j = 0; (j < KC) && (t < (ROUNDS+1)*BC); j++, t++)
-            for(i = 0; i < 4; i++) W[t / BC][i][t % BC] = tk[i][j];
+        for(j = 0; (j < KC192) && (t < (ROUNDS+1)*BC); j++, t++){
+            for(i = 0; i < 4; i++){
+                 W[t / BC][i][t % BC] = tk[i][j];
+            }
+        }
             
         while (t < (ROUNDS+1)*BC) { /* while not enough round key material calculated */
             /* calculate new values */
-            for(i = 0; i < 4; i++)
-                tk[i][0] ^= S[tk[(i+1)%4][KC-1]];
+            for(i = 0; i < 4; i++){
+                tk[i][0] ^= S[tk[(i+1)%4][KC192-1]];
+            }
             tk[0][0] ^= rcon[rconpointer++];
 
-            if (KC != 8)
-                for(j = 1; j < KC; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
-            else {
-                for(j = 1; j < KC/2; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
-                for(i = 0; i < 4; i++) tk[i][KC/2] ^= S[tk[i][KC/2 - 1]];
-                for(j = KC/2 + 1; j < KC; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
-        }
-        /* copy values into round key array */
-        for(j = 0; (j < KC) && (t < (ROUNDS+1)*BC); j++, t++)
-            for(i = 0; i < 4; i++) W[t / BC][i][t % BC] = tk[i][j];
+            for(j = 1; j < KC192; j++){
+                for(i = 0; i < 4; i++){
+                     tk[i][j] ^= tk[i][j-1];
+                }
+            }
+            /* copy values into round key array */
+            for(j = 0; (j < KC192) && (t < (ROUNDS+1)*BC); j++, t++){
+                for(i = 0; i < 4; i++){
+                    W[t / BC][i][t % BC] = tk[i][j];
+                }
+            }
         }        
 
         return 0;
@@ -1482,11 +1474,14 @@ private:
 
 class SslAes256_CBC_direct
 {
+    enum {
+        KC256 = 8
+    };
+
     int direction; // AES_direction::SSL_AES_ENCRYPT or AES_direction::SSL_AES_DECRYPT
     keyInstance keyInst;
     cipherInstance cipherInst;
     uint8_t keyMaterial[320];
-    unsigned KC;
     unsigned BC;
     unsigned ROUNDS;
     
@@ -1500,7 +1495,6 @@ class SslAes256_CBC_direct
 
     SslAes256_CBC_direct(const uint8_t key[32], const uint8_t (& iv)[16], AES_direction direction)
         : direction(static_cast<int>(direction))
-        , KC(8) // 4, 6, 8
         , BC(4) // 4, 4, 4
         , ROUNDS(14) // 10, 12, 14
         , tiv([](const uint8_t (& iv)[16])-> const t_iv {
@@ -1542,90 +1536,8 @@ class SslAes256_CBC_direct
                 memcpy(tiv.iv, inBlock, blockLength/8);
             }                        
 
-//            switch (keyLength) {
-//            case 128:
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j] ^= outBlock[j];
-//                }
-//                break;
-//            case 192:
-//                for(j = 0; j < 64/8; j++) {
-//                    binKey[j] ^= tmpBlock[j + 64/8];
-//                }
-//                for (j = 0; j < 128/8; j++) {
-//                    binKey[j + 64/8] ^= outBlock[j];
-//                }
-//                break;
-//            case 256:
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j] ^= tmpBlock[j];
-//                }
-//                for(j = 0; j < 128/8; j++) {
-//                    binKey[j + 128/8] ^= outBlock[j];
-//                }
-//                break;
-//            }
         }
     }
-
-
-//static void rijndaelCBC (const uint8_t binKey[256/8], int keyLength, 
-//                         const uint8_t binIv[256/8], 
-//                         const uint8_t inBlock[256/8], int blockLength, 
-//                         BYTE direction)
-//{
-//    int i, j, r, t;
-//    BYTE outBlock[256/8];
-//    keyInstance keyInst;
-//    cipherInstance cipherInst;
-
-//    for(i = 0; i < 400; i++) {
-//        /* prepare key: */
-//        keyInst.blockLen = blockLength;
-//        r = makeKey(&keyInst, direction, keyLength, binKey);
-//        /* do encryption/decryption: */
-//        cipherInst.blockLen = blockLength;
-//        cipherInit (&cipherInst, MODE_CBC, binIv);
-//        blockEncrypt(&cipherInst, &keyInst, inBlock, blockLength, outBlock);
-//        if (direction == DIR_ENCRYPT) {
-//            memcpy (inBlock, binIv, blockLength/8);
-//            memcpy (binIv, outBlock, blockLength/8);
-//        } else {
-//            memcpy (binIv, inBlock, blockLength/8);
-//            memcpy (inBlock, outBlock, blockLength/8);
-//        }
-//        /* prepare new key: */
-//        switch (keyLength) {
-//        case 128:
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j] ^= outBlock[j];
-//            }
-//            break;
-//        case 192:
-//            for(j = 0; j < 64/8; j++) {
-//                if (direction == DIR_ENCRYPT)
-//                    binKey[j] ^= inBlock[j + 64/8];
-//                else
-//                    binKey[j] ^= binIv[j + 64/8];
-//            }
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j + 64/8] ^= outBlock[j];
-//            }
-//            break;
-//        case 256:
-//            for(j = 0; j < 128/8; j++) {
-//                if (direction == DIR_ENCRYPT)
-//                    binKey[j] ^= inBlock[j];
-//                else
-//                    binKey[j] ^= binIv[j];
-//            }
-//            for(j = 0; j < 128/8; j++) {
-//                binKey[j + 128/8] ^= outBlock[j];
-//            }
-//            break;
-//        }
-//    }
-//} 
 
 private:
 
@@ -2073,7 +1985,7 @@ private:
 
     int makeKey(keyInstance *key, uint8_t direction, int keyLen, const uint8_t * binKey)
     {
-        uint8_t k[4][MAXKC];
+        uint8_t k[4][KC256];
         int i;
     
         if (key == NULL) {
@@ -2105,21 +2017,14 @@ private:
         return TRUE;
     }
     
-    int rijndaelKeySched (uint8_t k[4][MAXKC], int keyBits, int blockBits, uint8_t W[MAXROUNDS+1][4][MAXBC]) 
+    int rijndaelKeySched (uint8_t k[4][KC256], int keyBits, int blockBits, uint8_t W[MAXROUNDS+1][4][MAXBC]) 
     {
         /* Calculate the necessary round keys
          * The number of calculations depends on keyBits and blockBits
          */
-        int KC, BC, ROUNDS;
+        int BC, ROUNDS;
         int i, j, t, rconpointer = 0;
-        uint8_t tk[4][MAXKC];   
-
-        switch (keyBits) {
-        case 128: KC = 4; break;
-        case 192: KC = 6; break;
-        case 256: KC = 8; break;
-        default : return (-1);
-        }
+        uint8_t tk[4][KC256];   
 
         switch (blockBits) {
         case 128: BC = 4; break;
@@ -2162,39 +2067,50 @@ private:
         };
 
 
-        for(j = 0; j < KC; j++)
-            for(i = 0; i < 4; i++)
+        for(j = 0; j < KC256; j++){
+            for(i = 0; i < 4; i++){
                 tk[i][j] = k[i][j];
+            }
+        }
         t = 0;
         /* copy values into round key array */
-        for(j = 0; (j < KC) && (t < (ROUNDS+1)*BC); j++, t++)
-            for(i = 0; i < 4; i++) W[t / BC][i][t % BC] = tk[i][j];
+        for(j = 0; (j < KC256) && (t < (ROUNDS+1)*BC); j++, t++){
+            for(i = 0; i < 4; i++){
+                W[t / BC][i][t % BC] = tk[i][j];
+            }
+        }
             
         while (t < (ROUNDS+1)*BC) { /* while not enough round key material calculated */
             /* calculate new values */
-            for(i = 0; i < 4; i++)
-                tk[i][0] ^= S[tk[(i+1)%4][KC-1]];
+            for(i = 0; i < 4; i++){
+                tk[i][0] ^= S[tk[(i+1)%4][KC256-1]];
+            }
             tk[0][0] ^= rcon[rconpointer++];
 
-            if (KC != 8)
-                for(j = 1; j < KC; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
-            else {
-                for(j = 1; j < KC/2; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
-                for(i = 0; i < 4; i++) tk[i][KC/2] ^= S[tk[i][KC/2 - 1]];
-                for(j = KC/2 + 1; j < KC; j++)
-                    for(i = 0; i < 4; i++) tk[i][j] ^= tk[i][j-1];
+            for(j = 1; j < KC256/2; j++){
+                for(i = 0; i < 4; i++){
+                    tk[i][j] ^= tk[i][j-1];
+                }
+            }
+            for(i = 0; i < 4; i++){
+                tk[i][KC256/2] ^= S[tk[i][KC256/2 - 1]];
+            }
+            for(j = KC256/2 + 1; j < KC256; j++){
+                for(i = 0; i < 4; i++){
+                    tk[i][j] ^= tk[i][j-1];
+                }
+            }
+
+            /* copy values into round key array */
+            for(j = 0; (j < KC256) && (t < (ROUNDS+1)*BC); j++, t++){
+                for(i = 0; i < 4; i++){
+                    W[t / BC][i][t % BC] = tk[i][j];
+                }
+            }
         }
-        /* copy values into round key array */
-        for(j = 0; (j < KC) && (t < (ROUNDS+1)*BC); j++, t++)
-            for(i = 0; i < 4; i++) W[t / BC][i][t % BC] = tk[i][j];
-        }        
 
         return 0;
     }
-
-    
 };
 
 
