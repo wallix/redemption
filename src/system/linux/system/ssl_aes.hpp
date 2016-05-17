@@ -1450,7 +1450,6 @@ class SslAes256_CBC_direct
     keyInstance keyInst;
     cipherInstance cipherInst;
     uint8_t keyMaterial[320];
-    unsigned BC;
     unsigned ROUNDS;
     
     public:
@@ -1463,7 +1462,6 @@ class SslAes256_CBC_direct
 
     SslAes256_CBC_direct(const uint8_t key[32], const uint8_t (& iv)[16], AES_direction direction)
         : direction(static_cast<int>(direction))
-        , BC(4) // 4, 4, 4
         , ROUNDS(14) // 10, 12, 14
         , tiv([](const uint8_t (& iv)[16])-> const t_iv {
             t_iv tmp;
@@ -1555,16 +1553,19 @@ private:
         else return 0;
     }
 
-    void KeyAddition(uint8_t a[4][BC128], uint8_t rk[4][BC128], uint8_t BC) {
+    void KeyAddition(uint8_t a[4][BC128], uint8_t rk[4][BC128]) {
         /* Exor corresponding text input and round key input uint8_ts
          */
         int i, j;
         
-        for(i = 0; i < 4; i++)
-               for(j = 0; j < BC; j++) a[i][j] ^= rk[i][j];
+        for(i = 0; i < 4; i++){
+            for(j = 0; j < BC128; j++){
+                a[i][j] ^= rk[i][j];
+            }
+        }
     }
 
-    void ShiftRow(uint8_t a[4][BC128], uint8_t d, uint8_t BC) {
+    void ShiftRow(uint8_t a[4][BC128], uint8_t d) {
         /* Row 0 remains unchanged
          * The other three rows are shifted a variable amount
          */
@@ -1589,52 +1590,64 @@ private:
         }; 
         
         for(i = 1; i < 4; i++) {
-            for(j = 0; j < BC; j++) tmp[j] = a[i][(j + shifts[((BC - 4) >> 1)][i][d]) % BC];
-            for(j = 0; j < BC; j++) a[i][j] = tmp[j];
+            for(j = 0; j < BC128; j++){
+                tmp[j] = a[i][(j + shifts[((BC128 - 4) >> 1)][i][d]) % BC128];
+            }
+            for(j = 0; j < BC128; j++){
+                a[i][j] = tmp[j];
+            }
         }
     }
 
-    void Substitution(uint8_t a[4][BC128], const uint8_t box[256], uint8_t BC) {
+    void Substitution(uint8_t a[4][BC128], const uint8_t box[256]) {
         /* Replace every uint8_t of the input by the uint8_t at that place
          * in the nonlinear S-box
          */
         int i, j;
         
-        for(i = 0; i < 4; i++)
-            for(j = 0; j < BC; j++) a[i][j] = box[a[i][j]] ;
+        for(i = 0; i < 4; i++){
+            for(j = 0; j < BC128; j++){
+                a[i][j] = box[a[i][j]];
+            }
+        }
     }
        
-    void MixColumn(uint8_t a[4][BC128], uint8_t BC) {
+    void MixColumn(uint8_t a[4][BC128]) {
             /* Mix the four uint8_ts of every column in a linear way
          */
         uint8_t b[4][BC128];
         int i, j;
             
-        for(j = 0; j < BC; j++)
-            for(i = 0; i < 4; i++)
+        for(j = 0; j < BC128; j++){
+            for(i = 0; i < 4; i++){
                 b[i][j] = mul(2,a[i][j])
                     ^ mul(3,a[(i + 1) % 4][j])
                     ^ a[(i + 2) % 4][j]
                     ^ a[(i + 3) % 4][j];
-        for(i = 0; i < 4; i++)
-            for(j = 0; j < BC; j++) a[i][j] = b[i][j];
+            }
+        }
+        for(i = 0; i < 4; i++){
+            for(j = 0; j < BC128; j++){
+                a[i][j] = b[i][j];
+            }
+        }
     }
 
-    void InvMixColumn(uint8_t a[4][BC128], uint8_t BC) {
+    void InvMixColumn(uint8_t a[4][BC128]) {
             /* Mix the four uint8_ts of every column in a linear way
          * This is the opposite operation of Mixcolumn
          */
         uint8_t b[4][BC128];
         int i, j;
         
-        for(j = 0; j < BC; j++)
+        for(j = 0; j < BC128; j++)
         for(i = 0; i < 4; i++)             
             b[i][j] = mul(0xe,a[i][j])
                 ^ mul(0xb,a[(i + 1) % 4][j])                 
                 ^ mul(0xd,a[(i + 2) % 4][j])
                 ^ mul(0x9,a[(i + 3) % 4][j]);                        
         for(i = 0; i < 4; i++)
-            for(j = 0; j < BC; j++) a[i][j] = b[i][j];
+            for(j = 0; j < BC128; j++) a[i][j] = b[i][j];
     }
 
 
@@ -1659,15 +1672,8 @@ private:
          23,  43,   4, 126, 186, 119, 214,  38, 225, 105,  20,  99,  85,  33,  12, 125, 
         };
 
-        int r, BC, ROUNDS;
+        int r, ROUNDS;
         
-        switch (blockBits) {
-        case 128: BC = 4; break;
-        case 192: BC = 6; break;
-        case 256: BC = 8; break;
-        default : return (-2);
-        }
-
         switch (keyBits >= blockBits ? keyBits : blockBits) {
         case 128: ROUNDS = 10; break;
         case 192: ROUNDS = 12; break;
@@ -1687,23 +1693,23 @@ private:
          *   without InvMixColumn
          *   with extra KeyAddition
          */
-        KeyAddition(a,rk[ROUNDS],BC);
-        Substitution(a,Si,BC);
-        ShiftRow(a,1,BC);              
+        KeyAddition(a,rk[ROUNDS]);
+        Substitution(a,Si);
+        ShiftRow(a,1);              
         
         /* ROUNDS-1 ordinary rounds
          */
         for(r = ROUNDS-1; r > 0; r--) {
-            KeyAddition(a,rk[r],BC);
-            InvMixColumn(a,BC);      
-            Substitution(a,Si,BC);
-            ShiftRow(a,1,BC);                
+            KeyAddition(a,rk[r]);
+            InvMixColumn(a);
+            Substitution(a,Si);
+            ShiftRow(a,1);
         }
         
         /* End with the extra key addition
          */
         
-        KeyAddition(a,rk[0],BC);    
+        KeyAddition(a,rk[0]);
 
         return 0;
     }
@@ -1713,7 +1719,7 @@ private:
     {
         /* Encryption of one block. 
          */
-        int r, BC, ROUNDS;
+        int r, ROUNDS;
 
         const uint8_t S[256] = {
              99, 124, 119, 123, 242, 107, 111, 197,  48,   1, 103,  43, 254, 215, 171, 118, 
@@ -1734,13 +1740,6 @@ private:
             140, 161, 137,  13, 191, 230,  66, 104,  65, 153,  45,  15, 176,  84, 187,  22, 
         };
 
-        switch (blockBits) {
-        case 128: BC = 4; break;
-        case 192: BC = 6; break;
-        case 256: BC = 8; break;
-        default : return (-2);
-        }
-
         switch (keyBits >= blockBits ? keyBits : blockBits) {
         case 128: ROUNDS = 10; break;
         case 192: ROUNDS = 12; break;
@@ -1750,22 +1749,22 @@ private:
 
         /* begin with a key addition
          */
-        KeyAddition(a,rk[0],BC); 
+        KeyAddition(a,rk[0]); 
 
             /* ROUNDS-1 ordinary rounds
          */
         for(r = 1; r < ROUNDS; r++) {
-            Substitution(a,S,BC);
-            ShiftRow(a,0,BC);
-            MixColumn(a,BC);
-            KeyAddition(a,rk[r],BC);
+            Substitution(a,S);
+            ShiftRow(a,0);
+            MixColumn(a);
+            KeyAddition(a,rk[r]);
         }
         
         /* Last round is special: there is no MixColumn
          */
-        Substitution(a,S,BC);
-        ShiftRow(a,0,BC);
-        KeyAddition(a,rk[ROUNDS],BC);
+        Substitution(a,S);
+        ShiftRow(a,0);
+        KeyAddition(a,rk[ROUNDS]);
 
         return 0;
     }   
@@ -1990,16 +1989,9 @@ private:
         /* Calculate the necessary round keys
          * The number of calculations depends on keyBits and blockBits
          */
-        int BC, ROUNDS;
+        int ROUNDS;
         int i, j, t, rconpointer = 0;
         uint8_t tk[4][KC256];   
-
-        switch (blockBits) {
-        case 128: BC = 4; break;
-        case 192: BC = 6; break;
-        case 256: BC = 8; break;
-        default : return (-2);
-        }
 
         switch (keyBits >= blockBits ? keyBits : blockBits) {
         case 128: ROUNDS = 10; break;
@@ -2042,13 +2034,13 @@ private:
         }
         t = 0;
         /* copy values into round key array */
-        for(j = 0; (j < KC256) && (t < (ROUNDS+1)*BC); j++, t++){
+        for(j = 0; (j < KC256) && (t < (ROUNDS+1)*BC128); j++, t++){
             for(i = 0; i < 4; i++){
-                W[t / BC][i][t % BC] = tk[i][j];
+                W[t / BC128][i][t % BC128] = tk[i][j];
             }
         }
             
-        while (t < (ROUNDS+1)*BC) { /* while not enough round key material calculated */
+        while (t < (ROUNDS+1)*BC128) { /* while not enough round key material calculated */
             /* calculate new values */
             for(i = 0; i < 4; i++){
                 tk[i][0] ^= S[tk[(i+1)%4][KC256-1]];
@@ -2070,13 +2062,12 @@ private:
             }
 
             /* copy values into round key array */
-            for(j = 0; (j < KC256) && (t < (ROUNDS+1)*BC); j++, t++){
+            for(j = 0; (j < KC256) && (t < (ROUNDS+1)*BC128); j++, t++){
                 for(i = 0; i < 4; i++){
-                    W[t / BC][i][t % BC] = tk[i][j];
+                    W[t / BC128][i][t % BC128] = tk[i][j];
                 }
             }
         }
-
         return 0;
     }
 };
