@@ -277,11 +277,11 @@ class SslAes128_CBC_direct
     {
         LOG(LOG_INFO, "crypt_cbc\n");
 
-        size_t i, j;
+        size_t i;
         unsigned blockLength = 128; 
         unsigned keyLength = 128; 
 
-        for (i = 0 ; i < data_size ; i+=(blockLength/8)){
+        for(i = 0 ; i < data_size ; i+=(blockLength/8)){
             keyInst.blockLen = blockLength;
             keyInst.keyLen = keyLength;
             makeKey(&keyInst, direction, keyLength, binKey);
@@ -302,12 +302,12 @@ class SslAes128_CBC_direct
 
 //            switch (keyLength) {
 //            case 128:
-//                for (j = 0; j < 128/8; j++) {
+//                for(j = 0; j < 128/8; j++) {
 //                    binKey[j] ^= outBlock[j];
 //                }
 //                break;
 //            case 192:
-//                for (j = 0; j < 64/8; j++) {
+//                for(j = 0; j < 64/8; j++) {
 //                    binKey[j] ^= tmpBlock[j + 64/8];
 //                }
 //                for (j = 0; j < 128/8; j++) {
@@ -315,10 +315,10 @@ class SslAes128_CBC_direct
 //                }
 //                break;
 //            case 256:
-//                for (j = 0; j < 128/8; j++) {
+//                for(j = 0; j < 128/8; j++) {
 //                    binKey[j] ^= tmpBlock[j];
 //                }
-//                for (j = 0; j < 128/8; j++) {
+//                for(j = 0; j < 128/8; j++) {
 //                    binKey[j + 128/8] ^= outBlock[j];
 //                }
 //                break;
@@ -337,7 +337,7 @@ class SslAes128_CBC_direct
 //    keyInstance keyInst;
 //    cipherInstance cipherInst;
 
-//    for (i = 0; i < 400; i++) {
+//    for(i = 0; i < 400; i++) {
 //        /* prepare key: */
 //        keyInst.blockLen = blockLength;
 //        r = makeKey(&keyInst, direction, keyLength, binKey);
@@ -355,29 +355,29 @@ class SslAes128_CBC_direct
 //        /* prepare new key: */
 //        switch (keyLength) {
 //        case 128:
-//            for (j = 0; j < 128/8; j++) {
+//            for(j = 0; j < 128/8; j++) {
 //                binKey[j] ^= outBlock[j];
 //            }
 //            break;
 //        case 192:
-//            for (j = 0; j < 64/8; j++) {
+//            for(j = 0; j < 64/8; j++) {
 //                if (direction == DIR_ENCRYPT)
 //                    binKey[j] ^= inBlock[j + 64/8];
 //                else
 //                    binKey[j] ^= binIv[j + 64/8];
 //            }
-//            for (j = 0; j < 128/8; j++) {
+//            for(j = 0; j < 128/8; j++) {
 //                binKey[j + 64/8] ^= outBlock[j];
 //            }
 //            break;
 //        case 256:
-//            for (j = 0; j < 128/8; j++) {
+//            for(j = 0; j < 128/8; j++) {
 //                if (direction == DIR_ENCRYPT)
 //                    binKey[j] ^= inBlock[j];
 //                else
 //                    binKey[j] ^= binIv[j];
 //            }
-//            for (j = 0; j < 128/8; j++) {
+//            for(j = 0; j < 128/8; j++) {
 //                binKey[j + 128/8] ^= outBlock[j];
 //            }
 //            break;
@@ -679,51 +679,57 @@ private:
         
         switch (cipher->mode) {
         case MODE_ECB: 
-            for (i = 0; i < numBlocks; i++) {
-                for (j = 0; j < cipher->blockLen/32; j++) {
-                    for(t = 0; t < 4; t++)
+            for(i = 0; i < numBlocks; i++) {
+                for(j = 0; j < cipher->blockLen/32; j++) {
+                    for(t = 0; t < 4; t++){
                     /* parse input stream into rectangular array */
                         block[t][j] = input[4*j+t] & 0xFF;
+                    }
                 }
                 rijndaelDecrypt (block, key->keyLen, cipher->blockLen, key->keySched);
-                for (j = 0; j < cipher->blockLen/32; j++) {
+                for(j = 0; j < cipher->blockLen/32; j++) {
                     /* parse rectangular array into output ciphertext uint8_ts */
-                    for(t = 0; t < 4; t++)
-                        outBuffer[4*j+t] = (uint8_t) block[t][j];
+                    for(t = 0; t < 4; t++){
+                        outBuffer[4*j+t] = block[t][j];
+                    }
                 }
             }
             break;
             
         case MODE_CBC:
             /* first block */
-            for (j = 0; j < cipher->blockLen/32; j++) {
-                for(t = 0; t < 4; t++)
+            for(j = 0; j < cipher->blockLen/32; j++) {
+                for(t = 0; t < 4; t++){
                 /* parse input stream into rectangular array */
                     block[t][j] = input[4*j+t] & 0xFF;
+                }
             }
             rijndaelDecrypt (block, key->keyLen, cipher->blockLen, key->keySched);
             
-            for (j = 0; j < cipher->blockLen/32; j++) {
+            for(j = 0; j < cipher->blockLen/32; j++) {
                 /* exor the IV and parse rectangular array into output ciphertext uint8_ts */
-                for(t = 0; t < 4; t++)
-                    outBuffer[4*j+t] = (uint8_t) (block[t][j] ^ cipher->IV[t+4*j]);
+                for(t = 0; t < 4; t++){
+                    outBuffer[4*j+t] = (block[t][j] ^ cipher->IV[t+4*j]);
+                }
             }
             
             /* next blocks */
             for (i = 1; i < numBlocks; i++) {
-                for (j = 0; j < cipher->blockLen/32; j++) {
-                    for(t = 0; t < 4; t++)
+                for(j = 0; j < cipher->blockLen/32; j++) {
+                    for(t = 0; t < 4; t++){
                     /* parse input stream into rectangular array */
                         block[t][j] = input[cipher->blockLen/8+4*j+t] & 0xFF;
+                    }
                 }
                 rijndaelDecrypt (block, key->keyLen, cipher->blockLen, key->keySched);
                 
-                for (j = 0; j < cipher->blockLen/32; j++) {
+                for(j = 0; j < cipher->blockLen/32; j++) {
                     /* exor previous ciphertext block and parse rectangular array 
                            into output ciphertext uint8_ts */
-                    for(t = 0; t < 4; t++)
-                        outBuffer[cipher->blockLen/8+4*j+t] = (uint8_t) (block[t][j] ^ 
+                    for(t = 0; t < 4; t++){
+                        outBuffer[cipher->blockLen/8+4*j+t] = (block[t][j] ^ 
                             input[4*j+t-4*cipher->blockLen/32]);
+                    }
                 }
             }
             break;
@@ -736,8 +742,6 @@ private:
 
     int blockEncrypt(cipherInstance *cipher, keyInstance *key, const uint8_t *input, int inputLen, uint8_t *outBuffer)
     {
-
-        LOG(LOG_INFO, "blockEncrypt key=%p direction=%d keyLen=%d\n", (void*)key, key->direction, key->keyLen);
         int i, j, t, numBlocks;
         uint8_t block[4][MAXBC];
 
@@ -762,18 +766,19 @@ private:
         
         switch (cipher->mode) {
         case MODE_ECB: 
-            LOG(LOG_INFO, "MODE_ECB\n");
-            for (i = 0; i < numBlocks; i++) {
-                for (j = 0; j < cipher->blockLen/32; j++) {
-                    for(t = 0; t < 4; t++)
+            for(i = 0; i < numBlocks; i++) {
+                for(j = 0; j < cipher->blockLen/32; j++) {
+                    for(t = 0; t < 4; t++){
                     /* parse input stream into rectangular array */
                         block[t][j] = input[4*j+t] & 0xFF;
+                    }
                 }
                 rijndaelEncrypt(block, key->keyLen, cipher->blockLen, key->keySched);
-                for (j = 0; j < cipher->blockLen/32; j++) {
+                for(j = 0; j < cipher->blockLen/32; j++) {
                     /* parse rectangular array into output ciphertext uint8_ts */
-                    for(t = 0; t < 4; t++)
-                        outBuffer[4*j+t] = (uint8_t) block[t][j];
+                    for(t = 0; t < 4; t++){
+                        outBuffer[4*j+t] = block[t][j];
+                    }
                 }
             }
             break;
@@ -781,23 +786,26 @@ private:
         case MODE_CBC:
             LOG(LOG_INFO, "MODE_CBC\n");
 
-            for (j = 0; j < cipher->blockLen/32; j++) {
-                for(t = 0; t < 4; t++)
+            for(j = 0; j < cipher->blockLen/32; j++) {
+                for(t = 0; t < 4; t++){
                 /* parse initial value into rectangular array */
                         block[t][j] = cipher->IV[t+4*j] & 0xFF;
                 }
+            }
             for (i = 0; i < numBlocks; i++) {
                 for (j = 0; j < cipher->blockLen/32; j++) {
-                    for(t = 0; t < 4; t++)
+                    for(t = 0; t < 4; t++){
                     /* parse input stream into rectangular array and exor with 
                        IV or the previous ciphertext */
                         block[t][j] ^= input[4*j+t] & 0xFF;
+                    }
                 }
                 rijndaelEncrypt (block, key->keyLen, cipher->blockLen, key->keySched);
                 for (j = 0; j < cipher->blockLen/32; j++) {
                     /* parse rectangular array into output ciphertext uint8_ts */
-                    for(t = 0; t < 4; t++)
-                        outBuffer[4*j+t] = (uint8_t) block[t][j];
+                    for(t = 0; t < 4; t++){
+                        outBuffer[4*j+t] = block[t][j];
+                    }
                 }
             }
             break;
@@ -816,12 +824,13 @@ private:
         
         if ((mode == MODE_ECB) || (mode == MODE_CBC) || (mode == MODE_CFB1)) {
             cipher->mode = mode;
-        } else {
+        } 
+        else {
             LOG(LOG_INFO, "cipherInit BAD_CIPHER_MODE");
             return BAD_CIPHER_MODE;
         }
         
-         for(i = 0; i < cipher->blockLen/8; i++) {        
+         for(i = 0; i < cipher->blockLen/8; i++) {
             cipher->IV[i] = iv[i];
         } 
 
