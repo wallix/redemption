@@ -47,13 +47,24 @@ void check_datas(size_t lg_data, uint8_t * data,
                 break;
             }
         }
-        BOOST_CHECK_MESSAGE(lg_result == lg_data,
-            "test " << message << ": length mismatch\n"
-            "Expected " << lg_result << "\n"
-            "Got " << lg_data << "\n"
-            "Data differs at index " << i << "\n"
-            "Expected " << int(expected_result[i]) << "\n"
-            "Got " << int(data[i]) << "\n");
+
+        char buffer[4000];
+        sprintf(buffer, "test %s: length mismatch\n"
+                        "Expected %d\n"
+                        "Got %d\n"
+                        "Data differs at index %d\n"
+                        "Expected %d\n"
+                        "Got %d\n", message, lg_result, lg_data, i, int(expected_result[i]),  int(data[i]));
+
+
+        BOOST_CHECK_MESSAGE(lg_result == lg_data, buffer);
+                            /*"test " << message << ": length mismatch\n" <<
+                            "Expected " << lg_result << "\n" <<
+                            "Got " << lg_data << "\n" <<
+                            "Data differs at index " << i << "\n" <<
+                            "Expected " << int(expected_result[i]) << "\n" <<
+                            "Got " << int(data[i]) << "\n"
+                            );*/
         return;
     }
 
@@ -70,12 +81,16 @@ void check_datas(size_t lg_data, uint8_t * data,
             }
             printf("\n");
         }
-        BOOST_CHECK_MESSAGE(expected_result[i] == data[i],
-            "test "         << message << " :"
-            << " expected " << int(expected_result[i])
-            << " got "      << int(data[i])
-            << " at index " << i
-            << "\n");
+
+        char buffer[4000];
+        sprintf(buffer, "test %s :"
+                        " expected %d"
+                        " got %d"
+                        " at index %d"
+                        "\n",
+                        message, int(expected_result[i]),  int(data[i]),  i);
+
+        BOOST_CHECK_MESSAGE(expected_result[i] == data[i], buffer);
     }
 }
 

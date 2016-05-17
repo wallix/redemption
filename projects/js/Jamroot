@@ -327,8 +327,8 @@ test-canonical core/callback.hpp ;
 test-canonical core/channel_list.hpp ;
 test-canonical core/check_files.hpp ;
 test-canonical core/client_info.hpp ;
-#test-canonical utils/theme.hpp ; # 4 errors
-#test-canonical utils/confdescriptor.hpp ; #12 error
+#test-canonical utils/theme.hpp ; # error fixtures
+#test-canonical utils/confdescriptor.hpp ; # error fixtures
 test-canonical core/error.hpp ;
 #test-canonical core/font.hpp ;
 test-canonical core/listen.hpp ;
@@ -379,12 +379,12 @@ test-canonical core/RDP/GraphicUpdatePDU.hpp ;
 test-canonical core/RDP/RefreshRectPDU.hpp ;
 test-canonical core/RDP/logon.hpp ;
 #test-canonical core/RDP/nego.hpp : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
-#test-canonical core/RDP/orders/RDPOrdersCommon.hpp ;      # 1 error
+test-canonical core/RDP/orders/RDPOrdersCommon.hpp ; 
 test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
 #test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
 test-canonical core/RDP/RDPSerializer.hpp ;
-#test-canonical core/RDP/remote_programs.hpp ; # many failed
+test-canonical core/RDP/remote_programs.hpp ; 
 test-canonical core/server.hpp ;
 test-canonical core/session.hpp ;
 test-canonical core/session_server.hpp ;
@@ -405,7 +405,7 @@ test-canonical mod/rdp/rdp_orders.hpp ;
 #test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ; # error
 #test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>png ;
 #test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
-#test-canonical mod/vnc/vnc.hpp ; # error
+#test-canonical mod/vnc/vnc.hpp : <library>png ; 
 test-canonical mod/xup/xup.hpp ;
 #test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
 
@@ -459,7 +459,7 @@ test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/out_file_transport.hpp ;
 #test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
 #test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
-#test-canonical transport/bulk_compression_transport.hpp ; # 3 failed
+test-canonical transport/bulk_compression_transport.hpp ; 
 #test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 #test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 #test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
@@ -480,26 +480,26 @@ test-canonical transport/out_filename_sequence_transport.hpp ;
 #test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
-#test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error 
-#test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryLineTo.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPolyline.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
+test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error 
+test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryLineTo.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPolyline.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
+test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
 #test-canonical core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp : <library>bitmap <library>crypto ;
-#test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
-#test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
-#test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
+test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
+test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
 
 #test-run test_libpng 
 #    : test_libpng.cpp 
@@ -637,7 +637,7 @@ test-canonical transport/out_filename_sequence_transport.hpp ;
 #test-canonical mod/internal/widget2/number_edit.hpp : <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/edit_valid.hpp : <library>png <library>crypto ;
 ## test-run test_radio_list : mod/internal/widget2/test_radio_list.cpp : <library>png <library>libboost_unit_test ;
-#test-canonical mod/internal/widget2/radio_list.hpp ; # error
+#test-canonical mod/internal/widget2/radio_list.hpp ; # need png
 #test-canonical mod/internal/widget2/flat_dialog.hpp : <library>bitmap <library>png <library>crypto ;
 test-canonical mod/internal/widget2/widget.hpp ;
 #test-canonical mod/internal/widget2/composite.hpp : <library>png <library>crypto ;
@@ -649,7 +649,7 @@ test-canonical mod/internal/widget2/widget.hpp ;
 #test-canonical mod/internal/widget2/flat_wab_close.hpp : <library>bitmap <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/screen.hpp : <library>png <library>crypto ;
 ## test-run test_columnlayout : mod/internal/widget2/test_columnlayout.cpp : <library>png ;
-##test-canonical mod/internal/widget2/columnlayout.hpp ;
+##test-canonical mod/internal/widget2/columnlayout.hpp ; # need png
 ## test-run test_linelayout : mod/internal/widget2/test_linelayout.cpp : <library>png ;
 ##test-canonical mod/internal/widget2/linelayout.hpp ;
 ## test-run test_stacklayout : mod/internal/widget2/test_stacklayout.cpp : <library>png ;
@@ -685,8 +685,8 @@ test-canonical mod/internal/internal_mod.hpp ;
 ### @{
 test-canonical regex/regex_state.hpp ;
 #test-canonical regex/regex_parser.hpp ;
-#test-canonical regex/regex_st_automate.hpp ; # warning
-#test-canonical regex/regex.hpp ; #20 errors
+test-canonical regex/regex_st_automate.hpp ; # warning
+test-canonical regex/regex.hpp ; #20 errors
 
 ## test-run benchmark_regex_parser : benchmark/parser.cpp ;
 ## test-run benchmark_regex_search : benchmark/search.cpp ;
@@ -706,7 +706,7 @@ test-canonical core/RDP/nla/sspi.hpp ;
 ##alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
 #test-canonical core/RDP/nla/ntlm/ntlm_message_negotiate.hpp : <library>crypto ;
-#test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ; # error
+test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ; 
 #test-canonical core/RDP/nla/ntlm/ntlm_message_challenge.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_message_authenticate.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_context.hpp : <library>dl <library>z <library>crypto ;

@@ -750,7 +750,7 @@ test-canonical capture/FileToGraphic.hpp : <library>bitmap <library>snappy <libr
 test-canonical capture/GraphicToFile.hpp : <library>bitmap <library>snappy <library>crypto <library>png ;
 test-canonical capture/nativecapture.hpp : <library>bitmap <library>crypto <library>snappy <library>png ;
 test-canonical capture/chunked_image_transport.hpp : <library>bitmap <library>png <library>z <library>snappy <library>crypto <library>png ;
-test-canonical capture/capture.hpp : <library>bitmap <library>crypto <library>dl <library>z <library>snappy <library>png ;
+test-canonical capture/capture.hpp : <library>bitmap <library>png <library>crypto <library>dl <library>z <library>snappy ;
 test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
 
 ## @}
