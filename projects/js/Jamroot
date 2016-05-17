@@ -637,7 +637,7 @@ test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
 #test-canonical mod/internal/widget2/number_edit.hpp : <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/edit_valid.hpp : <library>png <library>crypto ;
 ## test-run test_radio_list : mod/internal/widget2/test_radio_list.cpp : <library>png <library>libboost_unit_test ;
-#test-canonical mod/internal/widget2/radio_list.hpp ; # error
+#test-canonical mod/internal/widget2/radio_list.hpp ; # need png
 #test-canonical mod/internal/widget2/flat_dialog.hpp : <library>bitmap <library>png <library>crypto ;
 test-canonical mod/internal/widget2/widget.hpp ;
 #test-canonical mod/internal/widget2/composite.hpp : <library>png <library>crypto ;
@@ -649,7 +649,7 @@ test-canonical mod/internal/widget2/widget.hpp ;
 #test-canonical mod/internal/widget2/flat_wab_close.hpp : <library>bitmap <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/screen.hpp : <library>png <library>crypto ;
 ## test-run test_columnlayout : mod/internal/widget2/test_columnlayout.cpp : <library>png ;
-##test-canonical mod/internal/widget2/columnlayout.hpp ;
+##test-canonical mod/internal/widget2/columnlayout.hpp ; # need png
 ## test-run test_linelayout : mod/internal/widget2/test_linelayout.cpp : <library>png ;
 ##test-canonical mod/internal/widget2/linelayout.hpp ;
 ## test-run test_stacklayout : mod/internal/widget2/test_stacklayout.cpp : <library>png ;
@@ -685,8 +685,8 @@ test-canonical mod/internal/internal_mod.hpp ;
 ### @{
 test-canonical regex/regex_state.hpp ;
 #test-canonical regex/regex_parser.hpp ;
-#test-canonical regex/regex_st_automate.hpp ; # warning
-#test-canonical regex/regex.hpp ; #20 errors
+test-canonical regex/regex_st_automate.hpp ; # warning
+test-canonical regex/regex.hpp ; #20 errors
 
 ## test-run benchmark_regex_parser : benchmark/parser.cpp ;
 ## test-run benchmark_regex_search : benchmark/search.cpp ;
@@ -706,7 +706,7 @@ test-canonical core/RDP/nla/sspi.hpp ;
 ##alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
 #test-canonical core/RDP/nla/ntlm/ntlm_message_negotiate.hpp : <library>crypto ;
-#test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ; # error
+test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ; 
 #test-canonical core/RDP/nla/ntlm/ntlm_message_challenge.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_message_authenticate.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_context.hpp : <library>dl <library>z <library>crypto ;
