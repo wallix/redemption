@@ -215,8 +215,9 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
             "  0: keyboard input are not masked\n"
             "  1: only passwords are masked\n"
-            "  2: passwords and unidentified texts are masked"
-        }, set(KeyboardInputMaskingLevel::password_and_unidentified));
+            "  2: passwords and unidentified texts are masked\n"
+            "  3: keyboard input are fully masked"
+        }, set(KeyboardInputMaskingLevel::fully_masked));
     });
 
     W.section("client", [&]
