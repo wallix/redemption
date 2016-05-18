@@ -380,10 +380,11 @@ class ModuleManager : public MMIni
 
     struct sock_mod_barrier {};
     template<class Mod>
-    struct ModWithSocket final : private SocketTransport, Mod
+    class ModWithSocket final : private SocketTransport, public Mod
     {
-    private:
         ModuleManager & mm;
+        bool target_info_is_shown = false;
+
     public:
         template<class... Args>
         ModWithSocket( ModuleManager & mm, const char * name, int sck, uint32_t verbose
@@ -398,23 +399,22 @@ class ModuleManager : public MMIni
             mm.mod_transport = this;
         }
 
-        bool targer_info_is_shown = false;
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
             //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
             Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
 
             if (this->mm.ini.template get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
-                bool f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
-                if (targer_info_is_shown && f12_released) {
+                bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
+                if (this->target_info_is_shown && f12_released) {
                     //LOG(LOG_INFO, "Hide info");
                     this->mm.clear_osd_message();
-                    targer_info_is_shown = false;
+                    this->target_info_is_shown = false;
                 }
-                else if (!f12_released) {
+                else if (!this->target_info_is_shown && !f12_released) {
                     //LOG(LOG_INFO, "Show info");
                     this->mm.osd_message(this->mm.ini.template get<cfg::globals::target_device>(), true);
-                    targer_info_is_shown = true;
+                    this->target_info_is_shown = true;
                 }
             }
         }
@@ -448,7 +448,8 @@ public:
             background_color = color_encode(background_color, this->front.client_info.bpp);
         }
         this->mod = new module_osd(
-            *this, Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
+            *this,
+            Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
             [this, message, color, background_color](mod_api & mod, const Rect & rect, const Rect & clip) {
                 const Rect r = rect.intersect(clip);
                 mod.begin_update();

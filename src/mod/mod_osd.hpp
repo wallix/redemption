@@ -162,7 +162,7 @@ protected:
 
     template<class Command, class... Args>
     void draw_impl(Command const & cmd, Rect const & clip, Args const &... args) {
-        auto const & rect = clip_from_cmd(cmd);
+        auto const & rect = clip_from_cmd(cmd).intersect(clip);
         if (this->fg_rect.contains(rect) || rect.isempty()) {
             //nada
         }
@@ -341,6 +341,26 @@ public:
 
     void set_palette(const BGRPalette& palette) override {
         this->mod.set_palette(palette);
+    }
+
+    wait_obj * get_secondary_event() override {
+        return this->mod.get_secondary_event();
+    }
+
+    wait_obj * get_asynchronous_task_event(int & out_fd) override {
+        return this->mod.get_asynchronous_task_event(out_fd);
+    }
+
+    void process_asynchronous_task() override {
+        this->mod.process_asynchronous_task();
+    }
+
+    wait_obj * get_session_probe_launcher_event() override {
+        return this->mod.get_session_probe_launcher_event();
+    }
+
+    void process_session_probe_launcher() override {
+        this->mod.process_session_probe_launcher();
     }
 };
 
