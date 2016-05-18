@@ -32,9 +32,22 @@ struct TEST_ ## name {\
 \
 void name()
 
+template<class T, class U>
+bool cmp(T x, U y) {
+	return x != y;
+}
+
+bool cmp(const char * s1, const char * s2) {
+	return strcmp(s1, s2) != 0;
+}
+
+bool cmp(char * s1, const char * s2) {
+	return strcmp(s1, s2) != 0;
+}
 
 
-#define BOOST_CHECK_EQUAL(x, y) if ((x)!=(y)) {\
+
+#define BOOST_CHECK_EQUAL(x, y) if (cmp(x,y)) {\
 std::cout << "Test Failed at " << __LINE__ << "\n";\
 std::cout << "Got (" << (x) << ") expected (" << (y) << ") \n";\
 TESTS.failure++;} else { TESTS.success++;}
@@ -44,6 +57,7 @@ TESTS.failure++;} else { TESTS.success++;}
 #define BOOST_REQUIRE(x) if (!(x)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 #define BOOST_REQUIRE_EQUAL(x, y) if ((x)!=(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 #define BOOST_REQUIRE_NE(x, y) if ((x)==(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
+#define BOOST_CHECK_MESSAGE(x,s) if(x) {TESTS.success++; printf("%s", s);} else {TESTS.failure++;};
 
 #ifdef BOOST_AUTO_TEST_MAIN
 struct TESTS {

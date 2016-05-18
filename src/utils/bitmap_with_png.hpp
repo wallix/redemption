@@ -30,7 +30,9 @@
 #ifndef _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
 #define _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
 
-#include "utils/bitmap_without_png.hpp"
+//#include "utils/png_bitmap.hpp"
+#include "utils/png.hpp"
+#include "utils/bitmap.hpp"
 
 #include "error.h"
 #include <png.h>
@@ -39,61 +41,95 @@
 
 using std::size_t;
 
-class Bitmap_With_PNG : public Bitmap
+class Bitmap_PNG : public Bitmap
 {
 
 
 public:
-    Bitmap_With_PNG() noexcept
-    : Bitmap()
-    {}
+    using Bitmap::Bitmap;
 
-    Bitmap_With_PNG(Bitmap&& bmp) noexcept
-    : Bitmap(bmp)
-    {
-        bmp.data_bitmap = nullptr;
-    }
+    enum openfile_t {
+        OPEN_FILE_UNKNOWN,
+        OPEN_FILE_BMP,
+        OPEN_FILE_PNG
+    };
 
-    Bitmap_With_PNG(const Bitmap & other)
-    : Bitmap(other)
-    {
-        if (this->data_bitmap) {
-            this->data_bitmap->inc();
+    openfile_t check_file_type(const char * filename) {
+        char type1[8];
+
+        int fd_ = open(filename, O_RDONLY);
+        if (!fd_) {
+            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n",
+                filename, strerror(errno), errno);
+            TODO("see value returned, maybe we should return open error");
+            return OPEN_FILE_UNKNOWN;
         }
-    }
 
-    ~Bitmap_With_PNG() {
-        this->reset();
-    }
+        class fdbuf
+        {
+            int fd;
+        public:
+            explicit fdbuf(int fd = -1) noexcept : fd(fd){}
 
-    // TODO("session color depth is only used for selection of compression60, should not be povided as first parameter");
-    Bitmap_With_PNG(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
-           uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
-           bool compressed = false)
-    : Bitmap(session_color_depth, bpp, palette,
-           cx, cy, data, size,
-           compressed)
-    {
-    }
+            ~fdbuf(){::close(this->fd);}
+            ssize_t read(void * data, size_t len) const
+            {
+                size_t remaining_len = len;
+                while (remaining_len) {
+                    ssize_t ret = ::read(this->fd, static_cast<char*>(data)
+                                        +(len - remaining_len), remaining_len);
+                    if (ret < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Error should still be there next time we try to read
+                        if (remaining_len != len){
+                            return len - remaining_len;
+                        }
+                        return ret;
+                    }
+                    // We must exit loop or we will enter infinite loop
+                    if (ret == 0){
+                        break;
+                    }
+                    remaining_len -= ret;
+                }
+                return len - remaining_len;
+            }
 
-    Bitmap_With_PNG(const Bitmap & src_bmp, const Rect & r)
-    : Bitmap(src_bmp, r)
-    {
-    }
+            off64_t seek(off64_t offset, int whence) const
+            {
+                return lseek64(this->fd, offset, whence);
+            }
+        } file(fd_);
 
-    TODO("add palette support")
-    Bitmap_With_PNG(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
-    : Bitmap(vnc_raw, vnc_cx, vnc_cy, vnc_bpp, tile)
-    {
+        if (file.read(type1, 2) != 2) {
+            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
+            return OPEN_FILE_UNKNOWN;
+        }
+        if ((type1[0] == 'B') && (type1[1] == 'M')) {
+            LOG(LOG_INFO, "Widget_load: image file [%s] is BMP file\n", filename);
+            return OPEN_FILE_BMP;
+        }
+        if (file.read(&type1[2], 6) != 6) {
+            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
+            return OPEN_FILE_BMP;
+        }
+        if (png_check_sig(reinterpret_cast<png_bytep>(type1), 8)) {
+            LOG(LOG_INFO, "Widget_load: image file [%s] is PNG file\n", filename);
+            return OPEN_FILE_PNG;
+        }
+        LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP or PNG file\n", filename);
+        return OPEN_FILE_UNKNOWN;
     }
 
     TODO("I could use some data provider lambda instead of filename")
-    explicit Bitmap_With_PNG(const char* filename)
+    explicit Bitmap_PNG(const char* filename)
     : Bitmap()
     {
         //LOG(LOG_INFO, "loading bitmap %s", filename);
 
-        openfile_t res = check_file_type(filename);
+        openfile_t res = Bitmap_PNG::check_file_type(filename);
 
         if (res == OPEN_FILE_UNKNOWN) {
             LOG(LOG_ERR, "loading bitmap %s failed, Unknown format type", filename);
@@ -351,74 +387,6 @@ public:
         }
     }
 
-    static openfile_t check_file_type(const char * filename) {
-        char type1[8];
-
-        int fd_ = open(filename, O_RDONLY);
-        if (!fd_) {
-            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n",
-                filename, strerror(errno), errno);
-            TODO("see value returned, maybe we should return open error");
-            return OPEN_FILE_UNKNOWN;
-        }
-
-        class fdbuf
-        {
-            int fd;
-        public:
-            explicit fdbuf(int fd = -1) noexcept : fd(fd){}
-
-            ~fdbuf(){::close(this->fd);}
-            ssize_t read(void * data, size_t len) const
-            {
-                size_t remaining_len = len;
-                while (remaining_len) {
-                    ssize_t ret = ::read(this->fd, static_cast<char*>(data)
-                                        +(len - remaining_len), remaining_len);
-                    if (ret < 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        // Error should still be there next time we try to read
-                        if (remaining_len != len){
-                            return len - remaining_len;
-                        }
-                        return ret;
-                    }
-                    // We must exit loop or we will enter infinite loop
-                    if (ret == 0){
-                        break;
-                    }
-                    remaining_len -= ret;
-                }
-                return len - remaining_len;
-            }
-
-            off64_t seek(off64_t offset, int whence) const
-            {
-                return lseek64(this->fd, offset, whence);
-            }
-        } file(fd_);
-
-        if (file.read(type1, 2) != 2) {
-            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
-            return OPEN_FILE_UNKNOWN;
-        }
-        if ((type1[0] == 'B') && (type1[1] == 'M')) {
-            LOG(LOG_INFO, "Widget_load: image file [%s] is BMP file\n", filename);
-            return OPEN_FILE_BMP;
-        }
-        if (file.read(&type1[2], 6) != 6) {
-            LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
-            return OPEN_FILE_BMP;
-        }
-        if (png_check_sig(reinterpret_cast<png_bytep>(type1), 8)) {
-            LOG(LOG_INFO, "Widget_load: image file [%s] is PNG file\n", filename);
-            return OPEN_FILE_PNG;
-        }
-        LOG(LOG_ERR, "Widget_load: error bitmap file [%s] not BMP or PNG file\n", filename);
-        return OPEN_FILE_UNKNOWN;
-    }
 
     bool open_png_file(const char * filename) {
         this->reset();
@@ -502,18 +470,6 @@ public:
 
         return true;
     } // bool open_png_file(const char * filename)
-
-    Bitmap_With_PNG(uint8_t out_bpp, const Bitmap& bmp)
-    : Bitmap(out_bpp, bmp)
-    {
-    }
-
-    Bitmap_With_PNG(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
-    : Bitmap(bpp, palette, cx, cy)
-    {
-
-    }
-
 };
 
 

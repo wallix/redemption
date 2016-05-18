@@ -89,8 +89,6 @@ class LanguageButton : public WidgetFlatButton
                 else {
                     LOG(LOG_WARNING, "Layout \"%.*s\" not found.", static_cast<int>(cend - cstr), cstr);
                 }
-
-                cstr = cend;
             }
 
             this->label.set_text(this->locales[0].locale_name);

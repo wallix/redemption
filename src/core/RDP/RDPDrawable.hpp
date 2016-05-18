@@ -768,12 +768,14 @@ public:
         this->mod_palette_rgb = palette;
     }
 
-    void dump_png24(Transport & trans, bool bgr) const {
-        ::transport_dump_png24(trans, this->drawable.data(),
-            this->drawable.width(), this->drawable.height(),
-            this->drawable.rowsize(),
-            bgr);
-    }
+
 };
+
+void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {
+    ::transport_dump_png24(trans, drawable.data(),
+        drawable.width(), drawable.height(),
+        drawable.rowsize(),
+        bgr);
+}
 
 #endif

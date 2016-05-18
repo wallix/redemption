@@ -482,9 +482,10 @@ enum class KeyboardInputMaskingLevel : unsigned {
     unmasked,
     password_only,
     password_and_unidentified,
+    fully_masked,
     NB
 };
-MK_ENUM_FIELD(::configs::KeyboardInputMaskingLevel, "0", "1", "2")
+MK_ENUM_FIELD(::configs::KeyboardInputMaskingLevel, "0", "1", "2", "3")
 
 
 enum class SessionProbeOnLaunchFailure {
