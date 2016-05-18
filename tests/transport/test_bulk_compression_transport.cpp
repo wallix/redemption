@@ -62,28 +62,32 @@ BOOST_AUTO_TEST_CASE(TestBulkCompressionTransport)
         {
             BulkCompressionInTransport  in_trans(mt);
 
-            char   in_data[128] = { 0 };
-            char * in_buffer   = in_data;
+            char   in_data1[21] = { 0 };
+            char * in_buffer   = in_data1;
 
             in_trans.recv(&in_buffer, 21);
-            BOOST_CHECK_EQUAL(in_data,
+            BOOST_CHECK_EQUAL(in_data1,
                 "azert"
                 "azert"
                 "azert"
                 "azert");
 
-            in_buffer = in_data;
+            char   in_data2[31] = { 0 };
+            in_buffer = in_data2;
+
             in_trans.recv(&in_buffer, 31);
-            BOOST_CHECK_EQUAL(in_data,
+            BOOST_CHECK_EQUAL(in_data2,
                 "wallix"
                 "wallix"
                 "wallix"
                 "wallix"
                 "wallix");
 
-            in_buffer = in_data;
+            char   in_data3[65] = { 0 };
+            in_buffer = in_data3;
+            ;
             in_trans.recv(&in_buffer, 65);
-            BOOST_CHECK_EQUAL(in_data,
+            BOOST_CHECK_EQUAL(in_data3,
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"
                 "0123456789ABCDEF"
