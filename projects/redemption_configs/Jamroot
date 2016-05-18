@@ -104,7 +104,6 @@ constant CXXFLAGS-COMMON :
 #     <cxxflags>-Wpadded
     <cxxflags>-Wstrict-overflow=1
 #     <cxxflags>-Wstrict-overflow=5
-    <cxxflags>-Wc++11-compat
     <cxxflags>-Wnarrowing
     <cxxflags>-Wvolatile-register-var
     <cxxflags>-Wdisabled-optimization
@@ -225,7 +224,7 @@ project configs
     <variant>debug:<define>REDASSERT_AS_ASSERT
     <variant>debug:<cxxflags>-g
 
-    <cxxflags>-std=c++11
+    <cxxflags>-std=c++14
 
 
     $(CXXFLAGS-COMMON)
@@ -254,6 +253,7 @@ lib libasan : : <name>asan ;
 constant AUTOGENDIR : include/configs/autogen ;
 constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
 constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
+constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
 
 actions generate_configs {
     $(>) \
@@ -266,12 +266,19 @@ actions generate_spec {
     $(>) $(FILEGEN_SPEC)
 }
 
+actions generate_enum {
+    $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
+}
+
 make $(FILEGEN_CONF) : make_cpp_config : @generate_configs : <location>. ;
 make $(FILEGEN_SPEC) : make_python_spec : @generate_spec : <location>. ;
+make $(FILEGEN_ENUM) : make_cpp_enum : @generate_enum : <location>. ;
 
 alias generate_configs : $(FILEGEN_CONF) ;
 alias generate_spec : $(FILEGEN_SPEC) ;
+alias generate_enum : $(FILEGEN_ENUM) ;
 
+exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_cpp_config : src/configs/write_cpp_config.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_python_spec : src/configs/write_python_spec.cpp : $(LIB_SAN_DEPENDENCY) ;
 
@@ -294,7 +301,11 @@ actions cp_config {
 }
 
 
-alias generate : generate_spec generate_configs ;
+alias generate  :
+    generate_spec
+    generate_configs
+    generate_enum
+;
 
 make install : generate : @cp_config ;
 explicit install ;
@@ -311,6 +322,7 @@ constant TEST_DEPENDENCIES :
     $(LIB_TEST_DEPENDENCY)
     <implicit-dependency>generate_configs
     <implicit-dependency>generate_spec
+    <implicit-dependency>generate_enum
 ;
 
 ## Tests

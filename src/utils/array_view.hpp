@@ -23,7 +23,7 @@
 
 #include <type_traits>
 
-#include <cstddef>
+#include <cstdint>
 #include <cassert>
 
 template<class T>
