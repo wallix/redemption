@@ -60,7 +60,7 @@ struct RngByBpp
 
 template<bool has_enc15, bool has_enc16, bool has_enc24, class Dec>
 Color4 get_colors(Dec dec, uint32_t color) {
-    Color4 colors {};
+    Color4 colors {{}};
     RngByBpp rng_by_bpp{colors};
     gdi::GraphicCmdColorDistributor<RngByBpp, Dec, false, has_enc15, has_enc16, has_enc24>{
         rng_by_bpp, dec
