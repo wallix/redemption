@@ -32,7 +32,7 @@
 
 //#include "utils/png_bitmap.hpp"
 #include "utils/png.hpp"
-#include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
 
 #include "error.h"
 #include <png.h>
