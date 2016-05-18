@@ -46,44 +46,7 @@ class Bitmap_PNG : public Bitmap
 
 
 public:
-    Bitmap_PNG() noexcept
-    : Bitmap()
-    {}
-
-    Bitmap_PNG(Bitmap&& bmp) noexcept
-    : Bitmap(bmp)
-    {
-    }
-
-    Bitmap_PNG(const Bitmap & other)
-    : Bitmap(other)
-    {
-    }
-
-    ~Bitmap_PNG() {
-        this->reset();
-    }
-
-    // TODO("session color depth is only used for selection of compression60, should not be povided as first parameter");
-    Bitmap_PNG(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
-           uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
-           bool compressed = false)
-    : Bitmap(session_color_depth, bpp, palette,
-           cx, cy, data, size,
-           compressed)
-    {
-    }
-
-    Bitmap_PNG(const Bitmap & src_bmp, const Rect & r)
-    : Bitmap(src_bmp, r)
-    {
-    }
-
-    TODO("add palette support")
-    Bitmap_PNG(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
-    : Bitmap(vnc_raw, vnc_cx, vnc_cy, vnc_bpp, tile)
-    {
-    }
+    using Bitmap::Bitmap;
 
     enum openfile_t {
         OPEN_FILE_UNKNOWN,
@@ -507,18 +470,6 @@ public:
 
         return true;
     } // bool open_png_file(const char * filename)
-
-    Bitmap_PNG(uint8_t out_bpp, const Bitmap& bmp)
-    : Bitmap(out_bpp, bmp)
-    {
-    }
-
-    Bitmap_PNG(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
-    : Bitmap(bpp, palette, cx, cy)
-    {
-
-    }
-
 };
 
 

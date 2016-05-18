@@ -350,7 +350,7 @@ public:
             const uint16_t cy = this->cy();
             for (uint16_t i = 0; i < cy ; i++){
                 memcpy(dest, src, data_width);
-                memset(dest + line_size, 0, line_size - data_width);
+                memset(dest + data_width, 0, line_size - data_width);
                 src += data_width;
                 dest += line_size;
             }

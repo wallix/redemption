@@ -67,8 +67,6 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
     bool clipboard_initialized = false;
     bool clipboard_monitor_ready = false;
 
-    bool clipboard_initialized_before_drive_ready = false;
-
     bool format_data_requested = false;
 
     wait_obj event;
@@ -76,9 +74,8 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
 
-    const uint64_t very_long_delay = 1000000;
-    const uint64_t long_delay      = 500000;
-    const uint64_t short_delay     = 50000;
+    const uint64_t long_delay  = 500000;
+    const uint64_t short_delay = 50000;
 
     unsigned int copy_paste_loop_counter = 0;
 
@@ -138,10 +135,6 @@ public:
 
         if (this->sesprob_channel) {
             this->sesprob_channel->give_additional_launch_time();
-        }
-
-        if (this->clipboard_initialized) {
-            this->clipboard_initialized_before_drive_ready = true;
         }
 
         this->drive_ready = true;
@@ -333,9 +326,9 @@ public:
                 // Ctrl (up)
                 this->mod.rdp_input_scancode(29,
                                              param2,
-                                             0,
                                              SlowPath::KBDFLAGS_DOWN |
                                                  SlowPath::KBDFLAGS_RELEASE,
+                                             param4,
                                              keymap);
 
                 this->state = State::CLIPBOARD_CTRL_V_CTRL_DOWN;
@@ -387,9 +380,9 @@ public:
                 // Ctrl (up)
                 this->mod.rdp_input_scancode(29,
                                              param2,
-                                             0,
                                              SlowPath::KBDFLAGS_DOWN |
                                                  SlowPath::KBDFLAGS_RELEASE,
+                                             param4,
                                              keymap);
 
                 this->state = State::ENTER;
@@ -751,8 +744,7 @@ private:
 
         this->state = State::RUN;
 
-        this->event.set(this->clipboard_initialized_before_drive_ready ?
-                        this->very_long_delay : this->long_delay);
+        this->event.set(this->short_delay);
     }
 };  // class SessionProbeClipboardBasedLauncher
 
