@@ -3681,7 +3681,7 @@ private:
                     if (this->verbose & (64|4)) {
                         LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
-                            left, top, right, bottom, rect.x, rect.cy);
+                            left, top, right, bottom, rect.cx, rect.cy);
                     }
                     // TODO("we should consider adding to API some function to refresh several rects at once")
                     // if (this->up_and_running) {
@@ -4360,6 +4360,7 @@ private:
             else {
                 if (!this->input_event_disabled && send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
+
                 }
                 this->has_activity = true;
             }
