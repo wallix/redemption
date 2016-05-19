@@ -27,6 +27,7 @@
 
 #include "utils/difftimeval.hpp"
 #include "utils/noncopyable.hpp"
+#include "utils/invalid_socket.hpp"
 
 enum BackEvent_t {
     BACK_EVENT_NONE = 0,
@@ -90,6 +91,46 @@ public:
             this->set(idle_usec);
         }
     }
+    
+    void add_to_fd_set(int fd, fd_set & rfds, unsigned & max, timeval & timeout) const
+    {
+        if (fd > INVALID_SOCKET) {
+            FD_SET(fd, &rfds);
+            max = (static_cast<unsigned>(fd) > max) ? fd : max;
+        }
+        if ((fd <= INVALID_SOCKET || this->object_and_time) && this->set_state) {
+            struct timeval now;
+            now = tvtime();
+            timeval remain = how_long_to_wait(this->trigger_time, now);
+            if (lessthantimeval(remain, timeout)) {
+                timeout = remain;
+            }
+        }
+    }
+
+    bool is_set(int fd, fd_set & rfds)
+    {
+        this->waked_up_by_time = false;
+
+        if (fd > INVALID_SOCKET) {
+            bool res = FD_ISSET(fd, &rfds);
+
+            if (res || !this->object_and_time) {
+                return res;
+            }
+        }
+
+        if (this->set_state) {
+            if (tvtime() >= this->trigger_time) {
+                this->waked_up_by_time = true;
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    
 };
 
 #endif

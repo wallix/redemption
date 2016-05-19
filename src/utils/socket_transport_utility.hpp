@@ -18,64 +18,27 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_SOCKET_TRANSPORT_UTILITY_HPP
-#define REDEMPTION_UTILS_SOCKET_TRANSPORT_UTILITY_HPP
+#pragma once
 
-#include "transport/socket_transport.hpp"
+#include <sys/select.h> // for FD_xxx macros as of POSIX.1-2001
+
+#include "utils/invalid_socket.hpp"
 #include "core/wait_obj.hpp"
 
-TODO("-Wold-style-cast is ignored")
+// NOTE: old-style-cast is ignored because of FD_xxx macros using it behind the hood
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
-inline
-void add_to_fd_set(wait_obj const & w, SocketTransport * t, fd_set & rfds, unsigned & max, timeval & timeout)
-{
-    if (t && (t->sck > INVALID_SOCKET)) {
-        FD_SET(t->sck, &rfds);
-        max = (static_cast<unsigned>(t->sck) > max) ? t->sck : max;
-    }
-    if ((!t || (t->sck <= INVALID_SOCKET) || w.object_and_time) && w.set_state) {
-        struct timeval now;
-        now = tvtime();
-        timeval remain = how_long_to_wait(w.trigger_time, now);
-        if (lessthantimeval(remain, timeout)) {
-            timeout = remain;
-        }
-    }
-}
-
-inline
-bool is_set(wait_obj & w, SocketTransport * t, fd_set & rfds)
-{
-    w.waked_up_by_time = false;
-
-    if (t && (t->sck > INVALID_SOCKET)) {
-        bool res = FD_ISSET(t->sck, &rfds);
-
-        if (res || !w.object_and_time) {
-            return res;
-        }
-    }
-
-    if (w.set_state) {
-        if (tvtime() >= w.trigger_time) {
-            w.waked_up_by_time = true;
-            return true;
-        }
-    }
-
-    return false;
-}
+//t?INVALID_SOCKET:t->sck
 
 inline
 void add_to_fd_set(wait_obj const & w, int fd, fd_set & rfds, unsigned & max, timeval & timeout)
 {
-    if (fd > -1) {
+    if (fd > INVALID_SOCKET) {
         FD_SET(fd, &rfds);
         max = (static_cast<unsigned>(fd) > max) ? fd : max;
     }
-    if (((fd <= -1) || w.object_and_time) && w.set_state) {
+    if ((fd <= INVALID_SOCKET || w.object_and_time) && w.set_state) {
         struct timeval now;
         now = tvtime();
         timeval remain = how_long_to_wait(w.trigger_time, now);
@@ -90,7 +53,7 @@ bool is_set(wait_obj & w, int fd, fd_set & rfds)
 {
     w.waked_up_by_time = false;
 
-    if (fd > -1) {
+    if (fd > INVALID_SOCKET) {
         bool res = FD_ISSET(fd, &rfds);
 
         if (res || !w.object_and_time) {
@@ -110,4 +73,3 @@ bool is_set(wait_obj & w, int fd, fd_set & rfds)
 
 #pragma GCC diagnostic pop
 
-#endif

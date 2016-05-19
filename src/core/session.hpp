@@ -18,9 +18,7 @@
    Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_SESSION_HPP_
-#define _REDEMPTION_CORE_SESSION_HPP_
-
+#pragma once
 #include <netinet/tcp.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -35,6 +33,8 @@
 #include <dirent.h>
 
 #include <array>
+
+#include "utils/invalid_socket.hpp"
 
 #include "core/server.hpp"
 #include "utils/colors.hpp"
@@ -111,11 +111,11 @@ class Session {
         {}
 
         bool is_set(fd_set & rfds) {
-            return ::is_set(this->auth_event, &this->auth_trans, rfds);
+            return ::is_set(this->auth_event, this->auth_trans.sck, rfds);
         }
 
         void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout) {
-            return ::add_to_fd_set(this->auth_event, &this->auth_trans, rfds, max, timeout);
+            return ::add_to_fd_set(this->auth_event, this->auth_trans.sck, rfds, max, timeout);
         }
     };
 
@@ -184,17 +184,19 @@ public:
                 FD_ZERO(&wfds);
                 timeval timeout = time_mark;
 
-                add_to_fd_set(this->front->get_event(), &front_trans, rfds, max, timeout);
+                add_to_fd_set(this->front->get_event(), front_trans.sck, rfds, max, timeout);
                 if (this->front->capture) {
-                    add_to_fd_set(this->front->capture->get_capture_event(), nullptr, rfds, max, timeout);
+                    add_to_fd_set(this->front->capture->get_capture_event(), INVALID_SOCKET, rfds, max, timeout);
                 }
                 if (this->client) {
                     this->client->add_to_fd_set(rfds, max, timeout);
                 }
-                add_to_fd_set(mm.mod->get_event(), mm.mod_transport, rfds, max, timeout);
+                add_to_fd_set(mm.mod->get_event(), 
+                              mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET,
+                              rfds, max, timeout);
                 wait_obj * secondary_event = mm.mod->get_secondary_event();
                 if (secondary_event) {
-                    add_to_fd_set(*secondary_event, -1, rfds, max, timeout);
+                    add_to_fd_set(*secondary_event, INVALID_SOCKET, rfds, max, timeout);
                 }
 
                 int        asynchronous_task_fd    = -1;
@@ -205,7 +207,7 @@ public:
 
                 wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
                 if (session_probe_launcher_event) {
-                    add_to_fd_set(*session_probe_launcher_event, -1, rfds, max, timeout);
+                    add_to_fd_set(*session_probe_launcher_event, INVALID_SOCKET, rfds, max, timeout);
                 }
 
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
@@ -234,7 +236,7 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (is_set(this->front->get_event(), &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
+                if (is_set(this->front->get_event(), front_trans.sck, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.mod, now);
                     } catch (Error & e) {
@@ -292,8 +294,8 @@ public:
                         // Process incoming module trafic
                                    secondary_event        = mm.mod->get_secondary_event();
                         const bool secondary_event_is_set = (secondary_event &&
-                                                             is_set(*secondary_event, nullptr, rfds));
-                        if (is_set(mm.mod->get_event(), mm.mod_transport, rfds) ||
+                                                             is_set(*secondary_event, INVALID_SOCKET, rfds));
+                        if (is_set(mm.mod->get_event(), mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET, rfds) ||
                             secondary_event_is_set) {
                             try
                             {
@@ -322,7 +324,7 @@ public:
                                 }
                             }
                         }
-                        if (this->front->capture && is_set(this->front->capture->get_capture_event(), nullptr, rfds)) {
+                        if (this->front->capture && is_set(this->front->capture->get_capture_event(), INVALID_SOCKET, rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
@@ -522,5 +524,3 @@ private:
         while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
     }
 };
-
-#endif

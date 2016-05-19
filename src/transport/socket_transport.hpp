@@ -20,8 +20,13 @@
    Transport layer abstraction, socket implementation with TLS support
 */
 
-#ifndef REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_SOCKET_TRANSPORT_HPP
+#pragma once
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <cinttypes>
+#include <memory>
+#include <string>
 
 #include "system/openssl.hpp"
 #include "core/defines.hpp"
@@ -29,18 +34,7 @@
 #include "utils/netutils.hpp"
 #include "utils/fileutils.hpp"
 
-#include <unistd.h>
-#include <fcntl.h>
-
-#include <cinttypes>
-
-#include <memory>
-#include <string>
-
-#ifndef INVALID_SOCKET
-#define INVALID_SOCKET -1
-#endif  // #ifndef INVALID_SOCKET
-
+#include "utils/invalid_socket.hpp"
 
 // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
 // Each line (for multiline formats) is indented by indent spaces.
@@ -357,5 +351,3 @@ private:
 };
 
 #pragma GCC diagnostic pop
-
-#endif
