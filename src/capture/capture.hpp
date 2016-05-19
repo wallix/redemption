@@ -310,7 +310,7 @@ public:
         this->external_capture_api.external_time(now);
     }
 
-    void session_update(const timeval & now, array_view_const_char const & message) override {
+    void session_update(const timeval & now, array_view_const_char message) override {
         this->capture_probe_api.session_update(now, message);
     }
 

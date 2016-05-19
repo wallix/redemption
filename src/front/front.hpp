@@ -2661,7 +2661,7 @@ private:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(array_view_const_char const & message) override {
+    void session_update(array_view_const_char message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();

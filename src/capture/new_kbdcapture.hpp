@@ -485,7 +485,7 @@ public:
         }
     }
 
-    void session_update(const timeval& /*now*/, const array_view_const_char & message) override {
+    void session_update(const timeval& /*now*/, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
         this->flush();
     }
