@@ -498,9 +498,9 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
             FD_ZERO(&wfds);
             struct timeval timeout = time_mark;
 
-            add_to_fd_set(mod.get_event(), st_mod, rfds, max, timeout);
+            add_to_fd_set(mod.get_event(), st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
-            if (is_set(mod.get_event(), st_mod, rfds)) {
+            if (is_set(mod.get_event(), st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 2;
                 timeout.tv_usec = 0;
             }
@@ -518,7 +518,7 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
                 break;
             }
 
-            if (is_set(mod.get_event(), st_mod, rfds)) {
+            if (is_set(mod.get_event(), st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 LOG(LOG_INFO, "RDP CLIENT :: draw_event");
                 mod.draw_event(time(nullptr));
             }

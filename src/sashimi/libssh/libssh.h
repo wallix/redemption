@@ -21,8 +21,7 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
  */
 
-#ifndef SASHIMI_LIBSSH_H
-#define SASHIMI_LIBSSH_H
+#pragma once
 
 #if __GNUC__ >= 4 && !defined(__OS2__)
   #define LIBSSH_API __attribute__((visibility("default")))
@@ -40,7 +39,8 @@
 #include <stdarg.h>
 #include <syslog.h>
 
-#include "../string.hpp"
+#include "utils/invalid_socket.hpp"
+#include "sashimi/string.hpp"
 
 /* Error return codes */
 enum {
@@ -89,8 +89,7 @@ static inline void ssh_set_error(error_struct & error, int code, const char *des
 #include "core/error.hpp"
 
 #undef des_cbc_encrypt
-#include "../libcrypto.hpp"
-
+#include "sashimi/libcrypto.hpp"
 
 
 extern "C" {
@@ -1211,6 +1210,4 @@ LIBSSH_API ssh_gssapi_creds ssh_gssapi_get_creds_server(ssh_session_struct * ses
 #define SSH_CIPHER_BLOWFISH     6
 
 }
-
-#endif /* SASHIMI_LIBSSH_H */
 
