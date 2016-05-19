@@ -3669,15 +3669,14 @@ private:
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
 
-                DArray<Rect> rects(numberOfAreas);
-                for (size_t i = 0; i < numberOfAreas ; i++) {
-
+                auto rects_raw = std::make_unique<Rect[]>(numberOfAreas);
+                array_view<Rect> rects(rects_raw.get(), numberOfAreas);
+                for (Rect & rect : rects) {
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();
                     int right = sdata_in.payload.in_uint16_le();
                     int bottom = sdata_in.payload.in_uint16_le();
-                    Rect rect(left, top, (right - left) + 1, (bottom - top) + 1);
-                    rects[i] = rect;
+                    rect = Rect(left, top, (right - left) + 1, (bottom - top) + 1);
                     if (this->verbose & (64|4)) {
                         LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",

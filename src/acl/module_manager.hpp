@@ -334,7 +334,7 @@ class ModuleManager : public MMIni
         void rdp_input_invalidate(const Rect & r) override {
             this->mod_api_ptr->rdp_input_invalidate(r);
         }
-        void rdp_input_invalidate2(const DArray<Rect> & vr) override {
+        void rdp_input_invalidate2(array_view<Rect> vr) override {
             this->mod_api_ptr->rdp_input_invalidate2(vr);
         }
         void rdp_input_up_and_running() override {

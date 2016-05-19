@@ -1021,8 +1021,6 @@ unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp : $(TEST
 ## @}
 
 
-unit-test test_darray : tests/utils/test_darray.cpp : $(TEST_DEPENDENCIES) ;
-
 ## Widget for workflow
 ## @{
 unit-test test_flat_wait : tests/mod/internal/widget2/test_flat_wait.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;

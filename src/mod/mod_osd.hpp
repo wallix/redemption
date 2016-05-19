@@ -331,7 +331,7 @@ public:
         return this->mod.is_up_and_running();
     }
 
-    void rdp_input_invalidate2(const DArray< Rect >& vr) override {
+    void rdp_input_invalidate2(array_view<Rect> vr) override {
         this->mod.rdp_input_invalidate2(vr);
     }
 

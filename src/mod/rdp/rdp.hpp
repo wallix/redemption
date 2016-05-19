@@ -5705,7 +5705,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate2(const DArray<Rect> & vr) override {
+    void rdp_input_invalidate2(array_view<Rect> vr) override {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
@@ -5715,9 +5715,9 @@ public:
                                       this->userid,
                                       this->encryptionLevel,
                                       this->encrypt);
-            for (size_t i = 0; i < vr.size() ; i++){
-                if (!vr[i].isempty()){
-                    rrpdu.addInclusiveRect(vr[i].x, vr[i].y, vr[i].x + vr[i].cx - 1, vr[i].y + vr[i].cy - 1);
+            for (Rect const & rect : vr) {
+                if (!rect.isempty()){
+                    rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
                 }
             }
             rrpdu.emit(this->nego.trans);
