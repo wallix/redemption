@@ -1167,7 +1167,7 @@ static inline int is_file_encrypted(const std::string & full_filename)
 }
 
 
-static inline int app_verifier(Inifile & ini, int argc, char * const * argv, const char * copyright_notice, CryptoContext & cctx)
+static inline int app_verifier(Inifile & ini, int argc, char const * const * argv, const char * copyright_notice, CryptoContext & cctx)
 {
     openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
 
