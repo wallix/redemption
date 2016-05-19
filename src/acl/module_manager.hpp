@@ -313,6 +313,45 @@ class ModuleManager : public MMIni
         }
     } accounts;
 
+    typedef mod_api * ModApiPtr;
+    class CurrentCallback : public Callback {
+    private:
+        ModApiPtr & mod_api_ptr;
+
+    public:
+        CurrentCallback(ModApiPtr & mod_api_ptr) : mod_api_ptr(mod_api_ptr) {
+        }
+
+        void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
+            this->mod_api_ptr->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        }
+        void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+            this->mod_api_ptr->rdp_input_mouse(device_flags, x, y, keymap);
+        }
+        void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+            this->mod_api_ptr->rdp_input_synchronize(time, device_flags, param1, param2);
+        }
+        void rdp_input_invalidate(const Rect & r) override {
+            this->mod_api_ptr->rdp_input_invalidate(r);
+        }
+        void rdp_input_invalidate2(const DArray<Rect> & vr) override {
+            this->mod_api_ptr->rdp_input_invalidate2(vr);
+        }
+        void rdp_input_up_and_running() override {
+            this->mod_api_ptr->rdp_input_up_and_running();
+        }
+
+        void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
+            this->mod_api_ptr->send_to_mod_channel(front_channel_name, chunk, length, flags);
+        }
+        void send_auth_channel_data(const char * data) override {
+            this->mod_api_ptr->send_auth_channel_data(data);
+        }
+        void send_disconnect_ultimatum() override {
+            this->mod_api_ptr->send_disconnect_ultimatum();
+        }
+    } current_callback;  // class CurrentCallback
+
     struct module_osd
     : public mod_osd
     {
@@ -492,6 +531,7 @@ public:
 
     ModuleManager(Front & front, Inifile & ini, Random & gen)
         : MMIni(ini)
+        , current_callback(this->mod)
         , osd(nullptr)
         , front(front)
         , no_mod(this->front)
@@ -514,6 +554,10 @@ public:
 
     ~ModuleManager() override {
         this->remove_mod();
+    }
+
+    Callback * get_callback() {
+        return &this->current_callback;
     }
 
     void new_mod(int target_module, time_t now, auth_api * acl) override {
