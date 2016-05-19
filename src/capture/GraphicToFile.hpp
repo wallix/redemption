@@ -425,7 +425,7 @@ protected:
     }
 
 public:
-    void session_update(timeval const & now, array_const_char const & message) override {
+    void session_update(timeval const & now, array_view_const_char const & message) override {
         uint16_t message_length = message.size() + 1;       // Null-terminator is included.
 
         StaticOutStream<16> payload;

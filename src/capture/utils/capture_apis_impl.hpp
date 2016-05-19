@@ -143,7 +143,7 @@ struct CaptureApisImpl
             }
         }
 
-        void session_update(const timeval& now, array_const_char const & message) override {
+        void session_update(const timeval& now, array_view_const_char const & message) override {
             for (gdi::CaptureProbeApi & cap_prob : this->probes) {
                 cap_prob.session_update(now, message);
             }

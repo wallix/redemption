@@ -733,6 +733,7 @@ unit-test test_noncopyable : tests/utils/test_noncopyable.cpp : $(TEST_DEPENDENC
 unit-test test_splitter : tests/utils/test_splitter.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_algostring : tests/utils/test_algostring.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_make_unique : tests/utils/test_make_unique.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_array_view : tests/utils/test_array_view.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
 unit-test test_stream : tests/utils/test_stream.cpp : $(TEST_DEPENDENCIES) ;

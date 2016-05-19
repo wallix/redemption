@@ -199,7 +199,7 @@ struct EmptyPreLoopFn { void operator()(Inifile &) const {} };
 // PreLoopFn = void(Inifile &)
 template<class ExtraOptions, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
 int app_proxy(
-    int argc, char** argv, const char * copyright_notice
+    int argc, char * const * argv, const char * copyright_notice
   , CryptoContext & cctx
   , ExtraOptions const & extrax_options, ExtracOptionChecker extrac_options_checker
   , PreLoopFn pre_loop_fn = PreLoopFn()
