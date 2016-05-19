@@ -62,7 +62,6 @@ BOOST_AUTO_TEST_CASE(TestColors)
 
     BGRPalette & palette = *(Hack(data_palette).palette);
 
-    BOOST_CHECK_EQUAL(0, color_decode(0, 1, palette));
     BOOST_CHECK_EQUAL(0, color_decode(0, 8, palette));
     BOOST_CHECK_EQUAL(0xFFFFFF, color_decode(0xFF, 8, palette));
 

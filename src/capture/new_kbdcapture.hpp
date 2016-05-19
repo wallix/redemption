@@ -218,7 +218,7 @@ void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn, NoPrintableFn
 {
     constexpr struct {
         uint32_t uchar;
-        array_const_char str;
+        array_view_const_char str;
         // for std::sort and std::lower_bound
         operator uint32_t () const { return this->uchar; }
     } noprintable_table[] = {
@@ -294,7 +294,7 @@ public:
                     }
                 }
             },
-            [this](array_const_char const &) {
+            [this](array_view_const_char const &) {
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
             }
@@ -335,7 +335,7 @@ protected:
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
 
-    TextKbd(array_u8 buffer)
+    TextKbd(array_view_u8 buffer)
     : kbd_stream(buffer)
     {}
 
@@ -367,7 +367,7 @@ protected:
                     this->copy_bytes({buf_char, char_len});
                 }
             },
-            [this](array_const_char no_printable_str) {
+            [this](array_view_const_char no_printable_str) {
                 this->copy_bytes(no_printable_str);
             }
         );
@@ -442,8 +442,8 @@ private:
 
 
 namespace {
-    constexpr array_const_char session_log_prefix() { return cstr_array_view("data='"); }
-    constexpr array_const_char session_log_suffix() { return cstr_array_view("'"); }
+    constexpr array_view_const_char session_log_prefix() { return cstr_array_view("data='"); }
+    constexpr array_view_const_char session_log_suffix() { return cstr_array_view("'"); }
 }
 
 class SessionLogKbd : public TextKbd<SessionLogKbd>, public gdi::CaptureProbeApi
@@ -485,7 +485,7 @@ public:
         }
     }
 
-    void session_update(const timeval& /*now*/, const array_const_char & message) override {
+    void session_update(const timeval& /*now*/, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcmp(message.data(), "Probe.Status=Unknown") != 0);
         this->flush();
     }
