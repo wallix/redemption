@@ -238,7 +238,7 @@ public:
 
                 if (is_set(this->front->get_event(), front_trans.sck, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
                     try {
-                        this->front->incoming(*mm.mod, now);
+                        this->front->incoming(*mm.get_callback(), now);
                     } catch (Error & e) {
                         if (
                             // Can be caused by client disconnect.
