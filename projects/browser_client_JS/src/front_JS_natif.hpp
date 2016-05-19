@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo
+   Author(s): Clement Moroldo
 */
 
 #ifndef FRONT_JS_NATIF_HPP
@@ -64,15 +64,16 @@
 #include "front_api.hpp"
 #include "channel_list.hpp"
 #include "mod_api.hpp"
-#include "bitmap_without_png.hpp"
+#include "utils/bitmap.hpp"
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "client_info.hpp"
 #include "keylayouts_r.hpp"
-#include "../../utils/colors.hpp"
+#include "utils/colors.hpp"
+#include "transport/transport_web_socket.hpp"
 
-// bjam client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
+// bjam -a client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
 
 
 
@@ -146,6 +147,7 @@ public:
 
     int                  _timer;
     bool                 _connected;
+    Transport          * _trans;
     //ClipboardVirtualChannel  _clipboard_channel;
 
     // Keyboard Controllers members
@@ -234,6 +236,8 @@ public:
 
     void empty_buffer() ;
     */
+
+   void connexion() {}
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -606,6 +610,7 @@ public:
     , _fps(30)
     , _mod_bpp(32)
     , mod_palette(BGRPalette::classic_332())
+    ,  _trans(nullptr)
     {
         //this->_to_client_sender._front = this;
     }
@@ -794,17 +799,19 @@ public:
 
 */
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //--------------------------------
-    //    SOCKET EVENTS FUNCTIONS
-    //--------------------------------
-
 };
 
 
 
 Front_JS_Natif front(0);
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------
+//         CONTROLLERS
+//--------------------------------
 
 extern "C" void mousePressEvent(int x, int y, int button) {
     front.mousePressEvent(x, y, button);
@@ -832,6 +839,20 @@ extern "C" void backspacePressed() {
     //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
     //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
     EM_ASM_({ console.log('Backspace'); }, 0);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------
+//    SOCKET EVENTS FUNCTIONS
+//--------------------------------
+
+extern "C" void recv_wrap(char ** pbuffer, size_t len) {
+    if (front._trans != nullptr) {
+        front._trans->recv(pbuffer, len);
+    }
 }
 
 
