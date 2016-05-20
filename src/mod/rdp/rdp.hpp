@@ -52,6 +52,7 @@
 #include "core/RDP/protocol.hpp"
 #include "core/RDP/RefreshRectPDU.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "core/RDP/SuppressOutputPDU.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/mppc_unified_dec.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
@@ -5766,8 +5767,46 @@ public:
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
+    }
 
-    };
+    void rdp_allow_display_updates(uint16_t left, uint16_t top,
+            uint16_t right, uint16_t bottom) override {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
+        }
+
+        this->send_pdu_type2(
+            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+            [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
+                RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
+
+                sopdud.emit(stream);
+            }
+        );
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates done");
+        }
+    }
+
+    void rdp_suppress_display_updates() override {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
+        }
+
+        this->send_pdu_type2(
+            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+            [](StreamSize<32>, OutStream & stream) {
+                RDP::SuppressOutputPDUData sopdud;
+
+                sopdud.emit(stream);
+            }
+        );
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates done");
+        }
+    }
 
     // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
     // =========================================================================

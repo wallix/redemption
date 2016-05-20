@@ -356,6 +356,13 @@ class ModuleManager : public MMIni
         void rdp_input_up_and_running() override {
             this->mod_api_ptr->rdp_input_up_and_running();
         }
+        void rdp_allow_display_updates(uint16_t left, uint16_t top,
+                uint16_t right, uint16_t bottom) override {
+            this->mod_api_ptr->rdp_allow_display_updates(left, top, right, bottom);
+        }
+        void rdp_suppress_display_updates() override {
+            this->mod_api_ptr->rdp_suppress_display_updates();
+        }
 
         void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
             this->mod_api_ptr->send_to_mod_channel(front_channel_name, chunk, length, flags);
@@ -1067,6 +1074,9 @@ public:
                     throw;
                 }
 
+                this->mod->rdp_suppress_display_updates();
+                this->mod->rdp_allow_display_updates(0, 0,
+                    this->front.client_info.width, this->front.client_info.height);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
@@ -1167,10 +1177,16 @@ public:
                                           this->front.client_info.height,
                                           this->ini,
                                           acl);
+                this->mod->rdp_suppress_display_updates();
+                this->mod->rdp_allow_display_updates(0, 0,
+                    this->front.client_info.width, this->front.client_info.height);
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
             else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
                 this->front.resume_capture();
+                this->mod->rdp_suppress_display_updates();
+                this->mod->rdp_allow_display_updates(0, 0,
+                    this->front.client_info.width, this->front.client_info.height);
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
         }

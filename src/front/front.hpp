@@ -68,9 +68,10 @@
 #include "utils/pattutils.hpp"
 
 #include "core/RDP/GraphicUpdatePDU.hpp"
-#include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
+#include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "core/RDP/SuppressOutputPDU.hpp"
 
 #include "core/RDP/capabilities/cap_bmpcache.hpp"
 #include "core/RDP/capabilities/offscreencache.hpp"
@@ -3763,13 +3764,25 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
-
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
             // to catch up so minimized apps don't take bandwidth
+            {
+                RDP::SuppressOutputPDUData sopdud;
+
+                sopdud.receive(sdata_in.payload);
+                sopdud.log(LOG_INFO);
+
+                if (RDP::ALLOW_DISPLAY_UPDATES == sopdud.get_allowDisplayUpdates()) {
+                    cb.rdp_allow_display_updates(sopdud.get_left(), sopdud.get_top(),
+                        sopdud.get_right(), sopdud.get_bottom());
+                }
+                else {
+                    cb.rdp_suppress_display_updates();
+                }
+
+            }
             break;
 
         break;
