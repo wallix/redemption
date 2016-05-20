@@ -64,12 +64,12 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
 
     subrect_t subrect(const Rect & rect) const
     {
-        const Rect sect = rect.intersect(this->fg_rect);
+        const Rect inter = rect.intersect(this->fg_rect);
         return {
-            Rect(rect.x, rect.y, rect.cx, sect.y - rect.y),
-            Rect(sect.right(), sect.y, rect.right() - sect.right(), sect.cy),
-            Rect(rect.x, sect.bottom(), rect.cx, rect.bottom() - sect.bottom()),
-            Rect(rect.x, sect.y, sect.x - rect.x, sect.cy)
+            Rect(rect.x, rect.y, rect.cx, inter.y - rect.y),
+            Rect(inter.right(), inter.y, rect.right() - inter.right(), inter.cy),
+            Rect(rect.x, inter.bottom(), rect.cx, rect.bottom() - inter.bottom()),
+            Rect(rect.x, inter.y, inter.x - rect.x, inter.cy)
         };
     }
 
@@ -120,10 +120,7 @@ public:
 
     ~mod_osd() override {
         if (this->is_active()) {
-            this->mod.rdp_suppress_display_updates();
-            this->mod.rdp_allow_display_updates(0, 0,
-                this->mod.get_front_width(), this->mod.get_front_height());
-            this->mod.rdp_input_invalidate(this->fg_rect);
+            this->skip_osd();
         }
     }
 
@@ -141,15 +138,10 @@ public:
     {
         if (this->is_active()) {
             this->set_gd(this->mod, &this->mod);
-            this->mod.rdp_suppress_display_updates();
-            this->mod.rdp_allow_display_updates(0, 0,
-                this->mod.get_front_width(), this->mod.get_front_height());
-            this->mod.rdp_input_invalidate(this->fg_rect);
+            this->skip_osd();
         }
         else {
-            this->mod.begin_update();
-            this->draw_fg(this->fg_rect);
-            this->mod.end_update();
+            this->redraw_osd();
             this->set_gd(this->mod, this);
         }
     }
@@ -265,6 +257,21 @@ private:
         }
     }
 
+    void skip_osd()
+    {
+        this->mod.rdp_suppress_display_updates();
+        this->mod.rdp_allow_display_updates(0, 0,
+            this->mod.get_front_width(), this->mod.get_front_height());
+        this->mod.rdp_input_invalidate(this->fg_rect);
+    }
+
+    void redraw_osd()
+    {
+        this->mod.begin_update();
+        this->draw_fg(this->fg_rect);
+        this->mod.end_update();
+    }
+
 public:
     void begin_update() override {
         this->mod.begin_update();
@@ -337,12 +344,22 @@ public:
         return this->mod.is_up_and_running();
     }
 
+    void send_disconnect_ultimatum() override {
+        this->mod.send_disconnect_ultimatum();
+    }
+
     void rdp_input_invalidate2(array_view<Rect> vr) override {
         this->mod.rdp_input_invalidate2(vr);
     }
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top,
             uint16_t right, uint16_t bottom) override {
+        Rect const intersect = this->fg_rect.intersect(Rect(left, top, right - left + 1, bottom - top + 1));
+        if (!intersect.isempty()) {
+            this->mod.begin_update();
+            this->draw_fg(intersect);
+            this->mod.end_update();
+        }
         this->mod.rdp_allow_display_updates(left, top, right, bottom);
     }
 
