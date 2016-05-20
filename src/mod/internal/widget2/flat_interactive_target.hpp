@@ -57,7 +57,7 @@ public:
     // ASK DEVICE YES/NO
     // ASK CRED : LOGIN+PASSWORD/PASSWORD/NO
 
-    FlatInteractiveTarget(mod_api& drawable, uint16_t width, uint16_t height,
+    FlatInteractiveTarget(mod_api& drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
                           Widget2 & parent, NotifyApi* notifier,
                           int group_id, bool ask_device,
                           bool ask_login, bool ask_password,
@@ -69,7 +69,7 @@ public:
                           const char * text_password,
                           Font const & font,
                           WidgetFlatButton * extra_button)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
         , caption_label(drawable, 0, 0, *this, nullptr, caption, true, -13,
                         theme.global.fgcolor, theme.global.bgcolor, font)
         , device_label(drawable, 0, 0, *this, nullptr, text_device, true, -13,
@@ -169,25 +169,25 @@ public:
         int y_cbloc = (height - cbloc_h) / 3;
 
         int y = y_cbloc;
-        this->caption_label.set_xy((width - this->caption_label.rect.cx) / 2, y);
+        this->caption_label.set_xy(left + (width - this->caption_label.rect.cx) / 2, top + y);
         this->separator.rect.cx = cbloc_w;
 
         y = this->caption_label.ly() + 20;
-        this->separator.set_xy(x_cbloc, y);
+        this->separator.set_xy(left + x_cbloc, y);
 
         y = this->separator.ly() + 20;
-        this->device_label.set_xy(x_cbloc, y);
-        device_show->set_xy(x_cbloc + margin_w + 20, y);
+        this->device_label.set_xy(left + x_cbloc, y);
+        device_show->set_xy(left + x_cbloc + margin_w + 20, y);
         y = device_show->ly() + 20;
         if (ask_device) {
-            this->device.set_xy(x_cbloc + margin_w + 20, y - 10);
+            this->device.set_xy(left + x_cbloc + margin_w + 20, y - 10);
             y = this->device.ly() + 20;
         }
-        this->login_label.set_xy(x_cbloc, y);
-        login_show->set_xy(x_cbloc + margin_w + 20, y);
+        this->login_label.set_xy(left + x_cbloc, y);
+        login_show->set_xy(left + x_cbloc + margin_w + 20, y);
         y = login_show->ly() + 20;
-        this->password_label.set_xy(x_cbloc, y);
-        this->password_edit.set_xy(x_cbloc + margin_w + 20, y);
+        this->password_label.set_xy(left + x_cbloc, y);
+        this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
 
         this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
         this->login_label.rect.y += (login_show->cy() - this->login_label.cy()) / 2;
@@ -195,8 +195,8 @@ public:
 
         if (extra_button) {
            this->add_widget(extra_button);
-           extra_button->set_button_x(60);
-           extra_button->set_button_y(height - 60);
+           extra_button->set_button_x(left + 60);
+           extra_button->set_button_y(top + height - 60);
         }
     }
 

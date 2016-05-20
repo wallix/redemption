@@ -120,6 +120,9 @@ public:
 
     ~mod_osd() override {
         if (this->is_active()) {
+            this->mod.rdp_suppress_display_updates();
+            this->mod.rdp_allow_display_updates(0, 0,
+                this->mod.get_front_width(), this->mod.get_front_height());
             this->mod.rdp_input_invalidate(this->fg_rect);
         }
     }
@@ -138,6 +141,9 @@ public:
     {
         if (this->is_active()) {
             this->set_gd(this->mod, &this->mod);
+            this->mod.rdp_suppress_display_updates();
+            this->mod.rdp_allow_display_updates(0, 0,
+                this->mod.get_front_width(), this->mod.get_front_height());
             this->mod.rdp_input_invalidate(this->fg_rect);
         }
         else {

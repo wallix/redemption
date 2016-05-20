@@ -84,6 +84,10 @@ struct RdpInput
     }
     // Client calls this member function when it became up and running.
     virtual void rdp_input_up_and_running() { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
+
+    virtual void rdp_allow_display_updates(uint16_t left, uint16_t top,
+        uint16_t right, uint16_t bottom) {};
+    virtual void rdp_suppress_display_updates() {};
 };
 
 struct Callback : RdpInput

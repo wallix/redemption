@@ -111,11 +111,11 @@ class Session {
         {}
 
         bool is_set(fd_set & rfds) {
-            return ::is_set(this->auth_event, this->auth_trans.sck, rfds);
+            return this->auth_event.is_set(this->auth_trans.sck, rfds);
         }
 
         void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout) {
-            return ::add_to_fd_set(this->auth_event, this->auth_trans.sck, rfds, max, timeout);
+            return this->auth_event.add_to_fd_set(this->auth_trans.sck, rfds, max, timeout);
         }
     };
 
@@ -184,30 +184,29 @@ public:
                 FD_ZERO(&wfds);
                 timeval timeout = time_mark;
 
-                add_to_fd_set(this->front->get_event(), front_trans.sck, rfds, max, timeout);
+                this->front->get_event().add_to_fd_set(front_trans.sck, rfds, max, timeout);
                 if (this->front->capture) {
-                    add_to_fd_set(this->front->capture->get_capture_event(), INVALID_SOCKET, rfds, max, timeout);
+                    this->front->capture->get_capture_event().add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
                 }
                 if (this->client) {
                     this->client->add_to_fd_set(rfds, max, timeout);
                 }
-                add_to_fd_set(mm.mod->get_event(), 
-                              mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET,
+                mm.mod->get_event().add_to_fd_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET,
                               rfds, max, timeout);
                 wait_obj * secondary_event = mm.mod->get_secondary_event();
                 if (secondary_event) {
-                    add_to_fd_set(*secondary_event, INVALID_SOCKET, rfds, max, timeout);
+                    secondary_event->add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
                 }
 
                 int        asynchronous_task_fd    = -1;
                 wait_obj * asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                 if (asynchronous_task_event) {
-                    add_to_fd_set(*asynchronous_task_event, asynchronous_task_fd, rfds, max, timeout);
+                    asynchronous_task_event->add_to_fd_set(asynchronous_task_fd, rfds, max, timeout);
                 }
 
                 wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
                 if (session_probe_launcher_event) {
-                    add_to_fd_set(*session_probe_launcher_event, INVALID_SOCKET, rfds, max, timeout);
+                    session_probe_launcher_event->add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
                 }
 
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
@@ -236,7 +235,7 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (is_set(this->front->get_event(), front_trans.sck, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
+                if (this->front->get_event().is_set(front_trans.sck, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.get_callback(), now);
                     } catch (Error & e) {
@@ -275,8 +274,7 @@ public:
                         asynchronous_task_fd    = -1;
                         asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                         const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
-                                                                     is_set(*asynchronous_task_event,
-                                                                            asynchronous_task_fd,
+                                                                     asynchronous_task_event->is_set(asynchronous_task_fd,
                                                                             rfds));
                         if (asynchronous_task_event_is_set) {
                             mm.mod->process_asynchronous_task();
@@ -284,9 +282,7 @@ public:
 
                         session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
                         const bool session_probe_launcher_event_is_set = (session_probe_launcher_event &&
-                                                                          is_set(*session_probe_launcher_event,
-                                                                                 asynchronous_task_fd,
-                                                                                 rfds));
+                                                                          session_probe_launcher_event->is_set(asynchronous_task_fd, rfds));
                         if (session_probe_launcher_event_is_set) {
                             mm.mod->process_session_probe_launcher();
                         }
@@ -294,8 +290,8 @@ public:
                         // Process incoming module trafic
                                    secondary_event        = mm.mod->get_secondary_event();
                         const bool secondary_event_is_set = (secondary_event &&
-                                                             is_set(*secondary_event, INVALID_SOCKET, rfds));
-                        if (is_set(mm.mod->get_event(), mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET, rfds) ||
+                                                             secondary_event->is_set(INVALID_SOCKET, rfds));
+                        if (mm.mod->get_event().is_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET, rfds) ||
                             secondary_event_is_set) {
                             try
                             {
@@ -324,7 +320,7 @@ public:
                                 }
                             }
                         }
-                        if (this->front->capture && is_set(this->front->capture->get_capture_event(), INVALID_SOCKET, rfds)) {
+                        if (this->front->capture && this->front->capture->get_capture_event()->is_set(INVALID_SOCKET, rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
