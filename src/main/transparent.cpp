@@ -31,7 +31,6 @@
 #include "transport/socket_transport.hpp"
 #include "utils/invalid_socket.hpp"
 #include "transport/out_file_transport.hpp"
-#include "utils/socket_transport_utility.hpp"
 #include "mod/internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 
