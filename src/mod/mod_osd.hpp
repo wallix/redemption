@@ -341,6 +341,15 @@ public:
         this->mod.rdp_input_invalidate2(vr);
     }
 
+    void rdp_allow_display_updates(uint16_t left, uint16_t top,
+            uint16_t right, uint16_t bottom) override {
+        this->mod.rdp_allow_display_updates(left, top, right, bottom);
+    }
+
+    void rdp_suppress_display_updates() override {
+        this->mod.rdp_suppress_display_updates();
+    }
+
     void refresh_context(Inifile& ini) override {
         this->mod.refresh_context(ini);
     }
