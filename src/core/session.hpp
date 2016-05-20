@@ -320,7 +320,7 @@ public:
                                 }
                             }
                         }
-                        if (this->front->capture && this->front->capture->get_capture_event()->is_set(INVALID_SOCKET, rfds)) {
+                        if (this->front->capture && this->front->capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
