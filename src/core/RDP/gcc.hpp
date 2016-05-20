@@ -32,6 +32,7 @@
 
 #include "core/RDP/out_per_bstream.hpp"
 #include "system/linux/system/ssl_calls.hpp"
+#include "system/linux/system/ssl_lib.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
 
