@@ -105,6 +105,8 @@
 "#_hidden\n"
 "disable_proxy_opt = boolean(default=False)\n\n"
 
+"allow_using_multiple_monitors = boolean(default=False)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"
@@ -209,6 +211,8 @@
 
 "#_advanced\n"
 "fast_path = boolean(default=True)\n\n"
+
+"enable_suppress_output = boolean(default=True)\n\n"
 
 "[mod_rdp]\n\n"
 

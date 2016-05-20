@@ -1050,6 +1050,8 @@ public:
 
                 mod_rdp_params.lang                                = language(this->ini);
 
+                mod_rdp_params.allow_using_multiple_monitors       = this->ini.get<cfg::globals::allow_using_multiple_monitors>();
+
                 try {
                     const char * const name = "RDP Target";
                     TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")

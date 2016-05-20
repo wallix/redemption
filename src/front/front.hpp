@@ -1450,8 +1450,10 @@ public:
                                 client_monitors_rect.cx, client_monitors_rect.cy);
                         }
 
-                        this->client_info.width     = client_monitors_rect.cx + 1;
-                        this->client_info.height    = client_monitors_rect.cy + 1;
+                        if (this->ini.get<cfg::globals::allow_using_multiple_monitors>()) {
+                            this->client_info.width     = client_monitors_rect.cx + 1;
+                            this->client_info.height    = client_monitors_rect.cy + 1;
+                        }
                     }
                     break;
                     case CS_MCS_MSGCHANNEL:
@@ -3483,7 +3485,8 @@ private:
     }
 
     void send_monitor_layout() {
-        if (!this->client_info.cs_monitor.monitorCount ||
+        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||
+            !this->client_info.cs_monitor.monitorCount ||
             !this->client_support_monitor_layout_pdu) {
             return;
         }
@@ -3772,16 +3775,17 @@ private:
                 RDP::SuppressOutputPDUData sopdud;
 
                 sopdud.receive(sdata_in.payload);
-                sopdud.log(LOG_INFO);
+                //sopdud.log(LOG_INFO);
 
-                if (RDP::ALLOW_DISPLAY_UPDATES == sopdud.get_allowDisplayUpdates()) {
-                    cb.rdp_allow_display_updates(sopdud.get_left(), sopdud.get_top(),
-                        sopdud.get_right(), sopdud.get_bottom());
+                if (this->ini.get<cfg::client::enable_suppress_output>()) {
+                    if (RDP::ALLOW_DISPLAY_UPDATES == sopdud.get_allowDisplayUpdates()) {
+                        cb.rdp_allow_display_updates(sopdud.get_left(), sopdud.get_top(),
+                            sopdud.get_right(), sopdud.get_bottom());
+                    }
+                    else {
+                        cb.rdp_suppress_display_updates();
+                    }
                 }
-                else {
-                    cb.rdp_suppress_display_updates();
-                }
-
             }
             break;
 

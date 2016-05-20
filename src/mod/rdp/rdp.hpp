@@ -466,6 +466,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
 
     Translation::language_t lang;
 
+    const bool allow_using_multiple_monitors;
+
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
@@ -747,6 +749,7 @@ public:
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
+        , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
@@ -2012,8 +2015,11 @@ public:
                                     this->cs_monitor.get_primary_monitor_rect();
 
                                 cs_core.version = this->use_rdp5?0x00080004:0x00080001;
-                                cs_core.desktopWidth = (primary_monitor_rect.isempty() ? this->front_width : primary_monitor_rect.cx + 1);
-                                cs_core.desktopHeight = (primary_monitor_rect.isempty() ? this->front_height : primary_monitor_rect.cy + 1);
+                                const bool single_monitor =
+                                    (!this->allow_using_multiple_monitors ||
+                                     (this->cs_monitor.monitorCount < 2));
+                                cs_core.desktopWidth  = (single_monitor ? this->front_width : primary_monitor_rect.cx + 1);
+                                cs_core.desktopHeight = (single_monitor ? this->front_height : primary_monitor_rect.cy + 1);
                                 //cs_core.highColorDepth = this->front_bpp;
                                 cs_core.highColorDepth = ((this->front_bpp == 32)
                                     ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
@@ -2022,7 +2028,7 @@ public:
                                     cs_core.supportedColorDepths = 15;
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
                                 }
-                                if (this->cs_monitor.monitorCount) {
+                                if (!single_monitor) {
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
                                 }
 
@@ -2226,7 +2232,7 @@ public:
                                     cs_net.emit(stream);
                                 }
 
-                                if (this->cs_monitor.monitorCount) {
+                                if (!single_monitor) {
                                     if (this->verbose & 1) {
                                         this->cs_monitor.log("Sending to server");
                                     }
@@ -3622,7 +3628,8 @@ public:
                         disable_input_event, disable_graphics_update);
                 }
 
-                if (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) {
+                if ((e.id == ERR_LIC) ||
+                    (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT)) {
                     throw;
                 }
             }

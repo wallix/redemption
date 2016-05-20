@@ -57,6 +57,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "fast_path")) {
             ::configs::parse(static_cast<cfg::client::fast_path&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "enable_suppress_output")) {
+            ::configs::parse(static_cast<cfg::client::enable_suppress_output&>(this->variables).value, value);
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -233,6 +236,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         }
         else if (0 == strcmp(key, "disable_proxy_opt")) {
             ::configs::parse(static_cast<cfg::globals::disable_proxy_opt&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "allow_using_multiple_monitors")) {
+            ::configs::parse(static_cast<cfg::globals::allow_using_multiple_monitors&>(this->variables).value, value);
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {

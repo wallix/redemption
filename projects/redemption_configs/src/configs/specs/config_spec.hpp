@@ -207,7 +207,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
         W.sep();
-        W.member(type_<bool>(), "allow_using_multiple_monitors", set(false));
+        W.member(V, type_<bool>(), "allow_using_multiple_monitors", set(false));
     });
 
     W.section("session_log", [&]
@@ -264,6 +264,8 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
         W.sep();
         W.member(A, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
+        W.sep();
+        W.member(V, type_<bool>(), "enable_suppress_output", set(true));
     });
 
     W.section("mod_rdp", [&]
