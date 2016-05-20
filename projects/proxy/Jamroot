@@ -930,7 +930,6 @@ test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
 test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
-test-canonical transport/bulk_compression_transport.hpp ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
