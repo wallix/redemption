@@ -62,12 +62,12 @@ private:
     Translation::language_t lang;
 
 public:
-    FlatWabClose(mod_api& drawable, int16_t width, int16_t height, Widget2& parent,
+    FlatWabClose(mod_api& drawable, int16_t left, int16_t top, int16_t width, int16_t height, Widget2& parent,
                  NotifyApi* notifier, const char * diagnostic_text, int group_id,
                  const char * username, const char * target,
                  bool showtimer, Font const & font, Theme const & theme,
                  Translation::language_t lang, bool back_selector = false)
-    : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+    : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
     , bg_color(theme.global.bgcolor)
     // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
     , img(drawable, 0, 0,
@@ -120,10 +120,10 @@ public:
 
         // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         int back_width = this->back ? this->back->cx() + 10 : 0;
-        this->cancel.set_button_x((this->cx() - (this->cancel.cx() + back_width)) / 2);
-        this->connection_closed_label.rect.x = (this->cx() - this->connection_closed_label.cx()) / 2;
+        this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+        this->connection_closed_label.rect.x = left + (this->cx() - this->connection_closed_label.cx()) / 2;
 
-        this->separator.rect.x = (this->cx() - 600) / 2;
+        this->separator.rect.x = left + (this->cx() - 600) / 2;
         this->separator.rect.cx = 600;
 
         this->add_widget(&this->connection_closed_label);
@@ -134,14 +134,14 @@ public:
 
         uint16_t px = this->diagnostic.cx() + 10;
 
-        int y = this->dy() + 10;
+        int y = this->dy() + 10 - top;
         // this->img.rect.y = y;
         // y += this->img.cy() + 20;
 
-        this->connection_closed_label.rect.y = y;
+        this->connection_closed_label.rect.y = top + y;
         y += this->connection_closed_label.cy();
 
-        this->separator.rect.y = y + 3;
+        this->separator.rect.y = top + y + 3;
         y += 30;
 
         if (username && *username) {
@@ -155,21 +155,21 @@ public:
             this->username_label_value.rect.x = this->username_label.dx() + px;
             this->target_label_value.rect.x = this->username_label.dx() + px;
 
-            this->username_label.rect.y = y;
-            this->username_label_value.rect.y = y;
+            this->username_label.rect.y = top + y;
+            this->username_label_value.rect.y = top + y;
             y += this->username_label.cy() + 10;
-            this->target_label.rect.y = y;
-            this->target_label_value.rect.y = y;
+            this->target_label.rect.y = top + y;
+            this->target_label_value.rect.y = top + y;
             y += this->target_label.cy() + 20;
         }
-        this->diagnostic.rect.y = y;
+        this->diagnostic.rect.y = top + y;
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.rect.y = y;
+            this->diagnostic_lines.rect.y = top + y;
             y += this->diagnostic_lines.cy() + 20;
         }
         else {
-            this->diagnostic_lines.rect.y = y;
+            this->diagnostic_lines.rect.y = top + y;
             y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
             this->diagnostic_lines.rect.x = this->username_label.dx() + px;
         }
@@ -177,8 +177,8 @@ public:
         if (showtimer) {
             this->add_widget(&this->timeleft_label);
             this->add_widget(&this->timeleft_value);
-            this->timeleft_label.rect.y = y;
-            this->timeleft_value.rect.y = y;
+            this->timeleft_label.rect.y = top + y;
+            this->timeleft_value.rect.y = top + y;
             if (this->timeleft_label.cx() + 10 > px) {
                 px = this->timeleft_label.cx() + 10;
                 this->diagnostic_lines.rect.x = this->username_label.dx() + px;
@@ -191,16 +191,16 @@ public:
         if (this->back) {
             this->add_widget(this->back);
             this->back->set_button_x(this->cancel.dx() + this->cancel.cx() + 10);
-            this->back->set_button_y(y);
+            this->back->set_button_y(top + y);
         }
 
-        this->cancel.set_button_y(y);
+        this->cancel.set_button_y(top + y);
         y += this->cancel.cy();
 
         this->move_xy(0, (height - y) / 2);
 
-        this->img.rect.x = (this->cx() - this->img.cx()) / 2;
-        this->img.rect.y = (3*(height - y) / 2 - this->img.cy()) / 2 + y;
+        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
+        this->img.rect.y = top + (3*(height - y) / 2 - this->img.cy()) / 2 + y;
         this->add_widget(&this->img);
 
         this->set_widget_focus(&this->cancel, focus_reason_tabkey);

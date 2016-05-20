@@ -52,6 +52,22 @@
 #include "mod/mod_osd.hpp"
 #include "mm_api.hpp"
 
+Rect get_widget_rect(uint16_t width, uint16_t height,
+        GCC::UserData::CSMonitor const & monitors) {
+    Rect widget_rect(0, 0, width - 1, height - 1);
+    if (monitors.monitorCount) {
+        Rect rect                 = monitors.get_rect();
+        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
+
+        widget_rect.x  = abs(rect.x);
+        widget_rect.y  = abs(rect.y);
+        widget_rect.cx = primary_monitor_rect.cx;
+        widget_rect.cy = primary_monitor_rect.cy;
+    }
+
+    return widget_rect;
+}
+
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
 #define STRMODULE_SELECTOR_LEGACY  "selector_legacy"
@@ -340,6 +356,13 @@ class ModuleManager : public MMIni
         void rdp_input_up_and_running() override {
             this->mod_api_ptr->rdp_input_up_and_running();
         }
+        void rdp_allow_display_updates(uint16_t left, uint16_t top,
+                uint16_t right, uint16_t bottom) override {
+            this->mod_api_ptr->rdp_allow_display_updates(left, top, right, bottom);
+        }
+        void rdp_suppress_display_updates() override {
+            this->mod_api_ptr->rdp_suppress_display_updates();
+        }
 
         void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
             this->mod_api_ptr->send_to_mod_channel(front_channel_name, chunk, length, flags);
@@ -619,11 +642,14 @@ public:
         case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             this->mod = new FlatSelector2Mod(this->ini,
-                        // new FlatSelectorMod(this->ini,
-                        // new SelectorMod(this->ini,
                                         this->front,
                                         this->front.client_info.width,
-                                        this->front.client_info.height
+                                        this->front.client_info.height,
+                                        get_widget_rect(
+                                                this->front.client_info.width,
+                                                this->front.client_info.height,
+                                                this->front.client_info.cs_monitor
+                                            )
                                         );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
@@ -636,10 +662,14 @@ public:
                     this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
                 }
                 this->mod = new FlatWabCloseMod(this->ini,
-                            // new WabCloseMod(this->ini,
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height,
+                                            get_widget_rect(
+                                                    this->front.client_info.width,
+                                                    this->front.client_info.height,
+                                                    this->front.client_info.cs_monitor
+                                                ),
                                             now,
                                             true
                                             );
@@ -656,6 +686,11 @@ public:
                                                 this->front,
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
+                                                get_widget_rect(
+                                                        this->front.client_info.width,
+                                                        this->front.client_info.height,
+                                                        this->front.client_info.cs_monitor
+                                                    ),
                                                 now,
                                                 true,
                                                 true
@@ -669,7 +704,13 @@ public:
                 this->mod = new InteractiveTargetMod(this->ini,
                                                      this->front,
                                                      this->front.client_info.width,
-                                                     this->front.client_info.height);
+                                                     this->front.client_info.height,
+                                                     get_widget_rect(
+                                                             this->front.client_info.width,
+                                                             this->front.client_info.height,
+                                                             this->front.client_info.cs_monitor
+                                                     )
+                                                     );
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
             break;
@@ -681,11 +722,15 @@ public:
                 const char * button = TR("refused", language(this->ini));
                 const char * caption = "Information";
                 this->mod = new FlatDialogMod(
-                            // new DialogMod(
                                           this->ini,
                                           this->front,
                                           this->front.client_info.width,
                                           this->front.client_info.height,
+                                          get_widget_rect(
+                                                  this->front.client_info.width,
+                                                  this->front.client_info.height,
+                                                  this->front.client_info.cs_monitor
+                                          ),
                                           caption,
                                           message,
                                           button,
@@ -706,6 +751,11 @@ public:
                                           this->front,
                                           this->front.client_info.width,
                                           this->front.client_info.height,
+                                          get_widget_rect(
+                                                  this->front.client_info.width,
+                                                  this->front.client_info.height,
+                                                  this->front.client_info.cs_monitor
+                                          ),
                                           caption,
                                           message,
                                           button,
@@ -730,6 +780,11 @@ public:
                                               this->front,
                                               this->front.client_info.width,
                                               this->front.client_info.height,
+                                              get_widget_rect(
+                                                      this->front.client_info.width,
+                                                      this->front.client_info.height,
+                                                      this->front.client_info.cs_monitor
+                                              ),
                                               caption,
                                               message,
                                               button,
@@ -751,6 +806,11 @@ public:
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height,
+                                            get_widget_rect(
+                                                    this->front.client_info.width,
+                                                    this->front.client_info.height,
+                                                    this->front.client_info.cs_monitor
+                                            ),
                                             caption,
                                             message,
                                             now,
@@ -796,6 +856,11 @@ public:
                                          this->front,
                                          this->front.client_info.width,
                                          this->front.client_info.height,
+                                         get_widget_rect(
+                                                this->front.client_info.width,
+                                                this->front.client_info.height,
+                                                this->front.client_info.cs_monitor
+                                            ),
                                          now
             );
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
@@ -985,6 +1050,8 @@ public:
 
                 mod_rdp_params.lang                                = language(this->ini);
 
+                mod_rdp_params.allow_using_multiple_monitors       = this->ini.get<cfg::globals::allow_using_multiple_monitors>();
+
                 try {
                     const char * const name = "RDP Target";
                     TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
@@ -1009,6 +1076,9 @@ public:
                     throw;
                 }
 
+                this->mod->rdp_suppress_display_updates();
+                this->mod->rdp_allow_display_updates(0, 0,
+                    this->front.client_info.width, this->front.client_info.height);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
@@ -1109,10 +1179,16 @@ public:
                                           this->front.client_info.height,
                                           this->ini,
                                           acl);
+                this->mod->rdp_suppress_display_updates();
+                this->mod->rdp_allow_display_updates(0, 0,
+                    this->front.client_info.width, this->front.client_info.height);
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
             else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
                 this->front.resume_capture();
+                this->mod->rdp_suppress_display_updates();
+                this->mod->rdp_allow_display_updates(0, 0,
+                    this->front.client_info.width, this->front.client_info.height);
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
         }

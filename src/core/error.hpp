@@ -186,6 +186,7 @@ enum error_type {
     ERR_RDP_SERVER_REDIR,
     ERR_RDP_OPEN_SESSION_TIMEOUT,
     ERR_RDP_HANDSHAKE_TIMEOUT,
+    ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT,
 
     ERR_WM_PASSWORD = 9000,
     ERR_WM_USERNAME,
@@ -373,6 +374,9 @@ public:
             return "Keep alive has been missed, connection may be dead or slow";
         case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
             return "Session logoff in progress";
+
+        case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
+            return "Unsupported client display monitor layout";
 
         case ERR_LIC:
             return "An error occurred during the licensing protocol";

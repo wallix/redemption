@@ -65,11 +65,11 @@ public:
     FlatLoginMod(
         FlatLoginModVariables vars,
         char const * username, char const * password,
-        FrontAPI & front, uint16_t width, uint16_t height, time_t now
+        FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now
     )
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->login, *this, front, this->font(), this->theme())
-        , login(*this, width, height, this->screen, this, "Redemption " VERSION,
+        , login(*this, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, "Redemption " VERSION,
                 username[0] != 0,
                 0, nullptr, nullptr,
                 TR("login", language(vars)),
