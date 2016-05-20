@@ -19,6 +19,7 @@
 */
 
 #pragma once
+
 #include <netinet/tcp.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -50,8 +51,6 @@
 #include "utils/bitmap.hpp"
 
 #include "acl/authentifier.hpp"
-
-#include "utils/socket_transport_utility.hpp"
 
 using namespace std;
 
@@ -95,7 +94,7 @@ class Session {
     public:
         SessionManager  acl;
 
-        Client( int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
+        Client(int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
         : auth_trans( "Authentifier"
                     , client_sck
                     , ini.get<cfg::globals::authfile>().c_str()
@@ -320,7 +319,7 @@ public:
                                 }
                             }
                         }
-                        if (this->front->capture && this->front->capture->get_capture_event()->is_set(INVALID_SOCKET, rfds)) {
+                        if (this->front->capture && this->front->capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl

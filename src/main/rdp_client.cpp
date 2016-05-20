@@ -27,10 +27,8 @@
 #include "utils/log.hpp"
 
 #include "core/front_api.hpp"
-//#include "core/RDP/x224.hpp"
 #include "core/client_info.hpp"
 #include "transport/socket_transport.hpp"
-#include "utils/socket_transport_utility.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/wait_obj.hpp"
