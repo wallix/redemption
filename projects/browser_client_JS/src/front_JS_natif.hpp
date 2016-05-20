@@ -61,9 +61,10 @@
 //#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "channel_list.hpp"
-#include "mod_api.hpp"
+#include "mod/mod_api.hpp"
+#include "mod/rdp/rdp.hpp"
 #include "utils/bitmap.hpp"
 #include "RDP/caches/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
@@ -148,6 +149,7 @@ public:
     int                  _timer;
     bool                 _connected;
     Transport          * _trans;
+    mod_rdp            * _mod;
     //ClipboardVirtualChannel  _clipboard_channel;
 
     // Keyboard Controllers members
@@ -237,7 +239,34 @@ public:
     void empty_buffer() ;
     */
 
-   void connexion() {}
+   void connexion() {
+
+        Inifile ini;
+
+        ModRDPParams mod_rdp_params( "administrateur"
+                                , "S3cur3!1nux"
+                                , "10.10.47.35"
+                                , "192.168.1.100"
+                                , 7
+                                , 511
+                                );
+        mod_rdp_params.device_id                       = "device_id";
+        mod_rdp_params.enable_tls                      = false;
+        mod_rdp_params.enable_nla                      = false;
+        mod_rdp_params.enable_fastpath                 = false;
+        mod_rdp_params.enable_mem3blt                  = false;
+        mod_rdp_params.enable_bitmap_update            = true;
+        mod_rdp_params.enable_new_pointer              = false;
+        mod_rdp_params.server_redirection_support      = true;
+
+        LCGRandom gen(0);
+
+        TransportWebSocket trans;
+        this->_trans = &trans;
+
+        mod_rdp mod(trans, this, this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+        this->_mod = &mod;
+   }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -611,6 +640,7 @@ public:
     , _mod_bpp(32)
     , mod_palette(BGRPalette::classic_332())
     ,  _trans(nullptr)
+    ,  _mod(nullptr)
     {
         //this->_to_client_sender._front = this;
     }

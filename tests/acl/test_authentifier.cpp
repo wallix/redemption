@@ -134,7 +134,10 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     // If no keepalive is received after 30 seconds => disconnection
     sesman.check(mm, 10073, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true);
+
+
 }
+
 
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)

@@ -31,9 +31,12 @@
 #define LOGNULL
 //#define LOGPRINT
 
-//#include "path/to/file.hpp"
+#include "acl/auth_api.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
     BOOST_CHECK(true);
+
+    NullAuthentifier nullAuth;
+
 }

@@ -30,9 +30,9 @@
 
 class TransportWebSocket :  public Transport
 {
-    void send(const char * const buffer, size_t len)
+    void send(const char * const buffer, size_t len) 
     {
-        EM_ASM_({ console.log('data_sent_to_serveur'); }, buffer,  len);
+        EM_ASM_({ console.log('data_sent_to_serveur'); }, buffer, len);
     }
 };
 
