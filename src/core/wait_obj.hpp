@@ -91,7 +91,10 @@ public:
             this->set(idle_usec);
         }
     }
-    
+
+// NOTE: old-style-cast is ignored because of FD_xxx macros using it behind the hood
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
     void add_to_fd_set(int fd, fd_set & rfds, unsigned & max, timeval & timeout) const
     {
         if (fd > INVALID_SOCKET) {
@@ -129,8 +132,7 @@ public:
 
         return false;
     }
-    
-    
+#pragma GCC diagnostic pop
 };
 
 #endif

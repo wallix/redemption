@@ -72,4 +72,3 @@ bool is_set(wait_obj & w, int fd, fd_set & rfds)
 }
 
 #pragma GCC diagnostic pop
-
