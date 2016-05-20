@@ -32,7 +32,7 @@
 
 struct Capability;
 class InStream;
-class OrderCaps;
+struct OrderCaps;
 
 namespace CHANNELS {
     class ChannelDefArray;
@@ -85,7 +85,7 @@ class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
     virtual void set_keylayout(int LCID) {}
     virtual void set_focus_on_password_textbox(bool set) {}
     virtual void set_consent_ui_visible(bool set) {}
-    virtual void session_update(array_const_char const & message) {}
+    virtual void session_update(array_view_const_char message) {}
 
     virtual bool disable_input_event_and_graphics_update(
             bool disable_input_event, bool disable_graphics_update) {

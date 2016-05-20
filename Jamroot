@@ -733,10 +733,10 @@ unit-test test_noncopyable : tests/utils/test_noncopyable.cpp : $(TEST_DEPENDENC
 unit-test test_splitter : tests/utils/test_splitter.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_algostring : tests/utils/test_algostring.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_make_unique : tests/utils/test_make_unique.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_array_view : tests/utils/test_array_view.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
 unit-test test_stream : tests/utils/test_stream.cpp : $(TEST_DEPENDENCIES) ;
-# unit-test test_inputarray : tests/utils/test_inputarray.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_utf : tests/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rect : tests/utils/test_rect.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_ellipse : tests/utils/test_ellipse.cpp : $(TEST_DEPENDENCIES) ;
@@ -846,7 +846,7 @@ unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp : $(TEST_DEPENDENC
 unit-test test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
 unit-test test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
-unit-test test_vnc : tests/mod/vnc/test_vnc.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp : $(TEST_DEPENDENCIES) <library>png ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_bitmap : tests/utils/test_bitmap.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
@@ -896,6 +896,9 @@ unit-test test_checksum_buf : tests/transport/buffer/test_checksum_buf.cpp : $(T
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp : $(TEST_DEPENDENCIES) <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp : $(TEST_DEPENDENCIES) <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
+
+## Orders tests
+## @{
 unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersPrimaryMemBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp : $(TEST_DEPENDENCIES) ;
@@ -916,7 +919,7 @@ unit-test test_RDPOrdersSecondaryBmpCache : tests/core/RDP/orders/test_RDPOrders
 unit-test test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing.cpp : $(TEST_DEPENDENCIES) ;
-
+## @}
 
 unit-test test_libpng : tests/test_libpng.cpp : $(TEST_DEPENDENCIES) <library>png <library>z ;
 unit-test test_rdp : tests/mod/rdp/test_rdp.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>d3des <library>z <library>dl <library>crypto ;
@@ -1019,8 +1022,6 @@ unit-test test_credentials : tests/core/RDP/nla/kerberos/test_credentials.cpp : 
 unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp : $(TEST_DEPENDENCIES) <library>krb5 <library>gssglue ;
 ## @}
 
-
-unit-test test_darray : tests/utils/test_darray.cpp : $(TEST_DEPENDENCIES) ;
 
 ## Widget for workflow
 ## @{

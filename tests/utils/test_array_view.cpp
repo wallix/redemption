@@ -33,9 +33,9 @@
 
 namespace {
 
-int test_ambiguous(array_const_char) { return 1; }
-int test_ambiguous(array_const_s8) { return 2; }
-int test_ambiguous(array_const_u8) { return 3; }
+int test_ambiguous(array_view_const_char) { return 1; }
+int test_ambiguous(array_view_const_s8) { return 2; }
+int test_ambiguous(array_view_const_u8) { return 3; }
 
 }
 
@@ -53,4 +53,12 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
 
     std::string s;
     BOOST_CHECK_EQUAL(test_ambiguous(s), 1);
+
+    s = "abc";
+    auto av = make_array_view(s);
+    BOOST_CHECK_EQUAL(av.size(), s.size());
+    BOOST_CHECK_EQUAL(av.data(), s.data());
+    BOOST_CHECK_EQUAL(av[0], s[0]);
+    BOOST_CHECK_EQUAL(av[1], s[1]);
+    BOOST_CHECK_EQUAL(av[2], s[2]);
 }

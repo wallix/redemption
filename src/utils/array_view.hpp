@@ -81,57 +81,6 @@ private:
     std::size_t sz  = 0;
 };
 
-template<class T>
-struct array_view<T const>
-{
-    using type = T const;
-
-    constexpr array_view() = default;
-
-    constexpr array_view(std::nullptr_t)
-    : array_view(nullptr, 0)
-    {}
-
-    constexpr array_view(type * p, std::size_t sz)
-    : p(p)
-    , sz(sz)
-    {}
-
-    constexpr array_view(type * p, type * pright)
-    : p(p)
-    , sz(pright - p)
-    {}
-
-    template<std::size_t N>
-    constexpr array_view(type (&a)[N])
-    : array_view(a, N)
-    {}
-
-    template<class U, class = decltype(
-        *static_cast<type**>(nullptr) = static_cast<U*>(nullptr)->data(),
-        *static_cast<std::size_t*>(nullptr) = static_cast<U*>(nullptr)->size()
-    )>
-    constexpr array_view(U & x)
-    : p(x.data())
-    , sz(x.size())
-    {}
-
-    constexpr bool empty() const noexcept { return !this->sz; }
-
-    constexpr std::size_t size() const noexcept { return this->sz; }
-
-    constexpr type * data() const noexcept { return this->p; }
-
-    constexpr type * begin() const { return this->p; }
-    constexpr type * end() const { return this->p + this->sz; }
-
-    type & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
-
-private:
-    type * p        = nullptr;
-    std::size_t sz  = 0;
-};
-
 
 template<class T>
 constexpr array_view<T> make_array_view(T * x, std::size_t n)
@@ -154,8 +103,9 @@ constexpr array_view<T> make_array_view(T (&arr)[N])
 { return {arr, N}; }
 
 template<class Cont>
-constexpr auto make_array_view(Cont & cont) -> array_view<decltype(cont.data())>
-{ return {cont.data(), cont.size()}; }
+constexpr auto make_array_view(Cont & cont)
+-> array_view<typename std::remove_pointer<decltype(cont.data())>::type>
+{ return {cont}; }
 
 template<class T>
 constexpr array_view<T const> make_const_array_view(T const * x, std::size_t n)
@@ -179,25 +129,25 @@ array_view<char> cstr_array_view(char (&str)[N])
 { return {str, N-1}; }
 
 
-using array_u8 = array_view<uint8_t>;
-using array_u16 = array_view<uint16_t>;
-using array_u32 = array_view<uint32_t>;
-using array_u64 = array_view<uint64_t>;
-using array_const_u8 = array_view<uint8_t const>;
-using array_const_u16 = array_view<uint16_t const>;
-using array_const_u32 = array_view<uint32_t const>;
-using array_const_u64 = array_view<uint64_t const>;
+using array_view_u8 = array_view<uint8_t>;
+using array_view_u16 = array_view<uint16_t>;
+using array_view_u32 = array_view<uint32_t>;
+using array_view_u64 = array_view<uint64_t>;
+using array_view_const_u8 = array_view<uint8_t const>;
+using array_view_const_u16 = array_view<uint16_t const>;
+using array_view_const_u32 = array_view<uint32_t const>;
+using array_view_const_u64 = array_view<uint64_t const>;
 
-using array_s8 = array_view<int8_t>;
-using array_s16 = array_view<int16_t>;
-using array_s32 = array_view<int32_t>;
-using array_s64 = array_view<int64_t>;
-using array_const_s8 = array_view<int8_t const>;
-using array_const_s16 = array_view<int16_t const>;
-using array_const_s32 = array_view<int32_t const>;
-using array_const_s64 = array_view<int64_t const>;
+using array_view_s8 = array_view<int8_t>;
+using array_view_s16 = array_view<int16_t>;
+using array_view_s32 = array_view<int32_t>;
+using array_view_s64 = array_view<int64_t>;
+using array_view_const_s8 = array_view<int8_t const>;
+using array_view_const_s16 = array_view<int16_t const>;
+using array_view_const_s32 = array_view<int32_t const>;
+using array_view_const_s64 = array_view<int64_t const>;
 
-using array_char = array_view<char>;
-using array_const_char = array_view<char const>;
+using array_view_char = array_view<char>;
+using array_view_const_char = array_view<char const>;
 
 #endif

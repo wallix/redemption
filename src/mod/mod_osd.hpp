@@ -120,6 +120,9 @@ public:
 
     ~mod_osd() override {
         if (this->is_active()) {
+            this->mod.rdp_suppress_display_updates();
+            this->mod.rdp_allow_display_updates(0, 0,
+                this->mod.get_front_width(), this->mod.get_front_height());
             this->mod.rdp_input_invalidate(this->fg_rect);
         }
     }
@@ -138,6 +141,9 @@ public:
     {
         if (this->is_active()) {
             this->set_gd(this->mod, &this->mod);
+            this->mod.rdp_suppress_display_updates();
+            this->mod.rdp_allow_display_updates(0, 0,
+                this->mod.get_front_width(), this->mod.get_front_height());
             this->mod.rdp_input_invalidate(this->fg_rect);
         }
         else {
@@ -162,7 +168,7 @@ protected:
 
     template<class Command, class... Args>
     void draw_impl(Command const & cmd, Rect const & clip, Args const &... args) {
-        auto const & rect = clip_from_cmd(cmd);
+        auto const & rect = clip_from_cmd(cmd).intersect(clip);
         if (this->fg_rect.contains(rect) || rect.isempty()) {
             //nada
         }
@@ -331,8 +337,17 @@ public:
         return this->mod.is_up_and_running();
     }
 
-    void rdp_input_invalidate2(const DArray< Rect >& vr) override {
+    void rdp_input_invalidate2(array_view<Rect> vr) override {
         this->mod.rdp_input_invalidate2(vr);
+    }
+
+    void rdp_allow_display_updates(uint16_t left, uint16_t top,
+            uint16_t right, uint16_t bottom) override {
+        this->mod.rdp_allow_display_updates(left, top, right, bottom);
+    }
+
+    void rdp_suppress_display_updates() override {
+        this->mod.rdp_suppress_display_updates();
     }
 
     void refresh_context(Inifile& ini) override {
@@ -341,6 +356,26 @@ public:
 
     void set_palette(const BGRPalette& palette) override {
         this->mod.set_palette(palette);
+    }
+
+    wait_obj * get_secondary_event() override {
+        return this->mod.get_secondary_event();
+    }
+
+    wait_obj * get_asynchronous_task_event(int & out_fd) override {
+        return this->mod.get_asynchronous_task_event(out_fd);
+    }
+
+    void process_asynchronous_task() override {
+        this->mod.process_asynchronous_task();
+    }
+
+    wait_obj * get_session_probe_launcher_event() override {
+        return this->mod.get_session_probe_launcher_event();
+    }
+
+    void process_session_probe_launcher() override {
+        this->mod.process_session_probe_launcher();
     }
 };
 

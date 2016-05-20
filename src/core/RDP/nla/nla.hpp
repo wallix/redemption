@@ -24,7 +24,11 @@
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/nla/ntlm/ntlm.hpp"
+
+#ifndef __EMSCRIPTEN__
 #include "core/RDP/nla/kerberos/kerberos.hpp"
+#endif
+
 #include "transport/transport.hpp"
 
 #define NLA_PKG_NAME NTLMSP_NAME
@@ -151,7 +155,10 @@ public:
         }
         if (secInter == Kerberos_Interface) {
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
+            
+            #ifndef __EMSCRIPTEN__
             this->table = new Kerberos_SecurityFunctionTable;
+            #endif
         }
         else if (this->table == nullptr) {
             this->table = new SecurityFunctionTable;

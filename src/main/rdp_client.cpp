@@ -27,10 +27,8 @@
 #include "utils/log.hpp"
 
 #include "core/front_api.hpp"
-//#include "core/RDP/x224.hpp"
 #include "core/client_info.hpp"
 #include "transport/socket_transport.hpp"
-#include "utils/socket_transport_utility.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/wait_obj.hpp"
@@ -498,9 +496,9 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
             FD_ZERO(&wfds);
             struct timeval timeout = time_mark;
 
-            add_to_fd_set(mod.get_event(), st_mod, rfds, max, timeout);
+            mod.get_event().add_to_fd_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
-            if (is_set(mod.get_event(), st_mod, rfds)) {
+            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 2;
                 timeout.tv_usec = 0;
             }
@@ -518,7 +516,7 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
                 break;
             }
 
-            if (is_set(mod.get_event(), st_mod, rfds)) {
+            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 LOG(LOG_INFO, "RDP CLIENT :: draw_event");
                 mod.draw_event(time(nullptr));
             }

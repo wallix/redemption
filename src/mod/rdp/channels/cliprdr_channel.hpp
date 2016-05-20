@@ -28,7 +28,6 @@
 #include "utils/make_unique.hpp"
 #include "utils/stream.hpp"
 
-#include <iostream>
 #include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"

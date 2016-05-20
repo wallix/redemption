@@ -53,6 +53,10 @@
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/cryptofile.hpp"
 
+#ifdef IN_IDE_PARSER
+#define FIXTURES_PATH ""
+#endif
+
 extern "C" {
 
 /**********************************************
@@ -218,32 +222,19 @@ BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 
-        char * argv[9] = {};
-        int argc = sizeof(argv)/sizeof(char*);
-        char oneargv[] =
-            "verifier.py\0"
-            "-i\0"
+        char const * argv[] = {
+            "verifier.py",
+            "-i",
                 "toto@10.10.43.13,Administrateur@QA@cible,"
-                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
-            "--hash-path\0"
-                FIXTURES_PATH "/verifier/hash\0"
-            "--mwrm-path\0"
-                FIXTURES_PATH "/verifier/recorded\0"
-            "--verbose\0"
-                "10\0";
-        {
-            int i = 0;
-            char * p = oneargv;
-            for (i = 0 ; i < argc ; i++){
-                argv[i] = p;
-                // provided command line parameters malformed
-                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
-                p++;
-                // provided command line parameters malformed
-                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
-            }
-            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
-        }
+                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
+            "--hash-path",
+                FIXTURES_PATH "/verifier/hash",
+            "--mwrm-path",
+                FIXTURES_PATH "/verifier/recorded",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
 
         int res = -1;
         try {
@@ -274,32 +265,20 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 
-        char * argv[9] = {};
-        int argc = sizeof(argv)/sizeof(char*);
-        char oneargv[] =
-            "verifier.py\0"
-            "-i\0"
+        char const * argv[] {
+            "verifier.py",
+            "-i",
                 "toto@10.10.43.13,Administrateur@QA@cible"
-                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
-            "--hash-path\0"
-                FIXTURES_PATH "/verifier/hash/\0"
-            "--mwrm-path\0"
-                FIXTURES_PATH "/verifier/recorded/\0"
-            "--verbose\0"
-                "10\0";
-        {
-            int i = 0;
-            char * p = oneargv;
-            for (i = 0 ; i < argc ; i++){
-                argv[i] = p;
-                // provided command line parameters malformed
-                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
-                p++;
-                // provided command line parameters malformed
-                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
-            }
-            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
-        }
+                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+            "--hash-path",
+                FIXTURES_PATH "/verifier/hash/",
+            "--mwrm-path",
+                FIXTURES_PATH "/verifier/recorded/",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
+
 
         int res = -1;
         try {
@@ -334,31 +313,18 @@ BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 
-        char * argv[7] = {};
-        int argc = sizeof(argv)/sizeof(char*);
-        char oneargv[] =
-            "decrypter.py\0"
-            "-i\0"
+        char const * argv[] {
+            "decrypter.py",
+            "-i",
                 FIXTURES_PATH "/verifier/recorded/"
                 "toto@10.10.43.13,Administrateur@QA@cible,"
-                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm\0"
-            "-o\0"
-                "decrypted.out\0"
-            "--verbose\0"
-                "10\0";
-        {
-            int i = 0;
-            char * p = oneargv;
-            for (i = 0 ; i < argc ; i++){
-                argv[i] = p;
-                // provided command line parameters malformed
-                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
-                p++;
-                // provided command line parameters malformed
-                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
-            }
-            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
-        }
+                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
+            "-o",
+                "decrypted.out",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
 
         int res = -1;
         try {
@@ -383,31 +349,18 @@ BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
 
-        char * argv[7] = {};
-        int argc = sizeof(argv)/sizeof(char*);
-        char oneargv[] =
-            "decrypter.py\0"
-            "-i\0"
+        char const * argv[] {
+            "decrypter.py",
+            "-i",
                 FIXTURES_PATH "/verifier/recorded/"
                  "toto@10.10.43.13,Administrateur@QA@cible"
-                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm\0"
-           "-o\0"
-                "decrypted.2.out\0"
-            "--verbose\0"
-                "10\0";
-        {
-            int i = 0;
-            char * p = oneargv;
-            for (i = 0 ; i < argc ; i++){
-                argv[i] = p;
-                // provided command line parameters malformed
-                for (;*p;p++){BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);}
-                p++;
-                // provided command line parameters malformed
-                BOOST_CHECK(p<&oneargv[sizeof(oneargv)]);
-            }
-            BOOST_CHECK(p==&oneargv[sizeof(oneargv)-1]);
-        }
+                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+           "-o",
+                "decrypted.2.out",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
 
         int res = -1;
         try {

@@ -402,6 +402,9 @@ public:
                             "Force full screen update. Rect=(0, 0, %u, %u)",
                         this->param_front_width, this->param_front_height);
                 }
+                this->mod.rdp_suppress_display_updates();
+                this->mod.rdp_allow_display_updates(0, 0,
+                    this->param_front_width, this->param_front_height);
                 this->mod.rdp_input_invalidate(Rect(0, 0,
                     this->param_front_width, this->param_front_height));
             }

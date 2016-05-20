@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
         WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
+        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           0, true, true, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
         WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
+        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           0, true, false, false, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
         WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
+        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           0, false, false, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", font, extra_button);
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
         WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
+        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           0, false, true, true, colors, "Target Infos",
                                           "Host", "machinetruc", "Login", "user1",
                                           "Password", font, extra_button);
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         colors.global.bgcolor = DARK_BLUE_BIS;
         colors.global.fgcolor = WHITE;
         WidgetFlatButton * extra_button = nullptr;
-        FlatInteractiveTarget interactive(drawable, 800, 600, parent, notifier,
+        FlatInteractiveTarget interactive(drawable, 0, 0, 800, 600, parent, notifier,
                                           0, true, false, true, colors, "Target Infos",
                                           "Host", "in 192.168.16.0/24 subnet", "Login",
                                           "user1", "Password", font, extra_button);

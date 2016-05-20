@@ -224,7 +224,6 @@ public:
                , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
-        REDASSERT(!this->bitmap_count);
         if (this->bitmap_count) { this->flush_bitmaps(); }
         const size_t max_order_batch = 4096;
         if (   (this->order_count >= max_order_batch)
@@ -647,7 +646,6 @@ public:
                );
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
-        REDASSERT(!this->order_count);
         if (this->order_count) { this->flush_orders(); }
         const size_t max_image_batch = 4096;
         if (   (this->bitmap_count >= max_image_batch)

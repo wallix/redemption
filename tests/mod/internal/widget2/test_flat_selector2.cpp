@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier,
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
                                 "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("reptile", "snake@10.10.14.111",
                         "RDP");

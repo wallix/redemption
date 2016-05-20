@@ -1181,8 +1181,6 @@ test-canonical core/RDP/nla/kerberos/credentials.hpp : <library>krb5 ;
 test-canonical core/RDP/nla/kerberos/kerberos.hpp : <library>krb5 <library>gssglue ;
 ## @}
 
-test-canonical utils/darray.hpp ;
-
 ## Widget for workflow
 ## @{
 test-canonical mod/internal/widget2/flat_wait.hpp : <library>png <library>crypto ;

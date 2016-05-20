@@ -264,9 +264,10 @@ public:
         TransportWebSocket trans;
         this->_trans = &trans;
 
-        mod_rdp mod(trans, this, this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+        mod_rdp mod(trans, *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
         this->_mod = &mod;
    }
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -879,11 +880,22 @@ extern "C" void backspacePressed() {
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
 
-extern "C" void recv_wrap(char ** pbuffer, size_t len) {
+extern "C" void recv_wraped(char * pbuffer, size_t len) {
     if (front._trans != nullptr) {
-        front._trans->recv(pbuffer, len);
+        front._trans->recv(&pbuffer, len);
     }
 }
+
+extern "C" void incomming_data() {
+    if (front._mod !=  nullptr) {
+        front._mod->draw_event(time(nullptr));
+    }
+}
+
+extern "C" void connexion_client() {
+    front.connexion();
+}
+
 
 
 

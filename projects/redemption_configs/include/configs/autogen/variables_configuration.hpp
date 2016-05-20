@@ -178,6 +178,14 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
+
+        struct enable_suppress_output {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
     };
 
     struct context {
@@ -1199,6 +1207,14 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+
+        struct allow_using_multiple_monitors {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{0};
+        };
     };
 
     struct internal_mod {
@@ -1962,6 +1978,7 @@ struct client
 , cfg::client::persist_bitmap_cache_on_disk
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
+, cfg::client::enable_suppress_output
 { static constexpr bool is_section = true; };
 
 struct context
@@ -2091,6 +2108,7 @@ struct globals
 , cfg::globals::enable_osd_display_remote_target
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
+, cfg::globals::allow_using_multiple_monitors
 { static constexpr bool is_section = true; };
 
 struct internal_mod

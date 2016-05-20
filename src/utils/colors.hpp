@@ -30,8 +30,8 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstddef>
+#include <cstring> // memcpy
 
-#include "utils/log.hpp"
 
 typedef uint32_t BGRColor;
 typedef uint32_t RGBColor;
@@ -279,8 +279,7 @@ inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const BGRPa
         case 24:
         case 32: return decode_color24()(c);
         default:
-            LOG(LOG_ERR, "in_bpp = %d", in_bpp);
-            exit(0);
+            assert(!"unknown bpp");
     }
     return 0;
 }
@@ -335,8 +334,7 @@ inline RGBColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, 
         case 24:
         case 32: return decode_color24_opaquerect()(c);
         default:
-            LOG(LOG_ERR, "in_bpp = %d", in_bpp);
-            exit(0);
+            assert(!"unknown bpp");
     }
     return 0;
 }

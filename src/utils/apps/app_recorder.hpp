@@ -536,7 +536,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 
 template<class CaptureMaker, class AddProgramOption, class ParseFormat
   , class HasExtraCapture>
-int app_recorder( int argc, char ** argv, const char * copyright_notice
+int app_recorder( int argc, char const * const * argv, const char * copyright_notice
                 , AddProgramOption add_prog_option, ParseFormat parse_format
                 , std::string & config_filename, Inifile & ini
                 , CryptoContext & cctx, Random & rnd

@@ -26,7 +26,7 @@
 #ifndef _REDEMPTION_CORE_CALLBACK_HPP_
 #define _REDEMPTION_CORE_CALLBACK_HPP_
 
-#include "utils/darray.hpp"
+#include "utils/array_view.hpp"
 #include "utils/rect.hpp"
 
 class InStream;
@@ -75,15 +75,19 @@ struct RdpInput
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_invalidate(const Rect & r) = 0;
-    virtual void rdp_input_invalidate2(const DArray<Rect> & vr) {
-        for (size_t i = 0; i < vr.size(); i++) {
-            if (!vr[i].isempty()) {
-                this->rdp_input_invalidate(vr[i]);
+    virtual void rdp_input_invalidate2(array_view<Rect> vr) {
+        for (Rect const & rect : vr) {
+            if (!rect.isempty()) {
+                this->rdp_input_invalidate(rect);
             }
         }
     }
     // Client calls this member function when it became up and running.
     virtual void rdp_input_up_and_running() { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
+
+    virtual void rdp_allow_display_updates(uint16_t left, uint16_t top,
+        uint16_t right, uint16_t bottom) {}
+    virtual void rdp_suppress_display_updates() {}
 };
 
 struct Callback : RdpInput
