@@ -354,7 +354,7 @@ public:
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top,
             uint16_t right, uint16_t bottom) override {
-        Rect const intersect = this->fg_rect.intersect({left, top, right - left + 1, bottom - top + 1});
+        Rect const intersect = this->fg_rect.intersect(Rect(left, top, right - left + 1, bottom - top + 1));
         if (!intersect.isempty()) {
             this->mod.begin_update();
             this->draw_fg(intersect);
