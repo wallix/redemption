@@ -448,7 +448,7 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverter : gdi::GraphicProxy<
+        struct GraphicConverter : gdi::GraphicProxyBase<
             GraphicConverter<ColorConverter>,
             gdi::GraphicApi,
             gdi::GraphicColorConverterAccess
@@ -465,11 +465,11 @@ private:
             , graphics(graphics)
             {}
 
-            ColorConverter const & color_converter_impl() const {
+            ColorConverter const & get_color_converter() const {
                 return this->color_converter;
             }
 
-            Graphics::PrivateGraphicsUpdatePDU & get_gd_proxy_impl() {
+            Graphics::PrivateGraphicsUpdatePDU & get_graphic_proxy() {
                 return this->graphics;
             }
 

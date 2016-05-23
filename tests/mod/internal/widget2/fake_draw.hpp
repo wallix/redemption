@@ -31,7 +31,7 @@
 #define FIXTURES_PATH
 #endif
 
-struct TestDraw : gdi::GraphicProxy<TestDraw, mod_api>
+struct TestDraw : gdi::GraphicProxyBase<TestDraw, mod_api>
 {
     RDPDrawable gd;
 
@@ -69,7 +69,7 @@ struct TestDraw : gdi::GraphicProxy<TestDraw, mod_api>
 
 private:
     friend gdi::GraphicCoreAccess;
-    RDPDrawable & get_gd_proxy_impl() { return this->gd; }
+    RDPDrawable & get_graphic_proxy() { return this->gd; }
 };
 
 #endif
