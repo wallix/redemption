@@ -111,7 +111,4 @@ BOOST_AUTO_TEST_CASE(TestColors)
     BOOST_CHECK_EQUAL(0x000000, color_decode_opaquerect(0xFF0000, 15, palette));
     BOOST_CHECK_EQUAL(0x00E3FF, color_decode_opaquerect(0x00FF00, 16, palette));
     BOOST_CHECK_EQUAL(0x0000FF, color_decode_opaquerect(0x0000FF, 24, palette));
-
-
-
 }

@@ -25,6 +25,8 @@
 
 #include "utils/make_unique.hpp"
 #include <type_traits>
+#include <iostream>
+#include <sstream>
 
 struct A {
     A(int, int) {}
@@ -35,4 +37,26 @@ BOOST_AUTO_TEST_CASE(TestMakeUnique)
 {
     BOOST_CHECK((std::is_same<std::unique_ptr<A>, decltype(std::make_unique<A>(2, 3))>::value));
     BOOST_CHECK((std::is_same<std::unique_ptr<A[]>, decltype(std::make_unique<A[]>(2))>::value));
+
+    std::stringbuf buf;
+    auto * oldbuf = std::cout.rdbuf(&buf);
+
+    struct D {
+        D() { std::cout << "c"; }
+        D(int) { std::cout << "i"; }
+        ~D() { std::cout << "d"; }
+    };
+
+    std::make_unique<D>();
+    BOOST_CHECK_EQUAL(buf.str(), "cd");
+
+    buf.str("");
+    std::make_unique<D>(1);
+    BOOST_CHECK_EQUAL(buf.str(), "id");
+
+    buf.str("");
+    std::make_unique<D[]>(2);
+    BOOST_CHECK_EQUAL(buf.str(), "ccdd");
+
+    std::cout.rdbuf(oldbuf);
 }
