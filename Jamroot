@@ -873,7 +873,6 @@ unit-test test_out_meta_sequence_transport : tests/transport/test_out_meta_seque
 unit-test test_test_transport : tests/transport/test_test_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_count_transport : tests/transport/test_count_transport.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_socket_transport : tests/transport/test_socket_transport.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl ;
-unit-test test_bulk_compression_transport : tests/transport/test_bulk_compression_transport.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>z ;
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>snappy ;

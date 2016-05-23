@@ -60,6 +60,8 @@ private:
 
     auth_api* param_acl = nullptr;
 
+    const bool param_bogus_refresh_rect_ex;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -101,6 +103,8 @@ public:
         Translation::language_t lang;
 
         auth_api* acl;
+
+        bool bogus_refresh_rect_ex;
     };
 
     SessionProbeVirtualChannel(
@@ -133,6 +137,7 @@ public:
     , param_real_working_dir(params.real_working_dir)
     , param_lang(params.lang)
     , param_acl(params.acl)
+    , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , front(front)
     , mod(mod)
     , file_system_virtual_channel(file_system_virtual_channel)
@@ -402,9 +407,11 @@ public:
                             "Force full screen update. Rect=(0, 0, %u, %u)",
                         this->param_front_width, this->param_front_height);
                 }
-                this->mod.rdp_suppress_display_updates();
-                this->mod.rdp_allow_display_updates(0, 0,
-                    this->param_front_width, this->param_front_height);
+                if (this->param_bogus_refresh_rect_ex) {
+                    this->mod.rdp_suppress_display_updates();
+                    this->mod.rdp_allow_display_updates(0, 0,
+                        this->param_front_width, this->param_front_height);
+                }
                 this->mod.rdp_input_invalidate(Rect(0, 0,
                     this->param_front_width, this->param_front_height));
             }

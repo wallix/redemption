@@ -174,7 +174,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<unsigned>(), "handshake_timeout", desc{"Time out during RDP handshake stage (in seconds)."}, set(10));
         W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
-        W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
+        W.member(A, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
         W.member(A, type_<unsigned>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
@@ -208,6 +208,8 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
         W.sep();
         W.member(V, type_<bool>(), "allow_using_multiple_monitors", set(false));
+        W.sep();
+        W.member(A, type_<bool>(), "bogus_refresh_rect", desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
     });
 
     W.section("session_log", [&]
