@@ -240,6 +240,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "allow_using_multiple_monitors")) {
             ::configs::parse(static_cast<cfg::globals::allow_using_multiple_monitors&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "bogus_refresh_rect")) {
+            ::configs::parse(static_cast<cfg::globals::bogus_refresh_rect&>(this->variables).value, value);
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

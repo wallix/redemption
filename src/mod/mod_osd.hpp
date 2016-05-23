@@ -97,12 +97,15 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
     mod_api & mod;
     drawable_function_type drawable_fn;
 
+    bool bogus_refresh_rect_ex = false;
+
 public:
-    mod_osd(mod_api & mod, Rect const & rect, drawable_function_type f, bool call_f = true)
+    mod_osd(mod_api & mod, Rect const & rect, bool bogus_refresh_rect_ex, drawable_function_type f, bool call_f = true)
     : mod_osd::base_type(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
     , mod(mod)
     , drawable_fn(std::move(f))
+    , bogus_refresh_rect_ex(bogus_refresh_rect_ex)
     {
         if (call_f) {
             this->draw_fg(this->fg_rect);
@@ -281,9 +284,11 @@ private:
 
     void skip_osd()
     {
-        this->mod.rdp_suppress_display_updates();
-        this->mod.rdp_allow_display_updates(0, 0,
-            this->mod.get_front_width(), this->mod.get_front_height());
+        if (this->bogus_refresh_rect_ex) {
+            this->mod.rdp_suppress_display_updates();
+            this->mod.rdp_allow_display_updates(0, 0,
+                this->mod.get_front_width(), this->mod.get_front_height());
+        }
         this->mod.rdp_input_invalidate(this->fg_rect);
     }
 
