@@ -62,6 +62,8 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
         Rect left;
     };
 
+    bool disable_filter = false;
+
     subrect_t subrect(const Rect & rect) const
     {
         const Rect inter = rect.intersect(this->fg_rect);
@@ -75,6 +77,17 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
 
     void draw_fg(Rect const & rect)
     {
+        class AutoDisabler {
+            bool & ref;
+        public:
+            AutoDisabler(bool & ref) : ref(ref) {
+                this->ref = true;
+            }
+            ~AutoDisabler() {
+                this->ref = false;
+            }
+        } auto_disabler(this->disable_filter);
+
         this->drawable_fn(this->mod, rect, this->fg_rect);
     }
 
@@ -160,6 +173,11 @@ protected:
 
     template<class Command, class... Args>
     void draw_impl(Command const & cmd, Rect const & clip, Args const &... args) {
+        if (this->disable_filter) {
+            this->mod.draw(cmd, clip, args...);
+            return;
+        }
+
         auto const & rect = clip_from_cmd(cmd).intersect(clip);
         if (this->fg_rect.contains(rect) || rect.isempty()) {
             //nada
@@ -191,7 +209,7 @@ protected:
                     , bitmap_data.dest_right - bitmap_data.dest_left + 1
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
-        if (rectBmp.has_intersection(this->fg_rect)) {
+        if (!this->disable_filter && rectBmp.has_intersection(this->fg_rect)) {
             const subrect_t rect4 = this->subrect(rectBmp);
 
             auto draw_bitmap_rect = [this, &rectBmp, &bmp](Rect const & rect) {
@@ -217,6 +235,11 @@ protected:
     }
 
     void draw_impl(const RDPScrBlt & cmd, const Rect & clip) {
+        if (this->disable_filter) {
+            this->mod.draw(cmd, clip);
+            return;
+        }
+
         const Rect drect = cmd.rect.intersect(clip);
         const int deltax = cmd.srcx - cmd.rect.x;
         const int deltay = cmd.srcy - cmd.rect.y;
@@ -229,7 +252,6 @@ protected:
 
         if (!has_dest_intersec_fg && !has_src_intersec_fg) {
             this->mod.draw(cmd, clip);
-            return ;
         }
         else {
             this->mod.begin_update();
@@ -286,7 +308,7 @@ public:
     }
 
     void rdp_input_invalidate(const Rect & r) override {
-        if (r.has_intersection(this->fg_rect)) {
+        if (!this->disable_filter && r.has_intersection(this->fg_rect)) {
             this->mod.begin_update();
             this->subrect_input_invalidate(r);
             this->draw_fg(this->fg_rect.intersect(r));
@@ -393,6 +415,13 @@ public:
 
     void process_session_probe_launcher() override {
         this->mod.process_session_probe_launcher();
+    }
+
+    void server_draw_text(
+        const Font& font, int16_t x, int16_t y, const char* text,
+        uint32_t fgcolor, uint32_t bgcolor, const Rect& clip
+    ) override {
+        this->mod.server_draw_text(font, x, y, text, fgcolor, bgcolor, clip);
     }
 };
 
