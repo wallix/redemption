@@ -93,7 +93,7 @@ struct GraphicDepth
 private:
     struct bpp_table { int table[5] = {0, 8, 15, 16, 24}; };
 public:
-    constexpr uint8_t to_bpp(uint8_t bpp) const {
+    constexpr uint8_t to_bpp() const {
         return bpp_table{}.table[unsigned(this->depth_)];
     }
 
