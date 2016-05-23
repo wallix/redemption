@@ -136,7 +136,7 @@ public:
 
     ~mod_osd() override {
         if (this->is_active()) {
-            this->skip_osd();
+            this->remove_osd();
         }
     }
 
@@ -154,7 +154,7 @@ public:
     {
         if (this->is_active()) {
             this->set_gd(this->mod, &this->mod);
-            this->skip_osd();
+            this->remove_osd();
         }
         else {
             this->redraw_osd();
@@ -282,7 +282,7 @@ private:
         }
     }
 
-    void skip_osd()
+    void remove_osd()
     {
         if (this->bogus_refresh_rect_ex) {
             this->mod.rdp_suppress_display_updates();
