@@ -22,7 +22,7 @@ namespace cfg {
                 return ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 13; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{0};
         };
         // cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic
@@ -109,31 +109,20 @@ namespace cfg {
             type value{0};
         };
 
-        // Specifies the highest compression package support available on the front side:
-        //   0: the RDP bulk compression is disabled
-        //   1: RDP 4.0 bulk compression
-        //   2: RDP 5.0 bulk compression
-        //   3: RDP 6.0 bulk compression
-        //   4: RDP 6.1 bulk compression
         struct rdp_compression {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<unsigned, 0, 4, 0>;
-            type value{4};
+            using type = configs::RdpCompression;
+            type value{static_cast<type>(4)};
         };
 
-        // Specifies the maximum color resolution (color depth) for client session:
-        //   8: 8 bbp
-        //   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
-        //   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
-        //   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
         struct max_color_depth {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::ColorDepth;
-            type value{static_cast< ::configs::ColorDepth>(24)};
+            using type = configs::ColorDepth;
+            type value{static_cast<type>(24)};
         };
 
         // Persistent Disk Bitmap Cache on the front side.
@@ -185,7 +174,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticString<1024>;
+            using type = char[1023 + 1];
             type value{};
         };
 
@@ -195,7 +184,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 50; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{40000};
         };
         // AUTHID_CONTEXT_OPT_FRAMERATE
@@ -204,7 +193,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 51; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{5};
         };
         // AUTHID_CONTEXT_OPT_QSCALE
@@ -213,7 +202,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 52; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{15};
         };
 
@@ -223,7 +212,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 53; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{24};
         };
         // AUTHID_CONTEXT_OPT_HEIGHT
@@ -232,7 +221,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 54; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{600};
         };
         // AUTHID_CONTEXT_OPT_WIDTH
@@ -241,20 +230,17 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 55; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{800};
         };
 
-        // auth_error_message is left as std::string type
-        // because SocketTransport and ReplayMod take it as argument on
-        // constructor and modify it as a std::string
         // AUTHID_CONTEXT_AUTH_ERROR_MESSAGE
         struct auth_error_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 56; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -273,7 +259,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 58; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{1};
         };
         // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
@@ -282,7 +268,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 59; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
@@ -291,7 +277,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 60; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
@@ -300,7 +286,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 61; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
@@ -309,7 +295,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 62; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{0};
         };
         // AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES
@@ -318,7 +304,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 63; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{1};
         };
 
@@ -328,7 +314,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 64; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_TARGET_HOST
@@ -337,8 +323,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 65; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_TARGET_SERVICE
         struct target_service {
@@ -346,8 +332,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 66; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_TARGET_PORT
         struct target_port {
@@ -355,7 +341,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 67; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{3389};
         };
         // AUTHID_CONTEXT_TARGET_PROTOCOL
@@ -364,7 +350,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 68; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{"RDP"};
         };
 
@@ -374,7 +360,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 69; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -384,7 +370,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 70; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -394,7 +380,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 71; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_RESULT
@@ -403,7 +389,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 72; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
@@ -412,7 +398,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 73; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -422,18 +408,17 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 74; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
-        TODO("why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button")
         // AUTHID_CONTEXT_ACCEPT_MESSAGE
         struct accept_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 75; }
-            using type = std::string;
+            using type = bool;
             type value{};
         };
         // AUTHID_CONTEXT_DISPLAY_MESSAGE
@@ -442,7 +427,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 76; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -452,7 +437,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 77; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -482,7 +467,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 80; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -492,7 +477,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 81; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{0};
         };
         // AUTHID_CONTEXT_END_TIME
@@ -501,7 +486,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 82; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -511,7 +496,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 83; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{"allow"};
         };
         // AUTHID_CONTEXT_TIMEZONE
@@ -530,7 +515,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 85; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -550,8 +535,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 87; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_COMMENT
         struct comment {
@@ -559,8 +544,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 88; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_DURATION
         struct duration {
@@ -568,8 +553,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 89; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_WAITINFORETURN
         struct waitinforeturn {
@@ -577,8 +562,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 90; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_SHOWFORM
         struct showform {
@@ -595,7 +580,7 @@ namespace cfg {
                 return ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 92; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{0};
         };
 
@@ -605,7 +590,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 93; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{"login"};
         };
         // AUTHID_CONTEXT_FORCEMODULE
@@ -623,7 +608,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 95; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -633,7 +618,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 96; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_PATTERN_NOTIFY
@@ -642,7 +627,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 97; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -652,7 +637,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 98; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -662,7 +647,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 99; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -670,7 +655,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON
@@ -679,7 +664,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 100; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
@@ -696,7 +681,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
     };
@@ -708,7 +693,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 45; }
-            using type = ::configs::StaticKeyString<32>;
+            using type = std::array<unsigned char, 32>;
             type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
         };
         // AUTHID_CRYPTO_KEY1
@@ -717,7 +702,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 46; }
-            using type = ::configs::StaticKeyString<32>;
+            using type = std::array<unsigned char, 32>;
             type value{"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"};
         };
     };
@@ -728,168 +713,168 @@ namespace cfg {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct mcs {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct sec {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct rdp {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct primary_orders {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct secondary_orders {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct bitmap {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct capture {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct auth {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct session {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct front {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct mod_rdp {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct mod_vnc {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct mod_int {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct mod_xup {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct widget {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct input {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct password {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct compression {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct cache {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct bitmap_update {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct performance {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
         struct pass_dialog_box {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{};
         };
 
         struct config {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<unsigned, 0, 2, 0>;
+            using type = unsigned int;
             type value{2};
         };
     };
@@ -911,7 +896,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 1; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_HOST
@@ -920,7 +905,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 2; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET
@@ -929,7 +914,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 3; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_DEVICE
@@ -938,7 +923,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 4; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_DEVICE_ID
@@ -947,7 +932,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 5; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_USER
@@ -956,7 +941,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read | ::configs::VariableProperties::write;
             }
             static constexpr unsigned index() { return 6; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION
@@ -965,7 +950,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 7; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
@@ -974,7 +959,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 8; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
@@ -983,7 +968,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 9; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -1006,7 +991,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{3389};
         };
         struct nomouse {
@@ -1023,19 +1008,18 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // low, medium or high.
         struct encryptionLevel {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Level;
-            type value{static_cast< ::configs::Level>(0)};
+            using type = configs::Level;
+            type value{static_cast<type>(0)};
         };
         struct authfile {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{"/var/run/redemption-sesman-sock"};
         };
 
@@ -1044,7 +1028,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{10};
         };
         // No traffic auto disconnection (in seconds).
@@ -1052,7 +1036,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{900};
         };
         // Keepalive (in seconds).
@@ -1060,7 +1044,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{30};
         };
         // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
@@ -1068,7 +1052,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{120};
         };
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
@@ -1076,30 +1060,25 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{600};
         };
 
-        // Session record options.
-        //   0: No encryption (faster).
-        //   1: No encryption, with checksum (default).
-        //   2: Encryption enabled.
-        // When session records are encrypted, they can be read only by the WAB where they have been generated.
         // AUTHID_GLOBALS_TRACE_TYPE
         struct trace_type {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 10; }
-            using type = ::configs::TraceType;
-            type value{static_cast< ::configs::TraceType>(1)};
+            using type = configs::TraceType;
+            type value{static_cast<type>(1)};
         };
 
         struct listen_address {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticIpString;
+            using type = std::string;
             type value{"0.0.0.0"};
         };
         // Allow IP Transparent.
@@ -1115,7 +1094,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticString<256>;
+            using type = char[255 + 1];
             type value{"inquisition"};
         };
 
@@ -1123,19 +1102,19 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticString<1024>;
+            using type = char[1023 + 1];
             type value{PNG_PATH};
         };
         struct wrm_path {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticString<1024>;
+            using type = char[1023 + 1];
             type value{WRM_PATH};
         };
 
-        // AUTHID_GLOBALS_MOVIE
-        struct movie {
+        // AUTHID_GLOBALS_IS_REC
+        struct is_rec {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
@@ -1149,7 +1128,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 12; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // Support of Bitmap Update.
@@ -1188,7 +1167,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticPath<1024>;
+            using type = char[1023 + 1];
             type value{PERSISTENT_PATH};
         };
 
@@ -1206,24 +1185,18 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
     };
 
     struct mod_rdp {
-        // Specifies the highest compression package support available on the front side:
-        //   0: the RDP bulk compression is disabled
-        //   1: RDP 4.0 bulk compression
-        //   2: RDP 5.0 bulk compression
-        //   3: RDP 6.0 bulk compression
-        //   4: RDP 6.1 bulk compression
         struct rdp_compression {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<unsigned, 0, 4, 0>;
-            type value{4};
+            using type = configs::RdpCompression;
+            type value{static_cast<type>(4)};
         };
 
         struct disconnect_on_logon_user_change {
@@ -1252,7 +1225,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{"15,16,17,18,22"};
         };
 
@@ -1377,7 +1350,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticString<8>;
+            using type = char[7 + 1];
             type value{"*"};
         };
 
@@ -1387,7 +1360,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 18; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
         // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
@@ -1396,7 +1369,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 19; }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -1428,7 +1401,7 @@ namespace cfg {
             }
             static constexpr unsigned index() { return 22; }
             using type = bool;
-            type value{0};
+            type value{1};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
         struct enable_session_probe_launch_mask {
@@ -1439,18 +1412,14 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
-        // Behavior on failure to launch Session Probe.
-        //   0: ignore failure and continue.
-        //   1: disconnect user.
-        //   2: reconnect without Session Probe.
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
         struct session_probe_on_launch_failure {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 24; }
-            using type = ::configs::SessionProbeOnLaunchFailure;
-            type value{static_cast< ::configs::SessionProbeOnLaunchFailure>(2)};
+            using type = configs::SessionProbeOnLaunchFailure;
+            type value{static_cast<type>(2)};
         };
         // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
         // In milliseconds, 0 to disable timeout.
@@ -1460,7 +1429,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 25; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{20000};
         };
         // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
@@ -1471,7 +1440,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 26; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{7000};
         };
         // Minimum supported server : Windows Server 2008.
@@ -1490,7 +1459,7 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 28; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{5000};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER
@@ -1521,7 +1490,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticString<512>;
+            using type = char[511 + 1];
             type value{"cmd /k"};
         };
         // Keep known server certificates on WAB
@@ -1534,90 +1503,64 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
-        // Behavior of certificates check.
-        //   0: fails if certificates doesn't match or miss.
-        //   1: fails if certificate doesn't match, succeed if no known certificate.
-        //   2: succeed if certificates exists (not checked), fails if missing.
-        //   3: always succeed.
-        // System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
         // AUTHID_MOD_RDP_SERVER_CERT_CHECK
         struct server_cert_check {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 31; }
-            using type = ::configs::ServerCertCheck;
-            type value{static_cast< ::configs::ServerCertCheck>(1)};
+            using type = configs::ServerCertCheck;
+            type value{static_cast<type>(1)};
         };
         // Warn if check allow connexion to server.
-        //   1: message sent to syslog
-        //   2: User notified (through proxy interface)
-        //   4: admin notified (wab notification)
-        // Values can be added (everyone: 1+2+4=7, mute: 0)
         // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE
         struct server_access_allowed_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 32; }
-            using type = ::configs::ServerNotification;
-            type value{static_cast< ::configs::ServerNotification>(1)};
+            using type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that new server certificate file was created.
-        //   1: message sent to syslog
-        //   2: User notified (through proxy interface)
-        //   4: admin notified (wab notification)
-        // Values can be added (everyone: 1+2+4=7, mute: 0)
         // AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE
         struct server_cert_create_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 33; }
-            using type = ::configs::ServerNotification;
-            type value{static_cast< ::configs::ServerNotification>(1)};
+            using type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that server certificate file was successfully checked.
-        //   1: message sent to syslog
-        //   2: User notified (through proxy interface)
-        //   4: admin notified (wab notification)
-        // Values can be added (everyone: 1+2+4=7, mute: 0)
         // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE
         struct server_cert_success_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 34; }
-            using type = ::configs::ServerNotification;
-            type value{static_cast< ::configs::ServerNotification>(1)};
+            using type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that server certificate file checking failed.
-        //   1: message sent to syslog
-        //   2: User notified (through proxy interface)
-        //   4: admin notified (wab notification)
-        // Values can be added (everyone: 1+2+4=7, mute: 0)
         // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE
         struct server_cert_failure_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 35; }
-            using type = ::configs::ServerNotification;
-            type value{static_cast< ::configs::ServerNotification>(1)};
+            using type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that server certificate check raised some internal error.
-        //   1: message sent to syslog
-        //   2: User notified (through proxy interface)
-        //   4: admin notified (wab notification)
-        // Values can be added (everyone: 1+2+4=7, mute: 0)
         // AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE
         struct server_cert_error_message {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 36; }
-            using type = ::configs::ServerNotification;
-            type value{static_cast< ::configs::ServerNotification>(1)};
+            using type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Do not transmit client machine name or RDP server.
         struct hide_client_name {
@@ -1672,7 +1615,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::string;
+            using type = std::basic_string<char>;
             type value{};
         };
 
@@ -1685,15 +1628,14 @@ namespace cfg {
         };
 
         // VNC server clipboard data encoding type.
-        //   latin1 (default) or utf-8
         // AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE
         struct server_clipboard_encoding_type {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 39; }
-            using type = ::configs::ClipboardEncodingType;
-            type value{static_cast< ::configs::ClipboardEncodingType>(1)};
+            using type = configs::ClipboardEncodingType;
+            type value{static_cast<type>(1)};
         };
 
         // AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
@@ -1702,8 +1644,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 40; }
-            using type = ::configs::Range<unsigned, 0, 2, 0>;
-            type value{0};
+            using type = configs::VncBogusClipboardInfiniteLoop;
+            type value{static_cast<type>(0)};
         };
     };
 
@@ -1716,15 +1658,12 @@ namespace cfg {
             type value{1};
         };
 
-        //   0: keyboard input are not masked
-        //   1: only passwords are masked
-        //   2: passwords and unidentified texts are masked
         struct keyboard_input_masking_level {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::KeyboardInputMaskingLevel;
-            type value{static_cast< ::configs::KeyboardInputMaskingLevel>(2)};
+            using type = configs::KeyboardInputMaskingLevel;
+            type value{static_cast<type>(2)};
         };
     };
 
@@ -1735,8 +1674,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 47; }
-            using type = ::configs::Language;
-            type value{static_cast< ::configs::Language>(0)};
+            using type = configs::Language;
+            type value{static_cast<type>(0)};
         };
         // AUTHID_TRANSLATION_PASSWORD_EN
         struct password_en {
@@ -1744,8 +1683,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 48; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_TRANSLATION_PASSWORD_FR
         struct password_fr {
@@ -1753,8 +1692,8 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 49; }
-            using type = std::string;
-            type value{""};
+            using type = std::basic_string<char>;
+            type value{};
         };
     };
 
@@ -1763,19 +1702,16 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{33};
         };
 
-        // Specifies the type of data to be captured:
-        //   1: PNG
-        //   2: WRM
         struct capture_flags {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::CaptureFlags;
-            type value{static_cast< ::configs::CaptureFlags>(3)};
+            using type = configs::CaptureFlags;
+            type value{static_cast<type>(3)};
         };
 
         // Frame interval is in 1/10 s.
@@ -1783,7 +1719,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{10};
         };
         // Frame interval is in 1/100 s.
@@ -1791,7 +1727,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{40};
         };
         // Time between 2 wrm movies (in seconds).
@@ -1799,7 +1735,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{600};
         };
         // Number of png captures to keep.
@@ -1807,7 +1743,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{5};
         };
 
@@ -1815,7 +1751,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticString<1024>;
+            using type = char[1023 + 1];
             type value{"/tmp/"};
         };
 
@@ -1823,21 +1759,21 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticPath<1024>;
+            using type = char[1023 + 1];
             type value{HASH_PATH};
         };
         struct record_tmp_path {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticPath<1024>;
+            using type = char[1023 + 1];
             type value{RECORD_TMP_PATH};
         };
         struct record_path {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::StaticPath<1024>;
+            using type = char[1023 + 1];
             type value{RECORD_PATH};
         };
 
@@ -1852,47 +1788,41 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = unsigned;
+            using type = unsigned int;
             type value{300};
         };
 
         // Disable keyboard log:
-        //   1: disable keyboard log in syslog
-        //   2: disable keyboard log in recorded sessions
         // AUTHID_VIDEO_DISABLE_KEYBOARD_LOG
         struct disable_keyboard_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 41; }
-            using type = ::configs::KeyboardLogFlags;
-            type value{static_cast< ::configs::KeyboardLogFlags>(1)};
+            using type = configs::KeyboardLogFlags;
+            type value{static_cast<type>(1)};
         };
 
         // Disable clipboard log:
-        //   1: disable clipboard log in syslog
-        //   2: disable clipboard log in recorded sessions
         // AUTHID_VIDEO_DISABLE_CLIPBOARD_LOG
         struct disable_clipboard_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 42; }
-            using type = ::configs::ClipboardLogFlags;
-            type value{static_cast< ::configs::ClipboardLogFlags>(1)};
+            using type = configs::ClipboardLogFlags;
+            type value{static_cast<type>(1)};
         };
 
         // Disable (redirected) file system log:
-        //   1: disable (redirected) file system log in syslog
-        //   2: disable (redirected) file system log in recorded sessions
         // AUTHID_VIDEO_DISABLE_FILE_SYSTEM_LOG
         struct disable_file_system_log {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 43; }
-            using type = ::configs::FileSystemLogFlags;
-            type value{static_cast< ::configs::FileSystemLogFlags>(1)};
+            using type = configs::FileSystemLogFlags;
+            type value{static_cast<type>(1)};
         };
 
         // AUTHID_VIDEO_RT_DISPLAY
@@ -1901,30 +1831,23 @@ namespace cfg {
                 return ::configs::VariableProperties::read;
             }
             static constexpr unsigned index() { return 44; }
-            using type = unsigned;
+            using type = unsigned int;
             type value{0};
         };
 
-        // The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
-        //   0: 24-bit
-        //   1: 16-bit
         struct wrm_color_depth_selection_strategy {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<unsigned, 0, 1, 0>;
-            type value{1};
+            using type = configs::ColorDepthSelectionStrategy;
+            type value{static_cast<type>(1)};
         };
-        // The compression method of native video capture:
-        //   0: No compression
-        //   1: GZip
-        //   2: Snappy
         struct wrm_compression_algorithm {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = ::configs::Range<unsigned, 0, 2, 0>;
-            type value{1};
+            using type = configs::WrmCompressionAlgorithm;
+            type value{static_cast<type>(1)};
         };
     };
 
@@ -2071,7 +1994,7 @@ struct globals
 , cfg::globals::certificate_password
 , cfg::globals::png_path
 , cfg::globals::wrm_path
-, cfg::globals::movie
+, cfg::globals::is_rec
 , cfg::globals::movie_path
 , cfg::globals::enable_bitmap_update
 , cfg::globals::enable_close_box
@@ -2210,7 +2133,7 @@ using VariablesAclPack = Pack<
 , cfg::globals::target_application_account
 , cfg::globals::target_application_password
 , cfg::globals::trace_type
-, cfg::globals::movie
+, cfg::globals::is_rec
 , cfg::globals::movie_path
 , cfg::client::keyboard_layout
 , cfg::client::disable_tsk_switch_shortcuts

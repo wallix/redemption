@@ -84,10 +84,7 @@ struct enum_flags
     template<class Ch, class Tr, class EE>
     friend std::basic_ostream<Ch, Tr> &
     operator << (std::basic_ostream<Ch, Tr> & out, enum_flags<EE> e) {
-        {
-            auto enum_name = type_name<EE>(nullptr);
-            out.write(enum_name.data(), std::streamsize(enum_name.size())) << "{";
-        }
+        out << type_name<EE>();
         auto && names = E::names();
         auto fisrt = names.begin();
         auto last = names.end();

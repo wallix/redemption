@@ -20,12 +20,30 @@
 
 #pragma once
 
-#include "utils/array_view.hpp"
-
+#include <iosfwd>
+#include <cstddef>
 #include <cstring>
 
+
+struct string_type_name
+{
+    char const * first;
+    char const * last;
+
+    char const * begin() const noexcept { return this->first; }
+    char const * end() const noexcept { return this->last; }
+    char const * data() const noexcept { return this->first; }
+
+    std::size_t size() const noexcept { return this->last - this->first; }
+
+    template<class Ch, class Tr>
+    friend std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, string_type_name const & s)
+    { return out.write(s.data(), s.size()); }
+};
+
+
 template<class T>
-array_const_char type_name(T const * = nullptr)
+string_type_name type_name(T const * = nullptr)
 #ifdef __clang__
 {
   char const * s = __PRETTY_FUNCTION__;

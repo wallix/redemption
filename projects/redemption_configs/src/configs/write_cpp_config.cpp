@@ -18,16 +18,14 @@
 *   Author(s): Jonathan Poelen
 */
 
+#include "configs/specs/config_spec.hpp"
 #include "configs/generators/cpp_config.hpp"
 
-int main(int ac, char ** av)
-{
-    struct Writer
-    : cpp_config_writer::CppConfigWriterBase<Writer>
-    {
+int main(int ac, char ** av) {
+    struct Writer : cfg_generators::cpp_config_writer::CppConfigWriterBase<Writer> {
         Writer() {
-            config_spec::config_spec_definition(*this);
-        }
-    };
-    return app_write_cpp_config<Writer>(ac, av);
+            cfg_specs::config_spec_definition(*this);
+        };
+    } W;
+    return cfg_generators::app_write_cpp_config<Writer>(ac, av);
 }

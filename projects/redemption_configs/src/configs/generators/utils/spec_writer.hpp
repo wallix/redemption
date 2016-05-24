@@ -68,25 +68,25 @@ namespace detail_
 
 
     template<class T>
-    auto pack_get_impl(ref<T> const & val, int)
+    auto pack_get(ref<T> const & val, int)
     -> decltype(unwrap(val.x))
     { return unwrap(val.x); }
 
     template<class T, class Pack>
     std::enable_if_t<!std::is_base_of<ref<T>, Pack>::value, typename T::bind_type const &>
-    pack_get_impl(Pack const & pack, char)
+    pack_get(Pack const & pack, char)
     { return static_cast<typename T::bind_type const &>(pack); }
 
 
     template<template<class> class Tpl, class T>
-    auto pack_get_impl_tpl_val(ref<Tpl<T>> const & val)
+    auto pack_get_tpl_val(ref<Tpl<T>> const & val)
     -> decltype(unwrap(val.x))
     { return unwrap(val.x); }
 
     template<template<class> class Tpl, class T>
-    auto pack_get_impl_tpl(T const & val, int)
-    -> decltype(pack_get_impl_tpl_val<Tpl>(val))
-    { return pack_get_impl_tpl_val<Tpl>(val); }
+    auto pack_get_tpl(T const & val, int)
+    -> decltype(pack_get_tpl_val<Tpl>(val))
+    { return pack_get_tpl_val<Tpl>(val); }
 
     template<class T> struct pack_get_binded_tpl;
 
@@ -99,7 +99,7 @@ namespace detail_
     };
 
     template<template<class> class Tpl, class T>
-    auto pack_get_impl_tpl(T const & val, char)
+    auto pack_get_tpl(T const & val, char)
     -> decltype(pack_get_binded_tpl<Tpl<int>>::pack_get(val))
     { return pack_get_binded_tpl<Tpl<int>>::pack_get(val); }
 }
@@ -107,13 +107,13 @@ namespace detail_
 
 template<class T, class...Ts>
 auto pack_get(pack_type<Ts...> const & pack)
--> decltype(detail_::pack_get_impl<T>(pack, 1))
-{ return detail_::pack_get_impl<T>(pack, 1); }
+-> decltype(detail_::pack_get<T>(pack, 1))
+{ return detail_::pack_get<T>(pack, 1); }
 
 template<template<class> class Tpl, class...Ts>
 auto pack_get(pack_type<Ts...> const & pack)
--> decltype(detail_::pack_get_impl_tpl<Tpl>(pack, 1))
-{ return detail_::pack_get_impl_tpl<Tpl>(pack, 1); }
+-> decltype(detail_::pack_get_tpl<Tpl>(pack, 1))
+{ return detail_::pack_get_tpl<Tpl>(pack, 1); }
 
 
 namespace detail_
@@ -160,6 +160,66 @@ U const & get_default(cfg_attributes::type_<T>, ref<cfg_attributes::default_<U>>
 template<class T>
 T const & get_default(cfg_attributes::type_<T>, ...)
 { static T r; return r; }
+
+
+namespace detail_
+{
+    template<class To, class Pack, class Default>
+    To const & value_or(std::true_type, Pack const & pack, Default const &)
+    { return pack_get<To>(pack); }
+
+    template<class To, class Pack, class Default>
+    To const & value_or(std::false_type, Pack const &, Default const & default_)
+    { return default_; }
+
+    template<template<class> class To, class Pack, class Default>
+    auto const & value_or(std::true_type, Pack const & pack, Default const &)
+    { return pack_get<To>(pack); }
+
+    template<template<class> class To, class Pack, class Default>
+    Default const & value_or(std::false_type, Pack const &, Default const & default_)
+    { return default_; }
+}
+
+template<class T, class...Ts>
+T const & value_or(pack_type<Ts...> const & pack, T const & default_)
+{ return detail_::value_or<T>(pack_contains<T>(pack), pack, default_); }
+
+template<class T, class...Ts, class Default>
+T const & value_or(pack_type<Ts...> const & pack, Default const & default_)
+{ return detail_::value_or<T>(pack_contains<T>(pack), pack, default_); }
+
+template<template<class> class T, class...Ts, class Default>
+auto const & value_or(pack_type<Ts...> const & pack, Default const & default_)
+{ return detail_::value_or<T>(pack_contains<T>(pack), pack, default_); }
+
+
+namespace detail_
+{
+    template<class To, class Pack, class Fn, class... Args>
+    void apply_if_contains(std::true_type, Pack const & pack, Fn & fn, Args const & ... args)
+    { fn(pack_get<To>(pack), args...); }
+
+    template<class To, class Pack, class Fn, class... Args>
+    void apply_if_contains(std::false_type, Pack const &, Fn &, Args const & ...)
+    {}
+
+    template<template<class> class To, class Pack, class Fn, class... Args>
+    void apply_if_contains(std::true_type, Pack const & pack, Fn & fn, Args const & ... args)
+    { fn(pack_get<To>(pack), args...); }
+
+    template<template<class> class To, class Pack, class Fn, class... Args>
+    void apply_if_contains(std::false_type, Pack const &, Fn &, Args const & ...)
+    {}
+}
+
+template<class T, class... Ts, class Fn, class... Args>
+void apply_if_contains(pack_type<Ts...> const & pack, Fn fn, Args const & ... args)
+{ detail_::apply_if_contains<T>(pack_contains<T>(pack), pack, fn, args...); }
+
+template<template<class> class T, class... Ts, class Fn, class... Args>
+void apply_if_contains(pack_type<Ts...> const & pack, Fn fn, Args const & ... args)
+{ detail_::apply_if_contains<T>(pack_contains<T>(pack), pack, fn, args...); }
 
 
 template<class T, class U = void>
@@ -215,16 +275,11 @@ struct ConfigSpecWriterBase
 
     template<class To, class... Ts>
     void write_if_contains(pack_type<Ts...> const & pack)
-    { this->write_if_contains_impl<To>(pack_contains<To>(pack), pack); }
+    { apply_if_contains<To>(pack, [this, &pack](auto&& val){ this->write(val, pack); }); }
 
-private:
-    template<class To, class Pack>
-    void write_if_contains_impl(std::true_type, Pack const & pack)
-    { this->write(pack_get<To>(pack), pack); }
-
-    template<class To, class Pack>
-    static void write_if_contains_impl(std::false_type, Pack const &)
-    {}
+    template<template<class> class To, class... Ts>
+    void write_if_contains(pack_type<Ts...> const & pack)
+    { apply_if_contains<To>(pack, [this, &pack](auto&& val){ this->write(val, pack); }); }
 
 public:
     void write_key(char const * k, std::size_t n, char const * prefix = "") {

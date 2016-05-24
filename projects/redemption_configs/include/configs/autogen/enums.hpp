@@ -151,13 +151,26 @@ operator << (std::basic_ostream<Ch, Tr> & os, FileSystemLogFlags e)
 // Values can be added (everyone: 1+2+4=7, mute: 0)
 enum class ServerNotification {
     nobody = 0,
-    // message sent to syslog.
+    // message sent to syslog
     syslog = 1,
-    // User notified (through proxy interface).
+    // User notified (through proxy interface)
     user = 2,
-    // admin notified (wab notification).
-    admin = 3,
+    // admin notified (wab notification)
+    admin = 4,
 };
+
+inline ServerNotification operator | (ServerNotification x, ServerNotification y)
+{ return static_cast<ServerNotification>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
+inline ServerNotification operator & (ServerNotification x, ServerNotification y)
+{ return static_cast<ServerNotification>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
+inline ServerNotification operator ~ (ServerNotification x)
+{ return static_cast<ServerNotification>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (4 - 1)))); }
+inline ServerNotification operator + (ServerNotification & x, ServerNotification y) { return x | y; }
+inline ServerNotification operator - (ServerNotification & x, ServerNotification y) { return x & ~y; }
+inline ServerNotification & operator |= (ServerNotification & x, ServerNotification y) { return x = x | y; }
+inline ServerNotification & operator &= (ServerNotification & x, ServerNotification y) { return x = x & y; }
+inline ServerNotification & operator += (ServerNotification & x, ServerNotification y) { return x = x + y; }
+inline ServerNotification & operator -= (ServerNotification & x, ServerNotification y) { return x = x - y; }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
@@ -184,7 +197,7 @@ operator << (std::basic_ostream<Ch, Tr> & os, ServerCertCheck e)
 { return os << static_cast<unsigned long>(e); }
 
 
-// Session record options
+// Session record options.
 // When session records are encrypted, they can be read only by the WAB where they have been generated.
 enum class TraceType {
     // No encryption (faster).
@@ -273,7 +286,7 @@ operator << (std::basic_ostream<Ch, Tr> & os, WrmCompressionAlgorithm e)
 
 // Specifies the highest compression package support available on the front side
 enum class RdpCompression {
-    // The RDP bulk compression
+    // The RDP bulk compression is disabled
     none = 0,
     // RDP 4.0 bulk compression
     rdp4 = 1,

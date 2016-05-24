@@ -117,6 +117,7 @@ constant CXXFLAGS-COMMON :
 #    <toolset>clang:<cxxflags>-Wno-overloaded-virtual
     <toolset>clang:<cxxflags>-Wno-char-subscripts
     <toolset>clang:<cxxflags>-Wno-unused-variable
+    <toolset>clang:<cxxflags>-Qunused-arguments
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
 ;
 

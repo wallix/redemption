@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_UTILS_APPS_APP_WRITE_PYTHON_SPEC_HPP
-#define REDEMPTION_SRC_UTILS_APPS_APP_WRITE_PYTHON_SPEC_HPP
+#pragma once
 
 #include "configs/attributes/spec.hpp"
 #include "configs/generators/utils/multi_filename_writer.hpp"
@@ -81,7 +80,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         if (bool(attr & spec::attr::password)) this->out() << "\"#_password\\n\"\n";
 
         this->out() << "\"" << pack_get<spec::name>(pack) << " = ";
-        this->write_type(type, get_default(type, pack));
+        this->inherit().write_type(type, get_default(type, pack));
         this->out() << "\\n\\n\"\n\n";
     }
 
@@ -341,5 +340,3 @@ int app_write_python_spec(int ac, char const * const * av)
 }
 
 }
-
-#endif

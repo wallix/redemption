@@ -163,11 +163,13 @@ struct io_hexkey
 {
     char const * s;
     std::size_t n;
+    char const * prefix = "";
 
     friend std::ostream & operator<<(std::ostream & out, io_hexkey const & hk)
     {
         int c;
         for (const char * k = hk.s, * e = k + hk.n; k != e; ++k) {
+            out << hk.prefix;
             c = (*k >> 4);
             c += (c > 9) ? 'A' - 10 : '0';
             out << char(c);
@@ -191,7 +193,7 @@ struct io_quoted2
     {
         if (auto s = q.s) {
             for (; *s; ++s) {
-                if ('\'' == *s || '"' == *s) {
+                if ('\'' == *s || '"' == *s || '\\' == *s) {
                     out << '\'';
                 }
                 out << *s;
