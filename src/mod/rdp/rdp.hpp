@@ -457,6 +457,7 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
 
     const bool bogus_sc_net_size;
     const bool bogus_linux_cursor;
+    const bool bogus_refresh_rect;
 
     std::string real_alternate_shell;
     std::string real_working_dir;
@@ -748,6 +749,7 @@ public:
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
+        , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , lang(mod_rdp_params.lang)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , server_notifier(mod_rdp_params.acl,
@@ -1330,6 +1332,10 @@ protected:
 
         session_probe_virtual_channel_params.acl                                    =
             this->acl;
+
+        session_probe_virtual_channel_params.bogus_refresh_rect_ex                  =
+            (this->bogus_refresh_rect && this->allow_using_multiple_monitors &&
+             (this->cs_monitor.monitorCount > 1));
 
         return session_probe_virtual_channel_params;
     }
@@ -5798,7 +5804,7 @@ public:
 
     void rdp_suppress_display_updates() override {
         if (this->verbose & 1){
-            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
+            LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates");
         }
 
         this->send_pdu_type2(
@@ -5811,7 +5817,7 @@ public:
         );
 
         if (this->verbose & 1){
-            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates done");
+            LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
         }
     }
 

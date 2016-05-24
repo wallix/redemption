@@ -1215,6 +1215,15 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+
+        // Needed to refresh screen of Windows Server 2012.
+        struct bogus_refresh_rect {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
     };
 
     struct internal_mod {
@@ -2109,6 +2118,7 @@ struct globals
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
 , cfg::globals::allow_using_multiple_monitors
+, cfg::globals::bogus_refresh_rect
 { static constexpr bool is_section = true; };
 
 struct internal_mod

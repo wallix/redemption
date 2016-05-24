@@ -40,7 +40,7 @@
 
 "# Keepalive (in seconds).\n"
 
-"#_hidden\n"
+"#_advanced\n"
 "keepalive_grace_delay = integer(min=0, default=30)\n\n"
 
 "# Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).\n"
@@ -110,6 +110,11 @@
 "disable_proxy_opt = boolean(default=False)\n\n"
 
 "allow_using_multiple_monitors = boolean(default=False)\n\n"
+
+"# Needed to refresh screen of Windows Server 2012.\n"
+
+"#_advanced\n"
+"bogus_refresh_rect = boolean(default=True)\n\n"
 
 "[session_log]\n\n"
 
