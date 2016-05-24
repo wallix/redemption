@@ -136,9 +136,11 @@
 "#_advanced\n"
 "ignore_logon_password = boolean(default=False)\n\n"
 
+"# Enable font smoothing (0x80).\n"
+
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_default = integer(min=0, default=0)\n\n"
+"performance_flags_default = integer(min=0, default=128)\n\n"
 
 "# Disable theme (0x8).\n"
 
@@ -146,11 +148,14 @@
 "#_hex\n"
 "performance_flags_force_present = integer(min=0, default=8)\n\n"
 
-"# Disable font smoothing (0x80).\n"
-
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_force_not_present = integer(min=0, default=128)\n\n"
+"performance_flags_force_not_present = integer(min=0, default=0)\n\n"
+
+"# If enabled, avoid automatically font smoothing in recorded session.\n"
+
+"#_advanced\n"
+"auto_adjust_performance_flags = boolean(default=True)\n\n"
 
 "# Fallback to RDP Legacy Encryption if client does not support TLS.\n"
 

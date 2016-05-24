@@ -1056,6 +1056,13 @@ public:
 
                 mod_rdp_params.allow_using_multiple_monitors       = this->ini.get<cfg::globals::allow_using_multiple_monitors>();
 
+                mod_rdp_params.adjust_performance_flags_for_recording
+                                                                   = (this->ini.get<cfg::globals::movie>() &&
+                                                                      this->ini.get<cfg::client::auto_adjust_performance_flags>() &&
+                                                                      ((this->ini.get<cfg::video::capture_flags>() &
+                                                                        (configs::CaptureFlags::wrm | configs::CaptureFlags::ocr)) !=
+                                                                       configs::CaptureFlags::none));
+
                 try {
                     const char * const name = "RDP Target";
                     TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")

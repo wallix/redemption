@@ -17,6 +17,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "performance_flags_force_not_present")) {
             ::configs::parse(static_cast<cfg::client::performance_flags_force_not_present&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "auto_adjust_performance_flags")) {
+            ::configs::parse(static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "tls_fallback_legacy")) {
             ::configs::parse(static_cast<cfg::client::tls_fallback_legacy&>(this->variables).value, value);
         }

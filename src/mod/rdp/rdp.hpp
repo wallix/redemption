@@ -668,7 +668,9 @@ public:
         , state(MOD_RDP_NEGO)
         , console_session(info.console_session)
         , front_bpp(info.bpp)
-        , performanceFlags(info.rdp5_performanceflags)
+        , performanceFlags(info.rdp5_performanceflags &
+                           (~(mod_rdp_params.adjust_performance_flags_for_recording ?
+                              static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING) : 0)))
         , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)

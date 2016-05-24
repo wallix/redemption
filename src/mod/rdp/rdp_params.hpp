@@ -126,6 +126,8 @@ struct ModRDPParams {
 
     bool allow_using_multiple_monitors;
 
+    bool adjust_performance_flags_for_recording;
+
     uint32_t verbose;
     uint32_t cache_verbose;
 
@@ -231,6 +233,8 @@ struct ModRDPParams {
         , lang(Translation::EN)
 
         , allow_using_multiple_monitors(false)
+
+        , adjust_performance_flags_for_recording(false)
 
         , verbose(verbose)
         , cache_verbose(0)
@@ -411,6 +415,10 @@ struct ModRDPParams {
 
         LOG(LOG_INFO,
             "ModRDPParams allow_using_multiple_monitors=%s",       (this->allow_using_multiple_monitors ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams adjust_performance_flags_for_recording=%s",
+                                                                   (this->adjust_performance_flags_for_recording ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);
