@@ -22,6 +22,7 @@
 #define REDEMPTION_GDI_GRAPHIC_DEVICE_HPP
 
 #include <type_traits>
+#include <utility>
 
 #include <cstdint>
 
@@ -219,39 +220,22 @@ struct GraphicCoreAccess
     }
 
     template<class Derived>
+    static auto graphic_proxy(Derived & derived)
+    -> decltype(derived.get_graphic_proxy()) {
+        return derived.get_graphic_proxy();
+    }
+
+    template<class Derived>
     static auto color_converter(Derived const & derived)
-    -> decltype(derived.color_converter_impl()) {
-        return derived.color_converter_impl();
-    }
-
-    template<class Derived, class Tag, class... Ts>
-    static void invoke_uniform_gd(Derived & derived, Tag tag, Ts const & ... args) {
-        derived.invoke_uniform_gd_impl(tag, args...);
-    }
-
-    template<class Derived>
-    static auto get_gd_proxy(Derived & derived)
-    -> decltype(derived.get_gd_proxy_impl()) {
-        return derived.get_gd_proxy_impl();
-    }
-
-    template<class Derived>
-    static auto get_gd_list(Derived & derived)
-    -> decltype(derived.get_gd_list_impl()) {
-        return derived.get_gd_list_impl();
-    }
-
-    template<class Derived, class Gd>
-    static auto to_gd_proxy(Derived & derived, Gd & gd)
-    -> decltype(derived.to_gd_proxy_impl(gd)) {
-        return derived.to_gd_proxy_impl(gd);
+    -> decltype(derived.get_color_converter()) {
+        return derived.get_color_converter();
     }
 };
 
 
 /**
  * \code
- * struct Gd : gdi::GraphicBase<Gd>
+ * struct Graphic : gdi::GraphicBase<Graphic>
  * {
  * private:
  *   friend gdi::GraphicCoreAccess;
@@ -329,159 +313,184 @@ private:
 
 /**
  * \code
- * struct Gd : gdi::GraphicProxy<Gd>
+ * struct Graphic : gdi::GraphicProxyBase<Graphic>
  * {
  * private:
  *   gdi::GraphicApi & internal;
  *
  *   friend gdi::GraphicCoreAccess;
  *
- *   gdi::GraphicApi & get_gd_proxy_impl() { return this->internal; }
+ *   gdi::GraphicApi & get_graphic_proxy() { return this->internal; }
  * };
  * \endcode
  */
 template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
-struct GraphicProxy : GraphicBase<Derived, InterfaceBase, CoreAccess>
+struct GraphicProxyBase : GraphicBase<Derived, InterfaceBase, CoreAccess>
 {
     using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
-    using base_type = GraphicProxy;
+    using base_type = GraphicProxyBase;
     friend CoreAccess;
 
     void set_pointer(Pointer    const & pointer) override {
-        CoreAccess::get_gd_proxy(this->derived()).set_pointer(pointer);
+        CoreAccess::graphic_proxy(this->derived()).set_pointer(pointer);
     }
 
     void set_palette(BGRPalette const & palette) override {
-        CoreAccess::get_gd_proxy(this->derived()).set_palette(palette);
+        CoreAccess::graphic_proxy(this->derived()).set_palette(palette);
     }
 
     void sync() override {
-        CoreAccess::get_gd_proxy(this->derived()).sync();
+        CoreAccess::graphic_proxy(this->derived()).sync();
     }
 
     void set_row(std::size_t rownum, const uint8_t * data) override {
-        CoreAccess::get_gd_proxy(this->derived()).set_row(rownum, data);
+        CoreAccess::graphic_proxy(this->derived()).set_row(rownum, data);
     }
 
 protected:
     template<class... Ts>
     void draw_impl(Ts const & ... args) {
-        CoreAccess::get_gd_proxy(this->derived()).draw(args...);
+        CoreAccess::graphic_proxy(this->derived()).draw(args...);
     }
 };
 
 
-/**
- * \code
- * struct Gd : gdi::GraphicDispatcher<Gd>
- * {
- * private:
- *   std::vector<std::reference_wrapper<gdi::GraphicApi>> gds;
- *
- *   friend gdi::GraphicCoreAccess;
- *
- *   auto & get_gd_list_impl() { return this->gds; }
- *
- *   //GraphicApiWrapper to_gd_proxy_impl(List::value_type & gd) { return wrap(gd); }
- * };
- * \endcode
- */
-template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
-struct GraphicDispatcher : GraphicBase<Derived, InterfaceBase, CoreAccess>
+struct draw_tag {};
+struct set_tag {};
+struct sync_tag {};
+struct set_row_tag {};
+
+
+template<class Graphic>
+struct GraphicUniformProxy
 {
-    using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
-    using base_type = GraphicDispatcher;
-    friend CoreAccess;
+    using proxy_type = GraphicUniformProxy;
 
-    void set_pointer(Pointer    const & pointer) override {
-        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
-            CoreAccess::to_gd_proxy(this->derived(), gd).set_pointer(pointer);
-        }
-    }
+    GraphicUniformProxy() = default;
+    GraphicUniformProxy(Graphic && graphic) : graphic_(std::move(graphic)) {}
+    GraphicUniformProxy(Graphic const & graphic) : graphic_(graphic) {}
 
-    void set_palette(BGRPalette const & palette) override {
-        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
-            CoreAccess::to_gd_proxy(this->derived(), gd).set_palette(palette);
-        }
-    }
+    template<class Graphic_>
+    GraphicUniformProxy(Graphic_ && graphic)
+    : graphic_(std::forward<Graphic_>(graphic))
+    {}
 
-    void sync() override {
-        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
-            CoreAccess::to_gd_proxy(this->derived(), gd).sync();
-        }
-    }
-
-    void set_row(std::size_t rownum, const uint8_t * data) override {
-        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
-            CoreAccess::to_gd_proxy(this->derived(), gd).set_row(rownum, data);
-        }
-    }
-
-protected:
     template<class... Ts>
-    void draw_impl(Ts const & ... args) {
-        for (auto && gd : CoreAccess::get_gd_list(this->derived())) {
-            CoreAccess::to_gd_proxy(this->derived(), gd).draw(args...);
-        }
+    void draw(Ts const & ... args) {
+        this->graphic_(draw_tag{}, args...);
     }
 
-    GraphicApi & to_gd_proxy_impl(GraphicApi & gd) {
-        return gd;
+    void set_pointer(Pointer    const & pointer) {
+        this->graphic_(set_tag{}, pointer);
+    }
+
+    void set_palette(BGRPalette const & palette) {
+        this->graphic_(set_tag{}, palette);
+    }
+
+    void sync() {
+        this->graphic_(sync_tag{});
+    }
+
+    void set_row(std::size_t rownum, const uint8_t * data) {
+        this->graphic_(set_row_tag{}, rownum, data);
+    }
+
+private:
+    Graphic graphic_;
+};
+
+
+template<class Graphic>
+struct GraphicUniformDistribution
+{
+    Graphic graphic_;
+
+    template<class... Ts>
+    void operator()(draw_tag, Ts const & ... args) {
+        this->graphic_.draw(args...);
+    }
+
+    void operator()(set_tag, Pointer const & pointer) {
+        this->graphic_.set_pointer(pointer);
+    }
+
+    void operator()(set_tag, BGRPalette const & palette) {
+        this->graphic_.set_palette(palette);
+    }
+
+    void operator()(sync_tag) {
+        this->graphic_.sync();
+    }
+
+    void operator()(set_row_tag, std::size_t rownum, const uint8_t * data) {
+        this->graphic_.set_row(rownum, data);
     }
 };
 
 
+struct self_fn
+{
+    template<class T> T & operator()(T & x) const { return x; }
+    template<class T> T operator()(T && x) const { return std::move(x); }
+
+    template<class T> T & operator()(std::reference_wrapper<T> x) const { return x; }
+};
+
+template<class GraphicList, class Projection = self_fn>
+struct GraphicUniformDispatcherList
+{
+    GraphicList & graphics_;
+    Projection projection_;
+
+    template<class Tag, class... Ts>
+    void operator()(Tag tag, Ts const & ... args) {
+        for (auto && graphic : this->graphics_) {
+            this->projection_(graphic)(tag, args...);
+        }
+    }
+};
+
+
+template<class Projection>
+struct GraphicUniformProjection
+{
+    Projection projection_;
+
+    template<class Graphic>
+    auto operator()(Graphic & graphic)
+    -> GraphicUniformDistribution<decltype(projection_(graphic))>
+    {
+        return {this->projection_(graphic)};
+    }
+};
+
 /**
  * \code
- * struct Gd : gdi::GraphicUniFormProxy<Gd>
+ * struct GraphicDispatcher : gdi::GraphicProxyBase<Graphic>
  * {
  * private:
+ *   std::vector<std::reference_wrapper<gdi::GraphicApi>> graphics;
+ *
  *   friend gdi::GraphicCoreAccess;
  *
- *   template<class Cmd, class... Args>
- *   void invoke_uniform_gd_impl(draw_tag, Cmd const & cmd, Args const & ... args) { ... }
- *
- *   void invoke_uniform_gd_impl(set_tag, BGRPalette const & palette) { ... }
- *   void invoke_uniform_gd_impl(set_tag, Pointer    const & pointer) { ... }
- *
- *   void invoke_uniform_gd_impl(sync_tag) { ... }
- *
- *   void invoke_uniform_gd_impl(set_row_tag, std::size_t rownum, const uint8_t * data) { ... }
+ *   GraphicDispatcherList<std::vector<std::reference_wrapper<gdi::GraphicApi>>>
+ *   get_graphic_proxy() { return this->graphics; }
  * };
  * \endcode
  */
-template<class Derived, class InterfaceBase = GraphicApi, class CoreAccess = GraphicCoreAccess>
-struct GraphicUniFormProxy : GraphicBase<Derived, InterfaceBase, CoreAccess>
+template<class GraphicList, class Projection = self_fn>
+struct GraphicDispatcherList
+: GraphicUniformProxy<
+    GraphicUniformDispatcherList<
+        GraphicList,
+        GraphicUniformProjection<Projection>
+    >
+>
 {
-    using GraphicBase<Derived, InterfaceBase, CoreAccess>::GraphicBase;
-    using base_type = GraphicUniFormProxy;
-    friend CoreAccess;
-
-    struct draw_tag {};
-    struct set_tag {};
-    struct sync_tag {};
-    struct set_row_tag {};
-
-    void set_pointer(Pointer    const & pointer) override {
-        CoreAccess::invoke_uniform_gd(this->derived(), set_tag{}, pointer);
-    }
-
-    void set_palette(BGRPalette const & palette) override {
-        CoreAccess::invoke_uniform_gd(this->derived(), set_tag{}, palette);
-    }
-
-    void sync() override {
-        CoreAccess::invoke_uniform_gd(this->derived(), sync_tag{});
-    }
-
-    void set_row(std::size_t rownum, const uint8_t * data) override {
-        CoreAccess::invoke_uniform_gd(this->derived(), set_row_tag{}, rownum, data);
-    }
-
-protected:
-    template<class... Ts> void draw_impl(Ts const & ... args) {
-        CoreAccess::invoke_uniform_gd(this->derived(), draw_tag{}, args...);
-    }
+    GraphicDispatcherList(GraphicList & graphic_list, Projection proj = Projection{})
+    : GraphicDispatcherList::proxy_type{{graphic_list, GraphicUniformProjection<Projection>{proj}}}
+    {}
 };
 
 

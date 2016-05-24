@@ -142,8 +142,9 @@ constant CXXFLAGS-CLANG :
     <cxxflags>-Wno-mismatched-tags
 #   <cxxflags>-Wno-overloaded-virtual
     <cxxflags>-Wno-char-subscripts
-    <cxxflags>-Wno-unused-variable
+#     <cxxflags>-Wno-unused-variable
 #    <cxxflags>-Wno-unused-private-field
+    <cxxflags>-Qunused-arguments
 ;
 
 
@@ -246,6 +247,9 @@ constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
 variant strict : :
     <cxxflags>-Wsign-conversion
 ;
+constant CXXFLAGS-strict :
+    <cxxflags>-Wunused-parameter
+;
 
 
 constant CXXFLAGS-debug :
@@ -317,6 +321,7 @@ project redemption
 
     $(CXXFLAGS-COMMON)
     <variant>debug:$(CXXFLAGS-debug)
+    <variant>strict:$(CXXFLAGS-strict)
 
     <toolset>clang:$(CXXFLAGS-CLANG)
     <toolset>gcc-4.8:$(CXXFLAGS-GCC-4.8)

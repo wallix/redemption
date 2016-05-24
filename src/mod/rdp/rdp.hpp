@@ -290,7 +290,7 @@ protected:
         get_session_probe_virtual_channel_params() const = 0;
 };  // RDPChannelManagerMod
 
-class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
+class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
 {
     friend gdi::GraphicCoreAccess;
 
@@ -6473,7 +6473,7 @@ public:
     }
 
 protected:
-    FrontAPI & get_gd_proxy_impl() {
+    FrontAPI & get_graphic_proxy() {
         return this->front;
     }
 

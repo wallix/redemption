@@ -37,7 +37,7 @@
 #include "mod/mod_osd.hpp"
 #include "utils/bitmap_with_png.hpp"
 
-struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
+struct FakeMod : gdi::GraphicProxyBase<FakeMod, mod_api>
 {
     RDPDrawable gd;
 
@@ -63,7 +63,7 @@ struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
 protected:
     friend gdi::GraphicCoreAccess;
 
-    RDPDrawable & get_gd_proxy_impl() {
+    RDPDrawable & get_graphic_proxy() {
         return this->gd;
     }
 };
