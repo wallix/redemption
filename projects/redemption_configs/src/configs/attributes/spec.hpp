@@ -20,6 +20,24 @@
 
 #pragma once
 
+#include <cstddef>
+
+#if __has_include(<linux/limits.h>)
+# include <linux/limits.h>
+namespace cfg_attributes {
+namespace globals {
+    constexpr std::size_t path_max = PATH_MAX;
+}
+}
+#else
+namespace cfg_attributes {
+namespace globals {
+    constexpr std::size_t path_max = 4096;
+}
+}
+#endif
+
+
 namespace cfg_attributes
 {
 
@@ -77,7 +95,7 @@ namespace types
 
     struct path
     {
-        using fixed_type = fixed_string<1023>;
+        using fixed_type = fixed_string<globals::path_max>;
     };
 }
 

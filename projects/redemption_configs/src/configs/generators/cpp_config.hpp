@@ -141,7 +141,9 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
             this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(pack) << "\")) {\n"
             "            ::configs::parse(\n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
-            "                from_type<"; this->inherit().write_type_spec(type_spec); this->out() << ">{},\n"
+            "                ::configs::spec_type<";
+            this->inherit().write_type_spec(type_spec);
+            this->out() << ">{},\n"
             "                value\n"
             "            );\n"
             "        }\n";
@@ -191,6 +193,19 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<class T>
     void write_type(type_<T>) { this->out() << type_name<T>(); }
+
+
+    template<unsigned N>
+    void write_type_spec(type_<types::fixed_binary<N>>) { this->out() << "::configs::fixed_binary<" << N << ">"; }
+
+    void write_type_spec(type_<types::path>) { this->out() << "::configs::path"; }
+    void write_type_spec(type_<types::ip_string>) { this->out() << "::configs::ip"; }
+
+    template<class T>
+    void write_type_spec(type_<types::list<T>>) { this->out() << "::configs::list<" << type_name<T>() << ">"; }
+
+    template<class T>
+    void write_type_spec(type_<T> t) { this->write_type(t); }
 };
 
 

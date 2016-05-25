@@ -2,8 +2,11 @@
 
 #include "configs/c_str_buf.hpp"
 
-#include <cstdlib>
+#include <cerrno>
 #include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <cstring>
 
 
 namespace configs {
@@ -16,14 +19,14 @@ inline char const * to_cstr(CStrBuf<CaptureFlags> & buf, CaptureFlags x)
     return buf.get();
 }
 
-bool parse(CaptureFlags & x, char const * str)
+bool parse(CaptureFlags & x, spec_type<CaptureFlags>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (5 - 1)) - 1)) {
-        e = ~~static_cast<CaptureFlags>(n);
+        x = ~~static_cast<CaptureFlags>(n);
         return true;
     }
     return false;
@@ -42,7 +45,7 @@ inline char const * to_cstr(CStrBuf<Level> &, Level x)
     assert(static_cast<unsigned long>(x) < 3);
     return arr[static_cast<unsigned long>(x))];
 }
-bool parse(Level & x, char const * str)
+bool parse(Level & x, spec_type<Level>, char const * str)
 {
     if (0 == strcasecmp(str, "low")) {
         x = Level::low;
@@ -74,7 +77,7 @@ inline char const * to_cstr(CStrBuf<Language> &, Language x)
     assert(static_cast<unsigned long>(x) < 2);
     return arr[static_cast<unsigned long>(x))];
 }
-bool parse(Language & x, char const * str)
+bool parse(Language & x, spec_type<Language>, char const * str)
 {
     if (0 == strcasecmp(str, "en")) {
         x = Language::en;
@@ -101,7 +104,7 @@ inline char const * to_cstr(CStrBuf<ClipboardEncodingType> &, ClipboardEncodingT
     assert(static_cast<unsigned long>(x) < 2);
     return arr[static_cast<unsigned long>(x))];
 }
-bool parse(ClipboardEncodingType & x, char const * str)
+bool parse(ClipboardEncodingType & x, spec_type<ClipboardEncodingType>, char const * str)
 {
     if (0 == strcasecmp(str, "utf-8")) {
         x = ClipboardEncodingType::utf8;
@@ -125,14 +128,14 @@ inline char const * to_cstr(CStrBuf<KeyboardLogFlags> & buf, KeyboardLogFlags x)
     return buf.get();
 }
 
-bool parse(KeyboardLogFlags & x, char const * str)
+bool parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<KeyboardLogFlags>(n);
+        x = ~~static_cast<KeyboardLogFlags>(n);
         return true;
     }
     return false;
@@ -147,14 +150,14 @@ inline char const * to_cstr(CStrBuf<ClipboardLogFlags> & buf, ClipboardLogFlags 
     return buf.get();
 }
 
-bool parse(ClipboardLogFlags & x, char const * str)
+bool parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<ClipboardLogFlags>(n);
+        x = ~~static_cast<ClipboardLogFlags>(n);
         return true;
     }
     return false;
@@ -169,14 +172,14 @@ inline char const * to_cstr(CStrBuf<FileSystemLogFlags> & buf, FileSystemLogFlag
     return buf.get();
 }
 
-bool parse(FileSystemLogFlags & x, char const * str)
+bool parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<FileSystemLogFlags>(n);
+        x = ~~static_cast<FileSystemLogFlags>(n);
         return true;
     }
     return false;
@@ -191,14 +194,14 @@ inline char const * to_cstr(CStrBuf<ServerNotification> & buf, ServerNotificatio
     return buf.get();
 }
 
-bool parse(ServerNotification & x, char const * str)
+bool parse(ServerNotification & x, spec_type<ServerNotification>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (4 - 1)) - 1)) {
-        e = ~~static_cast<ServerNotification>(n);
+        x = ~~static_cast<ServerNotification>(n);
         return true;
     }
     return false;
@@ -213,14 +216,14 @@ inline char const * to_cstr(CStrBuf<ServerCertCheck> & buf, ServerCertCheck x)
     return buf.get();
 }
 
-bool parse(ServerCertCheck & x, char const * str)
+bool parse(ServerCertCheck & x, spec_type<ServerCertCheck>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (4 - 1)) - 1)) {
-        e = ~~static_cast<ServerCertCheck>(n);
+        x = ~~static_cast<ServerCertCheck>(n);
         return true;
     }
     return false;
@@ -235,14 +238,14 @@ inline char const * to_cstr(CStrBuf<TraceType> & buf, TraceType x)
     return buf.get();
 }
 
-bool parse(TraceType & x, char const * str)
+bool parse(TraceType & x, spec_type<TraceType>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<TraceType>(n);
+        x = ~~static_cast<TraceType>(n);
         return true;
     }
     return false;
@@ -257,14 +260,14 @@ inline char const * to_cstr(CStrBuf<KeyboardInputMaskingLevel> & buf, KeyboardIn
     return buf.get();
 }
 
-bool parse(KeyboardInputMaskingLevel & x, char const * str)
+bool parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<KeyboardInputMaskingLevel>(n);
+        x = ~~static_cast<KeyboardInputMaskingLevel>(n);
         return true;
     }
     return false;
@@ -279,14 +282,14 @@ inline char const * to_cstr(CStrBuf<SessionProbeOnLaunchFailure> & buf, SessionP
     return buf.get();
 }
 
-bool parse(SessionProbeOnLaunchFailure & x, char const * str)
+bool parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbeOnLaunchFailure>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<SessionProbeOnLaunchFailure>(n);
+        x = ~~static_cast<SessionProbeOnLaunchFailure>(n);
         return true;
     }
     return false;
@@ -301,14 +304,14 @@ inline char const * to_cstr(CStrBuf<VncBogusClipboardInfiniteLoop> & buf, VncBog
     return buf.get();
 }
 
-bool parse(VncBogusClipboardInfiniteLoop & x, char const * str)
+bool parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusClipboardInfiniteLoop>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<VncBogusClipboardInfiniteLoop>(n);
+        x = ~~static_cast<VncBogusClipboardInfiniteLoop>(n);
         return true;
     }
     return false;
@@ -323,14 +326,14 @@ inline char const * to_cstr(CStrBuf<ColorDepthSelectionStrategy> & buf, ColorDep
     return buf.get();
 }
 
-bool parse(ColorDepthSelectionStrategy & x, char const * str)
+bool parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSelectionStrategy>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (2 - 1)) - 1)) {
-        e = ~~static_cast<ColorDepthSelectionStrategy>(n);
+        x = ~~static_cast<ColorDepthSelectionStrategy>(n);
         return true;
     }
     return false;
@@ -345,14 +348,14 @@ inline char const * to_cstr(CStrBuf<WrmCompressionAlgorithm> & buf, WrmCompressi
     return buf.get();
 }
 
-bool parse(WrmCompressionAlgorithm & x, char const * str)
+bool parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAlgorithm>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
-        e = ~~static_cast<WrmCompressionAlgorithm>(n);
+        x = ~~static_cast<WrmCompressionAlgorithm>(n);
         return true;
     }
     return false;
@@ -367,14 +370,14 @@ inline char const * to_cstr(CStrBuf<RdpCompression> & buf, RdpCompression x)
     return buf.get();
 }
 
-bool parse(RdpCompression & x, char const * str)
+bool parse(RdpCompression & x, spec_type<RdpCompression>, char const * str)
 {
     char * end = nullptr;
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
     if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (5 - 1)) - 1)) {
-        e = ~~static_cast<RdpCompression>(n);
+        x = ~~static_cast<RdpCompression>(n);
         return true;
     }
     return false;
@@ -389,7 +392,7 @@ inline char const * to_cstr(CStrBuf<ColorDepth> & buf, ColorDepth x)
     return buf.get();
 }
 
-bool parse(ColorDepth & x, char const * str)
+bool parse(ColorDepth & x, spec_type<ColorDepth>, char const * str)
 {
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     unsigned long const val = std::strtoul(str, &end, is_hex ? 16 : 10)

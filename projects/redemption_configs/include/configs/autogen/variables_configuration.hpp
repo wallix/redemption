@@ -174,7 +174,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{};
         };
 
@@ -1102,14 +1102,14 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{PNG_PATH};
         };
         struct wrm_path {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{WRM_PATH};
         };
 
@@ -1167,7 +1167,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{PERSISTENT_PATH};
         };
 
@@ -1225,7 +1225,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::basic_string<char>;
+            using type = std::string;
             type value{"15,16,17,18,22"};
         };
 
@@ -1615,7 +1615,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = std::basic_string<char>;
+            using type = std::string;
             type value{};
         };
 
@@ -1751,7 +1751,7 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{"/tmp/"};
         };
 
@@ -1759,21 +1759,21 @@ namespace cfg {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{HASH_PATH};
         };
         struct record_tmp_path {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{RECORD_TMP_PATH};
         };
         struct record_path {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
-            using type = char[1023 + 1];
+            using type = char[4096 + 1];
             type value{RECORD_PATH};
         };
 

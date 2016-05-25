@@ -44,7 +44,8 @@
 
 #include "utils/range.hpp"
 
-#include "configs/c_str_buf.hpp"
+#include "configs/io.hpp"
+#include "configs/autogen/enums.hpp"
 
 namespace configs {
     template<class... Ts>

@@ -176,8 +176,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<types::u32>(), "open_session_timeout", set(0));
         W.sep();
-        // TODO types::list<unsigned>
-        W.member(A, type_<std::string>(), "extra_orders", desc{
+        W.member(A, type_<types::list<unsigned>>(), "extra_orders", desc{
             "Enables support of additional drawing orders:\n"
             "  15: MultiDstBlt\n"
             "  16: MultiPatBlt\n"
@@ -266,8 +265,7 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."}, r);
         W.member(V, type_<bool>(), "clipboard_down", desc{"Enable or disable the clipboard from server (server to client)."}, r);
         W.sep();
-        // TODO types::list<int>
-        W.member(A, type_<std::string>(), "encodings", desc{
+        W.member(A, type_<types::list<int>>(), "encodings", desc{
             "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
             "  0: Raw\n"
             "  1: CopyRect\n"

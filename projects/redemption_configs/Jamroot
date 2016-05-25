@@ -289,10 +289,7 @@ actions cp_config {
     cp -R \
         include/configs/* \
         src/configs/types.hpp \
-        src/configs/parse.hpp \
-        src/configs/mk_enum_def.hpp \
-        src/configs/mk_enum_undef.hpp \
-        src/configs/c_str_buf.hpp \
+        src/configs/io.hpp \
         src/configs/config.hpp \
         src/configs/config_access.hpp \
         $dirinstall && \

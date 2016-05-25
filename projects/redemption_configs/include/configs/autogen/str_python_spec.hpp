@@ -62,10 +62,10 @@
 "certificate_password = string(max=255, default='inquisition')\n\n"
 
 "#_advanced\n"
-"png_path = string(max=1023, default='" PNG_PATH "')\n\n"
+"png_path = string(max=4096, default='" PNG_PATH "')\n\n"
 
 "#_advanced\n"
-"wrm_path = string(max=1023, default='" WRM_PATH "')\n\n"
+"wrm_path = string(max=4096, default='" WRM_PATH "')\n\n"
 
 "#_hidden\n"
 "movie = boolean(default=False)\n\n"
@@ -87,7 +87,7 @@
 "enable_osd_display_remote_target = boolean(default=True)\n\n"
 
 "#_advanced\n"
-"persistent_path = string(max=1023, default='" PERSISTENT_PATH "')\n\n"
+"persistent_path = string(max=4096, default='" PERSISTENT_PATH "')\n\n"
 
 "#_hidden\n"
 "disable_proxy_opt = boolean(default=False)\n\n"
@@ -204,7 +204,7 @@
 "#   18: MultiOpaqueRect\n"
 "#   22: Polyline\n"
 "#_advanced\n"
-"extra_orders = string(default='15,16,17,18,22')\n\n"
+"extra_orders = string_list(default=list('15,16,17,18,22'))\n\n"
 
 "# NLA authentication in secondary target.\n"
 "enable_nla = boolean(default=True)\n\n"
@@ -387,7 +387,7 @@
 "#   16: ZRLE\n"
 "#   -239 (0xFFFFFF11): Cursor pseudo-encoding\n"
 "#_advanced\n"
-"encodings = string(default='')\n\n"
+"encodings = string_list(default=list())\n\n"
 
 "#_advanced\n"
 "allow_authentification_retries = boolean(default=False)\n\n"
@@ -439,16 +439,16 @@
 "png_limit = integer(min=0, default=5)\n\n"
 
 "#_advanced\n"
-"replay_path = string(max=1023, default='/tmp/')\n\n"
+"replay_path = string(max=4096, default='/tmp/')\n\n"
 
 "#_advanced\n"
-"hash_path = string(max=1023, default='" HASH_PATH "')\n\n"
+"hash_path = string(max=4096, default='" HASH_PATH "')\n\n"
 
 "#_advanced\n"
-"record_tmp_path = string(max=1023, default='" RECORD_TMP_PATH "')\n\n"
+"record_tmp_path = string(max=4096, default='" RECORD_TMP_PATH "')\n\n"
 
 "#_advanced\n"
-"record_path = string(max=1023, default='" RECORD_PATH "')\n\n"
+"record_path = string(max=4096, default='" RECORD_PATH "')\n\n"
 
 "# Disable keyboard log:\n"
 "#   0: none\n"

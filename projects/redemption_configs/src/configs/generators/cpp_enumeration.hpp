@@ -96,7 +96,7 @@ namespace cpp_enumeration_writer
 
         auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
             write(e,
-                "bool parse(%e & x, char const * str)\n"
+                "bool parse(%e & x, spec_type<%e>, char const * str)\n"
                 "{\n"
             );
             if (e.is_icase_parser) {
@@ -122,8 +122,11 @@ namespace cpp_enumeration_writer
             "\n"
             "#include \"configs/c_str_buf.hpp\"\n"
             "\n"
-            "#include <cstdlib>\n"
+            "#include <cerrno>\n"
             "#include <cstdio>\n"
+            "#include <cstdlib>\n"
+            "#include <cassert>\n"
+            "#include <cstring>\n"
             "\n"
             "\n"
             "namespace configs {\n"
@@ -137,7 +140,7 @@ namespace cpp_enumeration_writer
                 "    bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');\n"
                 "    auto n = std::strtoul(str, &end, is_hex ? 16 : 10);\n"
                 "    if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (%u - 1)) - 1)) {\n"
-                "        e = ~~static_cast<%e>(n);\n"
+                "        x = ~~static_cast<%e>(n);\n"
                 "        return true;\n"
                 "    }\n"
             ); });
