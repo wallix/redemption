@@ -23,7 +23,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestXXXXXXXXXX
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -31,9 +31,12 @@
 #define LOGNULL
 //#define LOGPRINT
 
-//#include "path/to/file.hpp"
+#include "acl/auth_api.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
 {
     BOOST_CHECK(true);
+
+    NullAuthentifier nullAuth;
+
 }

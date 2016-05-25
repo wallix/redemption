@@ -30,9 +30,11 @@
 #ifndef _REDEMPTION_CORE_RDP_GCC_HPP_
 #define _REDEMPTION_CORE_RDP_GCC_HPP_
 
-#include "utils/stream.hpp"
 #include "core/RDP/out_per_bstream.hpp"
-#include "system/ssl_calls.hpp"
+#include "system/linux/system/ssl_calls.hpp"
+#include "system/linux/system/ssl_lib.hpp"
+#include "utils/rect.hpp"
+#include "utils/stream.hpp"
 
 #include <cinttypes>
 
@@ -1614,8 +1616,8 @@ namespace GCC
                 this->userDataType = stream.in_uint16_le();
                 this->length       = stream.in_uint16_le();
 
-                if (!stream.in_check_rem(4)) {
-                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=4 remains=%zu",
+                if (!stream.in_check_rem(8)) {
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=8 remains=%zu",
                         stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -1684,6 +1686,44 @@ namespace GCC
 
                 buffer[sizeof(buffer) - 1] = 0;
                 LOG(LOG_INFO, "%s", buffer);
+            }
+
+            Rect get_rect() const {
+                int32_t left   = 0;
+                int32_t top    = 0;
+                int32_t right  = 0;
+                int32_t bottom = 0;
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    if (left   > this->monitorDefArray[i].left) {
+                        left   = this->monitorDefArray[i].left;
+                    }
+                    if (top    > this->monitorDefArray[i].top) {
+                        top    = this->monitorDefArray[i].top;
+                    }
+                    if (right  < this->monitorDefArray[i].right) {
+                        right  = this->monitorDefArray[i].right;
+                    }
+                    if (bottom < this->monitorDefArray[i].bottom) {
+                        bottom = this->monitorDefArray[i].bottom;
+                    }
+                }
+
+                return Rect(left, top, right - left, bottom - top);
+            }
+
+            Rect get_primary_monitor_rect() const {
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    if (this->monitorDefArray[i].flags & TS_MONITOR_PRIMARY) {
+                        return Rect(this->monitorDefArray[i].left,
+                                    this->monitorDefArray[i].top,
+                                    this->monitorDefArray[i].right -
+                                        this->monitorDefArray[i].left,
+                                    this->monitorDefArray[i].bottom -
+                                        this->monitorDefArray[i].top);
+                    }
+                }
+
+                return Rect(0, 0, 0, 0);
             }
         };
 

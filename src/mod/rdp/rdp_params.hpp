@@ -117,10 +117,16 @@ struct ModRDPParams {
     bool server_redirection_support;
 
     bool bogus_sc_net_size;
+    bool bogus_linux_cursor;
+    bool bogus_refresh_rect;
 
     const char * proxy_managed_drives;
 
     Translation::language_t lang;
+
+    bool allow_using_multiple_monitors;
+
+    bool adjust_performance_flags_for_recording;
 
     uint32_t verbose;
     uint32_t cache_verbose;
@@ -219,10 +225,16 @@ struct ModRDPParams {
         , server_redirection_support(false)
 
         , bogus_sc_net_size(true)
+        , bogus_linux_cursor(false)
+        , bogus_refresh_rect(true)
 
         , proxy_managed_drives("")
 
         , lang(Translation::EN)
+
+        , allow_using_multiple_monitors(false)
+
+        , adjust_performance_flags_for_recording(false)
 
         , verbose(verbose)
         , cache_verbose(0)
@@ -391,9 +403,22 @@ struct ModRDPParams {
         LOG(LOG_INFO,
             "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
 
+        LOG(LOG_INFO,
+            "ModRDPParams bogus_linux_cursor=%s",                  (this->bogus_linux_cursor ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams bogus_refresh_rect=%s",                  (this->bogus_refresh_rect ? "yes" : "no"));
+
         LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
 
         LOG(LOG_INFO, "ModRDPParams lang=%s",                      ((this->lang == Translation::EN) ? "EN" : ((this->lang == Translation::FR) ? "FR" : "<unknown>")));
+
+        LOG(LOG_INFO,
+            "ModRDPParams allow_using_multiple_monitors=%s",       (this->allow_using_multiple_monitors ? "yes" : "no"));
+
+        LOG(LOG_INFO,
+            "ModRDPParams adjust_performance_flags_for_recording=%s",
+                                                                   (this->adjust_performance_flags_for_recording ? "yes" : "no"));
 
         LOG(LOG_INFO,
             "ModRDPParams verbose=0x%08X",                         this->verbose);

@@ -23,7 +23,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestModOSD
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -35,8 +35,9 @@
 #include "capture/image_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "mod/mod_osd.hpp"
+#include "utils/bitmap_with_png.hpp"
 
-struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
+struct FakeMod : gdi::GraphicProxyBase<FakeMod, mod_api>
 {
     RDPDrawable gd;
 
@@ -62,7 +63,7 @@ struct FakeMod : gdi::GraphicProxy<FakeMod, mod_api>
 protected:
     friend gdi::GraphicCoreAccess;
 
-    RDPDrawable & get_gd_proxy_impl() {
+    RDPDrawable & get_graphic_proxy() {
         return this->gd;
     }
 };
@@ -94,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH "."
 #endif
-        mod_osd osd(mod, Bitmap(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
+        mod_osd osd(mod, Bitmap_PNG(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
 
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);

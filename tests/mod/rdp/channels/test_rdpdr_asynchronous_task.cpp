@@ -22,7 +22,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRDPDRAsynchronousTask
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
@@ -32,7 +32,6 @@
 #include "utils/log.hpp"
 #include "utils/make_unique.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
-#include "utils/socket_transport_utility.hpp"
 #include "transport/test_transport.hpp"
 
 class TestToServerSender : public VirtualChannelDataSender {
@@ -101,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
         timeval timeout = { 3, 0 };
 
-        add_to_fd_set(event, rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
+        event.add_to_fd_set(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -114,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
             run_task = false;
         }
         else {
-            if (is_set(event, rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
+            if (event.is_set(rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
                 if (!rdpdr_drive_read_task.run(event)) {
                     run_task = false;
                 }
@@ -183,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
         timeval timeout = { 3, 0 };
 
-        add_to_fd_set(event, rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
+        event.add_to_fd_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -196,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
             run_task = false;
         }
         else {
-            if (is_set(event, rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
+            if (event.is_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
                 if (!rdpdr_send_drive_io_response_task.run(event)) {
                     run_task = false;
                 }

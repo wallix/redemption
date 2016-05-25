@@ -22,7 +22,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatWait
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWait)
 
 
     WidgetFlatButton * extra_button = nullptr;
-    FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Invalid Target",
+    FlatWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
                          text_invalid, 0, extra_button, font, colors, Translation::EN);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);

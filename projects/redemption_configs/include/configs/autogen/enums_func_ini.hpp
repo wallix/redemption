@@ -266,7 +266,7 @@ bool parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel>, 
     errno = 0;
     bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');
     auto n = std::strtoul(str, &end, is_hex ? 16 : 10);
-    if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (3 - 1)) - 1)) {
+    if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (4 - 1)) - 1)) {
         x = ~~static_cast<KeyboardInputMaskingLevel>(n);
         return true;
     }

@@ -22,12 +22,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestXXX
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
 // #define LOGNULL
 
 #include <stdio.h>
+#include "utils/log.hpp"
 #include "system/ssl_lib.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/gcc.hpp"

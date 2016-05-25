@@ -44,6 +44,10 @@
 
 #undef des_cbc_encryt
 
+#include "system/ssl_sha1.hpp"
+#include "system/ssl_sha256.hpp"
+
+
 /* the offsets of methods */
 enum ssh_kex_types_e {
     SSH_KEX=0,
@@ -75,20 +79,20 @@ static inline int find_key(const char * key, std::initializer_list<std::pair<con
 
 // find_matching gets 2 parameters : a list of available objects (avail)
 // and a list of preferred objects (pref)
-// it will return a new SSHString object containing the first preferred item 
+// it will return a new SSHString object containing the first preferred item
 // also found in the available objects list or a zero length SSHString object otherwise.
 static inline SSHString find_matching(const char * avail, const char * pref, const char delim)
-{  
+{
     uint32_t preferred_len = 0;
     uint32_t available_len = 0;
 
-    const char * preferred = pref; 
+    const char * preferred = pref;
     for (preferred_len = 0 ; preferred[preferred_len] != 0 ; preferred_len++){
         if (preferred[preferred_len] == delim){
             const char * available = avail;
             for (available_len = 0 ; available[available_len] != 0 ; available_len++){
                 if (available[available_len] == delim){
-                    if (preferred_len == available_len 
+                    if (preferred_len == available_len
                     && 0 == memcmp(preferred, available, preferred_len)){
                         // match found
                         SSHString res(preferred_len);
@@ -113,7 +117,7 @@ static inline SSHString find_matching(const char * avail, const char * pref, con
     const char * available = avail;
     for (available_len = 0 ; available[available_len] != 0 ; available_len++){
         if (available[available_len] == delim){
-            if (preferred_len == available_len 
+            if (preferred_len == available_len
             && 0 == memcmp(preferred, available, preferred_len)){
                 // match found
                 SSHString res(preferred_len);
@@ -223,7 +227,7 @@ struct InternalBignum {
 
         for (i = 0;i < 32;++i) {
             u = 0;
-            for (j = 0;j <= i;++j) { 
+            for (j = 0;j <= i;++j) {
                 u += a[j] * b[i - j];
             }
             for (j = i + 1;j < 32;++j) {
@@ -239,12 +243,12 @@ struct InternalBignum {
         unsigned int j;
         unsigned int u = 0;
         for (j = 0;j < 31;++j) {
-            u += 121665 * a[j]; out[j] = u & 255; u >>= 8; 
+            u += 121665 * a[j]; out[j] = u & 255; u >>= 8;
         }
         u += 121665 * a[31]; out[31] = u & 127;
         u = 19 * (u >> 7);
         for (j = 0;j < 31;++j) {
-            u += out[j]; out[j] = u & 255; u >>= 8; 
+            u += out[j]; out[j] = u & 255; u >>= 8;
         }
         u += out[j]; out[j] = u;
     }
@@ -258,9 +262,9 @@ struct InternalBignum {
         for (i = 0;i < 32;++i) {
             u = 0;
             for (j = 0;j < i - j;++j){
-                 u += a[j] * a[i - j]; 
+                 u += a[j] * a[i - j];
             }
-            for (j = i + 1;j < i + 32 - j;++j) { 
+            for (j = i + 1;j < i + 32 - j;++j) {
                 u += 38 * a[j] * a[i + 32 - j];
             }
             u *= 2;
@@ -455,7 +459,7 @@ enum ssh_key_exchange_e {
 struct ssh_kex_struct {
     unsigned char cookie[16];
     SSHString methods[SSH_KEX_METHODS];
- 
+
     ssh_kex_struct()
         : cookie{}
         , methods{0,0,0,0,0,0,0,0,0,0}
@@ -477,8 +481,8 @@ struct ssh_cipher_struct {
     virtual int set_decrypt_key(void *key, void *IV) = 0;
     virtual void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) = 0;
     virtual void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) = 0;
-    
-    ssh_cipher_struct(const char * name, unsigned blocksize, unsigned keylen, unsigned keysize) 
+
+    ssh_cipher_struct(const char * name, unsigned blocksize, unsigned keylen, unsigned keysize)
         : name(name) // ssh name of the algorithm
         , blocksize(blocksize) // blocksize of the algo
         , keylen(keylen)
@@ -486,10 +490,10 @@ struct ssh_cipher_struct {
         , IV(nullptr)
         , keysize(keysize)
     {}
-    
+
     virtual ~ssh_cipher_struct() {}
 
-    int alloc_key() 
+    int alloc_key()
     {
         this->key = malloc(this->keylen);
         if (this->key == nullptr) {
@@ -505,7 +509,7 @@ struct ssh_blowfish_cipher_struct : public ssh_cipher_struct
 {
 
     ssh_blowfish_cipher_struct()
-        : ssh_cipher_struct("blowfish-cbc", 8, sizeof(BF_KEY), 128) 
+        : ssh_cipher_struct("blowfish-cbc", 8, sizeof(BF_KEY), 128)
     {
     }
 
@@ -522,17 +526,17 @@ struct ssh_blowfish_cipher_struct : public ssh_cipher_struct
       this->IV = IV;
       return 0;
     }
-    
+
     int set_decrypt_key(void *key, void *IV)
     {
 //        syslog(LOG_INFO, " ssh_blowfish_cipher_struct::set_decrypt_key");
         return this->set_encrypt_key(key, IV);
     }
 
-    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
 //        syslog(LOG_INFO, " ssh_blowfish_cipher_struct::cbc_encrypt");
-      BF_cbc_encrypt(in, out, len, 
+      BF_cbc_encrypt(in, out, len,
             static_cast<const BF_KEY*>(this->key),
             static_cast<unsigned char *>(this->IV),
             BF_ENCRYPT);
@@ -540,9 +544,9 @@ struct ssh_blowfish_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) {
 //      syslog(LOG_INFO, "cbc_decrypt ssh_blowfish_cipher_struct");
-      BF_cbc_encrypt(in, out, len, 
-            static_cast<const BF_KEY*>(this->key), 
-            static_cast<unsigned char *>(this->IV), 
+      BF_cbc_encrypt(in, out, len,
+            static_cast<const BF_KEY*>(this->key),
+            static_cast<unsigned char *>(this->IV),
             BF_DECRYPT);
     }
 };
@@ -556,7 +560,7 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
 //      syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
@@ -577,7 +581,7 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
 //      syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
-    
+
     /** @internal
      * @brief encrypts/decrypts data with stream cipher AES_ctr128. 128 bits is actually
      * the size of the CTR counter and incidentally the blocksize, but not the keysize.
@@ -593,12 +597,12 @@ struct ssh_aes128_ctr_cipher_struct : public ssh_cipher_struct
        * Same for num, which is being used to store the current offset in blocksize in CTR
        * function.
        */
-      AES_ctr128_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+      AES_ctr128_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         tmp_buffer, &num);
     }
-    
+
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
 //        syslog(LOG_INFO, "ssh_aes128_ctr_cipher_struct::cbc_decrypt_key");
@@ -616,7 +620,7 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
 //      syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
@@ -639,7 +643,7 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
 //      syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
-    
+
     /** @internal
      * @brief encrypts/decrypts data with stream cipher AES_ctr128. 128 bits is actually
      * the size of the CTR counter and incidentally the blocksize, but not the keysize.
@@ -655,12 +659,12 @@ struct ssh_aes192_ctr_cipher_struct : public ssh_cipher_struct
        * Same for num, which is being used to store the current offset in blocksize in CTR
        * function.
        */
-      AES_ctr128_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+      AES_ctr128_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         tmp_buffer, &num);
     }
-    
+
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
 //        syslog(LOG_INFO, "ssh_aes192_ctr_cipher_struct::cbc_decrypt");
@@ -676,7 +680,7 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
 //      syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
@@ -699,7 +703,7 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
 //      syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
-    
+
     /** @internal
      * @brief encrypts/decrypts data with stream cipher AES_ctr128. 128 bits is actually
      * the size of the CTR counter and incidentally the blocksize, but not the keysize.
@@ -715,12 +719,12 @@ struct ssh_aes256_ctr_cipher_struct : public ssh_cipher_struct
        * Same for num, which is being used to store the current offset in blocksize in CTR
        * function.
        */
-      AES_ctr128_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+      AES_ctr128_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         tmp_buffer, &num);
     }
-    
+
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
 //        syslog(LOG_INFO, "ssh_aes256_ctr_cipher_struct::cbc_decrypt");
@@ -736,7 +740,7 @@ struct ssh_aes128_cbc_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
 //      syslog(LOG_INFO, "ssh_aes128_cbc_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
@@ -772,22 +776,22 @@ struct ssh_aes128_cbc_cipher_struct : public ssh_cipher_struct
       this->IV=IV;
       return 0;
     }
-    
-    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+
+    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
 //      syslog(LOG_INFO, "ssh_aes128_cbc_cipher_struct::cbc_encrypt");
-      AES_cbc_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+      AES_cbc_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         AES_ENCRYPT);
     }
 
-    void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+    void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
 //      syslog(LOG_INFO, "ssh_aes128_cbc_cipher_struct::cbc_decrypt");
-      AES_cbc_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+      AES_cbc_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         AES_DECRYPT);
     }
 
@@ -800,9 +804,9 @@ struct ssh_aes192_cbc_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_encrypt_key");    
+//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_encrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -819,7 +823,7 @@ struct ssh_aes192_cbc_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_decrypt_key");    
+//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::set_decrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -834,22 +838,22 @@ struct ssh_aes192_cbc_cipher_struct : public ssh_cipher_struct
       this->IV=IV;
       return 0;
     }
-    
-    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+
+    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_encrypt");    
-      AES_cbc_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_encrypt");
+      AES_cbc_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         AES_ENCRYPT);
     }
 
-    void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+    void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_decrypt");    
-      AES_cbc_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+//      syslog(LOG_INFO, "ssh_aes192_cbc_cipher_struct::cbc_decrypt");
+      AES_cbc_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         AES_DECRYPT);
     }
 
@@ -862,9 +866,9 @@ struct ssh_aes256_cbc_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_encrypt_key");        
+//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_encrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -882,7 +886,7 @@ struct ssh_aes256_cbc_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_decrypt_key");        
+//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::set_decrypt_key");
       if (this->key == nullptr) {
         if (this->alloc_key() < 0) {
           return -1;
@@ -898,23 +902,23 @@ struct ssh_aes256_cbc_cipher_struct : public ssh_cipher_struct
       this->IV=IV;
       return 0;
     }
-    
-    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+
+    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_encrypt");        
+//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_encrypt");
       AES_cbc_encrypt(
-        in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+        in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         AES_ENCRYPT);
     }
 
-    void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+    void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_decrypt");        
-      AES_cbc_encrypt(in, out, len, 
-        static_cast<const AES_KEY*>(this->key), 
-        static_cast<unsigned char *>(this->IV), 
+//      syslog(LOG_INFO, "ssh_aes256_cbc_cipher_struct::cbc_decrypt");
+      AES_cbc_encrypt(in, out, len,
+        static_cast<const AES_KEY*>(this->key),
+        static_cast<unsigned char *>(this->IV),
         AES_DECRYPT);
     }
 };
@@ -926,9 +930,9 @@ struct ssh_3des_cbc_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
-//        syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_encrypt_key");        
+//        syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
               return -1;
@@ -945,14 +949,14 @@ struct ssh_3des_cbc_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) {
-//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_decrypt_key");        
+//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
-    
-    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+
+    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_encrypt");        
-      DES_ede3_cbc_encrypt(in, out, len, 
+//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_encrypt");
+      DES_ede3_cbc_encrypt(in, out, len,
           static_cast<DES_key_schedule*>(this->key),
           static_cast<DES_key_schedule*>(this->key) + 1,
           static_cast<DES_key_schedule*>(this->key) + 2,
@@ -961,8 +965,8 @@ struct ssh_3des_cbc_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_decrypt");        
-      DES_ede3_cbc_encrypt(in, out, len, 
+//      syslog(LOG_INFO, "ssh_3des_cbc_cipher_struct::cbc_decrypt");
+      DES_ede3_cbc_encrypt(in, out, len,
           static_cast<DES_key_schedule*>(this->key),
           static_cast<DES_key_schedule*>(this->key) + 1,
           static_cast<DES_key_schedule*>(this->key) + 2,
@@ -978,9 +982,9 @@ struct ssh_3des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_encrypt_key");        
+//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_encrypt_key");
         if (this->key == nullptr) {
             if (this->alloc_key() < 0) {
               return -1;
@@ -997,14 +1001,14 @@ struct ssh_3des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_decrypt_key");        
+//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
-    
-    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+
+    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_encrypt");        
-        DES_ncbc_encrypt(in, out, len, 
+//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_encrypt");
+        DES_ncbc_encrypt(in, out, len,
                        static_cast<DES_key_schedule*>(this->key),
                        static_cast<unsigned char (*)[8]>(this->IV), 1);
 
@@ -1021,20 +1025,20 @@ struct ssh_3des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_decrypt");        
+//      syslog(LOG_INFO, "ssh_3des_cbc_ssh1_cipher_struct::cbc_decrypt");
         DES_ncbc_encrypt(in, out, len,
                         static_cast<DES_key_schedule*>(this->key) + 2,
                         static_cast<unsigned char (*)[8]>(this->IV), 0);
 
         // the const_cast here is cheating, but it's either that or weakening prototype for other functions
         // (and we won't call that as it's ssh1 anyway, we should probably just remove class)
-        DES_ncbc_encrypt(out, const_cast<unsigned char*>(in), len, 
+        DES_ncbc_encrypt(out, const_cast<unsigned char*>(in), len,
                         static_cast<DES_key_schedule*>(this->key) + 1,
                         static_cast<unsigned char (*)[8]>(this->IV) + 1,
                         1);
 
         DES_ncbc_encrypt(in, out, len,
-                        static_cast<DES_key_schedule*>(this->key), 
+                        static_cast<DES_key_schedule*>(this->key),
                         static_cast<unsigned char (*)[8]>(this->IV) + 2,
                         0);
     }
@@ -1048,9 +1052,9 @@ struct ssh_des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
     {
     }
 
-    int set_encrypt_key(void *key, void *IV) 
+    int set_encrypt_key(void *key, void *IV)
     {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_encrypt_key");        
+//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_encrypt_key");
         if(!this->key){
             if (this->alloc_key() < 0) {
                 return -1;
@@ -1065,13 +1069,13 @@ struct ssh_des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
     }
 
     int set_decrypt_key(void *key, void *IV) {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_decrypt_key");        
+//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::set_decrypt_key");
       return this->set_encrypt_key(key, IV);
     }
-    
-    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len) 
+
+    void cbc_encrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_encrypt");        
+//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_encrypt");
         DES_ncbc_encrypt(in, out, len,
                         static_cast<DES_key_schedule*>(this->key),
                         static_cast<unsigned char (*)[8]>(this->IV),
@@ -1080,7 +1084,7 @@ struct ssh_des_cbc_ssh1_cipher_struct : public ssh_cipher_struct
 
     void cbc_decrypt(const uint8_t *in, uint8_t *out, unsigned long len)
     {
-//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_decrypt");        
+//      syslog(LOG_INFO, "ssh_des_cbc_ssh1_cipher_struct::cbc_decrypt");
         DES_ncbc_encrypt(in, out, len,
                         static_cast<DES_key_schedule*>(this->key),
                         static_cast<unsigned char (*)[8]>(this->IV),
@@ -1094,19 +1098,19 @@ struct ssh_crypto_struct {
     BIGNUM * x;
     BIGNUM * k;
     BIGNUM * y;
-    
+
     struct ecdh {
         EC_KEY *privkey;
         SSHString client_pubkey;
         SSHString server_pubkey;
-        
+
         ecdh()
             : privkey{}
             , client_pubkey(0)
             , server_pubkey(0)
         {}
 
-        int build_k(BIGNUM * (& k), const SSHString & ecdh_pubkey) {        
+        int build_k(BIGNUM * (& k), const SSHString & ecdh_pubkey) {
           k = BN_new();
           if (k == nullptr) {
             return -1;
@@ -1142,7 +1146,7 @@ struct ssh_crypto_struct {
           return 0;
         }
     } ecdh;
-        
+
     struct curve_25519 {
         uint8_t privkey[CURVE25519_PRIVKEY_SIZE];
         uint8_t client_pubkey[CURVE25519_PUBKEY_SIZE];
@@ -1152,7 +1156,7 @@ struct ssh_crypto_struct {
             , client_pubkey{}
             , server_pubkey{}
         {}
-       
+
         void init(uint8_t (&pubkey)[CURVE25519_PUBKEY_SIZE])
         {
             /* Build server's keypair */
@@ -1163,7 +1167,7 @@ struct ssh_crypto_struct {
             BN.crypto_scalarmult(pubkey, this->privkey, base);
         }
 
-        void build_k(BIGNUM * (& k), uint8_t (&pubkey)[CURVE25519_PUBKEY_SIZE]) 
+        void build_k(BIGNUM * (& k), uint8_t (&pubkey)[CURVE25519_PUBKEY_SIZE])
         {
             uint8_t tmpk[CURVE25519_PUBKEY_SIZE];
             InternalBignum BN;
@@ -1172,7 +1176,7 @@ struct ssh_crypto_struct {
             k = BN_new();
             BN_bin2bn(tmpk, CURVE25519_PUBKEY_SIZE, k);
         }
-    } curve_25519; 
+    } curve_25519;
 
     SSHString dh_server_signature; /* information used by dh_handshake. */
     size_t digest_len; /* len of all the fields below */
@@ -1200,7 +1204,7 @@ struct ssh_crypto_struct {
     SSHString kex_methods[SSH_KEX_METHODS];
     enum ssh_key_exchange_e kex_type;
     enum ssh_mac_e mac_type; /* Mac operations to use for key gen */
-    
+
     ssh_crypto_struct()
         : e(nullptr)
         , f(nullptr)
@@ -1265,19 +1269,19 @@ struct ssh_crypto_struct {
         BN_clear_free(this->x);
         BN_clear_free(this->y);
         BN_clear_free(this->k);
-    
+
 //        if(this->session_id != nullptr){
 //            memset(this->session_id, '\0', this->digest_len);
 //            free(this->session_id);
 //            this->session_id = nullptr;
 //        }
-   
-        if (this->compress_out_ctx 
+
+        if (this->compress_out_ctx
         && (deflateEnd(static_cast<z_stream_s*>(this->compress_out_ctx)) != 0)) {
             inflateEnd(static_cast<z_stream_s*>(this->compress_out_ctx));
         }
 
-        if (this->compress_in_ctx 
+        if (this->compress_in_ctx
         && (deflateEnd(static_cast<z_stream_s*>(this->compress_in_ctx)) != 0)) {
             inflateEnd(static_cast<z_stream_s*>(this->compress_in_ctx));
         }
@@ -1304,7 +1308,7 @@ struct ssh_crypto_struct {
 
         memset(this, 0, sizeof(struct ssh_crypto_struct));
     }
-    
+
         /* add data for the final cookie */
     int generate_session_keys_server(unsigned char * session_id, error_struct & error)
     {
@@ -1488,7 +1492,7 @@ struct ssh_crypto_struct {
         return 0;
     }
 
-    
+
     int generate_session_keys_client(unsigned char * session_id, error_struct & error)
     {
         unsigned int len3 = BN_num_bytes(this->k);
@@ -1511,7 +1515,7 @@ struct ssh_crypto_struct {
 
         /* IV */
         uint32_t k_size_n = htonl(k_string.size);
-        
+
         switch (this->mac_type)
         {
         case SSH_MAC_SHA1:
@@ -1601,7 +1605,7 @@ struct ssh_crypto_struct {
             sha256_encryptIV.update(reinterpret_cast<const uint8_t*>("A"), 1);
             sha256_encryptIV.update(session_id, SHA256_DIGEST_LENGTH);
             sha256_encryptIV.final(this->encryptIV, SHA256_DIGEST_LENGTH);
-            
+
             // this->decryptIV, 'B'
             SslSha256 sha256_decryptIV;
             sha256_decryptIV.update(reinterpret_cast<uint8_t*>(&k_size_n), sizeof(uint32_t));
@@ -1629,7 +1633,7 @@ struct ssh_crypto_struct {
                 sha256.update(this->encryptkey, SHA256_DIGEST_LENGTH);
                 sha256.final(this->encryptkey + SHA256_DIGEST_LENGTH, SHA256_DIGEST_LENGTH);
             }
-            
+
             // this->decryptkey, 'D'
             SslSha256 sha256_decryptkey;
             sha256_decryptkey.update(reinterpret_cast<uint8_t*>(&k_size_n), sizeof(uint32_t));

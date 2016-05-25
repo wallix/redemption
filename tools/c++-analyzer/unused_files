@@ -2,7 +2,7 @@
 
 cd "`dirname "$0"`"/../..
 
-dirproj='src/capture src/core src/front src/main src/mod src/transport src/utils src/acl include/configs'
+dirproj='src/capture src/core src/front src/main src/mod src/transport src/utils src/acl src/gdi include/configs'
 dirtest='src/ftests tests'
 
 function find_unused() {

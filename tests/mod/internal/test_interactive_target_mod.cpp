@@ -22,7 +22,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestInteractiveTargetMod
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractiveTargetMod d(ini, front, 800, 600);
+    InteractiveTargetMod d(ini, front, 800, 600, Rect(0, 0, 799, 599));
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enter to validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractiveTargetMod d(ini, front, 800, 600);
+    InteractiveTargetMod d(ini, front, 800, 600, Rect(0, 0, 799, 599));
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractiveTargetMod d(ini, front, 800, 600);
+    InteractiveTargetMod d(ini, front, 800, 600, Rect(0, 0, 799, 599));
 
     bool    ctrl_alt_del;
 
@@ -131,5 +131,51 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
 
     BOOST_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::target_password>());
     BOOST_CHECK_EQUAL("True", ini.get<cfg::context::display_message>());
+}
 
+BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
+{
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 1600;
+    info.height = 1200;
+
+    FakeFront front(info, 0);
+
+    Inifile ini;
+    ini.set_acl<cfg::context::target_host>("somehost");
+    ini.set_acl<cfg::globals::target_user>("someuser");
+    ini.ask<cfg::context::target_password>();
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+
+    InteractiveTargetMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599));
+
+    bool    ctrl_alt_del;
+
+    uint16_t keyboardFlags = 0 ;
+    uint16_t keyCode = 16; // key is 'a'
+
+    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    BOOST_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::target_password>());
+    BOOST_CHECK_EQUAL("True", ini.get<cfg::context::display_message>());
 }

@@ -15,19 +15,17 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo
+   Author(s): Clement Moroldo
 */
 
 #ifndef FRONT_JS_NATIF_HPP
 #define FRONT_JS_NATIF_HPP
 
+
 #include <stdio.h>
-#include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
-//#include <SDL/SDL.h>
 #include <math.h>
-
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -63,19 +61,20 @@
 //#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
-#include "front_api.hpp"
+#include "core/front_api.hpp"
 #include "channel_list.hpp"
-#include "mod_api.hpp"
-#include "bitmap_without_png.hpp"
+#include "mod/mod_api.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "utils/bitmap.hpp"
 #include "RDP/caches/glyphcache.hpp"
-//#include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "client_info.hpp"
 #include "keylayouts_r.hpp"
-#include "../../utils/colors.hpp"
+#include "utils/colors.hpp"
+#include "transport/transport_web_socket.hpp"
 
-// bjam client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
+// bjam -a client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
 
 
 
@@ -149,6 +148,8 @@ public:
 
     int                  _timer;
     bool                 _connected;
+    Transport          * _trans;
+    mod_rdp            * _mod;
     //ClipboardVirtualChannel  _clipboard_channel;
 
     // Keyboard Controllers members
@@ -157,15 +158,26 @@ public:
     StaticOutStream<256> _decoded_data;    // currently not initialised
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
-    uint32_t             _requestedFormatId;
-    std::string          _requestedFormatShortName;
-    uint8_t            * _bufferRDPClipboardChannel;
-    size_t               _bufferRDPClipboardChannelSize;
-    size_t               _bufferRDPClipboardChannelSizeTotal;
-    int                  _bufferRDPCLipboardMetaFilePic_width;
-    int                  _bufferRDPCLipboardMetaFilePic_height;
-    int                  _bufferRDPClipboardMetaFilePicBPP;
+    //uint32_t             _requestedFormatId;
+    //std::string          _requestedFormatShortName;
+    //uint8_t            * _bufferRDPClipboardChannel;
+    //size_t               _bufferRDPClipboardChannelSize;
+    //size_t               _bufferRDPClipboardChannelSizeTotal;
+    //int                  _bufferRDPCLipboardMetaFilePic_width;
+    //int                  _bufferRDPCLipboardMetaFilePic_height;
+    //int                  _bufferRDPClipboardMetaFilePicBPP;
     const Keylayout_r  * _keylayout;
+
+    enum: int {
+        KBD_FLAGS_EXTENDED = 0x0100,
+    };
+
+    enum: int {
+        SCANCODE_ALTGR = 0x38,
+        SCANCODE_SHIFT = 0x36,
+        SCANCODE_ENTER = 0x1C,
+        SCANCODE_B_SPC = 0x0E
+    };
 
 
     //bool setClientInfo() ;
@@ -188,19 +200,9 @@ public:
             }
         }
         if (!found){
-            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
+            //std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
-/*
-        this->_layoutMods[NO_MOD                              ] = this->_keylayout->getnoMod();
-        this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout->getshift();
-        this->_layoutMods[ALTGR_MOD                           ] = this->_keylayout->getaltGr();
-        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = this->_keylayout->getshiftAltGr();
-        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = this->_keylayout->getcapslock_noMod();
-        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = this->_keylayout->getcapslock_shift();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = this->_keylayout->getcapslock_altGr();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = this->_keylayout->getcapslock_shiftAltGr();
-        this->_layoutMods[CTRL_MOD                            ] = this->_keylayout->getctrl();*/
 
     }
 
@@ -236,6 +238,36 @@ public:
 
     void empty_buffer() ;
     */
+
+   void connexion() {
+
+        Inifile ini;
+
+        ModRDPParams mod_rdp_params( "administrateur"
+                                , "S3cur3!1nux"
+                                , "10.10.47.35"
+                                , "192.168.1.100"
+                                , 7
+                                , 511
+                                );
+        mod_rdp_params.device_id                       = "device_id";
+        mod_rdp_params.enable_tls                      = false;
+        mod_rdp_params.enable_nla                      = false;
+        mod_rdp_params.enable_fastpath                 = false;
+        mod_rdp_params.enable_mem3blt                  = false;
+        mod_rdp_params.enable_bitmap_update            = true;
+        mod_rdp_params.enable_new_pointer              = false;
+        mod_rdp_params.server_redirection_support      = true;
+
+        LCGRandom gen(0);
+
+        TransportWebSocket trans;
+        this->_trans = &trans;
+
+        mod_rdp mod(trans, *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+        this->_mod = &mod;
+   }
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -528,7 +560,6 @@ public:
             case 0xB8: // TODO
                 {
                     Bitmap bitmapBpp(32, bitmap);
-                    const uint8_t * bitMapData = bitmapBpp.data();
 
                     EM_ASM_({drawable.rDPMem3Blt_0xB8($0    , $1    , $2   , $3   , HEAPU8.subarray($4, $4 + $5),  $6,  $7);},
                                                       rect.x, rect.y, rect.cx, rect.cy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, cmd.back_color);
@@ -609,6 +640,8 @@ public:
     , _fps(30)
     , _mod_bpp(32)
     , mod_palette(BGRPalette::classic_332())
+    ,  _trans(nullptr)
+    ,  _mod(nullptr)
     {
         //this->_to_client_sender._front = this;
     }
@@ -624,24 +657,145 @@ public:
     //------------------------
 
     void mousePressEvent(int x, int y, int button) {
+        int flag = 0;
+        switch (button) {
+            case 1: flag = MOUSE_FLAG_BUTTON1; break;
+            case 2: flag = MOUSE_FLAG_BUTTON2; break;
+            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            default: break;
+        }
+        //  this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, x, y, &(this->_keymap));
         EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
     void mouseReleaseEvent(int x, int y, int button) {
+        int flag = 0;
+        switch (button) {
+            case 1: flag = MOUSE_FLAG_BUTTON1; break;
+            case 2: flag = MOUSE_FLAG_BUTTON2; break;
+            case 4: flag = MOUSE_FLAG_BUTTON4; break;
+            default: break;
+        }
+        //  this->_callback->rdp_input_mouse(flag, x, y, &(this->_keymap));
         EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
     void mouseMoveEvent(int x, int y) {
         EM_ASM_({ console.log('Move '); }, x, y);
+        //this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
     }
 
-    void keyPressEvent(int code) {
-        EM_ASM_({ console.log('KeyPressed ' + $0); }, this->_keylayout->getnoMod()->at(code));
+    void charPressed(int code) {
+
+        int flag = 0;
+
+        if (code < 0) {
+            code += 256;
+        }
+
+        EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
+
+        switch (code) {
+
+            //-----------------------
+            //  Keylayout SHIFT MOD
+            //-----------------------
+            case 168 : /* ¨ */ code = this->_keylayout->deadkeys.at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+                            break;
+            case 37  : /* % */
+            case 43  : /* + */
+            case 46  : /* . */
+            case 63  : /* ? */
+            case 65  : /* A */
+            case 90  : /* Z */
+            case 69  : /* E */
+            case 82  : /* R */
+            case 84  : /* T */
+            case 89  : /* Y */
+            case 85  : /* U */
+            case 73  : /* I */
+            case 79  : /* O */
+            case 80  : /* P */
+            case 81  : /* Q */
+            case 83  : /* S */
+            case 68  : /* D */
+            case 70  : /* F */
+            case 71  : /* G */
+            case 72  : /* H */
+            case 74  : /* J */
+            case 75  : /* K */
+            case 76  : /* L */
+            case 77  : /* M */
+            case 87  : /* W */
+            case 88  : /* X */
+            case 67  : /* C */
+            case 86  : /* V */
+            case 66  : /* B */
+            case 78  : /* N */
+            case 162 : /* > */
+            case 163 : /* £ */
+            case 167 : /* § */
+            case 176 : /* ° */
+            case 181 : /* µ */ code = this->_keylayout->getshift()->at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+                            break;
+
+
+            //-----------------------
+            //  Keylayout ALTGR MOD
+            //-----------------------
+            case 96  : /* ` */ code = this->_keylayout->deadkeys.at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+                            break;
+            case 35  : /* # */
+            case 64  : /* @ */
+            case 91  : /* [ */
+            case 92  : /* \ */
+            case 93  : /* ] */
+            case 123 : /* { */
+            case 124 : /* | */
+            case 125 : /* } */
+            case 126 : /* ~ */
+            case 234 : /* ê */ code = this->_keylayout->getaltGr()->at(code);
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+                            break;
+
+
+            //-----------------------
+            //   Keylayout NO MOD
+            //-----------------------
+            case 94  : /* ^ */ code = this->_keylayout->deadkeys.at(code);
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                            break;
+            case 47  : /* / */ flag = KBD_FLAGS_EXTENDED;
+            case 224 : /* à */
+            case 231 : /* ç */
+            case 232 : /* è */
+            case 233 : /* é */
+            case 249 : /* ù */
+            default  :         code = this->_keylayout->getnoMod()->at(code);
+                               // this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_DOWN, 0, &(this->_keymap));
+                               // this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap))
+                            break;
+        }
+
+        EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
     }
 
-    void keyReleaseEvent(char code) {
-        EM_ASM_({ console.log('KeyRelease ' + $0); }, code);
-    }
 
 /*
     void wheelEvent(QWheelEvent *e) override {}
@@ -676,17 +830,71 @@ public:
 
 */
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //--------------------------------
-    //    SOCKET EVENTS FUNCTIONS
-    //--------------------------------
-
-
 };
 
 
+
 Front_JS_Natif front(0);
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------
+//         CONTROLLERS
+//--------------------------------
+
+extern "C" void mousePressEvent(int x, int y, int button) {
+    front.mousePressEvent(x, y, button);
+}
+
+extern "C" void mouseReleaseEvent(int x, int y, int button) {
+    front.mouseReleaseEvent(x, y, button);
+}
+
+extern "C" void mouseMoveEvent(int x, int y) {
+    front.mouseMoveEvent(x, y);
+}
+
+extern "C" void charPressed(char code) {
+    front.charPressed(code);
+}
+
+extern "C" void enterPressed() {
+    //this->_callback->rdp_input_scancode(SCANCODE_ENTER, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0, &(this->_keymap));
+    //this->_callback->rdp_input_scancode(SCANCODE_ENTER, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+    EM_ASM_({ console.log('Enter'); }, 0);
+}
+
+extern "C" void backspacePressed() {
+    //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
+    //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
+    EM_ASM_({ console.log('Backspace'); }, 0);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------
+//    SOCKET EVENTS FUNCTIONS
+//--------------------------------
+
+extern "C" void recv_wraped(char * pbuffer, size_t len) {
+    if (front._trans != nullptr) {
+        front._trans->recv(&pbuffer, len);
+    }
+}
+
+extern "C" void incomming_data() {
+    if (front._mod !=  nullptr) {
+        front._mod->draw_event(time(nullptr));
+    }
+}
+
+extern "C" void connexion_client() {
+    front.connexion();
+}
 
 
 

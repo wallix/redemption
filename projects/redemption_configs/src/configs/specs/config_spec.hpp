@@ -95,7 +95,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<unsigned>(), "handshake_timeout", desc{"Time out during RDP handshake stage (in seconds)."}, set(10));
         W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
-        W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
+        W.member(A, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
         W.member(A, type_<unsigned>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
@@ -121,13 +121,17 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::path>(), "persistent_path", set(CPP_MACRO(PERSISTENT_PATH)));
         W.sep();
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
+        W.sep();
+        W.member(V, type_<bool>(), "allow_using_multiple_monitors", set(false));
+        W.sep();
+        W.member(A, type_<bool>(), "bogus_refresh_rect", desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
     });
 
     W.section("session_log", [&]
     {
         W.member(V, type_<bool>(), "enable_session_log", set(true));
         W.sep();
-        W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
+        W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::fully_masked));
     });
 
     W.section("client", [&]
@@ -144,9 +148,10 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::list<std::string>>(), "keyboard_layout_proposals", desc{keyboard_layout_proposals_desc.c_str()}, set("en-US, fr-FR, de-DE, ru-RU"));
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
-        W.member(A | X, type_<types::u32>(), "performance_flags_default", set(0));
+        W.member(A | X, type_<types::u32>(), "performance_flags_default", desc{"Enable font smoothing (0x80)."}, set(0x80));
         W.member(A | X, type_<types::u32>(), "performance_flags_force_present", desc{"Disable theme (0x8)."}, set(0x8));
-        W.member(A | X, type_<types::u32>(), "performance_flags_force_not_present", desc{"Disable font smoothing (0x80)."}, set(0x80));
+        W.member(A | X, type_<types::u32>(), "performance_flags_force_not_present", set(0));
+        W.member(A, type_<bool>(), "auto_adjust_performance_flags", desc{"If enabled, avoid automatically font smoothing in recorded session."}, set(true));
         W.sep();
         W.member(V, type_<bool>(), "tls_fallback_legacy", desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(false));
         W.member(V, type_<bool>(), "tls_support", set(true));
@@ -166,6 +171,8 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
         W.sep();
         W.member(A, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
+        W.sep();
+        W.member(V, type_<bool>(), "enable_suppress_output", set(true));
     });
 
     W.section("mod_rdp", [&]
@@ -206,7 +213,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
+        W.member(A, type_<bool>(), "bogus_linux_cursor", desc{"Needed to get the old behavior of cursor rendering."}, set(false));
         W.member(A, type_<types::list<std::string>>(), "proxy_managed_drives", r);
+        W.sep();
         W.sep();
         W.member(H, type_<bool>(), "ignore_auth_channel", set(false), r);
         W.member(V, type_<types::fixed_string<7>>(), "auth_channel", set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
@@ -236,7 +245,7 @@ void config_spec_definition(Writer && W)
         }, set(true), r);
         W.member(H, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(H, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
-        W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
+        W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false), r);
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
         W.member(H, type_<types::fixed_string<511>>(), "session_probe_alternate_shell", set("cmd /k"));
 

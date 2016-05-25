@@ -221,6 +221,8 @@ enum class KeyboardInputMaskingLevel {
     password_only = 1,
     // passwords and unidentified texts are masked
     password_and_unidentified = 2,
+    // keyboard input are fully masked
+    fully_masked = 3,
 };
 
 template<class Ch, class Tr>

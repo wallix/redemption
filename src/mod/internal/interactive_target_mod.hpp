@@ -55,13 +55,13 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
     InteractiveTargetModVariables vars;
 
 public:
-    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height)
+    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , ask_device(vars.is_asked<cfg::context::target_host>())
         , ask_login(vars.is_asked<cfg::globals::target_user>())
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, *this, front, this->font(), this->theme())
-        , challenge(*this, width, height, this->screen, this, 0,
+        , challenge(*this, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, 0,
                     this->ask_device, this->ask_login, this->ask_password,
                     vars.get<cfg::theme>(),
                     TR("target_info_required", language(vars)),

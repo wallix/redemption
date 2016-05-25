@@ -63,7 +63,7 @@ private:
     // WidgetHScrollBar hbar;
 
 public:
-    FlatLogin(mod_api& drawable, uint16_t width, uint16_t height, Widget2 & parent,
+    FlatLogin(mod_api& drawable, int16_t left, int16_t top, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
               const char * login, const char * password,
@@ -72,7 +72,7 @@ public:
               const char * label_error_message,
               WidgetFlatButton * extra_button,
               Font const & font, Translator tr = Translator(), Theme const & theme = Theme())
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
                         password, -14, theme.edit.fgcolor,
@@ -142,11 +142,11 @@ public:
         int x_cbloc = (width  - cbloc_w) / 2;
         int y_cbloc = (height - cbloc_h) / 2;
 
-        this->login_label.set_xy(x_cbloc, y_cbloc);
-        this->password_label.set_xy(x_cbloc, height/2);
+        this->login_label.set_xy(left + x_cbloc, top + y_cbloc);
+        this->password_label.set_xy(left + x_cbloc, top + height / 2);
         int labels_w = std::max(this->password_label.rect.cx, this->login_label.rect.cx);
-        this->login_edit.set_xy(x_cbloc + labels_w + 10, y_cbloc);
-        this->password_edit.set_xy(x_cbloc + labels_w + 10, height/2);
+        this->login_edit.set_xy(left + x_cbloc + labels_w + 10, top + y_cbloc);
+        this->password_edit.set_xy(left + x_cbloc + labels_w + 10, top + height / 2);
 
         this->login_label.rect.y += (this->login_edit.cy() - this->login_label.cy()) / 2;
         this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
@@ -163,18 +163,18 @@ public:
         int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
-        this->img.set_xy((width - this->img.rect.cx) / 2, y_bbloc);
-        this->version_label.set_xy((width - this->version_label.rect.cx) / 2,
-                                   y_bbloc + this->img.rect.cy + 10);
+        this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
+        this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
+                                   top + y_bbloc + this->img.rect.cy + 10);
 
         this->helpicon.tab_flag = IGNORE_TAB;
         this->helpicon.focus_flag = IGNORE_FOCUS;
-        this->helpicon.set_button_x(width - 60);
-        this->helpicon.set_button_y(height - 60);
+        this->helpicon.set_button_x(left + width - 60);
+        this->helpicon.set_button_y(top + height - 60);
 
         if (extra_button) {
-            extra_button->set_button_x(60);
-            extra_button->set_button_y(height - 60);
+            extra_button->set_button_x(left + 60);
+            extra_button->set_button_y(top + height - 60);
         }
 
         // this->add_widget(&this->frame);

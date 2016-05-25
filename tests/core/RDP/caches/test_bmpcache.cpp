@@ -22,11 +22,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitmapCache
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 #include "core/RDP/caches/bmpcache.hpp"
+#include "utils/bitmap_with_png.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCacheBasic)
 {
@@ -8660,7 +8661,7 @@ BOOST_AUTO_TEST_CASE(BmpcachePutAndGet)
 {
     BmpCache bmpcache(BmpCache::Mod_rdp, 24, 1, false, BmpCache::CacheOption(256, 1024, true));
     {
-        Bitmap bmp("no_image");
+        Bitmap_PNG bmp("no_image");
         BOOST_CHECK(bmp.is_valid());
         bmpcache.put(0, RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX, bmp, ~0, ~0);
     }

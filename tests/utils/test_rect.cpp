@@ -25,7 +25,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRect
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
@@ -206,19 +206,19 @@ BOOST_AUTO_TEST_CASE(TestRect)
         Rect bad7(10, 10, 10, 11);
         Rect bad8(10, 10, 10, 9);
 
-        BOOST_CHECK_EQUAL(true, r.equal(r));
-        BOOST_CHECK_EQUAL(true, r.equal(same));
-        BOOST_CHECK_EQUAL(true, same.equal(r));
-        BOOST_CHECK_EQUAL(false, r.equal(inner));
-        BOOST_CHECK_EQUAL(false, r.equal(outer));
-        BOOST_CHECK_EQUAL(false, r.equal(bad1));
-        BOOST_CHECK_EQUAL(false, r.equal(bad1));
-        BOOST_CHECK_EQUAL(false, r.equal(bad3));
-        BOOST_CHECK_EQUAL(false, r.equal(bad4));
-        BOOST_CHECK_EQUAL(false, r.equal(bad5));
-        BOOST_CHECK_EQUAL(false, r.equal(bad6));
-        BOOST_CHECK_EQUAL(false, r.equal(bad7));
-        BOOST_CHECK_EQUAL(false, r.equal(bad8));
+        BOOST_CHECK_EQUAL(r, r);
+        BOOST_CHECK_EQUAL(r, same);
+        BOOST_CHECK_EQUAL(same, r);
+        BOOST_CHECK_NE(r, inner);
+        BOOST_CHECK_NE(r, outer);
+        BOOST_CHECK_NE(r, bad1);
+        BOOST_CHECK_NE(r, bad1);
+        BOOST_CHECK_NE(r, bad3);
+        BOOST_CHECK_NE(r, bad4);
+        BOOST_CHECK_NE(r, bad5);
+        BOOST_CHECK_NE(r, bad6);
+        BOOST_CHECK_NE(r, bad7);
+        BOOST_CHECK_NE(r, bad8);
 
     }
 
@@ -408,6 +408,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(0,10,5,5)));
         BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(10,0,5,5)));
         BOOST_CHECK_EQUAL(false, r.has_intersection(Rect(0,0,5,5)));
+        BOOST_CHECK_EQUAL(false, r.has_intersection(5,5));
 
         BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(10,10,10,10)));
         BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(5,10,10,10)));
@@ -416,5 +417,6 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(10,15,10,10)));
         BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(15,15,5,5)));
         BOOST_CHECK_EQUAL(true, r.has_intersection(Rect(0,0,40,40)));
+        BOOST_CHECK_EQUAL(true, r.has_intersection(15, 15));
     }
 }

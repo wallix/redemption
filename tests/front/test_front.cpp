@@ -23,7 +23,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdp
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -528,6 +528,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
     BOOST_CHECK(rdp_handshake_timeout_exception_raised);
 }
 
+/*
 BOOST_AUTO_TEST_CASE(TestFront3)
 {
     try {
@@ -757,3 +758,4 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         LOG(LOG_INFO, "Exiting on Exception");
     };
 }
+*/

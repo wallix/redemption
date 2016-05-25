@@ -56,12 +56,12 @@ class FlatWaitMod : public InternalMod, public NotifyApi
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect,
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, *this, front, this->font(), this->theme())
-        , wait_widget(*this, width, height, this->screen, this, caption, message, 0,
+        , wait_widget(*this, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
                       &this->language_button,
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),

@@ -29,8 +29,8 @@
 #include "core/listen.hpp"
 #include "core/session.hpp"
 #include "transport/socket_transport.hpp"
+#include "utils/invalid_socket.hpp"
 #include "transport/out_file_transport.hpp"
-#include "utils/socket_transport_utility.hpp"
 #include "mod/internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 
@@ -350,10 +350,10 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             FD_ZERO(&wfds);
             struct timeval timeout = time_mark;
 
-            add_to_fd_set(front_event, st_front, rfds, max, timeout);
-            add_to_fd_set(mod.get_event(), st_mod, rfds, max, timeout);
+            front_event.add_to_fd_set(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
+            mod.get_event().add_to_fd_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
-            if (is_set(mod.get_event(), st_mod, rfds)) {
+            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 0;
                 timeout.tv_usec = 0;
             }
@@ -369,7 +369,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
                 break;
             }
 
-            if (is_set(front_event, st_front, rfds)) {
+            if (front_event.is_set(st_front?st_front->sck:INVALID_SOCKET, rfds)) {
                 time_t now = time(nullptr);
 
                 try {
@@ -382,7 +382,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             }
 
             if (front.up_and_running) {
-                if (is_set(mod.get_event(), st_mod, rfds)) {
+                if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                     mod.get_event().reset();
                     mod.draw_event(time(nullptr));
                     if (mod.get_event().signal != BACK_EVENT_NONE) {

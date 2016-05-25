@@ -52,6 +52,7 @@
 #include "core/RDP/protocol.hpp"
 #include "core/RDP/RefreshRectPDU.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "core/RDP/SuppressOutputPDU.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/mppc_unified_dec.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
@@ -70,6 +71,7 @@
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "transparentrecorder.hpp"
 
@@ -288,7 +290,7 @@ protected:
         get_session_probe_virtual_channel_params() const = 0;
 };  // RDPChannelManagerMod
 
-class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
+class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
 {
     friend gdi::GraphicCoreAccess;
 
@@ -454,6 +456,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     RedirectionInfo & redir_info;
 
     const bool bogus_sc_net_size;
+    const bool bogus_linux_cursor;
+    const bool bogus_refresh_rect;
 
     std::string real_alternate_shell;
     std::string real_working_dir;
@@ -462,6 +466,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
     wait_obj                                      asynchronous_task_event;
 
     Translation::language_t lang;
+
+    const bool allow_using_multiple_monitors;
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -633,6 +639,8 @@ class mod_rdp : public gdi::GraphicProxy<mod_rdp, RDPChannelManagerMod>
 
     std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
+    GCC::UserData::CSMonitor cs_monitor;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -660,7 +668,9 @@ public:
         , state(MOD_RDP_NEGO)
         , console_session(info.console_session)
         , front_bpp(info.bpp)
-        , performanceFlags(info.rdp5_performanceflags)
+        , performanceFlags(info.rdp5_performanceflags &
+                           (~(mod_rdp_params.adjust_performance_flags_for_recording ?
+                              static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING) : 0)))
         , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
@@ -740,7 +750,10 @@ public:
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
+        , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
+        , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , lang(mod_rdp_params.lang)
+        , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , server_notifier(mod_rdp_params.acl,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
@@ -749,6 +762,7 @@ public:
                           mod_rdp_params.server_cert_error_message,
                           mod_rdp_params.verbose
                          )
+        , cs_monitor(info.cs_monitor)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -1320,6 +1334,10 @@ protected:
 
         session_probe_virtual_channel_params.acl                                    =
             this->acl;
+
+        session_probe_virtual_channel_params.bogus_refresh_rect_ex                  =
+            (this->bogus_refresh_rect && this->allow_using_multiple_monitors &&
+             (this->cs_monitor.monitorCount > 1));
 
         return session_probe_virtual_channel_params;
     }
@@ -2000,9 +2018,16 @@ public:
                             [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
                                 // ------------------------------------------------------------
                                 GCC::UserData::CSCore cs_core;
+
+                                Rect primary_monitor_rect =
+                                    this->cs_monitor.get_primary_monitor_rect();
+
                                 cs_core.version = this->use_rdp5?0x00080004:0x00080001;
-                                cs_core.desktopWidth = this->front_width;
-                                cs_core.desktopHeight = this->front_height;
+                                const bool single_monitor =
+                                    (!this->allow_using_multiple_monitors ||
+                                     (this->cs_monitor.monitorCount < 2));
+                                cs_core.desktopWidth  = (single_monitor ? this->front_width : primary_monitor_rect.cx + 1);
+                                cs_core.desktopHeight = (single_monitor ? this->front_height : primary_monitor_rect.cy + 1);
                                 //cs_core.highColorDepth = this->front_bpp;
                                 cs_core.highColorDepth = ((this->front_bpp == 32)
                                     ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
@@ -2010,6 +2035,9 @@ public:
                                 if (this->front_bpp == 32) {
                                     cs_core.supportedColorDepths = 15;
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
+                                }
+                                if (!single_monitor) {
+                                    cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
                                 }
 
                                 uint16_t hostlen = strlen(hostname);
@@ -2211,6 +2239,13 @@ public:
                                     }
                                     cs_net.emit(stream);
                                 }
+
+                                if (!single_monitor) {
+                                    if (this->verbose & 1) {
+                                        this->cs_monitor.log("Sending to server");
+                                    }
+                                    this->cs_monitor.emit(stream);
+                                }
                             },
                             [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
                                 GCC::Create_Request_Send(
@@ -2407,7 +2442,6 @@ public:
 //                                        hexdump(this->client_crypt_random, sizeof(this->client_crypt_random));
 //                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
 //                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
-
 
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);
@@ -3217,18 +3251,45 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
-                                            this->connection_finalization_state = WAITING_CTL_COOPERATE;
+
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+
+                                                if (sdata.pdutype2 == PDUTYPE2_MONITOR_LAYOUT_PDU) {
+                                                    MonitorLayoutPDU monitor_layout_pdu;
+
+                                                    monitor_layout_pdu.recv(sdata.payload);
+                                                    monitor_layout_pdu.log(
+                                                        "Rdp::receiving the server-to-client Monitor Layout PDU");
+
+                                                    if (this->cs_monitor.monitorCount &&
+                                                        (monitor_layout_pdu.get_monitorCount() !=
+                                                         this->cs_monitor.monitorCount)) {
+                                                        LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
+                                                        throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
+                                                    }
+                                                }
+                                                else {
+                                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
+                                                    if (this->transparent_recorder) {
+                                                        this->transparent_recorder->server_resize(this->front_width,
+                                                            this->front_height, this->bpp);
+                                                    }
+                                                    if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
+                                                        LOG(LOG_ERR, "Resize not available on older clients,"
+                                                            " change client resolution to match server resolution");
+                                                        throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+                                                    }
+
+                                                    this->connection_finalization_state = WAITING_CTL_COOPERATE;
+                                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                                }
                                             }
                                             break;
                                         case WAITING_CTL_COOPERATE:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -3239,7 +3300,6 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
                                             }
-                                            //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_FONT_MAP;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -3250,7 +3310,6 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_FONTMAP);
                                             this->connection_finalization_state = UP_AND_RUNNING;
 
                                             if (this->acl && !this->deactivation_reactivation_in_progress) {
@@ -3475,6 +3534,7 @@ public:
 
                                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
 
+/*
                                             LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
                                             if (this->transparent_recorder) {
                                                 this->transparent_recorder->server_resize(this->front_width,
@@ -3485,10 +3545,8 @@ public:
                                                     " change client resolution to match server resolution");
                                                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                             }
-//                                            this->orders.reset();
+*/
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
-
-//                                            this->deactivation_reactivation_in_progress = false;
                                         }
                                         break;
                                     case PDUTYPE_DEACTIVATEALLPDU:
@@ -3578,7 +3636,8 @@ public:
                         disable_input_event, disable_graphics_update);
                 }
 
-                if (e.id == ERR_LIC) {
+                if ((e.id == ERR_LIC) ||
+                    (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT)) {
                     throw;
                 }
             }
@@ -5703,7 +5762,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate2(const DArray<Rect> & vr) override {
+    void rdp_input_invalidate2(array_view<Rect> vr) override {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
@@ -5713,9 +5772,9 @@ public:
                                       this->userid,
                                       this->encryptionLevel,
                                       this->encrypt);
-            for (size_t i = 0; i < vr.size() ; i++){
-                if (!vr[i].isempty()){
-                    rrpdu.addInclusiveRect(vr[i].x, vr[i].y, vr[i].x + vr[i].cx - 1, vr[i].y + vr[i].cy - 1);
+            for (Rect const & rect : vr) {
+                if (!rect.isempty()){
+                    rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
                 }
             }
             rrpdu.emit(this->nego.trans);
@@ -5723,8 +5782,46 @@ public:
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
+    }
 
-    };
+    void rdp_allow_display_updates(uint16_t left, uint16_t top,
+            uint16_t right, uint16_t bottom) override {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
+        }
+
+        this->send_pdu_type2(
+            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+            [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
+                RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
+
+                sopdud.emit(stream);
+            }
+        );
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates done");
+        }
+    }
+
+    void rdp_suppress_display_updates() override {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates");
+        }
+
+        this->send_pdu_type2(
+            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+            [](StreamSize<32>, OutStream & stream) {
+                RDP::SuppressOutputPDUData sopdud;
+
+                sopdud.emit(stream);
+            }
+        );
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
+        }
+    }
 
     // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
     // =========================================================================
@@ -6091,11 +6188,13 @@ public:
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
 
-            for (unsigned i = 0 ; i < mlen; i++) {
-                uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
-                uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
-                data_data[i]    = new_data_data;
-                mask_data[i]    = new_mask_data;
+            if (this->bogus_linux_cursor) {
+                for (unsigned i = 0 ; i < mlen; i++) {
+                    uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                    uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                    data_data[i]    = new_data_data;
+                    mask_data[i]    = new_mask_data;
+                }
             }
 
             TODO("move that into cursor")
@@ -6376,7 +6475,7 @@ public:
     }
 
 protected:
-    FrontAPI & get_gd_proxy_impl() {
+    FrontAPI & get_graphic_proxy() {
         return this->front;
     }
 

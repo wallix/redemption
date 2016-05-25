@@ -37,7 +37,7 @@ private:
     using GdRef = std::reference_wrapper<gdi::GraphicApi>;
 
     struct Graphic final
-    : gdi::GraphicDispatcher<Graphic>
+    : gdi::GraphicProxyBase<Graphic>
     {
         friend gdi::GraphicCoreAccess;
 
@@ -51,8 +51,9 @@ private:
         , mouse(mouse)
         {}
 
-        std::vector<GdRef> & get_gd_list_impl() {
-            return this->gds;
+        gdi::GraphicDispatcherList<std::vector<GdRef>>
+        get_graphic_proxy() {
+            return {this->gds};
         }
 
         template<class Cmd, class... Ts>

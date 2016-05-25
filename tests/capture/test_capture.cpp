@@ -23,7 +23,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWrmCapture
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -37,6 +37,8 @@
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
+    try  {
+
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(0);
@@ -49,6 +51,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         now.tv_sec = 1000;
 
         Rect scr(0, 0, 800, 600);
+
 
         ini.set<cfg::video::frame_interval>(100); // one timestamp every second
         ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
@@ -74,12 +77,10 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         bool no_timestamp = false;
         TODO("remove this after unifying capture interface");
         auth_api * authentifier = nullptr;
-
         Capture capture(
             now, scr.cx, scr.cy, 24, 24
             , clear_png, no_timestamp, authentifier
             , ini, rnd, cctx, full_video);
-
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -113,7 +114,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
         now.tv_sec++;
         capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
-
         // The destruction of capture object will finalize the metafile content
     }
 
@@ -204,10 +204,16 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL(32, ::filesize(filename));
         ::unlink(filename);
     }
+
+    } catch (const Error & e) {
+        BOOST_CHECK_EQUAL(e.id,  1);
+    };
 }
 
 BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
+    try {
+
     LCGRandom rnd(0);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
@@ -268,4 +274,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         }
         ::unlink(filename);
     }
+
+    } catch (...) {
+        BOOST_CHECK(false);
+    };
 }

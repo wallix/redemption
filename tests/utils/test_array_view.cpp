@@ -22,7 +22,7 @@
 #define BOOST_TEST_DYN_LINK
 
 #define BOOST_TEST_MODULE TestArrayView
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
@@ -33,9 +33,9 @@
 
 namespace {
 
-int test_ambiguous(array_const_char) { return 1; }
-int test_ambiguous(array_const_s8) { return 2; }
-int test_ambiguous(array_const_u8) { return 3; }
+int test_ambiguous(array_view_const_char) { return 1; }
+int test_ambiguous(array_view_const_s8) { return 2; }
+int test_ambiguous(array_view_const_u8) { return 3; }
 
 }
 
@@ -53,4 +53,27 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
 
     std::string s;
     BOOST_CHECK_EQUAL(test_ambiguous(s), 1);
+
+    s = "abc";
+    auto av = make_array_view(s);
+    BOOST_CHECK_EQUAL(av.size(), s.size());
+    BOOST_CHECK_EQUAL(av.data(), s.data());
+    BOOST_CHECK_EQUAL(av[0], s[0]);
+    BOOST_CHECK_EQUAL(av[1], s[1]);
+    BOOST_CHECK_EQUAL(av[2], s[2]);
+    BOOST_CHECK_EQUAL(av.end() - av.begin(), 3);
+
+    {
+        auto const av_p = make_array_view(&s[0], &s[3]);
+        BOOST_CHECK_EQUAL(static_cast<void const *>(av_p.data()), static_cast<void const *>(av.data()));
+        BOOST_CHECK_EQUAL(av_p.size(), av.size());
+        BOOST_CHECK_EQUAL(av_p[0], av[0]);
+    }
+
+    BOOST_CHECK_EQUAL(make_array_view("abc").size(), 4);
+    BOOST_CHECK_EQUAL(cstr_array_view("abc").size(), 3);
+    BOOST_CHECK_EQUAL(make_array_view(av.data(), 1).size(), 1);
+
+    BOOST_CHECK(array_view_char{nullptr}.empty());
+
 }

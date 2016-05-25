@@ -24,7 +24,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestColors
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
@@ -62,7 +62,6 @@ BOOST_AUTO_TEST_CASE(TestColors)
 
     BGRPalette & palette = *(Hack(data_palette).palette);
 
-    BOOST_CHECK_EQUAL(0, color_decode(0, 1, palette));
     BOOST_CHECK_EQUAL(0, color_decode(0, 8, palette));
     BOOST_CHECK_EQUAL(0xFFFFFF, color_decode(0xFF, 8, palette));
 
@@ -112,7 +111,4 @@ BOOST_AUTO_TEST_CASE(TestColors)
     BOOST_CHECK_EQUAL(0x000000, color_decode_opaquerect(0xFF0000, 15, palette));
     BOOST_CHECK_EQUAL(0x00E3FF, color_decode_opaquerect(0x00FF00, 16, palette));
     BOOST_CHECK_EQUAL(0x0000FF, color_decode_opaquerect(0x0000FF, 24, palette));
-
-
-
 }

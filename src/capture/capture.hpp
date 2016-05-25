@@ -106,7 +106,10 @@ public:
 
         bool const enable_kbd
           = !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
-          || ini.get<cfg::session_log::enable_session_log>()
+          || (ini.get<cfg::session_log::enable_session_log>() &&
+              (ini.get<cfg::session_log::keyboard_input_masking_level>()
+               != ::configs::KeyboardInputMaskingLevel::fully_masked)
+             )
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
         ;
@@ -307,7 +310,7 @@ public:
         this->external_capture_api.external_time(now);
     }
 
-    void session_update(const timeval & now, array_const_char const & message) override {
+    void session_update(const timeval & now, array_view_const_char message) override {
         this->capture_probe_api.session_update(now, message);
     }
 

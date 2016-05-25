@@ -24,24 +24,21 @@ textField_.addEventListener("keyup", function(event) {
 
     switch (event.keyCode) {
 
-        case 8:  console.log('Backspace ' + size);
-                 if (size == 0) {
-                    extLength = 0;
-                 } else {
-                    extLength = size;
-                 }
+        case 8:  extLength = size;
+                 _backspacePressed();
         break;
 
-        case 13: console.log('Entrer');
-                 textField_.value = "";
+        case 13: textField_.value = "";
                  extLength = 0;
+                 _enterPressed();
         break;
 
         default: if (textLength < size) {
-                    _keyPressEvent(str.charCodeAt(size-1));
+                    var char = str.charCodeAt(size-1);
+                    _charPressed(char);
                     extLength = size;
                  } else if (textLength > size || size == 0) {
-                    console.log('Backspace_vide ' + textLength + ' ' + size);
+                    _backspacePressed();
                     extLength = size;
                  }
         break;

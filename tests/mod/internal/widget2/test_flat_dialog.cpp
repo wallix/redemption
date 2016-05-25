@@ -22,7 +22,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatDialog
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test1",
+    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test1",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test2",
+    FlatDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test2",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test3",
+    FlatDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test3",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test4",
+    FlatDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test4",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test5",
+    FlatDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test5",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 350, 500, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable, 0, 0, 350, 500, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 300, 600, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable, 0, 0, 300, 600, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
+    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -471,7 +471,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
+    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
                            "Lorem ipsum dolor sit amet, consectetur<br>"
                            "adipiscing elit. Nam purus lacus, luctus sit<br>"
                            "amet suscipit vel, posuere quis turpis. Sed<br>"

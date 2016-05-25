@@ -30,6 +30,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <arpa/inet.h> // for ntohl
+
 
 #include "core/error.hpp"
 #include "openssl_crypto.hpp"
@@ -68,193 +70,358 @@ class SslMd5_direct
     /* public domain md5 implementation based on rfc1321 and libtomcrypt */
 
     struct md5 {
-	    uint64_t len;    /* processed message length */
-	    uint32_t h[4];   /* hash state */
-	    uint8_t buf[64]; /* message block buffer */
+        uint64_t len;    /* processed message length */
+        uint32_t h[4];   /* hash state */
+        uint8_t buf[64]; /* message block buffer */
     } md5;
 
     static uint32_t rol(uint32_t n, int k) { return (n << k) | (n >> (32-k)); }
-    #define F(x,y,z) (z ^ (x & (y ^ z)))
-    #define G(x,y,z) (y ^ (z & (y ^ x)))
-    #define H(x,y,z) (x ^ y ^ z)
-    #define I(x,y,z) (y ^ (x | ~z))
-    #define FF(a,b,c,d,w,s,t) a += F(b,c,d) + w + t; a = rol(a,s) + b
-    #define GG(a,b,c,d,w,s,t) a += G(b,c,d) + w + t; a = rol(a,s) + b
-    #define HH(a,b,c,d,w,s,t) a += H(b,c,d) + w + t; a = rol(a,s) + b
-    #define II(a,b,c,d,w,s,t) a += I(b,c,d) + w + t; a = rol(a,s) + b
-
-    static void processblock(struct md5 *s, const uint8_t *buf)
+    static uint32_t F(uint32_t x, uint32_t  y, uint32_t z) { return (z ^ (x & (y ^ z))); }
+    static uint32_t G(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (z & (y ^ x))); }
+    static uint32_t H(uint32_t x, uint32_t y, uint32_t z) { return (x ^ y ^ z); }
+    static uint32_t I(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (x | ~z)); }
+    static uint32_t FF(uint32_t a, uint32_t b, uint32_t c, uint32_t  d, uint32_t w, uint32_t s, uint32_t t) 
+    { 
+        return rol(a + F(b,c,d) + w + t, s) + b;
+    }
+    static uint32_t GG(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t w, uint32_t s, uint32_t t)
     {
-	    uint32_t i, W[16], a, b, c, d;
+        return rol(a + G(b,c,d) + w + t, s) + b;
+    }
+    static uint32_t HH(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t w, uint32_t s, uint32_t t)
+    {
+        return rol(a + H(b,c,d) + w + t, s) + b;
+    }
+    static uint32_t II(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t w, uint32_t s, uint32_t t)
+    {
+        return rol(a + I(b,c,d) + w + t, s) + b;
+    }
 
-        for (i = 0; i < 16; i++) {
-            W[i] = buf[4*i];
-            W[i] |= static_cast<uint32_t>(buf[4*i+1]<<8);
-            W[i] |= static_cast<uint32_t>(buf[4*i+2]<<16);
-            W[i] |= static_cast<uint32_t>(buf[4*i+3]<<24);
+    static uint32_t UINT32_LE(const uint8_t * b)
+    {
+        return ( static_cast<uint32_t>( b[0])     )
+             | ( static_cast<uint32_t>( b[1] <<  8) )
+             | ( static_cast<uint32_t>( b[2] << 16) )
+             | ( static_cast<uint32_t>( b[3] << 24) );
+    }
+
+    void processblock(const uint8_t *buf)
+    {
+        uint32_t W[16];
+
+        W[ 0] = UINT32_LE(buf + 0);
+        W[ 1] = UINT32_LE(buf + 4);
+        W[ 2] = UINT32_LE(buf + 8);
+        W[ 3] = UINT32_LE(buf + 12);
+        W[ 4] = UINT32_LE(buf + 16);
+        W[ 5] = UINT32_LE(buf + 20);
+        W[ 6] = UINT32_LE(buf + 24);
+        W[ 7] = UINT32_LE(buf + 28);
+        W[ 8] = UINT32_LE(buf + 32);
+        W[ 9] = UINT32_LE(buf + 36);
+        W[10] = UINT32_LE(buf + 40);
+        W[11] = UINT32_LE(buf + 44);
+        W[12] = UINT32_LE(buf + 48);
+        W[13] = UINT32_LE(buf + 52);
+        W[14] = UINT32_LE(buf + 56);
+        W[15] = UINT32_LE(buf + 60);
+
+        uint32_t a = this->md5.h[0];
+        uint32_t b = this->md5.h[1];
+        uint32_t c = this->md5.h[2];
+        uint32_t d = this->md5.h[3];
+
+        uint32_t i = 0;
+        a = FF(a,b,c,d, W[i],  7, 0xd76aa478); i++;
+        d = FF(d,a,b,c, W[i], 12, 0xe8c7b756); i++;
+        c = FF(c,d,a,b, W[i], 17, 0x242070db); i++;
+        b = FF(b,c,d,a, W[i], 22, 0xc1bdceee); i++;
+        a = FF(a,b,c,d, W[i],  7, 0xf57c0faf); i++;
+        d = FF(d,a,b,c, W[i], 12, 0x4787c62a); i++;
+        c = FF(c,d,a,b, W[i], 17, 0xa8304613); i++;
+        b = FF(b,c,d,a, W[i], 22, 0xfd469501); i++;
+        a = FF(a,b,c,d, W[i],  7, 0x698098d8); i++;
+        d = FF(d,a,b,c, W[i], 12, 0x8b44f7af); i++;
+        c = FF(c,d,a,b, W[i], 17, 0xffff5bb1); i++;
+        b = FF(b,c,d,a, W[i], 22, 0x895cd7be); i++;
+        a = FF(a,b,c,d, W[i],  7, 0x6b901122); i++;
+        d = FF(d,a,b,c, W[i], 12, 0xfd987193); i++;
+        c = FF(c,d,a,b, W[i], 17, 0xa679438e); i++;
+        b = FF(b,c,d,a, W[i], 22, 0x49b40821); i++;
+
+        a = GG(a,b,c,d, W[(5*i+1)%16],  5, 0xf61e2562); i++;
+        d = GG(d,a,b,c, W[(5*i+1)%16],  9, 0xc040b340); i++;
+        c = GG(c,d,a,b, W[(5*i+1)%16], 14, 0x265e5a51); i++;
+        b = GG(b,c,d,a, W[(5*i+1)%16], 20, 0xe9b6c7aa); i++;
+
+        a = GG(a,b,c,d, W[(5*i+1)%16],  5, 0xd62f105d); i++;
+        d = GG(d,a,b,c, W[(5*i+1)%16],  9, 0x02441453); i++;
+        c = GG(c,d,a,b, W[(5*i+1)%16], 14, 0xd8a1e681); i++;
+        b = GG(b,c,d,a, W[(5*i+1)%16], 20, 0xe7d3fbc8); i++;
+
+        a = GG(a,b,c,d, W[(5*i+1)%16],  5, 0x21e1cde6); i++;
+        d = GG(d,a,b,c, W[(5*i+1)%16],  9, 0xc33707d6); i++;
+        c = GG(c,d,a,b, W[(5*i+1)%16], 14, 0xf4d50d87); i++;
+        b = GG(b,c,d,a, W[(5*i+1)%16], 20, 0x455a14ed); i++;
+
+        a = GG(a,b,c,d, W[(5*i+1)%16],  5, 0xa9e3e905); i++;
+        d = GG(d,a,b,c, W[(5*i+1)%16],  9, 0xfcefa3f8); i++;
+        c = GG(c,d,a,b, W[(5*i+1)%16], 14, 0x676f02d9); i++;
+        b = GG(b,c,d,a, W[(5*i+1)%16], 20, 0x8d2a4c8a); i++;
+
+        a = HH(a,b,c,d, W[(3*i+5)%16],  4, 0xfffa3942); i++;
+        d = HH(d,a,b,c, W[(3*i+5)%16], 11, 0x8771f681); i++;
+        c = HH(c,d,a,b, W[(3*i+5)%16], 16, 0x6d9d6122); i++;
+        b = HH(b,c,d,a, W[(3*i+5)%16], 23, 0xfde5380c); i++;
+
+        a = HH(a,b,c,d, W[(3*i+5)%16],  4, 0xa4beea44); i++;
+        d = HH(d,a,b,c, W[(3*i+5)%16], 11, 0x4bdecfa9); i++;
+        c = HH(c,d,a,b, W[(3*i+5)%16], 16, 0xf6bb4b60); i++;
+        b = HH(b,c,d,a, W[(3*i+5)%16], 23, 0xbebfbc70); i++;
+
+        a = HH(a,b,c,d, W[(3*i+5)%16],  4, 0x289b7ec6); i++;
+        d = HH(d,a,b,c, W[(3*i+5)%16], 11, 0xeaa127fa); i++;
+        c = HH(c,d,a,b, W[(3*i+5)%16], 16, 0xd4ef3085); i++;
+        b = HH(b,c,d,a, W[(3*i+5)%16], 23, 0x04881d05); i++;
+
+        a = HH(a,b,c,d, W[(3*i+5)%16],  4, 0xd9d4d039); i++;
+        d = HH(d,a,b,c, W[(3*i+5)%16], 11, 0xe6db99e5); i++;
+        c = HH(c,d,a,b, W[(3*i+5)%16], 16, 0x1fa27cf8); i++;
+        b = HH(b,c,d,a, W[(3*i+5)%16], 23, 0xc4ac5665); i++;
+
+        a = II(a,b,c,d, W[7*i%16],  6, 0xf4292244); i++;
+        d = II(d,a,b,c, W[7*i%16], 10, 0x432aff97); i++;
+        c = II(c,d,a,b, W[7*i%16], 15, 0xab9423a7); i++;
+        b = II(b,c,d,a, W[7*i%16], 21, 0xfc93a039); i++;
+
+        a = II(a,b,c,d, W[7*i%16],  6, 0x655b59c3); i++;
+        d = II(d,a,b,c, W[7*i%16], 10, 0x8f0ccc92); i++;
+        c = II(c,d,a,b, W[7*i%16], 15, 0xffeff47d); i++;
+        b = II(b,c,d,a, W[7*i%16], 21, 0x85845dd1); i++;
+
+        a = II(a,b,c,d, W[7*i%16],  6, 0x6fa87e4f); i++;
+        d = II(d,a,b,c, W[7*i%16], 10, 0xfe2ce6e0); i++;
+        c = II(c,d,a,b, W[7*i%16], 15, 0xa3014314); i++;
+        b = II(b,c,d,a, W[7*i%16], 21,  0x4e0811a1); i++;
+
+        a = II(a,b,c,d, W[7*i%16],  6, 0xf7537e82); i++;
+        d = II(d,a,b,c, W[7*i%16], 10, 0xbd3af235); i++;
+        c = II(c,d,a,b, W[7*i%16], 15, 0x2ad7d2bb); i++;
+        b = II(b,c,d,a, W[7*i%16], 21, 0xeb86d391); i++;
+
+        this->md5.h[0] += a;
+        this->md5.h[1] += b;
+        this->md5.h[2] += c;
+        this->md5.h[3] += d;
+    }
+
+    void pad()
+    {
+        unsigned r = this->md5.len % 64;
+
+        this->md5.buf[r++] = 0x80;
+        if (r > 56) {
+            memset(this->md5.buf + r, 0, 64 - r);
+            r = 0;
+            this->processblock(this->md5.buf);
         }
-
-        a = s->h[0];
-        b = s->h[1];
-        c = s->h[2];
-        d = s->h[3];
-
-        i = 0;
-        FF(a,b,c,d, W[i],  7, 0xd76aa478); i++;
-        FF(d,a,b,c, W[i], 12, 0xe8c7b756); i++;
-        FF(c,d,a,b, W[i], 17, 0x242070db); i++;
-        FF(b,c,d,a, W[i], 22, 0xc1bdceee); i++;
-        FF(a,b,c,d, W[i],  7, 0xf57c0faf); i++;
-        FF(d,a,b,c, W[i], 12, 0x4787c62a); i++;
-        FF(c,d,a,b, W[i], 17, 0xa8304613); i++;
-        FF(b,c,d,a, W[i], 22, 0xfd469501); i++;
-        FF(a,b,c,d, W[i],  7, 0x698098d8); i++;
-        FF(d,a,b,c, W[i], 12, 0x8b44f7af); i++;
-        FF(c,d,a,b, W[i], 17, 0xffff5bb1); i++;
-        FF(b,c,d,a, W[i], 22, 0x895cd7be); i++;
-        FF(a,b,c,d, W[i],  7, 0x6b901122); i++;
-        FF(d,a,b,c, W[i], 12, 0xfd987193); i++;
-        FF(c,d,a,b, W[i], 17, 0xa679438e); i++;
-        FF(b,c,d,a, W[i], 22, 0x49b40821); i++;
-
-        GG(a,b,c,d, W[(5*i+1)%16],  5, 0xf61e2562); i++;
-        GG(d,a,b,c, W[(5*i+1)%16],  9, 0xc040b340); i++;
-        GG(c,d,a,b, W[(5*i+1)%16], 14, 0x265e5a51); i++;
-        GG(b,c,d,a, W[(5*i+1)%16], 20, 0xe9b6c7aa); i++;
-        GG(a,b,c,d, W[(5*i+1)%16],  5, 0xd62f105d); i++;
-        GG(d,a,b,c, W[(5*i+1)%16],  9, 0x02441453); i++;
-        GG(c,d,a,b, W[(5*i+1)%16], 14, 0xd8a1e681); i++;
-        GG(b,c,d,a, W[(5*i+1)%16], 20, 0xe7d3fbc8); i++;
-        GG(a,b,c,d, W[(5*i+1)%16],  5, 0x21e1cde6); i++;
-        GG(d,a,b,c, W[(5*i+1)%16],  9, 0xc33707d6); i++;
-        GG(c,d,a,b, W[(5*i+1)%16], 14, 0xf4d50d87); i++;
-        GG(b,c,d,a, W[(5*i+1)%16], 20, 0x455a14ed); i++;
-        GG(a,b,c,d, W[(5*i+1)%16],  5, 0xa9e3e905); i++;
-        GG(d,a,b,c, W[(5*i+1)%16],  9, 0xfcefa3f8); i++;
-        GG(c,d,a,b, W[(5*i+1)%16], 14, 0x676f02d9); i++;
-        GG(b,c,d,a, W[(5*i+1)%16], 20, 0x8d2a4c8a); i++;
-
-        HH(a,b,c,d, W[(3*i+5)%16],  4, 0xfffa3942); i++;
-        HH(d,a,b,c, W[(3*i+5)%16], 11, 0x8771f681); i++;
-        HH(c,d,a,b, W[(3*i+5)%16], 16, 0x6d9d6122); i++;
-        HH(b,c,d,a, W[(3*i+5)%16], 23, 0xfde5380c); i++;
-        HH(a,b,c,d, W[(3*i+5)%16],  4, 0xa4beea44); i++;
-        HH(d,a,b,c, W[(3*i+5)%16], 11, 0x4bdecfa9); i++;
-        HH(c,d,a,b, W[(3*i+5)%16], 16, 0xf6bb4b60); i++;
-        HH(b,c,d,a, W[(3*i+5)%16], 23, 0xbebfbc70); i++;
-        HH(a,b,c,d, W[(3*i+5)%16],  4, 0x289b7ec6); i++;
-        HH(d,a,b,c, W[(3*i+5)%16], 11, 0xeaa127fa); i++;
-        HH(c,d,a,b, W[(3*i+5)%16], 16, 0xd4ef3085); i++;
-        HH(b,c,d,a, W[(3*i+5)%16], 23, 0x04881d05); i++;
-        HH(a,b,c,d, W[(3*i+5)%16],  4, 0xd9d4d039); i++;
-        HH(d,a,b,c, W[(3*i+5)%16], 11, 0xe6db99e5); i++;
-        HH(c,d,a,b, W[(3*i+5)%16], 16, 0x1fa27cf8); i++;
-        HH(b,c,d,a, W[(3*i+5)%16], 23, 0xc4ac5665); i++;
-
-        II(a,b,c,d, W[7*i%16],  6, 0xf4292244); i++;
-        II(d,a,b,c, W[7*i%16], 10, 0x432aff97); i++;
-        II(c,d,a,b, W[7*i%16], 15, 0xab9423a7); i++;
-        II(b,c,d,a, W[7*i%16], 21, 0xfc93a039); i++;
-        II(a,b,c,d, W[7*i%16],  6, 0x655b59c3); i++;
-        II(d,a,b,c, W[7*i%16], 10, 0x8f0ccc92); i++;
-        II(c,d,a,b, W[7*i%16], 15, 0xffeff47d); i++;
-        II(b,c,d,a, W[7*i%16], 21, 0x85845dd1); i++;
-        II(a,b,c,d, W[7*i%16],  6, 0x6fa87e4f); i++;
-        II(d,a,b,c, W[7*i%16], 10, 0xfe2ce6e0); i++;
-        II(c,d,a,b, W[7*i%16], 15, 0xa3014314); i++;
-        II(b,c,d,a, W[7*i%16], 21,  0x4e0811a1); i++;
-        II(a,b,c,d, W[7*i%16],  6, 0xf7537e82); i++;
-        II(d,a,b,c, W[7*i%16], 10, 0xbd3af235); i++;
-        II(c,d,a,b, W[7*i%16], 15, 0x2ad7d2bb); i++;
-        II(b,c,d,a, W[7*i%16], 21, 0xeb86d391); i++;
-
-	    s->h[0] += a;
-	    s->h[1] += b;
-	    s->h[2] += c;
-	    s->h[3] += d;
+        memset(this->md5.buf + r, 0, 56 - r);
+        this->md5.len *= 8;
+        this->md5.buf[56] = this->md5.len;
+        this->md5.buf[57] = this->md5.len >> 8;
+        this->md5.buf[58] = this->md5.len >> 16;
+        this->md5.buf[59] = this->md5.len >> 24;
+        this->md5.buf[60] = this->md5.len >> 32;
+        this->md5.buf[61] = this->md5.len >> 40;
+        this->md5.buf[62] = this->md5.len >> 48;
+        this->md5.buf[63] = this->md5.len >> 56;
+        this->processblock(this->md5.buf);
     }
 
-    static void pad(struct md5 *s)
+    void md5_init()
     {
-	    unsigned r = s->len % 64;
-
-	    s->buf[r++] = 0x80;
-	    if (r > 56) {
-		    memset(s->buf + r, 0, 64 - r);
-		    r = 0;
-		    processblock(s, s->buf);
-	    }
-	    memset(s->buf + r, 0, 56 - r);
-	    s->len *= 8;
-	    s->buf[56] = s->len;
-	    s->buf[57] = s->len >> 8;
-	    s->buf[58] = s->len >> 16;
-	    s->buf[59] = s->len >> 24;
-	    s->buf[60] = s->len >> 32;
-	    s->buf[61] = s->len >> 40;
-	    s->buf[62] = s->len >> 48;
-	    s->buf[63] = s->len >> 56;
-	    processblock(s, s->buf);
+        this->md5.len = 0;
+        this->md5.h[0] = 0x67452301;
+        this->md5.h[1] = 0xefcdab89;
+        this->md5.h[2] = 0x98badcfe;
+        this->md5.h[3] = 0x10325476;
     }
 
-    static void md5_init(struct md5 *s)
+    void md5_sum(uint8_t *md)
     {
-	    s->len = 0;
-	    s->h[0] = 0x67452301;
-	    s->h[1] = 0xefcdab89;
-	    s->h[2] = 0x98badcfe;
-	    s->h[3] = 0x10325476;
+        int i;
+
+        this->pad();
+        for (i = 0; i < 4; i++) {
+            md[4*i] = this->md5.h[i];
+            md[4*i+1] = this->md5.h[i] >> 8;
+            md[4*i+2] = this->md5.h[i] >> 16;
+            md[4*i+3] = this->md5.h[i] >> 24;
+        }
     }
 
-    static void md5_sum(struct md5 *s, uint8_t *md)
+    void md5_update(const uint8_t *m, unsigned long len)
     {
-	    int i;
+        const uint8_t *p = m;
+        unsigned r = this->md5.len % 64;
 
-	    pad(s);
-	    for (i = 0; i < 4; i++) {
-		    md[4*i] = s->h[i];
-		    md[4*i+1] = s->h[i] >> 8;
-		    md[4*i+2] = s->h[i] >> 16;
-		    md[4*i+3] = s->h[i] >> 24;
-	    }
-    }
-
-    static void md5_update(struct md5 *s, const void *m, unsigned long len)
-    {
-	    const uint8_t *p = reinterpret_cast<const uint8_t*>(m);
-	    unsigned r = s->len % 64;
-
-	    s->len += len;
-	    if (r) {
-		    if (len < 64 - r) {
-			    memcpy(s->buf + r, p, len);
-			    return;
-		    }
-		    memcpy(s->buf + r, p, 64 - r);
-		    len -= 64 - r;
-		    p += 64 - r;
-		    processblock(s, s->buf);
-	    }
-	    for (; len >= 64; len -= 64, p += 64)
-		    processblock(s, p);
-	    memcpy(s->buf, p, len);
+        this->md5.len += len;
+        if (r) {
+            if (len < 64 - r) {
+                memcpy(this->md5.buf + r, p, len);
+                return;
+            }
+            memcpy(this->md5.buf + r, p, 64 - r);
+            len -= 64 - r;
+            p += 64 - r;
+            this->processblock(this->md5.buf);
+        }
+        for (; len >= 64; len -= 64, p += 64){
+            this->processblock(p);
+        }
+        memcpy(this->md5.buf, p, len);
     }
 
     public:
     SslMd5_direct()
     {
-        SslMd5_direct::md5_init(&this->md5);
+        this->md5_init();
     }
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        SslMd5_direct::md5_update(&this->md5, data, data_size);
+        this->md5_update(data, data_size);
     }
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
         assert(MD5_DIGEST_LENGTH == out_data_size);
-        SslMd5_direct::md5_sum(&this->md5, out_data);
+        this->md5_sum(out_data);
+    }
+};
+
+
+// the HMAC_MD5 transform looks like:
+// MD5(K XOR opad, MD5(K XOR ipad, text))
+// where K is an n byte key
+// ipad is the byte 0x36 repeated 64 times
+// opad is the byte 0x5c repeated 64 times
+// and text is the data being protected
+
+class SslHMAC_Md5_direct
+{
+    uint8_t k_ipad[64]; 
+    uint8_t k_opad[64]; 
+    SslMd5_direct context;
+
+    public:
+    SslHMAC_Md5_direct(const uint8_t * const key, size_t key_len)
+        : k_ipad{
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
+         },
+         k_opad{
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+         }
+    {
+         const uint8_t * k = key;
+         if (key_len > 64) {
+             unsigned char digest[MD5_DIGEST_LENGTH];
+             SslMd5_direct md5;
+             md5.update(digest, MD5_DIGEST_LENGTH);
+             md5.final(digest, MD5_DIGEST_LENGTH);
+             key_len = MD5_DIGEST_LENGTH;
+             k = key;
+         }
+         size_t i;
+         for (i = 0; i < key_len; i++){
+            k_ipad[i] ^= k[i];
+            k_opad[i] ^= k[i];
+         }
+         context.update(k_ipad, 64);
+    }
+
+    ~SslHMAC_Md5_direct()
+    {
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        context.update(data, data_size);
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        assert(MD5_DIGEST_LENGTH == out_data_size);
+        context.final(out_data, MD5_DIGEST_LENGTH);
+
+        SslMd5_direct md5;
+        md5.update(this->k_opad, 64);
+        md5.update(out_data, MD5_DIGEST_LENGTH);
+        md5.final(out_data, MD5_DIGEST_LENGTH);
+    }
+};
+
+
+class SslHMAC_Md5
+{
+    HMAC_CTX hmac;
+
+    public:
+    SslHMAC_Md5(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_CTX_init(&this->hmac);
+        int res = 0;
+        res = HMAC_Init_ex(&this->hmac, key, key_size, EVP_md5(), nullptr);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+        }
+    }
+
+    ~SslHMAC_Md5()
+    {
+        HMAC_CTX_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        int res = 0;
+        res = HMAC_Update(&this->hmac, data, data_size);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+        }
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        int res = 0;
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            res = HMAC_Final(&this->hmac, tmp, &len);
+            if (res == 0) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        res = HMAC_Final(&this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
     }
 };
 

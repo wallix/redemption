@@ -24,12 +24,14 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitmap
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
+#include "utils/png.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
 #include "utils/drawable.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
@@ -3983,43 +3985,44 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
     }
 }
 
+// TODO: Move this one to bitmap_with_png.hpp
 BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     const BGRPalette & palette332 = BGRPalette::classic_332();
 
     int bpp = 8;
     const uint8_t * const data = nullptr;
-    Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
+    Bitmap_PNG bmp(bpp, bpp, &palette332, 0, 4, data, 0);
 
-    Bitmap::openfile_t res;
+    Bitmap_PNG::openfile_t res;
 
     // const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
     const char * filename = FIXTURES_PATH "/xrdp24b.bmp";
     res = bmp.check_file_type(filename);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_BMP);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_BMP);
 
     // const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
     const char * filename2 = FIXTURES_PATH "/xrdp24b.jpg";
     res = bmp.check_file_type(filename2);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
 
     // const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
     const char * filename3 = FIXTURES_PATH "/xrdp24b.png";
     res = bmp.check_file_type(filename3);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_PNG);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_PNG);
 
     res = bmp.check_file_type("wrong/access/directory/image.png");
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
 
     // res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
     res = bmp.check_file_type(FIXTURES_PATH "/cursor1.cur");
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
 
 
     bool boolres = bmp.open_png_file(filename3);
     BOOST_CHECK_EQUAL(boolres, true);
 
     try {
-        Bitmap file(filename);
+        Bitmap_PNG file(filename);
     }
     catch (const Error & e){
         // this test is not supposed to be executed
@@ -4027,14 +4030,14 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
     }
 
     try {
-        Bitmap file(filename2);
+        Bitmap_PNG file(filename2);
     }
     catch (const Error & e){
         // this test is supposed to be executed
         BOOST_CHECK_EQUAL(ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, e.id);
     }
     try {
-        Bitmap file(filename3);
+        Bitmap_PNG file(filename3);
     }
     catch (const Error & e){
         // this test is not supposed to be executed
@@ -4311,7 +4314,7 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
 
     const char * filename = FIXTURES_PATH "/red_box_20x20.png";
 
-    Bitmap bmp(filename);
+    Bitmap_PNG bmp(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4526,3 +4529,109 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
 }
 
 
+// to see last result file, remove unlink
+// and do something like:
+// eog `ls -1tr /tmp/test_* | tail -n 1`
+// (or any other variation you like)
+
+void dump_png(const char * prefix, const Bitmap & bmp)
+{
+    char tmpname[128];
+    sprintf(tmpname, "%sXXXXXX.png", prefix);
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+//    ::dump_png24(f, bmp.data_bitmap, bmp.bmp_size / (bmp.cy*nbbytes(bmp.original_bpp)), bmp.cy, bmp.bmp_size / bmp.cy);
+    ::dump_png24(f, bmp.data(), 4, 3, 12, true);
+
+    ::fclose(f);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestConvertBitmap)
+{
+    BGRPalette palette332(BGRPalette::classic_332());
+
+    const uint8_t source_bpp = 16;
+    const uint16_t cx = 2;
+    const uint16_t cy = 3;
+    const uint8_t data[] = {
+        0xFF, 0xFF,   0xFF, 0xFF,
+        0xFF, 0xFF,   0xFF, 0xFF,
+        0xFF, 0xFF,   0xFF, 0xFF,
+    };
+
+    Bitmap bmp16(16, source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false);
+    BOOST_CHECK_EQUAL(24, bmp16.bmp_size());
+    
+    TODO("Check that: cx is now forced to be a multiple of 4 when creating bitmap, previous behaviour was only forcing line size to be aligned as a multiple of 4 (RDP constraint). See it has not effect on provided data and not other unwanted effect");
+    BOOST_CHECK_EQUAL(8, bmp16.line_size());
+    BOOST_CHECK_EQUAL(4, bmp16.cx());
+    BOOST_CHECK_EQUAL(cy, bmp16.cy());
+    BOOST_CHECK_EQUAL(16, bmp16.bpp());
+
+    uint16_t target_bpp = 24;
+    Bitmap bmp24(target_bpp, bmp16);
+    BOOST_CHECK_EQUAL(36, bmp24.bmp_size());
+    BOOST_CHECK_EQUAL(12, bmp24.line_size());
+    BOOST_CHECK_EQUAL(4, bmp24.cx());
+    BOOST_CHECK_EQUAL(cy, bmp24.cy());
+    BOOST_CHECK_EQUAL(24, bmp24.bpp());
+
+    const uint8_t * outbuf = bmp24.data();
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[2]);
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[3]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[4]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[5]);
+
+    TODO("We should force to black uninitialized parts of bitmap. For now it is random");
+    BOOST_CHECK_EQUAL(outbuf[6], outbuf[6]);
+    BOOST_CHECK_EQUAL(outbuf[7], outbuf[7]);
+    BOOST_CHECK_EQUAL(outbuf[8], outbuf[8]);
+
+    BOOST_CHECK_EQUAL(outbuf[9], outbuf[9]);
+    BOOST_CHECK_EQUAL(outbuf[10], outbuf[10]);
+    BOOST_CHECK_EQUAL(outbuf[11], outbuf[11]);
+
+    // ---------------------------------
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[12]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[13]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[14]);
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[15]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[16]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[17]);
+
+    TODO("We should force to black uninitialized parts of bitmap. For now it is random");
+    BOOST_CHECK_EQUAL(outbuf[18], outbuf[18]);
+    BOOST_CHECK_EQUAL(outbuf[19], outbuf[19]);
+    BOOST_CHECK_EQUAL(outbuf[20], outbuf[20]);
+
+    BOOST_CHECK_EQUAL(outbuf[21], outbuf[21]);
+    BOOST_CHECK_EQUAL(outbuf[22], outbuf[22]);
+    BOOST_CHECK_EQUAL(outbuf[23], outbuf[23]);
+
+    // ---------------------------------
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[24]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[25]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[26]);
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[27]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[28]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[29]);
+
+    TODO("We should force to black uninitialized parts of bitmap. For now it is random");
+    BOOST_CHECK_EQUAL(outbuf[30], outbuf[30]);
+    BOOST_CHECK_EQUAL(outbuf[31], outbuf[31]);
+    BOOST_CHECK_EQUAL(outbuf[32], outbuf[32]);
+
+    BOOST_CHECK_EQUAL(outbuf[33], outbuf[33]);
+    BOOST_CHECK_EQUAL(outbuf[34], outbuf[34]);
+    BOOST_CHECK_EQUAL(outbuf[35], outbuf[35]);
+
+}

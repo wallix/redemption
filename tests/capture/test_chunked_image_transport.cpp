@@ -23,7 +23,8 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWrmImageChunk
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
+//#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -185,6 +186,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     OutChunkedBufferingTransport<100> png_trans(trans);
     try {
         consumer.dump_png24(png_trans, true);
+//        DumpPng24FromRDPDrawableAdapter(consumer).dump_png24(png_trans, true);
     } catch (Error const & e) {
         BOOST_CHECK(false);
     };
@@ -273,8 +275,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     consumer.sync();
 
     OutChunkedBufferingTransport<16> png_trans(trans);
-
     consumer.dump_png24(png_trans, true);
+//    DumpPng24FromRDPDrawableAdapter(consumer).dump_png24(png_trans, true);
 
 }
 
@@ -303,7 +305,8 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                 );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    d.dump_png24(png_trans, true);
+    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
+//    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 
@@ -365,7 +368,8 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    d.dump_png24(png_trans, true);
+    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
+//    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 

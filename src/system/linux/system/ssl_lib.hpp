@@ -14,21 +14,33 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2016
-   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
+   Copyright (C) Wallix 2016
+   Author(s): Christophe Grosjean
 
 */
 
 #pragma once
 
-#include "system/ssl_calls.hpp"
-#include "system/ssl_bignum.hpp"
+#include "utils/bitfu.hpp"
+#include "system/ssl_modexp.hpp"
+
+
+enum {
+    SEC_RANDOM_SIZE   = 32,
+    SEC_MODULUS_SIZE  = 64,
+    SEC_MAX_MODULUS_SIZE  = /*256*/512,
+    SEC_PADDING_SIZE  =  8,
+    SEC_EXPONENT_SIZE =  4
+};
+
 
 class ssllib
 {
     public:
     static void rsa_encrypt(uint8_t * out, uint32_t in_len, uint8_t * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
     {
+        TODO("check out buffer size");
+        size_t out_len = 64;
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
 
         reverseit(modulus, modulus_size);
@@ -38,40 +50,29 @@ class ssllib
             inr[in_len-1-i] = in[i];
         }
 
-        int outlen = 0;
-        {
-            Bignum mod(modulus, modulus_size);
-            Bignum exp(exponent, exponent_size);
-            Bignum x(inr, in_len);
-            Bignum y = x.mod_exp(exp, mod); 
-            outlen = BN_bn2bin(&y.bn, out);
-        }
-        
+        size_t outlen = mod_exp(out, out_len, inr, in_len, modulus, modulus_size, exponent, exponent_size);
+
         reverseit(out, outlen);
 
-        if (outlen < static_cast<int>(modulus_size)){
+        if (outlen < modulus_size){
             memset(out + outlen, 0, modulus_size - outlen);
         }
     }
 
-
-    static void ssl_xxxxxx(uint8_t * client_random, 
-                           uint32_t in_len, const uint8_t * in, 
-                           uint32_t mod_len, const uint8_t * mod, 
+    static void ssl_xxxxxx(uint8_t * client_random,
+                           uint32_t in_len, const uint8_t * in,
+                           uint32_t mod_len, const uint8_t * mod,
                            uint32_t exp_len, const uint8_t * exp)
     {
-        uint8_t l_out[64]; memset(l_out, 0, 64);
+        uint8_t l_out[64] = {};
         uint8_t l_in[64];  rmemcpy(l_in, in, in_len);
         uint8_t l_mod[64]; rmemcpy(l_mod, mod, mod_len);
         uint8_t l_exp[64]; rmemcpy(l_exp, exp, exp_len);
 
-        Bignum lmod(l_mod, mod_len);
-        Bignum lexp(l_exp, exp_len);
-        Bignum lin(l_in, in_len);
-        Bignum lout = lin.mod_exp(lexp, lmod);
-        int rv = BN_bn2bin(&lout.bn, l_out);
-        if (rv <= 64) {
-            reverseit(l_out, rv);
+        size_t outlen = mod_exp(l_out, 64, l_in, in_len, l_mod, mod_len, l_exp, exp_len);
+
+        if (outlen <= 64) {
+            reverseit(l_out, outlen);
             memcpy(client_random, l_out, 64);
         }
     }

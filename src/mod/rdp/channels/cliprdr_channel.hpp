@@ -28,7 +28,6 @@
 #include "utils/make_unique.hpp"
 #include "utils/stream.hpp"
 
-#include <iostream>
 #include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
@@ -1444,6 +1443,43 @@ public:
         this->clipboard_initialize_notifier    = launcher;
         this->format_list_response_notifier    = launcher;
         this->format_data_request_notifier     = launcher;
+    }
+
+    void empty_client_clipboard() {
+        if (proxy_managed) {
+            return;
+        }
+
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::empty_client_clipboard");
+        }
+
+        // Format List PDU.
+        {
+            RDPECLIP::FormatListPDU format_list_pdu;
+            StaticOutStream<1024> out_stream;
+
+            format_list_pdu.emit_empty(out_stream);
+
+            const uint32_t total_length      = out_stream.get_offset();
+            const uint32_t flags             =
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+            const uint8_t* chunk_data        = out_stream.get_data();
+            const uint32_t chunk_data_length = total_length;
+
+            this->send_message_to_client(
+                total_length,
+                flags,
+                chunk_data,
+                chunk_data_length);
+
+            this->send_message_to_server(
+                total_length,
+                flags,
+                chunk_data,
+                chunk_data_length);
+        }
     }
 };  // class ClipboardVirtualChannel
 

@@ -30,7 +30,12 @@
 "session_timeout = integer(min=0, default=900)\n\n"
 
 "# Keepalive (in seconds).\n"
+<<<<<<< HEAD
 "#_hidden\n"
+=======
+
+"#_advanced\n"
+>>>>>>> fa005dadd7899e0cbd46a18818cd9d4cb21154e5
 "keepalive_grace_delay = integer(min=0, default=30)\n\n"
 
 "# Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).\n"
@@ -92,6 +97,13 @@
 "#_hidden\n"
 "disable_proxy_opt = boolean(default=False)\n\n"
 
+"allow_using_multiple_monitors = boolean(default=False)\n\n"
+
+"# Needed to refresh screen of Windows Server 2012.\n"
+
+"#_advanced\n"
+"bogus_refresh_rect = boolean(default=True)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"
@@ -99,8 +111,15 @@
 "#   0: keyboard input are not masked\n"
 "#   1: only passwords are masked\n"
 "#   2: passwords and unidentified texts are masked\n"
+<<<<<<< HEAD
 "#_advanced\n"
 "keyboard_input_masking_level = option(0, 1, 2, default=2)\n\n"
+=======
+"#   3: keyboard input are fully masked\n"
+
+"#_advanced\n"
+"keyboard_input_masking_level = option('0', '1', '2', '3', default='3')\n\n"
+>>>>>>> fa005dadd7899e0cbd46a18818cd9d4cb21154e5
 
 "[client]\n\n"
 
@@ -112,19 +131,29 @@
 "#_advanced\n"
 "ignore_logon_password = boolean(default=False)\n\n"
 
+"# Enable font smoothing (0x80).\n"
+
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_default = integer(min=0, default=0)\n\n"
+"performance_flags_default = integer(min=0, default=128)\n\n"
 
 "# Disable theme (0x8).\n"
 "#_advanced\n"
 "#_hex\n"
 "performance_flags_force_present = integer(min=0, default=8)\n\n"
 
+<<<<<<< HEAD
 "# Disable font smoothing (0x80).\n"
+=======
+>>>>>>> fa005dadd7899e0cbd46a18818cd9d4cb21154e5
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_force_not_present = integer(min=0, default=128)\n\n"
+"performance_flags_force_not_present = integer(min=0, default=0)\n\n"
+
+"# If enabled, avoid automatically font smoothing in recorded session.\n"
+
+"#_advanced\n"
+"auto_adjust_performance_flags = boolean(default=True)\n\n"
 
 "# Fallback to RDP Legacy Encryption if client does not support TLS.\n"
 "tls_fallback_legacy = boolean(default=False)\n\n"
@@ -179,6 +208,8 @@
 "# Enables support of Clent Fast-Path Input Event PDUs.\n"
 "#_advanced\n"
 "fast_path = boolean(default=True)\n\n"
+
+"enable_suppress_output = boolean(default=True)\n\n"
 
 "[mod_rdp]\n\n"
 
@@ -244,6 +275,11 @@
 "# Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.\n"
 "#_advanced\n"
 "bogus_sc_net_size = boolean(default=True)\n\n"
+
+"# Needed to get the old behavior of cursor rendering.\n"
+
+"#_advanced\n"
+"bogus_linux_cursor = boolean(default=False)\n\n"
 
 "#_advanced\n"
 "proxy_managed_drives = string_list(default=list())\n\n"

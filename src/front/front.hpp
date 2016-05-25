@@ -22,8 +22,7 @@
     Front object (server), used to communicate with RDP client
 */
 
-#ifndef _REDEMPTION_FRONT_FRONT_HPP_
-#define _REDEMPTION_FRONT_FRONT_HPP_
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -44,7 +43,6 @@
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/slowpath.hpp"
 
-#include "system/ssl_calls.hpp"
 #include "system/ssl_lib.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/rect.hpp"
@@ -70,9 +68,10 @@
 #include "utils/pattutils.hpp"
 
 #include "core/RDP/GraphicUpdatePDU.hpp"
-#include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
+#include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "core/RDP/SuppressOutputPDU.hpp"
 
 #include "core/RDP/capabilities/cap_bmpcache.hpp"
 #include "core/RDP/capabilities/offscreencache.hpp"
@@ -96,13 +95,14 @@
 
 #include "acl/auth_api.hpp"
 
-#include "keymap2.hpp"
+#include "keyboard/keymap2.hpp"
 
 #include "core/RDP/mppc_40.hpp"
 #include "core/RDP/mppc_50.hpp"
 #include "core/RDP/mppc_60.hpp"
 #include "core/RDP/mppc_61.hpp"
 
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/timeout.hpp"
 #include "utils/underlying_cast.hpp"
 #include "utils/non_null_ptr.hpp"
@@ -448,7 +448,7 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverter : gdi::GraphicProxy<
+        struct GraphicConverter : gdi::GraphicProxyBase<
             GraphicConverter<ColorConverter>,
             gdi::GraphicApi,
             gdi::GraphicColorConverterAccess
@@ -465,11 +465,11 @@ private:
             , graphics(graphics)
             {}
 
-            ColorConverter const & color_converter_impl() const {
+            ColorConverter const & get_color_converter() const {
                 return this->color_converter;
             }
 
-            Graphics::PrivateGraphicsUpdatePDU & get_gd_proxy_impl() {
+            Graphics::PrivateGraphicsUpdatePDU & get_graphic_proxy() {
                 return this->graphics;
             }
 
@@ -635,6 +635,8 @@ private:
     Timeout timeout;
 
     bool is_client_disconnected = false;
+
+    bool client_support_monitor_layout_pdu = false;
 
 public:
     Front(  Transport & trans
@@ -826,6 +828,7 @@ public:
                 this->send_deactive();
                 /* this should do the actual resizing */
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
                 state = ACTIVATE_AND_PROCESS_DATA;
@@ -1384,6 +1387,9 @@ public:
                             this->client_info.bpp = std::min(
                                 this->client_info.bpp, static_cast<int>(this->ini.get<cfg::client::max_color_depth>()));
                         }
+                        this->client_support_monitor_layout_pdu =
+                            (cs_core.earlyCapabilityFlags &
+                             GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU);
                     }
                     break;
                     case CS_SECURITY:
@@ -1431,10 +1437,22 @@ public:
                     case CS_MONITOR:
                     {
                         GCC::UserData::CSMonitor & cs_monitor =
-                            this->client_info.client_monitor;
+                            this->client_info.cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
+                        }
+
+                        Rect client_monitors_rect = this->client_info.cs_monitor.get_rect();
+                        if (this->verbose & 1) {
+                            LOG(LOG_INFO, "MonitorsRect=(%d, %d, %d, %d)",
+                                client_monitors_rect.x, client_monitors_rect.y,
+                                client_monitors_rect.cx, client_monitors_rect.cy);
+                        }
+
+                        if (this->ini.get<cfg::globals::allow_using_multiple_monitors>()) {
+                            this->client_info.width     = client_monitors_rect.cx + 1;
+                            this->client_info.height    = client_monitors_rect.cy + 1;
                         }
                     }
                     break;
@@ -1888,6 +1906,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::incoming::ACTIVATED (mce)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
@@ -2092,6 +2111,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::incoming::ACTIVATED (new license request)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
@@ -2663,7 +2683,7 @@ private:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(array_const_char const & message) override {
+    void session_update(array_view_const_char message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
@@ -2900,6 +2920,10 @@ private:
                 }
             }
         );
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "Front::send_demand_active done");
+        }
     }   // send_demand_active
 
     void process_confirm_active(InStream & stream)
@@ -3460,6 +3484,46 @@ private:
         }
     }
 
+    void send_monitor_layout() {
+        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||
+            !this->client_info.cs_monitor.monitorCount ||
+            !this->client_support_monitor_layout_pdu) {
+            return;
+        }
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_monitor_layout");
+        }
+
+        MonitorLayoutPDU monitor_layout_pdu;
+
+        monitor_layout_pdu.set(this->client_info.cs_monitor);
+        monitor_layout_pdu.log("Send to client");
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+        // Payload
+        monitor_layout_pdu.emit(stream.get_data_stream());
+
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_MONITOR_LAYOUT_PDU
+                            , false
+                            , this->mppc_enc
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , this->verbose
+                            );
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_monitor_layout done");
+        }
+    }
+
     /* PDUTYPE_DATAPDU */
     void process_data(InStream & stream, Callback & cb)
     {
@@ -3671,19 +3735,18 @@ private:
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
 
-                DArray<Rect> rects(numberOfAreas);
-                for (size_t i = 0; i < numberOfAreas ; i++) {
-
+                auto rects_raw = std::make_unique<Rect[]>(numberOfAreas);
+                array_view<Rect> rects(rects_raw.get(), numberOfAreas);
+                for (Rect & rect : rects) {
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();
                     int right = sdata_in.payload.in_uint16_le();
                     int bottom = sdata_in.payload.in_uint16_le();
-                    Rect rect(left, top, (right - left) + 1, (bottom - top) + 1);
-                    rects[i] = rect;
+                    rect = Rect(left, top, (right - left) + 1, (bottom - top) + 1);
                     if (this->verbose & (64|4)) {
                         LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
-                            left, top, right, bottom, rect.x, rect.cy);
+                            left, top, right, bottom, rect.cx, rect.cy);
                     }
                     // TODO("we should consider adding to API some function to refresh several rects at once")
                     // if (this->up_and_running) {
@@ -3704,13 +3767,26 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
-
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
             // to catch up so minimized apps don't take bandwidth
+            {
+                RDP::SuppressOutputPDUData sopdud;
+
+                sopdud.receive(sdata_in.payload);
+                //sopdud.log(LOG_INFO);
+
+                if (this->ini.get<cfg::client::enable_suppress_output>()) {
+                    if (RDP::ALLOW_DISPLAY_UPDATES == sopdud.get_allowDisplayUpdates()) {
+                        cb.rdp_allow_display_updates(sopdud.get_left(), sopdud.get_top(),
+                            sopdud.get_right(), sopdud.get_bottom());
+                    }
+                    else {
+                        cb.rdp_suppress_display_updates();
+                    }
+                }
+            }
             break;
 
         break;
@@ -4362,6 +4438,7 @@ private:
             else {
                 if (!this->input_event_disabled && send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
+
                 }
                 this->has_activity = true;
             }
@@ -4395,4 +4472,3 @@ private:
     }
 };
 
-#endif

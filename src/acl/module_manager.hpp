@@ -52,6 +52,22 @@
 #include "mod/mod_osd.hpp"
 #include "mm_api.hpp"
 
+Rect get_widget_rect(uint16_t width, uint16_t height,
+        GCC::UserData::CSMonitor const & monitors) {
+    Rect widget_rect(0, 0, width - 1, height - 1);
+    if (monitors.monitorCount) {
+        Rect rect                 = monitors.get_rect();
+        Rect primary_monitor_rect = monitors.get_primary_monitor_rect();
+
+        widget_rect.x  = abs(rect.x);
+        widget_rect.y  = abs(rect.y);
+        widget_rect.cx = primary_monitor_rect.cx;
+        widget_rect.cy = primary_monitor_rect.cy;
+    }
+
+    return widget_rect;
+}
+
 #define STRMODULE_LOGIN            "login"
 #define STRMODULE_SELECTOR         "selector"
 #define STRMODULE_SELECTOR_LEGACY  "selector_legacy"
@@ -313,6 +329,52 @@ class ModuleManager : public MMIni
         }
     } accounts;
 
+    typedef mod_api * ModApiPtr;
+    class CurrentCallback : public Callback {
+    private:
+        ModApiPtr & mod_api_ptr;
+
+    public:
+        CurrentCallback(ModApiPtr & mod_api_ptr) : mod_api_ptr(mod_api_ptr) {
+        }
+
+        void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
+            this->mod_api_ptr->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        }
+        void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+            this->mod_api_ptr->rdp_input_mouse(device_flags, x, y, keymap);
+        }
+        void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+            this->mod_api_ptr->rdp_input_synchronize(time, device_flags, param1, param2);
+        }
+        void rdp_input_invalidate(const Rect & r) override {
+            this->mod_api_ptr->rdp_input_invalidate(r);
+        }
+        void rdp_input_invalidate2(array_view<Rect> vr) override {
+            this->mod_api_ptr->rdp_input_invalidate2(vr);
+        }
+        void rdp_input_up_and_running() override {
+            this->mod_api_ptr->rdp_input_up_and_running();
+        }
+        void rdp_allow_display_updates(uint16_t left, uint16_t top,
+                uint16_t right, uint16_t bottom) override {
+            this->mod_api_ptr->rdp_allow_display_updates(left, top, right, bottom);
+        }
+        void rdp_suppress_display_updates() override {
+            this->mod_api_ptr->rdp_suppress_display_updates();
+        }
+
+        void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
+            this->mod_api_ptr->send_to_mod_channel(front_channel_name, chunk, length, flags);
+        }
+        void send_auth_channel_data(const char * data) override {
+            this->mod_api_ptr->send_auth_channel_data(data);
+        }
+        void send_disconnect_ultimatum() override {
+            this->mod_api_ptr->send_disconnect_ultimatum();
+        }
+    } current_callback;  // class CurrentCallback
+
     struct module_osd
     : public mod_osd
     {
@@ -320,10 +382,10 @@ class ModuleManager : public MMIni
         bool external_deleting;
     public:
         module_osd(
-            ModuleManager & manager, const Rect & rect,
+            ModuleManager & manager, const Rect & rect, bool bogus_refresh_rect_ex,
             std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
             bool external_deleting)
-        : mod_osd(*manager.mod, rect, std::move(f))
+        : mod_osd(*manager.mod, rect, bogus_refresh_rect_ex, std::move(f))
         , external_deleting(external_deleting)
         , manager(manager)
         , old_mod(manager.mod)
@@ -380,10 +442,11 @@ class ModuleManager : public MMIni
 
     struct sock_mod_barrier {};
     template<class Mod>
-    struct ModWithSocket final : private SocketTransport, Mod
+    class ModWithSocket final : private SocketTransport, public Mod
     {
-    private:
         ModuleManager & mm;
+        bool target_info_is_shown = false;
+
     public:
         template<class... Args>
         ModWithSocket( ModuleManager & mm, const char * name, int sck, uint32_t verbose
@@ -398,23 +461,22 @@ class ModuleManager : public MMIni
             mm.mod_transport = this;
         }
 
-        bool targer_info_is_shown = false;
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
             //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
             Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
 
             if (this->mm.ini.template get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
-                bool f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
-                if (targer_info_is_shown && f12_released) {
+                bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
+                if (this->target_info_is_shown && f12_released) {
                     //LOG(LOG_INFO, "Hide info");
                     this->mm.clear_osd_message();
-                    targer_info_is_shown = false;
+                    this->target_info_is_shown = false;
                 }
-                else if (!f12_released) {
+                else if (!this->target_info_is_shown && !f12_released) {
                     //LOG(LOG_INFO, "Show info");
                     this->mm.osd_message(this->mm.ini.template get<cfg::globals::target_device>(), true);
-                    targer_info_is_shown = true;
+                    this->target_info_is_shown = true;
                 }
             }
         }
@@ -448,7 +510,11 @@ public:
             background_color = color_encode(background_color, this->front.client_info.bpp);
         }
         this->mod = new module_osd(
-            *this, Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
+            *this,
+            Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
+            (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+             this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+             (this->front.client_info.cs_monitor.monitorCount > 1)),
             [this, message, color, background_color](mod_api & mod, const Rect & rect, const Rect & clip) {
                 const Rect r = rect.intersect(clip);
                 mod.begin_update();
@@ -492,6 +558,7 @@ public:
 
     ModuleManager(Front & front, Inifile & ini, Random & gen)
         : MMIni(ini)
+        , current_callback(this->mod)
         , osd(nullptr)
         , front(front)
         , no_mod(this->front)
@@ -514,6 +581,10 @@ public:
 
     ~ModuleManager() override {
         this->remove_mod();
+    }
+
+    Callback * get_callback() {
+        return &this->current_callback;
     }
 
     void new_mod(int target_module, time_t now, auth_api * acl) override {
@@ -574,11 +645,14 @@ public:
         case MODULE_INTERNAL_WIDGET2_SELECTOR_LEGACY:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             this->mod = new FlatSelector2Mod(this->ini,
-                        // new FlatSelectorMod(this->ini,
-                        // new SelectorMod(this->ini,
                                         this->front,
                                         this->front.client_info.width,
-                                        this->front.client_info.height
+                                        this->front.client_info.height,
+                                        get_widget_rect(
+                                                this->front.client_info.width,
+                                                this->front.client_info.height,
+                                                this->front.client_info.cs_monitor
+                                            )
                                         );
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
@@ -591,10 +665,14 @@ public:
                     this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
                 }
                 this->mod = new FlatWabCloseMod(this->ini,
-                            // new WabCloseMod(this->ini,
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height,
+                                            get_widget_rect(
+                                                    this->front.client_info.width,
+                                                    this->front.client_info.height,
+                                                    this->front.client_info.cs_monitor
+                                                ),
                                             now,
                                             true
                                             );
@@ -611,6 +689,11 @@ public:
                                                 this->front,
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
+                                                get_widget_rect(
+                                                        this->front.client_info.width,
+                                                        this->front.client_info.height,
+                                                        this->front.client_info.cs_monitor
+                                                    ),
                                                 now,
                                                 true,
                                                 true
@@ -624,7 +707,13 @@ public:
                 this->mod = new InteractiveTargetMod(this->ini,
                                                      this->front,
                                                      this->front.client_info.width,
-                                                     this->front.client_info.height);
+                                                     this->front.client_info.height,
+                                                     get_widget_rect(
+                                                             this->front.client_info.width,
+                                                             this->front.client_info.height,
+                                                             this->front.client_info.cs_monitor
+                                                     )
+                                                     );
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
             break;
@@ -636,11 +725,15 @@ public:
                 const char * button = TR("refused", language(this->ini));
                 const char * caption = "Information";
                 this->mod = new FlatDialogMod(
-                            // new DialogMod(
                                           this->ini,
                                           this->front,
                                           this->front.client_info.width,
                                           this->front.client_info.height,
+                                          get_widget_rect(
+                                                  this->front.client_info.width,
+                                                  this->front.client_info.height,
+                                                  this->front.client_info.cs_monitor
+                                          ),
                                           caption,
                                           message,
                                           button,
@@ -661,6 +754,11 @@ public:
                                           this->front,
                                           this->front.client_info.width,
                                           this->front.client_info.height,
+                                          get_widget_rect(
+                                                  this->front.client_info.width,
+                                                  this->front.client_info.height,
+                                                  this->front.client_info.cs_monitor
+                                          ),
                                           caption,
                                           message,
                                           button,
@@ -685,6 +783,11 @@ public:
                                               this->front,
                                               this->front.client_info.width,
                                               this->front.client_info.height,
+                                              get_widget_rect(
+                                                      this->front.client_info.width,
+                                                      this->front.client_info.height,
+                                                      this->front.client_info.cs_monitor
+                                              ),
                                               caption,
                                               message,
                                               button,
@@ -706,6 +809,11 @@ public:
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height,
+                                            get_widget_rect(
+                                                    this->front.client_info.width,
+                                                    this->front.client_info.height,
+                                                    this->front.client_info.cs_monitor
+                                            ),
                                             caption,
                                             message,
                                             now,
@@ -751,6 +859,11 @@ public:
                                          this->front,
                                          this->front.client_info.width,
                                          this->front.client_info.height,
+                                         get_widget_rect(
+                                                this->front.client_info.width,
+                                                this->front.client_info.height,
+                                                this->front.client_info.cs_monitor
+                                            ),
                                          now
             );
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
@@ -934,10 +1047,21 @@ public:
                 mod_rdp_params.server_redirection_support          = this->ini.get<cfg::mod_rdp::server_redirection_support>();
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.get<cfg::mod_rdp::bogus_sc_net_size>();
+                mod_rdp_params.bogus_linux_cursor                  = this->ini.get<cfg::mod_rdp::bogus_linux_cursor>();
+                mod_rdp_params.bogus_refresh_rect                  = this->ini.get<cfg::globals::bogus_refresh_rect>();
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
 
                 mod_rdp_params.lang                                = language(this->ini);
+
+                mod_rdp_params.allow_using_multiple_monitors       = this->ini.get<cfg::globals::allow_using_multiple_monitors>();
+
+                mod_rdp_params.adjust_performance_flags_for_recording
+                                                                   = (this->ini.get<cfg::globals::movie>() &&
+                                                                      this->ini.get<cfg::client::auto_adjust_performance_flags>() &&
+                                                                      ((this->ini.get<cfg::video::capture_flags>() &
+                                                                        (configs::CaptureFlags::wrm | configs::CaptureFlags::ocr)) !=
+                                                                       configs::CaptureFlags::none));
 
                 try {
                     const char * const name = "RDP Target";
@@ -963,6 +1087,13 @@ public:
                     throw;
                 }
 
+                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                    this->mod->rdp_suppress_display_updates();
+                    this->mod->rdp_allow_display_updates(0, 0,
+                        this->front.client_info.width, this->front.client_info.height);
+                }
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
@@ -1063,10 +1194,24 @@ public:
                                           this->front.client_info.height,
                                           this->ini,
                                           acl);
+                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                    this->mod->rdp_suppress_display_updates();
+                    this->mod->rdp_allow_display_updates(0, 0,
+                        this->front.client_info.width, this->front.client_info.height);
+                }
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
             else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
                 this->front.resume_capture();
+                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                    this->mod->rdp_suppress_display_updates();
+                    this->mod->rdp_allow_display_updates(0, 0,
+                        this->front.client_info.width, this->front.client_info.height);
+                }
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
         }

@@ -67,6 +67,7 @@ notifications:
       - jpoelen@wallix.com
       - rzhou@wallix.com
       - cgrosjean@wallix.com
+      - cmoroldo@wallix.com
       #- jinthavong@wallix.com
       #- mtan@wallix.com
     on_success: never

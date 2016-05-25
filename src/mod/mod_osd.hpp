@@ -62,19 +62,32 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
         Rect left;
     };
 
+    bool disable_filter = false;
+
     subrect_t subrect(const Rect & rect) const
     {
-        const Rect sect = rect.intersect(this->fg_rect);
+        const Rect inter = rect.intersect(this->fg_rect);
         return {
-            Rect(rect.x, rect.y, rect.cx, sect.y - rect.y),
-            Rect(sect.right(), sect.y, rect.right() - sect.right(), sect.cy),
-            Rect(rect.x, sect.bottom(), rect.cx, rect.bottom() - sect.bottom()),
-            Rect(rect.x, sect.y, sect.x - rect.x, sect.cy)
+            Rect(rect.x, rect.y, rect.cx, inter.y - rect.y),
+            Rect(inter.right(), inter.y, rect.right() - inter.right(), inter.cy),
+            Rect(rect.x, inter.bottom(), rect.cx, rect.bottom() - inter.bottom()),
+            Rect(rect.x, inter.y, inter.x - rect.x, inter.cy)
         };
     }
 
     void draw_fg(Rect const & rect)
     {
+        class AutoDisabler {
+            bool & ref;
+        public:
+            AutoDisabler(bool & ref) : ref(ref) {
+                this->ref = true;
+            }
+            ~AutoDisabler() {
+                this->ref = false;
+            }
+        } auto_disabler(this->disable_filter);
+
         this->drawable_fn(this->mod, rect, this->fg_rect);
     }
 
@@ -84,12 +97,15 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
     mod_api & mod;
     drawable_function_type drawable_fn;
 
+    bool bogus_refresh_rect_ex = false;
+
 public:
-    mod_osd(mod_api & mod, Rect const & rect, drawable_function_type f, bool call_f = true)
+    mod_osd(mod_api & mod, Rect const & rect, bool bogus_refresh_rect_ex, drawable_function_type f, bool call_f = true)
     : mod_osd::base_type(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
     , mod(mod)
     , drawable_fn(std::move(f))
+    , bogus_refresh_rect_ex(bogus_refresh_rect_ex)
     {
         if (call_f) {
             this->draw_fg(this->fg_rect);
@@ -120,7 +136,7 @@ public:
 
     ~mod_osd() override {
         if (this->is_active()) {
-            this->mod.rdp_input_invalidate(this->fg_rect);
+            this->remove_osd();
         }
     }
 
@@ -138,12 +154,10 @@ public:
     {
         if (this->is_active()) {
             this->set_gd(this->mod, &this->mod);
-            this->mod.rdp_input_invalidate(this->fg_rect);
+            this->remove_osd();
         }
         else {
-            this->mod.begin_update();
-            this->draw_fg(this->fg_rect);
-            this->mod.end_update();
+            this->redraw_osd();
             this->set_gd(this->mod, this);
         }
     }
@@ -162,7 +176,12 @@ protected:
 
     template<class Command, class... Args>
     void draw_impl(Command const & cmd, Rect const & clip, Args const &... args) {
-        auto const & rect = clip_from_cmd(cmd);
+        if (this->disable_filter) {
+            this->mod.draw(cmd, clip, args...);
+            return;
+        }
+
+        auto const & rect = clip_from_cmd(cmd).intersect(clip);
         if (this->fg_rect.contains(rect) || rect.isempty()) {
             //nada
         }
@@ -193,7 +212,7 @@ protected:
                     , bitmap_data.dest_right - bitmap_data.dest_left + 1
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
-        if (rectBmp.has_intersection(this->fg_rect)) {
+        if (!this->disable_filter && rectBmp.has_intersection(this->fg_rect)) {
             const subrect_t rect4 = this->subrect(rectBmp);
 
             auto draw_bitmap_rect = [this, &rectBmp, &bmp](Rect const & rect) {
@@ -219,6 +238,11 @@ protected:
     }
 
     void draw_impl(const RDPScrBlt & cmd, const Rect & clip) {
+        if (this->disable_filter) {
+            this->mod.draw(cmd, clip);
+            return;
+        }
+
         const Rect drect = cmd.rect.intersect(clip);
         const int deltax = cmd.srcx - cmd.rect.x;
         const int deltay = cmd.srcy - cmd.rect.y;
@@ -231,7 +255,6 @@ protected:
 
         if (!has_dest_intersec_fg && !has_src_intersec_fg) {
             this->mod.draw(cmd, clip);
-            return ;
         }
         else {
             this->mod.begin_update();
@@ -259,6 +282,23 @@ private:
         }
     }
 
+    void remove_osd()
+    {
+        if (this->bogus_refresh_rect_ex) {
+            this->mod.rdp_suppress_display_updates();
+            this->mod.rdp_allow_display_updates(0, 0,
+                this->mod.get_front_width(), this->mod.get_front_height());
+        }
+        this->mod.rdp_input_invalidate(this->fg_rect);
+    }
+
+    void redraw_osd()
+    {
+        this->mod.begin_update();
+        this->draw_fg(this->fg_rect);
+        this->mod.end_update();
+    }
+
 public:
     void begin_update() override {
         this->mod.begin_update();
@@ -273,7 +313,7 @@ public:
     }
 
     void rdp_input_invalidate(const Rect & r) override {
-        if (r.has_intersection(this->fg_rect)) {
+        if (!this->disable_filter && r.has_intersection(this->fg_rect)) {
             this->mod.begin_update();
             this->subrect_input_invalidate(r);
             this->draw_fg(this->fg_rect.intersect(r));
@@ -331,8 +371,27 @@ public:
         return this->mod.is_up_and_running();
     }
 
-    void rdp_input_invalidate2(const DArray< Rect >& vr) override {
+    void send_disconnect_ultimatum() override {
+        this->mod.send_disconnect_ultimatum();
+    }
+
+    void rdp_input_invalidate2(array_view<Rect> vr) override {
         this->mod.rdp_input_invalidate2(vr);
+    }
+
+    void rdp_allow_display_updates(uint16_t left, uint16_t top,
+            uint16_t right, uint16_t bottom) override {
+        Rect const intersect = this->fg_rect.intersect(Rect(left, top, right - left + 1, bottom - top + 1));
+        if (!intersect.isempty()) {
+            this->mod.begin_update();
+            this->draw_fg(intersect);
+            this->mod.end_update();
+        }
+        this->mod.rdp_allow_display_updates(left, top, right, bottom);
+    }
+
+    void rdp_suppress_display_updates() override {
+        this->mod.rdp_suppress_display_updates();
     }
 
     void refresh_context(Inifile& ini) override {
@@ -341,6 +400,33 @@ public:
 
     void set_palette(const BGRPalette& palette) override {
         this->mod.set_palette(palette);
+    }
+
+    wait_obj * get_secondary_event() override {
+        return this->mod.get_secondary_event();
+    }
+
+    wait_obj * get_asynchronous_task_event(int & out_fd) override {
+        return this->mod.get_asynchronous_task_event(out_fd);
+    }
+
+    void process_asynchronous_task() override {
+        this->mod.process_asynchronous_task();
+    }
+
+    wait_obj * get_session_probe_launcher_event() override {
+        return this->mod.get_session_probe_launcher_event();
+    }
+
+    void process_session_probe_launcher() override {
+        this->mod.process_session_probe_launcher();
+    }
+
+    void server_draw_text(
+        const Font& font, int16_t x, int16_t y, const char* text,
+        uint32_t fgcolor, uint32_t bgcolor, const Rect& clip
+    ) override {
+        this->mod.server_draw_text(font, x, y, text, fgcolor, bgcolor, clip);
     }
 };
 

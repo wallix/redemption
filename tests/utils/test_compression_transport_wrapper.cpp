@@ -21,7 +21,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestSnappyCompressionTransport
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
@@ -57,4 +57,8 @@ BOOST_AUTO_TEST_CASE(TestCompressionTransportWrapper)
     std::cout.rdbuf(oldbuf);
 
     BOOST_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
+
+    CompressionTestTransportWrapper t(trans, 2);
+    BOOST_CHECK_EQUAL(t.get_index_algorithm(), 2);
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(t.get_algorithm()), 2);
 }

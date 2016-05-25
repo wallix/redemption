@@ -57,11 +57,12 @@
 #include "program_options/program_options.hpp"
 
 
-class Analyzer : public gdi::GraphicUniFormProxy<Analyzer, FrontAPI>
+class Analyzer : public gdi::GraphicProxyBase<Analyzer, FrontAPI>
 {
     friend gdi::GraphicCoreAccess;
 
-    template<class... Ts> void invoke_uniform_gd_impl(Ts const & ...) { REDASSERT(false); }
+    struct NullFn { template<class... Ts> void operator()(Ts const & ...) {} };
+    gdi::GraphicUniformProxy<NullFn> get_graphic_proxy() { return {}; }
 
 private:
     CHANNELS::ChannelDefArray channel_list;

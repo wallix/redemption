@@ -22,7 +22,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatLogin
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     int id = 0;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, parent.cx(), parent.cy(), parent, notifier, "test1",
+    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
                          false, id, "rec", "rec", "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     WidgetScreen parent(drawable, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2",
+    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test2",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600, font);
 
-    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
+    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
+    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test4",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
+    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
+    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     } notifier;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
+    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     BOOST_CHECK(notifier.sender == nullptr);

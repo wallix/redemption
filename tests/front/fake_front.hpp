@@ -32,9 +32,7 @@
 //#include <openssl/ssl.h>
 
 class FakeFront;
-namespace {
-    using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverterAccess>;
-}
+using FakeFrontBase = gdi::GraphicBase<FakeFront, FrontAPI, gdi::GraphicColorConverterAccess>;
 
 class FakeFront : public FakeFrontBase
 {
@@ -63,7 +61,7 @@ private:
 
     friend gdi::GraphicCoreAccess;
 
-    ColorDecoder color_converter_impl() const {
+    ColorDecoder get_color_converter() const {
         return {this->mod_bpp};
     }
 

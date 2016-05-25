@@ -21,7 +21,7 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestAuthentifierNew
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
@@ -29,10 +29,10 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "acl/authentifier.hpp"
-#include "acl/module_manager.hpp"
+//#include "acl/module_manager.hpp"
 #include "transport/count_transport.hpp"
 #include "transport/test_transport.hpp"
+#include "acl/authentifier.hpp"
 
 struct ActivityAlwaysTrue : ActivityChecker {
     virtual bool check_and_reset_activity() override { return true; };
@@ -134,7 +134,10 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     // If no keepalive is received after 30 seconds => disconnection
     sesman.check(mm, 10073, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true);
+
+
 }
+
 
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)

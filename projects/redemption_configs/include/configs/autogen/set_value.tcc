@@ -37,6 +37,13 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 value
             );
         }
+        else if (0 == strcmp(key, "auto_adjust_performance_flags")) {
+            ::configs::parse(
+                static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (0 == strcmp(key, "tls_fallback_legacy")) {
             ::configs::parse(
                 static_cast<cfg::client::tls_fallback_legacy&>(this->variables).value,
@@ -117,6 +124,13 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "fast_path")) {
             ::configs::parse(
                 static_cast<cfg::client::fast_path&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (0 == strcmp(key, "enable_suppress_output")) {
+            ::configs::parse(
+                static_cast<cfg::client::enable_suppress_output&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -506,6 +520,20 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 value
             );
         }
+        else if (0 == strcmp(key, "allow_using_multiple_monitors")) {
+            ::configs::parse(
+                static_cast<cfg::globals::allow_using_multiple_monitors&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (0 == strcmp(key, "bogus_refresh_rect")) {
+            ::configs::parse(
+                static_cast<cfg::globals::bogus_refresh_rect&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -621,6 +649,13 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "bogus_sc_net_size")) {
             ::configs::parse(
                 static_cast<cfg::mod_rdp::bogus_sc_net_size&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (0 == strcmp(key, "bogus_linux_cursor")) {
+            ::configs::parse(
+                static_cast<cfg::mod_rdp::bogus_linux_cursor&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );

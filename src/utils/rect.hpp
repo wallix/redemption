@@ -73,19 +73,15 @@ struct Rect {
               && inner.bottom() <= this->bottom());
     }
 
-    bool equal(const Rect & other) const {
+    bool operator==(const Rect &other) const {
         return (other.x == this->x
              && other.y == this->y
-             && other.right() == this->right()
-             && other.bottom() == this->bottom());
-    }
-
-    bool operator==(const Rect &other) const {
-        return this->equal(other);
+             && other.cx == this->cx
+             && other.cy == this->cy);
     }
 
     bool operator!=(const Rect &other) const {
-        return !this->equal(other);
+        return !(*this == other);
     }
 
     // Rect constructor ensures that any empty rect will be (0, 0, 0, 0)

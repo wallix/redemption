@@ -18,26 +18,34 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#ifndef _REDEMPTION_UTILS_OUTBOUNDCONNECTIONMONITORRULES_HPP_
-#define _REDEMPTION_UTILS_OUTBOUNDCONNECTIONMONITORRULES_HPP_
+#pragma once
 
-#include <string.h>
+#include "utils/make_unique.hpp"
 
-class OutboundConnectionMonitorRules {
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include <cstring>
+
+
+class OutboundConnectionMonitorRules
+{
+    struct outbound_connection_monitor_rule
+    {
+        unsigned type;
+        std::string address;
+        unsigned port;
+    };
+
+    std::vector<outbound_connection_monitor_rule> rules;
+
 public:
-    // Type, host address or subnet, and port.
-    typedef std::tuple<unsigned int, std::unique_ptr<std::string>, unsigned int>
-        outbound_connection_monitor_rule;
-
-private:
-    typedef std::vector<outbound_connection_monitor_rule>
-        outbound_connection_monitor_rule_collection;
-
-    outbound_connection_monitor_rule_collection rules;
-
-public:
-    OutboundConnectionMonitorRules(const char * comma_separated_notify_rules,
-            const char * comme_separated_block_rules) {
+    OutboundConnectionMonitorRules(
+        const char * comma_separated_notify_rules,
+        const char * comme_separated_block_rules
+    ) {
+        (void)comma_separated_notify_rules;
         if (comme_separated_block_rules) {
             const char * rule = comme_separated_block_rules;
 
@@ -57,14 +65,11 @@ public:
 
                 if (info_separator)
                 {
-                    std::unique_ptr<std::string> host_address_or_subnet =
-                        std::make_unique<std::string>(rule_c_str, info_separator - rule_c_str);
+                    std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
 
-                    this->rules.push_back(
-                            std::make_tuple(
-                                    1, std::move(host_address_or_subnet), ::atoi(info_separator + 1)
-                                )
-                        );
+                    this->rules.push_back({
+                        1, std::move(host_address_or_subnet), static_cast<unsigned>(::atoi(info_separator + 1))
+                    });
                 }
 
                 if (!rule_separator) {
@@ -76,23 +81,24 @@ public:
         }
     }
 
-    bool get(size_t index, unsigned int & out__type,
-            std::string & out__host_address_or_subnet,
-            unsigned int & out__port) {
+    bool get(
+        size_t index,
+        unsigned int & out__type,
+        std::string & out__host_address_or_subnet,
+        unsigned int & out__port
+    ) {
         if (this->rules.size() <= index) {
             out__type                   = 0;
-            out__host_address_or_subnet = "";
+            out__host_address_or_subnet.clear();
             out__port                   = 0;
 
             return false;
         }
 
-        out__type                   = std::get<0>(this->rules[index]);
-        out__host_address_or_subnet = std::get<1>(this->rules[index])->c_str();
-        out__port                   = std::get<2>(this->rules[index]);
+        out__type                   = this->rules[index].type;
+        out__host_address_or_subnet = this->rules[index].address;
+        out__port                   = this->rules[index].port;
 
         return true;
     }
 };
-
-#endif  // #ifndef _REDEMPTION_UTILS_OUTBOUNDCONNECTIONMONITORRULES_HPP_
