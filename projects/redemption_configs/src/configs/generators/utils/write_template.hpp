@@ -159,23 +159,35 @@ inline io_prefix_lines python_comment(char const * s, unsigned space) {
 }
 
 
+struct io_chex
+{
+    char c;
+
+    friend std::ostream & operator<<(std::ostream & out, io_chex const & h)
+    {
+        int
+        c = (h.c >> 4);
+        c += (c > 9) ? 'A' - 10 : '0';
+        out << char(c);
+        c = (h.c & 0xf);
+        c += (c > 9) ? 'A' - 10 : '0';
+        out << char(c);
+        return out;
+    }
+};
+
+
 struct io_hexkey
 {
     char const * s;
     std::size_t n;
     char const * prefix = "";
+    char const * suffix = "";
 
     friend std::ostream & operator<<(std::ostream & out, io_hexkey const & hk)
     {
-        int c;
         for (const char * k = hk.s, * e = k + hk.n; k != e; ++k) {
-            out << hk.prefix;
-            c = (*k >> 4);
-            c += (c > 9) ? 'A' - 10 : '0';
-            out << char(c);
-            c = (*k & 0xf);
-            c += (c > 9) ? 'A' - 10 : '0';
-            out << char(c);
+            out << hk.prefix << io_chex{*k} << hk.suffix;
         }
         return out;
     }

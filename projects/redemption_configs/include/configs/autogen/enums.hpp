@@ -318,5 +318,11 @@ enum class ColorDepth {
     depth24 = 24,
 };
 
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, ColorDepth e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 
 }

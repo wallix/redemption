@@ -193,6 +193,17 @@ namespace cpp_enumeration_writer
             out << "};\n\n";
         };
 
+        auto write_io = [write](auto && e) {
+            write(e,
+                "template<class Ch, class Tr>\n"
+                "std::basic_ostream<Ch, Tr> &\n"
+                "operator << (std::basic_ostream<Ch, Tr> & os, %e e)\n"
+                "{ return os << static_cast<unsigned long>(e); }\n"
+                "\n"
+                "\n"
+            );
+        };
+
 #ifdef IN_IDE_PARSER
 #define CPP_IDE(...)
 #else
@@ -234,18 +245,12 @@ namespace cpp_enumeration_writer
             else {
                 enum_def(e, [CPP_IDE(i = 0)] (auto &) mutable { return i++; });
             }
-            write(e,
-                "template<class Ch, class Tr>\n"
-                "std::basic_ostream<Ch, Tr> &\n"
-                "operator << (std::basic_ostream<Ch, Tr> & os, %e e)\n"
-                "{ return os << static_cast<unsigned long>(e); }\n"
-                "\n"
-                "\n"
-            );
+            write_io(e);
         }
 
         for (auto & e : enums.enumerations_set_) {
             enum_def(e, [] (auto & v) mutable { return v.val; });
+            write_io(e);
         }
 
         out << "\n}\n";

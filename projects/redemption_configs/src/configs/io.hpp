@@ -27,6 +27,7 @@
 
 #include <cstdlib>
 
+#include "utils/algostring.hpp"
 #include "utils/array_view.hpp"
 #include "utils/splitter.hpp"
 
@@ -37,9 +38,9 @@ namespace detail {
     template<class T, bool = std::is_integral<T>::value, bool = std::is_enum<T>::value>
     struct TaggedCStrBuf;
 
-    template<class IntT>
+    template<class TInt>
     constexpr std::size_t integral_buffer_size()
-    { return std::numeric_limits<IntT>::digits10 + 1 + std::numeric_limits<IntT>::is_signed; }
+    { return std::numeric_limits<TInt>::digits10 + 1 + std::numeric_limits<TInt>::is_signed; }
 
     template<class T>
     struct TaggedCStrBuf<T, true, false>
@@ -64,7 +65,7 @@ struct CStrBuf : detail::TaggedCStrBuf<T>
 {};
 
 template<class T>
-inline char const * c_str(CStrBuf<T>& , T const &);
+char const * c_str(CStrBuf<T>& , T const &);
 
 template<class T>
 CStrBuf<T> make_c_str_buf(T const & x) {
@@ -76,7 +77,8 @@ CStrBuf<T> make_c_str_buf(T const & x) {
 
 template<class> struct spec_type {};
 
-namespace spec_types {
+namespace spec_types
+{
     template<unsigned> class fixed_binary;
     template<class T> class list;
     using ip = std::string;
@@ -91,7 +93,8 @@ struct parse_error
     char const * c_str() const { return this->s_err; }
 };
 
-constexpr parse_error no_parse_error = {nullptr};
+constexpr parse_error no_parse_error {nullptr};
+
 
 parse_error parse(std::string & x, spec_type<std::string>, array_view_const_char value)
 {
@@ -99,19 +102,32 @@ parse_error parse(std::string & x, spec_type<std::string>, array_view_const_char
     return no_parse_error;
 }
 
-template<unsigned N>
+template<std::size_t N>
+parse_error parse(char (&x)[N], spec_type<char[N]>, array_view_const_char value)
+{
+    if (value.size() >= N-1) {
+        return {"out of bounds"};
+    }
+    memcpy(x, value.data(), value.size());
+    x[value.size()] = 0;
+    return no_parse_error;
+}
+
+template<std::size_t N1, unsigned N2>
 parse_error parse(
-    std::array<unsigned char, N> & key,
-    spec_type<spec_types::fixed_binary<N>>,
+    std::array<unsigned char, N1> & key,
+    spec_type<spec_types::fixed_binary<N2>>,
     array_view_const_char value
 ) {
-    if (value.size() != N*2) {
+    static_assert(N1 == N2, "");
+
+    if (value.size() != N1*2) {
         return {"bad length"};
     }
 
     char   hexval[3] = { 0 };
     char * end{};
-    for (std::size_t i = 0; i < N; i++) {
+    for (std::size_t i = 0; i < N1; i++) {
         hexval[0] = value[i*2];
         hexval[1] = value[i*2+1];
         key[i] = strtol(hexval, &end, 16);
@@ -131,23 +147,31 @@ parse_error parse(std::string & x, spec_type<spec_types::list<std::string>>, arr
 
 namespace detail
 {
-    template<class IntOrigni, class IntStr, class StrTo>
+    template<class IntOrigni, class IntStr>
     parse_error parse_list(
         std::string & x,
         array_view_const_char value,
         IntStr(*strtoi)(char const *, char**, int)
     ) {
-        char buf[detail::integral_buffer_size<IntOrigni>()+1];
-        for (auto && r : get_split(value, ',')) {
+        constexpr std::size_t sz_buf = detail::integral_buffer_size<IntOrigni>();
+        char buf[sz_buf+1];
+        for (auto r : get_split(value, ',')) {
+            r = trim(r);
             char * end{};
-            IntStr val{strtoi(value, &end, 10)};
+            if (r.size() >= sz_buf) {
+                return {"too large"};
+            }
+            memcpy(buf, r.begin(), r.size());
+            buf[r.size()] = 0;
+            IntStr val{strtoi(buf, &end, 10)};
             if (val > static_cast<IntStr>(std::numeric_limits<IntOrigni>::max())) {
                 return {"too large"};
             }
-            end = std::find_if_not(end, r.end(), [](char c) {
+            char const * cend = end;
+            cend = std::find_if_not(cend, r.end(), [](char c) {
                 return c == ' ' || c == '\t';
             });
-            if (errno == ERANGE || end != r.end()) {
+            if (errno == ERANGE || cend != r.end()) {
                 return {"bad format, expected \"integral(, integral)*\""};
             }
         }
@@ -178,8 +202,9 @@ parse_error parse(char (&x)[N], spec_type<spec_types::path>, array_view_const_ch
             if (x[0] == '.') {
                 x[1] = '/';
                 x[2] = 0;
+                return no_parse_error;
             }
-            return no_parse_error;
+            break;
         case 2:
             x[0] = value[0];
             x[1] = value[1];
@@ -187,24 +212,36 @@ parse_error parse(char (&x)[N], spec_type<spec_types::path>, array_view_const_ch
             if (x[0] == '.' && x[1] == '.') {
                 x[2] = '/';
                 x[3] = 0;
+                return no_parse_error;
             }
-            return no_parse_error;
-        default: {
-            if (value.size() > std::size_t(N - 2)) {
-                return {"too long"};
-            }
-            memcpy(x, value.data(), value.size());
-            x[value.size()+0] = '/';
-            x[value.size()+1] = 0;
-            return no_parse_error;
-        }
+            break;
+        default:;
     }
+
+    std::size_t cp_sz = N - (value[0] == '/' ? 2 : 4);
+    if (value.size() > cp_sz) {
+        return {"too long"};
+    }
+    char * p = x;
+    if (value[0] != '/') {
+        *p++ = '.';
+        *p++ = '/';
+    }
+    memcpy(p, value.data(), value.size());
+    p += value.size();
+    if (*(p-1) != '/') {
+        *p++ = '/';
+    }
+    *p = 0;
+    return no_parse_error;
 }
 
 template<class T>
 typename std::enable_if<std::is_integral<T>::value, parse_error>::type
 parse(T & x, spec_type<bool>, array_view_const_char value)
 {
+    range<char const *> rng = trim(value);
+
     struct P {
         array_view_const_char s;
         bool val;
@@ -219,7 +256,7 @@ parse(T & x, spec_type<bool>, array_view_const_char value)
         {cstr_array_view("false"), false},
     };
     for (P c : cmp_list) {
-        if (c.s.size() == value.size() && strncasecmp(c.s.data(), value, c.s.size())) {
+        if (c.s.size() == rng.size() && strncasecmp(c.s.data(), rng.begin(), c.s.size())) {
             x = c.val;
             return no_parse_error;
         }
@@ -227,50 +264,53 @@ parse(T & x, spec_type<bool>, array_view_const_char value)
     return {"bad format, expected 1, on, yes, true, 0, no, false"};
 }
 
-template<class T>
-typename std::enable_if<std::is_integral<T>::value, parse_error>::type
-parse(T & x, spec_type<T>, array_view_const_char value)
+template<class TInt>
+typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
+parse(TInt & x, spec_type<TInt>, array_view_const_char value)
 {
-    constexpr std::size_t buf_sz = detail::integral_buffer_size<T>();
+    range<char const *> rng = trim(value);
+
+    constexpr std::size_t buf_sz = detail::integral_buffer_size<TInt>();
     char buf[buf_sz+1];
-    if (value.size() >= buf_sz) {
+    if (rng.size() >= buf_sz) {
         return {"too large"};
     }
-    if (value.size() == 0) {
+    if (rng.size() == 0) {
         x = 0;
         return no_parse_error;
     }
 
     char * end{};
-    T val{};
+    TInt val{};
     {
         std::size_t idx = 0;
         int base = 10;
-        if (value.size() > 2 && value[0] == '0' && value[1] == 'x') {
+        if (rng.size() > 2 && rng[0] == '0' && rng[1] == 'x') {
             idx = 2;
             base = 16;
         }
 
-        memcpy(buf, value.data()+idx, value.size()-idx);
-        buf[value.size()-idx] = 0;
-        if (std::is_signed<T>::value) {
-            val = strtoll(buf, end, 16);
+        memcpy(buf, rng.begin()+idx, rng.size()-idx);
+        buf[rng.size()-idx] = 0;
+        if (std::is_signed<TInt>::value) {
+            val = strtoll(buf, &end, 16);
         }
         else {
-            val = strtoull(buf, end, 16);
+            val = strtoull(buf, &end, 16);
         }
     }
 
-    if (val > static_cast<IntStr>(std::numeric_limits<T>::max())) {
+    if (val > std::numeric_limits<TInt>::max()) {
         return {"too large"};
     }
-    if (val < static_cast<IntStr>(std::numeric_limits<T>::min())) {
+    if (val < std::numeric_limits<TInt>::min()) {
         return {"too short"};
     }
-    end = std::find_if_not(end, value.end(), [](char c) {
+    char const * cend = end;
+    cend = std::find_if_not(cend, rng.end(), [](char c) {
         return c == ' ' || c == '\t';
     });
-    if (errno == ERANGE || end != value.end()) {
+    if (errno == ERANGE || cend != rng.end()) {
         return {"bad format"};
     }
 
@@ -279,7 +319,7 @@ parse(T & x, spec_type<T>, array_view_const_char value)
 }
 
 template<class T, class U>
-void parse_adapter(T & x, U & y)
+parse_error parse_adapter(T & x, U & y)
 {
     x = std::move(y);
     return no_parse_error;

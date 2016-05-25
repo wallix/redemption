@@ -95,7 +95,7 @@ namespace types
 
     struct path
     {
-        using fixed_type = fixed_string<globals::path_max>;
+        using fixed_type = fixed_string<globals::path_max-1>;
     };
 }
 
@@ -152,6 +152,14 @@ namespace sesman
         write   = 1 << 1,
         rw = read | write,
     };
+
+    constexpr io operator | (io x, io y) {
+        return static_cast<io>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+    }
+
+    constexpr io operator & (io x, io y) {
+        return static_cast<io>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+    }
 }
 
 }

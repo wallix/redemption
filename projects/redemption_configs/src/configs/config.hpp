@@ -24,28 +24,23 @@
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
 
-#include <cstdio>
-#include <cassert>
-#include <cstdint>
-
-#include <stdexcept>
-#include <string>
-#include <set>
-
-#include "utils/log.hpp"
-#include "core/font.hpp"
-#include "core/defines.hpp"
-#include "utils/exchange.hpp"
-#include "utils/underlying_cast.hpp"
+#include "configs/io.hpp"
 
 #include "core/authid.hpp"
 
-#include "utils/get_printable_password.hpp"
+#include "utils/underlying_cast.hpp"
+#include "utils/exchange.hpp"
+#include "core/defines.hpp"
+#include "core/font.hpp"
+#include "utils/log.hpp"
 
-#include "utils/range.hpp"
+#include <set>
+#include <string>
+#include <stdexcept>
 
-#include "configs/io.hpp"
-#include "configs/autogen/enums.hpp"
+#include <cstdint>
+#include <cassert>
+#include <cstdio>
 
 namespace configs {
     template<class... Ts>
@@ -102,11 +97,11 @@ namespace configs {
     }
 }
 
-#include "configs/types.hpp"
 #include "configs/variant/includes.hpp"
+
+#include "configs/autogen/enums.hpp"
 #include "configs/autogen/variables_configuration.hpp"
 
-#include "configs/parse.hpp"
 
 class Inifile
 {
@@ -124,56 +119,56 @@ public:
 
     template<class T>
     typename T::type const & get() const noexcept {
-        //static_assert(bool(T::properties() & properties_t::read), "T isn't readable");
+        //static_assert(T::is_readable(), "T isn't readable");
         return static_cast<T const &>(this->variables).value;
     }
 
     template<class T>
     typename T::type & get_ref() noexcept {
-        static_assert(!bool(T::properties() & properties_t::write), "reference on write variable isn't safe");
+        static_assert(!T::is_writable(), "reference on write variable isn't safe");
         return static_cast<T&>(this->variables).value;
     }
 
     template<class T, class U>
     void set(U && new_value) {
-        static_assert(!bool(T::properties() & properties_t::write), "T is writable, used set_acl<T>().");
+        static_assert(!T::is_writable(), "T is writable, used set_acl<T>().");
         static_cast<T&>(this->variables).value = std::forward<U>(new_value);
-        this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T, class U, class... O>
     void set(U && param1, O && ... other_params) {
-        static_assert(!bool(T::properties() & properties_t::write), "T is writable, used set_acl<T>().");
+        static_assert(!T::is_writable(), "T is writable, used set_acl<T>().");
         static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
-        this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T, class U>
     void set_acl(U && new_value) {
-        static_assert(bool(T::properties() & properties_t::write), "T isn't writable, used set<T>().");
+        static_assert(T::is_writable(), "T isn't writable, used set<T>().");
         static_cast<T&>(this->variables).value = std::forward<U>(new_value);
-        this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::write)>());
-        this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+        this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
+        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T, class U, class... O>
     void set_acl(U && param1, O && ... other_params) {
-        static_assert(bool(T::properties() & properties_t::write), "T isn't writable, used set<T>().");
+        static_assert(T::is_writable(), "T isn't writable, used set<T>().");
         static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
-        this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::write)>());
-        this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
+        this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
+        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T>
     void ask() {
-        static_assert(bool(T::properties() & properties_t::read), "T isn't askable");
+        static_assert(T::is_readable(), "T isn't askable");
         this->to_send_index.insert(T::index());
         static_cast<Field<T>&>(this->fields).asked_ = true;
     }
 
     template<class T>
     bool is_asked() const {
-        static_assert(bool(T::properties() & properties_t::read), "T isn't askable");
+        static_assert(T::is_readable(), "T isn't askable");
         return static_cast<Field<T>const&>(this->fields).asked_;
     }
 
@@ -190,7 +185,6 @@ private:
     {
         bool is_asked() const { return this->asked_; }
         virtual void parse(configs::VariablesConfiguration & variables, char const * value) = 0;
-        virtual int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const = 0;
         virtual char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const = 0;
         virtual ~FieldBase() {}
 
@@ -203,11 +197,11 @@ private:
     struct Field : FieldBase
     {
         void parse(configs::VariablesConfiguration & variables, char const * value) override final {
-            ::configs::parse(static_cast<T&>(variables).value, value);
-        }
-
-        int copy_val(configs::VariablesConfiguration const & variables, char * buff, std::size_t n) const override final {
-            return ::configs::copy_val(static_cast<T const &>(variables).value, buff, n);
+            ::configs::parse(
+                static_cast<T&>(variables).value,
+                configs::spec_type<typename T::spec_type>{},
+                {value, strlen(value)}
+            );
         }
 
         char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final {
@@ -256,10 +250,6 @@ public:
             this->field->parse(this->ini->variables, value);
             this->field->asked_ = false;
             this->ini->new_from_acl = true;
-        }
-
-        int copy(char * buff, std::size_t n) const {
-            return this->field->copy_val(this->ini->variables, buff, n);
         }
 
         char const * c_str() const {
