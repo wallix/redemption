@@ -63,64 +63,58 @@ namespace cpp_enumeration_writer
             }
         };
 
-        auto to_cstr_fmt = [&](auto & e) {
+        auto to_c_str_fmt = [&](auto & e) {
             if (e.is_icase_parser) {
                 write(e,
-                    "template<> struct CStrBuf<%e> : CStrBuf<void> {};\n"
+                    "template<> struct szbuffer_traits<%e> : szbuffer_traits<void> {};\n"
                     "\n"
-                    "inline char const * to_cstr(CStrBuf<%e> &, %e x)\n"
+                    "inline array_view_const_char to_c_str(szbuffer_from<%e> &, %e x)\n"
                     "{\n"
-                    "    constexpr char const * arr[]{\n"
+                    "    constexpr array_view_const_char arr[]{\n"
                 );
-                loop(e, "        \"%s\", \n");
+                loop(e, "        cstr_array_view(\"%s\"),\n");
                 write(e,
                     "    };\n"
                     "    assert(static_cast<unsigned long>(x) < %u);\n"
-                    "    return arr[static_cast<unsigned long>(x))];\n"
+                    "    return arr[static_cast<unsigned long>(x)];\n"
                     "}\n"
                 );
             }
             else {
                 write(e,
-                    "template<> struct CStrBuf<%e> : CStrBuf<unsigned long> {};\n"
+                    "template<> struct szbuffer_traits<%e> : szbuffer_traits<unsigned long> {};\n"
                     "\n"
-                    "inline char const * to_cstr(CStrBuf<%e> & buf, %e x)\n"
+                    "inline array_view_const_char to_c_str(szbuffer_from<%e> & buf, %e x)\n"
                     "{\n"
-                    "    std::snprintf(buf.get(), buf.size(), \"%%lu\", static_cast<unsigned long>(x));\n"
-                    "    return buf.get();\n"
+                    "    int sz = snprintf(buf.get(), buf.size(), \"%%lu\", static_cast<unsigned long>(x));\n"
+                    "    return array_view_const_char(buf.get(), sz);\n"
                     "}\n"
                 );
-                out << "\n";
             }
+            out << "\n";
         };
 
         auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
             write(e,
-                "bool parse(%e & x, spec_type<%e>, char const * str)\n"
+                "parse_error parse(%e & x, spec_type<%e>, array_view_const_char value)\n"
                 "{\n"
             );
             if (e.is_icase_parser) {
-                loop(e,
-                    "    if (0 == strcasecmp(str, \"%a\")) {\n"
-                    "        x = %e::%s;\n"
-                    "        return true;\n"
-                    "    }\n"
-                    "\n"
-                );
+                out << "    return parse_enum_str(x, value, {\n";
+                loop(e,"        {cstr_array_view(\"%a\"), %e::%s},\n");
+                out << "    });\n";
             }
             else {
                 lazy_integral_parse_fmt();
             }
-            write(e,
-                "    return false;\n"
-                "}\n\n"
-            );
+            out << "}\n\n";
         };
 
         out <<
             "#pragma once\n"
             "\n"
-            "#include \"configs/c_str_buf.hpp\"\n"
+            "#include \"configs/io.hpp\"\n"
+            "#include \"configs/autogen/enums.hpp\"\n"
             "\n"
             "#include <cerrno>\n"
             "#include <cstdio>\n"
@@ -133,36 +127,18 @@ namespace cpp_enumeration_writer
             "\n"
         ;
         for (auto & e : enums.enumerations_) {
-            to_cstr_fmt(e);
+            to_c_str_fmt(e);
             parse_fmt(e, [&]{ write(e,
-                "    char * end = nullptr;\n"
-                "    errno = 0;\n"
-                "    bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');\n"
-                "    auto n = std::strtoul(str, &end, is_hex ? 16 : 10);\n"
-                "    if (!errno && end && !*end && n <= static_cast<unsigned long>((1 << (%u - 1)) - 1)) {\n"
-                "        x = ~~static_cast<%e>(n);\n"
-                "        return true;\n"
-                "    }\n"
+                "    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (%u - 1)) - 1));\n"
             ); });
-            out << "\n";
         }
         for (auto & e : enums.enumerations_set_) {
-            to_cstr_fmt(e);
+            to_c_str_fmt(e);
             parse_fmt(e, [&]{
-                write(e,
-                    "    bool const is_hex = str[0] == '0' && (str[1] == 'x' || str[1] == 'X');\n"
-                    "    unsigned long const val = std::strtoul(str, &end, is_hex ? 16 : 10)\n"
-                    "\n"
-                );
-                loop(e,
-                    "    if (val == static_cast<unsigned long>(%e::%s)) {\n"
-                    "        x = %e::%s\n"
-                    "        return true;\n"
-                    "    }\n"
-                    "\n"
-                );
+                out << "    return parse_enum_list(x, value, {\n";
+                loop(e,"        %e::%s,\n");
+                out << "    });\n";
             });
-            out << "\n";
         }
         out << "}\n";
     }

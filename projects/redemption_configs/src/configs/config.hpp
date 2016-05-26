@@ -71,7 +71,7 @@ namespace configs {
     };
 
     template<class Config>
-    struct CBuf : CStrBuf<typename Config::type> {
+    struct CBuf : szbuffer_from<typename Config::type> {
     };
 
     template<class>
@@ -100,8 +100,24 @@ namespace configs {
 #include "configs/variant/includes.hpp"
 
 #include "configs/autogen/enums.hpp"
+#include "configs/autogen/enums_func_ini.hpp"
 #include "configs/autogen/variables_configuration.hpp"
 
+
+namespace configs
+{
+    template<class T, class U>
+    void parse_and_log(const char * context, const char * key, T & x, U u, array_view_const_char av)
+    {
+        if (auto err = ::configs::parse(x, u, av)) {
+            LOG(
+                LOG_ERR,
+                "parsing error with parameter '%s' in section [%s] for \"%*s\": %s",
+                key, context, int(av.size()), av.data(), err.c_str()
+            );
+        }
+    }
+}
 
 class Inifile
 {
@@ -196,22 +212,26 @@ private:
     template<class T>
     struct Field : FieldBase
     {
-        void parse(configs::VariablesConfiguration & variables, char const * value) override final {
-            ::configs::parse(
+        void parse(configs::VariablesConfiguration & variables, char const * value) override final
+        {
+            ::configs::parse_and_log(
+                // TODO
+                "", "",
                 static_cast<T&>(variables).value,
                 configs::spec_type<typename T::spec_type>{},
                 {value, strlen(value)}
             );
         }
 
-        char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final {
-            return ::configs::c_str(
-                const_cast<configs::CStrBuf<typename T::type> &>(
-                    static_cast<configs::CStrBuf<typename T::type> const &>(
+        char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
+        {
+            return ::configs::to_c_str(
+                const_cast<configs::szbuffer_from<typename T::type> &>(
+                    static_cast<configs::szbuffer_from<typename T::type> const &>(
                         static_cast<configs::CBuf<T> const &>(buffers)
                     )
                 ), static_cast<T const &>(variables).value
-            );
+            ).data();
         }
     };
 

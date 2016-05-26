@@ -87,8 +87,8 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-pedantic-errors
 #   <cxxflags>-Wconversion
     <cxxflags>-Wvla
-    <cxxflags>-Wstrict-aliasing=2
-#   <cxxflags>-Wlong-long
+#     <cxxflags>-Wstrict-aliasing=2
+#     <cxxflags>-Wstrict-aliasing=3
 
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor

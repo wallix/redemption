@@ -3,7 +3,7 @@ namespace cfg {
         static constexpr bool is_readable() { return 0; }
         static constexpr bool is_writable() { return 0; }
         using type = Theme;
-        type value;
+        type value{};
     };
     struct font {
         static constexpr bool is_readable() { return 0; }
@@ -20,13 +20,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 13; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{0};
+            using spec_type = unsigned int;
+            type value{0};
         };
         // cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic
         struct keyboard_layout_proposals {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::string;
+            using spec_type = ::configs::spec_types::list<std::basic_string<char>>;
             type value = "en-US, fr-FR, de-DE, ru-RU";
         };
         // If true, ignore password provided by RDP client, user need do login manually.
@@ -34,6 +36,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -42,6 +45,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
+            using spec_type = uint32_t;
             type value{128};
         };
         // Disable theme (0x8).
@@ -49,12 +53,14 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
+            using spec_type = uint32_t;
             type value{8};
         };
         struct performance_flags_force_not_present {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
+            using spec_type = uint32_t;
             type value{0};
         };
         // If enabled, avoid automatically font smoothing in recorded session.
@@ -62,6 +68,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
@@ -70,12 +77,14 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         struct tls_support {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         // Needed to connect with jrdp, based on bogus X224 layer code.
@@ -83,6 +92,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         // Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code.
@@ -90,6 +100,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
@@ -100,13 +111,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 14; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
 
         struct rdp_compression {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::RdpCompression;
+            using spec_type = configs::RdpCompression;
             type value{static_cast<type>(4)};
         };
 
@@ -114,6 +127,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::ColorDepth;
+            using spec_type = configs::ColorDepth;
             type value{static_cast<type>(24)};
         };
 
@@ -122,6 +136,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
@@ -129,6 +144,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
@@ -136,6 +152,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -144,6 +161,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
@@ -152,6 +170,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
@@ -159,6 +178,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
     };
@@ -167,8 +187,8 @@ namespace cfg {
         struct movie {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
-            type value;
+            using type = ::configs::spec_types::directory_path;
+            type value{};
         };
 
         // AUTHID_CONTEXT_OPT_BITRATE
@@ -177,7 +197,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 51; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{40000};
+            using spec_type = unsigned int;
+            type value{40000};
         };
         // AUTHID_CONTEXT_OPT_FRAMERATE
         struct opt_framerate {
@@ -185,7 +206,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 52; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{5};
+            using spec_type = unsigned int;
+            type value{5};
         };
         // AUTHID_CONTEXT_OPT_QSCALE
         struct opt_qscale {
@@ -193,7 +215,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 53; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{15};
+            using spec_type = unsigned int;
+            type value{15};
         };
 
         // AUTHID_CONTEXT_OPT_BPP
@@ -202,7 +225,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 54; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{24};
+            using spec_type = unsigned int;
+            type value{24};
         };
         // AUTHID_CONTEXT_OPT_HEIGHT
         struct opt_height {
@@ -210,7 +234,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 55; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{600};
+            using spec_type = unsigned int;
+            type value{600};
         };
         // AUTHID_CONTEXT_OPT_WIDTH
         struct opt_width {
@@ -218,7 +243,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 56; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{800};
+            using spec_type = unsigned int;
+            type value{800};
         };
 
         // AUTHID_CONTEXT_AUTH_ERROR_MESSAGE
@@ -227,7 +253,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 57; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_SELECTOR
@@ -236,7 +263,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 58; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
         // AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE
         struct selector_current_page {
@@ -244,7 +272,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 59; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{1};
+            using spec_type = unsigned int;
+            type value{1};
         };
         // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
         struct selector_device_filter {
@@ -252,7 +281,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 60; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
         struct selector_group_filter {
@@ -260,7 +290,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 61; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
         struct selector_proto_filter {
@@ -268,7 +299,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 62; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
         struct selector_lines_per_page {
@@ -276,7 +308,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 63; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{0};
+            using spec_type = unsigned int;
+            type value{0};
         };
         // AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES
         struct selector_number_of_pages {
@@ -284,7 +317,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 64; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{1};
+            using spec_type = unsigned int;
+            type value{1};
         };
 
         // AUTHID_CONTEXT_TARGET_PASSWORD
@@ -293,7 +327,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 65; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_TARGET_HOST
         struct target_host {
@@ -301,7 +336,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 66; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_TARGET_SERVICE
         struct target_service {
@@ -309,7 +345,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 67; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_TARGET_PORT
         struct target_port {
@@ -317,7 +354,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 68; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{3389};
+            using spec_type = unsigned int;
+            type value{3389};
         };
         // AUTHID_CONTEXT_TARGET_PROTOCOL
         struct target_protocol {
@@ -325,7 +363,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 69; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value = "RDP";
+            using spec_type = std::basic_string<char>;
+            type value = "RDP";
         };
 
         // AUTHID_CONTEXT_PASSWORD
@@ -334,7 +373,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 70; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_REPORTING
@@ -343,7 +383,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 71; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER
@@ -352,7 +393,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 72; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_RESULT
         struct auth_channel_result {
@@ -360,7 +402,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 73; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
         struct auth_channel_target {
@@ -368,7 +411,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 74; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_MESSAGE
@@ -377,7 +421,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 75; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_ACCEPT_MESSAGE
@@ -386,7 +431,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 76; }
             using type = bool;
-        using spec_type = bool;            type value;
+            using spec_type = bool;
+            type value{};
         };
         // AUTHID_CONTEXT_DISPLAY_MESSAGE
         struct display_message {
@@ -394,7 +440,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 77; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_REJECTED
@@ -403,7 +450,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 78; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_AUTHENTICATED
@@ -412,7 +460,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 79; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
 
         // AUTHID_CONTEXT_KEEPALIVE
@@ -421,7 +470,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 80; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
 
         // AUTHID_CONTEXT_SESSION_ID
@@ -430,7 +480,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 81; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_END_DATE_CNX
@@ -439,7 +490,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 82; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{0};
+            using spec_type = unsigned int;
+            type value{0};
         };
         // AUTHID_CONTEXT_END_TIME
         struct end_time {
@@ -447,7 +499,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 83; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_MODE_CONSOLE
@@ -456,7 +509,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 84; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value = "allow";
+            using spec_type = std::basic_string<char>;
+            type value = "allow";
         };
         // AUTHID_CONTEXT_TIMEZONE
         struct timezone {
@@ -464,7 +518,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 85; }
             using type = int;
-        using spec_type = int;            type value{-3600};
+            using spec_type = int;
+            type value{-3600};
         };
 
         // AUTHID_CONTEXT_REAL_TARGET_DEVICE
@@ -473,7 +528,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 86; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE
@@ -482,7 +538,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 87; }
             using type = bool;
-        using spec_type = bool;            type value;
+            using spec_type = bool;
+            type value{};
         };
 
         // AUTHID_CONTEXT_TICKET
@@ -491,7 +548,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 88; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_COMMENT
         struct comment {
@@ -499,7 +557,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 89; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_DURATION
         struct duration {
@@ -507,7 +566,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 90; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_WAITINFORETURN
         struct waitinforeturn {
@@ -515,7 +575,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 91; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_SHOWFORM
         struct showform {
@@ -523,7 +584,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 92; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
         // AUTHID_CONTEXT_FORMFLAG
         struct formflag {
@@ -531,7 +593,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 93; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{0};
+            using spec_type = unsigned int;
+            type value{0};
         };
 
         // AUTHID_CONTEXT_MODULE
@@ -540,7 +603,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 94; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value = "login";
+            using spec_type = std::basic_string<char>;
+            type value = "login";
         };
         // AUTHID_CONTEXT_FORCEMODULE
         struct forcemodule {
@@ -548,7 +612,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 95; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
         // AUTHID_CONTEXT_PROXY_OPT
         struct proxy_opt {
@@ -556,7 +621,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 96; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_PATTERN_KILL
@@ -565,7 +631,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 97; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_PATTERN_NOTIFY
         struct pattern_notify {
@@ -573,7 +640,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 98; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_OPT_MESSAGE
@@ -582,7 +650,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 99; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES
@@ -591,14 +660,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 100; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         struct manager_disconnect_reason {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::basic_string<char>;
-            type value;
+            type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON
         struct disconnect_reason {
@@ -606,7 +676,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 101; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
         struct disconnect_reason_ack {
@@ -614,14 +685,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 102; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
 
         struct ip_target {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::basic_string<char>;
-            type value;
+            type value{};
         };
     };
 
@@ -632,7 +704,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 46; }
             using type = std::array<unsigned char, 32>;
-        using spec_type = ::configs::spec_types::fixed_binary<32>;            type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
+            using spec_type = ::configs::spec_types::fixed_binary<32>;
+            type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
         };
         // AUTHID_CRYPTO_KEY1
         struct key1 {
@@ -640,7 +713,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 47; }
             using type = std::array<unsigned char, 32>;
-        using spec_type = ::configs::spec_types::fixed_binary<32>;            type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
+            using spec_type = ::configs::spec_types::fixed_binary<32>;
+            type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
         };
     };
 
@@ -649,145 +723,169 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct mcs {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct sec {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct rdp {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct primary_orders {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct secondary_orders {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct bitmap {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct capture {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct auth {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct session {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct front {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct mod_rdp {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct mod_vnc {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct mod_int {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct mod_xup {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct widget {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct input {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct password {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct compression {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct cache {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct bitmap_update {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct performance {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
         struct pass_dialog_box {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
-            type value;
+            using spec_type = uint32_t;
+            type value{};
         };
 
         struct config {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = bool;
             type value{2};
         };
     };
@@ -799,7 +897,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 0; }
             using type = bool;
-        using spec_type = bool;            type value;
+            using spec_type = bool;
+            type value{};
         };
 
         // AUTHID_GLOBALS_AUTH_USER
@@ -808,7 +907,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 1; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_HOST
         struct host {
@@ -816,7 +916,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 2; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_TARGET
         struct target {
@@ -824,7 +925,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 3; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_TARGET_DEVICE
         struct target_device {
@@ -832,7 +934,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 4; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_DEVICE_ID
         struct device_id {
@@ -840,7 +943,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 5; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_TARGET_USER
         struct target_user {
@@ -848,7 +952,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr unsigned index() { return 6; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION
         struct target_application {
@@ -856,7 +961,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 7; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
         struct target_application_account {
@@ -864,7 +970,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 8; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
         struct target_application_password {
@@ -872,7 +979,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 9; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // Support of Bitmap Cache.
@@ -880,42 +988,49 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         struct glyph_cache {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         struct port {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{3389};
         };
         struct nomouse {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         struct notimestamp {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         struct encryptionLevel {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::Level;
+            using spec_type = configs::Level;
             type value{static_cast<type>(0)};
         };
         struct authfile {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::basic_string<char>;
+            using spec_type = std::basic_string<char>;
             type value = "/var/run/redemption-sesman-sock";
         };
 
@@ -924,6 +1039,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{10};
         };
         // No traffic auto disconnection (in seconds).
@@ -931,6 +1047,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{900};
         };
         // Keepalive (in seconds).
@@ -938,6 +1055,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{30};
         };
         // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
@@ -945,6 +1063,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{120};
         };
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
@@ -952,6 +1071,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{600};
         };
 
@@ -961,13 +1081,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 10; }
             using type = configs::TraceType;
-        using spec_type = configs::TraceType;            type value{static_cast<type>(1)};
+            using spec_type = configs::TraceType;
+            type value{static_cast<type>(1)};
         };
 
         struct listen_address {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::string;
+            using spec_type = ::configs::spec_types::ip;
             type value = "0.0.0.0";
         };
         // Allow IP Transparent.
@@ -975,6 +1097,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         // Proxy certificate password.
@@ -982,19 +1105,22 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = char[255 + 1];
+            using spec_type = char[255 + 1];
             type value = "inquisition";
         };
 
         struct png_path {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
+            using type = ::configs::spec_types::directory_path;
+            using spec_type = ::configs::spec_types::directory_path;
             type value = PNG_PATH;
         };
         struct wrm_path {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
+            using type = ::configs::spec_types::directory_path;
+            using spec_type = ::configs::spec_types::directory_path;
             type value = WRM_PATH;
         };
 
@@ -1004,7 +1130,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 11; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
         // AUTHID_GLOBALS_MOVIE_PATH
         struct movie_path {
@@ -1012,13 +1139,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 12; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // Support of Bitmap Update.
         struct enable_bitmap_update {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
@@ -1027,25 +1156,29 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         struct enable_osd {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         struct enable_osd_display_remote_target {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
         struct persistent_path {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
+            using type = ::configs::spec_types::directory_path;
+            using spec_type = ::configs::spec_types::directory_path;
             type value = PERSISTENT_PATH;
         };
 
@@ -1053,6 +1186,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -1060,6 +1194,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -1068,6 +1203,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
     };
@@ -1077,7 +1213,8 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::basic_string<char>;
-            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
     };
 
@@ -1086,6 +1223,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::RdpCompression;
+            using spec_type = configs::RdpCompression;
             type value{static_cast<type>(4)};
         };
 
@@ -1093,6 +1231,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -1100,6 +1239,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = uint32_t;
+            using spec_type = uint32_t;
             type value{0};
         };
 
@@ -1113,6 +1253,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::string;
+            using spec_type = ::configs::spec_types::list<unsigned int>;
             type value = "15,16,17,18,22";
         };
 
@@ -1121,6 +1262,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         // If enabled, NLA authentication will try Kerberos before NTLM.
@@ -1129,6 +1271,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -1137,6 +1280,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
@@ -1144,6 +1288,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
@@ -1151,6 +1296,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -1159,6 +1305,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::string;
+            using spec_type = ::configs::spec_types::list<std::basic_string<char>>;
             type value = "*";
         };
         // Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
@@ -1166,7 +1313,8 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::string;
-            type value;
+            using spec_type = ::configs::spec_types::list<std::basic_string<char>>;
+            type value{};
         };
 
         // Enables support of Server Fast-Path Update PDUs.
@@ -1174,6 +1322,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
@@ -1182,6 +1331,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -1189,7 +1339,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = RedirectionInfo;
-            type value;
+            type value{};
         };
 
         // Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
@@ -1199,7 +1349,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 15; }
             using type = bool;
-        using spec_type = bool;            type value{1};
+            using spec_type = bool;
+            type value{1};
         };
 
         // Needed to get the old behavior of cursor rendering.
@@ -1207,6 +1358,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
@@ -1215,7 +1367,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 16; }
             using type = std::string;
-        using spec_type = ::configs::spec_types::list<std::basic_string<char>>;            type value;
+            using spec_type = ::configs::spec_types::list<std::basic_string<char>>;
+            type value{};
         };
 
 
@@ -1225,13 +1378,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 17; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
         // Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
         struct auth_channel {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = char[7 + 1];
+            using spec_type = char[7 + 1];
             type value = "*";
         };
 
@@ -1241,7 +1396,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 18; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
         struct shell_working_directory {
@@ -1249,7 +1405,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 19; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
 
         // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL
@@ -1258,7 +1415,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 20; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
 
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE
@@ -1267,7 +1425,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 21; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
         // Minimum supported server : Windows Server 2008.
         // Clipboard redirection should be remain enabled on Terminal Server.
@@ -1277,7 +1436,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 22; }
             using type = bool;
-        using spec_type = bool;            type value{1};
+            using spec_type = bool;
+            type value{1};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
         struct enable_session_probe_launch_mask {
@@ -1285,7 +1445,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 23; }
             using type = bool;
-        using spec_type = bool;            type value{1};
+            using spec_type = bool;
+            type value{1};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
         struct session_probe_on_launch_failure {
@@ -1293,7 +1454,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 24; }
             using type = configs::SessionProbeOnLaunchFailure;
-        using spec_type = configs::SessionProbeOnLaunchFailure;            type value{static_cast<type>(2)};
+            using spec_type = configs::SessionProbeOnLaunchFailure;
+            type value{static_cast<type>(2)};
         };
         // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
         // In milliseconds, 0 to disable timeout.
@@ -1303,7 +1465,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 25; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{20000};
+            using spec_type = unsigned int;
+            type value{20000};
         };
         // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
         // In milliseconds, 0 to disable timeout.
@@ -1313,7 +1476,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 26; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{7000};
+            using spec_type = unsigned int;
+            type value{7000};
         };
         // Minimum supported server : Windows Server 2008.
         // AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON
@@ -1322,7 +1486,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 27; }
             using type = bool;
-        using spec_type = bool;            type value{1};
+            using spec_type = bool;
+            type value{1};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
         struct session_probe_keepalive_timeout {
@@ -1330,7 +1495,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 28; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{5000};
+            using spec_type = unsigned int;
+            type value{5000};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER
         struct session_probe_on_keepalive_timeout_disconnect_user {
@@ -1338,7 +1504,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 29; }
             using type = bool;
-        using spec_type = bool;            type value{1};
+            using spec_type = bool;
+            type value{1};
         };
         // End automatically a disconnected session
         // AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION
@@ -1347,18 +1514,21 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 30; }
             using type = bool;
-        using spec_type = bool;            type value{0};
+            using spec_type = bool;
+            type value{0};
         };
         struct session_probe_customize_executable_name {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
         struct session_probe_alternate_shell {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = char[511 + 1];
+            using spec_type = char[511 + 1];
             type value = "cmd /k";
         };
         // Keep known server certificates on WAB
@@ -1368,7 +1538,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 31; }
             using type = bool;
-        using spec_type = bool;            type value{1};
+            using spec_type = bool;
+            type value{1};
         };
         // AUTHID_MOD_RDP_SERVER_CERT_CHECK
         struct server_cert_check {
@@ -1376,7 +1547,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 32; }
             using type = configs::ServerCertCheck;
-        using spec_type = configs::ServerCertCheck;            type value{static_cast<type>(1)};
+            using spec_type = configs::ServerCertCheck;
+            type value{static_cast<type>(1)};
         };
         // Warn if check allow connexion to server.
         // AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE
@@ -1385,7 +1557,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 33; }
             using type = configs::ServerNotification;
-        using spec_type = configs::ServerNotification;            type value{static_cast<type>(1)};
+            using spec_type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that new server certificate file was created.
         // AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE
@@ -1394,7 +1567,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 34; }
             using type = configs::ServerNotification;
-        using spec_type = configs::ServerNotification;            type value{static_cast<type>(1)};
+            using spec_type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that server certificate file was successfully checked.
         // AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE
@@ -1403,7 +1577,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 35; }
             using type = configs::ServerNotification;
-        using spec_type = configs::ServerNotification;            type value{static_cast<type>(1)};
+            using spec_type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that server certificate file checking failed.
         // AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE
@@ -1412,7 +1587,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 36; }
             using type = configs::ServerNotification;
-        using spec_type = configs::ServerNotification;            type value{static_cast<type>(1)};
+            using spec_type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Warn that server certificate check raised some internal error.
         // AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE
@@ -1421,13 +1597,15 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 37; }
             using type = configs::ServerNotification;
-        using spec_type = configs::ServerNotification;            type value{static_cast<type>(1)};
+            using spec_type = configs::ServerNotification;
+            type value{static_cast<type>(1)};
         };
         // Do not transmit client machine name or RDP server.
         struct hide_client_name {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
     };
@@ -1438,6 +1616,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
     };
@@ -1450,7 +1629,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 38; }
             using type = bool;
-        using spec_type = bool;            type value;
+            using spec_type = bool;
+            type value{};
         };
         // Enable or disable the clipboard from server (server to client).
         // AUTHID_MOD_VNC_CLIPBOARD_DOWN
@@ -1459,7 +1639,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 39; }
             using type = bool;
-        using spec_type = bool;            type value;
+            using spec_type = bool;
+            type value{};
         };
 
         // Sets the encoding types in which pixel data can be sent by the VNC server:
@@ -1472,13 +1653,15 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = std::string;
-            type value;
+            using spec_type = ::configs::spec_types::list<int>;
+            type value{};
         };
 
         struct allow_authentification_retries {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{0};
         };
 
@@ -1489,7 +1672,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 40; }
             using type = configs::ClipboardEncodingType;
-        using spec_type = configs::ClipboardEncodingType;            type value{static_cast<type>(1)};
+            using spec_type = configs::ClipboardEncodingType;
+            type value{static_cast<type>(1)};
         };
 
         // AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
@@ -1498,7 +1682,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 41; }
             using type = configs::VncBogusClipboardInfiniteLoop;
-        using spec_type = configs::VncBogusClipboardInfiniteLoop;            type value{static_cast<type>(0)};
+            using spec_type = configs::VncBogusClipboardInfiniteLoop;
+            type value{static_cast<type>(0)};
         };
     };
 
@@ -1507,6 +1692,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = bool;
+            using spec_type = bool;
             type value{1};
         };
 
@@ -1514,6 +1700,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::KeyboardInputMaskingLevel;
+            using spec_type = configs::KeyboardInputMaskingLevel;
             type value{static_cast<type>(3)};
         };
     };
@@ -1525,7 +1712,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 48; }
             using type = configs::Language;
-        using spec_type = configs::Language;            type value{static_cast<type>(0)};
+            using spec_type = configs::Language;
+            type value{static_cast<type>(0)};
         };
         // AUTHID_TRANSLATION_PASSWORD_EN
         struct password_en {
@@ -1533,7 +1721,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 49; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
         // AUTHID_TRANSLATION_PASSWORD_FR
         struct password_fr {
@@ -1541,7 +1730,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 50; }
             using type = std::basic_string<char>;
-        using spec_type = std::basic_string<char>;            type value;
+            using spec_type = std::basic_string<char>;
+            type value{};
         };
     };
 
@@ -1550,6 +1740,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{33};
         };
 
@@ -1557,6 +1748,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::CaptureFlags;
+            using spec_type = configs::CaptureFlags;
             type value{static_cast<type>(3)};
         };
 
@@ -1565,6 +1757,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{10};
         };
         // Frame interval is in 1/100 s.
@@ -1572,6 +1765,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{40};
         };
         // Time between 2 wrm movies (in seconds).
@@ -1579,6 +1773,7 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{600};
         };
         // Number of png captures to keep.
@@ -1586,32 +1781,37 @@ namespace cfg {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = unsigned int;
+            using spec_type = unsigned int;
             type value{5};
         };
 
         struct replay_path {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
+            using type = ::configs::spec_types::directory_path;
+            using spec_type = ::configs::spec_types::directory_path;
             type value = "/tmp/";
         };
 
         struct hash_path {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
+            using type = ::configs::spec_types::directory_path;
+            using spec_type = ::configs::spec_types::directory_path;
             type value = HASH_PATH;
         };
         struct record_tmp_path {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
+            using type = ::configs::spec_types::directory_path;
+            using spec_type = ::configs::spec_types::directory_path;
             type value = RECORD_TMP_PATH;
         };
         struct record_path {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
-            using type = char[4095 + 1];
+            using type = ::configs::spec_types::directory_path;
+            using spec_type = ::configs::spec_types::directory_path;
             type value = RECORD_PATH;
         };
 
@@ -1635,7 +1835,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 42; }
             using type = configs::KeyboardLogFlags;
-        using spec_type = configs::KeyboardLogFlags;            type value{static_cast<type>(1)};
+            using spec_type = configs::KeyboardLogFlags;
+            type value{static_cast<type>(1)};
         };
 
         // Disable clipboard log:
@@ -1645,7 +1846,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 43; }
             using type = configs::ClipboardLogFlags;
-        using spec_type = configs::ClipboardLogFlags;            type value{static_cast<type>(1)};
+            using spec_type = configs::ClipboardLogFlags;
+            type value{static_cast<type>(1)};
         };
 
         // Disable (redirected) file system log:
@@ -1655,7 +1857,8 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 44; }
             using type = configs::FileSystemLogFlags;
-        using spec_type = configs::FileSystemLogFlags;            type value{static_cast<type>(1)};
+            using spec_type = configs::FileSystemLogFlags;
+            type value{static_cast<type>(1)};
         };
 
         // AUTHID_VIDEO_RT_DISPLAY
@@ -1664,19 +1867,22 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr unsigned index() { return 45; }
             using type = unsigned int;
-        using spec_type = unsigned int;            type value{0};
+            using spec_type = unsigned int;
+            type value{0};
         };
 
         struct wrm_color_depth_selection_strategy {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::ColorDepthSelectionStrategy;
+            using spec_type = configs::ColorDepthSelectionStrategy;
             type value{static_cast<type>(1)};
         };
         struct wrm_compression_algorithm {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             using type = configs::WrmCompressionAlgorithm;
+            using spec_type = configs::WrmCompressionAlgorithm;
             type value{static_cast<type>(1)};
         };
     };

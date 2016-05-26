@@ -198,7 +198,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<bool HasPrefix, class T, class Pack>
     void write_enumeration_value_description(std::integral_constant<bool, HasPrefix>, T, Pack const &)
-    { static_assert(!HasPrefix, "prefix_value only woth enums type"); }
+    { static_assert(!HasPrefix, "prefix_value only with enums type"); }
 
 
     template<class T>

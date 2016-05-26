@@ -101,8 +101,9 @@ void write_template(
                     is_executed = true
                 ) : 1
             )...};
-            if (!is_executed && '%' == *fmt) {
+            if (!is_executed) {
                 out.write(fmt_point, fmt - fmt_point - 1);
+                out.put(*fmt);
                 fmt_point = fmt+1;
             }
         }

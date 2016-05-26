@@ -108,13 +108,12 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
             this->tab(); this->out() << "    static constexpr unsigned index() { return " << this->index_authid++ << "; }\n";
         }
         this->tab(); this->out() << "    using type = "; this->inherit().write_type(type); this->out() << ";\n";
-        if (bool(properties)) {
-            this->tab();
-            this->out() << "using spec_type = ";
-            auto type_sesman = pack_get<sesman::type_>(pack);
+        if (bool(properties) || pack_contains<spec::attr>(pack)) {
+            this->tab(); this->out() << "    using spec_type = ";
+            auto type_sesman = pack_get<spec::type_>(pack);
             this->inherit().write_type_spec(type_sesman);
-            this->out() << ";";
-        }
+            this->out() << ";\n";
+        };
         if (std::is_convertible<decltype(type), type_<Font>>::value) {
             this->tab(); this->out() << "    font(char const * filename) : value(filename) {}\n";
             this->tab(); this->out() << "    type value;\n";
@@ -131,7 +130,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
         apply_if_contains<spec::attr>(pack, [this, &pack, &varname_with_section](auto&&){
             auto type_spec = pack_get<spec::type_>(pack);
             this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(pack) << "\")) {\n"
-            "            ::configs::parse(\n"
+            "            ::configs::parse_and_log(\n"
+            "                context, key, \n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
             "                ::configs::spec_type<";
             this->inherit().write_type_spec(type_spec);
@@ -144,12 +144,12 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
 
 
     template<class E>
-    std::enable_if_t<std::is_enum<E>::value>
+    enable_if_enum_t<E>
     write_value(E const & e)
     { this->out() << "{static_cast<type>(" << static_cast<unsigned long>(e) << ")}"; }
 
     template<class T>
-    std::enable_if_t<!std::is_enum<T>::value>
+    disable_if_enum_t<T>
     write_value(T const & r) { this->out() << '{' << r << '}'; }
 
     void write_value(const char * s) { this->out() << " = \"" << io_quoted2{s} << '"';  }
@@ -168,7 +168,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     }
 
     void write_assignable_default(std::false_type, ...)
-    { }
+    { this->out() << "{}"; }
 
 
     void write_type(type_<types::u32>) { this->out() << "uint32_t"; }
@@ -180,7 +180,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     template<unsigned N>
     void write_type(type_<types::fixed_string<N>>) { this->out() << "char[" << N << " + 1]"; }
 
-    void write_type(type_<types::path>) { this->write_type(type_<types::path::fixed_type>{}); }
+    void write_type(type_<types::path>) { this->out() << "::configs::spec_types::directory_path"; }
     void write_type(type_<types::ip_string>) { this->out() << "std::string"; }
 
     template<class T>
@@ -194,7 +194,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     void write_type_spec(type_<types::fixed_binary<N>>)
     { this->out() << "::configs::spec_types::fixed_binary<" << N << ">"; }
 
-    void write_type_spec(type_<types::path>) { this->out() << "::configs::spec_types::path"; }
     void write_type_spec(type_<types::ip_string>) { this->out() << "::configs::spec_types::ip"; }
 
     template<class T>
