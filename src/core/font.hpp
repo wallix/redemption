@@ -343,7 +343,9 @@ struct Font
         return;
 ErrorReadingFontFile:
         LOG(LOG_ERR, "Error reading font definition file %s, exiting proxy",  file_path);
+        #ifndef __EMSCRIPTEN__
         exit(-1);
+        #endif
     }
 
     bool glyph_defined(uint32_t charnum) const

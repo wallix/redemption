@@ -1147,7 +1147,7 @@
 	<noscript>
 		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
 	</noscript>
-   <script src='wprdpsc.js'></script>
+
    <script src='draw.js'></script>
 
     <script type='text/javascript'>
@@ -1158,6 +1158,11 @@
 		})(),
 	      };
 
+	      var script = document.createElement('script');
+              script.src = "test_emscripten_browser_client_JS.js";
+              document.body.appendChild(script);
+
+
     </script>
     
 
@@ -1165,10 +1170,13 @@
 
 
     <script type='text/javascript'>
-	      window.onload = function() {
+	      window.onload = function() {					
 			_run_main();
 	      };
+
     </script>
+
+    
 
 </body>
 </html>

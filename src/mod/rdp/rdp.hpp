@@ -1965,24 +1965,26 @@ private:
 
 public:
     void draw_event(time_t now) override {
+        EM_ASM_({ console.log('draw_event start'); }, 0);
         if (!this->event.waked_up_by_time &&
             (!this->session_probe_virtual_channel_p || !this->session_probe_virtual_channel_p->is_event_signaled())) {
             try{
                 char * hostname = this->hostname;
-
+                EM_ASM_({ console.log('draw_event 1'); }, 0);
                 switch (this->state){
-                case MOD_RDP_NEGO:
+                case MOD_RDP_NEGO: EM_ASM_({ console.log('draw_event MOD_RDP_NEGO'); }, 0);
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
                     }
                     switch (this->nego.state){
-                    default:
+                    default: EM_ASM_({ console.log('draw_event MOD_RDP_NEGO default 0'); }, 0);
                         this->nego.server_event(
                                 this->server_cert_store,
                                 this->server_cert_check,
                                 this->server_notifier,
                                 this->certif_path.get()
                             );
+                            EM_ASM_({ console.log('draw_event MOD_RDP_NEGO default 1'); }, 0);
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         // Basic Settings Exchange
@@ -3670,6 +3672,7 @@ public:
         if (this->session_probe_virtual_channel_p) {
             this->session_probe_virtual_channel_p->process_event();
         }
+        EM_ASM_({ console.log('draw_event end'); }, 0);
     }   // draw_event
 
     wait_obj * get_secondary_event() override {

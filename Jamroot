@@ -1058,7 +1058,7 @@ exe test_data_draw :
     openssl
     crypto
     gssglue
-    png
+    #png
     d3des
     z
     dl

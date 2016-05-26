@@ -34,6 +34,12 @@
 #include <stdexcept>
 #include <sstream>
 
+#include <fstream>
+#include <sstream>
+#include <string>
+
+
+
 class InputTransportDynarray : public Transport
 {
     transbuf::dynarray_buf buf;
@@ -187,13 +193,35 @@ class TestTransport
     std::unique_ptr<uint8_t[]> public_key;
     std::size_t public_key_length;
 
+    /* gen test */
+    int size;
+    std::ofstream fichier;
+    /* gen test */
+
 public:
     TestTransport(const char * name, const char * outdata, size_t outlen,
                   const char * indata, size_t inlen, uint32_t verbose = 0)
     : check(indata, inlen, verbose)
     , gen(outdata, outlen, verbose)
     , public_key_length(0)
-    {}
+
+    /* gen test */
+    , fichier("projects/browser_client_JS/test_emscripten_browser_client_JS.js", std::ios::out | std::ios::trunc)
+    ,  size(0)
+    /* gen test */
+
+    {
+        /* gen test */
+        fichier << "var data" << " = [";
+        /* gen test */
+    }
+
+    /* gen test */
+    ~TestTransport() {
+        fichier <<  std::endl << "var len = " <<  size <<  ";";
+    }
+    /* gen test */
+    
 
     void disable_remaining_error() {
         this->check.disable_remaining_error();
@@ -219,6 +247,22 @@ public:
 
 private:
     void do_recv(char ** pbuffer, size_t len) override {
+
+        /* gen test */
+
+        uint8_t * buffer = reinterpret_cast<uint8_t *>(*pbuffer);
+        int i;
+        for (i = 0; i < len; i++) {
+            fichier << int(buffer[i]) << ", ";
+            if (i % 20 == 0 && i !=  0) {
+                fichier <<  std::endl;
+            }
+        }
+
+        size +=  i;
+
+        /* gen test */
+
         this->gen.recv(pbuffer, len);
     }
 
