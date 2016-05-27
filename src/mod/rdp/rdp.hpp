@@ -97,7 +97,6 @@
 
 #include <cstdlib>
 
-
 class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, mod_api>
 {
     friend gdi::GraphicCoreAccess;
