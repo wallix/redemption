@@ -31,28 +31,28 @@
 #include <emscripten.h>
 #endif
 
-#include "RDP/caches/brushcache.hpp"
-#include "RDP/capabilities/colcache.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/caches/brushcache.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
 //#include <algorithm>
 #include <fstream>
@@ -61,24 +61,18 @@
 //#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
-#include "core/front_api.hpp"
-#include "channel_list.hpp"
-#include "mod/mod_api.hpp"
-#include "mod/rdp/rdp.hpp"
+#include "core/channel_list.hpp"
 #include "utils/bitmap.hpp"
-#include "RDP/caches/glyphcache.hpp"
-#include "RDP/bitmapupdate.hpp"
-#include "keymap2.hpp"
-#include "client_info.hpp"
-#include "keylayouts_r.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "keyboard/keymap2.hpp"
+#include "core/client_info.hpp"
+#include "keyboard/reversed_keymaps/keylayouts_r.hpp"
 #include "utils/colors.hpp"
+#include "core/front_api.hpp"
+#include "mod/mod_api.hpp"
 #include "transport/transport_web_socket.hpp"
-
-#ifdef __EMSCRIPTEN__
-#undef REDASSERT
-#define REDASSERT(verif) {}
-#endif
-
+#include "mod/rdp/rdp.hpp"
 
 // bjam -a client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
 
@@ -205,7 +199,6 @@ public:
             }
         }
         if (!found){
-            //std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
 

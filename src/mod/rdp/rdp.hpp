@@ -73,7 +73,7 @@
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
-#include "transparentrecorder.hpp"
+#include "capture/transparentrecorder.hpp"
 
 #include "core/client_info.hpp"
 #include "utils/genrandom.hpp"

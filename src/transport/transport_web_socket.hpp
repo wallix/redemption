@@ -51,6 +51,8 @@ class TransportWebSocket :  public Transport
             }
 
             pbuffer = &(this->buffer) + i;
+        } else {
+            EM_ASM_({ console.log('Trap len ' + %0); }, lenInt);
         }
     }
 

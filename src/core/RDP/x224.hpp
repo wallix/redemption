@@ -964,35 +964,38 @@ namespace X224
             : Recv(stream)
             , tpdu_hdr([&]()
             {
-                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv start'); }, 0);
+                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv tpdu_hdr start'); }, 0);
                 /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
                 if (!stream.in_check_rem(7)){
                     LOG(LOG_ERR, "Truncated TPDU header: expected=7 remains=%zu", stream.in_remain());
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv 1'); }, 0);
+                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv tpdu_hdr 1'); }, 0);
                 uint8_t LI = stream.in_uint8();
                 uint8_t code = stream.in_uint8();
-                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv 2'); }, 0);
+                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv tpdu_hdr 2'); }, 0);
                 if (!(code == X224::CC_TPDU)){
                     LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", code);
                     throw Error(ERR_X224);
                 }
 
                 uint16_t dst_ref = stream.in_uint16_le();
+                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv tpdu_hdr 3'); }, 0);
                 uint16_t src_ref = stream.in_uint16_le();
                 uint8_t class_option = stream.in_uint8();
+                EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv tpdu_hdr 4'); }, 0);
                 return CC_Header{LI, code, dst_ref, src_ref, class_option};
             }())
             , _header_size(X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1)
         {
+            EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv start'); }, 0);
             unsigned expected = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
             if (stream.get_capacity() < expected){
                 LOG(LOG_ERR, "Truncated CC TPDU header: expected %u, got %zu",
                     expected, stream.get_capacity());
                 throw Error(ERR_X224);
             }
-            EM_ASM_({ console.log('draw_event x224::CC_TPDU_Recv start'); }, 0);
+
             // extended negotiation header
             this->rdp_neg_type = 0;
             this->rdp_neg_flags = 0;
