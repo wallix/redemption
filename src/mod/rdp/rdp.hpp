@@ -27,7 +27,6 @@
 
 #include "mod/rdp/rdp_orders.hpp"
 
-/* include "ther h files */
 #include "utils/stream.hpp"
 #include "system/ssl_calls.hpp"
 #include "mod/mod_api.hpp"
@@ -94,205 +93,16 @@
 #include "utils/splitter.hpp"
 #include "utils/timeout.hpp"
 
+#include "mod/rdp/rdp_channel_manager.hpp"
+
 #include <cstdlib>
 
-class RDPChannelManagerMod : public mod_api
-{
-private:
-    std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>   file_system_to_server_sender;
 
-    std::unique_ptr<FileSystemVirtualChannel>   file_system_virtual_channel;
-
-    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_server_sender;
-
-    std::unique_ptr<ClipboardVirtualChannel>    clipboard_virtual_channel;
-
-    std::unique_ptr<VirtualChannelDataSender>   session_probe_to_server_sender;
-
-    std::unique_ptr<SessionProbeVirtualChannel> session_probe_virtual_channel;
-
-protected:
-    FileSystemDriveManager file_system_drive_manager;
-
-    FrontAPI& front;
-
-    class ToClientSender : public VirtualChannelDataSender
-    {
-        FrontAPI& front;
-
-        const CHANNELS::ChannelDef& channel;
-
-        uint32_t verbose;
-
-    public:
-        ToClientSender(FrontAPI& front,
-                       const CHANNELS::ChannelDef& channel,
-                       uint32_t verbose)
-        : front(front)
-        , channel(channel)
-        , verbose(verbose) {}
-
-        void operator()(uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length)
-                override
-        {
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-
-            this->front.send_to_channel(this->channel,
-                chunk_data, total_length, chunk_data_length, flags);
-        }
-    };
-
-    class ToServerSender : public VirtualChannelDataSender
-    {
-        Transport&      transport;
-        CryptContext&   encrypt;
-        int             encryption_level;
-        uint16_t        user_id;
-        uint16_t        channel_id;
-        bool            show_protocol;
-
-        uint32_t verbose;
-
-    public:
-        ToServerSender(Transport& transport,
-                       CryptContext& encrypt,
-                       int encryption_level,
-                       uint16_t user_id,
-                       uint16_t channel_id,
-                       bool show_protocol,
-                       uint32_t verbose)
-        : transport(transport)
-        , encrypt(encrypt)
-        , encryption_level(encryption_level)
-        , user_id(user_id)
-        , channel_id(channel_id)
-        , show_protocol(show_protocol)
-        , verbose(verbose) {}
-
-        void operator()(uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length)
-                override {
-            CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-
-            if (this->show_protocol) {
-                flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-            }
-
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = false;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-
-            virtual_channel_pdu.send_to_server(this->transport,
-                this->encrypt, this->encryption_level, this->user_id,
-                this->channel_id, total_length, flags, chunk_data,
-                chunk_data_length);
-        }
-    };
-
-    RDPChannelManagerMod(const uint16_t front_width,
-        const uint16_t front_height, FrontAPI& front)
-    : mod_api(front_width, front_height)
-    , front(front) {}
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-        const char* channel_name) const = 0;
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-        const char* channel_name) = 0;
-
-public:
-    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
-        if (!this->clipboard_virtual_channel) {
-            REDASSERT(!this->clipboard_to_client_sender &&
-                !this->clipboard_to_server_sender);
-
-            this->clipboard_to_client_sender =
-                this->create_to_client_sender(channel_names::cliprdr);
-            this->clipboard_to_server_sender =
-                this->create_to_server_sender(channel_names::cliprdr);
-
-            this->clipboard_virtual_channel =
-                std::make_unique<ClipboardVirtualChannel>(
-                    this->clipboard_to_client_sender.get(),
-                    this->clipboard_to_server_sender.get(),
-                    this->front,
-                    this->get_clipboard_virtual_channel_params());
-        }
-
-        return *this->clipboard_virtual_channel;
-    }
-
-    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
-        if (!this->file_system_virtual_channel) {
-            REDASSERT(!this->file_system_to_client_sender &&
-                !this->file_system_to_server_sender);
-
-            this->file_system_to_client_sender =
-                this->create_to_client_sender(channel_names::rdpdr);
-            this->file_system_to_server_sender =
-                this->create_to_server_sender(channel_names::rdpdr);
-
-            this->file_system_virtual_channel =
-                std::make_unique<FileSystemVirtualChannel>(
-                    this->file_system_to_client_sender.get(),
-                    this->file_system_to_server_sender.get(),
-                    this->file_system_drive_manager,
-                    this->front,
-                    this->get_file_system_virtual_channel_params());
-        }
-
-        return *this->file_system_virtual_channel;
-    }
-
-    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
-        if (!this->session_probe_virtual_channel) {
-            REDASSERT(!this->session_probe_to_server_sender);
-
-            this->session_probe_to_server_sender =
-                this->create_to_server_sender(channel_names::sespro);
-
-            FileSystemVirtualChannel& file_system_virtual_channel =
-                get_file_system_virtual_channel();
-
-            this->session_probe_virtual_channel =
-                std::make_unique<SessionProbeVirtualChannel>(
-                    this->session_probe_to_server_sender.get(),
-                    this->front,
-                    *this,
-                    file_system_virtual_channel,
-                    this->get_session_probe_virtual_channel_params());
-        }
-
-        return *this->session_probe_virtual_channel;
-    }
-
-protected:
-    virtual const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const = 0;
-
-    virtual const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const = 0;
-
-    virtual const SessionProbeVirtualChannel::Params
-        get_session_probe_virtual_channel_params() const = 0;
-};  // RDPChannelManagerMod
-
-class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
+class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, mod_api>
 {
     friend gdi::GraphicCoreAccess;
+
+    RDPChannelManagerMod channel_manager;
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
@@ -452,7 +262,6 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     const uint32_t password_printing_mode;
 
     bool deactivation_reactivation_in_progress;
-
     RedirectionInfo & redir_info;
 
     const bool bogus_sc_net_size;
@@ -641,6 +450,8 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
 
     GCC::UserData::CSMonitor cs_monitor;
 
+    FrontAPI & front;
+    
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -649,7 +460,8 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_rdp::base_type(info.width - (info.width % 4), info.height, front)
+        : mod_rdp::base_type(info.width - (info.width % 4), info.height)
+        , channel_manager(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -763,6 +575,7 @@ public:
                           mod_rdp_params.verbose
                          )
         , cs_monitor(info.cs_monitor)
+        , front(front)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -785,7 +598,7 @@ public:
 
 
         if (this->enable_session_probe) {
-            this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
+            this->channel_manager.file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
         }
 
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
@@ -1064,7 +877,7 @@ public:
                     snprintf(statestr, sizeof(statestr), "RDP_GET_LICENSE");
                     break;
                 case MOD_RDP_CONNECTED:
-                    snprintf(statestr, sizeof(statestr), "RDP_CONNECTED");
+                    snprintf(statestr, sizeof(statestr),"RDP_CONNECTED");
                     break;
                 default:
                     snprintf(statestr, sizeof(statestr), "UNKNOWN");
@@ -1083,15 +896,17 @@ public:
                 this->session_probe_launcher.get());
 
             FileSystemVirtualChannel& fsvc =
-                this->get_file_system_virtual_channel();
+                this->get_file_system_virtual_channel(this->get_file_system_virtual_channel_params());
             fsvc.set_session_probe_launcher(
                 this->session_probe_launcher.get());
 
-            this->file_system_drive_manager.set_session_probe_launcher(
+            this->channel_manager.file_system_drive_manager.set_session_probe_launcher(
                 this->session_probe_launcher.get());
 
             SessionProbeVirtualChannel& spvc =
-                this->get_session_probe_virtual_channel();
+                this->get_session_probe_virtual_channel(
+                        this->get_file_system_virtual_channel_params(), 
+                        this->get_session_probe_virtual_channel_params());
             spvc.set_session_probe_launcher(this->session_probe_launcher.get());
             this->session_probe_virtual_channel_p = &spvc;
             if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
@@ -1142,44 +957,33 @@ public:
     }
 
 protected:
-    std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-            const char* channel_name) const override
+    std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(const char* channel_name) const
     {
-        if (!this->authorization_channels.is_authorized(channel_name))
-        {
+        if (!this->authorization_channels.is_authorized(channel_name)){
             return nullptr;
         }
 
-        const CHANNELS::ChannelDefArray& front_channel_list =
-            this->front.get_channel_list();
-
-        const CHANNELS::ChannelDef* channel =
-            front_channel_list.get_by_name(channel_name);
-        if (!channel)
-        {
+        const CHANNELS::ChannelDefArray& front_channel_list = this->front.get_channel_list();
+        const CHANNELS::ChannelDef* channel = front_channel_list.get_by_name(channel_name);
+        if (!channel){
             return nullptr;
         }
 
-        std::unique_ptr<ToClientSender> to_client_sender =
-            std::make_unique<ToClientSender>(this->front, *channel,
-                this->verbose);
+        std::unique_ptr<RDPChannelManagerMod::ToClientSender> to_client_sender =
+            std::make_unique<RDPChannelManagerMod::ToClientSender>(this->front, *channel, this->verbose);
 
-        return std::unique_ptr<VirtualChannelDataSender>(
-            std::move(to_client_sender));
+        return std::unique_ptr<VirtualChannelDataSender>(std::move(to_client_sender));
     }
 
-    std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-            const char* channel_name) override
+    std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(const char* channel_name)
     {
-        const CHANNELS::ChannelDef* channel =
-            this->mod_channel_list.get_by_name(channel_name);
-        if (!channel)
-        {
+        const CHANNELS::ChannelDef* channel = this->mod_channel_list.get_by_name(channel_name);
+        if (!channel){
             return nullptr;
         }
 
-        std::unique_ptr<ToServerSender> to_server_sender =
-            std::make_unique<ToServerSender>(
+        std::unique_ptr<RDPChannelManagerMod::ToServerSender> to_server_sender =
+            std::make_unique<RDPChannelManagerMod::ToServerSender>(
                 this->nego.trans,
                 this->encrypt,
                 this->encryptionLevel,
@@ -1205,42 +1009,31 @@ protected:
                     this->asynchronous_task_event,
                     this->verbose);
 
-        return std::unique_ptr<VirtualChannelDataSender>(
-            std::move(to_server_asynchronous_sender));
+        return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_asynchronous_sender));
     }
 
     const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const override
+        get_clipboard_virtual_channel_params() const
     {
         ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
-        clipboard_virtual_channel_params.authentifier                    =
-            this->acl;
-        clipboard_virtual_channel_params.exchanged_data_limit            =
-            this->max_clipboard_data;
-        clipboard_virtual_channel_params.verbose                         =
-            this->verbose;
+        clipboard_virtual_channel_params.authentifier = this->acl;
+        clipboard_virtual_channel_params.exchanged_data_limit = this->max_clipboard_data;
+        clipboard_virtual_channel_params.verbose = this->verbose;
 
-        clipboard_virtual_channel_params.clipboard_down_authorized       =
-            this->authorization_channels.cliprdr_down_is_authorized();
-        clipboard_virtual_channel_params.clipboard_up_authorized         =
-            this->authorization_channels.cliprdr_up_is_authorized();
-        clipboard_virtual_channel_params.clipboard_file_authorized       =
-            this->authorization_channels.cliprdr_file_is_authorized();
+        clipboard_virtual_channel_params.clipboard_down_authorized = this->authorization_channels.cliprdr_down_is_authorized();
+        clipboard_virtual_channel_params.clipboard_up_authorized = this->authorization_channels.cliprdr_up_is_authorized();
+        clipboard_virtual_channel_params.clipboard_file_authorized = this->authorization_channels.cliprdr_file_is_authorized();
 
-        clipboard_virtual_channel_params.dont_log_data_into_syslog       =
-            this->disable_clipboard_log_syslog;
-        clipboard_virtual_channel_params.dont_log_data_into_wrm          =
-            this->disable_clipboard_log_wrm;
-
-        clipboard_virtual_channel_params.acl                             =
-            this->acl;
+        clipboard_virtual_channel_params.dont_log_data_into_syslog = this->disable_clipboard_log_syslog;
+        clipboard_virtual_channel_params.dont_log_data_into_wrm = this->disable_clipboard_log_wrm;
+        clipboard_virtual_channel_params.acl = this->acl;
 
         return clipboard_virtual_channel_params;
     }
 
     const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const override
+        get_file_system_virtual_channel_params() const
     {
         FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -1284,7 +1077,7 @@ protected:
     }
 
     const SessionProbeVirtualChannel::Params
-        get_session_probe_virtual_channel_params() const override
+        get_session_probe_virtual_channel_params() const
     {
         SessionProbeVirtualChannel::Params
             session_probe_virtual_channel_params;
@@ -1460,7 +1253,7 @@ public:
             if (verbose) {
                 LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
             }
-            this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
+            this->channel_manager.file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
         }
     }   // configure_proxy_managed_drives
 
@@ -1835,7 +1628,7 @@ private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    InStream & chunk, size_t length, uint32_t flags) {
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
-            !this->file_system_drive_manager.HasManagedDrive()) {
+            !this->channel_manager.file_system_drive_manager.HasManagedDrive()) {
             if (this->verbose && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                 LOG(LOG_INFO,
                     "mod_rdp::send_to_mod_rdpdr_channel: "
@@ -1846,7 +1639,7 @@ private:
             return;
         }
 
-        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
+        BaseVirtualChannel& channel = this->get_file_system_virtual_channel(this->get_file_system_virtual_channel_params());
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -2106,7 +1899,7 @@ public:
                                 const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                                 size_t num_channels = channel_list.size();
                                 if ((num_channels > 0) || this->enable_auth_channel ||
-                                    this->file_system_drive_manager.HasManagedDrive()) {
+                                    this->channel_manager.file_system_drive_manager.HasManagedDrive()) {
                                     /* Here we need to put channel information in order
                                     to redirect channel data
                                     from client to server passing through the "proxy" */
@@ -2120,7 +1913,7 @@ public:
                                         if (this->authorization_channels.is_authorized(channel_item.name) ||
                                             ((!strcmp(channel_item.name, channel_names::rdpdr) ||
                                               !strcmp(channel_item.name, channel_names::rdpsnd)) &&
-                                            this->file_system_drive_manager.HasManagedDrive())
+                                            this->channel_manager.file_system_drive_manager.HasManagedDrive())
                                         ) {
                                             if (!strcmp(channel_item.name, channel_names::cliprdr)) {
                                                 has_cliprdr_channel = true;
@@ -2147,7 +1940,7 @@ public:
                                     }
 
                                     // Inject a new channel for file system virtual channel (rdpdr)
-                                    if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
+                                    if (!has_rdpdr_channel && this->channel_manager.file_system_drive_manager.HasManagedDrive()) {
                                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpdr);
@@ -2186,7 +1979,7 @@ public:
                                     // The RDPDR channel advertised by the client is ONLY accepted by the RDP
                                     //  server 2012 if the RDPSND channel is also advertised.
                                     if (!has_rdpsnd_channel &&
-                                        this->file_system_drive_manager.HasManagedDrive()) {
+                                        this->channel_manager.file_system_drive_manager.HasManagedDrive()) {
                                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpsnd);
@@ -6558,9 +6351,81 @@ public:
         }
     }
 
+    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
+        if (!this->channel_manager.clipboard_virtual_channel) {
+            REDASSERT(!this->channel_manager.clipboard_to_client_sender &&
+                !this->channel_manager.clipboard_to_server_sender);
+
+            this->channel_manager.clipboard_to_client_sender =
+                this->create_to_client_sender(channel_names::cliprdr);
+            this->channel_manager.clipboard_to_server_sender =
+                this->create_to_server_sender(channel_names::cliprdr);
+
+            this->channel_manager.clipboard_virtual_channel =
+                std::make_unique<ClipboardVirtualChannel>(
+                    this->channel_manager.clipboard_to_client_sender.get(),
+                    this->channel_manager.clipboard_to_server_sender.get(),
+                    this->front,
+                    this->get_clipboard_virtual_channel_params());
+        }
+
+        return *this->channel_manager.clipboard_virtual_channel;
+    }
+
+
+    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel(
+        const FileSystemVirtualChannel::Params fs_params, 
+        const SessionProbeVirtualChannel::Params sp_params) {
+        if (!this->channel_manager.session_probe_virtual_channel) {
+            REDASSERT(!this->channel_manager.session_probe_to_server_sender);
+
+            this->channel_manager.session_probe_to_server_sender =
+                this->create_to_server_sender(channel_names::sespro);
+
+            FileSystemVirtualChannel& file_system_virtual_channel =
+                get_file_system_virtual_channel(fs_params);
+
+            this->channel_manager.session_probe_virtual_channel =
+                std::make_unique<SessionProbeVirtualChannel>(
+                    this->channel_manager.session_probe_to_server_sender.get(),
+                    this->front,
+                    *this,
+                    file_system_virtual_channel,
+                    sp_params);
+        }
+
+        return *this->channel_manager.session_probe_virtual_channel;
+    }
+
+    inline FileSystemVirtualChannel& get_file_system_virtual_channel(const FileSystemVirtualChannel::Params params) {
+        if (!this->channel_manager.file_system_virtual_channel) {
+            REDASSERT(!this->channel_manager.file_system_to_client_sender &&
+                !this->channel_manager.file_system_to_server_sender);
+
+            this->channel_manager.file_system_to_client_sender =
+                this->create_to_client_sender(channel_names::rdpdr);
+            this->channel_manager.file_system_to_server_sender =
+                this->create_to_server_sender(channel_names::rdpdr);
+
+            this->channel_manager.file_system_virtual_channel =
+                std::make_unique<FileSystemVirtualChannel>(
+                    this->channel_manager.file_system_to_client_sender.get(),
+                    this->channel_manager.file_system_to_server_sender.get(),
+                    this->channel_manager.file_system_drive_manager,
+                    this->front,
+                    params);
+        }
+
+        return *this->channel_manager.file_system_virtual_channel;
+    }
+
+
     void process_session_probe_event(const CHANNELS::ChannelDef & session_probe_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
-        BaseVirtualChannel& channel = this->get_session_probe_virtual_channel();
+
+        BaseVirtualChannel& channel = this->get_session_probe_virtual_channel(
+                            this->get_file_system_virtual_channel_params(), 
+                            this->get_session_probe_virtual_channel_params());
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -6609,7 +6474,7 @@ public:
     void process_rdpdr_event(const CHANNELS::ChannelDef & rdpdr_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
-            !this->file_system_drive_manager.HasManagedDrive()) {
+            !this->channel_manager.file_system_drive_manager.HasManagedDrive()) {
             if (this->verbose && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                 LOG(LOG_INFO,
                     "mod_rdp::process_rdpdr_event: "
@@ -6621,7 +6486,7 @@ public:
             return;
         }
 
-        BaseVirtualChannel& channel = this->get_file_system_virtual_channel();
+        BaseVirtualChannel& channel = this->get_file_system_virtual_channel(this->get_file_system_virtual_channel_params());
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
