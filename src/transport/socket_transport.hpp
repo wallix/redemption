@@ -102,7 +102,8 @@ public:
         return this->tls ? this->tls->public_key_length : 0;
     }
 
-    void enable_server_tls(const char * certificate_password) override {
+    void enable_server_tls(const char * certificate_password,
+            const char * ssl_cipher_list) override {
         if (this->tls != nullptr) {
             TODO("this should be an error, no need to commute two times to TLS");
             return;
@@ -111,7 +112,7 @@ public:
 
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
-        this->tls->enable_server_tls(this->sck, certificate_password);
+        this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list);
 
         LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
     }
