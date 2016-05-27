@@ -132,21 +132,21 @@ public:
     template<class T, class U>
     void set(U && new_value) {
         static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
-        static_cast<T&>(this->variables).value = std::forward<U>(new_value);
+        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(new_value));
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T, class U, class... O>
     void set(U && param1, O && ... other_params) {
         static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
-        static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
+        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(param1), std::forward<O>(other_params)...);
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T, class U>
     void set_acl(U && new_value) {
         static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
-        static_cast<T&>(this->variables).value = std::forward<U>(new_value);
+        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(new_value));
         this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
@@ -154,7 +154,7 @@ public:
     template<class T, class U, class... O>
     void set_acl(U && param1, O && ... other_params) {
         static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
-        static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
+        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(param1), std::forward<O>(other_params)...);
         this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }

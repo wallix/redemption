@@ -3,8 +3,6 @@
 #include <iosfwd>
 
 
-namespace configs {
-
 // Specifies the type of data to be captured:
 enum class CaptureFlags {
     none = 0,
@@ -324,5 +322,3 @@ operator << (std::basic_ostream<Ch, Tr> & os, ColorDepth e)
 { return os << static_cast<unsigned long>(e); }
 
 
-
-}

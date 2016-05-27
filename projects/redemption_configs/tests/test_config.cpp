@@ -84,14 +84,15 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -102,16 +103,16 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
@@ -122,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+    BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
@@ -177,16 +178,16 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -208,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
@@ -216,8 +217,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::delayed,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL("./",                             ini.get<cfg::context::movie>());
@@ -408,14 +409,15 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -426,15 +428,15 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::globals::handshake_timeout>());
@@ -445,7 +447,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
+    BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
@@ -499,16 +501,16 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp4,    ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp4,             ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(45,                               ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -530,7 +532,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
@@ -538,8 +540,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
     BOOST_CHECK_EQUAL("16,2,0,1,-239",                  ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::delayed,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -631,14 +633,15 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::medium,           ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::medium,                    ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -649,13 +652,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL("/mnt/wab/recorded/rdp/",         ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL("/mnt/tmp/wab/recorded/rdp/",     ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,  ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog, ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::wrm,   ini.get<cfg::video::disable_file_system_log>());
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,         ini.get<cfg::video::disable_keyboard_log>());
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,        ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::wrm,          ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
@@ -666,7 +669,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::localfile,    ini.get<cfg::globals::trace_type>());
+    BOOST_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
@@ -720,16 +723,16 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::none,    ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth8,      ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth8,               ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp5,    ini.get<cfg::mod_rdp::rdp_compression>()); BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp5,             ini.get<cfg::mod_rdp::rdp_compression>()); BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(30,                               ini.get<cfg::mod_rdp::open_session_timeout>());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
@@ -748,14 +751,14 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::utf8, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::duplicated,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::utf8,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::duplicated,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(1,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -824,14 +827,15 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::high,             ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -842,16 +846,16 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
@@ -862,7 +866,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
+    BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("rdpproxy",                       ini.get<cfg::globals::certificate_password>());
@@ -905,16 +909,16 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::none,    ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -937,14 +941,14 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::delayed,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -1021,14 +1025,15 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::high,             ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -1039,15 +1044,15 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::none, ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::none,          ini.get<cfg::video::disable_clipboard_log>());
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(7,                                ini.get<cfg::globals::handshake_timeout>());
@@ -1058,7 +1063,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
+    BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("rdpproxy RDP",                   ini.get<cfg::globals::certificate_password>());
@@ -1101,16 +1106,16 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::none,    ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -1133,14 +1138,14 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::continued,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::continued,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -1191,14 +1196,15 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -1209,16 +1215,16 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
@@ -1229,7 +1235,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::localfile,    ini.get<cfg::globals::trace_type>());
+    BOOST_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
@@ -1272,16 +1278,16 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -1303,14 +1309,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::delayed,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -1362,14 +1368,15 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -1380,16 +1387,16 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
@@ -1400,7 +1407,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::cryptofile,   ini.get<cfg::globals::trace_type>());
+    BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
@@ -1443,16 +1450,16 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -1474,14 +1481,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::ignore_and_continue,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::ignore_and_continue,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::delayed,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -1519,14 +1526,15 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -1537,16 +1545,16 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
@@ -1557,7 +1565,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+    BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
@@ -1601,16 +1609,16 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -1632,14 +1640,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::delayed,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -1678,14 +1686,15 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     BOOST_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
-    BOOST_CHECK_EQUAL(configs::Level::low,              ini.get<cfg::globals::encryptionLevel>());
+    BOOST_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
     BOOST_CHECK_EQUAL("/var/run/redemption-sesman-sock",ini.get<cfg::globals::authfile>());
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     BOOST_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    BOOST_CHECK_EQUAL(configs::CaptureFlags::png | configs::CaptureFlags::wrm, ini.get<cfg::video::capture_flags>());
+    BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+                                                        ini.get<cfg::video::capture_flags>());
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
     BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
     BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
@@ -1696,16 +1705,16 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
     BOOST_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
-    BOOST_CHECK_EQUAL(configs::KeyboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
-    BOOST_CHECK_EQUAL(configs::ClipboardLogFlags::syslog,
+    BOOST_CHECK_EQUAL(ClipboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_clipboard_log>());
-    BOOST_CHECK_EQUAL(configs::FileSystemLogFlags::syslog,
+    BOOST_CHECK_EQUAL(FileSystemLogFlags::syslog,
                                                         ini.get<cfg::video::disable_file_system_log>());
 
-    BOOST_CHECK_EQUAL(configs::ColorDepthSelectionStrategy::depth16,
+    BOOST_CHECK_EQUAL(ColorDepthSelectionStrategy::depth16,
                                                         ini.get<cfg::video::wrm_color_depth_selection_strategy>());
-    BOOST_CHECK_EQUAL(configs::WrmCompressionAlgorithm::gzip,
+    BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
     BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
@@ -1716,7 +1725,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    BOOST_CHECK_EQUAL(configs::TraceType::localfile_hashed,
+    BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
@@ -1760,16 +1769,16 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bogus_neg_request>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::bogus_user_id>());
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::client::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::client::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::disable_tsk_switch_shortcuts>());
-    BOOST_CHECK_EQUAL(configs::ColorDepth::depth24,     ini.get<cfg::client::max_color_depth>());
+    BOOST_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::client::max_color_depth>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::cache_waiting_list>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::persist_bitmap_cache_on_disk>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::bitmap_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::fast_path>());
 
-    BOOST_CHECK_EQUAL(configs::RdpCompression::rdp6_1,  ini.get<cfg::mod_rdp::rdp_compression>());
+    BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
@@ -1791,14 +1800,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
     BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
-    BOOST_CHECK_EQUAL(configs::SessionProbeOnLaunchFailure::retry_without_session_probe,
+    BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
     BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
-    BOOST_CHECK_EQUAL(configs::ClipboardEncodingType::latin1, ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
-    BOOST_CHECK_EQUAL(configs::VncBogusClipboardInfiniteLoop::delayed,
+    BOOST_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
+    BOOST_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
 
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_replay::on_end_of_data>());
@@ -2197,10 +2206,32 @@ BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestConfigSet)
+{
+    Inifile             ini;
+
+    cfg::crypto::key0::type akey{{}};
+    BOOST_CHECK(ini.get<cfg::crypto::key0>() != akey);
+
+    unsigned char ckey[32]{1};
+    ini.set<cfg::crypto::key0>(ckey);
+    akey[0] = 1;
+    BOOST_CHECK(ini.get<cfg::crypto::key0>() == akey);
+
+    unsigned char const cckey[32]{1, 1};
+    ini.set<cfg::crypto::key0>(cckey);
+    akey[1] = 1;
+    BOOST_CHECK(ini.get<cfg::crypto::key0>() == akey);
+
+    akey[2] = 1;
+    ini.set<cfg::crypto::key0>(akey);
+    BOOST_CHECK(ini.get<cfg::crypto::key0>() == akey);
+}
+
+
 BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 {
     Inifile             ini;
-    ConfigurationLoader cfg_loader(ini.configuration_holder());
 
     // nothing has been changed initialy
     BOOST_CHECK(!ini.check_from_acl());

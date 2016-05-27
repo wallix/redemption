@@ -191,8 +191,6 @@ namespace cpp_enumeration_writer
             "#include <iosfwd>\n"
             "\n"
             "\n"
-            "namespace configs {\n"
-            "\n"
         ;
         for (auto & e : enums.enumerations_) {
             if (e.flag == type_enumeration::flags) {
@@ -227,8 +225,6 @@ namespace cpp_enumeration_writer
             enum_def(e, [] (auto & v) mutable { return v.val; });
             write_io(e);
         }
-
-        out << "\n}\n";
     }
 }
 

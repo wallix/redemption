@@ -70,7 +70,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     }
 
     template<class... Ts>
-    void member(Ts const & ... args)
+    void do_member(Ts const & ... args)
     {
         pack_type<Ts...> pack{args...};
         auto type = pack_get<cpp::type_>(pack);
@@ -87,7 +87,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
         this->out_ = &this->out_member_;
 
         apply_if_contains<desc>(pack, [this](auto desc){
-            this->out() << cpp_comment(desc.value, 8);
+            this->tab();
+            this->out() << cpp_comment(desc.value, 0);
         });
         if (bool(properties)) {
             this->tab();

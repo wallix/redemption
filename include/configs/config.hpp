@@ -25,8 +25,7 @@
     parsing config file rdpproxy.ini
 */
 
-#ifndef _REDEMPTION_CORE_CONFIG_HPP_
-#define _REDEMPTION_CORE_CONFIG_HPP_
+#pragma once
 
 #include <cstdio>
 #include <cassert>
@@ -140,21 +139,21 @@ public:
     template<class T, class U>
     void set(U && new_value) {
         static_assert(!bool(T::properties() & properties_t::write), "T is writable, used set_acl<T>().");
-        static_cast<T&>(this->variables).value = std::forward<U>(new_value);
+        set_value(static_cast<T&>(this->variables).value, std::forward<U>(new_value));
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
     }
 
     template<class T, class U, class... O>
     void set(U && param1, O && ... other_params) {
         static_assert(!bool(T::properties() & properties_t::write), "T is writable, used set_acl<T>().");
-        static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
+        set_value(static_cast<T&>(this->variables).value, std::forward<U>(param1), std::forward<O>(other_params)...);
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
     }
 
     template<class T, class U>
     void set_acl(U && new_value) {
         static_assert(bool(T::properties() & properties_t::write), "T isn't writable, used set<T>().");
-        static_cast<T&>(this->variables).value = std::forward<U>(new_value);
+        set_value(static_cast<T&>(this->variables).value, std::forward<U>(new_value));
         this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::write)>());
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
     }
@@ -162,7 +161,7 @@ public:
     template<class T, class U, class... O>
     void set_acl(U && param1, O && ... other_params) {
         static_assert(bool(T::properties() & properties_t::write), "T isn't writable, used set<T>().");
-        static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
+        set_value(static_cast<T&>(this->variables).value, std::forward<U>(param1), std::forward<O>(other_params)...);
         this->insert_index<T>(std::integral_constant<bool, bool(T::properties() & properties_t::write)>());
         this->unask<T>(std::integral_constant<bool, bool(T::properties() & properties_t::read)>());
     }
@@ -181,6 +180,22 @@ public:
     }
 
 private:
+    template<class T, class U>
+    static void set_value(T & x, U && new_value)
+    { x = std::forward<U>(new_value); }
+
+    template<class T, class U, class... Ts>
+    static void set_value(T & x, U && param1, Ts && ... other_params)
+    { x = {std::forward<U>(param1), std::forward<Ts>(other_params)...}; }
+
+    template<class T, std::size_t N>
+    static void set_value(std::array<T, N> & x, const T (&arr)[N])
+    { std::copy(begin(arr), end(arr), begin(x)); }
+
+    template<class T, std::size_t N>
+    static void set_value(std::array<T, N> & x, T (&arr)[N])
+    { set_value(x, static_cast<T const (&)[N]>(arr)); }
+
     template<class T> void insert_index(std::false_type) {}
     template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index()); }
 
@@ -410,5 +425,3 @@ private:
 
 #include "configs/autogen/set_value.tcc"
 #include "configs/variant/check_record_config.tcc"
-
-#endif

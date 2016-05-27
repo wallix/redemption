@@ -24,9 +24,7 @@
 #include "configs/attributes/spec.hpp"
 #include "configs/enumeration.hpp"
 
-// TODO
 #include "configs/autogen/enums.hpp"
-using namespace configs;
 
 #include "keyboard/keymap2.hpp" // keylayouts
 

@@ -165,7 +165,7 @@ struct type_enumerations
     void apply_for(Fn fn) const
     {
         auto tname = type_name<T>();
-        std::string str_tname(tname.begin() + sizeof("configs::")-1, tname.end());
+        std::string str_tname(tname.begin(), tname.end());
         if ( ! apply_enum(str_tname, fn, this->enumerations_)
          &&  ! apply_enum(str_tname, fn, this->enumerations_set_)) {
             throw std::runtime_error("unknown enum " + str_tname);

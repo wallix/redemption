@@ -307,6 +307,9 @@ public:
         }
 
         this->out_ = &this->out_member_;
+        if (!this->section_name.empty()) {
+            --this->depth;
+        }
         this->inherit().do_stop_section();
         this->members_accu->footer = this->out_member_.str();
         this->out_member_.str("");

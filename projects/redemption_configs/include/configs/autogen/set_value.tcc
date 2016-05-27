@@ -95,7 +95,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::client::rdp_compression&>(this->variables).value,
-                ::configs::spec_type<configs::RdpCompression>{},
+                ::configs::spec_type<RdpCompression>{},
                 av
             );
         }
@@ -103,7 +103,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::client::max_color_depth&>(this->variables).value,
-                ::configs::spec_type<configs::ColorDepth>{},
+                ::configs::spec_type<ColorDepth>{},
                 av
             );
         }
@@ -428,7 +428,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::encryptionLevel&>(this->variables).value,
-                ::configs::spec_type<configs::Level>{},
+                ::configs::spec_type<Level>{},
                 av
             );
         }
@@ -484,7 +484,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::trace_type&>(this->variables).value,
-                ::configs::spec_type<configs::TraceType>{},
+                ::configs::spec_type<TraceType>{},
                 av
             );
         }
@@ -634,7 +634,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::rdp_compression&>(this->variables).value,
-                ::configs::spec_type<configs::RdpCompression>{},
+                ::configs::spec_type<RdpCompression>{},
                 av
             );
         }
@@ -826,7 +826,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::session_probe_on_launch_failure&>(this->variables).value,
-                ::configs::spec_type<configs::SessionProbeOnLaunchFailure>{},
+                ::configs::spec_type<SessionProbeOnLaunchFailure>{},
                 av
             );
         }
@@ -906,7 +906,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::server_cert_check&>(this->variables).value,
-                ::configs::spec_type<configs::ServerCertCheck>{},
+                ::configs::spec_type<ServerCertCheck>{},
                 av
             );
         }
@@ -914,7 +914,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::server_access_allowed_message&>(this->variables).value,
-                ::configs::spec_type<configs::ServerNotification>{},
+                ::configs::spec_type<ServerNotification>{},
                 av
             );
         }
@@ -922,7 +922,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::server_cert_create_message&>(this->variables).value,
-                ::configs::spec_type<configs::ServerNotification>{},
+                ::configs::spec_type<ServerNotification>{},
                 av
             );
         }
@@ -930,7 +930,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::server_cert_success_message&>(this->variables).value,
-                ::configs::spec_type<configs::ServerNotification>{},
+                ::configs::spec_type<ServerNotification>{},
                 av
             );
         }
@@ -938,7 +938,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::server_cert_failure_message&>(this->variables).value,
-                ::configs::spec_type<configs::ServerNotification>{},
+                ::configs::spec_type<ServerNotification>{},
                 av
             );
         }
@@ -946,7 +946,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::server_cert_error_message&>(this->variables).value,
-                ::configs::spec_type<configs::ServerNotification>{},
+                ::configs::spec_type<ServerNotification>{},
                 av
             );
         }
@@ -1016,7 +1016,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_vnc::server_clipboard_encoding_type&>(this->variables).value,
-                ::configs::spec_type<configs::ClipboardEncodingType>{},
+                ::configs::spec_type<ClipboardEncodingType>{},
                 av
             );
         }
@@ -1024,7 +1024,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_vnc::bogus_clipboard_infinite_loop&>(this->variables).value,
-                ::configs::spec_type<configs::VncBogusClipboardInfiniteLoop>{},
+                ::configs::spec_type<VncBogusClipboardInfiniteLoop>{},
                 av
             );
         }
@@ -1047,7 +1047,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value,
-                ::configs::spec_type<configs::KeyboardInputMaskingLevel>{},
+                ::configs::spec_type<KeyboardInputMaskingLevel>{},
                 av
             );
         }
@@ -1062,7 +1062,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::translation::language&>(this->variables).value,
-                ::configs::spec_type<configs::Language>{},
+                ::configs::spec_type<Language>{},
                 av
             );
         }
@@ -1101,7 +1101,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::capture_flags&>(this->variables).value,
-                ::configs::spec_type<configs::CaptureFlags>{},
+                ::configs::spec_type<CaptureFlags>{},
                 av
             );
         }
@@ -1173,7 +1173,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::disable_keyboard_log&>(this->variables).value,
-                ::configs::spec_type<configs::KeyboardLogFlags>{},
+                ::configs::spec_type<KeyboardLogFlags>{},
                 av
             );
         }
@@ -1181,7 +1181,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::disable_clipboard_log&>(this->variables).value,
-                ::configs::spec_type<configs::ClipboardLogFlags>{},
+                ::configs::spec_type<ClipboardLogFlags>{},
                 av
             );
         }
@@ -1189,7 +1189,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::disable_file_system_log&>(this->variables).value,
-                ::configs::spec_type<configs::FileSystemLogFlags>{},
+                ::configs::spec_type<FileSystemLogFlags>{},
                 av
             );
         }
@@ -1205,7 +1205,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::wrm_color_depth_selection_strategy&>(this->variables).value,
-                ::configs::spec_type<configs::ColorDepthSelectionStrategy>{},
+                ::configs::spec_type<ColorDepthSelectionStrategy>{},
                 av
             );
         }
@@ -1213,7 +1213,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::wrm_compression_algorithm&>(this->variables).value,
-                ::configs::spec_type<configs::WrmCompressionAlgorithm>{},
+                ::configs::spec_type<WrmCompressionAlgorithm>{},
                 av
             );
         }

@@ -195,6 +195,13 @@ namespace spec_types
             return *this;
         }
 
+        directory_path & operator = (char const * new_path)
+        {
+            this->path = new_path;
+            this->normalize();
+            return *this;
+        }
+
         directory_path & operator = (directory_path &&) = default;
         directory_path & operator = (directory_path const &) = default;
 
@@ -497,6 +504,74 @@ parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer
         }
     }
     return {"unknown value"};
+}
+
+
+template<class T, class U>
+void set_value(T & x, U && new_value)
+{ x = std::forward<U>(new_value); }
+
+template<class T, class U, class... Ts>
+void set_value(T & x, U && param1, Ts && ... other_params)
+{ x = {std::forward<U>(param1), std::forward<Ts>(other_params)...}; }
+
+namespace detail
+{
+    template<class T, class U>
+    using enable_if_no_cv_is_same_t = typename std::enable_if<
+        std::is_same<typename std::remove_cv<T>::type, U>::value
+    >::type;
+}
+
+template<class T>
+detail::enable_if_no_cv_is_same_t<T, unsigned char>
+set_value(std::array<unsigned char, 32> & x, T (&arr)[32])
+{ std::copy(begin(arr), end(arr), begin(x)); }
+
+template<class T>
+detail::enable_if_no_cv_is_same_t<T, char>
+set_value(std::array<unsigned char, 32> & x, T (&arr)[33])
+{ std::copy(begin(arr), end(arr), begin(x)); }
+
+template<class T, class Int>
+detail::enable_if_no_cv_is_same_t<T, char>
+set_value(std::array<unsigned char, 32> & x, T * arr, Int n)
+{
+    assert(32 >= n);
+    std::copy(arr, arr + n, begin(x));
+}
+
+template<std::size_t N, class T, class Int>
+detail::enable_if_no_cv_is_same_t<T, char>
+set_value(char (&s)[N], T * arr, Int n)
+{
+    // TODO
+}
+
+template<std::size_t N, class T>
+detail::enable_if_no_cv_is_same_t<T, char>
+set_value(char (&s)[N], T * arr)
+{
+    // TODO
+}
+
+template<std::size_t N>
+void set_value(char (&s)[N], std::string & arr)
+{
+    // TODO
+}
+
+template<std::size_t N>
+void set_value(char (&s)[N], std::string const & arr)
+{
+    // TODO
+}
+
+template<std::size_t N1, std::size_t N2, class T>
+detail::enable_if_no_cv_is_same_t<T, char>
+set_value(char (&s1)[N1], T (&s2)[N1])
+{
+    // TODO
 }
 
 }
