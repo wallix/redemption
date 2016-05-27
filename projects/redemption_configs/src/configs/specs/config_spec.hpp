@@ -269,6 +269,8 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
         W.sep();
         W.member(V, type_<bool>(), "enable_suppress_output", set(true));
+        W.sep();
+        W.member(H, type_<std::string>(), "ssl_cipher_list");
     });
 
     W.section("mod_rdp", [&]
@@ -390,6 +392,7 @@ void config_spec_definition(Writer && W)
             +server_notification_desc
         ).c_str()}, set(ServerNotification::syslog), r);
         //@}
+        W.sep();
 
         W.member(V, type_<bool>(), "hide_client_name", desc{"Do not transmit client machine name or RDP server."}, set(false));
     });

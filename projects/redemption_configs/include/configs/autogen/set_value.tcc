@@ -59,6 +59,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "enable_suppress_output")) {
             ::configs::parse(static_cast<cfg::client::enable_suppress_output&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "ssl_cipher_list")) {
+            ::configs::parse(static_cast<cfg::client::ssl_cipher_list&>(this->variables).value, value);
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
