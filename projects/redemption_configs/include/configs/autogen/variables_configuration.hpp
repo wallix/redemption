@@ -194,6 +194,14 @@ namespace cfg {
             using type = bool;
             type value{1};
         };
+
+        struct ssl_cipher_list {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = std::string;
+            type value{};
+        };
     };
 
     struct context {
@@ -1663,6 +1671,7 @@ namespace cfg {
             using type = ::configs::ServerNotification;
             type value{static_cast< ::configs::ServerNotification>(1)};
         };
+
         // Do not transmit client machine name or RDP server.
         struct hide_client_name {
             static constexpr ::configs::VariableProperties properties() {
@@ -1997,6 +2006,7 @@ struct client
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
 , cfg::client::enable_suppress_output
+, cfg::client::ssl_cipher_list
 { static constexpr bool is_section = true; };
 
 struct context

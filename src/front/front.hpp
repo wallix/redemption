@@ -1289,7 +1289,8 @@ public:
                 this->trans.send(stream.get_data(), stream.get_offset());
 
                 if (this->tls_client_active) {
-                    this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>());
+                    this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>(),
+                        this->ini.get<cfg::client::ssl_cipher_list>().c_str());
 
             // 2.2.10.2 Early User Authorization Result PDU
             // ============================================

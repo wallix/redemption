@@ -228,6 +228,9 @@
 
 "enable_suppress_output = boolean(default=True)\n\n"
 
+"#_hidden\n"
+"ssl_cipher_list = string(default='')\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side:\n"
