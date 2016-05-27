@@ -31,8 +31,8 @@
 #define _REDEMPTION_CORE_RDP_GCC_HPP_
 
 #include "core/RDP/out_per_bstream.hpp"
-#include "system/linux/system/ssl_calls.hpp"
-#include "system/linux/system/ssl_lib.hpp"
+#include "system/ssl_calls.hpp"
+#include "system/ssl_lib.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
 

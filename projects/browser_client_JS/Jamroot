@@ -8,7 +8,6 @@ project redjs
     <include>$(SRCDIR)
     <include>$(SRCDIR)/system/emscripten
     <include>$(SRCDIR)/headers
-    <include>src
     <include>$(INCLUDEDIR)
     <cxxflags>-std=c++11
     <cxxflags>-Wall
