@@ -496,6 +496,8 @@ public:
                                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                     }
                 }
+
+                this->event.object_and_time = false;
             break;
 
             case State::RUN:
@@ -571,7 +573,7 @@ public:
                 "SessionProbeClipboardBasedLauncher :=> on_server_format_list_response");
         }
 
-        if (this->state != State::RUN) {
+        if (this->state != State::START) {
             return (this->state < State::WAIT);
         }
 
@@ -756,9 +758,9 @@ private:
                                       | CHANNELS::CHANNEL_FLAG_LAST
                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
-        this->state = State::RUN;
+//        this->state = State::RUN;
 
-        this->event.set(this->short_delay);
+//        this->event.set(this->short_delay);
     }
 };  // class SessionProbeClipboardBasedLauncher
 
