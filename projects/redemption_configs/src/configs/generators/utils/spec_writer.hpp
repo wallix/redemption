@@ -26,7 +26,7 @@
 #include <type_traits>
 #include <sstream>
 #include <string>
-#include <map>
+#include <unordered_map>
 
 
 namespace cfg_generators {
@@ -46,12 +46,28 @@ struct ref<T*>
 };
 
 template<class... Ts>
-struct pack_type : ref<std::decay_t<Ts>>...
+struct pack_type : ref<
+    std::conditional_t<
+        std::is_array<Ts>::value,
+        std::remove_extent_t<Ts> const *,
+        Ts
+    >
+>...
 {
     explicit pack_type(Ts const &... x)
-    : ref<std::decay_t<Ts>>{x}...
+    : ref<
+        std::conditional_t<
+            std::is_array<Ts>::value,
+            std::remove_extent_t<Ts> const *,
+            Ts
+        >
+    >{x}...
     {}
 };
+
+template<class... Ts>
+pack_type<Ts...> make_pack(Ts const & ... args)
+{ return pack_type<Ts...>{args...}; }
 
 
 namespace detail_
@@ -237,8 +253,32 @@ struct ConfigSpecWriterBase
     std::ostream * out_;
     type_enumerations enums;
 
-    std::map<std::string, std::string> sections_member;
+    struct Members
+    {
+        std::string header;
+        std::string footer;
+        std::vector<std::string> members_ordered;
+        std::unordered_map<std::string, std::string> members;
 
+        bool empty() const { return this->members_ordered.empty(); }
+
+        friend std::ostream & operator<<(std::ostream & out, Members const & m)
+        {
+            out << m.header;
+            for (auto & k : m.members_ordered) {
+                out << m.members.find(k)->second;
+            }
+            out << m.footer;
+            return out;
+        }
+    };
+    std::unordered_map<std::string, Members> sections;
+    std::vector<std::string> sections_ordered;
+
+private:
+    Members * members_accu = nullptr;
+
+public:
     std::ostream & out() {
         return *this->out_;
     }
@@ -252,15 +292,48 @@ struct ConfigSpecWriterBase
         }
         this->inherit().do_start_section();
 
+        this->members_accu = &this->sections[this->section_name];
+        this->members_accu->header = this->out_member_.str();
+        this->out_member_.str("");
+
         fn();
 
-        this->out_ = &this->out_member_;
-        if (!this->section_name.empty()) {
-            --this->depth;
+        if (std::find(
+            this->sections_ordered.begin(),
+            this->sections_ordered.end(),
+            this->section_name
+        ) == this->sections_ordered.end()) {
+            this->sections_ordered.emplace_back(this->section_name);
         }
-        this->sections_member[this->section_name] += this->out_member_.str();
-        this->out_member_.str("");
+
+        this->out_ = &this->out_member_;
         this->inherit().do_stop_section();
+        this->members_accu->footer = this->out_member_.str();
+        this->out_member_.str("");
+    }
+
+    template<class... Ts>
+    void member(Ts const & ... args)
+    {
+        this->out_ = &this->out_member_;
+        this->out_member_.str("");
+        this->inherit().do_member(args...);
+
+        std::string contents = this->out_member_.str();
+        if (contents.empty()) {
+            return ;
+        }
+
+        std::string varname = pack_get<cfg_attributes::name_>(make_pack(args...));
+        auto it = this->members_accu->members.find(varname);
+        if (it == this->members_accu->members.end()) {
+            this->members_accu->members_ordered.push_back(varname);
+            this->members_accu->members.emplace(std::move(varname), std::move(contents));
+        }
+        else {
+            it->second = std::move(contents);
+        }
+        this->out_member_.str("");
     }
 
     void sep() { this->inherit().do_sep(); }

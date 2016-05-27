@@ -45,20 +45,8 @@ using namespace cfg_attributes;
 template<class Inherit>
 struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 {
-    std::vector<std::string> sections_ordered;
-
-    void do_stop_section() {
-        if (std::find(
-            this->sections_ordered.begin(),
-            this->sections_ordered.end(),
-            this->section_name
-        ) == this->sections_ordered.end()) {
-            this->sections_ordered.emplace_back(std::move(this->section_name));
-        }
-    }
-
     template<class... Ts>
-    void member(Ts const & ... args)
+    void do_member(Ts const & ... args)
     {
         pack_type<Ts...> pack{args...};
         this->template write_if_contains<spec::attr>(pack);
@@ -67,7 +55,6 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     template<class Pack>
     void do_write(spec::attr attr, Pack const & pack)
     {
-        this->out_ = &this->out_member_;
         auto type = pack_get<spec::type_>(pack);
 
         this->write_description(pack_contains<desc>(pack), type, pack);
@@ -303,17 +290,18 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
 
 template<class SpecWriter>
-void write_spec(std::ostream & os, SpecWriter & writer) {
+void write_spec(std::ostream & os, SpecWriter & writer)
+{
     os << "\"## Config file for RDP proxy.\\n\\n\\n\"\n" ;
     for (auto & section_name : writer.sections_ordered) {
-        auto body = writer.sections_member.find(section_name)->second;
-        if (std::none_of(begin(body), end(body), [](int c){return std::isblank(c);} )) {
+        auto & members = writer.sections.find(section_name)->second;
+        if (members.empty()) {
             continue;
         }
         if (!section_name.empty()) {
             os << "\"[" << section_name << "]\\n\\n\"\n\n";
         }
-        os << body;
+        os << members;
     }
 }
 

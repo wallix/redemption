@@ -224,10 +224,11 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
 
 
 template<class ConfigCppWriter>
-void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
+void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer)
+{
     out_authid <<
-      "#ifndef REDEMPTION_CONFIGS_AUTHID_T_DEF\n"
-      "#define REDEMPTION_CONFIGS_AUTHID_T_DEF\n"
+      "#pragma once\n"
+      "\n"
       "enum authid_t {\n"
     ;
     for (auto & body : writer.authids) {
@@ -242,22 +243,24 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer) {
     for (auto & body : writer.authids) {
         out_authid << "    \"" << body.second << "\",\n";
     }
-    out_authid << "};\n#endif\n";
+    out_authid << "};\n";
 }
 
 template<class ConfigCppWriter>
-void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter & writer) {
+void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter & writer)
+{
     out_varconf <<
         "namespace cfg {\n"
     ;
-    for (auto & body : writer.sections_member) {
-        if (body.first.empty()) {
-            out_varconf << body.second << "\n";
+    for (auto & section_name : writer.sections_ordered) {
+        auto & members = writer.sections.find(section_name)->second;
+        if (section_name.empty()) {
+            out_varconf << members << "\n";
         }
         else {
             out_varconf <<
-                "    struct " << body.first << " {\n" <<
-                         body.second <<
+                "    struct " << section_name << " {\n" <<
+                         members <<
                 "    };\n\n"
             ;
         }
@@ -321,7 +324,8 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
 }
 
 template<class ConfigCppWriter>
-void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writer) {
+void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writer)
+{
     out_set_value <<
         "inline void Inifile::ConfigurationHolder::set_value(const char * context, const char * key, const char * value) {\n"
         "    array_view_const_char av {value, strlen(value)};\n"
