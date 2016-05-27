@@ -90,21 +90,49 @@ template<class T>
 using szbuffer_from = typename szbuffer_traits<T>::type;
 
 
+struct non_owner_string
+{
+    constexpr non_owner_string(char const * s, std::size_t sz) noexcept
+    : s(s)
+    , sz(sz)
+    {}
 
-inline array_view_const_char to_c_str(szbuffer_from<std::string>&, std::string const & str)
-{ return {str}; }
+    template<std::size_t N>
+    constexpr non_owner_string(char const (&s)[N]) noexcept
+    : s(s)
+    , sz(N)
+    {}
+
+    char const * c_str() const { return this->s; }
+    std::size_t size() const { return this->sz; }
+
+private:
+    char const * s;
+    std::size_t sz;
+};
+
+
+template<class> struct cfg_s_type {};
+
+inline non_owner_string cfg_to_s(
+    szbuffer_from<std::string> &,
+    cfg_s_type<std::string>,
+    std::string const & str
+) { return {str.c_str(), str.size()}; }
 
 template<std::size_t N>
-array_view_const_char to_c_str(szbuffer_from<char[N]>&, char const (&s)[N])
+non_owner_string cfg_to_s(szbuffer_from<char[N]> &, cfg_s_type<char[N]>,  char const (&s)[N])
 { return {s, strlen(s)}; }
 
-inline array_view_const_char to_c_str(szbuffer_from<bool>&, bool x)
-{ return x ? cstr_array_view("True") : cstr_array_view("False"); }
+inline non_owner_string cfg_to_s(szbuffer_from<bool>&, cfg_s_type<bool>, bool x)
+{ return x ? non_owner_string("True") : non_owner_string("False"); }
 
 template<std::size_t N>
-array_view_const_char
-to_c_str(szbuffer_from<std::array<unsigned char, N>>& buf, std::array<unsigned char, N> const & arr)
-{
+non_owner_string cfg_to_s(
+    szbuffer_from<std::array<unsigned char, N>> & buf,
+    cfg_s_type<std::array<unsigned char, N>>,
+    std::array<unsigned char, N> const & arr
+) {
     char * p = buf.get();
     for (int c : arr) {
         auto x = (c & 0xf0) >> 4;
@@ -116,21 +144,21 @@ to_c_str(szbuffer_from<std::array<unsigned char, N>>& buf, std::array<unsigned c
 }
 
 template<class TInt>
-typename std::enable_if<std::is_integral<TInt>::value, array_view_const_char>::type
-to_c_str(szbuffer_from<TInt>& buf, TInt const & x)
+typename std::enable_if<std::is_integral<TInt>::value, non_owner_string>::type
+cfg_to_s(szbuffer_from<TInt> & buf, cfg_s_type<TInt>, TInt const & x)
 {
     int sz = (std::is_signed<TInt>::value)
         ? snprintf(buf.get(), buf.size(), "%lld", static_cast<long long>(x))
         : snprintf(buf.get(), buf.size(), "%llu", static_cast<unsigned long long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return non_owner_string(buf.get(), sz);
 }
 
 template<class E>
-typename std::enable_if<std::is_enum<E>::value, array_view_const_char>::type
-to_c_str(szbuffer_from<E>& buf, E const & x)
+typename std::enable_if<std::is_enum<E>::value, non_owner_string>::type
+cfg_to_s(szbuffer_from<E> & buf, cfg_s_type<E>, E const & x)
 {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    return non_owner_string(buf.get(), sz);
 }
 
 

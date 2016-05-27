@@ -2062,8 +2062,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL("answer",                         ini.get<cfg::context::auth_channel_answer>());
 
-    BOOST_CHECK_EQUAL("answer",                         ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER).c_str());
-
 
     // authchannel_target
     ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_TARGET).ask();
@@ -2090,15 +2088,11 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL("result",                         ini.get<cfg::context::auth_channel_result>());
 
-    BOOST_CHECK_EQUAL("result",                         ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_RESULT).c_str());
-
 
     // message
     ini.get_acl_field(AUTHID_CONTEXT_MESSAGE).set(               "message");
 
     BOOST_CHECK_EQUAL("message",                        ini.get<cfg::context::message>());
-
-    BOOST_CHECK_EQUAL("message",                        ini.get_acl_field(AUTHID_CONTEXT_MESSAGE).c_str());
 
 
     // rejected
@@ -2124,15 +2118,11 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::keepalive>());
 
-    BOOST_CHECK_EQUAL("True",                           ini.get_acl_field(AUTHID_CONTEXT_KEEPALIVE).c_str());
-
 
     // session_id
     ini.get_acl_field(AUTHID_CONTEXT_SESSION_ID).set(            "0123456789");
 
     BOOST_CHECK_EQUAL("0123456789",                     ini.get<cfg::context::session_id>());
-
-    BOOST_CHECK_EQUAL("0123456789",                     ini.get_acl_field(AUTHID_CONTEXT_SESSION_ID).c_str());
 
 
     // end_date_cnx
@@ -2140,15 +2130,11 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(12345678,                         ini.get<cfg::context::end_date_cnx>());
 
-    BOOST_CHECK_EQUAL("12345678",                       ini.get_acl_field(AUTHID_CONTEXT_END_DATE_CNX).c_str());
-
 
     // end_time
     ini.get_acl_field(AUTHID_CONTEXT_END_TIME).set(              "end_time");
 
     BOOST_CHECK_EQUAL("end_time",                       ini.get<cfg::context::end_time>());
-
-    BOOST_CHECK_EQUAL("end_time",                       ini.get_acl_field(AUTHID_CONTEXT_END_TIME).c_str());
 
 
     // mode_console
@@ -2156,15 +2142,11 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL("deny",                           ini.get<cfg::context::mode_console>());
 
-    BOOST_CHECK_EQUAL("deny",                           ini.get_acl_field(AUTHID_CONTEXT_MODE_CONSOLE).c_str());
-
 
     // timezone
     ini.get_acl_field(AUTHID_CONTEXT_TIMEZONE).set(              "-7200");
 
     BOOST_CHECK_EQUAL(-7200,                            ini.get<cfg::context::timezone>());
-
-    BOOST_CHECK_EQUAL("-7200",                          ini.get_acl_field(AUTHID_CONTEXT_TIMEZONE).c_str());
 
 
     // real_target_device
@@ -2179,8 +2161,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE).set(     "true");
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::authentication_challenge>());
-
-    BOOST_CHECK_EQUAL("True",                           ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE).c_str());
 }
 
 
@@ -2217,55 +2197,52 @@ BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestConfigNotifications)
+{
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini.configuration_holder());
 
-// BOOST_AUTO_TEST_CASE(TestConfigNotifications)
-// {
-//     Inifile             ini;
-//     ConfigurationLoader cfg_loader(ini.configuration_holder());
-//
-//     // nothing has been changed initialy
-//     BOOST_CHECK(!ini.check_from_acl());
-//
-//     // auth_user has been changed, so check_from_acl() method will notify that something changed
-//     ini.set<cfg::globals::auth_user>("someoneelse");
-//     BOOST_CHECK(ini.check_from_acl());
-//     BOOST_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
-//
-//     ini.clear_send_index();
-//     BOOST_CHECK(!ini.check_from_acl());
-//
-//     // setting a field without changing it should not notify that something changed
-//     ini.set<cfg::globals::auth_user>("someoneelse");
-//     BOOST_CHECK(!ini.check_from_acl());
-//
-//
-//     // Using the list of changed fields:
-//     ini.set<cfg::globals::auth_user>("someuser");
-//     ini.set<cfg::globals::host>("35.53.0.1");
-//     ini.set<cfg::context::opt_height>(602);
-//     ini.set<cfg::globals::target>("35.53.0.2");
-//     ini.set<cfg::context::selector>(true);
-//     BOOST_CHECK(ini.check_from_acl());
-//
-//     auto list = ini.get_fields_changed();
-//     {
-//         std::size_t distance = 0;
-//         for (auto && x : list) {
-//             (void)x;
-//             ++distance;
-//         }
-//         BOOST_CHECK_EQUAL(5, distance);
-//     }
-//
-//     for (auto && var : list) {
-//         BOOST_CHECK(
-//             var.authid() == cfg::globals::auth_user::index()
-//          || var.authid() == cfg::globals::host::index()
-//          || var.authid() == cfg::context::opt_height::index()
-//          || var.authid() == cfg::globals::target::index()
-//          || var.authid() == cfg::context::selector::index()
-//         );
-//     }
-//     ini.clear_send_index();
-//     BOOST_CHECK(!ini.check_from_acl());
-// }
+    // nothing has been changed initialy
+    BOOST_CHECK(!ini.check_from_acl());
+
+    // auth_user has been changed, so check_from_acl() method will notify that something changed
+    ini.get_acl_field(static_cast<authid_t>(cfg::globals::auth_user::index())).set("someoneelse");
+    BOOST_CHECK(ini.check_from_acl());
+    BOOST_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
+
+    ini.clear_send_index();
+    BOOST_CHECK(!ini.check_from_acl());
+
+    // setting a field without changing it should not notify that something changed
+    ini.set_acl<cfg::globals::auth_user>("someoneelse");
+    BOOST_CHECK(!ini.check_from_acl());
+
+
+    // Using the list of changed fields:
+    ini.set_acl<cfg::globals::auth_user>("someuser");
+    ini.set_acl<cfg::globals::host>("35.53.0.1");
+    ini.set_acl<cfg::context::opt_height>(602);
+    ini.set_acl<cfg::globals::target>("35.53.0.2");
+    BOOST_CHECK(!ini.check_from_acl());
+
+    auto list = ini.get_fields_changed();
+    {
+        std::size_t distance = 0;
+        for (auto && x : list) {
+            (void)x;
+            ++distance;
+        }
+        BOOST_CHECK_EQUAL(4, distance);
+    }
+
+    for (auto && var : list) {
+        BOOST_CHECK(
+            var.authid() == cfg::globals::auth_user::index()
+         || var.authid() == cfg::globals::host::index()
+         || var.authid() == cfg::context::opt_height::index()
+         || var.authid() == cfg::globals::target::index()
+        );
+    }
+    ini.clear_send_index();
+    BOOST_CHECK(!ini.check_from_acl());
+}

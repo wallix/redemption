@@ -63,35 +63,34 @@ namespace cpp_enumeration_writer
             }
         };
 
-        auto to_c_str_fmt = [&](auto & e) {
+        auto cfg_to_s_fmt = [&](auto & e) {
+            write(e, "template<> struct szbuffer_traits<%e> : ");
+            out << "szbuffer_traits<" << (e.is_icase_parser ? "void" : "unsigned long") << "> {};\n\n";
+            write(e,
+                "inline non_owner_string cfg_to_s(\n"
+                "    szbuffer_from<%e> & buf,\n"
+                "    cfg_s_type<%e>,\n"
+                "    %e x\n"
+                ") {\n"
+            );
             if (e.is_icase_parser) {
-                write(e,
-                    "template<> struct szbuffer_traits<%e> : szbuffer_traits<void> {};\n"
-                    "\n"
-                    "inline array_view_const_char to_c_str(szbuffer_from<%e> &, %e x)\n"
-                    "{\n"
-                    "    constexpr array_view_const_char arr[]{\n"
-                );
-                loop(e, "        cstr_array_view(\"%s\"),\n");
+                out <<
+                    "    (void)buf;"
+                    "    constexpr non_owner_string arr[]{\n";
+                loop(e, "        non_owner_string(\"%s\"),\n");
                 write(e,
                     "    };\n"
                     "    assert(static_cast<unsigned long>(x) < %u);\n"
                     "    return arr[static_cast<unsigned long>(x)];\n"
-                    "}\n"
                 );
             }
             else {
                 write(e,
-                    "template<> struct szbuffer_traits<%e> : szbuffer_traits<unsigned long> {};\n"
-                    "\n"
-                    "inline array_view_const_char to_c_str(szbuffer_from<%e> & buf, %e x)\n"
-                    "{\n"
                     "    int sz = snprintf(buf.get(), buf.size(), \"%%lu\", static_cast<unsigned long>(x));\n"
-                    "    return array_view_const_char(buf.get(), sz);\n"
-                    "}\n"
+                    "    return non_owner_string(buf.get(), sz);\n"
                 );
             }
-            out << "\n";
+            out << "}\n\n";
         };
 
         auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
@@ -127,13 +126,13 @@ namespace cpp_enumeration_writer
             "\n"
         ;
         for (auto & e : enums.enumerations_) {
-            to_c_str_fmt(e);
+            cfg_to_s_fmt(e);
             parse_fmt(e, [&]{ write(e,
                 "    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (%u - 1)) - 1));\n"
             ); });
         }
         for (auto & e : enums.enumerations_set_) {
-            to_c_str_fmt(e);
+            cfg_to_s_fmt(e);
             parse_fmt(e, [&]{
                 out << "    return parse_enum_list(x, value, {\n";
                 loop(e,"        %e::%s,\n");

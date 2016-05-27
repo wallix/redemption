@@ -104,16 +104,34 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
         this->tab(); this->out() << "struct " << varname << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_readable() { return " << bool(properties & sesman::io::read) << "; }\n";
         this->tab(); this->out() << "    static constexpr bool is_writable() { return " << bool(properties & sesman::io::write) << "; }\n";
+
+        this->tab(); this->out() << "    static constexpr char const * section() { return \"" << this->section_name << "\"; }\n";
+        this->tab(); this->out() << "    static constexpr char const * name() { return \"" << varname << "\"; }\n";
+
         if (bool(properties)) {
             this->tab(); this->out() << "    static constexpr unsigned index() { return " << this->index_authid++ << "; }\n";
         }
-        this->tab(); this->out() << "    using type = "; this->inherit().write_type(type); this->out() << ";\n";
+
+        this->tab(); this->out() << "    using type = ";
+        this->inherit().write_type(type);
+        this->out() << ";\n";
+
         if (bool(properties) || pack_contains<spec::attr>(pack)) {
-            this->tab(); this->out() << "    using spec_type = ";
-            auto type_sesman = pack_get<spec::type_>(pack);
+            auto type_sesman = pack_get<sesman::type_>(pack);
+            auto type_spec = pack_get<spec::type_>(pack);
+            static_assert(
+                std::is_same<decltype(type_spec), decltype(type_sesman)>{}
+             || !std::is_same<
+                    decltype(pack_contains<sesman::io>(pack)),
+                    decltype(pack_contains<spec::attr>(pack))
+                >{},
+                "different type for sesman and spec isn't supported (go code :D)"
+            );
+            this->tab(); this->out() << "    using sesman_and_spec_type = ";
             this->inherit().write_type_spec(type_sesman);
             this->out() << ";\n";
         };
+
         if (std::is_convertible<decltype(type), type_<Font>>::value) {
             this->tab(); this->out() << "    font(char const * filename) : value(filename) {}\n";
             this->tab(); this->out() << "    type value;\n";

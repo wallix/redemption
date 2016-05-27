@@ -81,20 +81,6 @@ namespace configs {
     struct BufferPack<Pack<Ts...>>
     : CBuf<Ts>...
     {};
-
-    enum class VariableProperties {
-        none,
-        read  = 1 << 0,
-        write = 1 << 1,
-    };
-
-    constexpr VariableProperties operator | (VariableProperties x, VariableProperties y) {
-        return static_cast<VariableProperties>(underlying_cast(x) | underlying_cast(y));
-    }
-
-    constexpr VariableProperties operator & (VariableProperties x, VariableProperties y) {
-        return static_cast<VariableProperties>(underlying_cast(x) & underlying_cast(y));
-    }
 }
 
 #include "configs/variant/includes.hpp"
@@ -121,8 +107,6 @@ namespace configs
 
 class Inifile
 {
-    using properties_t = configs::VariableProperties;
-
 public:
     using authid_t = ::authid_t;
 
@@ -147,21 +131,21 @@ public:
 
     template<class T, class U>
     void set(U && new_value) {
-        static_assert(!T::is_writable(), "T is writable, used set_acl<T>().");
+        static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
         static_cast<T&>(this->variables).value = std::forward<U>(new_value);
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T, class U, class... O>
     void set(U && param1, O && ... other_params) {
-        static_assert(!T::is_writable(), "T is writable, used set_acl<T>().");
+        static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
         static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
 
     template<class T, class U>
     void set_acl(U && new_value) {
-        static_assert(T::is_writable(), "T isn't writable, used set<T>().");
+        static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
         static_cast<T&>(this->variables).value = std::forward<U>(new_value);
         this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
@@ -169,7 +153,7 @@ public:
 
     template<class T, class U, class... O>
     void set_acl(U && param1, O && ... other_params) {
-        static_assert(T::is_writable(), "T isn't writable, used set<T>().");
+        static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
         static_cast<T&>(this->variables).value = {std::forward<U>(param1), std::forward<O>(other_params)...};
         this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
@@ -210,29 +194,41 @@ private:
     };
 
     template<class T>
+    static char const * cfg_to_s_(std::false_type, configs::VariablesConfiguration const &, Buffers const &)
+    { return nullptr; }
+
+    template<class T>
+    static char const * cfg_to_s_(
+        std::true_type, configs
+        ::VariablesConfiguration const & variables,
+        Buffers const & buffers
+    ){
+        return ::configs::cfg_to_s(
+            const_cast<configs::szbuffer_from<typename T::type> &>(
+                static_cast<configs::szbuffer_from<typename T::type> const &>(
+                    static_cast<configs::CBuf<T> const &>(buffers)
+                )
+            ),
+            configs::cfg_s_type<typename T::sesman_and_spec_type>{},
+            static_cast<T const &>(variables).value
+        ).c_str();
+    }
+
+    template<class T>
     struct Field : FieldBase
     {
         void parse(configs::VariablesConfiguration & variables, char const * value) override final
         {
             ::configs::parse_and_log(
-                // TODO
-                "", "",
+                T::section(), T::name(),
                 static_cast<T&>(variables).value,
-                configs::spec_type<typename T::spec_type>{},
+                configs::spec_type<typename T::sesman_and_spec_type>{},
                 {value, strlen(value)}
             );
         }
 
         char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
-        {
-            return ::configs::to_c_str(
-                const_cast<configs::szbuffer_from<typename T::type> &>(
-                    static_cast<configs::szbuffer_from<typename T::type> const &>(
-                        static_cast<configs::CBuf<T> const &>(buffers)
-                    )
-                ), static_cast<T const &>(variables).value
-            ).data();
-        }
+        { return cfg_to_s_<T>(std::integral_constant<bool, T::is_writable()>{}, variables, buffers); }
     };
 
 public:
@@ -311,10 +307,6 @@ public:
             return {};
         }
         return {*this, authid};
-    }
-
-    void notify_from_acl() {
-        this->new_from_acl = true;
     }
 
     bool check_from_acl() {
