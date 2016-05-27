@@ -42,12 +42,13 @@ namespace cfg {
             type value{0};
         };
 
+        // Enable font smoothing (0x80).
         struct performance_flags_default {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{0};
+            type value{128};
         };
         // Disable theme (0x8).
         struct performance_flags_force_present {
@@ -57,13 +58,20 @@ namespace cfg {
             using type = uint32_t;
             type value{8};
         };
-        // Disable font smoothing (0x80).
         struct performance_flags_force_not_present {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{128};
+            type value{0};
+        };
+        // If enabled, avoid automatically font smoothing in recorded session.
+        struct auto_adjust_performance_flags {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
         };
 
         // Fallback to RDP Legacy Encryption if client does not support TLS.
@@ -1215,6 +1223,15 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
+
+        // Needed to refresh screen of Windows Server 2012.
+        struct bogus_refresh_rect {
+            static constexpr ::configs::VariableProperties properties() {
+                return ::configs::VariableProperties::none;
+            }
+            using type = bool;
+            type value{1};
+        };
     };
 
     struct internal_mod {
@@ -1966,6 +1983,7 @@ struct client
 , cfg::client::performance_flags_default
 , cfg::client::performance_flags_force_present
 , cfg::client::performance_flags_force_not_present
+, cfg::client::auto_adjust_performance_flags
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
 , cfg::client::bogus_neg_request
@@ -2109,6 +2127,7 @@ struct globals
 , cfg::globals::persistent_path
 , cfg::globals::disable_proxy_opt
 , cfg::globals::allow_using_multiple_monitors
+, cfg::globals::bogus_refresh_rect
 { static constexpr bool is_section = true; };
 
 struct internal_mod

@@ -382,10 +382,10 @@ class ModuleManager : public MMIni
         bool external_deleting;
     public:
         module_osd(
-            ModuleManager & manager, const Rect & rect,
+            ModuleManager & manager, const Rect & rect, bool bogus_refresh_rect_ex,
             std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
             bool external_deleting)
-        : mod_osd(*manager.mod, rect, std::move(f))
+        : mod_osd(*manager.mod, rect, bogus_refresh_rect_ex, std::move(f))
         , external_deleting(external_deleting)
         , manager(manager)
         , old_mod(manager.mod)
@@ -512,6 +512,9 @@ public:
         this->mod = new module_osd(
             *this,
             Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
+            (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+             this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+             (this->front.client_info.cs_monitor.monitorCount > 1)),
             [this, message, color, background_color](mod_api & mod, const Rect & rect, const Rect & clip) {
                 const Rect r = rect.intersect(clip);
                 mod.begin_update();
@@ -1045,12 +1048,20 @@ public:
 
                 mod_rdp_params.bogus_sc_net_size                   = this->ini.get<cfg::mod_rdp::bogus_sc_net_size>();
                 mod_rdp_params.bogus_linux_cursor                  = this->ini.get<cfg::mod_rdp::bogus_linux_cursor>();
+                mod_rdp_params.bogus_refresh_rect                  = this->ini.get<cfg::globals::bogus_refresh_rect>();
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
 
                 mod_rdp_params.lang                                = language(this->ini);
 
                 mod_rdp_params.allow_using_multiple_monitors       = this->ini.get<cfg::globals::allow_using_multiple_monitors>();
+
+                mod_rdp_params.adjust_performance_flags_for_recording
+                                                                   = (this->ini.get<cfg::globals::movie>() &&
+                                                                      this->ini.get<cfg::client::auto_adjust_performance_flags>() &&
+                                                                      ((this->ini.get<cfg::video::capture_flags>() &
+                                                                        (configs::CaptureFlags::wrm | configs::CaptureFlags::ocr)) !=
+                                                                       configs::CaptureFlags::none));
 
                 try {
                     const char * const name = "RDP Target";
@@ -1076,9 +1087,13 @@ public:
                     throw;
                 }
 
-                this->mod->rdp_suppress_display_updates();
-                this->mod->rdp_allow_display_updates(0, 0,
-                    this->front.client_info.width, this->front.client_info.height);
+                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                    this->mod->rdp_suppress_display_updates();
+                    this->mod->rdp_allow_display_updates(0, 0,
+                        this->front.client_info.width, this->front.client_info.height);
+                }
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                 this->ini.get_ref<cfg::context::auth_error_message>().clear();
@@ -1179,16 +1194,24 @@ public:
                                           this->front.client_info.height,
                                           this->ini,
                                           acl);
-                this->mod->rdp_suppress_display_updates();
-                this->mod->rdp_allow_display_updates(0, 0,
-                    this->front.client_info.width, this->front.client_info.height);
+                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                    this->mod->rdp_suppress_display_updates();
+                    this->mod->rdp_allow_display_updates(0, 0,
+                        this->front.client_info.width, this->front.client_info.height);
+                }
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
             else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
                 this->front.resume_capture();
-                this->mod->rdp_suppress_display_updates();
-                this->mod->rdp_allow_display_updates(0, 0,
-                    this->front.client_info.width, this->front.client_info.height);
+                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                    this->mod->rdp_suppress_display_updates();
+                    this->mod->rdp_allow_display_updates(0, 0,
+                        this->front.client_info.width, this->front.client_info.height);
+                }
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
         }

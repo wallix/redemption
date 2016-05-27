@@ -36,7 +36,7 @@
 
 "# Keepalive (in seconds).\n"
 
-"#_hidden\n"
+"#_advanced\n"
 "keepalive_grace_delay = integer(min=0, default=30)\n\n"
 
 "# Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).\n"
@@ -107,6 +107,11 @@
 
 "allow_using_multiple_monitors = boolean(default=False)\n\n"
 
+"# Needed to refresh screen of Windows Server 2012.\n"
+
+"#_advanced\n"
+"bogus_refresh_rect = boolean(default=True)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"
@@ -131,9 +136,11 @@
 "#_advanced\n"
 "ignore_logon_password = boolean(default=False)\n\n"
 
+"# Enable font smoothing (0x80).\n"
+
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_default = integer(min=0, default=0)\n\n"
+"performance_flags_default = integer(min=0, default=128)\n\n"
 
 "# Disable theme (0x8).\n"
 
@@ -141,11 +148,14 @@
 "#_hex\n"
 "performance_flags_force_present = integer(min=0, default=8)\n\n"
 
-"# Disable font smoothing (0x80).\n"
-
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_force_not_present = integer(min=0, default=128)\n\n"
+"performance_flags_force_not_present = integer(min=0, default=0)\n\n"
+
+"# If enabled, avoid automatically font smoothing in recorded session.\n"
+
+"#_advanced\n"
+"auto_adjust_performance_flags = boolean(default=True)\n\n"
 
 "# Fallback to RDP Legacy Encryption if client does not support TLS.\n"
 

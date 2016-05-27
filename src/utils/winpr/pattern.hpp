@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#ifndef _REDEMPTION_UTILS_WINPR_PATTERN_HPP_
-#define _REDEMPTION_UTILS_WINPR_PATTERN_HPP_
+#pragma once
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -31,56 +30,38 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef const char * LPCSTR;
-typedef const char * LPSTR;
-
-typedef unsigned int DWORD;
-
-typedef int BOOL;
-
-#ifndef FALSE
-# define FALSE 0
-#endif
-#ifndef TRUE
-# define TRUE  1
-#endif
-
-
-#define WILDCARD_STAR       0x00000001
-#define WILDCARD_QM         0x00000002
-#define WILDCARD_DOS        0x00000100
-#define WILDCARD_DOS_STAR   0x00000110
-#define WILDCARD_DOS_QM     0x00000120
-#define WILDCARD_DOS_DOT    0x00000140
-
-#define _stricmp  strcasecmp
-#define _strnicmp strncasecmp
+enum {
+    WILDCARD_STAR     = 0x00000001,
+    WILDCARD_QM       = 0x00000002,
+    WILDCARD_DOS      = 0x00000100,
+    WILDCARD_DOS_STAR = 0x00000110,
+    WILDCARD_DOS_QM   = 0x00000120,
+    WILDCARD_DOS_DOT  = 0x00000140
+};
 
 /**
  * File System Behavior in the Microsoft Windows Environment:
  * http://download.microsoft.com/download/4/3/8/43889780-8d45-4b2e-9d3a-c696a890309f/File%20System%20Behavior%20Overview.pdf
  */
 
-static LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
+static const char * FilePatternFindNextWildcardA(const char * lpPattern, unsigned int* pFlags)
 {
-    LPSTR lpWildcard;
-
     *pFlags = 0;
-    lpWildcard = strpbrk(lpPattern, "*?~");
+    const char * lpWildcard = strpbrk(lpPattern, "*?~");
 
     if (lpWildcard)
     {
-        if (*lpWildcard == '*')
+        if (lpWildcard[0] == '*')
         {
             *pFlags = WILDCARD_STAR;
             return lpWildcard;
         }
-        else if (*lpWildcard == '?')
+        else if (lpWildcard[0] == '?')
         {
             *pFlags = WILDCARD_QM;
             return lpWildcard;
         }
-        else if (*lpWildcard == '~')
+        else if (lpWildcard[0] == '~')
         {
             if (lpWildcard[1] == '*')
             {
@@ -99,15 +80,14 @@ static LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
             }
         }
     }
-
     return nullptr;
 }
 
-static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
-        LPCSTR lpX, size_t cchX, LPCSTR lpY, size_t cchY, LPCSTR lpWildcard, LPSTR* ppMatchEnd)
+static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFileName,
+        const char * lpX, size_t cchX, const char * lpY, size_t cchY, const char * lpWildcard, const char ** ppMatchEnd)
 {
-    TODO("compiler warn that parameters passed as ppMatchEnd mays not be initialized");
-    LPSTR lpMatch;
+    // TODO "compiler warn that parameters passed as ppMatchEnd mays not be initialized";
+    const char * lpMatch;
 
     if (*lpWildcard == '*')
     {
@@ -122,8 +102,8 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
          * State 0: match 'X'
          */
 
-        if (_strnicmp(lpFileName, lpX, cchX) != 0)
-            return FALSE;
+        if (strncasecmp(lpFileName, lpX, cchX) != 0)
+            return false;
 
         /*
          * State 1: match 'S' or 'e'
@@ -141,10 +121,10 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
             lpMatch = strchr(&lpFileName[cchX], *lpY);
 
             if (!lpMatch)
-                return FALSE;
+                return false;
 
-            if (_strnicmp(lpMatch, lpY, cchY) != 0)
-                return FALSE;
+            if (strncasecmp(lpMatch, lpY, cchY) != 0)
+                return false;
         }
         else
         {
@@ -157,7 +137,7 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 
         *ppMatchEnd = &lpMatch[cchY];
 
-        return TRUE;
+        return true;
     }
     else if (*lpWildcard == '?')
     {
@@ -171,10 +151,10 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
          */
 
         if (cchFileName < cchX)
-            return FALSE;
+            return false;
 
-        if (_strnicmp(lpFileName, lpX, cchX) != 0)
-            return FALSE;
+        if (strncasecmp(lpFileName, lpX, cchX) != 0)
+            return false;
 
         /*
          * State 1: match 'S'
@@ -190,15 +170,15 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
             lpMatch = strchr(&lpFileName[cchX + 1], *lpY);
 
             if (!lpMatch)
-                return FALSE;
+                return false;
 
-            if (_strnicmp(lpMatch, lpY, cchY) != 0)
-                return FALSE;
+            if (strncasecmp(lpMatch, lpY, cchY) != 0)
+                return false;
             }
         else
         {
             if ((cchX + 1) > cchFileName)
-                return FALSE;
+                return false;
 
             lpMatch = &lpFileName[cchX + 1];
         }
@@ -209,29 +189,28 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 
         *ppMatchEnd = &lpMatch[cchY];
 
-        return TRUE;
+        return true;
     }
     else if (*lpWildcard == '~')
     {
         fprintf(stderr, "warning: unimplemented '~' pattern match\n");
 
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
-static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
+static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
 {
-    BOOL match;
-    LPSTR lpTail;
+    bool match;
+    const char * lpTail;
     size_t cchTail;
     size_t cchPattern;
     size_t cchFileName;
-    DWORD dwFlags;
-    DWORD dwNextFlags;
-    LPSTR lpWildcard;
-    LPSTR lpNextWildcard;
+    unsigned int dwFlags;
+    unsigned int dwNextFlags;
+    const char * lpWildcard;
 
     /**
      * Wild Card Matching
@@ -248,10 +227,10 @@ static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
      */
 
     if (!lpPattern)
-        return FALSE;
+        return false;
 
     if (!lpFileName)
-        return FALSE;
+        return false;
 
     cchPattern = strlen(lpPattern);
     cchFileName = strlen(lpFileName);
@@ -264,7 +243,7 @@ static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
      */
 
     if ((lpPattern[0] == '*') && (cchPattern == 1))
-        return TRUE;
+        return true;
 
     /**
      * Subsequently evaluation of the “*X” expression is performed. This is a case where
@@ -286,12 +265,12 @@ static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
             /* tail contains no wildcards */
 
             if (cchFileName < cchTail)
-                return FALSE;
+                return false;
 
-            if (_stricmp(&lpFileName[cchFileName - cchTail], lpTail) == 0)
-                return TRUE;
+            if (strcasecmp(&lpFileName[cchFileName - cchTail], lpTail) == 0)
+                return true;
 
-            return FALSE;
+            return false;
         }
     }
 
@@ -333,35 +312,22 @@ static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 
     if (lpWildcard)
     {
-        LPSTR lpX;
-        LPSTR lpY;
-        size_t cchX;
-        size_t cchY;
-        TODO("initialisation below used to mute compiler warning, not a real solution, rewrite this code to match redemption coding style without macros, etc. And of course add unit tests.")
-        LPSTR lpMatchEnd = nullptr;
-        LPSTR lpSubPattern;
-        size_t cchSubPattern;
-        LPSTR lpSubFileName;
-        size_t cchSubFileName;
-        size_t cchWildcard;
-        size_t cchNextWildcard;
+        const char * lpMatchEnd = nullptr;
 
-        cchSubPattern = cchPattern;
-        lpSubPattern = lpPattern;
-
-        cchSubFileName = cchFileName;
-        lpSubFileName = lpFileName;
-
-        cchWildcard = ((dwFlags & WILDCARD_DOS) ? 2 : 1);
-        lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
+        size_t cchSubPattern = cchPattern;
+        const char * lpSubPattern = lpPattern;
+        size_t cchSubFileName = cchFileName;
+        const char * lpSubFileName = lpFileName;
+        size_t cchWildcard = ((dwFlags & WILDCARD_DOS) ? 2 : 1);
+        const char * lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
 
         if (!lpNextWildcard)
         {
-            lpX = lpSubPattern;
-            cchX = (lpWildcard - lpSubPattern);
+            const char * lpX = lpSubPattern;
+            size_t cchX = (lpWildcard - lpSubPattern);
 
-            lpY = &lpSubPattern[cchX + cchWildcard];
-            cchY = (cchSubPattern - (lpY - lpSubPattern));
+            const char * lpY = &lpSubPattern[cchX + cchWildcard];
+            size_t cchY = (cchSubPattern - (lpY - lpSubPattern));
 
             match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
                     lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
@@ -373,19 +339,19 @@ static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
             while (lpNextWildcard)
             {
                 cchSubFileName = cchFileName - (lpSubFileName - lpFileName);
-                cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
+                size_t cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
 
-                lpX = lpSubPattern;
-                cchX = (lpWildcard - lpSubPattern);
+                const char * lpX = lpSubPattern;
+                size_t cchX = (lpWildcard - lpSubPattern);
 
-                lpY = &lpSubPattern[cchX + cchWildcard];
-                cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
+                const char * lpY = &lpSubPattern[cchX + cchWildcard];
+                size_t cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
 
                 match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
                         lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
 
                 if (!match)
-                    return FALSE;
+                    return false;
 
                 lpSubFileName = lpMatchEnd;
 
@@ -396,19 +362,17 @@ static BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
                 lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
             }
 
-            return TRUE;
+            return true;
         }
     }
     else
     {
         /* no wildcard characters */
 
-        if (_stricmp(lpFileName, lpPattern) == 0)
-            return TRUE;
+        if (strcasecmp(lpFileName, lpPattern) == 0)
+            return true;
     }
 
-    return FALSE;
+    return false;
 }
-
-#endif  // _REDEMPTION_UTILS_WINPR_PATTERN_HPP_
 

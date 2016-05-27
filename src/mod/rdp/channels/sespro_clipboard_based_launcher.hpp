@@ -74,8 +74,9 @@ class SessionProbeClipboardBasedLauncher : public SessionProbeLauncher {
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
 
-    const uint64_t long_delay  = 500000;
-    const uint64_t short_delay = 50000;
+    const uint64_t clipboard_initialization_delay  = 2000000;
+    const uint64_t long_delay                      = 500000;
+    const uint64_t short_delay                     = 50000;
 
     unsigned int copy_paste_loop_counter = 0;
 
@@ -119,6 +120,16 @@ public:
 
     bool on_clipboard_monitor_ready() override {
         this->clipboard_monitor_ready = true;
+
+        if (this->state == State::START) {
+            this->event.object_and_time = true;
+
+            this->event.set(this->clipboard_initialization_delay);
+        }
+
+        if (this->sesprob_channel) {
+            this->sesprob_channel->give_additional_launch_time();
+        }
 
         return false;
     }
@@ -424,6 +435,71 @@ public:
             break;
 
             case State::START:
+                if (!this->clipboard_initialized) {
+                    if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
+                        LOG(LOG_INFO,
+                            "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
+                    }
+
+                    if (this->cliprdr_channel) {
+                        this->cliprdr_channel->disable_to_client_sender();
+                    }
+
+                    // Client Clipboard Capabilities PDU.
+                    {
+                        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
+                            RDPECLIP::GeneralCapabilitySet::size());
+                        RDPECLIP::GeneralCapabilitySet general_cap_set(
+                            RDPECLIP::CB_CAPS_VERSION_1,
+                            RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                        StaticOutStream<1024> out_s;
+
+                        clipboard_caps_pdu.emit(out_s);
+                        general_cap_set.emit(out_s);
+
+                        const size_t totalLength = out_s.get_offset();
+
+                        InStream in_s(out_s.get_data(), totalLength);
+
+                        this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                                      in_s,
+                                                      totalLength,
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                    }
+
+                    // Format List PDU.
+                    {
+                        const bool use_long_format_names =
+                            (this->cliprdr_channel ?
+                             this->cliprdr_channel->use_long_format_names() :
+                             false);
+
+                        RDPECLIP::FormatListPDU format_list_pdu;
+                        StaticOutStream<256>    out_s;
+
+                        const bool unicodetext = false;
+
+                        format_list_pdu.emit_2(out_s, unicodetext,
+                            use_long_format_names);
+
+                        const size_t totalLength = out_s.get_offset();
+
+                        InStream in_s(out_s.get_data(), totalLength);
+
+                        this->mod.send_to_mod_channel(channel_names::cliprdr,
+                                                      in_s,
+                                                      totalLength,
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                    }
+                }
+
+                this->event.object_and_time = false;
+            break;
+
             case State::RUN:
             case State::WAIT:
             case State::STOP:
@@ -497,7 +573,7 @@ public:
                 "SessionProbeClipboardBasedLauncher :=> on_server_format_list_response");
         }
 
-        if (this->state != State::RUN) {
+        if (this->state != State::START) {
             return (this->state < State::WAIT);
         }
 
@@ -620,7 +696,9 @@ public:
             }
         }
 
-        this->cliprdr_channel->empty_client_clipboard();
+        if (this->clipboard_initialized) {
+            this->cliprdr_channel->empty_client_clipboard();
+        }
 
         const long     param2 = 0;
               Keymap2* keymap = nullptr;
@@ -654,68 +732,6 @@ private:
         REDASSERT(State::START == this->state);
 
         if (!this->drive_ready || !this->clipboard_initialized) {
-            if (this->drive_ready && this->clipboard_monitor_ready) {
-                if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
-                    LOG(LOG_INFO,
-                        "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
-                }
-
-                if (this->cliprdr_channel) {
-                    this->cliprdr_channel->disable_to_client_sender();
-                }
-
-                // Client Clipboard Capabilities PDU.
-                {
-                    RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
-                        RDPECLIP::GeneralCapabilitySet::size());
-                    RDPECLIP::GeneralCapabilitySet general_cap_set(
-                        RDPECLIP::CB_CAPS_VERSION_1,
-                        RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-                    StaticOutStream<1024> out_s;
-
-                    clipboard_caps_pdu.emit(out_s);
-                    general_cap_set.emit(out_s);
-
-                    const size_t totalLength = out_s.get_offset();
-
-                    InStream in_s(out_s.get_data(), totalLength);
-
-                    this->mod.send_to_mod_channel(channel_names::cliprdr,
-                                                  in_s,
-                                                  totalLength,
-                                                    CHANNELS::CHANNEL_FLAG_FIRST
-                                                  | CHANNELS::CHANNEL_FLAG_LAST
-                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-                }
-
-                // Format List PDU.
-                {
-                    const bool use_long_format_names =
-                        (this->cliprdr_channel ?
-                         this->cliprdr_channel->use_long_format_names() :
-                         false);
-
-                    RDPECLIP::FormatListPDU format_list_pdu;
-                    StaticOutStream<256>    out_s;
-
-                    const bool unicodetext = false;
-
-                    format_list_pdu.emit_2(out_s, unicodetext,
-                        use_long_format_names);
-
-                    const size_t totalLength = out_s.get_offset();
-
-                    InStream in_s(out_s.get_data(), totalLength);
-
-                    this->mod.send_to_mod_channel(channel_names::cliprdr,
-                                                  in_s,
-                                                  totalLength,
-                                                    CHANNELS::CHANNEL_FLAG_FIRST
-                                                  | CHANNELS::CHANNEL_FLAG_LAST
-                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-                }
-            }
-
             return;
         }
 
@@ -742,9 +758,9 @@ private:
                                       | CHANNELS::CHANNEL_FLAG_LAST
                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
-        this->state = State::RUN;
+//        this->state = State::RUN;
 
-        this->event.set(this->short_delay);
+//        this->event.set(this->short_delay);
     }
 };  // class SessionProbeClipboardBasedLauncher
 

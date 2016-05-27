@@ -174,7 +174,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(V, type_<unsigned>(), "handshake_timeout", desc{"Time out during RDP handshake stage (in seconds)."}, set(10));
         W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
-        W.member(H, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
+        W.member(A, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
         W.member(A, type_<unsigned>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
@@ -208,6 +208,8 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
         W.sep();
         W.member(V, type_<bool>(), "allow_using_multiple_monitors", set(false));
+        W.sep();
+        W.member(A, type_<bool>(), "bogus_refresh_rect", desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
     });
 
     W.section("session_log", [&]
@@ -236,9 +238,10 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<StringList>(), "keyboard_layout_proposals", desc{keyboard_layout_proposals_desc.c_str()}, set("en-US, fr-FR, de-DE, ru-RU"));
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
-        W.member(A | X, type_<uint32_>(), "performance_flags_default", set(0));
+        W.member(A | X, type_<uint32_>(), "performance_flags_default", desc{"Enable font smoothing (0x80)."}, set(0x80));
         W.member(A | X, type_<uint32_>(), "performance_flags_force_present", desc{"Disable theme (0x8)."}, set(0x8));
-        W.member(A | X, type_<uint32_>(), "performance_flags_force_not_present", desc{"Disable font smoothing (0x80)."}, set(0x80));
+        W.member(A | X, type_<uint32_>(), "performance_flags_force_not_present", set(0));
+        W.member(A, type_<bool>(), "auto_adjust_performance_flags", desc{"If enabled, avoid automatically font smoothing in recorded session."}, set(true));
         W.sep();
         W.member(V, type_<bool>(), "tls_fallback_legacy", desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(false));
         W.member(V, type_<bool>(), "tls_support", set(true));

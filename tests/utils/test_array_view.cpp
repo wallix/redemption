@@ -61,4 +61,19 @@ BOOST_AUTO_TEST_CASE(TestArrayView)
     BOOST_CHECK_EQUAL(av[0], s[0]);
     BOOST_CHECK_EQUAL(av[1], s[1]);
     BOOST_CHECK_EQUAL(av[2], s[2]);
+    BOOST_CHECK_EQUAL(av.end() - av.begin(), 3);
+
+    {
+        auto const av_p = make_array_view(&s[0], &s[3]);
+        BOOST_CHECK_EQUAL(static_cast<void const *>(av_p.data()), static_cast<void const *>(av.data()));
+        BOOST_CHECK_EQUAL(av_p.size(), av.size());
+        BOOST_CHECK_EQUAL(av_p[0], av[0]);
+    }
+
+    BOOST_CHECK_EQUAL(make_array_view("abc").size(), 4);
+    BOOST_CHECK_EQUAL(cstr_array_view("abc").size(), 3);
+    BOOST_CHECK_EQUAL(make_array_view(av.data(), 1).size(), 1);
+
+    BOOST_CHECK(array_view_char{nullptr}.empty());
+
 }

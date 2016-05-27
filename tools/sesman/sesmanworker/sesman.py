@@ -1215,6 +1215,7 @@ class Sesman():
                             connectionpolicy_kv[u'session_probe_end_disconnected_session']= session_probe_section.get('end_disconnected_session')
 
                             connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
+                        connectionpolicy_kv[u'outbound_connection_blocking_rules'] = "10.10.0.0/16:3389"
 
                         server_cert_section = conn_opts.get('server_cert')
                         if server_cert_section is not None:

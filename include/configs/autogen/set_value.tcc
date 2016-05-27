@@ -21,6 +21,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         else if (0 == strcmp(key, "performance_flags_force_not_present")) {
             ::configs::parse(static_cast<cfg::client::performance_flags_force_not_present&>(this->variables).value, value);
         }
+        else if (0 == strcmp(key, "auto_adjust_performance_flags")) {
+            ::configs::parse(static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value, value);
+        }
         else if (0 == strcmp(key, "tls_fallback_legacy")) {
             ::configs::parse(static_cast<cfg::client::tls_fallback_legacy&>(this->variables).value, value);
         }
@@ -239,6 +242,9 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
         }
         else if (0 == strcmp(key, "allow_using_multiple_monitors")) {
             ::configs::parse(static_cast<cfg::globals::allow_using_multiple_monitors&>(this->variables).value, value);
+        }
+        else if (0 == strcmp(key, "bogus_refresh_rect")) {
+            ::configs::parse(static_cast<cfg::globals::bogus_refresh_rect&>(this->variables).value, value);
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {

@@ -448,7 +448,7 @@ private:
         }
 
         template<class ColorConverter>
-        struct GraphicConverter : gdi::GraphicProxy<
+        struct GraphicConverter : gdi::GraphicProxyBase<
             GraphicConverter<ColorConverter>,
             gdi::GraphicApi,
             gdi::GraphicColorConverterAccess
@@ -465,11 +465,11 @@ private:
             , graphics(graphics)
             {}
 
-            ColorConverter const & color_converter_impl() const {
+            ColorConverter const & get_color_converter() const {
                 return this->color_converter;
             }
 
-            Graphics::PrivateGraphicsUpdatePDU & get_gd_proxy_impl() {
+            Graphics::PrivateGraphicsUpdatePDU & get_graphic_proxy() {
                 return this->graphics;
             }
 
@@ -1244,12 +1244,20 @@ public:
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
+                if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+                    LOG(LOG_WARNING, "tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
+                }
+
                 if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
                     (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
                     && this->ini.get<cfg::client::tls_fallback_legacy>()) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
                     this->tls_client_active = false;
+                }
+                else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) &&
+                         !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+                    LOG(LOG_WARNING, "TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
                 }
             }
 

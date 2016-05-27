@@ -194,7 +194,7 @@ private:
     }
 
     template<class Mut, class Bool, class Enc, class Range, class Cmd, class... Ts>
-    void encode_if(unsigned, Mut, Bool, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const {
+    void encode_if(unsigned, Mut, Bool, Enc, Range && rng, Cmd & cmd, Ts const & ... args) const {
         this->dispatch_if(Bool{}, rng, cmd, args...);
     }
 
