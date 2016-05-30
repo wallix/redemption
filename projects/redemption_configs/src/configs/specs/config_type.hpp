@@ -24,7 +24,7 @@
 
 namespace cfg_specs {
 
-void config_type_definition(type_enumerations & e)
+inline void config_type_definition(type_enumerations & e)
 {
     e.enumeration_flags("CaptureFlags", "Specifies the type of data to be captured:")
       .value("none")

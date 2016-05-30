@@ -202,6 +202,9 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     template<unsigned N>
     void write_type(type_<types::static_string<N>>) { this->out() << "char[" << N+1 << "]"; }
 
+    template<class T, long min, long max>
+    void write_type(type_<types::range<T, min, max>>) { this->out() << type_name<T>(); }
+
     void write_type(type_<types::path>) { this->out() << "::configs::spec_types::directory_path"; }
     void write_type(type_<types::ip_string>) { this->out() << "std::string"; }
 
@@ -219,6 +222,10 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     template<unsigned N>
     void write_type_spec(type_<types::fixed_binary<N>>)
     { this->out() << "::configs::spec_types::fixed_binary"; }
+
+    template<class T, long min, long max>
+    void write_type_spec(type_<types::range<T, min, max>>)
+    { this->out() << "::configs::spec_types::range<" << type_name<T>() << ", " << min << ", " << max << ">"; }
 
     void write_type_spec(type_<types::ip_string>) { this->out() << "::configs::spec_types::ip"; }
 

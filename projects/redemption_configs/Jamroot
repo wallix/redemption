@@ -256,14 +256,14 @@ constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
 constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
 constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
 
-actions generate_configs {
+actions generate_cpp_configs {
     $(>) \
         $(AUTOGENDIR)/authid.hpp \
         $(FILEGEN_CONF) \
         $(AUTOGENDIR)/set_value.tcc
 }
 
-actions generate_spec {
+actions generate_python_spec {
     $(>) $(FILEGEN_SPEC)
 }
 
@@ -271,17 +271,17 @@ actions generate_enum {
     $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
 }
 
-make $(FILEGEN_CONF) : make_cpp_config : @generate_configs : <location>. ;
-make $(FILEGEN_SPEC) : make_python_spec : @generate_spec : <location>. ;
+make $(FILEGEN_CONF) : make_cpp_config : @generate_cpp_configs : <location>. ;
+make $(FILEGEN_SPEC) : make_python_spec : @generate_python_spec : <location>. ;
 make $(FILEGEN_ENUM) : make_cpp_enum : @generate_enum : <location>. ;
 
-alias generate_configs : $(FILEGEN_CONF) ;
-alias generate_spec : $(FILEGEN_SPEC) ;
+alias generate_cpp_configs : $(FILEGEN_CONF) ;
+alias generate_python_spec : $(FILEGEN_SPEC) ;
 alias generate_enum : $(FILEGEN_ENUM) ;
 
-exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_cpp_config : src/configs/write_cpp_config.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_python_spec : src/configs/write_python_spec.cpp : $(LIB_SAN_DEPENDENCY) ;
+exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : $(LIB_SAN_DEPENDENCY) ;
 
 actions cp_config {
     dirinstall=../../include/configs
@@ -299,13 +299,16 @@ actions cp_config {
 }
 
 
-alias generate  :
-    generate_spec
-    generate_configs
+alias generate_types :
     generate_enum
 ;
 
-make install : generate : @cp_config ;
+alias generate_descs :
+    generate_python_spec
+    generate_cpp_configs
+;
+
+make install : generate_types generate_descs : @cp_config ;
 explicit install ;
 
 
@@ -318,8 +321,8 @@ constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 constant TEST_DEPENDENCIES :
     $(LIB_SAN_DEPENDENCY)
     $(LIB_TEST_DEPENDENCY)
-    <implicit-dependency>generate_configs
-    <implicit-dependency>generate_spec
+    <implicit-dependency>generate_cpp_configs
+    <implicit-dependency>generate_python_spec
     <implicit-dependency>generate_enum
 ;
 

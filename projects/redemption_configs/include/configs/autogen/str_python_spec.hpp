@@ -59,7 +59,7 @@
 "# Proxy certificate password.\n"
 "#_advanced\n"
 "#_password\n"
-"certificate_password = string(max=255, default='inquisition')\n\n"
+"certificate_password = string(max=254, default='inquisition')\n\n"
 
 "#_advanced\n"
 "png_path = string(max=4095, default='" PNG_PATH "')\n\n"

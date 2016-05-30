@@ -21,11 +21,12 @@
 #include "configs/specs/config_spec.hpp"
 #include "configs/generators/cpp_config.hpp"
 
-int main(int ac, char ** av) {
+int main(int ac, char ** av)
+{
     struct Writer : cfg_generators::cpp_config_writer::CppConfigWriterBase<Writer> {
         Writer() {
             cfg_specs::config_spec_definition(*this);
         };
-    } W;
+    };
     return cfg_generators::app_write_cpp_config<Writer>(ac, av);
 }

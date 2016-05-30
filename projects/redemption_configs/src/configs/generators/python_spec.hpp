@@ -83,6 +83,8 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     int get_value(types::u64) { return 0; }
     template<class T> T const & get_value(T const & x) { return x; }
     template<class T> enable_if_enum_t<T, T const &> get_value(T const & x) { return x; }
+    template<class Int, long min, long max, class T> T get_value(types::range<Int, min, max>)
+    { static_assert(!min, "unspecified value but 'min' isn't 0"); return {}; }
 
 
     macroio quoted2(macroio m) { return m; }
@@ -210,6 +212,10 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         }
         this->out() << "default=" << this->get_value(i) << ")";
     }
+
+    template<class Int, long min, long max, class T>
+    void write_type(type_<types::range<Int, min, max>>, T i)
+    { this->out() << "integer(min=" << min << ", max=" << max << ", default=" << this->get_value(i) << ")"; }
 
     template<unsigned N, class T>
     void write_type(type_<types::fixed_binary<N>>, T const & x)

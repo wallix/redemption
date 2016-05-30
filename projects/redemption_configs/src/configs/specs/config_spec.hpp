@@ -320,11 +320,11 @@ void config_spec_definition(Writer && W)
         W.member(type_<unsigned>(), "inactivity_timeout", set(300));
         W.sep();
 
-        W.member(V, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog), r);
+        W.member(V, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));
         W.sep();
-        W.member(V, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog), r);
+        W.member(V, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog));
         W.sep();
-        W.member(V, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog), r);
+        W.member(V, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
         W.sep();
         W.member(H, type_<unsigned>(), "rt_display", set(0), r);
         W.sep();

@@ -47,6 +47,9 @@ struct type_enumeration_base
     type_enumeration_base(type_enumeration_base const &) = delete;
     type_enumeration_base(type_enumeration_base &&) = default;
 
+    type_enumeration_base & operator=(type_enumeration_base const &) = delete;
+    type_enumeration_base & operator=(type_enumeration_base &&) = default;
+
     Inherit & enable_icase_parser() { this->is_icase_parser = true; return this->inherit(); }
 
     Inherit & alias(char const * s) {
@@ -81,6 +84,7 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
     {}
 
     type_enumeration(type_enumeration &&) = default;
+    type_enumeration & operator=(type_enumeration &&) = default;
 
     type_enumeration & value(char const * name, char const * desc = nullptr)
     {
@@ -117,6 +121,7 @@ struct type_enumeration_set : type_enumeration_base<type_enumeration_set>
     using base_type::base_type;
 
     type_enumeration_set(type_enumeration_set &&) = default;
+    type_enumeration_set & operator=(type_enumeration_set &&) = default;
 
     type_enumeration_set & value(char const * name, long long val, char const * desc = nullptr)
     {
