@@ -22,8 +22,7 @@
    entities
 */
 
-#ifndef _REDEMPTION_UTILS_STREAM_HPP_
-#define _REDEMPTION_UTILS_STREAM_HPP_
+#pragma once
 
 #include "utils/log.hpp" // REDASSERT
 #include "utils/bitfu.hpp"
@@ -1218,4 +1217,3 @@ dynamic_packet(std::size_t stream_sz, Writer writer) {
     return {std::move(writer), stream_sz};
 }
 
-#endif

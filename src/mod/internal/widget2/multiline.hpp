@@ -19,11 +19,10 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP
-
+#pragma once
 #include "widget.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetMultiLine : public Widget2
 {
@@ -47,7 +46,7 @@ public:
     Font const & font;
 
 public:
-    WidgetMultiLine(mod_api& drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetMultiLine(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize, int group_id,
                     int fgcolor, int bgcolor, Font const & font,
@@ -139,4 +138,3 @@ public:
     }
 };
 
-#endif

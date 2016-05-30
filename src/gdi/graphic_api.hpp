@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_GRAPHIC_DEVICE_HPP
-#define REDEMPTION_GDI_GRAPHIC_DEVICE_HPP
+#pragma once
 
 #include <type_traits>
 #include <utility>
@@ -509,4 +508,3 @@ public:
 
 }
 
-#endif

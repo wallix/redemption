@@ -19,8 +19,7 @@
  *              Jennifer Inthavong
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_INTERACTIVE_TARGET_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_INTERACTIVE_TARGET_HPP
+#pragma once 
 
 #include "edit.hpp"
 #include "edit_valid.hpp"
@@ -32,6 +31,7 @@
 #include "flat_button.hpp"
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
+#include "gdi/graphic_api.hpp"
 
 
 class FlatInteractiveTarget : public WidgetParent
@@ -57,7 +57,7 @@ public:
     // ASK DEVICE YES/NO
     // ASK CRED : LOGIN+PASSWORD/PASSWORD/NO
 
-    FlatInteractiveTarget(mod_api& drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
+    FlatInteractiveTarget(gdi::GraphicApi & drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
                           Widget2 & parent, NotifyApi* notifier,
                           int group_id, bool ask_device,
                           bool ask_login, bool ask_password,
@@ -233,4 +233,4 @@ public:
     }
 };
 
-#endif
+

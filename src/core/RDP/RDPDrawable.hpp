@@ -19,8 +19,7 @@
               Martin Potier, Poelen Jonathan, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
-#define _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
+#pragma once
 
 #include <utility>
 
@@ -778,4 +777,3 @@ void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {
         bgr);
 }
 
-#endif

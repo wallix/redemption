@@ -20,10 +20,9 @@
  *
  */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET2_LAYOUT_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET2_LAYOUT_HPP_
-
+#pragma once
 #include "widget.hpp"
+#include "gdi/graphic_api.hpp"
 
 static const size_t LAYOUT_SIZE_MAX = 50;
 
@@ -32,7 +31,7 @@ struct WidgetLayout : public Widget2 {
     size_t    nb_items;
     int bgcolor;
 
-    WidgetLayout(mod_api & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLayout(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , nb_items(0)
@@ -171,4 +170,3 @@ struct WidgetLayout : public Widget2 {
 };
 
 
-#endif

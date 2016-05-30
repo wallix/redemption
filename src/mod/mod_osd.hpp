@@ -19,8 +19,7 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
-#define REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
+#pragma once
 
 #include "mod/mod_api.hpp"
 #include "core/front_api.hpp"
@@ -431,4 +430,3 @@ public:
     }
 };
 
-#endif

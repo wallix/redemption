@@ -18,11 +18,11 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
-#define REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetGroupBox : public WidgetParent
 {
@@ -39,7 +39,7 @@ public:
     Font const & font;
 
 public:
-    WidgetGroupBox( mod_api & drawable, int16_t x, int16_t y
+    WidgetGroupBox( gdi::GraphicApi & drawable, int16_t x, int16_t y
                   , uint16_t cx, uint16_t cy, Widget2 & parent
                   , NotifyApi * notifier, const char * text
                   , int group_id, int fgcolor, int bgcolor, Font const & font)
@@ -130,4 +130,3 @@ public:
     }
 };
 
-#endif  // #ifndef REDEMPTION_MOD_WIDGET2_GROUP_BOX_HPP

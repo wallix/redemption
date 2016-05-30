@@ -20,8 +20,7 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_MOD_HPP_
-#define _REDEMPTION_MOD_INTERNAL_TEST_CARD_MOD_HPP_
+#pragma once
 
 #include "core/defines.hpp"
 #include "internal_mod.hpp"
@@ -203,4 +202,3 @@ public:
     }
 };
 
-#endif
