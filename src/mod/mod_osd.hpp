@@ -49,7 +49,6 @@
 #include "utils/bitmap.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
-
 #include <functional>
 
 
@@ -100,7 +99,9 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
     bool bogus_refresh_rect_ex = false;
 
 public:
-    mod_osd(mod_api & mod, Rect const & rect, bool bogus_refresh_rect_ex, drawable_function_type f, bool call_f = true)
+    mod_osd(
+        /*FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,*/ 
+        mod_api & mod, Rect const & rect, bool bogus_refresh_rect_ex, drawable_function_type f, bool call_f = true)
     : mod_osd::base_type(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
     , mod(mod)
@@ -422,11 +423,11 @@ public:
         this->mod.process_session_probe_launcher();
     }
 
-    void server_draw_text(
+    void server_draw_text_deprecated(
         const Font& font, int16_t x, int16_t y, const char* text,
         uint32_t fgcolor, uint32_t bgcolor, const Rect& clip
     ) override {
-        this->mod.server_draw_text(font, x, y, text, fgcolor, bgcolor, clip);
+        this->mod.server_draw_text_deprecated(font, x, y, text, fgcolor, bgcolor, clip);
     }
 };
 

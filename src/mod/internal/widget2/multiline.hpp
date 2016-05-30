@@ -124,7 +124,7 @@ public:
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
-            this->drawable.server_draw_text(this->font, this->x_text + this->dx(),
+            this->drawable.server_draw_text_deprecated(this->font, this->x_text + this->dx(),
                                              dy,
                                              line->str,
                                              this->fg_color,

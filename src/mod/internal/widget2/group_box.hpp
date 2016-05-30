@@ -91,7 +91,7 @@ public:
         this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
 
         // Label.
-        this->drawable.server_draw_text( this->font
+        this->drawable.server_draw_text_deprecated( this->font
                                        , this->rect.x + text_indentation
                                        , this->rect.y
                                        , this->buffer
