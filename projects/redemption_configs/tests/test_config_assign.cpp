@@ -34,14 +34,41 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     Inifile ini;
 
     char const * cpath = "/dsds/dsds";
-    char const * cs = "blah blah";
-    char const * cslist = "blah, blah";
+    char const * cs = "blah";
+    char const * cslist = "blah";
     char const * cip = "0.0.0.0";
     std::string s(cs);
     std::string slist(cslist);
     std::string spath(cpath);
     std::string sip(cip);
     unsigned char key[32]{};
+
+    {
+        char cs[] = "abc";
+        char const c_cs[] = "def";
+        char * pcs = cs;
+        char const * pc_cs = c_cs;
+        std::string s = "abc";
+        std::string const c_s = "def";
+        {
+            using type = cfg::context::message;
+            ini.set<type>(cs); BOOST_CHECK_EQUAL(ini.get<type>(), cs);
+            ini.set<type>(c_cs); BOOST_CHECK_EQUAL(ini.get<type>(), c_cs);
+            ini.set<type>(pcs); BOOST_CHECK_EQUAL(ini.get<type>(), pcs);
+            ini.set<type>(pc_cs); BOOST_CHECK_EQUAL(ini.get<type>(), pc_cs);
+            ini.set<type>(s); BOOST_CHECK_EQUAL(ini.get<type>(), s);
+            ini.set<type>(c_s); BOOST_CHECK_EQUAL(ini.get<type>(), c_s);
+        }
+        {
+            using type = cfg::globals::certificate_password;
+            ini.set<type>(cs); BOOST_CHECK_EQUAL(ini.get<type>(), cs);
+            ini.set<type>(c_cs); BOOST_CHECK_EQUAL(ini.get<type>(), c_cs);
+            ini.set<type>(pcs); BOOST_CHECK_EQUAL(ini.get<type>(), pcs);
+            ini.set<type>(pc_cs); BOOST_CHECK_EQUAL(ini.get<type>(), pc_cs);
+            ini.set<type>(s); BOOST_CHECK_EQUAL(ini.get<type>(), s);
+            ini.set<type>(c_s); BOOST_CHECK_EQUAL(ini.get<type>(), c_s);
+        }
+    }
 
     ini.set<cfg::client::bitmap_compression>(true);
     ini.set<cfg::client::bogus_neg_request>(true);

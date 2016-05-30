@@ -507,71 +507,70 @@ parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer
 }
 
 
+namespace detail
+{
+    template<class T>
+    struct set_value_impl
+    {
+        template<class U>
+        static void impl(T & x, U && new_value)
+        { x = std::forward<U>(new_value); }
+
+        template<class U, class... Ts>
+        static void impl(T & x, U && param1, Ts && ... other_params)
+        { x = {std::forward<U>(param1), std::forward<Ts>(other_params)...}; }
+    };
+
+    template<>
+    struct set_value_impl<std::array<unsigned char, 32>>
+    {
+        static constexpr std::size_t N = 32;
+        using T = std::array<unsigned char, N>;
+
+        static void impl(T & x, T const & arr)
+        { x = arr; }
+
+        static void impl(T & x, unsigned char const (&arr)[N])
+        { std::copy(begin(arr), end(arr), begin(x)); }
+
+        static void impl(T & x, char const (&arr)[N+1])
+        { std::copy(begin(arr), end(arr), begin(x)); }
+
+        template<class U>
+        static void impl(T & x, U const * arr, std::size_t n)
+        {
+            assert(N >= n);
+            std::copy(arr, arr + n, begin(x));
+        }
+    };
+
+    template<std::size_t N>
+    struct set_value_impl<char[N]>
+    {
+        using T = char[N];
+
+        static void impl(T & x, char const * s, std::size_t n)
+        {
+            assert(N > n);
+            n = std::min(n, N-1);
+            std::copy(s, s + n, begin(x));
+            x[n] = 0;
+        }
+
+        static void impl(T & x, char const * s)
+        { impl(x, s, strnlen(s, N-1)); }
+
+        static void impl(T & x, std::string const & str)
+        { impl(x, str.data(), str.size()); }
+    };
+}
+
 template<class T, class U>
 void set_value(T & x, U && new_value)
-{ x = std::forward<U>(new_value); }
+{ detail::set_value_impl<T>::impl(x, std::forward<U>(new_value)); }
 
 template<class T, class U, class... Ts>
 void set_value(T & x, U && param1, Ts && ... other_params)
-{ x = {std::forward<U>(param1), std::forward<Ts>(other_params)...}; }
-
-namespace detail
-{
-    template<class T, class U>
-    using enable_if_no_cv_is_same_t = typename std::enable_if<
-        std::is_same<typename std::remove_cv<T>::type, U>::value
-    >::type;
-}
-
-template<class T>
-detail::enable_if_no_cv_is_same_t<T, unsigned char>
-set_value(std::array<unsigned char, 32> & x, T (&arr)[32])
-{ std::copy(begin(arr), end(arr), begin(x)); }
-
-template<class T>
-detail::enable_if_no_cv_is_same_t<T, char>
-set_value(std::array<unsigned char, 32> & x, T (&arr)[33])
-{ std::copy(begin(arr), end(arr), begin(x)); }
-
-template<class T, class Int>
-detail::enable_if_no_cv_is_same_t<T, char>
-set_value(std::array<unsigned char, 32> & x, T * arr, Int n)
-{
-    assert(32 >= n);
-    std::copy(arr, arr + n, begin(x));
-}
-
-template<std::size_t N, class T, class Int>
-detail::enable_if_no_cv_is_same_t<T, char>
-set_value(char (&s)[N], T * arr, Int n)
-{
-    // TODO
-}
-
-template<std::size_t N, class T>
-detail::enable_if_no_cv_is_same_t<T, char>
-set_value(char (&s)[N], T * arr)
-{
-    // TODO
-}
-
-template<std::size_t N>
-void set_value(char (&s)[N], std::string & arr)
-{
-    // TODO
-}
-
-template<std::size_t N>
-void set_value(char (&s)[N], std::string const & arr)
-{
-    // TODO
-}
-
-template<std::size_t N1, std::size_t N2, class T>
-detail::enable_if_no_cv_is_same_t<T, char>
-set_value(char (&s1)[N1], T (&s2)[N1])
-{
-    // TODO
-}
+{ detail::set_value_impl<T>::impl(x, std::forward<U>(param1), std::forward<Ts>(other_params)...); }
 
 }
