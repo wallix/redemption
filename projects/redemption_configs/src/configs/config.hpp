@@ -129,34 +129,16 @@ public:
         return static_cast<T&>(this->variables).value;
     }
 
-    template<class T, class U>
-    void set(U && new_value) {
+    template<class T, class... Args>
+    void set(Args && ... args) {
         static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
-        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(new_value));
-        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
+        this->set_value<T>(std::forward<Args>(args)...);
     }
 
-    template<class T, class U, class... O>
-    void set(U && param1, O && ... other_params) {
-        static_assert(!T::is_writable(), "T is writable, used set_acl<T>() instead.");
-        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(param1), std::forward<O>(other_params)...);
-        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
-    }
-
-    template<class T, class U>
-    void set_acl(U && new_value) {
+    template<class T, class... Args>
+    void set_acl(Args && ... args) {
         static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
-        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(new_value));
-        this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
-        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
-    }
-
-    template<class T, class U, class... O>
-    void set_acl(U && param1, O && ... other_params) {
-        static_assert(T::is_writable(), "T isn't writable, used set<T>() instead.");
-        configs::set_value(static_cast<T&>(this->variables).value, std::forward<U>(param1), std::forward<O>(other_params)...);
-        this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
-        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
+        this->set_value<T>(std::forward<Args>(args)...);
     }
 
     template<class T>
@@ -173,6 +155,22 @@ public:
     }
 
 private:
+    template<class...> using void_t = void;
+    template<class T, class = void> struct set_value_spec_type { using type = typename T::type; };
+    template<class T> struct set_value_spec_type<T, void_t<typename T::sesman_and_spec_type>>
+    { using type = typename T::sesman_and_spec_type; };
+
+    template<class T, class... Args>
+    void set_value(Args && ... args) {
+        configs::set_value(
+            static_cast<T&>(this->variables).value,
+            configs::spec_type<typename set_value_spec_type<T>::type>{},
+            std::forward<Args>(args)...
+        );
+        this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
+        this->unask<T>(std::integral_constant<bool, T::is_readable()>());
+    }
+
     template<class T> void insert_index(std::false_type) {}
     template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index()); }
 

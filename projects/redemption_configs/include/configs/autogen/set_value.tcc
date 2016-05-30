@@ -166,7 +166,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::crypto::key0&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::fixed_binary<32>>{},
+                ::configs::spec_type<::configs::spec_types::fixed_binary>{},
                 av
             );
         }
@@ -174,7 +174,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::crypto::key1&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::fixed_binary<32>>{},
+                ::configs::spec_type<::configs::spec_types::fixed_binary>{},
                 av
             );
         }
@@ -508,7 +508,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::certificate_password&>(this->variables).value,
-                ::configs::spec_type<char[255 + 1]>{},
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
             );
         }
@@ -770,7 +770,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::auth_channel&>(this->variables).value,
-                ::configs::spec_type<char[7 + 1]>{},
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
             );
         }
@@ -890,7 +890,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::session_probe_alternate_shell&>(this->variables).value,
-                ::configs::spec_type<char[511 + 1]>{},
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
             );
         }

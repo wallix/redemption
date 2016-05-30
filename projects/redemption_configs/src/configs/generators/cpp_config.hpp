@@ -197,7 +197,10 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     void write_type(type_<types::fixed_binary<N>>) { this->out() << "std::array<unsigned char, " << N << ">"; }
 
     template<unsigned N>
-    void write_type(type_<types::fixed_string<N>>) { this->out() << "char[" << N << " + 1]"; }
+    void write_type(type_<types::fixed_string<N>>) { this->out() << "char[" << N+1 << "]"; }
+
+    template<unsigned N>
+    void write_type(type_<types::static_string<N>>) { this->out() << "char[" << N+1 << "]"; }
 
     void write_type(type_<types::path>) { this->out() << "::configs::spec_types::directory_path"; }
     void write_type(type_<types::ip_string>) { this->out() << "std::string"; }
@@ -210,8 +213,12 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
 
 
     template<unsigned N>
+    void write_type_spec(type_<types::fixed_string<N>>)
+    { this->out() << "::configs::spec_types::fixed_string"; }
+
+    template<unsigned N>
     void write_type_spec(type_<types::fixed_binary<N>>)
-    { this->out() << "::configs::spec_types::fixed_binary<" << N << ">"; }
+    { this->out() << "::configs::spec_types::fixed_binary"; }
 
     void write_type_spec(type_<types::ip_string>) { this->out() << "::configs::spec_types::ip"; }
 

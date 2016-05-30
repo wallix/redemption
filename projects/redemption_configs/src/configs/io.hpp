@@ -167,7 +167,8 @@ template<class> struct spec_type {};
 
 namespace spec_types
 {
-    template<unsigned> class fixed_binary;
+    class fixed_binary;
+    class fixed_string;
     template<class T> class list;
     using ip = std::string;
 
@@ -273,21 +274,30 @@ parse_error parse(char (&x)[N], spec_type<char[N]>, array_view_const_char value)
     return no_parse_error;
 }
 
-template<std::size_t N1, unsigned N2>
+template<std::size_t N>
+parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string>, array_view_const_char value)
+{
+    if (value.size() >= N) {
+        return {"out of bounds"};
+    }
+    memcpy(x, value.data(), value.size());
+    memset(x + value.size(), 0, value.size() - N);
+    return no_parse_error;
+}
+
+template<std::size_t N>
 parse_error parse(
-    std::array<unsigned char, N1> & key,
-    spec_type<spec_types::fixed_binary<N2>>,
+    std::array<unsigned char, N> & key,
+    spec_type<spec_types::fixed_binary>,
     array_view_const_char value
 ) {
-    static_assert(N1 == N2, "");
-
-    if (value.size() != N1*2) {
+    if (value.size() != N*2) {
         return {"bad length"};
     }
 
     char   hexval[3] = { 0 };
     char * end{};
-    for (std::size_t i = 0; i < N1; i++) {
+    for (std::size_t i = 0; i < N; i++) {
         hexval[0] = value[i*2];
         hexval[1] = value[i*2+1];
         key[i] = strtol(hexval, &end, 16);
@@ -509,7 +519,7 @@ parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer
 
 namespace detail
 {
-    template<class T>
+    template<class T, class Spec>
     struct set_value_impl
     {
         template<class U>
@@ -522,7 +532,7 @@ namespace detail
     };
 
     template<>
-    struct set_value_impl<std::array<unsigned char, 32>>
+    struct set_value_impl<std::array<unsigned char, 32>, spec_types::fixed_binary>
     {
         static constexpr std::size_t N = 32;
         using T = std::array<unsigned char, N>;
@@ -545,7 +555,7 @@ namespace detail
     };
 
     template<std::size_t N>
-    struct set_value_impl<char[N]>
+    struct set_value_impl<char[N], char[N]>
     {
         using T = char[N];
 
@@ -553,8 +563,28 @@ namespace detail
         {
             assert(N > n);
             n = std::min(n, N-1);
-            std::copy(s, s + n, begin(x));
+            memcpy(x, s, n);
             x[n] = 0;
+        }
+
+        static void impl(T & x, char const * s)
+        { impl(x, s, strnlen(s, N-1)); }
+
+        static void impl(T & x, std::string const & str)
+        { impl(x, str.data(), str.size()); }
+    };
+
+    template<std::size_t N>
+    struct set_value_impl<char[N], spec_types::fixed_string>
+    {
+        using T = char[N];
+
+        static void impl(T & x, char const * s, std::size_t n)
+        {
+            assert(N >= n);
+            n = std::min(n, N-1);
+            memcpy(x, s, n);
+            memset(x + n, 0, N - n);
         }
 
         static void impl(T & x, char const * s)
@@ -565,12 +595,12 @@ namespace detail
     };
 }
 
-template<class T, class U>
-void set_value(T & x, U && new_value)
-{ detail::set_value_impl<T>::impl(x, std::forward<U>(new_value)); }
+template<class T, class Spec, class U>
+void set_value(T & x, spec_type<Spec>, U && new_value)
+{ detail::set_value_impl<T, Spec>::impl(x, std::forward<U>(new_value)); }
 
-template<class T, class U, class... Ts>
-void set_value(T & x, U && param1, Ts && ... other_params)
-{ detail::set_value_impl<T>::impl(x, std::forward<U>(param1), std::forward<Ts>(other_params)...); }
+template<class T, class Spec, class U, class... Ts>
+void set_value(T & x, spec_type<Spec>, U && param1, Ts && ... other_params)
+{ detail::set_value_impl<T, Spec>::impl(x, std::forward<U>(param1), std::forward<Ts>(other_params)...); }
 
 }

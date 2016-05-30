@@ -103,7 +103,7 @@ void config_spec_definition(Writer && W)
 
         W.member(A, type_<types::ip_string>(), "listen_address", set("0.0.0.0"));
         W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
-        W.member(A | P, type_<types::fixed_string<255>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
+        W.member(A | P, type_<types::fixed_string<254>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
         W.sep();
         W.member(A, type_<types::path>(), "png_path", set(CPP_MACRO(PNG_PATH)));
         W.member(A, type_<types::path>(), "wrm_path", set(CPP_MACRO(WRM_PATH)));
