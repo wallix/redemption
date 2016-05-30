@@ -147,10 +147,11 @@
 "performance_flags_default = integer(min=0, default=128)\n\n"
 
 "# Disable theme (0x8).\n"
+"# Disable mouse cursor shadows (0x20).\n"
 
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_force_present = integer(min=0, default=8)\n\n"
+"performance_flags_force_present = integer(min=0, default=40)\n\n"
 
 "#_advanced\n"
 "#_hex\n"

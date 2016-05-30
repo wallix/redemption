@@ -239,7 +239,10 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
         W.member(A | X, type_<uint32_>(), "performance_flags_default", desc{"Enable font smoothing (0x80)."}, set(0x80));
-        W.member(A | X, type_<uint32_>(), "performance_flags_force_present", desc{"Disable theme (0x8)."}, set(0x8));
+        W.member(A | X, type_<uint32_>(), "performance_flags_force_present", desc{
+            "Disable theme (0x8).\n"
+            "Disable mouse cursor shadows (0x20)."
+        }, set(0x28));
         W.member(A | X, type_<uint32_>(), "performance_flags_force_not_present", set(0));
         W.member(A, type_<bool>(), "auto_adjust_performance_flags", desc{"If enabled, avoid automatically font smoothing in recorded session."}, set(true));
         W.sep();

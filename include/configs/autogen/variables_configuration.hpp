@@ -55,12 +55,13 @@ namespace cfg {
             type value{128};
         };
         // Disable theme (0x8).
+        // Disable mouse cursor shadows (0x20).
         struct performance_flags_force_present {
             static constexpr ::configs::VariableProperties properties() {
                 return ::configs::VariableProperties::none;
             }
             using type = uint32_t;
-            type value{8};
+            type value{40};
         };
         struct performance_flags_force_not_present {
             static constexpr ::configs::VariableProperties properties() {
