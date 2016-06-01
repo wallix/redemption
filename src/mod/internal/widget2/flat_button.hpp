@@ -195,9 +195,8 @@ public:
     }
 
     Dimension get_optimal_dim() override {
-        int w, h;
-        this->drawable.text_metrics(this->font, this->label.buffer, w, h);
-        return Dimension(w + 2*this->label.x_text + 4, h + 2*this->label.y_text + 4);
+        gdi::TextMetrics tm(this->font, this->label.buffer);
+        return Dimension(tm.width + 2*this->label.x_text + 4, tm.height + 2*this->label.y_text + 4);
     }
 };
 

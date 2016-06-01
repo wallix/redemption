@@ -81,10 +81,9 @@ public:
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize) {
-                int w, h;
-                this->drawable.text_metrics(this->font, this->buffer, w, h);
-                this->rect.cx = this->x_text * 2 + w;
-                this->rect.cy = this->y_text * 2 + h;
+                gdi::TextMetrics tm(this->font, this->buffer);
+                this->rect.cx = this->x_text * 2 + tm.width;
+                this->rect.cy = this->y_text * 2 + tm.height;
             }
         }
     }
@@ -96,20 +95,20 @@ public:
 
     void draw(const Rect& clip) override {
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        this->drawable.server_draw_text_deprecated(this->font,
-                                        this->x_text + this->dx(),
-                                        this->y_text + this->dy(),
-                                        this->get_text(),
-                                        this->fg_color,
-                                        this->bg_color,
-                                        this->rect.intersect(clip)
-                                        );
+        gdi::server_draw_text(this->drawable,
+                              this->font,
+                              this->x_text + this->dx(),
+                              this->y_text + this->dy(),
+                              this->get_text(),
+                              this->fg_color,
+                              this->bg_color,
+                              this->rect.intersect(clip)
+                              );
     }
 
     Dimension get_optimal_dim() override {
-        int w, h;
-        this->drawable.text_metrics(this->font, this->buffer, w, h);
-        return Dimension(w + this->x_text * 2, h + this->y_text * 2);
+        gdi::TextMetrics tm(this->font, this->buffer);
+        return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
     }
 
     bool shift_text(int pos_x) {
@@ -134,10 +133,9 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
         if (this->tool) {
             if (device_flags == MOUSE_FLAG_MOVE) {
-                int w = 0;
-                int h = 0;
-                this->drawable.text_metrics(this->font, this->buffer, w, h);
-                if (w > this->rect.cx) {
+                // TODO: tm.height unused ?
+                gdi::TextMetrics tm(this->font, this->buffer);
+                if (tm.width > this->rect.cx) {
                     this->show_tooltip(this, this->buffer, x, y);
                 }
             }

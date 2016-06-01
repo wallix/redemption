@@ -66,12 +66,14 @@ public:
             this->cursor_px_pos = 0;
             char c = this->label.buffer[this->edit_buffer_pos];
             this->label.buffer[this->edit_buffer_pos] = 0;
-            this->drawable.text_metrics(this->font, this->label.buffer, this->w_text, this->h_text);
+            gdi::TextMetrics tm1(this->font, this->label.buffer);
+            this->w_text = tm1.width;
+            this->h_text = tm1.height;
             this->cursor_px_pos = this->w_text;
             this->label.buffer[this->edit_buffer_pos] = c;
-            int w, h;
-            this->drawable.text_metrics(this->font, &this->label.buffer[this->edit_buffer_pos], w, h);
-            this->w_text += w;
+            // TODO: tm.height unused ?
+            gdi::TextMetrics tm2(this->font, &this->label.buffer[this->edit_buffer_pos]);
+            this->w_text += tm2.width;
         } else {
             this->buffer_size = 0;
             this->num_chars = 0;
@@ -80,16 +82,17 @@ public:
             this->cursor_px_pos = 0;
         }
 
-        int w = 0;
-        this->drawable.text_metrics(this->font, "Édp", w, this->h_text);
+        // TODO: tm.width unused ?
+        gdi::TextMetrics tm(this->font, "Édp");
+        this->h_text = tm.height;
         this->rect.cy = this->h_text + this->label.y_text * 2;
         this->label.rect.cx = this->rect.cx;
         this->label.rect.cy = this->rect.cy;
-        ++this->label.rect.x;
-        ++this->label.rect.y;
+        this->label.rect.x +=1;
+        this->label.rect.y += 1;
         this->rect.cx += 2;
         this->rect.cy += 2;
-        --this->h_text;
+        this->h_text -= 1;
 
         this->pointer_flag = Pointer::POINTER_EDIT;
     }
@@ -110,7 +113,9 @@ public:
 
             memcpy(this->label.buffer, text, this->buffer_size);
             this->label.buffer[this->buffer_size] = 0;
-            this->drawable.text_metrics(this->font, this->label.buffer, this->w_text, this->h_text);
+            gdi::TextMetrics tm(this->font, this->label.buffer);
+            this->w_text = tm.width;
+            this->h_text = tm.height;
             if (this->label.auto_resize) {
                 this->rect.cx = this->label.x_text * 2 + this->w_text;
                 this->rect.cy = this->label.y_text * 2 + this->h_text;
@@ -146,7 +151,9 @@ public:
             }
             this->buffer_size = total_n;
             this->label.buffer[this->buffer_size] = 0;
-            this->drawable.text_metrics(this->font, this->label.buffer, this->w_text, this->h_text);
+            gdi::TextMetrics tm(this->font, this->label.buffer);
+            this->w_text = tm.width;
+            this->h_text = tm.height;
             if (this->label.auto_resize) {
                 this->rect.cx = this->label.x_text * 2 + this->w_text;
                 this->rect.cy = this->label.y_text * 2 + this->h_text;
@@ -166,10 +173,10 @@ public:
                 const size_t pos = this->edit_buffer_pos + max_n;
                 const char c = this->label.buffer[pos];
                 this->label.buffer[pos] = 0;
-                int w, h;
-                this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, h);
+                // TODO: tm.height unused ?
+                gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
                 this->label.buffer[pos] = c;
-                this->cursor_px_pos += w;
+                this->cursor_px_pos += tm.width;
                 this->edit_buffer_pos += max_n;
             }
             this->edit_pos += this->num_chars - tmp_num_chars;
@@ -270,9 +277,9 @@ public:
         size_t n = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 1);
         char c = this->label.buffer[this->edit_buffer_pos + n];
         this->label.buffer[this->edit_buffer_pos + n] = 0;
-        int w;
-        this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, this->h_text);
-        this->cursor_px_pos += w;
+        gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+        this->h_text = tm.height;
+        this->cursor_px_pos += tm.width;
         this->label.buffer[this->edit_buffer_pos + n] = c;
         this->edit_buffer_pos += n;
 
@@ -301,10 +308,9 @@ public:
         this->edit_pos--;
         char c = this->label.buffer[this->edit_buffer_pos];
         this->label.buffer[this->edit_buffer_pos] = 0;
-        int w;
-        this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos - len,
-                                    w, this->h_text);
-        this->cursor_px_pos -= w;
+        gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos - len);
+        this->h_text = tm.height;
+        this->cursor_px_pos -= tm.width;
         this->label.buffer[this->edit_buffer_pos] = c;
         this->edit_buffer_pos -= len;
 
@@ -377,12 +383,12 @@ public:
                 while (this->edit_buffer_pos < this->buffer_size) {
                     char c = this->label.buffer[this->edit_buffer_pos + len];
                     this->label.buffer[this->edit_buffer_pos + len] = 0;
-                    int w, h;
-                    this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, h);
+                    gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+                    // TODO: tm.height unused ?
                     this->label.buffer[this->edit_buffer_pos + len] = c;
-                    xx += w;
+                    xx += tm.width;
                     if (xx >= x) {
-                        xx -= w;
+                        xx -= tm.width;
                         break;
                     }
                     len = this->utf8len_current_char();
@@ -502,8 +508,8 @@ public:
                         size_t len = this->utf8len_current_char();
                         char c = this->label.buffer[this->edit_buffer_pos + len];
                         this->label.buffer[this->edit_buffer_pos + len] = 0;
-                        int w;
-                        this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, this->h_text);
+                        gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+                        this->h_text = tm.height;
                         this->label.buffer[this->edit_buffer_pos + len] = c;
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size -= len;
@@ -516,7 +522,7 @@ public:
                                         ));
                         this->draw_cursor(this->get_cursor_rect());
                         this->drawable.end_update();
-                        this->w_text -= w;
+                        this->w_text -= tm.width;
                     }
 
 
@@ -527,8 +533,8 @@ public:
                                 size_t len = this->utf8len_current_char();
                                 char c = this->label.buffer[this->edit_buffer_pos + len];
                                 this->label.buffer[this->edit_buffer_pos + len] = 0;
-                                int w;
-                                this->drawable.text_metrics(this->font, this->label.buffer + this->edit_buffer_pos, w, this->h_text);
+                                gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
+                                this->h_text = tm.height;
                                 this->label.buffer[this->edit_buffer_pos + len] = c;
                                 UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                                 this->buffer_size -= len;
@@ -541,7 +547,7 @@ public:
                                                 ));
                                 this->draw_cursor(this->get_cursor_rect());
                                 this->drawable.end_update();
-                                this->w_text -= w;
+                                this->w_text -= tm.width;
                             }
                             else
                                 break;

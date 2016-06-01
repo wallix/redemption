@@ -26,6 +26,8 @@
 #include <cstdint>
 
 #include "utils/noncopyable.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
 
 struct BGRPalette;
@@ -192,6 +194,9 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPColCache   const & cmd) {}
     virtual void draw(RDPBrushCache const & cmd) {}
 
+    virtual void begin_update() {}
+    virtual void end_update() {}
+
     virtual void sync() {}
 
     // TODO berk, data within size
@@ -346,6 +351,14 @@ struct GraphicProxyBase : GraphicBase<Derived, InterfaceBase, CoreAccess>
         CoreAccess::graphic_proxy(this->derived()).set_row(rownum, data);
     }
 
+    void begin_update() override {
+        CoreAccess::graphic_proxy(this->derived()).begin_update();
+    }
+
+    void end_update() override {
+        CoreAccess::graphic_proxy(this->derived()).end_update();
+    }
+
 protected:
     template<class... Ts>
     void draw_impl(Ts const & ... args) {
@@ -358,7 +371,8 @@ struct draw_tag {};
 struct set_tag {};
 struct sync_tag {};
 struct set_row_tag {};
-
+struct begin_update_tag{};
+struct end_update_tag{};
 
 template<class Graphic>
 struct GraphicUniformProxy
@@ -395,6 +409,14 @@ struct GraphicUniformProxy
         this->graphic_(set_row_tag{}, rownum, data);
     }
 
+    void begin_update() {
+        this->graphic_(begin_update_tag{});
+    }
+
+    void end_update() {
+        this->graphic_(end_update_tag{});
+    }
+
 private:
     Graphic graphic_;
 };
@@ -424,6 +446,14 @@ struct GraphicUniformDistribution
 
     void operator()(set_row_tag, std::size_t rownum, const uint8_t * data) {
         this->graphic_.set_row(rownum, data);
+    }
+
+    void operator()(begin_update_tag) {
+        this->graphic_.begin_update();
+    }
+
+    void operator()(end_update_tag) {
+        this->graphic_.end_update();
     }
 };
 

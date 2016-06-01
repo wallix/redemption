@@ -48,14 +48,16 @@ public:
     {
         this->set_masked_text();
 
-        this->drawable.text_metrics(font, "*", this->w_char, this->h_char);
+        gdi::TextMetrics tm(font, "*");
+        this->w_char = tm.width;
+        this->h_char = tm.height;
         this->rect.cy = (this->masked_text.y_text) * 2 + this->h_char;
         this->masked_text.rect.cx = this->rect.cx;
         this->masked_text.rect.cy = this->rect.cy;
-        ++this->masked_text.rect.x;
-        ++this->masked_text.rect.y;
+        this->masked_text.rect.x += 1;
+        this->masked_text.rect.y += 1;
         this->rect.cy += 2;
-        --this->h_char;
+        this->h_char -= 1;
     }
 
     ~WidgetPassword() override {
