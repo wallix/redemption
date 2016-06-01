@@ -21,7 +21,7 @@
    Vnc module
 */
 
-#pragma once 
+#pragma once
 
 #include "main/version.hpp"
 
@@ -1905,8 +1905,9 @@ private:
                 }
 
                 Pointer cursor;
-                cursor.x = 3;
-                cursor.y = 3;
+                LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
+                cursor.x = x;
+                cursor.y = y;
                 cursor.bpp = 24;
                 cursor.width = 32;
                 cursor.height = 32;
