@@ -18,13 +18,13 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_LABELGRID_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET_LABELGRID_HPP_
+#pragma once
 
 #include "utils/log.hpp"
 #include "widget.hpp"
 #include "label.hpp"
 #include "grid.hpp"
+#include "gdi/graphic_api.hpp"
 
 struct WidgetLabelGrid : public WidgetGrid {
     static const unsigned x_padding_label = 3;
@@ -34,7 +34,7 @@ struct WidgetLabelGrid : public WidgetGrid {
 
     Font const & font;
 
-    WidgetLabelGrid(mod_api & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLabelGrid(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_lines, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,
@@ -99,4 +99,4 @@ struct WidgetLabelGrid : public WidgetGrid {
 };
 
 
-#endif
+

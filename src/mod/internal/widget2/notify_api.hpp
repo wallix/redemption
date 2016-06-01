@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_)
-#define REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_
+#pragma once
 
 class Widget2;
 
@@ -34,4 +33,3 @@ public:
     {}
 };
 
-#endif

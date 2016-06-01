@@ -19,12 +19,12 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_TOOLTIP_HPP)
-#define REDEMPTION_MOD_WIDGET2_TOOLTIP_HPP
+#pragma once
 
 #include "widget.hpp"
 #include "multiline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetTooltip : public Widget2
 {
@@ -33,7 +33,7 @@ class WidgetTooltip : public Widget2
     WidgetMultiLine desc;
     int border_color;
 public:
-    WidgetTooltip(mod_api & drawable, int16_t x, int16_t y, Widget2 & parent,
+    WidgetTooltip(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
                   int fgcolor, int bgcolor, int border_color, Font const & font)
         : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)
@@ -99,4 +99,3 @@ public:
     }
 };
 
-#endif

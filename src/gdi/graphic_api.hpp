@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_GRAPHIC_DEVICE_HPP
-#define REDEMPTION_GDI_GRAPHIC_DEVICE_HPP
+#pragma once
 
 #include <type_traits>
 #include <utility>
@@ -27,6 +26,8 @@
 #include <cstdint>
 
 #include "utils/noncopyable.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
 
 struct BGRPalette;
@@ -193,6 +194,9 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPColCache   const & cmd) {}
     virtual void draw(RDPBrushCache const & cmd) {}
 
+    virtual void begin_update() {}
+    virtual void end_update() {}
+
     virtual void sync() {}
 
     // TODO berk, data within size
@@ -347,6 +351,14 @@ struct GraphicProxyBase : GraphicBase<Derived, InterfaceBase, CoreAccess>
         CoreAccess::graphic_proxy(this->derived()).set_row(rownum, data);
     }
 
+    void begin_update() override {
+        CoreAccess::graphic_proxy(this->derived()).begin_update();
+    }
+
+    void end_update() override {
+        CoreAccess::graphic_proxy(this->derived()).end_update();
+    }
+
 protected:
     template<class... Ts>
     void draw_impl(Ts const & ... args) {
@@ -359,7 +371,8 @@ struct draw_tag {};
 struct set_tag {};
 struct sync_tag {};
 struct set_row_tag {};
-
+struct begin_update_tag{};
+struct end_update_tag{};
 
 template<class Graphic>
 struct GraphicUniformProxy
@@ -396,6 +409,14 @@ struct GraphicUniformProxy
         this->graphic_(set_row_tag{}, rownum, data);
     }
 
+    void begin_update() {
+        this->graphic_(begin_update_tag{});
+    }
+
+    void end_update() {
+        this->graphic_(end_update_tag{});
+    }
+
 private:
     Graphic graphic_;
 };
@@ -425,6 +446,14 @@ struct GraphicUniformDistribution
 
     void operator()(set_row_tag, std::size_t rownum, const uint8_t * data) {
         this->graphic_.set_row(rownum, data);
+    }
+
+    void operator()(begin_update_tag) {
+        this->graphic_.begin_update();
+    }
+
+    void operator()(end_update_tag) {
+        this->graphic_.end_update();
     }
 };
 
@@ -507,6 +536,105 @@ public:
     using base_type_::base_type_;
 };
 
+struct TextMetrics
+{
+    int width;
+    int height;
+    
+    TextMetrics(const Font & font, const char * text)
+        : width(0)
+        , height(0)
+    {
+        UTF8toUnicodeIterator unicode_iter(text);
+        for (; uint32_t c = *unicode_iter; ++unicode_iter) {
+            bool exists = font.glyph_defined(c) && font.font_items[c];
+            const FontChar & font_item = font.font_items[exists ? c : static_cast<unsigned>('?')];
+            width += font_item.incby;
+            height = std::max(height, font_item.height);
+        }
+    }
+};
+
+
+TODO("implementation of the server_draw_text_deprecated function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+static inline void server_draw_text(
+                GraphicApi & drawable,
+                Font const & font, int16_t x, int16_t y, const char * text,
+                uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) 
+{
+    static GlyphCache mod_glyph_cache;
+
+    UTF8toUnicodeIterator unicode_iter(text);
+    bool is_first_char = true;
+    int offset_first_char = 0;
+    while (*unicode_iter) {
+        int total_width = 0;
+        int total_height = 0;
+        uint8_t data[256];
+        auto data_begin = std::begin(data);
+        const auto data_end = std::end(data)-2;
+
+        const int cacheId = 7;
+        int distance_from_previous_fragment = 0;
+        while (data_begin != data_end) {
+            const uint32_t charnum = *unicode_iter;
+            if (!charnum) {
+                break ;
+            }
+            ++unicode_iter;
+
+            int cacheIndex = 0;
+            bool exists = font.glyph_defined(charnum) && font.font_items[charnum];
+            if (!exists){
+                LOG(LOG_WARNING, "mod_api::server_draw_text_deprecated()"
+                                 " - character not defined >0x%02x<", charnum);
+            }
+            FontChar const & font_item = font.font_items[exists ? charnum : static_cast<unsigned>('?')];
+           
+            if (is_first_char) {
+                is_first_char = false;
+                offset_first_char = font_item.offset;
+            }
+            TODO(" avoid passing parameters by reference to get results")
+            const GlyphCache::t_glyph_cache_result cache_result =
+                mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
+            (void)cache_result; // supress warning
+
+            *data_begin = cacheIndex;
+            ++data_begin;
+            *data_begin = distance_from_previous_fragment;
+            ++data_begin;
+            distance_from_previous_fragment = font_item.incby;
+            total_width += font_item.incby;
+            total_height = std::max(total_height, font_item.height);
+        }
+
+        const Rect bk(x, y, total_width + 1, total_height + 1);
+
+        RDPGlyphIndex glyphindex(
+            cacheId,            // cache_id
+            0x03,               // fl_accel
+            0x0,                // ui_charinc
+            1,                  // f_op_redundant,
+            fgcolor,            // BackColor (text color)
+            bgcolor,            // ForeColor (color of the opaque rectangle)
+            bk,                 // bk
+            bk,                 // op
+            // brush
+            RDPBrush(0, 0, 3, 0xaa,
+                reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55")),
+            x - offset_first_char, // glyph_x
+            y + total_height,   // glyph_y
+            data_begin - data,  // data_len in bytes
+            data                // data
+        );
+
+        x += total_width;
+
+        drawable.draw(glyphindex, clip, mod_glyph_cache);
+    }
 }
 
-#endif
+
+}
+

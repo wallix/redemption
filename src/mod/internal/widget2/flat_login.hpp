@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_LOGIN_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_LOGIN_HPP
+#pragma once
 
 #include "edit.hpp"
 #include "edit_valid.hpp"
@@ -33,10 +32,9 @@
 #include "utils/ellipse.hpp"
 #include "utils/theme.hpp"
 #include "core/defines.hpp"
+#include "gdi/graphic_api.hpp"
 
 #include <array>
-
-// #include "scroll.hpp"
 
 class FlatLogin : public WidgetParent
 {
@@ -63,7 +61,8 @@ private:
     // WidgetHScrollBar hbar;
 
 public:
-    FlatLogin(mod_api& drawable, int16_t left, int16_t top, uint16_t width, uint16_t height, Widget2 & parent,
+    FlatLogin(gdi::GraphicApi & drawable, 
+              int16_t left, int16_t top, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
               const char * login, const char * password,
@@ -234,4 +233,3 @@ public:
     }
 };
 
-#endif

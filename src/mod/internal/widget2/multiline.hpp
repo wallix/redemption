@@ -19,11 +19,10 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP
-
+#pragma once
 #include "widget.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetMultiLine : public Widget2
 {
@@ -47,7 +46,7 @@ public:
     Font const & font;
 
 public:
-    WidgetMultiLine(mod_api& drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetMultiLine(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize, int group_id,
                     int fgcolor, int bgcolor, Font const & font,
@@ -91,15 +90,18 @@ public:
             text += size + 4;
             *pbuf = '\0';
             ++pbuf;
-            int h;
-            this->drawable.text_metrics(this->font, line->str, line->cx, h);
-            if (h > this->cy_text)
-                this->cy_text = h;
+            gdi::TextMetrics tm(this->font, line->str);
+            line->cx = tm.width;
+            if (tm.height > this->cy_text){
+                this->cy_text = tm.height;
+            }
             if (this->auto_resize) {
-                if (line->cx > this->rect.cx)
+                if (line->cx > this->rect.cx){
                     this->rect.cx = line->cx;
-                if (h > this->rect.cy)
-                    this->rect.cy = h;
+                }
+                if (tm.height > this->rect.cy){
+                    this->rect.cy = tm.height;
+                }
             }
             ++line;
         } while (str && pbuf < &this->buffer[this->buffer_size] && line != &this->lines[this->max_line-1]);
@@ -124,7 +126,7 @@ public:
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
-            this->drawable.server_draw_text(this->font, this->x_text + this->dx(),
+            gdi::server_draw_text(this->drawable, this->font, this->x_text + this->dx(),
                                              dy,
                                              line->str,
                                              this->fg_color,
@@ -139,4 +141,3 @@ public:
     }
 };
 
-#endif
