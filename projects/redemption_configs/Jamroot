@@ -257,22 +257,22 @@ constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
 constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
 
 actions generate_cpp_configs {
-    $(>) \
+    $(>[0]) \
         $(AUTOGENDIR)/authid.hpp \
         $(FILEGEN_CONF) \
         $(AUTOGENDIR)/set_value.tcc
 }
 
 actions generate_python_spec {
-    $(>) $(FILEGEN_SPEC)
+    $(>[0]) $(FILEGEN_SPEC)
 }
 
 actions generate_enum {
     $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
 }
 
-make $(FILEGEN_CONF) : make_cpp_config : @generate_cpp_configs : <location>. ;
-make $(FILEGEN_SPEC) : make_python_spec : @generate_python_spec : <location>. ;
+make $(FILEGEN_CONF) : make_cpp_config generate_enum : @generate_cpp_configs : <location>. ;
+make $(FILEGEN_SPEC) : make_python_spec generate_enum : @generate_python_spec : <location>. ;
 make $(FILEGEN_ENUM) : make_cpp_enum : @generate_enum : <location>. ;
 
 alias generate_cpp_configs : $(FILEGEN_CONF) ;
@@ -288,7 +288,6 @@ actions cp_config {
     mkdir -p $dirinstall && \
     cp -R \
         include/configs/* \
-        src/configs/types.hpp \
         src/configs/io.hpp \
         src/configs/config.hpp \
         src/configs/config_access.hpp \

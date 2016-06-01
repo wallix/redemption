@@ -75,20 +75,23 @@ extern "C" {
 #define HMAC_KEY_LENGTH   CRYPTO_KEY_LENGTH
 
 
-class CryptoContext {
+class CryptoContext
+{
     bool master_key_loaded;
     bool hmac_key_loaded;
     unsigned char master_key[CRYPTO_KEY_LENGTH];
+    static_assert(cfg::crypto::key0::type().size() == CRYPTO_KEY_LENGTH, "");
 
-    public:
+public:
     get_hmac_key_prototype * get_hmac_key_cb;
     get_trace_key_prototype * get_trace_key_cb;
 
     Random & gen;
     const Inifile & ini;
-    private:
+private:
     unsigned char hmac_key[HMAC_KEY_LENGTH];
-    public:
+    static_assert(cfg::crypto::key1::type().size() == HMAC_KEY_LENGTH, "");
+public:
 
     auto get_hmac_key() -> unsigned char (&)[HMAC_KEY_LENGTH]
     {
@@ -98,7 +101,7 @@ class CryptoContext {
                 this->get_hmac_key_cb(reinterpret_cast<char*>(this->hmac_key));
             }
             else {
-                memcpy(this->hmac_key, ini.get<cfg::crypto::key1>(), sizeof(this->hmac_key));
+                memcpy(this->hmac_key, ini.get<cfg::crypto::key1>().data(), sizeof(this->hmac_key));
             }
             this->hmac_key_loaded = true;
         }
@@ -118,7 +121,7 @@ class CryptoContext {
                 this->master_key_loaded = true;
             }
             else {
-                memcpy(this->master_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->master_key));
+                memcpy(this->master_key, this->ini.get<cfg::crypto::key0>().data(), sizeof(this->master_key));
                 this->master_key_loaded = true;
             }
         }
@@ -236,7 +239,7 @@ class CryptoContext {
     {
         if (not this->master_key_loaded)
         {
-            memcpy(this->master_key, this->ini.get<cfg::crypto::key0>(), sizeof(this->master_key));
+            memcpy(this->master_key, this->ini.get<cfg::crypto::key0>().data(), sizeof(this->master_key));
             this->master_key_loaded = true;
         }
         return &(this->master_key[0]);

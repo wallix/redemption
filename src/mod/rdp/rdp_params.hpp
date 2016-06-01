@@ -54,16 +54,16 @@ struct ModRDPParams {
     bool disable_file_system_log_syslog;
     bool disable_file_system_log_wrm;
 
-    bool                                  session_probe_use_clipboard_based_launcher;
-    unsigned                              session_probe_launch_timeout;
-    unsigned                              session_probe_launch_fallback_timeout;
-    bool                                  session_probe_start_launch_timeout_timer_only_after_logon;
-    configs::SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
-    unsigned                              session_probe_keepalive_timeout;
-    bool                                  session_probe_on_keepalive_timeout_disconnect_user;
-    bool                                  session_probe_end_disconnected_session;
-    bool                                  session_probe_customize_executable_name;
-    const char *                          session_probe_alternate_shell;
+    bool                         session_probe_use_clipboard_based_launcher;
+    unsigned                     session_probe_launch_timeout;
+    unsigned                     session_probe_launch_fallback_timeout;
+    bool                         session_probe_start_launch_timeout_timer_only_after_logon;
+    SessionProbeOnLaunchFailure  session_probe_on_launch_failure;
+    unsigned                     session_probe_keepalive_timeout;
+    bool                         session_probe_on_keepalive_timeout_disconnect_user;
+    bool                         session_probe_end_disconnected_session;
+    bool                         session_probe_customize_executable_name;
+    const char *                 session_probe_alternate_shell;
 
     bool         enable_transparent_mode;
     const char * output_filename;
@@ -91,13 +91,13 @@ struct ModRDPParams {
     bool          disconnect_on_logon_user_change;
     uint32_t      open_session_timeout;
 
-    bool                        server_cert_store;
-    configs::ServerCertCheck    server_cert_check;
-    configs::ServerNotification server_access_allowed_message;
-    configs::ServerNotification server_cert_create_message;
-    configs::ServerNotification server_cert_success_message;
-    configs::ServerNotification server_cert_failure_message;
-    configs::ServerNotification server_cert_error_message;
+    bool               server_cert_store;
+    ServerCertCheck    server_cert_check;
+    ServerNotification server_access_allowed_message;
+    ServerNotification server_cert_create_message;
+    ServerNotification server_cert_success_message;
+    ServerNotification server_cert_failure_message;
+    ServerNotification server_cert_error_message;
 
     bool hide_client_name;
 
@@ -167,7 +167,7 @@ struct ModRDPParams {
         , session_probe_launch_timeout(0)
         , session_probe_launch_fallback_timeout(0)
         , session_probe_start_launch_timeout_timer_only_after_logon(true)
-        , session_probe_on_launch_failure(configs::SessionProbeOnLaunchFailure::disconnect_user)
+        , session_probe_on_launch_failure(SessionProbeOnLaunchFailure::disconnect_user)
         , session_probe_keepalive_timeout(0)
         , session_probe_on_keepalive_timeout_disconnect_user(true)
         , session_probe_end_disconnected_session(false)
@@ -201,12 +201,12 @@ struct ModRDPParams {
         , open_session_timeout(0)
 
         , server_cert_store(true)
-        , server_cert_check(configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know)
-        , server_access_allowed_message(configs::ServerNotification::syslog)
-        , server_cert_create_message(configs::ServerNotification::syslog)
-        , server_cert_success_message(configs::ServerNotification::syslog)
-        , server_cert_failure_message(configs::ServerNotification::syslog)
-        , server_cert_error_message(configs::ServerNotification::syslog)
+        , server_cert_check(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know)
+        , server_access_allowed_message(ServerNotification::syslog)
+        , server_cert_create_message(ServerNotification::syslog)
+        , server_cert_success_message(ServerNotification::syslog)
+        , server_cert_failure_message(ServerNotification::syslog)
+        , server_cert_error_message(ServerNotification::syslog)
 
         , hide_client_name(false)
 

@@ -47,14 +47,14 @@ public:
     {}
 
     void attach_apis(ApisRegister & api_register, const Inifile & ini) {
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)) {
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)) {
             api_register.kbd_input_list.push_back(this->syslog_kbd);
             api_register.capture_list.push_back(this->syslog_kbd);
         }
 
         if (this->authentifier && ini.get<cfg::session_log::enable_session_log>() &&
             (ini.get<cfg::session_log::keyboard_input_masking_level>()
-             != ::configs::KeyboardInputMaskingLevel::fully_masked)
+             != ::KeyboardInputMaskingLevel::fully_masked)
         ) {
             api_register.kbd_input_list.push_back(this->session_log_kbd);
             api_register.capture_probe_list.push_back(this->session_log_kbd);

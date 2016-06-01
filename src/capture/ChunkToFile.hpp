@@ -74,9 +74,9 @@ public:
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
     , ini(ini)
-    , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
+    , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
     {
-        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_index_algorithm()) {
+        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
                , this->ini.get<cfg::video::wrm_compression_algorithm>().get());
         }
@@ -109,7 +109,7 @@ public:
           , info_cache_4_size
           , info_cache_4_persistent
 
-          , this->compression_wrapper.get_index_algorithm()
+          , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
         );
     }
 
@@ -192,7 +192,7 @@ public:
                   , info_cache_4_size
                   , info_cache_4_persistent
 
-                  , this->compression_wrapper.get_index_algorithm()
+                  , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
                 );
             }
             break;

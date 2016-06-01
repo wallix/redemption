@@ -7,7 +7,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::client::keyboard_layout_proposals&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
                 av
             );
         }
@@ -436,7 +436,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::authfile&>(this->variables).value,
-                ::configs::spec_type<std::basic_string<char>>{},
+                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
                 av
             );
         }
@@ -540,7 +540,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::movie_path&>(this->variables).value,
-                ::configs::spec_type<std::basic_string<char>>{},
+                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
                 av
             );
         }
@@ -619,7 +619,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::internal_mod::theme&>(this->variables).value,
-                ::configs::spec_type<std::basic_string<char>>{},
+                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
                 av
             );
         }
@@ -706,7 +706,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::allow_channels&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
                 av
             );
         }
@@ -714,7 +714,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::deny_channels&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
                 av
             );
         }
@@ -754,7 +754,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::proxy_managed_drives&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
                 av
             );
         }
@@ -778,7 +778,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::alternate_shell&>(this->variables).value,
-                ::configs::spec_type<std::basic_string<char>>{},
+                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
                 av
             );
         }
@@ -786,7 +786,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::shell_working_directory&>(this->variables).value,
-                ::configs::spec_type<std::basic_string<char>>{},
+                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
                 av
             );
         }
@@ -1070,7 +1070,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::translation::password_en&>(this->variables).value,
-                ::configs::spec_type<std::basic_string<char>>{},
+                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
                 av
             );
         }
@@ -1078,7 +1078,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::translation::password_fr&>(this->variables).value,
-                ::configs::spec_type<std::basic_string<char>>{},
+                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
                 av
             );
         }

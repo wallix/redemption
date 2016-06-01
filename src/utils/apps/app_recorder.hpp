@@ -428,10 +428,11 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
 //    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
 //        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
 //    }
-    ini.set<cfg::video::wrm_compression_algorithm>(
-        ((wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM)) ?
-         player.info_compression_algorithm :
-         wrm_compression_algorithm_));
+    ini.set<cfg::video::wrm_compression_algorithm>(static_cast<WrmCompressionAlgorithm>(
+        (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
+        ? player.info_compression_algorithm
+        : wrm_compression_algorithm_
+    ));
 
     int return_code = 0;
     try {
@@ -474,7 +475,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
             }
         };
 
-        if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
+        if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
             run(
                 CryptoOutMetaSequenceTransport(
                     &cctx,
@@ -743,19 +744,19 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
     ini.set<cfg::video::png_interval>(png_interval);
     ini.set<cfg::video::frame_interval>(wrm_frame_interval);
     ini.set<cfg::video::break_interval>(wrm_break_interval);
-    ini.get_ref<cfg::video::capture_flags>() &= ~(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
+    ini.get_ref<cfg::video::capture_flags>() &= ~(CaptureFlags::wrm | CaptureFlags::png);
     if (options.count("wrm") > 0) {
-        ini.get_ref<cfg::video::capture_flags>() |= configs::CaptureFlags::wrm;
+        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::wrm;
     }
     if (options.count("png") > 0) {
-        ini.get_ref<cfg::video::capture_flags>() |= configs::CaptureFlags::png;
+        ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::png;
     }
 
     if (int status = parse_format(ini, options, output_filename)) {
         return status;
     }
 
-    ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png));
+    ini.set<cfg::video::rt_display>(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png));
 
 /*
     {
@@ -802,13 +803,13 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
 
     if (options.count("encryption") > 0) {
              if (0 == strcmp(wrm_encryption.c_str(), "enable")) {
-            ini.set<cfg::globals::trace_type>(configs::TraceType::cryptofile);
+            ini.set<cfg::globals::trace_type>(TraceType::cryptofile);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "disable")) {
-            ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
+            ini.set<cfg::globals::trace_type>(TraceType::localfile);
         }
         else if (0 == strcmp(wrm_encryption.c_str(), "original")) {
-            ini.set<cfg::globals::trace_type>(infile_is_encrypted ? configs::TraceType::cryptofile : configs::TraceType::localfile);
+            ini.set<cfg::globals::trace_type>(infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile);
         }
         else {
             std::cerr << "Unknown wrm encryption parameter\n\n";
@@ -816,10 +817,10 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         }
     }
     else {
-        ini.set<cfg::globals::trace_type>(infile_is_encrypted ? configs::TraceType::cryptofile : configs::TraceType::localfile);
+        ini.set<cfg::globals::trace_type>(infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile);
     }
 
-    if (infile_is_encrypted || (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile)) {
+    if (infile_is_encrypted || (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile)) {
         OpenSSL_add_all_digests();
     }
 
@@ -906,7 +907,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         try {
             bool test = (
                 force_record
-             || bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::png)
+             || bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::png)
 //             || ini.get<cfg::video::wrm_color_depth_selection_strategy>() != USE_ORIGINAL_COLOR_DEPTH
              || capture_bpp != static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
              || show_file_metadata

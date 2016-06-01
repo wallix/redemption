@@ -173,7 +173,7 @@ struct type_enumerations
         std::string str_tname(tname.begin(), tname.end());
         if ( ! apply_enum(str_tname, fn, this->enumerations_)
          &&  ! apply_enum(str_tname, fn, this->enumerations_set_)) {
-            throw std::runtime_error("unknown enum " + str_tname);
+            throw std::runtime_error("unknown enum '" + str_tname + "'");
         }
     }
 

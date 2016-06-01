@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::client::bogus_user_id>(false);
         ini.set<cfg::client::rdp_compression>(0);
         ini.set<cfg::client::fast_path>(fastpath_support);
-        ini.set<cfg::globals::movie>(true);
+        ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
 
         class MyFront : public Front
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::client::bogus_user_id>(false);
         ini.set<cfg::client::rdp_compression>(0);
         ini.set<cfg::client::fast_path>(fastpath_support);
-        ini.set<cfg::globals::movie>(true);
+        ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
 
         class MyFront : public Front
@@ -601,7 +601,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         ini.set<cfg::client::bogus_user_id>(false);
         ini.set<cfg::client::rdp_compression>(0);
         ini.set<cfg::client::fast_path>(fastpath_support);
-        ini.set<cfg::globals::movie>(true);
+        ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
 
         class MyFront : public Front

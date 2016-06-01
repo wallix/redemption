@@ -43,8 +43,7 @@ private:
     const unsigned param_session_probe_keepalive_timeout;
     const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
 
-    const ::configs::SessionProbeOnLaunchFailure
-                   param_session_probe_on_launch_failure;
+    const SessionProbeOnLaunchFailure param_session_probe_on_launch_failure;
 
     const bool     param_session_probe_end_disconnected_session;
 
@@ -85,7 +84,7 @@ public:
         unsigned session_probe_keepalive_timeout;
         bool     session_probe_on_keepalive_timeout_disconnect_user;
 
-        ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+        SessionProbeOnLaunchFailure session_probe_on_launch_failure;
 
         bool session_probe_end_disconnected_session;
 
@@ -118,7 +117,7 @@ public:
                          params)
     , session_probe_effective_launch_timeout(
             (params.session_probe_on_launch_failure ==
-             ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?
+             SessionProbeOnLaunchFailure::disconnect_user) ?
             params.session_probe_launch_timeout :
             params.session_probe_launch_fallback_timeout
         )
@@ -236,7 +235,7 @@ public:
             !this->session_probe_ready &&
             !this->has_additional_launch_time) {
             LOG(((this->param_session_probe_on_launch_failure ==
-                  ::configs::SessionProbeOnLaunchFailure::disconnect_user) ?
+                  SessionProbeOnLaunchFailure::disconnect_user) ?
                  LOG_ERR : LOG_WARNING),
                 "SessionProbeVirtualChannel::process_event: "
                     "Session Probe is not ready yet!");
@@ -253,7 +252,7 @@ public:
                      disable_input_event, disable_graphics_update);
 
             if (this->param_session_probe_on_launch_failure ==
-                ::configs::SessionProbeOnLaunchFailure::ignore_and_continue) {
+                SessionProbeOnLaunchFailure::ignore_and_continue) {
                 if (need_full_screen_update) {
                     if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                         LOG(LOG_INFO,

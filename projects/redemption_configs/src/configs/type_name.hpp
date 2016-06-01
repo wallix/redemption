@@ -52,7 +52,7 @@ string_type_name type_name(T const * = nullptr)
 #elif defined(__GNUG__)
 {
   char const * s = __PRETTY_FUNCTION__;
-  return {s + 47, s + strlen(s) - 44};
+  return {s + 47, s + strlen(s) - 1};
 }
 #else
 ;

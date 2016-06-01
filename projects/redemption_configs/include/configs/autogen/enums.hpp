@@ -12,12 +12,18 @@ enum class CaptureFlags {
     ocr = 8,
 };
 
+inline bool is_valid_enum_value(CaptureFlags e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return i == (i & static_cast<unsigned long>(1 << (5 - 1)));
+}
+
 inline CaptureFlags operator | (CaptureFlags x, CaptureFlags y)
 { return static_cast<CaptureFlags>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
 inline CaptureFlags operator & (CaptureFlags x, CaptureFlags y)
 { return static_cast<CaptureFlags>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline CaptureFlags operator ~ (CaptureFlags x)
-{ return static_cast<CaptureFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (5 - 1)))); }
+{ return static_cast<CaptureFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1 << (5 - 1))); }
 inline CaptureFlags operator + (CaptureFlags & x, CaptureFlags y) { return x | y; }
 inline CaptureFlags operator - (CaptureFlags & x, CaptureFlags y) { return x & ~y; }
 inline CaptureFlags & operator |= (CaptureFlags & x, CaptureFlags y) { return x = x | y; }
@@ -37,6 +43,9 @@ enum class Level {
     high = 2,
 };
 
+inline bool is_valid_enum_value(Level e)
+{ return static_cast<unsigned long>(e) < 3; }
+
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, Level e)
@@ -48,6 +57,9 @@ enum class Language {
     fr = 1,
 };
 
+inline bool is_valid_enum_value(Language e)
+{ return static_cast<unsigned long>(e) < 2; }
+
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, Language e)
@@ -58,6 +70,9 @@ enum class ClipboardEncodingType {
     utf8 = 0,
     latin1 = 1,
 };
+
+inline bool is_valid_enum_value(ClipboardEncodingType e)
+{ return static_cast<unsigned long>(e) < 2; }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
@@ -73,12 +88,18 @@ enum class KeyboardLogFlags {
     wrm = 2,
 };
 
+inline bool is_valid_enum_value(KeyboardLogFlags e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return i == (i & static_cast<unsigned long>(1 << (3 - 1)));
+}
+
 inline KeyboardLogFlags operator | (KeyboardLogFlags x, KeyboardLogFlags y)
 { return static_cast<KeyboardLogFlags>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
 inline KeyboardLogFlags operator & (KeyboardLogFlags x, KeyboardLogFlags y)
 { return static_cast<KeyboardLogFlags>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline KeyboardLogFlags operator ~ (KeyboardLogFlags x)
-{ return static_cast<KeyboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (3 - 1)))); }
+{ return static_cast<KeyboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1 << (3 - 1))); }
 inline KeyboardLogFlags operator + (KeyboardLogFlags & x, KeyboardLogFlags y) { return x | y; }
 inline KeyboardLogFlags operator - (KeyboardLogFlags & x, KeyboardLogFlags y) { return x & ~y; }
 inline KeyboardLogFlags & operator |= (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x | y; }
@@ -100,12 +121,18 @@ enum class ClipboardLogFlags {
     wrm = 2,
 };
 
+inline bool is_valid_enum_value(ClipboardLogFlags e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return i == (i & static_cast<unsigned long>(1 << (3 - 1)));
+}
+
 inline ClipboardLogFlags operator | (ClipboardLogFlags x, ClipboardLogFlags y)
 { return static_cast<ClipboardLogFlags>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
 inline ClipboardLogFlags operator & (ClipboardLogFlags x, ClipboardLogFlags y)
 { return static_cast<ClipboardLogFlags>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline ClipboardLogFlags operator ~ (ClipboardLogFlags x)
-{ return static_cast<ClipboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (3 - 1)))); }
+{ return static_cast<ClipboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1 << (3 - 1))); }
 inline ClipboardLogFlags operator + (ClipboardLogFlags & x, ClipboardLogFlags y) { return x | y; }
 inline ClipboardLogFlags operator - (ClipboardLogFlags & x, ClipboardLogFlags y) { return x & ~y; }
 inline ClipboardLogFlags & operator |= (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x | y; }
@@ -127,12 +154,18 @@ enum class FileSystemLogFlags {
     wrm = 2,
 };
 
+inline bool is_valid_enum_value(FileSystemLogFlags e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return i == (i & static_cast<unsigned long>(1 << (3 - 1)));
+}
+
 inline FileSystemLogFlags operator | (FileSystemLogFlags x, FileSystemLogFlags y)
 { return static_cast<FileSystemLogFlags>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
 inline FileSystemLogFlags operator & (FileSystemLogFlags x, FileSystemLogFlags y)
 { return static_cast<FileSystemLogFlags>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline FileSystemLogFlags operator ~ (FileSystemLogFlags x)
-{ return static_cast<FileSystemLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (3 - 1)))); }
+{ return static_cast<FileSystemLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1 << (3 - 1))); }
 inline FileSystemLogFlags operator + (FileSystemLogFlags & x, FileSystemLogFlags y) { return x | y; }
 inline FileSystemLogFlags operator - (FileSystemLogFlags & x, FileSystemLogFlags y) { return x & ~y; }
 inline FileSystemLogFlags & operator |= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x | y; }
@@ -157,12 +190,18 @@ enum class ServerNotification {
     admin = 4,
 };
 
+inline bool is_valid_enum_value(ServerNotification e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return i == (i & static_cast<unsigned long>(1 << (4 - 1)));
+}
+
 inline ServerNotification operator | (ServerNotification x, ServerNotification y)
 { return static_cast<ServerNotification>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
 inline ServerNotification operator & (ServerNotification x, ServerNotification y)
 { return static_cast<ServerNotification>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline ServerNotification operator ~ (ServerNotification x)
-{ return static_cast<ServerNotification>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (4 - 1)))); }
+{ return static_cast<ServerNotification>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1 << (4 - 1))); }
 inline ServerNotification operator + (ServerNotification & x, ServerNotification y) { return x | y; }
 inline ServerNotification operator - (ServerNotification & x, ServerNotification y) { return x & ~y; }
 inline ServerNotification & operator |= (ServerNotification & x, ServerNotification y) { return x = x | y; }
@@ -189,6 +228,9 @@ enum class ServerCertCheck {
     always_succeed = 3,
 };
 
+inline bool is_valid_enum_value(ServerCertCheck e)
+{ return static_cast<unsigned long>(e) < 4; }
+
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, ServerCertCheck e)
@@ -205,6 +247,9 @@ enum class TraceType {
     // Encryption enabled.
     cryptofile = 2,
 };
+
+inline bool is_valid_enum_value(TraceType e)
+{ return static_cast<unsigned long>(e) < 3; }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
@@ -223,6 +268,9 @@ enum class KeyboardInputMaskingLevel {
     fully_masked = 3,
 };
 
+inline bool is_valid_enum_value(KeyboardInputMaskingLevel e)
+{ return static_cast<unsigned long>(e) < 4; }
+
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, KeyboardInputMaskingLevel e)
@@ -239,6 +287,9 @@ enum class SessionProbeOnLaunchFailure {
     retry_without_session_probe = 2,
 };
 
+inline bool is_valid_enum_value(SessionProbeOnLaunchFailure e)
+{ return static_cast<unsigned long>(e) < 3; }
+
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnLaunchFailure e)
@@ -250,6 +301,9 @@ enum class VncBogusClipboardInfiniteLoop {
     duplicated = 1,
     continued = 2,
 };
+
+inline bool is_valid_enum_value(VncBogusClipboardInfiniteLoop e)
+{ return static_cast<unsigned long>(e) < 3; }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
@@ -265,6 +319,9 @@ enum class ColorDepthSelectionStrategy {
     depth16 = 1,
 };
 
+inline bool is_valid_enum_value(ColorDepthSelectionStrategy e)
+{ return static_cast<unsigned long>(e) < 2; }
+
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, ColorDepthSelectionStrategy e)
@@ -277,6 +334,9 @@ enum class WrmCompressionAlgorithm {
     gzip = 1,
     snappy = 2,
 };
+
+inline bool is_valid_enum_value(WrmCompressionAlgorithm e)
+{ return static_cast<unsigned long>(e) < 3; }
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
@@ -298,6 +358,9 @@ enum class RdpCompression {
     rdp6_1 = 4,
 };
 
+inline bool is_valid_enum_value(RdpCompression e)
+{ return static_cast<unsigned long>(e) < 5; }
+
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, RdpCompression e)
@@ -315,6 +378,17 @@ enum class ColorDepth {
     // 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
     depth24 = 24,
 };
+
+inline bool is_valid_enum_value(ColorDepth e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return false
+     || i == 8
+     || i == 15
+     || i == 16
+     || i == 24
+    ;
+}
 
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &

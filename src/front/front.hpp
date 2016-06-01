@@ -306,7 +306,7 @@ private:
           , max_bitmap_size
           , fastpath_support
           , mppc_enc
-          , ini.get<cfg::client::rdp_compression>() ? client_info.rdp_compression : 0
+          , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
           , verbose
         )
         {}
@@ -860,8 +860,8 @@ public:
         // Recording is enabled.
         TODO("simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types")
 
-        if (!ini.get<cfg::globals::movie>() &&
-            bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) &&
+        if (!ini.get<cfg::globals::is_rec>() &&
+            bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
 //            ini.get<cfg::context::pattern_kill>().empty() &&
 //            ini.get<cfg::context::pattern_notify>().empty()
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
@@ -878,12 +878,12 @@ public:
             return;
         }
 
-        if (!ini.get<cfg::globals::movie>()) {
+        if (!ini.get<cfg::globals::is_rec>()) {
             ini.set<cfg::video::capture_flags>(
 //                (!ini.get<cfg::context::pattern_kill>().empty() || !ini.get<cfg::context::pattern_notify>().empty()) ?
                 (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
                  ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())) ?
-                configs::CaptureFlags::ocr : configs::CaptureFlags::none);
+                CaptureFlags::ocr : CaptureFlags::none);
             ini.set<cfg::video::png_limit>(0);
         }
 
@@ -898,7 +898,7 @@ public:
             LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
         }
 
-        this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
+        this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
         TODO("remove this after unifying capture interface");
         bool full_video = false;
         this->capture = new Capture(
@@ -1069,7 +1069,7 @@ private:
 
         this->max_bitmap_size = 1024 * 64;
 
-        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.get<cfg::client::rdp_compression>() - 1))
+        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, static_cast<int>(this->ini.get<cfg::client::rdp_compression>()) - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
             if (this->verbose & 1) {
@@ -2724,7 +2724,7 @@ private:
 
         ::send_server_update( this->trans
                             , this->server_fastpath_update_support
-                            , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
+                            , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -3804,7 +3804,7 @@ private:
                 const uint32_t log_condition = (128 | 8);
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
-                                    , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
+                                    , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
                                     , this->mppc_enc
                                     , this->share_id
                                     , this->encryptionLevel
@@ -4355,7 +4355,7 @@ private:
         ::send_server_update(
             this->trans
           , this->server_fastpath_update_support
-          , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
+          , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
           , this->mppc_enc
           , this->share_id
           , this->encryptionLevel
@@ -4453,14 +4453,14 @@ private:
     }
 
     void update_keyboard_input_mask_state() {
-        const ::configs::KeyboardInputMaskingLevel keyboard_input_masking_level =
+        const ::KeyboardInputMaskingLevel keyboard_input_masking_level =
             this->ini.get<cfg::session_log::keyboard_input_masking_level>();
 
-        if (keyboard_input_masking_level == ::configs::KeyboardInputMaskingLevel::unmasked) return;
+        if (keyboard_input_masking_level == ::KeyboardInputMaskingLevel::unmasked) return;
 
         const bool mask_unidentified_data =
             ((keyboard_input_masking_level ==
-                  ::configs::KeyboardInputMaskingLevel::password_and_unidentified) ?
+                  ::KeyboardInputMaskingLevel::password_and_unidentified) ?
              (!this->session_probe_started_) : false);
 
         if (this->capture) {

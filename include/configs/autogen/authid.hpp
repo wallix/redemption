@@ -2,8 +2,8 @@
 // ATTENTION -- This file is auto-generated
 //
 
-#ifndef REDEMPTION_CONFIGS_AUTHID_T_DEF
-#define REDEMPTION_CONFIGS_AUTHID_T_DEF
+#pragma once
+
 enum authid_t {
     AUTHID_GLOBALS_CAPTURE_CHUNK,
     AUTHID_GLOBALS_AUTH_USER,
@@ -16,7 +16,7 @@ enum authid_t {
     AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT,
     AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD,
     AUTHID_GLOBALS_TRACE_TYPE,
-    AUTHID_GLOBALS_MOVIE,
+    AUTHID_GLOBALS_IS_REC,
     AUTHID_GLOBALS_MOVIE_PATH,
     AUTHID_CLIENT_KEYBOARD_LAYOUT,
     AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS,
@@ -47,9 +47,6 @@ enum authid_t {
     AUTHID_MOD_VNC_CLIPBOARD_DOWN,
     AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
     AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP,
-    AUTHID_VIDEO_DISABLE_KEYBOARD_LOG,
-    AUTHID_VIDEO_DISABLE_CLIPBOARD_LOG,
-    AUTHID_VIDEO_DISABLE_FILE_SYSTEM_LOG,
     AUTHID_VIDEO_RT_DISPLAY,
     AUTHID_CRYPTO_KEY0,
     AUTHID_CRYPTO_KEY1,
@@ -154,9 +151,6 @@ constexpr char const * const authstr[] = {
     "clipboard_down",
     "vnc_server_clipboard_encoding_type",
     "vnc_bogus_clipboard_infinite_loop",
-    "disable_keyboard_log",
-    "disable_clipboard_log",
-    "disable_file_system_log",
     "rt_display",
     "encryption_key",
     "sign_key",
@@ -216,4 +210,3 @@ constexpr char const * const authstr[] = {
     "disconnect_reason",
     "disconnect_reason_ack",
 };
-#endif

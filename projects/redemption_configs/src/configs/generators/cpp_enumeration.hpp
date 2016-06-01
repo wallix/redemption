@@ -64,11 +64,11 @@ namespace cpp_enumeration_writer
         };
 
         auto cfg_to_s_fmt = [&](auto & e) {
-            write(e, "template<> struct szbuffer_traits<%e> : ");
-            out << "szbuffer_traits<" << (e.is_icase_parser ? "void" : "unsigned long") << "> {};\n\n";
+            write(e, "template<> struct zstr_buffer_traits<%e> : ");
+            out << "zstr_buffer_traits<" << (e.is_icase_parser ? "void" : "unsigned long") << "> {};\n\n";
             write(e,
                 "inline non_owner_string cfg_to_s(\n"
-                "    szbuffer_from<%e> & buf,\n"
+                "    zstr_buffer_from<%e> & buf,\n"
                 "    cfg_s_type<%e>,\n"
                 "    %e x\n"
                 ") {\n"
@@ -201,12 +201,17 @@ namespace cpp_enumeration_writer
                     return ret;
                 });
                 write(e,
+                    "inline bool is_valid_enum_value(%e e)\n"
+                    "{\n"
+                    "    auto const i = static_cast<unsigned long>(e);\n"
+                    "    return i == (i & static_cast<unsigned long>(1 << (%u - 1)));\n"
+                    "}\n\n"
                     "inline %e operator | (%e x, %e y)\n"
                     "{ return static_cast<%e>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }\n"
                     "inline %e operator & (%e x, %e y)\n"
                     "{ return static_cast<%e>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }\n"
                     "inline %e operator ~ (%e x)\n"
-                    "{ return static_cast<%e>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (%u - 1)))); }\n"
+                    "{ return static_cast<%e>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1 << (%u - 1))); }\n"
                     "inline %e operator + (%e & x, %e y) { return x | y; }\n"
                     "inline %e operator - (%e & x, %e y) { return x & ~y; }\n"
                     "inline %e & operator |= (%e & x, %e y) { return x = x | y; }\n"
@@ -217,12 +222,29 @@ namespace cpp_enumeration_writer
             }
             else {
                 enum_def(e, [CPP_IDE(i = 0)] (auto &) mutable { return i++; });
+                write(e,
+                    "inline bool is_valid_enum_value(%e e)\n"
+                    "{ return static_cast<unsigned long>(e) < %u; }\n\n"
+                );
             }
             write_io(e);
         }
 
         for (auto & e : enums.enumerations_set_) {
             enum_def(e, [] (auto & v) mutable { return v.val; });
+            write(e,
+                "inline bool is_valid_enum_value(%e e)\n"
+                "{\n"
+                "    auto const i = static_cast<unsigned long>(e);\n"
+                "    return false\n"
+            );
+            for (auto & v : e.values) {
+                out << "     || i == " << v.val << "\n";
+            }
+            write(e,
+                "    ;\n"
+                "}\n\n"
+            );
             write_io(e);
         }
     }

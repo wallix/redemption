@@ -102,6 +102,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
             this->out() << str << "\n";
             this->authids.emplace_back(str, pack_get<sesman::name>(pack));
         }
+        this->tab(); this->out() << "// type: "; this->inherit().write_type(type); this->out() << "\n";
         this->tab(); this->out() << "struct " << varname << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_readable() { return " << bool(properties & sesman::io::read) << "; }\n";
         this->tab(); this->out() << "    static constexpr bool is_writable() { return " << bool(properties & sesman::io::write) << "; }\n";

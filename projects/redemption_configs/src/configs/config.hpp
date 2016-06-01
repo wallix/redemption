@@ -21,8 +21,7 @@
     parsing config file rdpproxy.ini
 */
 
-#ifndef _REDEMPTION_CORE_CONFIG_HPP_
-#define _REDEMPTION_CORE_CONFIG_HPP_
+#pragma once
 
 #include "configs/io.hpp"
 
@@ -71,7 +70,7 @@ namespace configs {
     };
 
     template<class Config>
-    struct CBuf : szbuffer_from<typename Config::type> {
+    struct CBuf : zstr_buffer_from<typename Config::type> {
     };
 
     template<class>
@@ -192,18 +191,21 @@ private:
     };
 
     template<class T>
-    static char const * cfg_to_s_(std::false_type, configs::VariablesConfiguration const &, Buffers const &)
-    { return nullptr; }
+    static char const * assign_zbuf_from_cfg_(
+        std::false_type,
+        configs::VariablesConfiguration const &,
+        Buffers const &
+    ) { return nullptr; }
 
     template<class T>
-    static char const * cfg_to_s_(
+    static char const * assign_zbuf_from_cfg_(
         std::true_type, configs
         ::VariablesConfiguration const & variables,
         Buffers const & buffers
     ){
-        return ::configs::cfg_to_s(
-            const_cast<configs::szbuffer_from<typename T::type> &>(
-                static_cast<configs::szbuffer_from<typename T::type> const &>(
+        return ::configs::assign_zbuf_from_cfg(
+            const_cast<configs::zstr_buffer_from<typename T::type> &>(
+                static_cast<configs::zstr_buffer_from<typename T::type> const &>(
                     static_cast<configs::CBuf<T> const &>(buffers)
                 )
             ),
@@ -226,7 +228,7 @@ private:
         }
 
         char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
-        { return cfg_to_s_<T>(std::integral_constant<bool, T::is_writable()>{}, variables, buffers); }
+        { return assign_zbuf_from_cfg_<T>(std::integral_constant<bool, T::is_writable()>{}, variables, buffers); }
     };
 
 public:
@@ -407,5 +409,3 @@ private:
 
 #include "configs/autogen/set_value.tcc"
 #include "configs/variant/check_record_config.tcc"
-
-#endif

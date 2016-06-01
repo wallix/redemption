@@ -117,7 +117,7 @@ public:
     }
 
     void enable_client_tls(bool server_cert_store,
-                           configs::ServerCertCheck server_cert_check,
+                           ServerCertCheck server_cert_check,
                            ServerNotifier & server_notifier,
                            const char * certif_path
             ) override {
@@ -131,12 +131,12 @@ public:
 
         LOG(LOG_INFO, "Client TLS start");
         bool ensure_server_certificate_match =
-            (server_cert_check == configs::ServerCertCheck::fails_if_no_match_or_missing)
-           ||(server_cert_check == configs::ServerCertCheck::fails_if_no_match_and_succeed_if_no_know);
+            (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
+           ||(server_cert_check == ServerCertCheck::fails_if_no_match_and_succeed_if_no_know);
 
         bool ensure_server_certificate_exists =
-            (server_cert_check == configs::ServerCertCheck::fails_if_no_match_or_missing)
-           ||(server_cert_check == configs::ServerCertCheck::succeed_if_exists_and_fails_if_missing);
+            (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
+           ||(server_cert_check == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
 
         try {
             this->tls->enable_client_tls(this->sck,

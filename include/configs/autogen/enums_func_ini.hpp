@@ -1,3 +1,7 @@
+//
+// ATTENTION -- This file is auto-generated
+//
+
 #pragma once
 
 #include "configs/io.hpp"

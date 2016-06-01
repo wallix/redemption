@@ -64,7 +64,7 @@ extern "C" {
                     if (   output_filename.length()
                         && !(
                             bool(ini.get<cfg::video::capture_flags>()
-                                & (configs::CaptureFlags::png | configs::CaptureFlags::wrm)
+                                & (CaptureFlags::png | CaptureFlags::wrm)
                             ) | ini.get<cfg::globals::capture_chunk>()
                         )
                     ) {

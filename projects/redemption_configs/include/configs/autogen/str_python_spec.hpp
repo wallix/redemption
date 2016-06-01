@@ -62,10 +62,10 @@
 "certificate_password = string(max=254, default='inquisition')\n\n"
 
 "#_advanced\n"
-"png_path = string(max=4095, default='" PNG_PATH "')\n\n"
+"png_path = string(max=4096, default='" PNG_PATH "')\n\n"
 
 "#_advanced\n"
-"wrm_path = string(max=4095, default='" WRM_PATH "')\n\n"
+"wrm_path = string(max=4096, default='" WRM_PATH "')\n\n"
 
 "#_hidden\n"
 "movie = boolean(default=False)\n\n"
@@ -87,7 +87,7 @@
 "enable_osd_display_remote_target = boolean(default=True)\n\n"
 
 "#_advanced\n"
-"persistent_path = string(max=4095, default='" PERSISTENT_PATH "')\n\n"
+"persistent_path = string(max=4096, default='" PERSISTENT_PATH "')\n\n"
 
 "#_hidden\n"
 "disable_proxy_opt = boolean(default=False)\n\n"
@@ -456,16 +456,16 @@
 "png_limit = integer(min=0, default=5)\n\n"
 
 "#_advanced\n"
-"replay_path = string(max=4095, default='/tmp/')\n\n"
+"replay_path = string(max=4096, default='/tmp/')\n\n"
 
 "#_advanced\n"
-"hash_path = string(max=4095, default='" HASH_PATH "')\n\n"
+"hash_path = string(max=4096, default='" HASH_PATH "')\n\n"
 
 "#_advanced\n"
-"record_tmp_path = string(max=4095, default='" RECORD_TMP_PATH "')\n\n"
+"record_tmp_path = string(max=4096, default='" RECORD_TMP_PATH "')\n\n"
 
 "#_advanced\n"
-"record_path = string(max=4095, default='" RECORD_PATH "')\n\n"
+"record_path = string(max=4096, default='" RECORD_PATH "')\n\n"
 
 "# Disable keyboard log:\n"
 "#   0: none\n"
