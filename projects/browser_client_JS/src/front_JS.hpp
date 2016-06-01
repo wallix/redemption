@@ -19,8 +19,8 @@
 
 */
 
-#ifndef FRONT_QT_HPP
-#define FRONT_QT_HPP
+#ifndef FRONT_JS_SDL_HPP
+#define FRONT_JS_SDL_HPP
 
 #include <stdio.h>
 #include <openssl/ssl.h>

@@ -56,7 +56,7 @@ class TransportWebSocket :  public Transport
 
             *pbuffer = this->buffer + i;
         } else {
-            EM_ASM_({ console.log('No data in WebSocket'); }, lenInt);
+            EM_ASM_({ console.log('No input data from WebSocket'); }, lenInt);
         }
     }
 
