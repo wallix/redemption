@@ -1148,7 +1148,7 @@ namespace details_ {
     }
 
     template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>
-    void write_packets_mpl(
+    void write_packets_impl(
         DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, uint8_t * buf,
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
@@ -1169,11 +1169,11 @@ namespace details_ {
     {
         if (data_buf_sz + header_buf_sz < 65536) {
             uint8_t buf[65536];
-            write_packets_mpl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
+            write_packets_impl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
         }
         else {
             auto u = std::make_unique<uint8_t[]>(data_buf_sz + header_buf_sz);
-            write_packets_mpl(data_buf_sz, header_buf_sz, u.get(), trans, data_writer, header_writers...);
+            write_packets_impl(data_buf_sz, header_buf_sz, u.get(), trans, data_writer, header_writers...);
         }
     }
 
@@ -1186,7 +1186,7 @@ namespace details_ {
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
         uint8_t buf[TotalSz::value];
-        write_packets_mpl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
+        write_packets_impl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
     }
 }
 

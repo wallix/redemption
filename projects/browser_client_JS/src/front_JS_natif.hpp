@@ -17,6 +17,13 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Clement Moroldo
 */
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#define  LOG_JS(s) EM_ASM_({ console.log($0); }, s);
+#else
+#define  LOG_JS(s)
+#endif
+
 
 #ifndef FRONT_JS_NATIF_HPP
 #define FRONT_JS_NATIF_HPP
@@ -27,9 +34,7 @@
 #include <stdint.h>
 #include <math.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
+
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -183,6 +188,11 @@ public:
 
     //void writeClientInfo() ;
 
+    /*void call_draw_event() {
+        EM_ASM_({ console.error(new Error().stack.toString()); }, 0);
+        this->_mod->draw_event(time(nullptr));
+    }*/
+
     void setClientInfo(ClientInfo & info) {
         this->_info = info;
         this->_mod_bpp = this->_info.bpp;
@@ -263,8 +273,7 @@ public:
 
         LCGRandom gen(0);
         if (this->_trans != nullptr) {
-            mod_rdp mod(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
-            this->_mod = &mod;
+            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);;
         }
     }
 
@@ -641,8 +650,8 @@ public:
     , _fps(30)
     , _mod_bpp(32)
     , mod_palette(BGRPalette::classic_332())
-    ,  _trans(nullptr)
-    ,  _mod(nullptr)
+    , _trans(nullptr)
+    , _mod(nullptr)
     {
         //this->_to_client_sender._front = this;
         //this->connexion();
@@ -876,9 +885,10 @@ extern "C" void backspacePressed() {
 
 extern "C" void recv_wraped() {
     if (front._mod !=  nullptr) {
-        front._mod->draw_event(time(nullptr));
-        EM_ASM_({ console.log('data_recved '); }, 0);
-    } else { EM_ASM_({ console.log('incoming_data off '); }, 0); }
+        front._mod->draw_event(time_t(nullptr));
+    } else {
+        EM_ASM_({ console.log('incoming_data off '); }, 0);
+    }
 }
 
 extern "C" void connexion() {

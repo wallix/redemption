@@ -35,6 +35,8 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 
+#define NID_shaWithRSAEncryption    42
+
 
 enum: int {
 	SHA_DIGEST_LENGTH = 20

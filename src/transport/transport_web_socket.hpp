@@ -20,12 +20,16 @@
    Transport layer abstraction
 */
 
+
 #ifndef TRANSPORT_WEB_SOCKET_HPP
 #define TRANSPORT_WEB_SOCKET_HPP
+
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
+
+
 
 #include "transport/transport.hpp"
 
@@ -35,7 +39,7 @@ class TransportWebSocket :  public Transport
     char * buffer;
 
     void do_send(const char * const buffer, size_t len) override {
-        EM_ASM_({ console.log('data_sent_to_serveur'); }, buffer, len);
+        EM_ASM_({ console.log('data_sent_to_serveur'); }, 0);
     }
 
     void do_recv(char ** pbuffer, size_t len) override {
@@ -50,9 +54,9 @@ class TransportWebSocket :  public Transport
                 EM_ASM_({ getDataOctet($0); }, i);
             }
 
-            pbuffer = &(this->buffer) + i;
+            *pbuffer = this->buffer + i;
         } else {
-            EM_ASM_({ console.log('Trap len ' + %0); }, lenInt);
+            EM_ASM_({ console.log('No data in WebSocket'); }, lenInt);
         }
     }
 

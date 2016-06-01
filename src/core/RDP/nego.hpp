@@ -24,6 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
 
+
 #include "core/RDP/nla/nla.hpp"
 #include "core/RDP/x224.hpp"
 
@@ -153,12 +154,10 @@ struct RdpNego
         ServerNotifier & server_notifier,
         const char * certif_path)
     {
-        EM_ASM_({ console.log('draw_event server_event start'); }, 0);
         switch (this->state){
-        case NEGO_STATE_INITIAL: EM_ASM_({ console.log('draw_event server_event NEGO_STATE_INITIAL'); }, 0);
+        case NEGO_STATE_INITIAL:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->send_negotiation_request();
-            EM_ASM_({ console.log('draw_event server_event NEGO_STATE_INITIAL 1'); }, 0);
             if (this->nla) {
                 this->state = NEGO_STATE_NLA;
             }
@@ -170,7 +169,7 @@ struct RdpNego
             }
         break;
         default:
-        case NEGO_STATE_NLA: EM_ASM_({ console.log('draw_event server_event NEGO_STATE_NLA'); }, 0);
+        case NEGO_STATE_NLA:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
             this->recv_connection_confirm(
                     server_cert_store,
@@ -179,7 +178,7 @@ struct RdpNego
                     certif_path
                 );
         break;
-        case NEGO_STATE_TLS: EM_ASM_({ console.log('draw_event server_event NEGO_STATE_TLS'); }, 0);
+        case NEGO_STATE_TLS:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
             this->recv_connection_confirm(
                     server_cert_store,
@@ -188,7 +187,7 @@ struct RdpNego
                     certif_path
                 );
         break;
-        case NEGO_STATE_RDP: EM_ASM_({ console.log('draw_event server_event NEGO_STATE_RDP'); }, 0);
+        case NEGO_STATE_RDP:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
             this->recv_connection_confirm(
                     server_cert_store,
@@ -196,10 +195,8 @@ struct RdpNego
                     server_notifier,
                     certif_path
                 );
-                EM_ASM_({ console.log('draw_event server_event NEGO_STATE_RDP 1'); }, 0);
         break;
         }
-        EM_ASM_({ console.log('draw_event server_event end'); }, 0);
     }
 
 
@@ -317,18 +314,15 @@ struct RdpNego
         ServerNotifier & server_notifier,
         const char * certif_path)
     {
-        EM_ASM_({ console.log('draw_event recv_connection_confirm start'); }, 0);
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
         constexpr size_t array_size = AUTOSIZE;
         uint8_t array[array_size];
         uint8_t * end = array;
         X224::RecvFactory f(this->trans, &end, array_size);
-
         InStream stream(array, end - array);
-        EM_ASM_({ console.log('draw_event recv_connection_confirm 1'); }, 0);
         X224::CC_TPDU_Recv x224(stream);
-        EM_ASM_({ console.log('draw_event recv_connection_confirm 2'); }, 0);
+
         if (x224.rdp_neg_type == 0){
             this->tls = false;
             this->state = NEGO_STATE_FINAL;
@@ -350,7 +344,7 @@ struct RdpNego
                         server_notifier,
                         certif_path
                     );
-                    EM_ASM_({ console.log('draw_event recv_connection_confirm 3'); }, 0);
+
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(this->trans, this->user,
 //                                   this->domain, this->password,
@@ -362,7 +356,7 @@ struct RdpNego
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }
-                EM_ASM_({ console.log('draw_event recv_connection_confirm 4'); }, 0);
+
                 int res = 0;
                 bool fallback = false;
                 try {
@@ -461,7 +455,6 @@ struct RdpNego
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
 
-        EM_ASM_({ console.log('draw_event recv_connection_confirm end'); }, 0);
     }
 
 
@@ -498,17 +491,14 @@ struct RdpNego
 
     void send_negotiation_request()
     {
-        EM_ASM_({ console.log('draw_event send_negotiation_request start'); }, 0);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
         char * cookie_or_token = this->lb_info?this->lb_info:cookie;
-        EM_ASM_({ console.log('draw_event send_negotiation_request 1'); }, 0);
         if (this->verbose & 128) {
             LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
             hexdump_c(cookie_or_token, strlen(cookie_or_token));
         }
-        EM_ASM_({ console.log('draw_event send_negotiation_request 2'); }, 0);
         uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP;
         if (this->tls) {
             rdp_neg_requestedProtocols |= X224::PROTOCOL_TLS;
@@ -516,7 +506,6 @@ struct RdpNego
         if (this->nla) {
             rdp_neg_requestedProtocols |= X224::PROTOCOL_HYBRID;
         }
-        EM_ASM_({ console.log('draw_event send_negotiation_request 3'); }, 0);
         StaticOutStream<65536> stream;
         X224::CR_TPDU_Send(stream, cookie_or_token,
                            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
@@ -525,7 +514,6 @@ struct RdpNego
                            rdp_neg_requestedProtocols);
         this->trans.send(stream.get_data(), stream.get_offset());
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
-        EM_ASM_({ console.log('draw_event send_negotiation_request end'); }, 0);
     }
 
 
