@@ -65,40 +65,34 @@ public:
         const uint16_t text_margin      = 6;
         const uint16_t text_indentation = border + text_margin + 4;
 
-        int w, h, tmp;
-        this->drawable.text_metrics(this->font, "bp", tmp, h);
-        this->drawable.text_metrics(this->font, this->buffer, w, tmp);
+        gdi::TextMetrics tm1(this->font, "bp");
+        gdi::TextMetrics tm2(this->font, this->buffer);
 
-        auto gcy = this->rect.cy - h / 2 - border;
+        auto gcy = this->rect.cy - tm1.height / 2 - border;
         auto gcx = this->rect.cx - border * 2 + 1;
         auto px = this->rect.x + border - 1;
-        auto wlabel = text_margin * 2 + w;
-        auto x = px;
-        auto y = this->rect.y + h / 2;
-        auto cx = text_indentation - text_margin - border + 2;
-        auto cy = 1;
-        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
-        cx = gcx;
-        this->drawable.draw(RDPOpaqueRect(Rect(x, y+gcy, cx+1, cy), this->fg_color), clip);
-        x += wlabel + 4;
-        cx -= wlabel + 4;
-        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
-        x = px;
-        cy = gcy;
-        cx = 1;
-        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
-        x += gcx;
-        this->drawable.draw(RDPOpaqueRect(Rect(x, y, cx, cy), this->fg_color), clip);
+        auto wlabel = text_margin * 2 + tm2.width;
+        auto y = this->rect.y + tm1.height / 2;
+        auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
+        this->drawable.draw(RDPOpaqueRect(rect1, this->fg_color), clip);
+        auto rect2 = Rect(px, y+gcy, gcx+1, 1);        
+        this->drawable.draw(RDPOpaqueRect(rect2, this->fg_color), clip);
+        auto rect3 = Rect(px + wlabel + 4, y, gcx - wlabel + 4, 1);
+        this->drawable.draw(RDPOpaqueRect(rect3, this->fg_color), clip);
+        auto rect4 = Rect(px, gcy, 1, 1);
+        this->drawable.draw(RDPOpaqueRect(rect4, this->fg_color), clip);
+        auto rect5 = Rect(px + gcx, y, 1, gcy);
+        this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), clip);
 
         // Label.
-        this->drawable.server_draw_text_deprecated( this->font
-                                       , this->rect.x + text_indentation
-                                       , this->rect.y
-                                       , this->buffer
-                                       , this->fg_color
-                                       , this->bg_color
-                                       , rect_intersect
-                                       );
+        gdi::server_draw_text(this->drawable, this->font
+                           , this->rect.x + text_indentation
+                           , this->rect.y
+                           , this->buffer
+                           , this->fg_color
+                           , this->bg_color
+                           , rect_intersect
+                           );
 
         WidgetParent::draw_children(rect_intersect);
     }

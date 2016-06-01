@@ -28,6 +28,7 @@
 #include "utils/noncopyable.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
 
 
 struct BGRPalette;
@@ -51,7 +52,6 @@ struct RDPBitmapData;
 struct Pointer;
 struct Rect;
 class Bitmap;
-class GlyphCache;
 
 class RDPColCache;
 class RDPBrushCache;
@@ -556,7 +556,7 @@ struct TextMetrics
 };
 
 
-TODO("implementation of the server_draw_text_deprecated function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+TODO("implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
 static inline void server_draw_text(
                 GraphicApi & drawable,
                 Font const & font, int16_t x, int16_t y, const char * text,

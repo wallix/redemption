@@ -221,16 +221,12 @@ public:
     }
 
     void rearrange() {
-        int target_group_min_width = 0;
-        int target_min_width = 0;
-        int protocol_min_width = 0;
-        int h = 0;
-        this->drawable.text_metrics(this->font, this->target_group_label.get_text(), target_group_min_width, h);
-        this->drawable.text_metrics(this->font, this->target_label.get_text(), target_min_width, h);
-        this->drawable.text_metrics(this->font, this->protocol_label.get_text(), protocol_min_width, h);
-        target_group_min_width += 5;
-        target_min_width += 5;
-        protocol_min_width += 5;
+        gdi::TextMetrics tm1(this->font, this->target_group_label.get_text());
+        int target_group_min_width = tm1.width + 5;
+        gdi::TextMetrics tm2(this->font, this->target_label.get_text());
+        int target_min_width = tm2.width + 5;
+        gdi::TextMetrics tm(this->font, this->protocol_label.get_text());
+        int protocol_min_width = tm.width + 5;
 
         ColumnWidthStrategy column_width_strategies[] = {
             { static_cast<uint16_t>(target_group_min_width), 200 },

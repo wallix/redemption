@@ -80,6 +80,7 @@ public:
 
 
 protected:
+
     static gdi::GraphicApi * get_gd(mod_api const & mod)
     {
         return mod.gd;
@@ -91,6 +92,13 @@ protected:
     }
 
 public:
+    void server_draw_text_poubelle(Font const & font, int16_t x, int16_t y, const char * text,
+                uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) 
+    {
+        gdi::server_draw_text(*this->gd, font, x, y, text, fgcolor, bgcolor, clip);
+    }
+
+
     virtual void send_to_front_channel(const char * const mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;
 
