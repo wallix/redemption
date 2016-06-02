@@ -1055,14 +1055,14 @@ obj test_show_data.o : tests/mod/rdp/test_show_data.cpp
 obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp
     : <cxxflags>-fPIC ;
 
-exe test_data_draw :
+exe test_show_data :
     bitmap_data_allocator.o
     test_show_data.o
     krb5
     openssl
     crypto
     gssglue
-    png
+    #png
     d3des
     z
     dl

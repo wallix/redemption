@@ -374,11 +374,11 @@ int app_proxy(
 
     if (!ini.get<cfg::globals::enable_ip_transparent>()) {
         if (setgid(egid) != 0){
-            LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
+            LOG(LOG_ERR, "Changing process group to %u failed with error: %s\n", egid, strerror(errno));
             return 1;
         }
         if (setuid(euid) != 0){
-            LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
+            LOG(LOG_ERR, "Changing process user to %u failed with error: %s\n", euid, strerror(errno));
             return 1;
         }
     }

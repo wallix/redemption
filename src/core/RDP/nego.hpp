@@ -24,6 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
 
+
 #include "core/RDP/nla/nla.hpp"
 #include "core/RDP/x224.hpp"
 
@@ -343,6 +344,7 @@ struct RdpNego
                         server_notifier,
                         certif_path
                     );
+
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(this->trans, this->user,
 //                                   this->domain, this->password,
@@ -354,6 +356,7 @@ struct RdpNego
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }
+
                 int res = 0;
                 bool fallback = false;
                 try {
@@ -451,6 +454,7 @@ struct RdpNego
             this->state = NEGO_STATE_FINAL;
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
+
     }
 
 
@@ -495,7 +499,6 @@ struct RdpNego
             LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
             hexdump_c(cookie_or_token, strlen(cookie_or_token));
         }
-
         uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP;
         if (this->tls) {
             rdp_neg_requestedProtocols |= X224::PROTOCOL_TLS;
@@ -503,7 +506,6 @@ struct RdpNego
         if (this->nla) {
             rdp_neg_requestedProtocols |= X224::PROTOCOL_HYBRID;
         }
-
         StaticOutStream<65536> stream;
         X224::CR_TPDU_Send(stream, cookie_or_token,
                            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),

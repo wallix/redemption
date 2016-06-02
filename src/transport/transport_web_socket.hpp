@@ -20,8 +20,14 @@
    Transport layer abstraction
 */
 
+
 #ifndef TRANSPORT_WEB_SOCKET_HPP
 #define TRANSPORT_WEB_SOCKET_HPP
+
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 
 
@@ -30,10 +36,35 @@
 
 class TransportWebSocket :  public Transport
 {
-    void send(const char * const buffer, size_t len) 
-    {
-        EM_ASM_({ console.log('data_sent_to_serveur'); }, buffer, len);
+    char * buffer;
+
+    void do_send(const char * const buffer, size_t len) override {
+        EM_ASM_({ console.log('data_sent_to_serveur'); }, 0);
     }
+
+    void do_recv(char ** pbuffer, size_t len) override {
+        //pbuffer[0...len] = read(len)
+
+        this->buffer = *pbuffer;
+        int i(0);
+        int lenInt(len);
+        if (lenInt > 0) {
+
+            for (i = 0; i < lenInt; i++) {
+                EM_ASM_({ getDataOctet($0); }, i);
+            }
+
+            *pbuffer = this->buffer + i;
+        } else {
+            EM_ASM_({ console.log('No input data from WebSocket'); }, lenInt);
+        }
+    }
+
+public:
+    void setBufferValue(char value, int i) {
+        this->buffer[i] = value;
+    }
+
 };
 
 
