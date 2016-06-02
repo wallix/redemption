@@ -21,7 +21,7 @@
    Vnc module
 */
 
-#pragma once 
+#pragma once
 
 #include "main/version.hpp"
 
@@ -181,7 +181,7 @@ private:
 
     bool clipboard_owned_by_client = true;
 
-    uint32_t bogus_clipboard_infinite_loop = 0;
+    VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
 
     uint32_t clipboard_general_capability_flags = 0;
 
@@ -206,7 +206,7 @@ public:
            , bool allow_authentification_retries
            , bool is_socket_transport
            , ClipboardEncodingType clipboard_server_encoding_type
-           , uint32_t bogus_clipboard_infinite_loop
+           , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , auth_api * acl
            , uint32_t verbose
            )
@@ -2336,7 +2336,7 @@ private:
                                                    );
                     }
                     else {
-                        if (!this->bogus_clipboard_infinite_loop) {
+                        if (this->bogus_clipboard_infinite_loop == VncBogusClipboardInfiniteLoop::delayed) {
                             if (this->verbose) {
                                 LOG(LOG_INFO,
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%d) (delayed)",
@@ -2347,7 +2347,7 @@ private:
 
                             this->clipboard_requesting_for_data_is_delayed = true;
                         }
-                        else if ((this->bogus_clipboard_infinite_loop != 1) &&
+                        else if (this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated &&
                                  (this->clipboard_general_capability_flags & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
                             if (this->verbose) {
                                 LOG( LOG_INFO
@@ -2456,7 +2456,7 @@ private:
                     while (remaining_pdu_data_length);
                 };
 
-                if (this->bogus_clipboard_infinite_loop && this->clipboard_owned_by_client) {
+                if (this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::delayed && this->clipboard_owned_by_client) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
                             8 +                                 // clipHeader(8)

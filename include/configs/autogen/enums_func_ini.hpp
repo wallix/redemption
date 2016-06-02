@@ -27,7 +27,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(CaptureFlags & x, spec_type<CaptureFlags>, array_view_const_char value)
+inline parse_error parse(CaptureFlags & x, spec_type<CaptureFlags>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (5 - 1)) - 1));
 }
@@ -48,7 +48,7 @@ inline non_owner_string cfg_to_s(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(Level & x, spec_type<Level>, array_view_const_char value)
+inline parse_error parse(Level & x, spec_type<Level>, array_view_const_char value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("low"), Level::low},
@@ -72,7 +72,7 @@ inline non_owner_string cfg_to_s(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(Language & x, spec_type<Language>, array_view_const_char value)
+inline parse_error parse(Language & x, spec_type<Language>, array_view_const_char value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("en"), Language::en},
@@ -95,7 +95,7 @@ inline non_owner_string cfg_to_s(
     return arr[static_cast<unsigned long>(x)];
 }
 
-parse_error parse(ClipboardEncodingType & x, spec_type<ClipboardEncodingType>, array_view_const_char value)
+inline parse_error parse(ClipboardEncodingType & x, spec_type<ClipboardEncodingType>, array_view_const_char value)
 {
     return parse_enum_str(x, value, {
         {cstr_array_view("utf-8"), ClipboardEncodingType::utf8},
@@ -114,7 +114,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags>, array_view_const_char value)
+inline parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
@@ -130,7 +130,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags>, array_view_const_char value)
+inline parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
@@ -146,7 +146,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags>, array_view_const_char value)
+inline parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
@@ -162,7 +162,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(ServerNotification & x, spec_type<ServerNotification>, array_view_const_char value)
+inline parse_error parse(ServerNotification & x, spec_type<ServerNotification>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (4 - 1)) - 1));
 }
@@ -178,7 +178,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(ServerCertCheck & x, spec_type<ServerCertCheck>, array_view_const_char value)
+inline parse_error parse(ServerCertCheck & x, spec_type<ServerCertCheck>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (4 - 1)) - 1));
 }
@@ -194,7 +194,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(TraceType & x, spec_type<TraceType>, array_view_const_char value)
+inline parse_error parse(TraceType & x, spec_type<TraceType>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
@@ -210,7 +210,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel>, array_view_const_char value)
+inline parse_error parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (4 - 1)) - 1));
 }
@@ -226,7 +226,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbeOnLaunchFailure>, array_view_const_char value)
+inline parse_error parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbeOnLaunchFailure>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
@@ -242,7 +242,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusClipboardInfiniteLoop>, array_view_const_char value)
+inline parse_error parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusClipboardInfiniteLoop>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
@@ -258,7 +258,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSelectionStrategy>, array_view_const_char value)
+inline parse_error parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSelectionStrategy>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (2 - 1)) - 1));
 }
@@ -274,7 +274,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAlgorithm>, array_view_const_char value)
+inline parse_error parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAlgorithm>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
@@ -290,7 +290,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(RdpCompression & x, spec_type<RdpCompression>, array_view_const_char value)
+inline parse_error parse(RdpCompression & x, spec_type<RdpCompression>, array_view_const_char value)
 {
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (5 - 1)) - 1));
 }
@@ -306,7 +306,7 @@ inline non_owner_string cfg_to_s(
     return non_owner_string(buf.get(), sz);
 }
 
-parse_error parse(ColorDepth & x, spec_type<ColorDepth>, array_view_const_char value)
+inline parse_error parse(ColorDepth & x, spec_type<ColorDepth>, array_view_const_char value)
 {
     return parse_enum_list(x, value, {
         ColorDepth::depth8,

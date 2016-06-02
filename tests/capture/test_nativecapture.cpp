@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     Inifile ini;
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     RDPDrawable drawable(800, 600, 24);
     DumpPng24FromRDPDrawableAdapter dump_png{drawable};
     GraphicToFile graphic_to_file(

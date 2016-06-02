@@ -98,10 +98,10 @@ private:
             this->vars.set_acl<cfg::context::password>(this->dialog_widget.challenge->get_text());
         }
         else if (this->dialog_widget.cancel) {
-            this->vars.set_acl<cfg::context::accept_message>("True");
+            this->vars.set_acl<cfg::context::accept_message>(true);
         }
         else {
-            this->vars.set_acl<cfg::context::display_message>("True");
+            this->vars.set_acl<cfg::context::display_message>(true);
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
@@ -112,10 +112,10 @@ private:
     {
         if (!this->dialog_widget.challenge) {
             if (this->dialog_widget.cancel) {
-                this->vars.set_acl<cfg::context::accept_message>("False");
+                this->vars.set_acl<cfg::context::accept_message>(false);
             }
             else {
-                this->vars.set_acl<cfg::context::display_message>("False");
+                this->vars.set_acl<cfg::context::display_message>(false);
             }
         }
         this->event.signal = BACK_EVENT_NEXT;

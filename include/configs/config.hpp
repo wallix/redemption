@@ -180,43 +180,19 @@ private:
     template<class T> void unask(std::false_type) {}
     template<class T> void unask(std::true_type) { this->fields[T::index()].asked_ = false; }
 
-    using Buffers = configs::BufferPack<configs::VariablesAclPack>;
+    struct Buffers : configs::BufferPack<configs::VariablesAclPack> {};
 
     struct FieldBase
     {
         bool is_asked() const { return this->asked_; }
         virtual void parse(configs::VariablesConfiguration & variables, char const * value) = 0;
         virtual char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const = 0;
-        virtual ~FieldBase() {}
+        virtual ~FieldBase() = default;
 
     private:
         friend class Inifile;
         bool asked_ = false;
     };
-
-    template<class T>
-    static char const * assign_zbuf_from_cfg_(
-        std::false_type,
-        configs::VariablesConfiguration const &,
-        Buffers const &
-    ) { return nullptr; }
-
-    template<class T>
-    static char const * assign_zbuf_from_cfg_(
-        std::true_type, configs
-        ::VariablesConfiguration const & variables,
-        Buffers const & buffers
-    ){
-        return ::configs::assign_zbuf_from_cfg(
-            const_cast<configs::zstr_buffer_from<typename T::type> &>(
-                static_cast<configs::zstr_buffer_from<typename T::type> const &>(
-                    static_cast<configs::CBuf<T> const &>(buffers)
-                )
-            ),
-            configs::cfg_s_type<typename T::sesman_and_spec_type>{},
-            static_cast<T const &>(variables).value
-        ).c_str();
-    }
 
     template<class T>
     struct Field : FieldBase
@@ -232,7 +208,17 @@ private:
         }
 
         char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
-        { return assign_zbuf_from_cfg_<T>(std::integral_constant<bool, T::is_writable()>{}, variables, buffers); }
+        {
+            return ::configs::assign_zbuf_from_cfg(
+                const_cast<configs::zstr_buffer_from<typename T::type> &>(
+                    static_cast<configs::zstr_buffer_from<typename T::type> const &>(
+                        static_cast<configs::CBuf<T> const &>(buffers)
+                    )
+                ),
+                configs::cfg_s_type<typename T::sesman_and_spec_type>{},
+                static_cast<T const &>(variables).value
+            ).c_str();
+        }
     };
 
 public:
@@ -381,29 +367,35 @@ private:
     ConfigurationHolder conf_holder = variables;
     bool new_from_acl = false;
 
-    void initialize() {
-        this->to_send_index.insert(cfg::context::opt_bpp::index());
-        this->to_send_index.insert(cfg::context::opt_width::index());
-        this->to_send_index.insert(cfg::context::opt_height::index());
-        this->to_send_index.insert(cfg::context::selector::index());
-        this->to_send_index.insert(cfg::context::selector_current_page::index());
-        this->to_send_index.insert(cfg::context::selector_device_filter::index());
-        this->to_send_index.insert(cfg::context::selector_group_filter::index());
-        this->to_send_index.insert(cfg::context::selector_proto_filter::index());
-        this->to_send_index.insert(cfg::context::selector_lines_per_page::index());
+    template<class T>
+    void push_to_send_index()
+    {
+        static_assert(T::is_writable(), "is not writable");
+        this->to_send_index.insert(T::index());
+    }
+
+    void initialize()
+    {
+        this->push_to_send_index<cfg::context::opt_bpp>();
+        this->push_to_send_index<cfg::context::opt_width>();
+        this->push_to_send_index<cfg::context::opt_height>();
+        this->push_to_send_index<cfg::context::selector_current_page>();
+        this->push_to_send_index<cfg::context::selector_device_filter>();
+        this->push_to_send_index<cfg::context::selector_group_filter>();
+        this->push_to_send_index<cfg::context::selector_proto_filter>();
+        this->push_to_send_index<cfg::context::selector_lines_per_page>();
         this->ask<cfg::context::target_password>();
         this->ask<cfg::context::target_host>();
         this->ask<cfg::context::target_protocol>();
         this->ask<cfg::context::password>();
-        this->to_send_index.insert(cfg::context::reporting::index());
-        this->to_send_index.insert(cfg::context::auth_channel_result::index());
-        this->to_send_index.insert(cfg::context::auth_channel_target::index());
-        this->to_send_index.insert(cfg::context::accept_message::index());
-        this->to_send_index.insert(cfg::context::display_message::index());
-        this->to_send_index.insert(cfg::context::real_target_device::index());
+        this->push_to_send_index<cfg::context::reporting>();
+        this->push_to_send_index<cfg::context::auth_channel_target>();
+        this->push_to_send_index<cfg::context::accept_message>();
+        this->push_to_send_index<cfg::context::display_message>();
+        this->push_to_send_index<cfg::context::real_target_device>();
         this->ask<cfg::globals::auth_user>();
-        this->to_send_index.insert(cfg::globals::host::index());
-        this->to_send_index.insert(cfg::globals::target::index());
+        this->push_to_send_index<cfg::globals::host>();
+        this->push_to_send_index<cfg::globals::target>();
         this->ask<cfg::globals::target_device>();
         this->ask<cfg::globals::target_user>();
 

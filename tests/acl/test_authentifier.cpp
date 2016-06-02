@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\xA1"
+           "\x00\x00\x01\x85"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -65,7 +65,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
-           "selector\n!False\n"
            "selector_current_page\n!1\n"
            "selector_device_filter\n!\n"
            "selector_group_filter\n!\n"
@@ -76,10 +75,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "proto_dest\nASK\n"
            "password\nASK\n"
            "reporting\n!\n"
-           "auth_channel_result\n!\n"
            "auth_channel_target\n!\n"
-           "accept_message\n!\n"
-           "display_message\n!\n"
+           "accept_message\n!False\n"
+           "display_message\n!False\n"
            "real_target_device\n!\n"
 
         // Time: 10043
@@ -155,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\xA1"
+           "\x00\x00\x01\x85"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -164,7 +162,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
-           "selector\n!False\n"
            "selector_current_page\n!1\n"
            "selector_device_filter\n!\n"
            "selector_group_filter\n!\n"
@@ -175,10 +172,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
            "proto_dest\nASK\n"
            "password\nASK\n"
            "reporting\n!\n"
-           "auth_channel_result\n!\n"
            "auth_channel_target\n!\n"
-           "accept_message\n!\n"
-           "display_message\n!\n"
+           "accept_message\n!False\n"
+           "display_message\n!False\n"
            "real_target_device\n!\n"
 
         // Time 10043
@@ -274,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-        "\x00\x00\x01\xA1"
+        "\x00\x00\x01\x85"
         "login\nASK\n"
         "ip_client\n!\n"
         "ip_target\n!\n"
@@ -283,7 +279,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "bpp\n!24\n"
         "height\n!600\n"
         "width\n!800\n"
-        "selector\n!False\n"
         "selector_current_page\n!1\n"
         "selector_device_filter\n!\n"
         "selector_group_filter\n!\n"
@@ -294,10 +289,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "proto_dest\nASK\n"
         "password\nASK\n"
         "reporting\n!\n"
-        "auth_channel_result\n!\n"
         "auth_channel_target\n!\n"
-        "accept_message\n!\n"
-        "display_message\n!\n"
+        "accept_message\n!False\n"
+        "display_message\n!False\n"
         "real_target_device\n!\n"
     ;
 

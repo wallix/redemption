@@ -70,6 +70,8 @@ struct CompressionTransportWrapper
             case WrmCompressionAlgorithm::no_compression:
                 return *this->compressors.trans;
         }
+        assert(false && "unknown algorithm");
+        return *this->compressors.trans;
     }
 
     WrmCompressionAlgorithm get_algorithm() const
@@ -87,6 +89,9 @@ private:
 
         explicit CompressionTransport(Transport & trans)
         : trans(&trans)
+        {}
+
+        ~CompressionTransport()
         {}
     } compressors;
 };

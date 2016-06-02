@@ -95,7 +95,7 @@ namespace cpp_enumeration_writer
 
         auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
             write(e,
-                "parse_error parse(%e & x, spec_type<%e>, array_view_const_char value)\n"
+                "inline parse_error parse(%e & x, spec_type<%e>, array_view_const_char value)\n"
                 "{\n"
             );
             if (e.is_icase_parser) {

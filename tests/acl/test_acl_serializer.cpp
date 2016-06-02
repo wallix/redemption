@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = string_from_authid(static_cast<authid_t>(cfg::context::display_message::index()));
+    auto const key = string_from_authid(static_cast<authid_t>(cfg::context::rejected::index()));
     auto const total_sz = sz_string + 8u + strlen(key) + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream(u.get(), total_sz);
@@ -179,9 +179,9 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     AclSerializer acl(ini, trans, 0);
 
-    ini.set_acl<cfg::context::display_message>(std::string(sz_string, 'a'));
+    ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
-    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::display_message>().size(), sz_string);
+    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::rejected>().size(), sz_string);
     BOOST_REQUIRE_EQUAL(ini.changed_field_size(), 1);
 
     acl.send_acl_data();
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = string_from_authid(static_cast<authid_t>(cfg::context::display_message::index()));
+    auto const key = string_from_authid(static_cast<authid_t>(cfg::context::rejected::index()));
     auto const total_sz = sz_string + 8u + strlen(key) + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream(u.get(), total_sz);
@@ -221,9 +221,9 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     AclSerializer acl(ini, trans, 0);
 
     std::string result(sz_string, 'a');
-    BOOST_REQUIRE_NE(ini.get<cfg::context::display_message>(), result);
+    BOOST_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);
 
     acl.incoming();
 
-    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::display_message>(), result);
+    BOOST_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
 }

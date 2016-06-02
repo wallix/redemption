@@ -118,8 +118,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::crypto::key0>(key);
     ini.set<cfg::crypto::key0>("12\x00#:\x55", 6u);
     //ini.set<cfg::crypto::key0>("12\x00#:\x55");
-    ini.set_acl<cfg::context::display_message>(cs);
-    ini.set_acl<cfg::context::display_message>(s);
+    ini.set_acl<cfg::context::display_message>(true);
+    ini.set_acl<cfg::context::display_message>(false);
     ini.set_acl<cfg::context::duration>(cs);
     ini.set_acl<cfg::context::duration>(s);
     ini.set<cfg::context::end_date_cnx>(1);

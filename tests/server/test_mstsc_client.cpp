@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::cache_waiting_list>(true);
     ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::video::png_interval>(3000);
-    ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::tls_support>(true);
     ini.set<cfg::client::tls_fallback_legacy>(false);
     ini.set<cfg::client::bogus_user_id>(false);
-    ini.set<cfg::client::rdp_compression>(0);
+    ini.set<cfg::client::rdp_compression>(RdpCompression::none);
 
     time_t now = 1450864840;
 

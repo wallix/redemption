@@ -35,8 +35,6 @@
 #include "utils/array_view.hpp"
 #include "utils/splitter.hpp"
 
-// TODO
-#include "utils/log.hpp"
 
 namespace configs {
 
@@ -94,87 +92,6 @@ template<class T>
 using zstr_buffer_from = typename zstr_buffer_traits<T>::type;
 
 
-struct non_owner_string
-{
-    constexpr non_owner_string(char const * s, std::size_t sz) noexcept
-    : s(s)
-    , sz(sz)
-    {}
-
-    template<std::size_t N>
-    constexpr non_owner_string(char const (&s)[N]) noexcept
-    : s(s)
-    , sz(N)
-    {}
-
-    char const * c_str() const { return this->s; }
-    std::size_t size() const { return this->sz; }
-
-private:
-    char const * s;
-    std::size_t sz;
-};
-
-
-template<class> struct cfg_s_type {};
-
-inline non_owner_string assign_zbuf_from_cfg(
-    zstr_buffer_from<std::string> &,
-    cfg_s_type<std::string>,
-    std::string const & str
-) { return {str.c_str(), str.size()}; }
-
-template<std::size_t N>
-non_owner_string assign_zbuf_from_cfg(zstr_buffer_from<char[N]> &, cfg_s_type<char[N]>,  char const (&s)[N])
-{ return {s, strlen(s)}; }
-
-inline non_owner_string assign_zbuf_from_cfg(zstr_buffer_from<bool>&, cfg_s_type<bool>, bool x)
-{ return x ? non_owner_string("True") : non_owner_string("False"); }
-
-template<std::size_t N>
-non_owner_string assign_zbuf_from_cfg(
-    zstr_buffer_from<std::array<unsigned char, N>> & buf,
-    cfg_s_type<std::array<unsigned char, N>>,
-    std::array<unsigned char, N> const & arr
-) {
-    char * p = buf.get();
-    for (int c : arr) {
-        auto x = (c & 0xf0) >> 4;
-        *p++ = x < 10 ? ('0' + x) : ('A' + x - 10);
-        x = c & 0xf;
-        *p++ = x < 10 ? ('0' + x) : ('A' + x - 10);
-    }
-    return {buf.get(), p};
-}
-
-template<class TInt>
-typename std::enable_if<std::is_integral<TInt>::value, non_owner_string>::type
-assign_zbuf_from_cfg(zstr_buffer_from<TInt> & buf, cfg_s_type<TInt>, TInt const & x)
-{
-    int sz = (std::is_signed<TInt>::value)
-        ? snprintf(buf.get(), buf.size(), "%lld", static_cast<long long>(x))
-        : snprintf(buf.get(), buf.size(), "%llu", static_cast<unsigned long long>(x));
-    return non_owner_string(buf.get(), sz);
-}
-
-template<class E>
-typename std::enable_if<std::is_enum<E>::value, non_owner_string>::type
-assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E>, E const & x)
-{
-    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
-}
-
-
-template<class T>
-zstr_buffer_from<T> make_zstr_buffer(T const & x)
-{
-    zstr_buffer_from<T> buf;
-    assign_zbuf_from_cfg(buf, cfg_s_type<T>{}, x);
-    return buf;
-}
-
-
 template<class> struct spec_type {};
 
 namespace spec_types
@@ -230,7 +147,9 @@ namespace spec_types
             }
             else {
                 if (this->path.front() != '/') {
-                    this->path.insert(0, "./");
+                    if (not(this->path.size() >= 2 && this->path[0] == '.' && this->path[1] == '/')) {
+                        this->path.insert(0, "./");
+                    }
                 }
                 if (this->path.back() != '/') {
                     this->path += '/';
@@ -241,22 +160,118 @@ namespace spec_types
         std::string path;
     };
 
-    bool operator == (directory_path const & x, directory_path const & y) { return x.to_string() == y.to_string(); }
-    bool operator == (std::string const & x, directory_path const & y) { return x == y.to_string(); }
-    bool operator == (char const * x, directory_path const & y) { return x == y.to_string(); }
-    bool operator == (directory_path const & x, std::string const & y) { return x.to_string() == y; }
-    bool operator == (directory_path const & x, char const * y) { return x.to_string() == y; }
+    inline bool operator == (directory_path const & x, directory_path const & y) { return x.to_string() == y.to_string(); }
+    inline bool operator == (std::string const & x, directory_path const & y) { return x == y.to_string(); }
+    inline bool operator == (char const * x, directory_path const & y) { return x == y.to_string(); }
+    inline bool operator == (directory_path const & x, std::string const & y) { return x.to_string() == y; }
+    inline bool operator == (directory_path const & x, char const * y) { return x.to_string() == y; }
 
-    bool operator != (directory_path const & x, directory_path const & y) { return !(x == y); }
-    bool operator != (std::string const & x, directory_path const & y) { return !(x == y); }
-    bool operator != (char const * x, directory_path const & y) { return !(x == y); }
-    bool operator != (directory_path const & x, std::string const & y) { return !(x == y); }
-    bool operator != (directory_path const & x, char const * y) { return !(x == y); }
+    inline bool operator != (directory_path const & x, directory_path const & y) { return !(x == y); }
+    inline bool operator != (std::string const & x, directory_path const & y) { return !(x == y); }
+    inline bool operator != (char const * x, directory_path const & y) { return !(x == y); }
+    inline bool operator != (directory_path const & x, std::string const & y) { return !(x == y); }
+    inline bool operator != (directory_path const & x, char const * y) { return !(x == y); }
 
     template<class Ch, class Tr>
     std::basic_ostream<Ch, Tr> & operator << (std::basic_ostream<Ch, Tr> & out, directory_path const & path)
     { return out << path.to_string(); }
 }
+
+
+struct non_owner_string
+{
+    constexpr non_owner_string(char const * s, std::size_t sz) noexcept
+    : s(s)
+    , sz(sz)
+    {}
+
+    template<std::size_t N>
+    constexpr non_owner_string(char const (&s)[N]) noexcept
+    : s(s)
+    , sz(N)
+    {}
+
+    char const * c_str() const { return this->s; }
+    std::size_t size() const { return this->sz; }
+
+private:
+    char const * s;
+    std::size_t sz;
+};
+
+
+//
+// assign_zbuf_from_cfg
+//
+
+template<class> struct cfg_s_type {};
+
+inline non_owner_string assign_zbuf_from_cfg(
+    zstr_buffer_from<std::string> &,
+    cfg_s_type<std::string>,
+    std::string const & str
+) { return {str.c_str(), str.size()}; }
+
+inline non_owner_string assign_zbuf_from_cfg(
+    zstr_buffer_from<std::string> &,
+    cfg_s_type<spec_types::list<std::string>>,
+    std::string const & str
+) { return {str.c_str(), str.size()}; }
+
+template<std::size_t N>
+non_owner_string assign_zbuf_from_cfg(zstr_buffer_from<char[N]> &, cfg_s_type<char[N]>,  char const (&s)[N])
+{ return {s, strlen(s)}; }
+
+inline non_owner_string assign_zbuf_from_cfg(zstr_buffer_from<bool>&, cfg_s_type<bool>, bool x)
+{ return x ? non_owner_string("True") : non_owner_string("False"); }
+
+template<std::size_t N>
+non_owner_string assign_zbuf_from_cfg(
+    zstr_buffer_from<std::array<unsigned char, N>> & buf,
+    cfg_s_type<spec_types::fixed_binary>,
+    std::array<unsigned char, N> const & arr
+) {
+    char * p = buf.get();
+    for (int c : arr) {
+        auto x = (c & 0xf0) >> 4;
+        *p++ = x < 10 ? ('0' + x) : ('A' + x - 10);
+        x = c & 0xf;
+        *p++ = x < 10 ? ('0' + x) : ('A' + x - 10);
+    }
+    return non_owner_string(buf.get(), p-buf.get());
+}
+
+template<class TInt>
+typename std::enable_if<std::is_integral<TInt>::value, non_owner_string>::type
+assign_zbuf_from_cfg(zstr_buffer_from<TInt> & buf, cfg_s_type<TInt>, TInt const & x)
+{
+    int sz = (std::is_signed<TInt>::value)
+        ? snprintf(buf.get(), buf.size(), "%lld", static_cast<long long>(x))
+        : snprintf(buf.get(), buf.size(), "%llu", static_cast<unsigned long long>(x));
+    return non_owner_string(buf.get(), sz);
+}
+
+template<class E>
+typename std::enable_if<std::is_enum<E>::value, non_owner_string>::type
+assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E>, E const & x)
+{
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return non_owner_string(buf.get(), sz);
+}
+
+
+template<class T>
+zstr_buffer_from<T> make_zstr_buffer(T const & x)
+{
+    zstr_buffer_from<T> buf;
+    assign_zbuf_from_cfg(buf, cfg_s_type<T>{}, x);
+    return buf;
+}
+
+
+//
+// parse
+//
 
 struct parse_error
 {

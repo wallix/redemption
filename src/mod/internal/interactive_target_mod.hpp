@@ -118,7 +118,7 @@ private:
         if (this->ask_password) {
             this->vars.set_acl<cfg::context::target_password>(this->challenge.password_edit.get_text());
         }
-        this->vars.set_acl<cfg::context::display_message>("True");
+        this->vars.set_acl<cfg::context::display_message>(true);
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -127,7 +127,7 @@ private:
     void refused()
     {
         this->vars.set_acl<cfg::context::target_password>("");
-        this->vars.set_acl<cfg::context::display_message>("False");
+        this->vars.set_acl<cfg::context::display_message>(false);
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

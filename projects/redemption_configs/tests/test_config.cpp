@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::message>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::context::accept_message>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::display_message>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::context::display_message>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::rejected>());
 

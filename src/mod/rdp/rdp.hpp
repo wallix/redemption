@@ -391,7 +391,7 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     const bool disable_clipboard_log_wrm;
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
-    const int  rdp_compression;
+    const RdpCompression rdp_compression;
 
     const unsigned                    session_probe_launch_timeout;
     const unsigned                    session_probe_launch_fallback_timeout;
@@ -6429,10 +6429,10 @@ public:
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
-                if (this->rdp_compression) {
+                if (bool(this->rdp_compression)) {
                     infoPacket.flags |= INFO_COMPRESSION;
                     infoPacket.flags &= ~CompressionTypeMask;
-                    infoPacket.flags |= ((this->rdp_compression - 1) << 9);
+                    infoPacket.flags |= (static_cast<unsigned>(this->rdp_compression) - 1) << 9;
                 }
 
                 if (this->enable_session_probe) {

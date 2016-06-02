@@ -607,8 +607,8 @@ public:
         case MODULE_INTERNAL_TEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
             this->mod = new ReplayMod(  this->front
-                                     , this->ini.get<cfg::video::replay_path>()
-                                     , this->ini.get<cfg::context::movie>()
+                                     , this->ini.get<cfg::video::replay_path>().c_str()
+                                     , this->ini.get<cfg::context::movie>().c_str()
                                      , this->front.client_info.width
                                      , this->front.client_info.height
                                      , this->ini.get_ref<cfg::context::auth_error_message>()

@@ -18,6 +18,7 @@
 #include "transport/in_filename_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "utils/fdbuf.hpp"
+#include "utils/fileutils.hpp"
 
 #include "program_options/program_options.hpp"
 

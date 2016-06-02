@@ -422,13 +422,14 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "reporting", rw);
         W.sep();
         W.member(type_<std::string>(), "auth_channel_answer", r);
+        // TODO unused
         W.member(type_<std::string>(), "auth_channel_result", r);
         W.member(type_<std::string>(), "auth_channel_target", rw);
         W.sep();
         W.member(type_<std::string>(), "message", r);
         W.sep();
         W.member(type_<bool>(), "accept_message", w);
-        W.member(type_<std::string>(), "display_message", rw);
+        W.member(type_<bool>(), "display_message", rw);
         W.sep();
         W.member(type_<std::string>(), "rejected", rw);
         W.sep();

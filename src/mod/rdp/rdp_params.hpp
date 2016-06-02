@@ -85,7 +85,7 @@ struct ModRDPParams {
     const char * target_application_account;
     const char * target_application_password;
 
-    int rdp_compression;
+    RdpCompression rdp_compression;
 
     std::string * error_message;
     bool          disconnect_on_logon_user_change;
@@ -194,7 +194,7 @@ struct ModRDPParams {
         , target_application_account("")
         , target_application_password("")
 
-        , rdp_compression(0)
+        , rdp_compression(RdpCompression::none)
 
         , error_message(nullptr)
         , disconnect_on_logon_user_change(false)
@@ -353,7 +353,7 @@ struct ModRDPParams {
             "ModRDPParams target_application_password=\"%s\"",     (this->target_application_password ? "<hidden>" : "<null>"));
 
         LOG(LOG_INFO,
-            "ModRDPParams rdp_compression=%d",                     this->rdp_compression);
+            "ModRDPParams rdp_compression=%u",                     static_cast<unsigned>(this->rdp_compression));
 
         LOG(LOG_INFO,
             "ModRDPParams error_message=<%p>",                     static_cast<void*>(this->error_message));

@@ -290,9 +290,10 @@ static int do_record( Transport & in_wrm_trans, const timeval begin_record, cons
 //            ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
 //        }
         ini.set<cfg::video::wrm_compression_algorithm>(
-            ((wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM)) ?
-             player.info_compression_algorithm :
-             wrm_compression_algorithm_));
+            (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
+            ? player.info_compression_algorithm
+            : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
+        );
 
 //        if (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == USE_ORIGINAL_COLOR_DEPTH) {
 //            ini.set<cfg::video::wrm_color_depth_selection_strategy>(player.info_bpp);
@@ -431,7 +432,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
     ini.set<cfg::video::wrm_compression_algorithm>(static_cast<WrmCompressionAlgorithm>(
         (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
         ? player.info_compression_algorithm
-        : wrm_compression_algorithm_
+        : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
     ));
 
     int return_code = 0;
@@ -480,7 +481,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
                 CryptoOutMetaSequenceTransport(
                     &cctx,
                     outfile_path.c_str(),
-                    ini.get<cfg::video::hash_path>(),
+                    ini.get<cfg::video::hash_path>().c_str(),
                     outfile_basename.c_str(),
                     begin_record,
                     player.info_width,
@@ -494,7 +495,7 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
                 OutMetaSequenceTransport(
                     &cctx,
                     outfile_path.c_str(),
-                    ini.get<cfg::video::hash_path>(),
+                    ini.get<cfg::video::hash_path>().c_str(),
                     outfile_basename.c_str(),
                     begin_record,
                     player.info_width,
@@ -690,16 +691,16 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
 
     if (options.count("compression") > 0) {
              if (wrm_compression_algorithm == "none") {
-//            ini.set<cfg::video::wrm_compression_algorithm>(0);
-            wrm_compression_algorithm_ = 0;
+//            ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+            wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::no_compression);
         }
         else if (wrm_compression_algorithm == "gzip") {
 //            ini.set<cfg::video::wrm_compression_algorithm>(1);
-            wrm_compression_algorithm_ = 1;
+            wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::gzip);
         }
         else if (wrm_compression_algorithm == "snappy") {
 //            ini.set<cfg::video::wrm_compression_algorithm>(2);
-            wrm_compression_algorithm_ = 2;
+            wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::snappy);
         }
         else if (wrm_compression_algorithm == "original") {
 //            ini.set<cfg::video::wrm_compression_algorithm>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
@@ -956,7 +957,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
                 infile_prefix,
                 infile_extension.c_str(), infile_is_encrypted?1:0, 0);
 
-            remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>(), infile_path.c_str()
+            remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
                        , infile_basename.c_str(), infile_extension.c_str()
                        , infile_is_encrypted);
         }
