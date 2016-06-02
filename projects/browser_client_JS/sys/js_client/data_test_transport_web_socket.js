@@ -17,6 +17,7 @@ function getDataOctet(i) {
         var start = current;
         current += i;
         var newData = data.slice(start, current);
+        console.log('new getDataOctet' + newData[1]);
 		_recv_value(newData);
 
 	} else {
