@@ -37,6 +37,7 @@
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
+#include <iostream>
 #include "fake_draw.hpp"
 
 BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
