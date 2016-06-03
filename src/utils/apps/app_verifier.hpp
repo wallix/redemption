@@ -1188,8 +1188,7 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
     })
     ;
 
-    // TODO: fix that horrible cast
-    auto options = program_options::parse_command_line(argc, const_cast<char**>(argv), desc);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
