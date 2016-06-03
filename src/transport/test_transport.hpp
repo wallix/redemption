@@ -34,6 +34,12 @@
 #include <stdexcept>
 #include <sstream>
 
+#include <fstream>
+#include <sstream>
+#include <string>
+
+
+
 class InputTransportDynarray : public Transport
 {
     transbuf::dynarray_buf buf;
@@ -193,7 +199,9 @@ public:
     : check(indata, inlen, verbose)
     , gen(outdata, outlen, verbose)
     , public_key_length(0)
-    {}
+    {
+    }
+
 
     void disable_remaining_error() {
         this->check.disable_remaining_error();
@@ -219,6 +227,7 @@ public:
 
 private:
     void do_recv(char ** pbuffer, size_t len) override {
+
         this->gen.recv(pbuffer, len);
     }
 

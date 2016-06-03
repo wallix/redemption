@@ -73,7 +73,7 @@
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/remote_programs.hpp"
-#include "transparentrecorder.hpp"
+#include "capture/transparentrecorder.hpp"
 
 #include "core/client_info.hpp"
 #include "utils/genrandom.hpp"
@@ -1949,11 +1949,11 @@ private:
                     static_cast<OutPerStream&>(mcs_header), this->userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
+
                 (void)mcs;
             },
             write_x224_dt_tpdu_fn{}
         );
-
         if (this->verbose & 16) {
             LOG(LOG_INFO, "send data request done");
         }
@@ -2275,12 +2275,10 @@ public:
                         X224::DT_TPDU_Recv x224(x224_data);
 
                         MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
-
                         GCC::Create_Response_Recv gcc_cr(mcs.payload);
-
                         while (gcc_cr.payload.in_check_rem(4)) {
-
                             GCC::UserData::RecvFactory f(gcc_cr.payload);
+
                             switch (f.tag) {
                             case SC_CORE:
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
@@ -2300,6 +2298,7 @@ public:
                                 {
                                     GCC::UserData::SCSecurity sc_sec1;
                                     sc_sec1.recv(f.payload);
+
                                     if (this->verbose & 1) {
                                         sc_sec1.log("Received from server");
                                     }
@@ -2318,7 +2317,6 @@ public:
 
                                         memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
 //                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
-
                                         // serverCertificate (variable): The variable-length certificate containing the
                                         //  server's public key information. The length in bytes is given by the
                                         // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
@@ -2336,8 +2334,9 @@ public:
 
                                         }
                                         else {
-//                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
+                                            #ifndef __EMSCRIPTEN__
 
+//                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
                                             uint32_t certcount = sc_sec1.x509.certCount;
                                             if (certcount < 2){
                                                 LOG(LOG_ERR, "Server didn't send enough X509 certificates");
@@ -2395,11 +2394,14 @@ public:
                                                 LOG(LOG_ERR, "Failed to extract RSA exponent and modulus");
                                                 throw Error(ERR_SEC);
                                             }
+
                                             int len_e = BN_bn2bin(server_public_key->e, exponent);
                                             int len_n = BN_bn2bin(server_public_key->n, modulus);
                                             reverseit(exponent, len_e);
                                             reverseit(modulus, len_n);
                                             RSA_free(server_public_key);
+
+                                            #endif
                                         }
 
                                         uint8_t client_random[SEC_RANDOM_SIZE];
@@ -2481,6 +2483,7 @@ public:
                                 throw Error(ERR_GCC);
                             }
                         }
+
                         if (gcc_cr.payload.in_check_rem(1)) {
                             LOG(LOG_ERR, "Error while parsing GCC UserData : short header");
                             throw Error(ERR_GCC);
@@ -2541,6 +2544,7 @@ public:
                         },
                         write_x224_dt_tpdu_fn{}
                     );
+
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "Send MCS::AttachUserRequest");
                     }
@@ -2603,7 +2607,6 @@ public:
                                 uint8_t * end = array;
                                 X224::RecvFactory f(this->nego.trans, &end, array_size);
                                 InStream x224_data(array, end - array);
-
                                 X224::DT_TPDU_Recv x224(x224_data);
                                 InStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
@@ -2652,6 +2655,7 @@ public:
                                 LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
                                     this->server_public_key_len);
                             }
+
                             this->send_data_request(
                                 GCC::MCS_GLOBAL_CHANNEL,
                                 dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
@@ -3161,7 +3165,6 @@ public:
 
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
-
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
                             if (this->verbose & 16) {
                                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
@@ -3206,8 +3209,10 @@ public:
                                 );
                             }
                             sec.payload.in_skip_bytes(sec.payload.in_remain());
+
                         }
                         else {
+
                             uint8_t const * next_packet = sec.payload.get_current();
                             while (next_packet < sec.payload.get_data_end()) {
                                 sec.payload.rewind();
@@ -3228,6 +3233,7 @@ public:
                                     next_packet = sec.payload.get_current();
                                 }
                                 else {
+
                                     ShareControl_Recv sctrl(sec.payload);
                                     next_packet += sctrl.totalLength;
 
@@ -3355,6 +3361,7 @@ public:
 
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+
                                                 switch (sdata.pdutype2) {
                                                 case PDUTYPE2_UPDATE:
                                                     {
@@ -3502,11 +3509,12 @@ public:
 
                                             this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
 
+
         // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
                                             uint32_t sessionId = sctrl.payload.in_uint32_le();
-                                            (void)sessionId;
 
+                                            (void)sessionId;
                                             this->send_confirm_active();
                                             this->send_synchronise();
                                             this->send_control(RDP_CTL_COOPERATE);
@@ -3579,6 +3587,7 @@ public:
                                         break;
                                     }
                                 TODO("check sctrl.payload is completely consumed");
+
                                 }
                             }
                         }
@@ -3725,7 +3734,6 @@ public:
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
-
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this](StreamSize<65536>, OutStream & stream) {
@@ -6413,7 +6421,6 @@ public:
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
-
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
                              , this->username
@@ -6423,9 +6430,7 @@ public:
                              , this->performanceFlags
                              , this->clientAddr
                              );
-
         infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
-
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
@@ -6444,10 +6449,10 @@ public:
                 }
 
                 infoPacket.emit(stream);
+
             },
             write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
         );
-
         if (this->verbose & 1) {
             infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
         }
@@ -6457,7 +6462,6 @@ public:
                 now, this->open_session_timeout.count());
             this->event.set(1000000);
         }
-
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
         }

@@ -17,6 +17,13 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Clement Moroldo
 */
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#define  LOG_JS(s) EM_ASM_({ console.log($0); }, s);
+#else
+#define  LOG_JS(s)
+#endif
+
 
 #ifndef FRONT_JS_NATIF_HPP
 #define FRONT_JS_NATIF_HPP
@@ -27,32 +34,30 @@
 #include <stdint.h>
 #include <math.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
 
-#include "RDP/caches/brushcache.hpp"
-#include "RDP/capabilities/colcache.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "RDP/orders/AlternateSecondaryWindowing.hpp"
+
+#include "core/RDP/caches/brushcache.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
 //#include <algorithm>
 #include <fstream>
@@ -61,22 +66,22 @@
 //#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
-#include "core/front_api.hpp"
-#include "channel_list.hpp"
-#include "mod/mod_api.hpp"
-#include "mod/rdp/rdp.hpp"
+#include "core/channel_list.hpp"
 #include "utils/bitmap.hpp"
-#include "RDP/caches/glyphcache.hpp"
-#include "RDP/bitmapupdate.hpp"
-#include "keymap2.hpp"
-#include "client_info.hpp"
-#include "keylayouts_r.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "keyboard/keymap2.hpp"
+#include "core/client_info.hpp"
+#include "keyboard/reversed_keymaps/keylayouts_r.hpp"
 #include "utils/colors.hpp"
+#include "core/front_api.hpp"
+#include "mod/mod_api.hpp"
 #include "transport/transport_web_socket.hpp"
+#include "mod/rdp/rdp.hpp"
 
 // bjam -a client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
 
-
+// bjam -a test_transport_web_socket |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/test_transport_web_socket.html
 
 // #--shell-file templates/penta_template.html
 // -s EXPORTED_FUNCTIONS="['_run_main']"
@@ -97,14 +102,14 @@ class Front_JS_Natif : public FrontAPI
     class ClipboardServerChannelDataSender : public VirtualChannelDataSender
     {
     public:
-        mod_api        * _callback;
+        mod_api        * _mod;
 
         ClipboardServerChannelDataSender() = default;
 
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
             InStream chunk(chunk_data, chunk_data_length);
-            this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
+            this->_mod->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
         }
     };
 
@@ -134,7 +139,6 @@ public:
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
-    mod_api         * _callback;
     //ClipboardServerChannelDataSender _to_server_sender;
     //ClipboardClientChannelDataSender _to_client_sender;
     int                  _fps;
@@ -145,7 +149,6 @@ public:
 
 
     // Connexion socket members
-
     int                  _timer;
     bool                 _connected;
     Transport          * _trans;
@@ -173,16 +176,23 @@ public:
     };
 
     enum: int {
-        SCANCODE_ALTGR = 0x38,
-        SCANCODE_SHIFT = 0x36,
-        SCANCODE_ENTER = 0x1C,
-        SCANCODE_B_SPC = 0x0E
+        SCANCODE_ALTGR  = 0x38,
+        SCANCODE_SHIFT  = 0x36,
+        SCANCODE_ENTER  = 0x1C,
+        SCANCODE_BK_SPC = 0x0E,
+        SCANCODE_CTRL   = 0x1D,
+        SCANCODE_DELETE = 0x53
     };
 
 
     //bool setClientInfo() ;
 
     //void writeClientInfo() ;
+
+    /*void call_draw_event() {
+        EM_ASM_({ console.error(new Error().stack.toString()); }, 0);
+        this->_mod->draw_event(time(nullptr));
+    }*/
 
     void setClientInfo(ClientInfo & info) {
         this->_info = info;
@@ -200,7 +210,6 @@ public:
             }
         }
         if (!found){
-            //std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
 
@@ -239,17 +248,24 @@ public:
     void empty_buffer() ;
     */
 
-   void connexion() {
+
+    void connexion(char * ip, char * user, char * password, int port) {
+        /*
+        EM_ASM_({ console.log('connexion '+HEAPU8.subarray($0, $0+1)+' '
+                                          +HEAPU8.subarray($1, $1+1)+' '
+                                          +HEAPU8.subarray($2, $2+1)+' '
+                                          +$3); },
+                                          ip, user, password, port);*/
 
         Inifile ini;
 
-        ModRDPParams mod_rdp_params( "administrateur"
-                                , "S3cur3!1nux"
-                                , "10.10.47.35"
-                                , "192.168.1.100"
-                                , 7
-                                , 511
-                                );
+        ModRDPParams mod_rdp_params( user                   //"administrateur"
+                                   , password               //"S3cur3!1nux"
+                                   , ip                     //"10.10.47.35"
+                                   , "192.168.1.100"
+                                   , 7
+                                   , 511
+                                   );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
         mod_rdp_params.enable_nla                      = false;
@@ -259,16 +275,18 @@ public:
         mod_rdp_params.enable_new_pointer              = false;
         mod_rdp_params.server_redirection_support      = true;
 
+        this->_trans = new TransportWebSocket();
+
         LCGRandom gen(0);
+        if (this->_trans != nullptr) {
+            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);;
+        }
+    }
 
-        TransportWebSocket trans;
-        this->_trans = &trans;
-
-        mod_rdp mod(trans, *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
-        this->_mod = &mod;
-   }
-
-
+    void disconnect() {
+        delete(this->_mod);
+        this->_mod = nullptr;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -319,35 +337,36 @@ public:
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
         const Rect rect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
         if (rect.isempty()) {
-            return;
-        }
+
+        } else {
 
         int srcx(rect.x + cmd.srcx - cmd.rect.x);
         int srcy(rect.y + cmd.srcy - cmd.rect.y);
 
-        switch (cmd.rop) {
+            switch (cmd.rop) {
 
-            case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
-                                                    rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
-                break;
+                case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
+                                                        rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
+                    break;
 
-            case 0x55: EM_ASM_({drawable.rDPScrBlt_Invert($0  , $1  , $2      , $3      , $4       , $5); },
-                                                          srcx, srcy, rect.x-1, rect.y-1, rect.cx+2, rect.cy+2 );
-                break;
+                case 0x55: EM_ASM_({drawable.rDPScrBlt_Invert($0  , $1  , $2      , $3      , $4       , $5); },
+                                                            srcx, srcy, rect.x-1, rect.y-1, rect.cx+2, rect.cy+2 );
+                    break;
 
-            case 0xAA: // nothing to change
-                break;
+                case 0xAA: // nothing to change
+                    break;
 
-            case 0xCC: EM_ASM_({drawable.rDPScrBlt($0  , $1  , $2      , $3      , $4       , $5); },
-                                                   srcx, srcy, rect.x-1, rect.y-1, rect.cx+2, rect.cy+2 );
-                break;
+                case 0xCC: EM_ASM_({drawable.rDPScrBlt($0  , $1  , $2      , $3      , $4       , $5); },
+                                                    srcx, srcy, rect.x-1, rect.y-1, rect.cx+2, rect.cy+2 );
+                    break;
 
-            case 0xFF: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
-                                                    rect.x, rect.y, rect.cx, rect.cy, 0xffffffff);
-                break;
+                case 0xFF: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
+                                                        rect.x, rect.y, rect.cx, rect.cy, 0xffffffff);
+                    break;
 
-            default: //std::cout << "RDPScrBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
-                break;
+                default: EM_ASM_({ console.log('RDPScrBlt '+$0);}, cmd.rop);
+                    break;
+            }
         }
     }
 
@@ -356,95 +375,96 @@ public:
         Rect rectBmp(cmd.rect);
         const Rect& rect = clip.intersect(rectBmp);
         if (rect.isempty()){
-            return ;
-        }
 
-        switch (cmd.rop) {
+        } else {
 
-            case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
-                                                    rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
+            switch (cmd.rop) {
+
+                case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
+                                                        rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
+                    break;
+
+                case 0x22: // TODO
+                {
+                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+                        Bitmap bitmapBpp(32, bitmap);
+                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                        EM_ASM_({drawable.rDPMemBlt_0x22($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                    rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+                }
                 break;
 
-            case 0x22: // TODO
-            {
-                       int srcx = cmd.srcx + (rect.x - cmd.rect.x);
-                       int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+                case 0x55: // TODO
+                {
+                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-                       Bitmap bitmapBpp(32, bitmap);
-                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
-                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+                        Bitmap bitmapBpp(32, bitmap);
+                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
-                       EM_ASM_({drawable.rDPMemBlt_0x22($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
-                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+                        EM_ASM_({drawable.rDPMemBlt_0x55($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                    rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+                }
+                    break;
+
+                case 0x66: // TODO
+                {
+                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+                        Bitmap bitmapBpp(32, bitmap);
+                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                        EM_ASM_({drawable.rDPMemBlt_0x66($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                    rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+                }
+                break;
+
+                case 0x99:  // nothing to change
+                    break;
+
+                case 0xCC: // TODO
+                {
+                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+                        Bitmap bitmapBpp(32, bitmap);
+                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                        EM_ASM_({drawable.rDPMemBlt($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                    rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+
+                }
+                    break;
+
+                case 0xEE: // TODO
+                {
+                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+                        Bitmap bitmapBpp(32, bitmap);
+                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                        EM_ASM_({drawable.rDPMemBlt($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                    rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+                }
+                    break;
+
+                case 0xFF: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
+                                                        rect.x, rect.y, rect.cx, rect.cy, 0xffffffff);
+                    break;
+
+                default: EM_ASM_({ console.log('RDPMemBlt '+$0);}, cmd.rop);
+                    break;
             }
-            break;
-
-            case 0x55: // TODO
-            {
-                       int srcx = cmd.srcx + (rect.x - cmd.rect.x);
-                       int srcy = cmd.srcy + (rect.y - cmd.rect.y);
-
-                       Bitmap bitmapBpp(32, bitmap);
-                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
-                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
-
-                       EM_ASM_({drawable.rDPMemBlt_0x55($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
-                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
-            }
-                break;
-
-            case 0x66: // TODO
-            {
-                       int srcx = cmd.srcx + (rect.x - cmd.rect.x);
-                       int srcy = cmd.srcy + (rect.y - cmd.rect.y);
-
-                       Bitmap bitmapBpp(32, bitmap);
-                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
-                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
-
-                       EM_ASM_({drawable.rDPMemBlt_0x66($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
-                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
-            }
-            break;
-
-            case 0x99:  // nothing to change
-                break;
-
-            case 0xCC: // TODO
-            {
-                       int srcx = cmd.srcx + (rect.x - cmd.rect.x);
-                       int srcy = cmd.srcy + (rect.y - cmd.rect.y);
-
-                       Bitmap bitmapBpp(32, bitmap);
-                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
-                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
-
-                       EM_ASM_({drawable.rDPMemBlt($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
-                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
-
-            }
-                break;
-
-            case 0xEE: // TODO
-            {
-                       int srcx = cmd.srcx + (rect.x - cmd.rect.x);
-                       int srcy = cmd.srcy + (rect.y - cmd.rect.y);
-
-                       Bitmap bitmapBpp(32, bitmap);
-                       const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
-                       const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
-
-                       EM_ASM_({drawable.rDPMemBlt($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
-                                                rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
-            }
-                break;
-
-            case 0xFF: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
-                                                    rect.x, rect.y, rect.cx, rect.cy, 0xffffffff);
-                break;
-
-            default: //std::cout << "RDPMemBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
-                break;
         }
     }
 
@@ -452,27 +472,28 @@ public:
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override {
         const Rect rect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
         if (rect.isempty()) {
-            return;
-        }
 
-        switch (cmd.rop) {
+        } else {
 
-            case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
-                                                    rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
-                break;
+            switch (cmd.rop) {
 
-            case 0x55: EM_ASM_({ drawable.rDPScrBlt_Invert($0      , $1      , $2      , $3      , $4       , $5); },
-                                                           rect.x-1, rect.y-1, rect.x-1, rect.y-1, rect.cx+2, rect.cy+2 );
-                break;
+                case 0x00: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
+                                                        rect.x, rect.y, rect.cx, rect.cy, 0x000000ff);
+                    break;
 
-            case 0xAA: // nothing to change
-                break;
+                case 0x55: EM_ASM_({ drawable.rDPScrBlt_Invert($0      , $1      , $2      , $3      , $4       , $5); },
+                                                            rect.x-1, rect.y-1, rect.x-1, rect.y-1, rect.cx+2, rect.cy+2 );
+                    break;
 
-            case 0xFF: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
-                                                    rect.x, rect.y, rect.cx, rect.cy, 0xffffffff);
-                break;
-            default: //std::cout << "RDPScrBlt (" << std::hex << (int)cmd.rop << ")" << std::endl;
-                break;
+                case 0xAA: // nothing to change
+                    break;
+
+                case 0xFF: EM_ASM_({drawable.opaqueRect($0    , $1    , $2     , $3     , $4   );},
+                                                        rect.x, rect.y, rect.cx, rect.cy, 0xffffffff);
+                    break;
+                default: EM_ASM_({ console.log('RDPDestBlt '+$0);}, cmd.rop);
+                    break;
+            }
         }
     }
 
@@ -521,7 +542,7 @@ public:
                                                     rect.x, rect.y, rect.cx, rect.cy, 0xffffffff);
                 break;
 
-            default:  //std::cout << "RDPPatBlt " << (int) cmd.rop << std::endl;
+            default:  EM_ASM_({ console.log('RDPPatBlt '+$0);}, cmd.rop);
                 break;
         }
     }
@@ -553,21 +574,22 @@ public:
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
         const Rect& rect = clip.intersect(cmd.rect);
         if (rect.isempty() || bitmap.cx() <= 0 || bitmap.cy() <= 0){
-            return ;
-        }
 
-        switch (cmd.rop) {
-            case 0xB8: // TODO
-                {
-                    Bitmap bitmapBpp(32, bitmap);
+        } else {
 
-                    EM_ASM_({drawable.rDPMem3Blt_0xB8($0    , $1    , $2   , $3   , HEAPU8.subarray($4, $4 + $5),  $6,  $7);},
-                                                      rect.x, rect.y, rect.cx, rect.cy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, cmd.back_color);
-                }
-                break;
+            switch (cmd.rop) {
+                case 0xB8: // TODO
+                    {
+                        Bitmap bitmapBpp(32, bitmap);
 
-            default: //std::cout << "RDPMem3Blt (" << std::hex << (int)cmd.rop << ")" << std::endl;
-                break;
+                        EM_ASM_({drawable.rDPMem3Blt_0xB8($0    , $1    , $2   , $3   , HEAPU8.subarray($4, $4 + $5),  $6,  $7);},
+                                                        rect.x, rect.y, rect.cx, rect.cy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, cmd.back_color);
+                    }
+                    break;
+
+                default: EM_ASM_({ console.log('RDPMem3Blt '+$0);}, cmd.rop);
+                    break;
+            }
         }
     }
 
@@ -636,14 +658,14 @@ public:
     : FrontAPI(false, false)
     , verbose((uint32_t)verb)
     , _port(0)
-    , _callback(nullptr)
     , _fps(30)
     , _mod_bpp(32)
     , mod_palette(BGRPalette::classic_332())
-    ,  _trans(nullptr)
-    ,  _mod(nullptr)
+    , _trans(nullptr)
+    , _mod(nullptr)
     {
         //this->_to_client_sender._front = this;
+        //this->connexion();
     }
 
     ~Front_JS_Natif() {}
@@ -657,177 +679,159 @@ public:
     //------------------------
 
     void mousePressEvent(int x, int y, int button) {
-        int flag = 0;
-        switch (button) {
-            case 1: flag = MOUSE_FLAG_BUTTON1; break;
-            case 2: flag = MOUSE_FLAG_BUTTON2; break;
-            case 4: flag = MOUSE_FLAG_BUTTON4; break;
-            default: break;
+        if (this->_mod !=  nullptr) {
+            int flag = 0;
+            switch (button) {
+                case 1: flag = MOUSE_FLAG_BUTTON1; break;
+                case 2: flag = MOUSE_FLAG_BUTTON2; break;
+                case 4: flag = MOUSE_FLAG_BUTTON4; break;
+                default: break;
+            }
+            this->_mod->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, x, y, &(this->_keymap));
+            EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
         }
-        //  this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, x, y, &(this->_keymap));
-        EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
     void mouseReleaseEvent(int x, int y, int button) {
-        int flag = 0;
-        switch (button) {
-            case 1: flag = MOUSE_FLAG_BUTTON1; break;
-            case 2: flag = MOUSE_FLAG_BUTTON2; break;
-            case 4: flag = MOUSE_FLAG_BUTTON4; break;
-            default: break;
+        if (this->_mod !=  nullptr) {
+            int flag = 0;
+            switch (button) {
+                case 1: flag = MOUSE_FLAG_BUTTON1; break;
+                case 2: flag = MOUSE_FLAG_BUTTON2; break;
+                case 4: flag = MOUSE_FLAG_BUTTON4; break;
+                default: break;
+            }
+            this->_mod->rdp_input_mouse(flag, x, y, &(this->_keymap));
+            EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
         }
-        //  this->_callback->rdp_input_mouse(flag, x, y, &(this->_keymap));
-        EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
     }
 
     void mouseMoveEvent(int x, int y) {
-        EM_ASM_({ console.log('Move '); }, x, y);
-        //this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
+        if (this->_mod !=  nullptr) {
+            EM_ASM_({ console.log('Move '); }, x, y);
+            this->_mod->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
+        }
     }
 
     void charPressed(int code) {
+        if (this->_mod !=  nullptr) {
+            int flag = 0;
 
-        int flag = 0;
+            if (code < 0) {
+                code += 256;
+            }
 
-        if (code < 0) {
-            code += 256;
+            switch (code) {
+
+                //-----------------------
+                //  Keylayout SHIFT MOD
+                //-----------------------
+                case 168 : /* ¨ */  code = this->_keylayout->deadkeys.at(code);
+                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+                                break;
+                case 37  : /* % */
+                case 43  : /* + */
+                case 46  : /* . */
+                case 63  : /* ? */
+                case 65  : /* A */
+                case 90  : /* Z */
+                case 69  : /* E */
+                case 82  : /* R */
+                case 84  : /* T */
+                case 89  : /* Y */
+                case 85  : /* U */
+                case 73  : /* I */
+                case 79  : /* O */
+                case 80  : /* P */
+                case 81  : /* Q */
+                case 83  : /* S */
+                case 68  : /* D */
+                case 70  : /* F */
+                case 71  : /* G */
+                case 72  : /* H */
+                case 74  : /* J */
+                case 75  : /* K */
+                case 76  : /* L */
+                case 77  : /* M */
+                case 87  : /* W */
+                case 88  : /* X */
+                case 67  : /* C */
+                case 86  : /* V */
+                case 66  : /* B */
+                case 78  : /* N */
+                case 162 : /* > */
+                case 163 : /* £ */
+                case 167 : /* § */
+                case 176 : /* ° */
+                case 181 : /* µ */  code = this->_keylayout->getshift()->at(code);
+                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+                                break;
+
+
+                //-----------------------
+                //  Keylayout ALTGR MOD
+                //-----------------------
+                case 96  : /* ` */  code = this->_keylayout->deadkeys.at(code);
+                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(this->_keymap));
+                                break;
+                case 35  : /* # */
+                case 64  : /* @ */
+                case 91  : /* [ */
+                case 92  : /* \ */
+                case 93  : /* ] */
+                case 123 : /* { */
+                case 124 : /* | */
+                case 125 : /* } */
+                case 126 : /* ~ */
+                case 234 : /* ê */  code = this->_keylayout->getaltGr()->at(code);
+                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(this->_keymap));
+                                break;
+
+
+                //-----------------------
+                //   Keylayout NO MOD
+                //-----------------------
+                case 94  : /* ^ */  code = this->_keylayout->deadkeys.at(code);
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+                                break;
+                case 47  : /* / */ flag = KBD_FLAGS_EXTENDED;
+                case 224 : /* à */
+                case 231 : /* ç */
+                case 232 : /* è */
+                case 233 : /* é */
+                case 249 : /* ù */
+                default  :          code = this->_keylayout->getnoMod()->at(code);
+                                    this->_mod->rdp_input_scancode(code, 0, flag | KBD_FLAG_DOWN, 0, &(this->_keymap));
+                                    this->_mod->rdp_input_scancode(code, 0, flag | KBD_FLAG_UP  , 0, &(this->_keymap));
+                                break;
+            }
+
+            EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
         }
-
-        EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
-
-        switch (code) {
-
-            //-----------------------
-            //  Keylayout SHIFT MOD
-            //-----------------------
-            case 168 : /* ¨ */ code = this->_keylayout->deadkeys.at(code);
-                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
-                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
-                            break;
-            case 37  : /* % */
-            case 43  : /* + */
-            case 46  : /* . */
-            case 63  : /* ? */
-            case 65  : /* A */
-            case 90  : /* Z */
-            case 69  : /* E */
-            case 82  : /* R */
-            case 84  : /* T */
-            case 89  : /* Y */
-            case 85  : /* U */
-            case 73  : /* I */
-            case 79  : /* O */
-            case 80  : /* P */
-            case 81  : /* Q */
-            case 83  : /* S */
-            case 68  : /* D */
-            case 70  : /* F */
-            case 71  : /* G */
-            case 72  : /* H */
-            case 74  : /* J */
-            case 75  : /* K */
-            case 76  : /* L */
-            case 77  : /* M */
-            case 87  : /* W */
-            case 88  : /* X */
-            case 67  : /* C */
-            case 86  : /* V */
-            case 66  : /* B */
-            case 78  : /* N */
-            case 162 : /* > */
-            case 163 : /* £ */
-            case 167 : /* § */
-            case 176 : /* ° */
-            case 181 : /* µ */ code = this->_keylayout->getshift()->at(code);
-                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
-                               // this->_callback->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
-                            break;
-
-
-            //-----------------------
-            //  Keylayout ALTGR MOD
-            //-----------------------
-            case 96  : /* ` */ code = this->_keylayout->deadkeys.at(code);
-                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
-                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
-                            break;
-            case 35  : /* # */
-            case 64  : /* @ */
-            case 91  : /* [ */
-            case 92  : /* \ */
-            case 93  : /* ] */
-            case 123 : /* { */
-            case 124 : /* | */
-            case 125 : /* } */
-            case 126 : /* ~ */
-            case 234 : /* ê */ code = this->_keylayout->getaltGr()->at(code);
-                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0,         &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
-                               // this->_callback->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
-                            break;
-
-
-            //-----------------------
-            //   Keylayout NO MOD
-            //-----------------------
-            case 94  : /* ^ */ code = this->_keylayout->deadkeys.at(code);
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap))
-                            break;
-            case 47  : /* / */ flag = KBD_FLAGS_EXTENDED;
-            case 224 : /* à */
-            case 231 : /* ç */
-            case 232 : /* è */
-            case 233 : /* é */
-            case 249 : /* ù */
-            default  :         code = this->_keylayout->getnoMod()->at(code);
-                               // this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_DOWN, 0, &(this->_keymap));
-                               // this->_callback->rdp_input_scancode(code, 0, flag | KBD_FLAGS_RELEASE, 0, &(this->_keymap))
-                            break;
-        }
-
-        EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
     }
 
 
 /*
-    void wheelEvent(QWheelEvent *e) override {}
+    void wheelEvent() {}
 
-    void connexionPressed() override {}
+    void RefreshPressed() {}
 
-    void connexionReleased() override {}
-
-    void RefreshPressed() override {}
-
-    void RefreshReleased() override {}
-
-    void CtrlAltDelPressed() override {}
-
-    void CtrlAltDelReleased() override {}
-
-    void disconnexionPressed()  override {}
-
-    void disconnexionReleased() override {}
+    void RefreshReleased() {}
 
     void refresh(int x, int y, int w, int h);
-
-    void send_rdp_scanCode(int keyCode, int flag);
-
-    void connect();
-
-    void disconnect(std::string) override {}
-
-    void closeFromScreen() override {}
-
-    void dropScreen() override {}
-
 */
 
 };
@@ -861,15 +865,32 @@ extern "C" void charPressed(char code) {
 }
 
 extern "C" void enterPressed() {
-    //this->_callback->rdp_input_scancode(SCANCODE_ENTER, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_DOWN, 0, &(this->_keymap));
-    //this->_callback->rdp_input_scancode(SCANCODE_ENTER, 0, KBD_FLAGS_EXTENDED | KBD_FLAGS_RELEASE, 0, &(this->_keymap));
-    EM_ASM_({ console.log('Enter'); }, 0);
+    if (front._mod !=  nullptr) {
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0,Front_JS_Natif:: KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(front._keymap));
+        EM_ASM_({ console.log('Enter'); }, 0);
+    }
 }
 
 extern "C" void backspacePressed() {
-    //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_DOWN, 0, &(this->_keymap));
-    //this->_callback->rdp_input_scancode(SCANCODE_B_SPC, 0, KBD_FLAGS_RELEASE, 0, &(this->_keymap));
-    EM_ASM_({ console.log('Backspace'); }, 0);
+    if (front._mod !=  nullptr) {
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_DOWN , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_UP   , 0, &(front._keymap));
+        EM_ASM_({ console.log('Backspace'); }, 0);
+    }
+}
+
+extern "C" void CtrlAltDelPressed() {
+    if (front._mod !=  nullptr) {
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
+
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
+        EM_ASM_({ console.log('Ctrl Alt Del'); }, 0);
+    }
 }
 
 
@@ -880,20 +901,26 @@ extern "C" void backspacePressed() {
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
 
-extern "C" void recv_wraped(char * pbuffer, size_t len) {
-    if (front._trans != nullptr) {
-        front._trans->recv(&pbuffer, len);
-    }
-}
-
-extern "C" void incomming_data() {
+extern "C" void recv_wraped() {
     if (front._mod !=  nullptr) {
-        front._mod->draw_event(time(nullptr));
+        front._mod->draw_event(time_t(nullptr));
+    } else {
+        EM_ASM_({ console.log('incoming_data off '); }, 0);
     }
 }
 
-extern "C" void connexion_client() {
-    front.connexion();
+extern "C" void connexion(char * ip, char * user, char * password, int port) {
+    front.connexion(ip, user, password, port);
+}
+
+extern "C" void diconnexion() {
+    front.disconnect();
+}
+
+extern "C" void recv_value(int value, int i) {
+    if (front._trans !=  nullptr) {
+        static_cast<TransportWebSocket *>(front._trans)->setBufferValue(value, i);
+    }
 }
 
 
@@ -912,7 +939,6 @@ int main(int argc, char** argv){
 
     front.setClientInfo(info);
 
-    //emscripten_set_main_loop(eventLoop, front._fps, 0);
 
     return 0;
 }*/

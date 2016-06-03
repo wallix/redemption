@@ -155,6 +155,14 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
+        else if (0 == strcmp(key, "ssl_cipher_list")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

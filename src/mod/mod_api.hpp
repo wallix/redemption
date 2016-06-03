@@ -78,8 +78,8 @@ public:
         );
     }
 
-    TODO("implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
+    TODO("implementation of the server_draw_text_deprecated function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+    virtual void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char * text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {
         static GlyphCache mod_glyph_cache;
 
@@ -106,7 +106,7 @@ public:
                 FontChar const & font_item = font.glyph_defined(charnum) && font.font_items[charnum]
                 ? font.font_items[charnum]
                 : [&]() {
-                    LOG(LOG_WARNING, "mod_api::server_draw_text() - character not defined >0x%02x<", charnum);
+                    LOG(LOG_WARNING, "mod_api::server_draw_text_deprecated() - character not defined >0x%02x<", charnum);
                     return std::ref(font.font_items[static_cast<unsigned>('?')]);
                 }().get();
                 if (is_first_char) {

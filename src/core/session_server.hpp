@@ -120,11 +120,11 @@ public:
                     close(fd);
 
                     if (setgid(this->gid) != 0){
-                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        LOG(LOG_ERR, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
                         _exit(1);
                     }
                     if (setuid(this->uid) != 0){
-                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        LOG(LOG_ERR, "Changing process user to %u failed with error: %s\n", this->uid, strerror(errno));
                         _exit(1);
                     }
 

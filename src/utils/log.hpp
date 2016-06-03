@@ -46,6 +46,9 @@ namespace { namespace compiler_aux_ {
 
 // REDASSERT behave like assert but instaed of calling abort it triggers a segfault
 // This is handy to get stacktrace while debugging.
+
+
+
 #ifdef NDEBUG
 #define REDASSERT(x)
 #else

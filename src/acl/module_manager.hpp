@@ -328,13 +328,12 @@ class ModuleManager : public MMIni
         }
     } accounts;
 
-    typedef mod_api * ModApiPtr;
     class CurrentCallback : public Callback {
     private:
-        ModApiPtr & mod_api_ptr;
+        mod_api * (& mod_api_ptr);
 
     public:
-        CurrentCallback(ModApiPtr & mod_api_ptr) : mod_api_ptr(mod_api_ptr) {
+        CurrentCallback(mod_api * (& mod_api_ptr)) : mod_api_ptr(mod_api_ptr) {
         }
 
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
@@ -542,7 +541,7 @@ public:
                 mod.draw(polyline_box, r);
 
 
-                mod.server_draw_text(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
+                mod.server_draw_text_deprecated(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
                 mod.end_update();
             },
             external_deleting

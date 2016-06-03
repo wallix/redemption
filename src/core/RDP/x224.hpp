@@ -329,11 +329,12 @@ namespace X224
                 : type(0)
                 , length(0)
                 , fast_path(false) {
-
             size_t nbbytes = 0;
             Parse data(*end);
             TODO("We should have less calls to read, one to get length, the other to get data, other short packets are error")
+
             t.recv(end, 1);
+
             nbbytes++;
             uint8_t tpkt_version = data.in_uint8();
             int action = tpkt_version & 0x03;
@@ -349,8 +350,10 @@ namespace X224
                     LOG(LOG_ERR, "Fast-path PDU expected: action=0x%X", action);
                     throw Error(ERR_RDP_FASTPATH);
                 }
+
                 t.recv(end, 1);
                 nbbytes++;
+
                 uint16_t lg = data.in_uint8();
                 if (lg & 0x80){
                     t.recv(end, 1);
@@ -358,6 +361,7 @@ namespace X224
                     uint8_t byte = data.in_uint8();
                     lg = (lg & 0x7F) << 8 | byte;
                 }
+
                 this->length = lg;
                 if (bufsize < this->length){
                     LOG(LOG_ERR, "Buffer too small to read data need=%zu available=%zu",
@@ -365,6 +369,7 @@ namespace X224
                     throw Error(ERR_X224);
                 }
                 t.recv(end, this->length - nbbytes);
+
                 return;
             }
             else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
@@ -377,12 +382,14 @@ namespace X224
                     LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
                     throw Error(ERR_X224);
                 }
+
                 this->length = tpkt_len;
                 if (bufsize < this->length){
                     LOG(LOG_ERR, "Buffer too small to read data need=%zu available=%zu",
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 }
+
                 t.recv(end, tpkt_len - nbbytes );
                 data.in_skip_bytes(1);
                 uint8_t tpdu_type = data.in_uint8();
@@ -393,6 +400,7 @@ namespace X224
                 case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
                 case X224::ER_TPDU: // TPDU Error         0111 0000
                     this->type = tpdu_type & 0xF0;
+
                 break;
                 default:
                     this->type = 0;
@@ -1065,6 +1073,7 @@ namespace X224
                 throw Error(ERR_X224);
             }
             this->_header_size = stream.get_offset();
+
         }
 
         void throw_error() {

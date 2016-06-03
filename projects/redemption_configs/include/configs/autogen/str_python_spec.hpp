@@ -130,9 +130,10 @@
 "performance_flags_default = integer(min=0, default=128)\n\n"
 
 "# Disable theme (0x8).\n"
+"# Disable mouse cursor shadows (0x20).\n"
 "#_advanced\n"
 "#_hex\n"
-"performance_flags_force_present = integer(min=0, default=8)\n\n"
+"performance_flags_force_present = integer(min=0, default=40)\n\n"
 
 "#_advanced\n"
 "#_hex\n"
@@ -197,6 +198,9 @@
 "fast_path = boolean(default=True)\n\n"
 
 "enable_suppress_output = boolean(default=True)\n\n"
+
+"#_hidden\n"
+"ssl_cipher_list = string(default='')\n\n"
 
 "[mod_rdp]\n\n"
 

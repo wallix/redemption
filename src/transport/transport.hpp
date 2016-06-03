@@ -119,7 +119,8 @@ public:
         // default enable_tls do nothing
     }
 
-    virtual void enable_server_tls(const char * certificate_password)
+    virtual void enable_server_tls(const char * certificate_password,
+        const char * ssl_cipher_list)
     {
         // default enable_tls do nothing
     }

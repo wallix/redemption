@@ -837,7 +837,7 @@ struct TLSContext
         LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
     }
 
-    void enable_server_tls(int sck, const char * certificate_password)
+    void enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list)
     {
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -1027,7 +1027,7 @@ struct TLSContext
         // Allow legacy insecure renegotiation between OpenSSL and unpatched servers only: this option
         // is currently set by default. See the SECURE RENEGOTIATION section for more details.
 
-        LOG(LOG_INFO, "SocketTransport::SSL_CTX_set_options()");
+        LOG(LOG_INFO, "SocketTransport::enable_server_tls() set SSL options");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
@@ -1036,6 +1036,10 @@ struct TLSContext
 //        SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
 // Not compatible with MSTSC 6.1 on XP and W2K3
 //        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
+        if (ssl_cipher_list && *ssl_cipher_list) {
+            LOG(LOG_INFO, "SocketTransport::enable_server_tls() set SSL cipher list");
+            SSL_CTX_set_cipher_list(ctx, ssl_cipher_list);
+        }
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
 
@@ -1046,7 +1050,7 @@ struct TLSContext
         {
             BIO_printf(bio_err, "Can't read certificate file\n");
             ERR_print_errors(bio_err);
-            exit(0);
+            exit(128);
         }
 
         SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
@@ -1055,14 +1059,14 @@ struct TLSContext
         {
             BIO_printf(bio_err,"Can't read key file\n");
             ERR_print_errors(bio_err);
-            exit(0);
+            exit(129);
         }
 
         BIO *bio = BIO_new_file(CFG_PATH "/" DH_PEM,"r");
         if (bio == nullptr){
             BIO_printf(bio_err,"Couldn't open DH file\n");
             ERR_print_errors(bio_err);
-            exit(0);
+            exit(130);
         }
 
         DH *ret = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
@@ -1071,7 +1075,7 @@ struct TLSContext
         {
             BIO_printf(bio_err,"Couldn't set DH parameters\n");
             ERR_print_errors(bio_err);
-            exit(0);
+            exit(131);
         }
         DH_free(ret);
         // SSL_new() creates a new SSL structure which is needed to hold the data for a TLS/SSL
@@ -1099,7 +1103,7 @@ struct TLSContext
         {
             BIO_printf(bio_err, "SSL accept error\n");
             ERR_print_errors(bio_err);
-            exit(0);
+            exit(132);
         }
 
         this->io = ssl;

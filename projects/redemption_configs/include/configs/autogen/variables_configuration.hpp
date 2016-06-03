@@ -489,6 +489,7 @@ namespace cfg {
             type value{128};
         };
         // Disable theme (0x8).
+// Disable mouse cursor shadows (0x20).
         // type: uint32_t
         struct performance_flags_force_present {
             static constexpr bool is_readable() { return 0; }
@@ -497,7 +498,7 @@ namespace cfg {
             static constexpr char const * name() { return "performance_flags_force_present"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
-            type value{8};
+            type value{40};
         };
         // type: uint32_t
         struct performance_flags_force_not_present {
@@ -660,6 +661,16 @@ namespace cfg {
             using type = bool;
             using sesman_and_spec_type = bool;
             type value{1};
+        };
+        // type: std::string
+        struct ssl_cipher_list {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "client"; }
+            static constexpr char const * name() { return "ssl_cipher_list"; }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            type value{};
         };
     };
 
@@ -2469,6 +2480,7 @@ struct client
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
 , cfg::client::enable_suppress_output
+, cfg::client::ssl_cipher_list
 { static constexpr bool is_section = true; };
 
 struct context

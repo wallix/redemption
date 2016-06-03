@@ -96,7 +96,7 @@ public:
 
     void draw(const Rect& clip) override {
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        this->drawable.server_draw_text(this->font,
+        this->drawable.server_draw_text_deprecated(this->font,
                                         this->x_text + this->dx(),
                                         this->y_text + this->dy(),
                                         this->get_text(),

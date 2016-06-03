@@ -155,7 +155,10 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
         W.member(A | X, type_<types::u32>(), "performance_flags_default", desc{"Enable font smoothing (0x80)."}, set(0x80));
-        W.member(A | X, type_<types::u32>(), "performance_flags_force_present", desc{"Disable theme (0x8)."}, set(0x8));
+        W.member(A | X, type_<types::u32>(), "performance_flags_force_present", desc{
+            "Disable theme (0x8).\n"
+            "Disable mouse cursor shadows (0x20)."
+        }, set(0x28));
         W.member(A | X, type_<types::u32>(), "performance_flags_force_not_present", set(0));
         W.member(A, type_<bool>(), "auto_adjust_performance_flags", desc{"If enabled, avoid automatically font smoothing in recorded session."}, set(true));
         W.sep();
@@ -179,6 +182,8 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
         W.sep();
         W.member(V, type_<bool>(), "enable_suppress_output", set(true));
+        W.sep();
+        W.member(H, type_<std::string>(), "ssl_cipher_list");
     });
 
     W.section("mod_rdp", [&]
@@ -271,6 +276,7 @@ void config_spec_definition(Writer && W)
             W.member(H, type_<ServerNotification>(), p.name, desc{p.desc}, set(ServerNotification::syslog), r);
         }
         //@}
+        W.sep();
 
         W.member(V, type_<bool>(), "hide_client_name", desc{"Do not transmit client machine name or RDP server."}, set(false));
     });

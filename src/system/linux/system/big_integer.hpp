@@ -6,6 +6,9 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+
+#define LOGPRINT
+#include "utils/log.hpp"
  
 #define MAX 10000 // for strings
 
@@ -415,66 +418,53 @@ private:
         return sum;
     }
 
-
-void shiftRight(BigInteger& a) {
-    //std::cout << "shr " << a.toString() << " == ";
-    for (int i = 0; i < static_cast<int>(a.number.size()); ++i) {
-        a.number[i] >>= 1;
-        if (i+1 < static_cast<int>(a.number.size())) {
-            if ((a.number[i+1] & 0x1) != 0) {
-                a.number[i] |= 0x8000;
-            }
-        }
-    }
-    //std::cout << a.toString() << std::endl;
-}
-
-
     int cmpWithoutSign(const BigInteger& a, const BigInteger& b) {
         int n = static_cast<int>(a.number.size());
         if (n < static_cast<int>(b.number.size()))
             n = static_cast<int>(b.number.size());
-        //std::cout << "cmp(" << a.toString() << ", " << b.toString() << ") == ";
+
         for (int i = n-1; i >= 0; --i) {
             unsigned short a_digit = 0;
             unsigned short b_digit = 0;
-            if (i < static_cast<int>(a.number.size()))
+
+            if (i < static_cast<int>(a.number.size())) {
                 a_digit = a.number[i];
-            if (i < static_cast<int>(b.number.size()))
+            }
+
+            if (i < static_cast<int>(b.number.size())) {
                 b_digit = b.number[i];
+            }
+
             if (a_digit < b_digit) {
-                //std::cout << "-1" << std::endl;
                 return -1;
             } else if (a_digit > b_digit) {
-                //std::cout << "+1" << std::endl;
                 return +1;
             }
         }
-        //std::cout << "0" << std::endl;
+
         return 0;
     }
 
-
-    bool isOdd() const {
-        return (number[0] & 0x1) != 0;
-    }
 
 
 public:
 
     BigInteger& powAssignUnderMod(const BigInteger& exponent, const BigInteger& modulus) {
         BigInteger zero("0");
-        BigInteger one("1");
         BigInteger e = exponent;
         BigInteger base = *this;
-        *this = one;
+        *this = BigInteger("1");
+
         while (cmpWithoutSign(e, zero) != 0) {
-            if (e.isOdd()) {
+            BigInteger odd = e % BigInteger(2);
+
+            if (strcmp(odd.number.c_str(),"1") == 0) {
                 *this *= base;
                 *this %= modulus;
             }
-            shiftRight(e);
-            base *= BigInteger(base);
+
+            e /= BigInteger("2");
+            base *= base;
             base %= modulus;
         }
         return *this;

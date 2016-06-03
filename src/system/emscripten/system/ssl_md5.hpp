@@ -37,6 +37,9 @@
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
 
+#define NID_md5WithRSAEncryption    8
+
+
 enum {
     MD5_DIGEST_LENGTH = 16
 };
@@ -56,8 +59,8 @@ class SslMd5_direct
     static uint32_t G(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (z & (y ^ x))); }
     static uint32_t H(uint32_t x, uint32_t y, uint32_t z) { return (x ^ y ^ z); }
     static uint32_t I(uint32_t x, uint32_t y, uint32_t z) { return (y ^ (x | ~z)); }
-    static uint32_t FF(uint32_t a, uint32_t b, uint32_t c, uint32_t  d, uint32_t w, uint32_t s, uint32_t t) 
-    { 
+    static uint32_t FF(uint32_t a, uint32_t b, uint32_t c, uint32_t  d, uint32_t w, uint32_t s, uint32_t t)
+    {
         return rol(a + F(b,c,d) + w + t, s) + b;
     }
     static uint32_t GG(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t w, uint32_t s, uint32_t t)
@@ -271,7 +274,7 @@ class SslMd5_direct
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
-        assert(MD5_DIGEST_LENGTH == out_data_size);
+        //assert(MD5_DIGEST_LENGTH == out_data_size);
         this->md5_sum(out_data);
     }
 };
@@ -286,8 +289,8 @@ class SslMd5_direct
 
 class SslHMAC_Md5_direct
 {
-    uint8_t k_ipad[64]; 
-    uint8_t k_opad[64]; 
+    uint8_t k_ipad[64];
+    uint8_t k_opad[64];
     SslMd5_direct context;
 
     public:
