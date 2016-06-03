@@ -50,19 +50,23 @@ class TransportWebSocket :  public Transport
         int lenInt(len);
         if (lenInt > 0) {
 
-            for (i = 0; i < lenInt; i++) {
-                EM_ASM_({ getDataOctet($0); }, i);
-            }
+            //for (i = 0; i < lenInt; i++) {
+                EM_ASM_({ getDataOctet($0); },lenInt-1);
+            //}
 
             *pbuffer = this->buffer + i;
         } else {
-            EM_ASM_({ console.log('No input data from WebSocket'); }, lenInt);
+            EM_ASM_({ console.log('No input data from WebSocket'); }, 0);
         }
     }
 
 public:
-    void setBufferValue(char value, int i) {
-        this->buffer[i] = value;
+    void setBufferValue(char value[]) {
+        EM_ASM_({ console.log('lol '+ $0); }, value[0]);
+        for (int i = 0; i < 64; i++) {
+            this->buffer[i] = value[i];
+        }
+
     }
 
 };
