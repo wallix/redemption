@@ -93,9 +93,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -115,11 +115,11 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -208,10 +208,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -418,9 +418,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -439,11 +439,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(5,                                ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(150,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(5,                                ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(150,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -513,7 +513,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(45,                               ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(45,                               ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("22",                             ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -531,10 +531,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::clipboard_up>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
@@ -642,9 +642,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -661,11 +661,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -734,7 +734,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(RdpCompression::rdp5,             ini.get<cfg::mod_rdp::rdp_compression>()); BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -750,10 +750,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -836,9 +836,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -858,11 +858,11 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -921,7 +921,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -940,10 +940,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -1034,9 +1034,9 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -1055,11 +1055,11 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(7,                                ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(300,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(7,                                ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(300,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -1118,7 +1118,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
     BOOST_CHECK_EQUAL(RdpCompression::none,             ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -1137,10 +1137,10 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -1205,9 +1205,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -1227,11 +1227,11 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -1290,7 +1290,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -1308,10 +1308,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -1377,9 +1377,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -1399,11 +1399,11 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -1462,7 +1462,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -1480,10 +1480,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(4000,                             ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::ignore_and_continue,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(7000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -1535,9 +1535,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -1557,11 +1557,11 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(120,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -1621,7 +1621,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -1639,10 +1639,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
@@ -1695,9 +1695,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
                                                         ini.get<cfg::video::capture_flags>());
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>());
-    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
+    BOOST_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     BOOST_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
 
@@ -1717,11 +1717,11 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(WrmCompressionAlgorithm::gzip,
                                                         ini.get<cfg::video::wrm_compression_algorithm>());
 
-    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>());
-    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>());
-    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>());
-    BOOST_CHECK_EQUAL(300,                              ini.get<cfg::globals::authentication_timeout>());
-    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>());
+    BOOST_CHECK_EQUAL(10,                               ini.get<cfg::globals::handshake_timeout>().count());
+    BOOST_CHECK_EQUAL(900,                              ini.get<cfg::globals::session_timeout>().count());
+    BOOST_CHECK_EQUAL(30,                               ini.get<cfg::globals::keepalive_grace_delay>().count());
+    BOOST_CHECK_EQUAL(300,                              ini.get<cfg::globals::authentication_timeout>().count());
+    BOOST_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     BOOST_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
@@ -1781,7 +1781,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(RdpCompression::rdp6_1,           ini.get<cfg::mod_rdp::rdp_compression>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_nla>());
-    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>());
+    BOOST_CHECK_EQUAL(0,                                ini.get<cfg::mod_rdp::open_session_timeout>().count());
     BOOST_CHECK_EQUAL("15,16,17,18,22",                 ini.get<cfg::mod_rdp::extra_orders>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::cache_waiting_list>());
@@ -1799,10 +1799,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_rdp::enable_session_probe>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::mod_rdp::enable_session_probe_launch_mask>());
-    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>());
+    BOOST_CHECK_EQUAL(20000,                            ini.get<cfg::mod_rdp::session_probe_launch_timeout>().count());
     BOOST_CHECK_EQUAL(SessionProbeOnLaunchFailure::retry_without_session_probe,
                                                         ini.get<cfg::mod_rdp::session_probe_on_launch_failure>());
-    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>());
+    BOOST_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());

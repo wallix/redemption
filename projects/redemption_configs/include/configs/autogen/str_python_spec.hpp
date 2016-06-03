@@ -23,21 +23,26 @@
 "#_advanced\n"
 "authfile = string(default='/var/run/redemption-sesman-sock')\n\n"
 
-"# Time out during RDP handshake stage (in seconds).\n"
+"# Time out during RDP handshake stage.\n"
+"# (is in second)\n"
 "handshake_timeout = integer(min=0, default=10)\n\n"
 
-"# No traffic auto disconnection (in seconds).\n"
+"# No traffic auto disconnection.\n"
+"# (is in second)\n"
 "session_timeout = integer(min=0, default=900)\n\n"
 
-"# Keepalive (in seconds).\n"
+"# Keepalive.\n"
+"# (is in second)\n"
 "#_advanced\n"
 "keepalive_grace_delay = integer(min=0, default=30)\n\n"
 
 "# Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).\n"
+"# (is in second)\n"
 "#_advanced\n"
 "authentication_timeout = integer(min=0, default=120)\n\n"
 
 "# Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).\n"
+"# (is in second)\n"
 "#_advanced\n"
 "close_timeout = integer(min=0, default=600)\n\n"
 
@@ -207,6 +212,7 @@
 "#_advanced\n"
 "disconnect_on_logon_user_change = boolean(default=False)\n\n"
 
+"# (is in second)\n"
 "#_advanced\n"
 "open_session_timeout = integer(min=0, default=0)\n\n"
 
@@ -299,12 +305,14 @@
 "session_probe_on_launch_failure = option(0, 1, 2, default=2)\n\n"
 
 "# This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
-"# In milliseconds, 0 to disable timeout.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
 "#_hidden\n"
 "session_probe_launch_timeout = integer(min=0, default=20000)\n\n"
 
 "# This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
-"# In milliseconds, 0 to disable timeout.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
 "#_hidden\n"
 "session_probe_launch_fallback_timeout = integer(min=0, default=7000)\n\n"
 
@@ -312,6 +320,7 @@
 "#_hidden\n"
 "session_probe_start_launch_timeout_timer_only_after_logon = boolean(default=True)\n\n"
 
+"# (is in millisecond)\n"
 "#_hidden\n"
 "session_probe_keepalive_timeout = integer(min=0, default=5000)\n\n"
 
@@ -439,15 +448,18 @@
 "#_advanced\n"
 "capture_flags = integer(min=0, max=15, default=3)\n\n"
 
-"# Frame interval is in 1/10 s.\n"
+"# Frame interval.\n"
+"# (is in 1/10 second)\n"
 "#_advanced\n"
 "png_interval = integer(min=0, default=10)\n\n"
 
-"# Frame interval is in 1/100 s.\n"
+"# Frame interval.\n"
+"# (is in 1/100 second)\n"
 "#_advanced\n"
 "frame_interval = integer(min=0, default=40)\n\n"
 
-"# Time between 2 wrm movies (in seconds).\n"
+"# Time between 2 wrm movies.\n"
+"# (is in second)\n"
 "#_advanced\n"
 "break_interval = integer(min=0, default=600)\n\n"
 

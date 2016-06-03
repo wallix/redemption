@@ -31,6 +31,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <chrono>
 #include <map>
 
 #include <cerrno>
@@ -175,6 +176,9 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
     void write_value(const char * s) { this->out() << " = \"" << io_quoted2{s} << '"';  }
     void write_value(cpp::macro x) { this->out() << " = " << x.name; }
 
+    template<class T, class Ratio>
+    void write_value(std::chrono::duration<T, Ratio> x) { this->out() << '{' << x.count() << '}'; }
+
 
     template<class T, class U>
     void write_assignable_default(std::true_type, type_<T>, ref<default_<U>> const & d)
@@ -211,6 +215,18 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<class T>
     void write_type(type_<types::list<T>>) { this->out() << "std::string"; }
+
+    void write_type(type_<std::chrono::hours>) { this->out() << "std::chrono::hours"; }
+    void write_type(type_<std::chrono::minutes>) { this->out() << "std::chrono::minutes"; }
+    void write_type(type_<std::chrono::seconds>) { this->out() << "std::chrono::seconds"; }
+    void write_type(type_<std::chrono::milliseconds>) { this->out() << "std::chrono::milliseconds"; }
+
+    template<class T, class Ratio>
+    void write_type(type_<std::chrono::duration<T, Ratio>>)
+    {
+        this->out() << "std::chrono::duration<" << type_name<T>()
+          << ", std::ratio<" << Ratio::num << ", " << Ratio::den << ">>";
+    }
 
     template<class T>
     void write_type(type_<T>) { this->out() << type_name<T>(); }

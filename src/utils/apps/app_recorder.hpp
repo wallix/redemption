@@ -742,9 +742,9 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
     }
 
     ini.set<cfg::video::png_limit>(png_limit);
-    ini.set<cfg::video::png_interval>(png_interval);
-    ini.set<cfg::video::frame_interval>(wrm_frame_interval);
-    ini.set<cfg::video::break_interval>(wrm_break_interval);
+    ini.set<cfg::video::png_interval>(std::chrono::seconds{png_interval});
+    ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
+    ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
     ini.get_ref<cfg::video::capture_flags>() &= ~(CaptureFlags::wrm | CaptureFlags::png);
     if (options.count("wrm") > 0) {
         ini.get_ref<cfg::video::capture_flags>() |= CaptureFlags::wrm;

@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <chrono>
 #include <locale>
 #include <vector>
 #include <map>
@@ -58,6 +59,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         auto type = pack_get<spec::type_>(pack);
 
         this->write_description(pack_contains<desc>(pack), type, pack);
+        this->write_type_info(type);
         this->write_enumeration_value_description(pack_contains<prefix_value>(pack), type, pack);
 
         if (bool(attr & spec::attr::iptables)) this->out() << "\"#_iptables\\n\"\n";
@@ -116,6 +118,27 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
             }
         });
     }
+
+
+    template<class T>
+    void write_type_info(type_<T>)
+    {}
+
+    void write_type_info(type_<std::chrono::hours>)
+    { this->out() << "\"# (is in hour)\\n\"\n"; }
+
+    void write_type_info(type_<std::chrono::minutes>)
+    { this->out() << "\"# (is in minute)\\n\"\n"; }
+
+    void write_type_info(type_<std::chrono::seconds>)
+    { this->out() << "\"# (is in second)\\n\"\n"; }
+
+    void write_type_info(type_<std::chrono::milliseconds>)
+    { this->out() << "\"# (is in millisecond)\\n\"\n"; }
+
+    template<class T, class Ratio>
+    void write_type_info(type_<std::chrono::duration<T, Ratio>>)
+    { this->out() << "\"# (is in " << Ratio::num << "/" << Ratio::den << " second)\\n\"\n"; }
 
 
     template<class T, class V>
@@ -216,6 +239,11 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     template<class Int, long min, long max, class T>
     void write_type(type_<types::range<Int, min, max>>, T i)
     { this->out() << "integer(min=" << min << ", max=" << max << ", default=" << this->get_value(i) << ")"; }
+
+
+    template<class T, class Ratio, class U>
+    void write_type(type_<std::chrono::duration<T, Ratio>>, U i)
+    { this->out() << "integer(min=0, default=" << this->get_value(i) << ")"; }
 
     template<unsigned N, class T>
     void write_type(type_<types::fixed_binary<N>>, T const & x)

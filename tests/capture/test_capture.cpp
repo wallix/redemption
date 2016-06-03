@@ -52,12 +52,11 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         Rect scr(0, 0, 800, 600);
 
-
-        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
-        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
 
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
@@ -225,11 +224,11 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Rect scr(0, 0, 12, 10);
 
-        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
-        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
 
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
         ini.set<cfg::video::capture_flags>(CaptureFlags::png);
         ini.set<cfg::globals::trace_type>(TraceType::localfile);

@@ -44,8 +44,8 @@ class KeepAlive {
     bool connected;
 
 public:
-    KeepAlive(int _grace_delay, uint32_t verbose)
-        : grace_delay(_grace_delay)
+    KeepAlive(std::chrono::seconds _grace_delay, uint32_t verbose)
+        : grace_delay(_grace_delay.count())
         , timeout(0)
         , renew_time(0)
         , wait_answer(false)
@@ -133,8 +133,8 @@ class Inactivity {
     uint32_t verbose;
 
 public:
-    Inactivity(ActivityChecker & checker, uint32_t timeout, time_t start, uint32_t verbose)
-    : inactivity_timeout((timeout>30)?timeout:30)
+    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, uint32_t verbose)
+    : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
     , last_activity_time(start)
     , checker(checker)
     , verbose(verbose)
@@ -188,8 +188,6 @@ public:
         : ini(ini)
         , acl_serial(ini, _auth_trans, ini.get<cfg::debug::auth>())
         , remote_answer(false)
-        //, start_time(start_time)
-        //, acl_start_time(acl_start_time)
         , verbose(ini.get<cfg::debug::auth>())
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), ini.get<cfg::debug::auth>())
         , inactivity(activity_checker, ini.get<cfg::globals::session_timeout>(),
@@ -496,9 +494,9 @@ class PauseRecord {
     uint64_t last_total_sent;
 
 public:
-    explicit PauseRecord(time_t timeout)
+    explicit PauseRecord(std::chrono::seconds timeout)
         : stop_record_inactivity(false)
-        , stop_record_time((timeout > 30)?timeout:30)
+        , stop_record_time(std::max<time_t>(timeout.count(), 30))
         , last_record_activity_time(0)
         , last_total_received(0)
         , last_total_sent(0)

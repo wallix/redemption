@@ -21,6 +21,8 @@
 #pragma once
 
 #include <iosfwd>
+#include <type_traits>
+
 #include <cstddef>
 #include <cstring>
 
@@ -41,19 +43,44 @@ struct string_type_name
     { return out.write(s.data(), s.size()); }
 };
 
+namespace detail
+{
+    template<class T, bool = std::is_integral<T>::value || std::is_enum<T>::value>
+    struct type_name_impl;
+
+    template<class T>
+    struct type_name_impl<T, true>
+    {
+        static string_type_name impl()
+        {
+            char const * s = __PRETTY_FUNCTION__;
+#ifdef __clang__
+            return {s + 70, s + strlen(s) - 1};
+#elif defined(__GNUG__)
+            return {s + 74, s + strlen(s) - 1};
+#endif
+        }
+    };
+}
 
 template<class T>
 string_type_name type_name(T const * = nullptr)
-#ifdef __clang__
-{
-  char const * s = __PRETTY_FUNCTION__;
-  return {s + 43, s + strlen(s) - 1};
-}
-#elif defined(__GNUG__)
-{
-  char const * s = __PRETTY_FUNCTION__;
-  return {s + 47, s + strlen(s) - 1};
-}
-#else
-;
-#endif
+{ return detail::type_name_impl<T>::impl(); }
+
+#define CONFIG_DEFINE_TYPE_NAME(type, name)                      \
+    namespace detail {                                    \
+        template<bool B> struct type_name_impl<type, B> { \
+            static string_type_name impl() {              \
+                return {name, name + sizeof(name) - 1};   \
+            }                                             \
+        };                                                \
+    }
+
+#define CONFIG_DEFINE_TYPE_NAME2(type) \
+    CONFIG_DEFINE_TYPE_NAME(type, #type)
+
+#define CONFIG_DEFINE_TYPE(type) \
+    class type {};        \
+    CONFIG_DEFINE_TYPE_NAME(type, #type)
+
+CONFIG_DEFINE_TYPE_NAME2(std::string)

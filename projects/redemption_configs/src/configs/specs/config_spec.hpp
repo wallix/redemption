@@ -25,27 +25,35 @@
 #include "configs/enumeration.hpp"
 
 #include "configs/autogen/enums.hpp"
+#include "configs/type_name.hpp"
 
 #include "keyboard/keymap2.hpp" // keylayouts
 
 #include <algorithm>
+#include <chrono>
 #include <vector>
 #include <string>
 
 
 /// ~"forward declaration" for redemption type
 //@{
-class RedirectionInfo {};
-class Theme {};
-class Font {};
+CONFIG_DEFINE_TYPE(RedirectionInfo)
+CONFIG_DEFINE_TYPE(Theme)
+CONFIG_DEFINE_TYPE(Font)
 //@}
 
 namespace cfg_specs {
+
+template<class T, T num, T denom>
+using type_duration = cfg_attributes::type_<std::chrono::duration<T, std::ratio<num, denom>>>;
+
 
 template<class Writer>
 void config_spec_definition(Writer && W)
 {
     using namespace cfg_attributes;
+    using std::chrono::duration;
+    using std::ratio;
 
 #ifdef IN_IDE_PARSER
     // for coloration...
@@ -91,11 +99,11 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(A, type_<std::string>(), "authfile", set("/var/run/redemption-sesman-sock"));
         W.sep();
-        W.member(V, type_<unsigned>(), "handshake_timeout", desc{"Time out during RDP handshake stage (in seconds)."}, set(10));
-        W.member(V, type_<unsigned>(), "session_timeout", desc{"No traffic auto disconnection (in seconds)."}, set(900));
-        W.member(A, type_<unsigned>(), "keepalive_grace_delay", desc{"Keepalive (in seconds)."}, set(30));
-        W.member(A, type_<unsigned>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
-        W.member(A, type_<unsigned>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
+        W.member(V, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
+        W.member(V, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));
+        W.member(A, type_<std::chrono::seconds>(), "keepalive_grace_delay", desc{"Keepalive."}, set(30));
+        W.member(A, type_<std::chrono::seconds>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
+        W.member(A, type_<std::chrono::seconds>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
         W.sep();
 
         W.member(A, type_<TraceType>(), "trace_type", set(TraceType::localfile_hashed), r);
@@ -179,7 +187,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "disconnect_on_logon_user_change", set(false));
         W.sep();
-        W.member(A, type_<types::u32>(), "open_session_timeout", set(0));
+        W.member(A, type_<std::chrono::seconds>(), "open_session_timeout", set(0));
         W.sep();
         W.member(A, type_<types::list<unsigned>>(), "extra_orders", desc{
             "Enables support of additional drawing orders:\n"
@@ -230,18 +238,18 @@ void config_spec_definition(Writer && W)
         }, cpp::name{"session_probe_use_clipboard_based_launcher"}, set(true), r);
         W.member(H, type_<bool>(), "enable_session_probe_launch_mask", set(true), r);
         W.member(H, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", set(SessionProbeOnLaunchFailure::retry_without_session_probe), r);
-        W.member(H, type_<unsigned>(), "session_probe_launch_timeout", desc{
+        W.member(H, type_<std::chrono::milliseconds>(), "session_probe_launch_timeout", desc{
             "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
-            "In milliseconds, 0 to disable timeout."
+            "0 to disable timeout."
         }, set(20000), r);
-        W.member(H, type_<unsigned>(), "session_probe_launch_fallback_timeout", desc{
+        W.member(H, type_<std::chrono::milliseconds>(), "session_probe_launch_fallback_timeout", desc{
             "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
-            "In milliseconds, 0 to disable timeout."
+            "0 to disable timeout."
         }, set(7000), r);
         W.member(H, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", desc{
             "Minimum supported server : Windows Server 2008."
         }, set(true), r);
-        W.member(H, type_<unsigned>(), "session_probe_keepalive_timeout", set(5000), r);
+        W.member(H, type_<std::chrono::milliseconds>(), "session_probe_keepalive_timeout", set(5000), r);
         W.member(H, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
         W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false), r);
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
@@ -302,12 +310,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<CaptureFlags>{}, "capture_flags", set(CaptureFlags::png | CaptureFlags::wrm));
         W.sep();
-        // TODO std:chrono::duration
-        W.member(A, type_<unsigned>(), "png_interval", desc{"Frame interval is in 1/10 s."}, set(10));
-        // TODO std:chrono::duration
-        W.member(A, type_<unsigned>(), "frame_interval", desc{"Frame interval is in 1/100 s."}, set(40));
-        // TODO std:chrono::duration
-        W.member(A, type_<unsigned>(), "break_interval", desc{"Time between 2 wrm movies (in seconds)."}, set(600));
+        W.member(A, type_<duration<unsigned, ratio<1, 10>>>(), "png_interval", desc{"Frame interval."}, set(10));
+        W.member(A, type_<duration<unsigned, ratio<1, 100>>>(), "frame_interval", desc{"Frame interval."}, set(40));
+        W.member(A, type_<std::chrono::seconds>(), "break_interval", desc{"Time between 2 wrm movies."}, set(600));
         W.member(A, type_<unsigned>(), "png_limit", desc{"Number of png captures to keep."}, set(5));
         W.sep();
         W.member(A, type_<types::path>(), "replay_path", set("/tmp/"));
@@ -317,7 +322,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::path>(), "record_path", set(CPP_MACRO(RECORD_PATH)));
         W.sep();
         W.member(type_<bool>(), "inactivity_pause", set(false));
-        W.member(type_<unsigned>(), "inactivity_timeout", set(300));
+        W.member(type_<std::chrono::seconds>(), "inactivity_timeout", set(300));
         W.sep();
 
         W.member(V, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));

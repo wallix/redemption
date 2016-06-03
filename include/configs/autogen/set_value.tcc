@@ -11,7 +11,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::client::keyboard_layout_proposals&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
             );
         }
@@ -440,7 +440,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::authfile&>(this->variables).value,
-                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -448,7 +448,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::handshake_timeout&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
         }
@@ -456,7 +456,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::session_timeout&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
         }
@@ -464,7 +464,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::keepalive_grace_delay&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
         }
@@ -472,7 +472,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::authentication_timeout&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
         }
@@ -480,7 +480,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::close_timeout&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
         }
@@ -544,7 +544,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::globals::movie_path&>(this->variables).value,
-                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -623,7 +623,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::internal_mod::theme&>(this->variables).value,
-                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -654,7 +654,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::open_session_timeout&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
+                ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
         }
@@ -710,7 +710,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::allow_channels&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
             );
         }
@@ -718,7 +718,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::deny_channels&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
             );
         }
@@ -758,7 +758,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::proxy_managed_drives&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::__cxx11::basic_string<char>>>{},
+                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
             );
         }
@@ -782,7 +782,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::alternate_shell&>(this->variables).value,
-                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -790,7 +790,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::shell_working_directory&>(this->variables).value,
-                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -838,7 +838,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::session_probe_launch_timeout&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
         }
@@ -846,7 +846,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::session_probe_launch_fallback_timeout&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
         }
@@ -862,7 +862,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
         }
@@ -1074,7 +1074,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::translation::password_en&>(this->variables).value,
-                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -1082,7 +1082,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::translation::password_fr&>(this->variables).value,
-                ::configs::spec_type<std::__cxx11::basic_string<char>>{},
+                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -1113,7 +1113,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::png_interval&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::duration<unsigned int, std::ratio<1, 10>>>{},
                 av
             );
         }
@@ -1121,7 +1121,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::frame_interval&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::duration<unsigned int, std::ratio<1, 100>>>{},
                 av
             );
         }
@@ -1129,7 +1129,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::video::break_interval&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
         }

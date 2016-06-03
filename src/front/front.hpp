@@ -679,7 +679,7 @@ public:
     , mppc_enc(nullptr)
     , authentifier(nullptr)
     , auth_info_sent(false)
-    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>()) {
+    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count()) {
         // init TLS
         // --------------------------------------------------------
 

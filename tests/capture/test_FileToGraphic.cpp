@@ -73,8 +73,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    ini.set<cfg::video::frame_interval>(10);
-    ini.set<cfg::video::break_interval>(20);
+    ini.set<cfg::video::frame_interval>(cfg::video::frame_interval::type{10});
+    ini.set<cfg::video::break_interval>(cfg::video::break_interval::type{20});
 
     const struct ToCacheOption {
         ToCacheOption(){}

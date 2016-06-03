@@ -29,6 +29,9 @@
 #define SHARE_PATH FIXTURES_PATH
 #include "configs/config.hpp"
 
+#include <chrono>
+
+
 BOOST_AUTO_TEST_CASE(TestIniAssign)
 {
     Inifile ini;
@@ -201,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::capture_chunk>(true);
     ini.set<cfg::globals::globals::certificate_password>(cs);
     ini.set<cfg::globals::globals::certificate_password>(s);
-    ini.set<cfg::globals::globals::close_timeout>(1);
+    ini.set<cfg::globals::globals::close_timeout>(std::chrono::seconds{1});
     ini.set<cfg::globals::globals::device_id>(cs);
     ini.set<cfg::globals::globals::device_id>(s);
     ini.set<cfg::globals::globals::disable_proxy_opt>(true);
@@ -214,7 +217,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::glyph_cache>(true);
     ini.set_acl<cfg::globals::globals::host>(cs);
     ini.set_acl<cfg::globals::globals::host>(s);
-    ini.set<cfg::globals::globals::keepalive_grace_delay>(1);
+    ini.set<cfg::globals::globals::keepalive_grace_delay>(std::chrono::minutes{1});
+    ini.set<cfg::globals::globals::keepalive_grace_delay>(std::chrono::seconds{1});
     ini.set<cfg::globals::globals::listen_address>(cip);
     ini.set<cfg::globals::globals::listen_address>(sip);
     ini.set<cfg::globals::globals::is_rec>(true);
@@ -227,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::png_path>(cpath);
     ini.set<cfg::globals::globals::png_path>(spath);
     ini.set<cfg::globals::globals::port>(1);
-    ini.set<cfg::globals::globals::session_timeout>(1);
+    ini.set<cfg::globals::globals::session_timeout>(std::chrono::seconds{1});
     ini.set_acl<cfg::globals::globals::target>(cs);
     ini.set_acl<cfg::globals::globals::target>(s);
     ini.set<cfg::globals::globals::target_application>(cs);
@@ -266,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::extra_orders>(slist);
     ini.set<cfg::mod_rdp::fast_path>(true);
     ini.set<cfg::mod_rdp::ignore_auth_channel>(true);
-    ini.set<cfg::mod_rdp::open_session_timeout>(1);
+    ini.set<cfg::mod_rdp::open_session_timeout>(std::chrono::seconds{1});
     ini.set<cfg::mod_rdp::persist_bitmap_cache_on_disk>(true);
     ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(true);
     ini.set<cfg::mod_rdp::proxy_managed_drives>(cslist);
@@ -284,8 +288,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::session_probe_alternate_shell>(s);
     ini.set<cfg::mod_rdp::session_probe_customize_executable_name>(true);
     ini.set<cfg::mod_rdp::session_probe_end_disconnected_session>(true);
-    ini.set<cfg::mod_rdp::session_probe_keepalive_timeout>(1);
-    ini.set<cfg::mod_rdp::session_probe_launch_timeout>(1);
+    ini.set<cfg::mod_rdp::session_probe_keepalive_timeout>(std::chrono::seconds{1});
+    ini.set<cfg::mod_rdp::session_probe_launch_timeout>(std::chrono::seconds{1});
     ini.set<cfg::mod_rdp::session_probe_on_launch_failure>(SessionProbeOnLaunchFailure::ignore_and_continue);
     ini.set<cfg::mod_rdp::shell_working_directory>(cs);
     ini.set<cfg::mod_rdp::shell_working_directory>(s);
@@ -309,18 +313,18 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::translation::password_fr>(cs);
     ini.set<cfg::translation::password_fr>(s);
 
-    ini.set<cfg::video::break_interval>(1);
+    ini.set<cfg::video::break_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
     ini.set<cfg::video::capture_groupid>(1);
     ini.set<cfg::video::disable_clipboard_log>(ClipboardLogFlags::syslog);
     ini.set<cfg::video::disable_file_system_log>(FileSystemLogFlags::syslog);
     ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::syslog);
-    ini.set<cfg::video::frame_interval>(1);
+    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::hash_path>(cpath);
     ini.set<cfg::video::hash_path>(spath);
     ini.set<cfg::video::inactivity_pause>(1);
-    ini.set<cfg::video::inactivity_timeout>(true);
-    ini.set<cfg::video::png_interval>(1);
+    ini.set<cfg::video::inactivity_timeout>(std::chrono::seconds{1});
+    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::png_limit>(1);
     ini.set<cfg::video::record_path>(cpath);
     ini.set<cfg::video::record_path>(spath);

@@ -30,6 +30,7 @@
 #include "utils/timeout.hpp"
 #include "configs/config_access.hpp"
 
+#include <chrono>
 
 using FlatWabCloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,          vcfg::get | vcfg::is_asked>,
@@ -95,12 +96,13 @@ public:
                        vars.get<cfg::theme>(),
                        language(vars),
                        back_selector)
-        , timeout(now, vars.get<cfg::globals::close_timeout>())
+        , timeout(now, vars.get<cfg::globals::close_timeout>().count())
         , vars(vars)
         , showtimer(showtimer)
     {
-        if (vars.get<cfg::globals::close_timeout>()) {
-            LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", vars.get<cfg::globals::close_timeout>());
+        if (vars.get<cfg::globals::close_timeout>().count()) {
+            LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
+                static_cast<unsigned>(vars.get<cfg::globals::close_timeout>().count()));
         }
         this->front.set_palette(BGRPalette::classic_332());
 

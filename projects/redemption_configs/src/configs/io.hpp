@@ -23,6 +23,7 @@
 #include <limits>
 #include <string>
 #include <array>
+#include <chrono>
 #include <algorithm>
 
 #include <cstdlib>
@@ -74,6 +75,11 @@ namespace detail
 template<class T>
 struct zstr_buffer_traits
 { using type = typename detail::zstr_buffer_traits<T>::type; };
+
+template<class T, class Ratio>
+struct zstr_buffer_traits<std::chrono::duration<T, Ratio>>
+: zstr_buffer_traits<T>
+{};
 
 template<> struct zstr_buffer_traits<void> { using type = zstr_buffer<0>; };
 template<> struct zstr_buffer_traits<std::string> { using type = zstr_buffer<0>; };
@@ -256,6 +262,17 @@ assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E>, E const & x)
 }
 
 
+template<class T, class Ratio>
+non_owner_string assign_zbuf_from_cfg(
+    zstr_buffer_from<std::chrono::duration<T, Ratio>> & buf,
+    cfg_s_type<std::chrono::duration<T, Ratio>>,
+    std::chrono::duration<T, Ratio> const & x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x.count()));
+    return non_owner_string(buf.get(), sz);
+}
+
+
 template<class T>
 zstr_buffer_from<T> make_zstr_buffer(T const & x)
 {
@@ -413,6 +430,20 @@ typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, boo
 parse(TInt & x, spec_type<TInt>, array_view_const_char value)
 { return detail::parse_integral(x, value, std::numeric_limits<TInt>::min(), std::numeric_limits<TInt>::max()); }
 
+template<class T, class Ratio>
+parse_error parse(
+    std::chrono::duration<T, Ratio> & x,
+    spec_type<std::chrono::duration<T, Ratio>>,
+    array_view_const_char value
+) {
+    T y;
+    if (parse_error err = detail::parse_integral(y, value, T{0}, std::numeric_limits<T>::max())) {
+        return err;
+    }
+    x = std::chrono::duration<T, Ratio>{y};
+    return no_parse_error;
+}
+
 namespace detail
 {
     template<class IntOrigni>
@@ -476,6 +507,7 @@ parse(T & x, spec_type<bool>, array_view_const_char value)
     }
     return {"bad format, expected 1, on, yes, true, 0, no, false"};
 }
+
 
 template<class T, class U>
 parse_error parse_adapter(T & x, U & y)

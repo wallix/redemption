@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     Inifile ini;
 
-    ini.set<cfg::globals::keepalive_grace_delay>(30);
-    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
+    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
     ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
@@ -132,8 +132,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     // If no keepalive is received after 30 seconds => disconnection
     sesman.check(mm, 10073, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true);
-
-
 }
 
 
@@ -145,8 +143,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     Inifile ini;
 
-    ini.set<cfg::globals::keepalive_grace_delay>(30);
-    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
+    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
     ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
@@ -263,8 +261,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     BackEvent_t signal = BACK_EVENT_NONE;
 
     Inifile ini;
-    ini.set<cfg::globals::keepalive_grace_delay>(30);
-    ini.set<cfg::globals::session_timeout>(240); // = 8*30 = 240secs inactivity>
+    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
+    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{240}); // = 8*30 = 240secs inactivity>
     ini.set<cfg::debug::auth>(255);
     MMIni mm(ini);
 

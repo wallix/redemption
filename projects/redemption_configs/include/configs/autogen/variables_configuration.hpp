@@ -13,111 +13,111 @@ namespace cfg {
             type value{};
         };
         // AUTHID_GLOBALS_AUTH_USER
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct auth_user {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "auth_user"; }
             static constexpr unsigned index() { return 1; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_HOST
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct host {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "host"; }
             static constexpr unsigned index() { return 2; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target"; }
             static constexpr unsigned index() { return 3; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_DEVICE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_device {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_device"; }
             static constexpr unsigned index() { return 4; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_DEVICE_ID
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct device_id {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "device_id"; }
             static constexpr unsigned index() { return 5; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_USER
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_user {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_user"; }
             static constexpr unsigned index() { return 6; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_application {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_application"; }
             static constexpr unsigned index() { return 7; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_application_account {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_application_account"; }
             static constexpr unsigned index() { return 8; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_application_password {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "target_application_password"; }
             static constexpr unsigned index() { return 9; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // Support of Bitmap Cache.
@@ -181,69 +181,69 @@ namespace cfg {
             using sesman_and_spec_type = Level;
             type value{static_cast<type>(0)};
         };
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct authfile {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "authfile"; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value = "/var/run/redemption-sesman-sock";
         };
-        // Time out during RDP handshake stage (in seconds).
-        // type: unsigned int
+        // Time out during RDP handshake stage.
+        // type: std::chrono::seconds
         struct handshake_timeout {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "handshake_timeout"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::seconds;
+            using sesman_and_spec_type = std::chrono::seconds;
             type value{10};
         };
-        // No traffic auto disconnection (in seconds).
-        // type: unsigned int
+        // No traffic auto disconnection.
+        // type: std::chrono::seconds
         struct session_timeout {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "session_timeout"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::seconds;
+            using sesman_and_spec_type = std::chrono::seconds;
             type value{900};
         };
-        // Keepalive (in seconds).
-        // type: unsigned int
+        // Keepalive.
+        // type: std::chrono::seconds
         struct keepalive_grace_delay {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "keepalive_grace_delay"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::seconds;
+            using sesman_and_spec_type = std::chrono::seconds;
             type value{30};
         };
         // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
-        // type: unsigned int
+        // type: std::chrono::seconds
         struct authentication_timeout {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "authentication_timeout"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::seconds;
+            using sesman_and_spec_type = std::chrono::seconds;
             type value{120};
         };
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
-        // type: unsigned int
+        // type: std::chrono::seconds
         struct close_timeout {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "close_timeout"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::seconds;
+            using sesman_and_spec_type = std::chrono::seconds;
             type value{600};
         };
         // AUTHID_GLOBALS_TRACE_TYPE
@@ -323,15 +323,15 @@ namespace cfg {
             type value{0};
         };
         // AUTHID_GLOBALS_MOVIE_PATH
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct movie_path {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
             static constexpr char const * name() { return "movie_path"; }
             static constexpr unsigned index() { return 12; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // Support of Bitmap Update.
@@ -463,7 +463,7 @@ namespace cfg {
             static constexpr char const * section() { return "client"; }
             static constexpr char const * name() { return "keyboard_layout_proposals"; }
             using type = std::string;
-            using sesman_and_spec_type = ::configs::spec_types::list<std::__cxx11::basic_string<char>>;
+            using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
             type value = "en-US, fr-FR, de-DE, ru-RU";
         };
         // If true, ignore password provided by RDP client, user need do login manually.
@@ -684,14 +684,14 @@ namespace cfg {
             using sesman_and_spec_type = bool;
             type value{0};
         };
-        // type: uint32_t
+        // type: std::chrono::seconds
         struct open_session_timeout {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "open_session_timeout"; }
-            using type = uint32_t;
-            using sesman_and_spec_type = uint32_t;
+            using type = std::chrono::seconds;
+            using sesman_and_spec_type = std::chrono::seconds;
             type value{0};
         };
         // Enables support of additional drawing orders:
@@ -774,7 +774,7 @@ namespace cfg {
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "allow_channels"; }
             using type = std::string;
-            using sesman_and_spec_type = ::configs::spec_types::list<std::__cxx11::basic_string<char>>;
+            using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
             type value = "*";
         };
         // Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
@@ -785,7 +785,7 @@ namespace cfg {
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "deny_channels"; }
             using type = std::string;
-            using sesman_and_spec_type = ::configs::spec_types::list<std::__cxx11::basic_string<char>>;
+            using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
             type value{};
         };
         // Enables support of Server Fast-Path Update PDUs.
@@ -852,7 +852,7 @@ namespace cfg {
             static constexpr char const * name() { return "proxy_managed_drives"; }
             static constexpr unsigned index() { return 16; }
             using type = std::string;
-            using sesman_and_spec_type = ::configs::spec_types::list<std::__cxx11::basic_string<char>>;
+            using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
             type value{};
         };
         // AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL
@@ -879,27 +879,27 @@ namespace cfg {
             type value = "*";
         };
         // AUTHID_MOD_RDP_ALTERNATE_SHELL
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct alternate_shell {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "alternate_shell"; }
             static constexpr unsigned index() { return 18; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct shell_working_directory {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "shell_working_directory"; }
             static constexpr unsigned index() { return 19; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL
@@ -965,31 +965,31 @@ namespace cfg {
             type value{static_cast<type>(2)};
         };
         // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
-// In milliseconds, 0 to disable timeout.
+// 0 to disable timeout.
         // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT
-        // type: unsigned int
+        // type: std::chrono::milliseconds
         struct session_probe_launch_timeout {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_launch_timeout"; }
             static constexpr unsigned index() { return 25; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::milliseconds;
+            using sesman_and_spec_type = std::chrono::milliseconds;
             type value{20000};
         };
         // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
-// In milliseconds, 0 to disable timeout.
+// 0 to disable timeout.
         // AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT
-        // type: unsigned int
+        // type: std::chrono::milliseconds
         struct session_probe_launch_fallback_timeout {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_launch_fallback_timeout"; }
             static constexpr unsigned index() { return 26; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::milliseconds;
+            using sesman_and_spec_type = std::chrono::milliseconds;
             type value{7000};
         };
         // Minimum supported server : Windows Server 2008.
@@ -1006,15 +1006,15 @@ namespace cfg {
             type value{1};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
-        // type: unsigned int
+        // type: std::chrono::milliseconds
         struct session_probe_keepalive_timeout {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "session_probe_keepalive_timeout"; }
             static constexpr unsigned index() { return 28; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::milliseconds;
+            using sesman_and_spec_type = std::chrono::milliseconds;
             type value{5000};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER
@@ -1280,37 +1280,37 @@ namespace cfg {
             using sesman_and_spec_type = CaptureFlags;
             type value{static_cast<type>(3)};
         };
-        // Frame interval is in 1/10 s.
-        // type: unsigned int
+        // Frame interval.
+        // type: std::chrono::duration<unsigned int, std::ratio<1, 10>>
         struct png_interval {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "png_interval"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::duration<unsigned int, std::ratio<1, 10>>;
+            using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 10>>;
             type value{10};
         };
-        // Frame interval is in 1/100 s.
-        // type: unsigned int
+        // Frame interval.
+        // type: std::chrono::duration<unsigned int, std::ratio<1, 100>>
         struct frame_interval {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "frame_interval"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
+            using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
             type value{40};
         };
-        // Time between 2 wrm movies (in seconds).
-        // type: unsigned int
+        // Time between 2 wrm movies.
+        // type: std::chrono::seconds
         struct break_interval {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "break_interval"; }
-            using type = unsigned int;
-            using sesman_and_spec_type = unsigned int;
+            using type = std::chrono::seconds;
+            using sesman_and_spec_type = std::chrono::seconds;
             type value{600};
         };
         // Number of png captures to keep.
@@ -1373,13 +1373,13 @@ namespace cfg {
             using type = bool;
             type value{0};
         };
-        // type: unsigned int
+        // type: std::chrono::seconds
         struct inactivity_timeout {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "inactivity_timeout"; }
-            using type = unsigned int;
+            using type = std::chrono::seconds;
             type value{300};
         };
         // Disable keyboard log:
@@ -1733,40 +1733,40 @@ namespace cfg {
             type value{static_cast<type>(0)};
         };
         // AUTHID_TRANSLATION_PASSWORD_EN
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct password_en {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "translation"; }
             static constexpr char const * name() { return "password_en"; }
             static constexpr unsigned index() { return 46; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_TRANSLATION_PASSWORD_FR
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct password_fr {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "translation"; }
             static constexpr char const * name() { return "password_fr"; }
             static constexpr unsigned index() { return 47; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
     };
 
     struct internal_mod {
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct theme {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "internal_mod"; }
             static constexpr char const * name() { return "theme"; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
     };
@@ -1854,15 +1854,15 @@ namespace cfg {
             type value{800};
         };
         // AUTHID_CONTEXT_AUTH_ERROR_MESSAGE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct auth_error_message {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_error_message"; }
             static constexpr unsigned index() { return 54; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR
@@ -1890,39 +1890,39 @@ namespace cfg {
             type value{1};
         };
         // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct selector_device_filter {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_device_filter"; }
             static constexpr unsigned index() { return 57; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct selector_group_filter {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_group_filter"; }
             static constexpr unsigned index() { return 58; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct selector_proto_filter {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_proto_filter"; }
             static constexpr unsigned index() { return 59; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
@@ -1950,39 +1950,39 @@ namespace cfg {
             type value{1};
         };
         // AUTHID_CONTEXT_TARGET_PASSWORD
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_password {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_password"; }
             static constexpr unsigned index() { return 62; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_TARGET_HOST
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_host {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_host"; }
             static constexpr unsigned index() { return 63; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_TARGET_SERVICE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_service {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_service"; }
             static constexpr unsigned index() { return 64; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_TARGET_PORT
@@ -1998,87 +1998,87 @@ namespace cfg {
             type value{3389};
         };
         // AUTHID_CONTEXT_TARGET_PROTOCOL
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct target_protocol {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_protocol"; }
             static constexpr unsigned index() { return 66; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value = "RDP";
         };
         // AUTHID_CONTEXT_PASSWORD
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct password {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "password"; }
             static constexpr unsigned index() { return 67; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_REPORTING
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct reporting {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "reporting"; }
             static constexpr unsigned index() { return 68; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct auth_channel_answer {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_channel_answer"; }
             static constexpr unsigned index() { return 69; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_RESULT
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct auth_channel_result {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_channel_result"; }
             static constexpr unsigned index() { return 70; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct auth_channel_target {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_channel_target"; }
             static constexpr unsigned index() { return 71; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_MESSAGE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct message {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "message"; }
             static constexpr unsigned index() { return 72; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_ACCEPT_MESSAGE
@@ -2106,15 +2106,15 @@ namespace cfg {
             type value{};
         };
         // AUTHID_CONTEXT_REJECTED
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct rejected {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "rejected"; }
             static constexpr unsigned index() { return 75; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_AUTHENTICATED
@@ -2142,15 +2142,15 @@ namespace cfg {
             type value{0};
         };
         // AUTHID_CONTEXT_SESSION_ID
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct session_id {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "session_id"; }
             static constexpr unsigned index() { return 78; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_END_DATE_CNX
@@ -2166,27 +2166,27 @@ namespace cfg {
             type value{0};
         };
         // AUTHID_CONTEXT_END_TIME
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct end_time {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "end_time"; }
             static constexpr unsigned index() { return 80; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_MODE_CONSOLE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct mode_console {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "mode_console"; }
             static constexpr unsigned index() { return 81; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value = "allow";
         };
         // AUTHID_CONTEXT_TIMEZONE
@@ -2202,15 +2202,15 @@ namespace cfg {
             type value{-3600};
         };
         // AUTHID_CONTEXT_REAL_TARGET_DEVICE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct real_target_device {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "real_target_device"; }
             static constexpr unsigned index() { return 83; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE
@@ -2226,51 +2226,51 @@ namespace cfg {
             type value{};
         };
         // AUTHID_CONTEXT_TICKET
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct ticket {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "ticket"; }
             static constexpr unsigned index() { return 85; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_COMMENT
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct comment {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "comment"; }
             static constexpr unsigned index() { return 86; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_DURATION
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct duration {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "duration"; }
             static constexpr unsigned index() { return 87; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_WAITINFORETURN
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct waitinforeturn {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "waitinforeturn"; }
             static constexpr unsigned index() { return 88; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_SHOWFORM
@@ -2298,15 +2298,15 @@ namespace cfg {
             type value{0};
         };
         // AUTHID_CONTEXT_MODULE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct module {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "module"; }
             static constexpr unsigned index() { return 91; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value = "login";
         };
         // AUTHID_CONTEXT_FORCEMODULE
@@ -2322,84 +2322,84 @@ namespace cfg {
             type value{0};
         };
         // AUTHID_CONTEXT_PROXY_OPT
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct proxy_opt {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "proxy_opt"; }
             static constexpr unsigned index() { return 93; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_PATTERN_KILL
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct pattern_kill {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "pattern_kill"; }
             static constexpr unsigned index() { return 94; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_PATTERN_NOTIFY
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct pattern_notify {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "pattern_notify"; }
             static constexpr unsigned index() { return 95; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_OPT_MESSAGE
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct opt_message {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_message"; }
             static constexpr unsigned index() { return 96; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct outbound_connection_blocking_rules {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "outbound_connection_blocking_rules"; }
             static constexpr unsigned index() { return 97; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct manager_disconnect_reason {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "manager_disconnect_reason"; }
-            using type = std::__cxx11::basic_string<char>;
+            using type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct disconnect_reason {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason"; }
             static constexpr unsigned index() { return 98; }
-            using type = std::__cxx11::basic_string<char>;
-            using sesman_and_spec_type = std::__cxx11::basic_string<char>;
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
             type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
@@ -2414,13 +2414,13 @@ namespace cfg {
             using sesman_and_spec_type = bool;
             type value{0};
         };
-        // type: std::__cxx11::basic_string<char>
+        // type: std::string
         struct ip_target {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "ip_target"; }
-            using type = std::__cxx11::basic_string<char>;
+            using type = std::string;
             type value{};
         };
     };

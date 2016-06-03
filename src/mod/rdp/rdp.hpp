@@ -393,11 +393,11 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     const bool disable_file_system_log_wrm;
     const RdpCompression rdp_compression;
 
-    const unsigned                    session_probe_launch_timeout;
-    const unsigned                    session_probe_launch_fallback_timeout;
+    const std::chrono::milliseconds   session_probe_launch_timeout;
+    const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
     const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
     const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
-    const unsigned                    session_probe_keepalive_timeout;
+    const std::chrono::milliseconds   session_probe_keepalive_timeout;
     const bool                        session_probe_on_keepalive_timeout_disconnect_user;
     const bool                        session_probe_end_disconnected_session;
           std::string                 session_probe_alternate_shell;
@@ -415,8 +415,8 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
 
     std::string * error_message;
 
-    const bool     disconnect_on_logon_user_change;
-    const uint32_t open_session_timeout;
+    const bool                 disconnect_on_logon_user_change;
+    const std::chrono::seconds open_session_timeout;
 
     Timeout open_session_timeout_checker;
 
@@ -795,7 +795,7 @@ public:
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
-        this->event.object_and_time = (this->open_session_timeout > 0);
+        this->event.object_and_time = (this->open_session_timeout.count() > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel,
@@ -3640,7 +3640,7 @@ public:
             }
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             switch(this->open_session_timeout_checker.check(now)) {
             case Timeout::TIMEOUT_REACHED:
                 if (this->error_message) {
@@ -5228,7 +5228,7 @@ public:
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
             this->event.reset();
@@ -6452,9 +6452,9 @@ public:
             infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
-                now, this->open_session_timeout);
+                now, this->open_session_timeout.count());
             this->event.set(1000000);
         }
 

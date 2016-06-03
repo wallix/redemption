@@ -32,11 +32,9 @@ class NativeCapture
 , public gdi::ExternalCaptureApi
 , public gdi::UpdateConfigCaptureApi
 {
-    uint64_t frame_interval;
     timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
 
-    uint64_t break_interval;
     timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
@@ -45,18 +43,11 @@ class NativeCapture
 
 public:
     NativeCapture( GraphicToFile & recorder, const timeval & now, const Inifile & ini)
-    : recorder(recorder)
+    : start_native_capture(now)
+    , start_break_capture(now)
+    , recorder(recorder)
     , time_to_wait(0)
     {
-        // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
-        this->start_native_capture = now;
-        this->frame_interval = 40;
-        this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
-
-        this->start_break_capture = now;
-        this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
-        this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
-
         this->update_config(ini);
     }
 
@@ -66,15 +57,17 @@ public:
 
     void update_config(const Inifile & ini) override
     {
-        if (ini.get<cfg::video::frame_interval>() != this->frame_interval){
-            // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
-            this->frame_interval = ini.get<cfg::video::frame_interval>();
-            this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
+        using std::chrono::duration_cast;
+        using std::chrono::microseconds;
+
+        {
+            auto const interval = ini.get<cfg::video::frame_interval>();
+            this->inter_frame_interval_native_capture = duration_cast<microseconds>(interval).count();
         }
 
-        if (ini.get<cfg::video::break_interval>() != this->break_interval){
-            this->break_interval = ini.get<cfg::video::break_interval>(); // break interval is in s, default value 1 break every 10 minutes
-            this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
+        {
+            auto const interval = ini.get<cfg::video::break_interval>();
+            this->inter_frame_interval_start_break_capture = duration_cast<microseconds>(interval).count();
         }
     }
 

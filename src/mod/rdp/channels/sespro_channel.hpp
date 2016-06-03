@@ -26,8 +26,10 @@
 #include "utils/outbound_connection_monitor_rules.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
+#include "core/error.hpp"
 
 #include <memory>
+#include <chrono>
 
 class SessionProbeVirtualChannel : public BaseVirtualChannel
 {
@@ -38,9 +40,9 @@ private:
 
     bool session_probe_launch_timeout_timer_started = false;
 
-    const unsigned session_probe_effective_launch_timeout;
+    const std::chrono::duration<unsigned, std::milli> session_probe_effective_launch_timeout;
 
-    const unsigned param_session_probe_keepalive_timeout;
+    const std::chrono::duration<unsigned, std::milli> param_session_probe_keepalive_timeout;
     const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
 
     const SessionProbeOnLaunchFailure param_session_probe_on_launch_failure;
@@ -79,9 +81,9 @@ private:
 
 public:
     struct Params : public BaseVirtualChannel::Params {
-        unsigned session_probe_launch_timeout;
-        unsigned session_probe_launch_fallback_timeout;
-        unsigned session_probe_keepalive_timeout;
+        std::chrono::duration<unsigned, std::milli> session_probe_launch_timeout;
+        std::chrono::duration<unsigned, std::milli> session_probe_launch_fallback_timeout;
+        std::chrono::duration<unsigned, std::milli> session_probe_keepalive_timeout;
         bool     session_probe_on_keepalive_timeout_disconnect_user;
 
         SessionProbeOnLaunchFailure session_probe_on_launch_failure;
@@ -148,9 +150,9 @@ public:
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
                     "timeout=%u fallback_timeout=%u effective_timeout=%u on_launch_failure=%d",
-                params.session_probe_launch_timeout,
-                params.session_probe_launch_fallback_timeout,
-                this->session_probe_effective_launch_timeout,
+                params.session_probe_launch_timeout.count(),
+                params.session_probe_launch_fallback_timeout.count(),
+                this->session_probe_effective_launch_timeout.count(),
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
 
@@ -159,17 +161,18 @@ public:
         REDASSERT(this->param_acl);
     }
 
-    void start_launch_timeout_timer() {
-        if ((this->session_probe_effective_launch_timeout > 0) &&
+    void start_launch_timeout_timer()
+    {
+        if ((this->session_probe_effective_launch_timeout.count() > 0) &&
             !this->session_probe_ready) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
-                LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::start_launch_timeout_timer");
+                LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
             }
 
             if (!this->session_probe_launch_timeout_timer_started) {
                 this->session_probe_event.set(
-                    this->session_probe_effective_launch_timeout * 1000);
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                        this->session_probe_effective_launch_timeout).count());
 
                 this->session_probe_launch_timeout_timer_started = true;
             }
@@ -190,7 +193,8 @@ public:
             if (this->has_additional_launch_time) {
                 if (!this->session_probe_ready) {
                     this->session_probe_event.set(
-                        this->session_probe_effective_launch_timeout * 1000);
+                        std::chrono::duration_cast<std::chrono::microseconds>(
+                            this->session_probe_effective_launch_timeout).count());
                 }
 
                 this->has_additional_launch_time = false;
@@ -231,7 +235,7 @@ public:
         this->session_probe_event.reset();
         this->session_probe_event.waked_up_by_time = false;
 
-        if (this->session_probe_effective_launch_timeout &&
+        if (this->session_probe_effective_launch_timeout.count() &&
             !this->session_probe_ready &&
             !this->has_additional_launch_time) {
             LOG(((this->param_session_probe_on_launch_failure ==
@@ -270,7 +274,7 @@ public:
         }
 
         if (this->session_probe_ready &&
-            this->param_session_probe_keepalive_timeout) {
+            this->param_session_probe_keepalive_timeout.count()) {
             if (!this->session_probe_keep_alive_received) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
@@ -327,7 +331,8 @@ public:
                 }
 
                 this->session_probe_event.set(
-                    this->param_session_probe_keepalive_timeout * 1000);
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                        this->param_session_probe_keepalive_timeout ).count());
             }
         }
     }
@@ -419,7 +424,7 @@ public:
 
             this->session_probe_event.reset();
 
-            if (this->param_session_probe_keepalive_timeout > 0) {
+            if (this->param_session_probe_keepalive_timeout.count() > 0) {
                 {
                     StaticOutStream<1024> out_s;
 
@@ -450,7 +455,8 @@ public:
                 }
 
                 this->session_probe_event.set(
-                    this->param_session_probe_keepalive_timeout * 1000);
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                        this->param_session_probe_keepalive_timeout).count());
             }
 
             {

@@ -34,6 +34,9 @@
 
 #include "utils/timeout.hpp"
 
+# include <chrono>
+
+
 using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::context::password,                   vcfg::set>,
     vcfg::var<cfg::globals::auth_user,                  vcfg::set>,
@@ -77,11 +80,12 @@ public:
                 vars.get<cfg::context::opt_message>().c_str(),
                 &this->language_button,
                 this->font(), Translator(language(vars)), this->theme())
-        , timeout(now, vars.get<cfg::globals::authentication_timeout>())
+        , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())
         , vars(vars)
     {
-        if (vars.get<cfg::globals::authentication_timeout>()) {
-            LOG(LOG_INFO, "LoginMod: Ending session in %u seconds", vars.get<cfg::globals::authentication_timeout>());
+        if (vars.get<cfg::globals::authentication_timeout>().count()) {
+            LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
+                static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));
         }
         this->screen.add_widget(&this->login);
 
