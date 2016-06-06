@@ -39,7 +39,7 @@ class TransportWebSocket :  public Transport
     char * buffer;
 
     void do_send(const char * const buffer, size_t len) override {
-        EM_ASM_({ console.log('data_sent_to_serveur'); }, 0);
+        EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1 - 1), $1); }, buffer, len);
     }
 
     void do_recv(char ** pbuffer, size_t len) override {
@@ -50,9 +50,9 @@ class TransportWebSocket :  public Transport
         int lenInt(len);
         if (lenInt > 0) {
 
-            //for (i = 0; i < lenInt; i++) {
-                EM_ASM_({ getDataOctet($0); },lenInt-1);
-            //}
+            for (i = 0; i < lenInt; i++) {
+                EM_ASM_({ getDataOctet($0); }, i);
+            }
 
             *pbuffer = this->buffer + i;
         } else {
@@ -61,12 +61,8 @@ class TransportWebSocket :  public Transport
     }
 
 public:
-    void setBufferValue(char value[]) {
-        EM_ASM_({ console.log('lol '+ $0); }, value[0]);
-        for (int i = 0; i < 64; i++) {
-            this->buffer[i] = value[i];
-        }
-
+    void setBufferValue(int value, int i) {
+        this->buffer[i] = value;
     }
 
 };

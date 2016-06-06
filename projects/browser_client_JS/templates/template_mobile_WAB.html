@@ -1117,7 +1117,6 @@
 		</div>
 	</nav>
 
-
 	<div id="clipboardDiv" class="modal fade" tabindex="-1" role="dialog">
 		<div class="modal-dialog">
 	    	<div class="modal-content">
@@ -1134,11 +1133,23 @@
 	    	</div><!-- /.modal-content -->
 	  	</div><!-- /.modal-dialog -->
 	</div><!--  /.modal -->
-	
-	<div class="emscripten_border">
+
+	<div id="form" style ="display:block">
+		<form action="demo_form.asp" width="1024px" height="768px">
+			  IP :       <input type="text" id="ip"><br>
+			  User :     <input type="text" id="user"><br>
+			  Password : <input type="text" id="password"><br>
+			  Port :     <input type="text" id="port"><br>
+			  <input type="button" value="Connect" onclick="connecting();">
+		</form> 
+	</div>
+
+	<div class="emscripten_border" id="emscripten_canvas" style ="display:none">
       		<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" width="1024px" height="768px" onclick="setFocuxOnText()" onmouseenter="setFocuxOnText()" ></canvas>
-		<div style ="width: 0; overflow: hidden;">
-			<input id="hidden_input_text" style="opacity: 0"/> <!--  -->
+		<div>
+			<input type="button" value="Disconnect" onclick="disconnecting();">
+			<input type="button" value="CTRL ALT DELETE" onclick="CTRL_ALT_DELETE();">
+			<input id="hidden_input_text" style="width:0; opacity:0"/> 
 		</div>
     	</div>
     </div>
@@ -1148,8 +1159,6 @@
 		<p class="error><%=rdpMsg.pleaseEnableJavascript()%"></p>
 	</noscript>
 
-   <script src='draw.js'></script>
-
     <script type='text/javascript'>
 	      var Module = {
 		canvas: (function() {
@@ -1158,12 +1167,13 @@
 		})(),
 	      };
 
-	      var script = document.createElement('script');
-              script.src = "test_emscripten_browser_client_JS.js";
-              document.body.appendChild(script);
-
+	      var script2 = document.createElement('script');
+              script2.src = "test_emscripten_browser_client_JS.js";
+              document.body.appendChild(script2);
 
     </script>
+
+<script src='draw.js'></script>
     
 
 	  {{{ SCRIPT }}}

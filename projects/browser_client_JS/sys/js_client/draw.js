@@ -46,6 +46,10 @@ textField_.addEventListener("keyup", function(event) {
     }
 });
 
+function CTRL_ALT_DELETE() {
+    _CtrlAltDelPressed();
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -86,8 +90,6 @@ canvas_.addEventListener("touchmove", function(event) {
     _mouseMoveEvent(event.pageX - canvas_.offsetLeft,
                     event.pageY - canvas_.offsetTop);
 });*/
-
-
 
 
 
@@ -379,8 +381,62 @@ Drawable.prototype.rDPMem3Blt_0xB8 = function(x, y, w, h, data, shift, back_colo
 
 
 
-
 var drawable = new Drawable();
 
 
+
+function connecting() {
+    var ip = document.getElementById("ip").value;
+    var user = document.getElementById("user").value;
+    var password = document.getElementById("password").value;
+    var port = document.getElementById("port").value;
+
+    if (init_socket(ip, user, password, port)) {
+
+        var pip = allocate(intArrayFromString(ip), 'i8', ALLOC_NORMAL);
+        var puser = allocate(intArrayFromString(user), 'i8', ALLOC_NORMAL);
+        var ppassword = allocate(intArrayFromString(password), 'i8', ALLOC_NORMAL);
+
+        document.getElementById("form").style = "display:none";
+        document.getElementById("emscripten_canvas").style = "display:block";
+
+        _connexion(pip, puser, ppassword, port);
+
+    }
+
+    /* Test */
+    startTimer();
+
+    for (var i = 0; i < 80; i++) { //  70 PDU + 10 call when WebSocket is empty
+        _recv_wraped(); // call when socket hear something
+    }
+
+    endTimer();
+    /* Test */
+}
+
+function disconnecting() {
+    document.getElementById("form").style = "display:block";
+    document.getElementById("emscripten_canvas").style = "display:none";
+
+    drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);
+
+    _diconnexion();
+}
+
+function init_socket(ip, user, password, port) {
+    console.log('init_socket');
+
+    return true;
+}
+
+function send_to_serveur(data, size) {
+    console.log('data_sent_to_serveur');
+}
+
+/*
+function getDataOctet(i) {
+    // _recv_value(data[i], i);
+}
+*/
 
