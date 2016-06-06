@@ -207,7 +207,7 @@ struct io_quoted2
         if (auto s = q.s) {
             for (; *s; ++s) {
                 if ('\'' == *s || '"' == *s || '\\' == *s) {
-                    out << '\'';
+                    out << '\\';
                 }
                 out << *s;
             }

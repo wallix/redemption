@@ -280,6 +280,15 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
         }
     }
 
+    template<class T, class E>
+    enable_if_enum_t<T>
+    write_type(type_<T> t, E const & x)
+    {
+        apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
+            this->write_enum_value(e, static_cast<std::underlying_type_t<E>>(x));
+        });
+    }
+
     template<class T>
     void write_enum_value(type_enumeration const & e, T default_value)
     {
@@ -310,15 +319,6 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
             this->out() << v.val << ", ";
         }
         this->out() << "default=" << default_value << ")";
-    }
-
-    template<class T, class E>
-    enable_if_enum_t<T>
-    write_type(type_<T> t, E const & x)
-    {
-        apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
-            this->write_enum_value(e, static_cast<std::underlying_type_t<E>>(x));
-        });
     }
 };
 

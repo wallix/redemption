@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
+    BOOST_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
@@ -1272,7 +1272,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
+    BOOST_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
@@ -1444,7 +1444,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
+    BOOST_CHECK_EQUAL(0x28,                              ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
@@ -1603,7 +1603,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
+    BOOST_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
@@ -1763,7 +1763,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::keyboard_layout>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::ignore_logon_password>());
     BOOST_CHECK_EQUAL(0x80,                             ini.get<cfg::client::performance_flags_default>());
-    BOOST_CHECK_EQUAL(0x8,                              ini.get<cfg::client::performance_flags_force_present>());
+    BOOST_CHECK_EQUAL(0x28,                             ini.get<cfg::client::performance_flags_force_present>());
     BOOST_CHECK_EQUAL(0,                                ini.get<cfg::client::performance_flags_force_not_present>());
     BOOST_CHECK_EQUAL(true,                             ini.get<cfg::client::tls_support>());
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::client::tls_fallback_legacy>());
