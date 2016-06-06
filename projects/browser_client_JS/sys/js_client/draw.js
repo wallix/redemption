@@ -405,13 +405,15 @@ function connecting() {
     }
 
     /* Test */
-    startTimer();
+    /*startTimer();
 
     for (var i = 0; i < 80; i++) { //  70 PDU + 10 call when WebSocket is empty
+
         _recv_wraped(); // call when socket hear something
+
     }
 
-    endTimer();
+    endTimer();*/
     /* Test */
 }
 

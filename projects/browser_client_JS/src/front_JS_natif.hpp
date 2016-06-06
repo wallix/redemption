@@ -189,11 +189,6 @@ public:
 
     //void writeClientInfo() ;
 
-    /*void call_draw_event() {
-        EM_ASM_({ console.error(new Error().stack.toString()); }, 0);
-        this->_mod->draw_event(time(nullptr));
-    }*/
-
     void setClientInfo(ClientInfo & info) {
         this->_info = info;
         this->_mod_bpp = this->_info.bpp;
@@ -688,7 +683,6 @@ public:
                 default: break;
             }
             this->_mod->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, x, y, &(this->_keymap));
-            EM_ASM_({ console.log('down ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
         }
     }
 
@@ -702,13 +696,11 @@ public:
                 default: break;
             }
             this->_mod->rdp_input_mouse(flag, x, y, &(this->_keymap));
-            EM_ASM_({ console.log('up ' + $0 + ' ' + $1 + ' ' + $2); }, x, y, button);
         }
     }
 
     void mouseMoveEvent(int x, int y) {
         if (this->_mod !=  nullptr) {
-            EM_ASM_({ console.log('Move '); }, x, y);
             this->_mod->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
         }
     }
@@ -818,8 +810,6 @@ public:
                                     this->_mod->rdp_input_scancode(code, 0, flag | KBD_FLAG_UP  , 0, &(this->_keymap));
                                 break;
             }
-
-            EM_ASM_({ console.log('KeyPressed ' + $0); }, code);
         }
     }
 
@@ -867,8 +857,7 @@ extern "C" void charPressed(char code) {
 extern "C" void enterPressed() {
     if (front._mod !=  nullptr) {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0,Front_JS_Natif:: KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(front._keymap));
-        EM_ASM_({ console.log('Enter'); }, 0);
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(front._keymap));
     }
 }
 
@@ -876,12 +865,22 @@ extern "C" void backspacePressed() {
     if (front._mod !=  nullptr) {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_DOWN , 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_UP   , 0, &(front._keymap));
-        EM_ASM_({ console.log('Backspace'); }, 0);
     }
 }
 
+
+/* Test */
+extern "C" void recv_wraped();
+/* Test */
+
+
 extern "C" void CtrlAltDelPressed() {
     if (front._mod !=  nullptr) {
+        /* Test */
+         recv_wraped();
+         /* Test */
+
+        /*
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
@@ -890,6 +889,7 @@ extern "C" void CtrlAltDelPressed() {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         EM_ASM_({ console.log('Ctrl Alt Del'); }, 0);
+        */
     }
 }
 
