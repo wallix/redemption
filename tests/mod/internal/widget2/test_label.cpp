@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "label5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,

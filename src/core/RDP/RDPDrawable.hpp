@@ -431,39 +431,23 @@ private:
     }
 
 private:
-    void draw_glyph( FontChar const & fc, size_t draw_pos, int16_t offset_y, Color color
-                   , int16_t bmp_pos_x, int16_t bmp_pos_y, Rect const & clip)
+    void draw_glyph( FontChar const & fc, int16_t pos_x, int16_t pos_y, Color color, Rect const & clip)
     {
-        const int16_t   local_offset_x     = draw_pos + fc.offset;
-        const int16_t   local_offset_y     = offset_y + fc.baseline;
-
               uint8_t   fc_bit_mask        = 128;
         const uint8_t * fc_data            = fc.data.get();
         const bool      skip_padding_pixel = (fc.width % 8);
 
-        for (int y = 0; y < fc.height; y++)
+        for (int yy = pos_y + fc.baseline ;
+                 yy - (pos_y + fc.baseline) < fc.height; yy++)
         {
-            const int pt_y = bmp_pos_y + local_offset_y + y;
-//            if (!(clip.y <= pt_y && pt_y < clip.bottom())) {
-//                break;
-//            }
-
-            for (int x = 0; x < fc.width; x++)
+            for (int xx = pos_x + fc.offset ;
+                     xx < pos_x + fc.offset + fc.width; xx++)
             {
-                if (fc_bit_mask & (*fc_data))
+                if (clip.contains_pt(xx, yy)
+                && (fc_bit_mask & (*fc_data)))
                 {
-                    const int pt_x = bmp_pos_x + local_offset_x + x;
-                    if (clip.x <= pt_x && pt_x < clip.right() &&
-                        clip.y <= pt_y && pt_y < clip.bottom()) {
-                        this->drawable.draw_pixel(pt_x, pt_y, color);
-                    }
-                    //printf("X");
+                    this->drawable.draw_pixel(xx, yy, color);
                 }
-                //else
-                //{
-                //    printf(".");
-                //}
-
                 fc_bit_mask >>= 1;
                 if (!fc_bit_mask)
                 {
@@ -475,11 +459,8 @@ private:
             if (skip_padding_pixel) {
                 fc_data++;
                 fc_bit_mask = 128;
-                //printf("_");
             }
-            //printf("\n");
         }
-        //printf("\n");
     }
 
 public:
@@ -520,8 +501,7 @@ public:
 
                 if (fc)
                 {
-                    this->draw_glyph( fc, draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y
-                                    , clip);
+                    this->draw_glyph(fc, draw_pos_ref + bmp_pos_x, offset_y + bmp_pos_y, color, clip);
                 }
             }
             else if (data == 0xFE)
@@ -624,8 +604,7 @@ public:
     }
 
     // for testing purposes
-    void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor,
-                          const Rect& clip)
+    void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor,  const Rect& clip, bool use_offset = false)
     {
         if (text[0] != 0) {
             Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
@@ -634,36 +613,84 @@ public:
             }
 
             const Color fg_color = this->u32_to_color(fgcolor);
-
             UTF8toUnicodeIterator unicode_iter(text);
 
-            for (; *unicode_iter; ++unicode_iter) {
-                const FontChar & font_item = this->get_font(font, *unicode_iter);
-                if (x + font_item.width > screen_rect.x) {
-                    break ;
-                }
-                x += font_item.incby;
-            }
 
-            for (; *unicode_iter && x < screen_rect.right(); ++unicode_iter) {
-                const FontChar & font_item = this->get_font(font, *unicode_iter);
-                int16_t cy = std::min<int16_t>(y + font_item.height, screen_rect.bottom()) - y;
-                int i = 0;
-                for (int yy = 0 ; yy < cy; yy++) {
-                    unsigned char oc = 1<<7;
-                    for (int xx = 0; xx < font_item.width; xx++) {
-                        if (!oc) {
-                            oc = 1 << 7;
-                            ++i;
-                        }
-                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item.data[i + yy] & oc) {
-                            this->drawable.draw_pixel(x + xx, y + yy, fg_color);
-                        }
-                        oc >>= 1;
-                    }
-                }
-                x += font_item.incby;
+//            for (; *unicode_iter ; ++unicode_iter) {
+//                const FontChar & fc = this->get_font(font, *unicode_iter);
+//                int16_t pos_x = x + fc.offset * use_offset;
+//                if (screen_rect.contains(Rect(x, y, fc.incby, fc.height))){
+//                    const uint8_t * fc_data = fc.data.get();
+//                    for (int yy = 0 ; yy < fc.height; yy++) {
+//                        unsigned char fc_bit_mask = 128;
+//                        for (int xx = 0 ; xx < fc.width ; xx++) {
+//                            if (screen_rect.contains_pt(xx + pos_x, y + yy) 
+//                            && fc_data[yy] & fc_bit_mask) {
+//                                this->drawable.draw_pixel(xx + pos_x, y + yy, fg_color);
+//                             }
+//                            fc_bit_mask >>= 1;
+//                            if (!fc_bit_mask) {
+//                                fc_bit_mask = 128;
+//                                fc_data++;
+//                            }
+//                        }
+//                    }
+//                }
+//                x += fc.incby;
+//            }
+
+
+        for (; *unicode_iter ; ++unicode_iter) {
+            const FontChar & fc = this->get_font(font, *unicode_iter);
+            if (Rect(0,0,0,0) != screen_rect.intersect(Rect(x, y, fc.incby, fc.height))){
+                    const uint8_t * fc_data            = fc.data.get() - y;
+                    int16_t cy = y + fc.height;
+                    for (int yy = y ; yy < y + cy - y; yy++) {
+                        unsigned char fc_bit_mask = 128;
+                        for (int xx = x + fc.offset * use_offset ; xx < fc.width + x + fc.offset * use_offset ; xx++) {
+                            if (!fc_bit_mask) {
+                                fc_bit_mask = 128;
+                                fc_data++;
+                            }
+                            if (screen_rect.contains_pt(xx, yy) 
+                                && (fc_data[yy] & fc_bit_mask)){
+                                this->drawable.draw_pixel(xx, yy, fg_color);
+                             }
+                            fc_bit_mask >>= 1;
+                         }
+                     }
             }
+            x += fc.incby;
+         }
+
+//                for (; *unicode_iter /*&& x < screen_rect.right()*/; ++unicode_iter) {
+//                    const FontChar & fc = this->get_font(font, *unicode_iter);
+//                    if (x + fc.width <= screen_rect.x) {
+//                        x += fc.incby;
+//                        continue ;
+//                    }
+//                    const uint8_t * fc_data            = fc.data.get();
+
+//                    if (y + fc.height <= screen_rect.y){
+//                        int16_t cy = std::min<int16_t>(y + fc.height, screen_rect.bottom()) - y;
+//                        for (int yy = 0 ; yy < cy; yy++) {
+//                            unsigned char fc_bit_mask = 128;
+//                            for (int xx = fc.offset ; xx < fc.offset + fc.width; xx++) {
+//                                if (screen_rect.contains_pt(x+xx, y+yy) 
+//                                && (fc_data[yy] & fc_bit_mask)) {
+//                                    this->drawable.draw_pixel(x + xx, y + yy, fg_color);
+//                                }
+//                                fc_bit_mask >>= 1;
+//                                if (!fc_bit_mask) {
+//                                    fc_bit_mask = 128;
+//                                    fc_data++;
+//                                }
+//                            }
+//                        }
+//                    }
+//                    x += fc.incby;
+//                }
+////            }
         }
     }
 
