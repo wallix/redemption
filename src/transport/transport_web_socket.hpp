@@ -39,7 +39,7 @@ class TransportWebSocket :  public Transport
     char * buffer;
 
     void do_send(const char * const buffer, size_t len) override {
-        EM_ASM_({ console.log('data_sent_to_serveur'); }, 0);
+        EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1 - 1), $1); }, buffer, len);
     }
 
     void do_recv(char ** pbuffer, size_t len) override {
@@ -56,12 +56,12 @@ class TransportWebSocket :  public Transport
 
             *pbuffer = this->buffer + i;
         } else {
-            EM_ASM_({ console.log('No data in WebSocket'); }, lenInt);
+            EM_ASM_({ console.log('No input data from WebSocket'); }, 0);
         }
     }
 
 public:
-    void setBufferValue(char value, int i) {
+    void setBufferValue(int value, int i) {
         this->buffer[i] = value;
     }
 

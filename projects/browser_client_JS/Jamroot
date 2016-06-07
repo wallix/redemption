@@ -46,10 +46,10 @@ install client_rdp_JS_natif
     : <location>./sandbox
     ;
 
-install client_rdp_JS_SDL
-    : [ glob ./sys/js_client/* ] client_rdp_JS_SDL.js client_rdp_JS_SDL.html client_rdp_JS_SDL.html.mem
-    : <location>./sandbox
-    ;
+#install client_rdp_JS_SDL
+#    : [ glob ./sys/js_client/* ] client_rdp_JS_SDL.js client_rdp_JS_SDL.html client_rdp_JS_SDL.html.mem
+#    : <location>./sandbox
+#    ;
 
 install test_transport_web_socket
     : [ glob ./sys/js_client/* ] test_transport_web_socket.js test_transport_web_socket.html test_transport_web_socket.html.mem
@@ -58,10 +58,10 @@ install test_transport_web_socket
 
 
     
-objjs test_rdp_client_test_card_JS_SDL.bc 
-	: src/test_rdp_client_test_card_JS_SDL.cpp 
-	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
-	;
+#objjs test_rdp_client_test_card_JS_SDL.bc 
+#	: src/test_rdp_client_test_card_JS_SDL.cpp 
+#	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+#	;
 
 objjs test_rdp_client_test_card_JS_natif.bc 
 	: src/test_rdp_client_test_card_JS_natif.cpp 
@@ -74,21 +74,21 @@ objjs bitmap_data_allocator.bc
 	;
 
 objjs test_transport_web_socket.bc 
-	: $(SRCDIR)/transport/test_transport_web_socket.cpp 
+	: src/test_transport_web_socket.cpp 
 	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
 	;
 
 
 
-exejs client_rdp_JS_SDL.js 
-     : 
-        test_rdp_client_test_card_JS_SDL.bc 
-        bitmap_data_allocator.bc
-     :  
-        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
-        <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEventG']\""
-	<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
-     ;
+#exejs client_rdp_JS_SDL.js 
+#     : 
+#        test_rdp_client_test_card_JS_SDL.bc 
+#        bitmap_data_allocator.bc
+#     :  
+#        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+#        <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEventG']\""
+#	<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
+#     ;
 
 exejs client_rdp_JS_natif.js 
      : 
@@ -101,7 +101,7 @@ exejs client_rdp_JS_natif.js
         <cxxflags>"-s ALLOW_MEMORY_GROWTH=1"
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"--llvm-opts 3 --llvm-lto 0"
-	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_recv_wraped','_connexion','_recv_value']\""
+	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_recv_wraped','_connexion','_recv_value','_diconnexion','_CtrlAltDelPressed']\""
      ;
 
 exejs test_transport_web_socket.js 
@@ -116,8 +116,8 @@ exejs test_transport_web_socket.js
 make client_rdp_JS_natif.html : client_rdp_JS_natif.js : @nothing ;
 make client_rdp_JS_natif.html.mem : client_rdp_JS_natif.js : @nothing ;      
 
-make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ; 
-make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;  
+#make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ; 
+#make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;  
 
 make test_transport_web_socket.html : test_transport_web_socket.js : @nothing ;
 make test_transport_web_socket.html.mem : test_transport_web_socket.js : @nothing ;

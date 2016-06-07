@@ -1047,14 +1047,11 @@ unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <librar
 unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp : $(TEST_DEPENDENCIES) ;
 
 #explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
-explicit bitmap_data_allocator.o test_data_draw ; #
 
 
 #obj test_show_data.o : tests/mod/rdp/test_show_data.cpp
 #    : <cxxflags>-fPIC ;
 
-obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp
-    : <cxxflags>-fPIC ;
 
 #exe test_show_data :
 #    bitmap_data_allocator.o
