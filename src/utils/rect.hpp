@@ -35,8 +35,16 @@ struct Rect {
     uint16_t cx;
     uint16_t cy;
 
+    int16_t left() const {
+        return this->x;
+    }
+
     int16_t right() const {
         return static_cast<int16_t>(this->x + this->cx);
+    }
+
+    int16_t top() const {
+        return this->y;
     }
 
     int16_t bottom() const {
@@ -61,6 +69,13 @@ struct Rect {
                 && y  >= this->y
                 && x   < this->right()
                 && y   < this->bottom();
+    }
+
+    bool has_intersection(int16_t x, int16_t y) const
+    {
+        return this->cx
+            && (x >= this->x && x < this->right())
+            && (y >= this->y && y < this->bottom());
     }
 
     // special cases: contains returns true
@@ -165,12 +180,6 @@ struct Rect {
         );
     }
 
-    bool has_intersection(int16_t x, int16_t y) const
-    {
-        return this->cx
-            && (x >= this->x && x < this->right())
-            && (y >= this->y && y < this->bottom());
-    }
 
     // Ensemblist difference
     template<class Fn>
