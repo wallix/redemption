@@ -623,16 +623,17 @@ public:
                     for (int yy = 0 ; yy < fc.height; yy++) {
                         unsigned char fc_bit_mask = 128;
                         for (int xx = 0 ; xx < fc.width ; xx++) {
-                            if (screen_rect.contains_pt(px + xx, y + yy) 
-                                && (fc_data[yy] & fc_bit_mask)){
-                                this->drawable.draw_pixel(px + xx, y + yy, fg_color);
-                             }
-                            fc_bit_mask >>= 1;
                             if (!fc_bit_mask) {
                                 fc_bit_mask = 128;
                                 fc_data++;
                             }
+                            if (screen_rect.contains_pt(px + xx, y + yy) 
+                                && (*fc_data & fc_bit_mask)){
+                                this->drawable.draw_pixel(px + xx, y + yy, fg_color);
+                             }
+                            fc_bit_mask >>= 1;
                          }
+                         fc_data++;
                      }
                 }
                 x += fc.incby;
