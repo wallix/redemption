@@ -23,8 +23,10 @@
 
 int main(int ac, char ** av)
 {
-    struct Writer : cfg_generators::cpp_config_writer::CppConfigWriterBase<Writer> {
-        Writer() {
+    struct Writer : cfg_generators::cpp_config_writer::CppConfigWriterBase<Writer>
+    {
+        void do_init()
+        {
             cfg_specs::config_spec_definition(*this);
         };
     };
