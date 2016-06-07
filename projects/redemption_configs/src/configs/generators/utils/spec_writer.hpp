@@ -24,7 +24,6 @@
 #include "configs/enumeration.hpp"
 
 #include <type_traits>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 
@@ -32,42 +31,34 @@
 namespace cfg_generators {
 
 template<class T>
-struct ref
+struct val
 {
-    T const & x;
+    T const x;
     operator T const & () const { return this->x; }
 };
 
 template<class T>
-struct ref<T*>
+struct val<T*>
 {
     T const * const x;
     operator T const * const & () const { return this->x; }
 };
 
-template<class... Ts>
-struct pack_type : ref<
+template<class T> using val_t = val<
     std::conditional_t<
-        std::is_array<Ts>::value,
-        std::remove_extent_t<Ts> const *,
-        Ts
+        std::is_array<T>::value,
+        std::remove_extent_t<T> const *,
+        T
     >
->...
-{
-    explicit pack_type(Ts const &... x)
-    : ref<
-        std::conditional_t<
-            std::is_array<Ts>::value,
-            std::remove_extent_t<Ts> const *,
-            Ts
-        >
-    >{x}...
-    {}
-};
+>;
 
 template<class... Ts>
-pack_type<Ts...> make_pack(Ts const & ... args)
-{ return pack_type<Ts...>{args...}; }
+struct pack_type : val_t<Ts>...
+{
+    explicit pack_type(Ts const &... x)
+    : val_t<Ts>{x}...
+    {}
+};
 
 
 namespace detail_
@@ -84,18 +75,18 @@ namespace detail_
 
 
     template<class T>
-    auto pack_get(ref<T> const & val, int)
+    auto pack_get(val<T> const & val, int)
     -> decltype(unwrap(val.x))
     { return unwrap(val.x); }
 
     template<class T, class Pack>
-    std::enable_if_t<!std::is_base_of<ref<T>, Pack>::value, typename T::bind_type const &>
+    std::enable_if_t<!std::is_base_of<val<T>, Pack>::value, typename T::bind_type const &>
     pack_get(Pack const & pack, char)
     { return static_cast<typename T::bind_type const &>(pack); }
 
 
     template<template<class> class Tpl, class T>
-    auto pack_get_tpl_val(ref<Tpl<T>> const & val)
+    auto pack_get_tpl_val(val<Tpl<T>> const & val)
     -> decltype(unwrap(val.x))
     { return unwrap(val.x); }
 
@@ -110,7 +101,7 @@ namespace detail_
     struct pack_get_binded_tpl<cfg_attributes::bind_<Tag, Tpl<T>>>
     {
         template<class U>
-        static Tpl<U> const & pack_get(ref<Tpl<U>> const & val)
+        static Tpl<U> const & pack_get(val<Tpl<U>> const & val)
         { return val.x; }
     };
 
@@ -170,12 +161,12 @@ template<class T> bool is_empty(cfg_attributes::types::list<T> const &) { return
 
 
 template<class T, class U>
-U const & get_default(cfg_attributes::type_<T>, ref<cfg_attributes::default_<U>> const & d)
+U const & get_default(cfg_attributes::type_<T>, val<cfg_attributes::default_<U>> const & d)
 { return d.x.value; }
 
 template<class T>
 T const & get_default(cfg_attributes::type_<T>, ...)
-{ static T r; return r; }
+{ static T r{}; return r; }
 
 
 namespace detail_
@@ -244,103 +235,110 @@ template<class T, class U = void>
 using disable_if_enum_t = typename std::enable_if<!std::is_enum<T>::value, U>::type;
 
 
-template<class Inherit>
+template<class Inherit, class AttributeName>
 struct ConfigSpecWriterBase
 {
-    std::string section_name;
-    unsigned depth = 0;
-    std::ostringstream out_member_;
-    std::ostream * out_;
     type_enumerations enums;
+
+    unsigned depth = 0;
+
+    struct InfosBase
+    {
+        virtual void apply(
+            std::string const & section_name,
+            std::string const & member_name,
+            Inherit & x
+        ) = 0;
+        virtual ~InfosBase() = default;
+    };
+
+    template<class... Ts>
+    struct Infos final : InfosBase
+    {
+        Infos(Ts const & ... args)
+        : infos(args...)
+        {}
+
+        void apply(
+            std::string const & section_name,
+            std::string const & member_name,
+            Inherit & x
+        ) override
+        { x.do_member(section_name, member_name, this->infos); }
+
+        pack_type<Ts...> infos;
+    };
+
+    struct Sep final : InfosBase
+    {
+        void apply(std::string const &, std::string const &, Inherit & x) override
+        { x.do_sep(); }
+    };
+
 
     struct Members
     {
-        std::string header;
-        std::string footer;
         std::vector<std::string> members_ordered;
-        std::unordered_map<std::string, std::string> members;
-
-        bool empty() const { return this->members_ordered.empty(); }
-
-        friend std::ostream & operator<<(std::ostream & out, Members const & m)
-        {
-            out << m.header;
-            for (auto & k : m.members_ordered) {
-                out << m.members.find(k)->second;
-            }
-            out << m.footer;
-            return out;
-        }
+        std::unordered_map<std::string, std::unique_ptr<InfosBase>> members;
     };
     std::unordered_map<std::string, Members> sections;
     std::vector<std::string> sections_ordered;
 
 private:
-    Members * members_accu = nullptr;
+    Members * section_;
 
 public:
-    std::ostream & out() {
-        return *this->out_;
-    }
+    Inherit & inherit() { return static_cast<Inherit&>(*this); }
+    void sep() { this->section_->members_ordered.emplace_back(); }
 
     template<class Fn>
-    void section(std::string name, Fn fn) {
-        this->out_ = &this->out_member_;
-        this->section_name = std::move(name);
-        if (!this->section_name.empty()) {
-            ++this->depth;
+    void section(std::string name, Fn fn)
+    {
+        auto it = this->sections.find(std::move(name));
+        if (it == this->sections.end()) {
+            this->sections_ordered.push_back(name);
+            it = this->sections.emplace(std::move(name), Members{}).first;
         }
-        this->inherit().do_start_section();
-
-        this->members_accu = &this->sections[this->section_name];
-        this->members_accu->header = this->out_member_.str();
-        this->out_member_.str("");
-
+        this->section_ = &it->second;
         fn();
-
-        if (std::find(
-            this->sections_ordered.begin(),
-            this->sections_ordered.end(),
-            this->section_name
-        ) == this->sections_ordered.end()) {
-            this->sections_ordered.emplace_back(this->section_name);
-        }
-
-        this->out_ = &this->out_member_;
-        if (!this->section_name.empty()) {
-            --this->depth;
-        }
-        this->inherit().do_stop_section();
-        this->members_accu->footer = this->out_member_.str();
-        this->out_member_.str("");
     }
 
     template<class... Ts>
     void member(Ts const & ... args)
     {
-        this->out_ = &this->out_member_;
-        this->out_member_.str("");
-        this->inherit().do_member(args...);
+        using infos_type = Infos<Ts...>;
+        std::unique_ptr<infos_type> u(new infos_type{args...});
 
-        std::string contents = this->out_member_.str();
-        if (contents.empty()) {
-            return ;
-        }
-
-        std::string varname = pack_get<cfg_attributes::name_>(make_pack(args...));
-        auto it = this->members_accu->members.find(varname);
-        if (it == this->members_accu->members.end()) {
-            this->members_accu->members_ordered.push_back(varname);
-            this->members_accu->members.emplace(std::move(varname), std::move(contents));
+        std::string varname = pack_get<AttributeName>(u->infos);
+        auto it = this->section_->members.find(varname);
+        if (it == this->section_->members.end()) {
+            this->section_->members_ordered.push_back(varname);
+            this->section_->members.emplace(std::move(varname), std::move(u));
         }
         else {
-            it->second = std::move(contents);
+            it->second = std::move(u);
         }
-        this->out_member_.str("");
     }
 
-    void sep() { this->inherit().do_sep(); }
-    void tab() { this->inherit().do_tab(); }
+    void evaluate()
+    {
+        this->inherit().do_init();
+        for (std::string const & section_name : this->sections_ordered) {
+            auto const & section = this->sections.find(section_name)->second;
+            this->inherit().do_start_section(section_name);
+            for (std::string const & member_name : section.members_ordered) {
+                if (member_name.empty()) {
+                    this->inherit().do_sep();
+                }
+                else {
+                    section.members.find(member_name)->second
+                    ->apply(section_name, member_name, this->inherit());
+                }
+            }
+            this->inherit().do_stop_section(section_name);
+        }
+        this->inherit().do_finish();
+    }
 
     template<class T>
     void write(T const & x) { this->inherit().do_write(x); }
@@ -349,38 +347,12 @@ public:
     void write(T const & x, pack_type<Ts...> const & pack)
     { this->inherit().do_write(x, pack); }
 
-    template<class To, class... Ts>
-    void write_if_contains(pack_type<Ts...> const & pack)
-    { apply_if_contains<To>(pack, [this, &pack](auto&& val){ this->write(val, pack); }); }
-
-    template<template<class> class To, class... Ts>
-    void write_if_contains(pack_type<Ts...> const & pack)
-    { apply_if_contains<To>(pack, [this, &pack](auto&& val){ this->write(val, pack); }); }
-
-public:
-    void write_key(char const * k, std::size_t n, char const * prefix = "") {
-        int c;
-        for (const char * e = k + n; k != e; ++k) {
-            this->out() << prefix;
-            c = (*k >> 4);
-            c += (c > 9) ? 'A' - 10 : '0';
-            this->out() << char(c);
-            c = (*k & 0xf);
-            c += (c > 9) ? 'A' - 10 : '0';
-            this->out() << char(c);
-        }
-    }
-
-protected:
-    Inherit & inherit() {
-        return static_cast<Inherit&>(*this);
-    }
-
 private:
-    void do_start_section() {}
-    void do_stop_section() {}
+    void do_start_section(std::string const & section_name) {}
+    void do_stop_section(std::string const & section_name) {}
     void do_sep() {}
-    void do_tab() {}
+    void do_init() {}
+    void do_finish() {}
 };
 
 }

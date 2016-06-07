@@ -4,8 +4,12 @@
 
 int main(int ac, char ** av)
 {
-    struct Writer : cfg_generators::python_spec_writer::PythonSpecWriterBase<Writer> {
-        Writer() {
+    struct Writer : cfg_generators::python_spec_writer::PythonSpecWriterBase<Writer>
+    {
+        using base_type::base_type;
+
+        void do_init()
+        {
             cfg_specs::config_type_definition(this->enums);
             cfg_specs::config_spec_definition(*this);
         };

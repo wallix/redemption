@@ -21,17 +21,17 @@
 #pragma once
 
 #include "configs/attributes/spec.hpp"
-#include "configs/generators/utils/multi_filename_writer.hpp"
 #include "configs/generators/utils/spec_writer.hpp"
 #include "configs/generators/utils/write_template.hpp"
 #include "configs/enumeration.hpp"
 
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include <locale>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 #include <cerrno>
 #include <cstring>
@@ -44,33 +44,56 @@ namespace python_spec_writer {
 using namespace cfg_attributes;
 
 template<class Inherit>
-struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
+struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
 {
-    template<class... Ts>
-    void do_member(Ts const & ... args)
+    using base_type = PythonSpecWriterBase;
+
+    std::ofstream out_file_;
+    std::ostringstream out_member_;
+
+    std::ostream & out() { return this->out_member_; }
+
+    PythonSpecWriterBase(char const * filename)
+    : out_file_(filename)
     {
-        pack_type<Ts...> pack{args...};
-        this->template write_if_contains<spec::attr>(pack);
+        this->out_file_ << "\"## Config file for RDP proxy.\\n\\n\\n\"\n";
+    }
+
+    void do_stop_section(std::string const & section_name)
+    {
+        auto str = this->out_member_.str();
+        if (!str.empty()) {
+            if (!section_name.empty()) {
+                this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n";
+            }
+            this->out_file_ << str;
+        }
+        this->out_member_.str("");
     }
 
     template<class Pack>
-    void do_write(spec::attr attr, Pack const & pack)
-    {
-        auto type = pack_get<spec::type_>(pack);
+    void do_member(
+        std::string const & section_name,
+        std::string const & member_name,
+        Pack const & infos
+    ) {
+        apply_if_contains<spec::attr>(infos, [&, this](auto && attr) {
+            auto type = pack_get<spec::type_>(infos);
 
-        this->write_description(pack_contains<desc>(pack), type, pack);
-        this->write_type_info(type);
-        this->write_enumeration_value_description(pack_contains<prefix_value>(pack), type, pack);
+            this->write_description(pack_contains<desc>(infos), type, infos);
+            this->write_type_info(type);
+            this->write_enumeration_value_description(pack_contains<prefix_value>(infos), type, infos);
 
-        if (bool(attr & spec::attr::iptables)) this->out() << "\"#_iptables\\n\"\n";
-        if (bool(attr & spec::attr::advanced)) this->out() << "\"#_advanced\\n\"\n";
-        if (bool(attr & spec::attr::hidden))   this->out() << "\"#_hidden\\n\"\n";
-        if (bool(attr & spec::attr::hex))      this->out() << "\"#_hex\\n\"\n";
-        if (bool(attr & spec::attr::password)) this->out() << "\"#_password\\n\"\n";
+            if (bool(attr & spec::attr::iptables)) this->out() << "\"#_iptables\\n\"\n";
+            if (bool(attr & spec::attr::advanced)) this->out() << "\"#_advanced\\n\"\n";
+            if (bool(attr & spec::attr::hidden))   this->out() << "\"#_hidden\\n\"\n";
+            if (bool(attr & spec::attr::hex))      this->out() << "\"#_hex\\n\"\n";
+            if (bool(attr & spec::attr::password)) this->out() << "\"#_password\\n\"\n";
 
-        this->out() << "\"" << pack_get<spec::name>(pack) << " = ";
-        this->inherit().write_type(type, get_default(type, pack));
-        this->out() << "\\n\\n\"\n\n";
+            this->out() << "\"" << member_name << " = ";
+            this->inherit().write_type(type, get_default(type, infos));
+            this->out() << "\\n\\n\"\n\n";
+        });
     }
 
     struct macroio {
@@ -101,7 +124,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
 
     template<class T, class Pack>
     void write_description(std::true_type, type_<T>, Pack const & pack)
-    { this->out() << this->comment(pack_get<desc>(pack).value); }
+    { this->out() << this->comment(pack_get<desc>(pack).value.c_str()); }
 
     template<class T, class Pack>
     disable_if_enum_t<T>
@@ -249,7 +272,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     void write_type(type_<types::fixed_binary<N>>, T const & x)
     {
         this->out() << "string(min=" << N*2 << ", max=" << N*2 << ", default='"
-          << io_hexkey{this->get_value(x), N} << "')";
+          << io_hexkey{this->get_value(x).c_str(), N} << "')";
     }
 
     template<unsigned N, class T>
@@ -284,6 +307,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     enable_if_enum_t<T>
     write_type(type_<T> t, E const & x)
     {
+        static_assert(std::is_same<T, E>::value, "");
         apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
             this->write_enum_value(e, static_cast<std::underlying_type_t<E>>(x));
         });
@@ -322,23 +346,6 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit>
     }
 };
 
-
-template<class SpecWriter>
-void write_spec(std::ostream & os, SpecWriter & writer)
-{
-    os << "\"## Config file for RDP proxy.\\n\\n\\n\"\n" ;
-    for (auto & section_name : writer.sections_ordered) {
-        auto & members = writer.sections.find(section_name)->second;
-        if (members.empty()) {
-            continue;
-        }
-        if (!section_name.empty()) {
-            os << "\"[" << section_name << "]\\n\\n\"\n\n";
-        }
-        os << members;
-    }
-}
-
 }
 
 
@@ -350,13 +357,12 @@ int app_write_python_spec(int ac, char const * const * av)
         return 1;
     }
 
-    SpecWriter writer;
+    SpecWriter writer(av[1]);
+    writer.evaluate();
 
-    MultiFilenameWriter<SpecWriter> sw(writer);
-    sw.then(av[1], &python_spec_writer::write_spec<SpecWriter>);
-    if (sw.err) {
-        std::cerr << av[0] << ": " << sw.filename << ": " << strerror(errno) << "\n";
-        return sw.errnum;
+    if (!writer.out_file_) {
+        std::cerr << av[0] << ": " << av[1] << ": " << strerror(errno) << "\n";
+        return 1;
     }
     return 0;
 }

@@ -151,7 +151,7 @@ void config_spec_definition(Writer && W)
         if (!keyboard_layout_proposals_desc.empty()) {
             keyboard_layout_proposals_desc.resize(keyboard_layout_proposals_desc.size() - 2);
         }
-        W.member(A, type_<types::list<std::string>>(), "keyboard_layout_proposals", desc{keyboard_layout_proposals_desc.c_str()}, set("en-US, fr-FR, de-DE, ru-RU"));
+        W.member(A, type_<types::list<std::string>>(), "keyboard_layout_proposals", desc{keyboard_layout_proposals_desc}, set("en-US, fr-FR, de-DE, ru-RU"));
         W.member(A, type_<bool>(), "ignore_logon_password", desc{"If true, ignore password provided by RDP client, user need do login manually."}, set(false));
         W.sep();
         W.member(A | X, type_<types::u32>(), "performance_flags_default", desc{"Enable font smoothing (0x80)."}, set(0x80));
@@ -259,7 +259,7 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false), r);
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
         W.member(H, type_<types::fixed_string<511>>(), "session_probe_alternate_shell", set("cmd /k"));
-
+        W.sep();
         /// ConnectionPolicy
         //@{
         W.member(H, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true), r);

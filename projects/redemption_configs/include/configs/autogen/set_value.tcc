@@ -1,395 +1,6 @@
 inline void Inifile::ConfigurationHolder::set_value(const char * context, const char * key, const char * value) {
     array_view_const_char av {value, strlen(value)};
     if (0) {}
-    else if (0 == strcmp(context, "client")) {
-        if (0) {}
-        else if (0 == strcmp(key, "keyboard_layout_proposals")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::keyboard_layout_proposals&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "ignore_logon_password")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::ignore_logon_password&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "performance_flags_default")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::performance_flags_default&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "performance_flags_force_present")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::performance_flags_force_present&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "performance_flags_force_not_present")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::performance_flags_force_not_present&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "auto_adjust_performance_flags")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "tls_fallback_legacy")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::tls_fallback_legacy&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "tls_support")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::tls_support&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "bogus_neg_request")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::bogus_neg_request&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "bogus_user_id")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::bogus_user_id&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::disable_tsk_switch_shortcuts&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "rdp_compression")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::rdp_compression&>(this->variables).value,
-                ::configs::spec_type<RdpCompression>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "max_color_depth")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::max_color_depth&>(this->variables).value,
-                ::configs::spec_type<ColorDepth>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::persistent_disk_bitmap_cache&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "cache_waiting_list")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::cache_waiting_list&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::persist_bitmap_cache_on_disk&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "bitmap_compression")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::bitmap_compression&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "fast_path")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::fast_path&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "enable_suppress_output")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::enable_suppress_output&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "ssl_cipher_list")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
-    else if (0 == strcmp(context, "crypto")) {
-        if (0) {}
-        else if (0 == strcmp(key, "encryption_key")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::crypto::key0&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::fixed_binary>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "sign_key")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::crypto::key1&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::fixed_binary>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
-    else if (0 == strcmp(context, "debug")) {
-        if (0) {}
-        else if (0 == strcmp(key, "x224")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::x224&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "mcs")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::mcs&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "sec")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::sec&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "rdp")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::rdp&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "primary_orders")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::primary_orders&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "secondary_orders")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::secondary_orders&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "bitmap")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::bitmap&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "capture")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::capture&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "auth")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::auth&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "session")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::session&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "front")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::front&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "mod_rdp")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::mod_rdp&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "mod_vnc")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::mod_vnc&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "mod_int")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::mod_int&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "mod_xup")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::mod_xup&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "widget")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::widget&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "input")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::input&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "password")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::password&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "compression")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::compression&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "cache")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::cache&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "bitmap_update")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::bitmap_update&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "performance")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::performance&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "pass_dialog_box")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::pass_dialog_box&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "config")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::debug::config&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
     else if (0 == strcmp(context, "globals")) {
         if (0) {}
         else if (0 == strcmp(key, "bitmap_cache")) {
@@ -621,12 +232,187 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
-    else if (0 == strcmp(context, "internal_mod")) {
+    else if (0 == strcmp(context, "session_log")) {
         if (0) {}
-        else if (0 == strcmp(key, "load_theme")) {
+        else if (0 == strcmp(key, "enable_session_log")) {
             ::configs::parse_and_log(
                 context, key, 
-                static_cast<cfg::internal_mod::theme&>(this->variables).value,
+                static_cast<cfg::session_log::enable_session_log&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "keyboard_input_masking_level")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value,
+                ::configs::spec_type<KeyboardInputMaskingLevel>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "client")) {
+        if (0) {}
+        else if (0 == strcmp(key, "keyboard_layout_proposals")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::keyboard_layout_proposals&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::list<std::string>>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "ignore_logon_password")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::ignore_logon_password&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "performance_flags_default")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::performance_flags_default&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "performance_flags_force_present")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::performance_flags_force_present&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "performance_flags_force_not_present")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::performance_flags_force_not_present&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "auto_adjust_performance_flags")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tls_fallback_legacy")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::tls_fallback_legacy&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tls_support")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::tls_support&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "bogus_neg_request")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::bogus_neg_request&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "bogus_user_id")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::bogus_user_id&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::disable_tsk_switch_shortcuts&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "rdp_compression")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::rdp_compression&>(this->variables).value,
+                ::configs::spec_type<RdpCompression>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "max_color_depth")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::max_color_depth&>(this->variables).value,
+                ::configs::spec_type<ColorDepth>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::persistent_disk_bitmap_cache&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "cache_waiting_list")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::cache_waiting_list&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::persist_bitmap_cache_on_disk&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "bitmap_compression")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::bitmap_compression&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "fast_path")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::fast_path&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_suppress_output")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::enable_suppress_output&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "ssl_cipher_list")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
             );
@@ -971,21 +757,6 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
-    else if (0 == strcmp(context, "mod_replay")) {
-        if (0) {}
-        else if (0 == strcmp(key, "on_end_of_data")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::mod_replay::on_end_of_data&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
     else if (0 == strcmp(context, "mod_vnc")) {
         if (0) {}
         else if (0 == strcmp(key, "clipboard_up")) {
@@ -1041,52 +812,13 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
-    else if (0 == strcmp(context, "session_log")) {
+    else if (0 == strcmp(context, "mod_replay")) {
         if (0) {}
-        else if (0 == strcmp(key, "enable_session_log")) {
+        else if (0 == strcmp(key, "on_end_of_data")) {
             ::configs::parse_and_log(
                 context, key, 
-                static_cast<cfg::session_log::enable_session_log&>(this->variables).value,
+                static_cast<cfg::mod_replay::on_end_of_data&>(this->variables).value,
                 ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "keyboard_input_masking_level")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables).value,
-                ::configs::spec_type<KeyboardInputMaskingLevel>{},
-                av
-            );
-        }
-
-        else if (static_cast<cfg::debug::config>(this->variables).value) {
-            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-        }
-    }
-    else if (0 == strcmp(context, "translation")) {
-        if (0) {}
-        else if (0 == strcmp(key, "language")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::translation::language&>(this->variables).value,
-                ::configs::spec_type<Language>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "password_en")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::translation::password_en&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "password_fr")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::translation::password_fr&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
                 av
             );
         }
@@ -1222,6 +954,274 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 context, key, 
                 static_cast<cfg::video::wrm_compression_algorithm&>(this->variables).value,
                 ::configs::spec_type<WrmCompressionAlgorithm>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "crypto")) {
+        if (0) {}
+        else if (0 == strcmp(key, "encryption_key")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::crypto::key0&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_binary>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "sign_key")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::crypto::key1&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_binary>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "debug")) {
+        if (0) {}
+        else if (0 == strcmp(key, "x224")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::x224&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "mcs")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::mcs&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "sec")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::sec&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "rdp")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::rdp&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "primary_orders")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::primary_orders&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "secondary_orders")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::secondary_orders&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "bitmap")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::bitmap&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "capture")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::capture&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "auth")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::auth&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::session&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "front")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::front&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "mod_rdp")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::mod_rdp&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "mod_vnc")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::mod_vnc&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "mod_int")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::mod_int&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "mod_xup")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::mod_xup&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "widget")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::widget&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "input")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::input&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "password")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::password&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "compression")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::compression&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "cache")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::cache&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "bitmap_update")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::bitmap_update&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "performance")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::performance&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "pass_dialog_box")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::pass_dialog_box&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "config")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::debug::config&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "translation")) {
+        if (0) {}
+        else if (0 == strcmp(key, "language")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::translation::language&>(this->variables).value,
+                ::configs::spec_type<Language>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "password_en")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::translation::password_en&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "password_fr")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::translation::password_fr&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "internal_mod")) {
+        if (0) {}
+        else if (0 == strcmp(key, "load_theme")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::internal_mod::theme&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 av
             );
         }

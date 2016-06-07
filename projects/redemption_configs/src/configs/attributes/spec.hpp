@@ -22,6 +22,8 @@
 
 #include <cstddef>
 
+#include <string>
+
 #if __has_include(<linux/limits.h>)
 # include <linux/limits.h>
 namespace cfg_attributes {
@@ -50,14 +52,18 @@ template<class T>
 struct default_
 {
     using type = T;
-    T const & value;
+    T value;
 };
 
 template<class T>
 default_<T> set(T const & x)
 { return {x}; }
 
-struct desc { char const * value; };
+template<std::size_t N>
+default_<std::string> set(char const (&x)[N])
+{ return {std::string(x+0, x+N-1)}; }
+
+struct desc { std::string value; };
 
 struct prefix_value { char const * value; };
 
