@@ -14,13 +14,13 @@ namespace configs {
 
 template<> struct zstr_buffer_traits<CaptureFlags> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<CaptureFlags> & buf,
     cfg_s_type<CaptureFlags>,
     CaptureFlags x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(CaptureFlags & x, spec_type<CaptureFlags>, array_view_const_char value)
@@ -30,15 +30,15 @@ inline parse_error parse(CaptureFlags & x, spec_type<CaptureFlags>, array_view_c
 
 template<> struct zstr_buffer_traits<Level> : zstr_buffer_traits<void> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<Level> & buf,
     cfg_s_type<Level>,
     Level x
 ) {
-    (void)buf;    constexpr non_owner_string arr[]{
-        non_owner_string("low"),
-        non_owner_string("medium"),
-        non_owner_string("high"),
+    (void)buf;    static constexpr array_view_const_char arr[]{
+        cstr_array_view("low"),
+        cstr_array_view("medium"),
+        cstr_array_view("high"),
     };
     assert(static_cast<unsigned long>(x) < 3);
     return arr[static_cast<unsigned long>(x)];
@@ -55,14 +55,14 @@ inline parse_error parse(Level & x, spec_type<Level>, array_view_const_char valu
 
 template<> struct zstr_buffer_traits<Language> : zstr_buffer_traits<void> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<Language> & buf,
     cfg_s_type<Language>,
     Language x
 ) {
-    (void)buf;    constexpr non_owner_string arr[]{
-        non_owner_string("en"),
-        non_owner_string("fr"),
+    (void)buf;    static constexpr array_view_const_char arr[]{
+        cstr_array_view("en"),
+        cstr_array_view("fr"),
     };
     assert(static_cast<unsigned long>(x) < 2);
     return arr[static_cast<unsigned long>(x)];
@@ -78,14 +78,14 @@ inline parse_error parse(Language & x, spec_type<Language>, array_view_const_cha
 
 template<> struct zstr_buffer_traits<ClipboardEncodingType> : zstr_buffer_traits<void> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ClipboardEncodingType> & buf,
     cfg_s_type<ClipboardEncodingType>,
     ClipboardEncodingType x
 ) {
-    (void)buf;    constexpr non_owner_string arr[]{
-        non_owner_string("utf8"),
-        non_owner_string("latin1"),
+    (void)buf;    static constexpr array_view_const_char arr[]{
+        cstr_array_view("utf8"),
+        cstr_array_view("latin1"),
     };
     assert(static_cast<unsigned long>(x) < 2);
     return arr[static_cast<unsigned long>(x)];
@@ -101,13 +101,13 @@ inline parse_error parse(ClipboardEncodingType & x, spec_type<ClipboardEncodingT
 
 template<> struct zstr_buffer_traits<KeyboardLogFlags> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<KeyboardLogFlags> & buf,
     cfg_s_type<KeyboardLogFlags>,
     KeyboardLogFlags x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags>, array_view_const_char value)
@@ -117,13 +117,13 @@ inline parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags>, arra
 
 template<> struct zstr_buffer_traits<ClipboardLogFlags> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ClipboardLogFlags> & buf,
     cfg_s_type<ClipboardLogFlags>,
     ClipboardLogFlags x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags>, array_view_const_char value)
@@ -133,13 +133,13 @@ inline parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags>, ar
 
 template<> struct zstr_buffer_traits<FileSystemLogFlags> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<FileSystemLogFlags> & buf,
     cfg_s_type<FileSystemLogFlags>,
     FileSystemLogFlags x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags>, array_view_const_char value)
@@ -149,13 +149,13 @@ inline parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags>, 
 
 template<> struct zstr_buffer_traits<ServerNotification> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ServerNotification> & buf,
     cfg_s_type<ServerNotification>,
     ServerNotification x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(ServerNotification & x, spec_type<ServerNotification>, array_view_const_char value)
@@ -165,13 +165,13 @@ inline parse_error parse(ServerNotification & x, spec_type<ServerNotification>, 
 
 template<> struct zstr_buffer_traits<ServerCertCheck> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ServerCertCheck> & buf,
     cfg_s_type<ServerCertCheck>,
     ServerCertCheck x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(ServerCertCheck & x, spec_type<ServerCertCheck>, array_view_const_char value)
@@ -181,13 +181,13 @@ inline parse_error parse(ServerCertCheck & x, spec_type<ServerCertCheck>, array_
 
 template<> struct zstr_buffer_traits<TraceType> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<TraceType> & buf,
     cfg_s_type<TraceType>,
     TraceType x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(TraceType & x, spec_type<TraceType>, array_view_const_char value)
@@ -197,13 +197,13 @@ inline parse_error parse(TraceType & x, spec_type<TraceType>, array_view_const_c
 
 template<> struct zstr_buffer_traits<KeyboardInputMaskingLevel> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<KeyboardInputMaskingLevel> & buf,
     cfg_s_type<KeyboardInputMaskingLevel>,
     KeyboardInputMaskingLevel x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel>, array_view_const_char value)
@@ -213,13 +213,13 @@ inline parse_error parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputM
 
 template<> struct zstr_buffer_traits<SessionProbeOnLaunchFailure> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<SessionProbeOnLaunchFailure> & buf,
     cfg_s_type<SessionProbeOnLaunchFailure>,
     SessionProbeOnLaunchFailure x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbeOnLaunchFailure>, array_view_const_char value)
@@ -229,13 +229,13 @@ inline parse_error parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbe
 
 template<> struct zstr_buffer_traits<VncBogusClipboardInfiniteLoop> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<VncBogusClipboardInfiniteLoop> & buf,
     cfg_s_type<VncBogusClipboardInfiniteLoop>,
     VncBogusClipboardInfiniteLoop x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusClipboardInfiniteLoop>, array_view_const_char value)
@@ -245,13 +245,13 @@ inline parse_error parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusCl
 
 template<> struct zstr_buffer_traits<ColorDepthSelectionStrategy> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ColorDepthSelectionStrategy> & buf,
     cfg_s_type<ColorDepthSelectionStrategy>,
     ColorDepthSelectionStrategy x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSelectionStrategy>, array_view_const_char value)
@@ -261,13 +261,13 @@ inline parse_error parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSe
 
 template<> struct zstr_buffer_traits<WrmCompressionAlgorithm> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<WrmCompressionAlgorithm> & buf,
     cfg_s_type<WrmCompressionAlgorithm>,
     WrmCompressionAlgorithm x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAlgorithm>, array_view_const_char value)
@@ -277,13 +277,13 @@ inline parse_error parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAl
 
 template<> struct zstr_buffer_traits<RdpCompression> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<RdpCompression> & buf,
     cfg_s_type<RdpCompression>,
     RdpCompression x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(RdpCompression & x, spec_type<RdpCompression>, array_view_const_char value)
@@ -293,13 +293,13 @@ inline parse_error parse(RdpCompression & x, spec_type<RdpCompression>, array_vi
 
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
-inline non_owner_string cfg_to_s(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<ColorDepth> & buf,
     cfg_s_type<ColorDepth>,
     ColorDepth x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 inline parse_error parse(ColorDepth & x, spec_type<ColorDepth>, array_view_const_char value)

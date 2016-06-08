@@ -28,7 +28,7 @@
 
 namespace vcfg {
 
-enum accessmode {
+enum class accessmode {
     get      = 1 << 0,
     set      = 1 << 1,
     ask      = 1 << 2,

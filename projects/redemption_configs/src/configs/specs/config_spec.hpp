@@ -301,7 +301,6 @@ void config_spec_definition(Writer && W)
             "VNC server clipboard data encoding type."
         }, sesman::name{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1), r);
         W.sep();
-        // TODO enum name
         W.member(A, type_<VncBogusClipboardInfiniteLoop>(), "bogus_clipboard_infinite_loop", sesman::name{"vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed), r);
     });
 
@@ -433,8 +432,6 @@ void config_spec_definition(Writer && W)
         W.member(type_<std::string>(), "reporting", rw);
         W.sep();
         W.member(type_<std::string>(), "auth_channel_answer", r);
-        // TODO unused
-        W.member(type_<std::string>(), "auth_channel_result", r);
         W.member(type_<std::string>(), "auth_channel_target", rw);
         W.sep();
         W.member(type_<std::string>(), "message", r);

@@ -33,18 +33,18 @@
 #include <chrono>
 
 using FlatWabCloseModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,          vcfg::get | vcfg::is_asked>,
-    vcfg::var<cfg::globals::target_device,      vcfg::get | vcfg::ask | vcfg::is_asked>,
-    vcfg::var<cfg::globals::target_user,        vcfg::get | vcfg::ask>,
-    vcfg::var<cfg::context::selector,           vcfg::ask>,
-    vcfg::var<cfg::context::target_protocol,    vcfg::ask>,
-    vcfg::var<cfg::globals::close_timeout,      vcfg::get>,
-    vcfg::var<cfg::globals::target_application, vcfg::get>,
-    vcfg::var<cfg::context::auth_error_message, vcfg::get>,
-    vcfg::var<cfg::context::module,             vcfg::get>,
-    vcfg::var<cfg::translation::language,       vcfg::get>,
-    vcfg::var<cfg::font,                        vcfg::get>,
-    vcfg::var<cfg::theme,                       vcfg::get>
+    vcfg::var<cfg::globals::auth_user,          vcfg::accessmode::get | vcfg::accessmode::is_asked>,
+    vcfg::var<cfg::globals::target_device,      vcfg::accessmode::get | vcfg::accessmode::ask | vcfg::accessmode::is_asked>,
+    vcfg::var<cfg::globals::target_user,        vcfg::accessmode::get | vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::selector,           vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::target_protocol,    vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::close_timeout,      vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_application, vcfg::accessmode::get>,
+    vcfg::var<cfg::context::auth_error_message, vcfg::accessmode::get>,
+    vcfg::var<cfg::context::module,             vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,       vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                        vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                       vcfg::accessmode::get>
 >;
 
 class FlatWabCloseMod : public InternalMod, public NotifyApi

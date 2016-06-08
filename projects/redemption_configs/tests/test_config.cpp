@@ -271,10 +271,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::password>());
 
     BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::auth_channel_target>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::auth_channel_result>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_answer>());
-    BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_result>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::auth_channel_target>());
 
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::context::message>());
@@ -1900,17 +1898,17 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ConfigurationLoader cfg_loader(ini.configuration_holder());
 
     // bitrate, framerate, qscale
-    ini.get_acl_field(AUTHID_CONTEXT_OPT_BITRATE).set(           "80000");
-    ini.get_acl_field(AUTHID_CONTEXT_OPT_FRAMERATE).set(         "6");
-    ini.get_acl_field(AUTHID_CONTEXT_OPT_QSCALE).set(            "16");
+    ini.get_acl_field(AUTHID_CONTEXT_OPT_BITRATE).set(cstr_array_view("80000"));
+    ini.get_acl_field(AUTHID_CONTEXT_OPT_FRAMERATE).set(cstr_array_view("6"));
+    ini.get_acl_field(AUTHID_CONTEXT_OPT_QSCALE).set(cstr_array_view("16"));
 
-    BOOST_CHECK_EQUAL(80000,                          ini.get<cfg::context::opt_bitrate>());
-    BOOST_CHECK_EQUAL(6,                              ini.get<cfg::context::opt_framerate>());
-    BOOST_CHECK_EQUAL(16,                             ini.get<cfg::context::opt_qscale>());
+    BOOST_CHECK_EQUAL(80000, ini.get<cfg::context::opt_bitrate>());
+    BOOST_CHECK_EQUAL(6,     ini.get<cfg::context::opt_framerate>());
+    BOOST_CHECK_EQUAL(16,    ini.get<cfg::context::opt_qscale>());
 
-    BOOST_CHECK_EQUAL(80000,                          ini.get<cfg::context::opt_bitrate>());
-    BOOST_CHECK_EQUAL(6,                              ini.get<cfg::context::opt_framerate>());
-    BOOST_CHECK_EQUAL(16,                             ini.get<cfg::context::opt_qscale>());
+    BOOST_CHECK_EQUAL("80000", ini.get_acl_field(AUTHID_CONTEXT_OPT_BITRATE).c_str());
+    BOOST_CHECK_EQUAL("6",     ini.get_acl_field(AUTHID_CONTEXT_OPT_FRAMERATE).c_str());
+    BOOST_CHECK_EQUAL("16",    ini.get_acl_field(AUTHID_CONTEXT_OPT_QSCALE).c_str());
 
 
     // bpp, height, width
@@ -1918,28 +1916,28 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ini.get_acl_field(AUTHID_CONTEXT_OPT_HEIGHT).ask();
     ini.get_acl_field(AUTHID_CONTEXT_OPT_WIDTH).ask();
 
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::opt_bpp>());
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::opt_height>());
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::opt_width>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_bpp>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_height>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_width>());
 
-    ini.get_acl_field(AUTHID_CONTEXT_OPT_BPP).set(               "16");
-    ini.get_acl_field(AUTHID_CONTEXT_OPT_HEIGHT).set(            "1024");
-    ini.get_acl_field(AUTHID_CONTEXT_OPT_WIDTH).set(             "1280");
+    ini.get_acl_field(AUTHID_CONTEXT_OPT_BPP).set(cstr_array_view("16"));
+    ini.get_acl_field(AUTHID_CONTEXT_OPT_HEIGHT).set(cstr_array_view("1024"));
+    ini.get_acl_field(AUTHID_CONTEXT_OPT_WIDTH).set(cstr_array_view("1280"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::opt_bpp>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::opt_height>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::opt_width>());
+    BOOST_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_bpp>());
+    BOOST_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_height>());
+    BOOST_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_width>());
 
-    BOOST_CHECK_EQUAL(1280,                             ini.get<cfg::context::opt_width>());
-    BOOST_CHECK_EQUAL(1024,                             ini.get<cfg::context::opt_height>());
-    BOOST_CHECK_EQUAL(16,                               ini.get<cfg::context::opt_bpp>());
+    BOOST_CHECK_EQUAL(16,   ini.get<cfg::context::opt_bpp>());
+    BOOST_CHECK_EQUAL(1024, ini.get<cfg::context::opt_height>());
+    BOOST_CHECK_EQUAL(1280, ini.get<cfg::context::opt_width>());
 
-    BOOST_CHECK_EQUAL(1280,                             ini.get<cfg::context::opt_width>());
-    BOOST_CHECK_EQUAL(1024,                             ini.get<cfg::context::opt_height>());
-    BOOST_CHECK_EQUAL(16,                               ini.get<cfg::context::opt_bpp>());
+    BOOST_CHECK_EQUAL("16",   ini.get_acl_field(AUTHID_CONTEXT_OPT_BPP).c_str());
+    BOOST_CHECK_EQUAL("1024", ini.get_acl_field(AUTHID_CONTEXT_OPT_HEIGHT).c_str());
+    BOOST_CHECK_EQUAL("1280", ini.get_acl_field(AUTHID_CONTEXT_OPT_WIDTH).c_str());
 
 
-    ini.get_acl_field(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE).set(     "Message d'erreur.");
+    ini.get_acl_field(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE).set(cstr_array_view("Message d'erreur."));
 
     BOOST_CHECK_EQUAL("Message d'erreur.", ini.get<cfg::context::auth_error_message>());
 
@@ -1951,225 +1949,214 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_GROUP_FILTER).ask();
     ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE).ask();
 
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector>());
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector_current_page>());
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector_device_filter>());
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector_group_filter>());
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::selector_lines_per_page>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_current_page>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_device_filter>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_group_filter>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_lines_per_page>());
 
-    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR).set(                  "True");
-    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE).set(     "2");
-    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER).set(    "Windows");
-    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_GROUP_FILTER).set(     "RDP");
-    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE).set(   "25");
-    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES).set(  "2");
+    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR).set(cstr_array_view("True"));
+    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE).set(cstr_array_view("2"));
+    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER).set(cstr_array_view("Windows"));
+    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_GROUP_FILTER).set(cstr_array_view("RDP"));
+    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE).set(cstr_array_view("25"));
+    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES).set(cstr_array_view("2"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector_current_page>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector_device_filter>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector_group_filter>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::selector_lines_per_page>());
+    BOOST_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector>());
+    BOOST_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector_current_page>());
+    BOOST_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector_device_filter>());
+    BOOST_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector_group_filter>());
+    BOOST_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector_lines_per_page>());
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::selector>());
-    BOOST_CHECK_EQUAL(2,                                ini.get<cfg::context::selector_current_page>());
-    BOOST_CHECK_EQUAL("Windows",                        ini.get<cfg::context::selector_device_filter>());
-    BOOST_CHECK_EQUAL("RDP",                            ini.get<cfg::context::selector_group_filter>());
-    BOOST_CHECK_EQUAL(25,                               ini.get<cfg::context::selector_lines_per_page>());
-    BOOST_CHECK_EQUAL(2,                                ini.get<cfg::context::selector_number_of_pages>());
+    BOOST_CHECK_EQUAL(true,      ini.get<cfg::context::selector>());
+    BOOST_CHECK_EQUAL(2,         ini.get<cfg::context::selector_current_page>());
+    BOOST_CHECK_EQUAL("Windows", ini.get<cfg::context::selector_device_filter>());
+    BOOST_CHECK_EQUAL("RDP",     ini.get<cfg::context::selector_group_filter>());
+    BOOST_CHECK_EQUAL(25,        ini.get<cfg::context::selector_lines_per_page>());
+    BOOST_CHECK_EQUAL(2,         ini.get<cfg::context::selector_number_of_pages>());
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::selector>());
-    BOOST_CHECK_EQUAL(2,                                ini.get<cfg::context::selector_current_page>());
-    BOOST_CHECK_EQUAL("Windows",                        ini.get<cfg::context::selector_device_filter>());
-    BOOST_CHECK_EQUAL("RDP",                            ini.get<cfg::context::selector_group_filter>());
-    BOOST_CHECK_EQUAL(25,                               ini.get<cfg::context::selector_lines_per_page>());
-    BOOST_CHECK_EQUAL(2,                                ini.get<cfg::context::selector_number_of_pages>());
+    BOOST_CHECK_EQUAL("True",    ini.get_acl_field(AUTHID_CONTEXT_SELECTOR).c_str());
+    BOOST_CHECK_EQUAL("2",       ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE).c_str());
+    BOOST_CHECK_EQUAL("Windows", ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER).c_str());
+    BOOST_CHECK_EQUAL("RDP",     ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_GROUP_FILTER).c_str());
+    BOOST_CHECK_EQUAL("25",      ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE).c_str());
+    BOOST_CHECK_EQUAL("2",       ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES).c_str());
 
 
     // target_xxxx
-    ini.get_acl_field(AUTHID_GLOBALS_TARGET_DEVICE).set(         "127.0.0.1");
-    ini.get_acl_field(AUTHID_CONTEXT_TARGET_PASSWORD).set(       "12345678");
-    ini.get_acl_field(AUTHID_CONTEXT_TARGET_PORT).set(           "3390");
-    ini.get_acl_field(AUTHID_CONTEXT_TARGET_PROTOCOL).set(       "RDP");
-    ini.get_acl_field(AUTHID_GLOBALS_TARGET_USER).set(           "admin");
-    ini.get_acl_field(AUTHID_GLOBALS_TARGET_APPLICATION).set(    "wallix@putty");
+    ini.get_acl_field(AUTHID_GLOBALS_TARGET_DEVICE).set(cstr_array_view("127.0.0.1"));
+    ini.get_acl_field(AUTHID_CONTEXT_TARGET_PASSWORD).set(cstr_array_view("12345678"));
+    ini.get_acl_field(AUTHID_CONTEXT_TARGET_PORT).set(cstr_array_view("3390"));
+    ini.get_acl_field(AUTHID_CONTEXT_TARGET_PROTOCOL).set(cstr_array_view("RDP"));
+    ini.get_acl_field(AUTHID_GLOBALS_TARGET_USER).set(cstr_array_view("admin"));
+    ini.get_acl_field(AUTHID_GLOBALS_TARGET_APPLICATION).set(cstr_array_view("wallix@putty"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::target_device>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::target_password>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::target_port>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::target_protocol>());
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::target_user>());
+    BOOST_CHECK_EQUAL(false,          ini.is_asked<cfg::globals::target_device>());
+    BOOST_CHECK_EQUAL(false,          ini.is_asked<cfg::context::target_password>());
+    BOOST_CHECK_EQUAL(false,          ini.is_asked<cfg::context::target_port>());
+    BOOST_CHECK_EQUAL(false,          ini.is_asked<cfg::context::target_protocol>());
+    BOOST_CHECK_EQUAL(false,          ini.is_asked<cfg::globals::target_user>());
 
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::target_device>());
-    BOOST_CHECK_EQUAL("12345678",                       ini.get<cfg::context::target_password>());
-    BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::context::target_port>());
-    BOOST_CHECK_EQUAL("RDP",                            ini.get<cfg::context::target_protocol>());
-    BOOST_CHECK_EQUAL("admin",                          ini.get<cfg::globals::target_user>());
-    BOOST_CHECK_EQUAL("wallix@putty",                   ini.get<cfg::globals::target_application>());
+    BOOST_CHECK_EQUAL("127.0.0.1",    ini.get<cfg::globals::target_device>());
+    BOOST_CHECK_EQUAL("12345678",     ini.get<cfg::context::target_password>());
+    BOOST_CHECK_EQUAL(3390,           ini.get<cfg::context::target_port>());
+    BOOST_CHECK_EQUAL("RDP",          ini.get<cfg::context::target_protocol>());
+    BOOST_CHECK_EQUAL("admin",        ini.get<cfg::globals::target_user>());
+    BOOST_CHECK_EQUAL("wallix@putty", ini.get<cfg::globals::target_application>());
 
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::target_device>());
-    BOOST_CHECK_EQUAL("12345678",                       ini.get<cfg::context::target_password>());
-    BOOST_CHECK_EQUAL(3390,                             ini.get<cfg::context::target_port>());
-    BOOST_CHECK_EQUAL("RDP",                            ini.get<cfg::context::target_protocol>());
-    BOOST_CHECK_EQUAL("admin",                          ini.get<cfg::globals::target_user>());
-    BOOST_CHECK_EQUAL("wallix@putty",                   ini.get<cfg::globals::target_application>());
+    BOOST_CHECK_EQUAL("127.0.0.1",    ini.get_acl_field(AUTHID_GLOBALS_TARGET_DEVICE).c_str());
+    BOOST_CHECK_EQUAL("12345678",     ini.get_acl_field(AUTHID_CONTEXT_TARGET_PASSWORD).c_str());
+    BOOST_CHECK_EQUAL("3390",         ini.get_acl_field(AUTHID_CONTEXT_TARGET_PORT).c_str());
+    BOOST_CHECK_EQUAL("RDP",          ini.get_acl_field(AUTHID_CONTEXT_TARGET_PROTOCOL).c_str());
+    BOOST_CHECK_EQUAL("admin",        ini.get_acl_field(AUTHID_GLOBALS_TARGET_USER).c_str());
+    BOOST_CHECK_EQUAL("wallix@putty", ini.get_acl_field(AUTHID_GLOBALS_TARGET_APPLICATION).c_str());
 
 
     // host
     ini.get_acl_field(AUTHID_GLOBALS_HOST).ask();
 
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::globals::host>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::globals::host>());
 
-    ini.get_acl_field(AUTHID_GLOBALS_HOST).set(                   "127.0.0.1");
+    ini.get_acl_field(AUTHID_GLOBALS_HOST).set(cstr_array_view("127.0.0.1"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::host>());
+    BOOST_CHECK_EQUAL(false,       ini.is_asked<cfg::globals::host>());
 
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::host>());
+    BOOST_CHECK_EQUAL("127.0.0.1", ini.get<cfg::globals::host>());
 
-    BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get_acl_field(AUTHID_GLOBALS_HOST).c_str());
+    BOOST_CHECK_EQUAL("127.0.0.1", ini.get_acl_field(AUTHID_GLOBALS_HOST).c_str());
+    BOOST_CHECK_EQUAL(9,           ini.get_acl_field(AUTHID_GLOBALS_HOST).to_string_view().size());
 
 
     // target
     ini.get_acl_field(AUTHID_GLOBALS_TARGET).ask();
 
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::globals::target>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::globals::target>());
 
-    ini.get_acl_field(AUTHID_GLOBALS_TARGET).set(                 "192.168.0.1");
+    ini.get_acl_field(AUTHID_GLOBALS_TARGET).set(cstr_array_view("192.168.0.1"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::target>());
+    BOOST_CHECK_EQUAL(false,         ini.is_asked<cfg::globals::target>());
 
-    BOOST_CHECK_EQUAL("192.168.0.1",                    ini.get<cfg::globals::target>());
+    BOOST_CHECK_EQUAL("192.168.0.1", ini.get<cfg::globals::target>());
 
-    BOOST_CHECK_EQUAL("192.168.0.1",                    ini.get_acl_field(AUTHID_GLOBALS_TARGET).c_str());
+    BOOST_CHECK_EQUAL("192.168.0.1", ini.get_acl_field(AUTHID_GLOBALS_TARGET).c_str());
 
 
     // auth_user
-    ini.get_acl_field(AUTHID_GLOBALS_AUTH_USER).set(             "admin");
+    ini.get_acl_field(AUTHID_GLOBALS_AUTH_USER).set(cstr_array_view("admin"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::globals::auth_user>());
+    BOOST_CHECK_EQUAL(false,   ini.is_asked<cfg::globals::auth_user>());
 
-    BOOST_CHECK_EQUAL("admin",                          ini.get<cfg::globals::auth_user>());
+    BOOST_CHECK_EQUAL("admin", ini.get<cfg::globals::auth_user>());
 
-    BOOST_CHECK_EQUAL("admin",                          ini.get_acl_field(AUTHID_GLOBALS_AUTH_USER).c_str());
+    BOOST_CHECK_EQUAL("admin", ini.get_acl_field(AUTHID_GLOBALS_AUTH_USER).c_str());
 
 
     // password
     ini.get_acl_field(AUTHID_CONTEXT_PASSWORD).ask();
 
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::password>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::password>());
 
-    ini.get_acl_field(AUTHID_CONTEXT_PASSWORD).set(              "12345678");
+    ini.get_acl_field(AUTHID_CONTEXT_PASSWORD).set(cstr_array_view("12345678"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::password>());
+    BOOST_CHECK_EQUAL(false,      ini.is_asked<cfg::context::password>());
 
-    BOOST_CHECK_EQUAL("12345678",                       ini.get<cfg::context::password>());
+    BOOST_CHECK_EQUAL("12345678", ini.get<cfg::context::password>());
 
-    BOOST_CHECK_EQUAL("12345678",                       ini.get_acl_field(AUTHID_CONTEXT_PASSWORD).c_str());
+    BOOST_CHECK_EQUAL("12345678", ini.get_acl_field(AUTHID_CONTEXT_PASSWORD).c_str());
 
 
     // answer
-    ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER).set(    "answer");
+    ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER).set(cstr_array_view("answer"));
 
-    BOOST_CHECK_EQUAL("answer",                         ini.get<cfg::context::auth_channel_answer>());
+    BOOST_CHECK_EQUAL("answer", ini.get<cfg::context::auth_channel_answer>());
 
 
     // authchannel_target
     ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_TARGET).ask();
 
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::auth_channel_target>());
+    BOOST_CHECK_EQUAL(true, ini.is_asked<cfg::context::auth_channel_target>());
 
-    ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_TARGET).set(    "target");
+    ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_TARGET).set(cstr_array_view("target"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::auth_channel_target>());
+    BOOST_CHECK_EQUAL(false, 	ini.is_asked<cfg::context::auth_channel_target>());
 
-    BOOST_CHECK_EQUAL("target",                         ini.get<cfg::context::auth_channel_target>());
+    BOOST_CHECK_EQUAL("target", ini.get<cfg::context::auth_channel_target>());
 
-    BOOST_CHECK_EQUAL("target",                         ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_TARGET).c_str());
-
-
-    // authchannel_result
-    ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_RESULT).ask();
-
-    BOOST_CHECK_EQUAL(true,                             ini.is_asked<cfg::context::auth_channel_result>());
-
-    ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_RESULT).set(    "result");
-
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::auth_channel_result>());
-
-    BOOST_CHECK_EQUAL("result",                         ini.get<cfg::context::auth_channel_result>());
+    BOOST_CHECK_EQUAL("target", ini.get_acl_field(AUTHID_CONTEXT_AUTH_CHANNEL_TARGET).c_str());
 
 
     // message
-    ini.get_acl_field(AUTHID_CONTEXT_MESSAGE).set(               "message");
+    ini.get_acl_field(AUTHID_CONTEXT_MESSAGE).set(cstr_array_view("message"));
 
-    BOOST_CHECK_EQUAL("message",                        ini.get<cfg::context::message>());
+    BOOST_CHECK_EQUAL("message", ini.get<cfg::context::message>());
 
 
     // rejected
-    ini.get_acl_field(AUTHID_CONTEXT_REJECTED).set(              "rejected");
+    ini.get_acl_field(AUTHID_CONTEXT_REJECTED).set(cstr_array_view("rejected"));
 
-    BOOST_CHECK_EQUAL("rejected",                       ini.get<cfg::context::rejected>());
+    BOOST_CHECK_EQUAL("rejected", ini.get<cfg::context::rejected>());
 
-    BOOST_CHECK_EQUAL("rejected",                       ini.get_acl_field(AUTHID_CONTEXT_REJECTED).c_str());
+    BOOST_CHECK_EQUAL("rejected", ini.get_acl_field(AUTHID_CONTEXT_REJECTED).c_str());
 
 
     // authenticated
-    ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATED).set(         "True");
+    ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATED).set(cstr_array_view("True"));
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::authenticated>());
+    BOOST_CHECK_EQUAL(true,   ini.get<cfg::context::authenticated>());
 
-    BOOST_CHECK_EQUAL("True",                           ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATED).c_str());
+    BOOST_CHECK_EQUAL("True", ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATED).c_str());
 
 
     // keepalive
-    ini.get_acl_field(AUTHID_CONTEXT_KEEPALIVE).set(             "True");
+    ini.get_acl_field(AUTHID_CONTEXT_KEEPALIVE).set(cstr_array_view("True"));
 
-    BOOST_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::keepalive>());
+    BOOST_CHECK_EQUAL(false, ini.is_asked<cfg::context::keepalive>());
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::keepalive>());
+    BOOST_CHECK_EQUAL(true,  ini.get<cfg::context::keepalive>());
 
 
     // session_id
-    ini.get_acl_field(AUTHID_CONTEXT_SESSION_ID).set(            "0123456789");
+    ini.get_acl_field(AUTHID_CONTEXT_SESSION_ID).set(cstr_array_view("0123456789"));
 
-    BOOST_CHECK_EQUAL("0123456789",                     ini.get<cfg::context::session_id>());
+    BOOST_CHECK_EQUAL("0123456789", ini.get<cfg::context::session_id>());
 
 
     // end_date_cnx
-    ini.get_acl_field(AUTHID_CONTEXT_END_DATE_CNX).set(          "12345678");
+    ini.get_acl_field(AUTHID_CONTEXT_END_DATE_CNX).set(cstr_array_view("12345678"));
 
-    BOOST_CHECK_EQUAL(12345678,                         ini.get<cfg::context::end_date_cnx>());
+    BOOST_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>());
 
 
     // end_time
-    ini.get_acl_field(AUTHID_CONTEXT_END_TIME).set(              "end_time");
+    ini.get_acl_field(AUTHID_CONTEXT_END_TIME).set(cstr_array_view("end_time"));
 
-    BOOST_CHECK_EQUAL("end_time",                       ini.get<cfg::context::end_time>());
+    BOOST_CHECK_EQUAL("end_time", ini.get<cfg::context::end_time>());
 
 
     // mode_console
-    ini.get_acl_field(AUTHID_CONTEXT_MODE_CONSOLE).set(          "deny");
+    ini.get_acl_field(AUTHID_CONTEXT_MODE_CONSOLE).set(cstr_array_view("deny"));
 
-    BOOST_CHECK_EQUAL("deny",                           ini.get<cfg::context::mode_console>());
+    BOOST_CHECK_EQUAL("deny", ini.get<cfg::context::mode_console>());
 
 
     // timezone
-    ini.get_acl_field(AUTHID_CONTEXT_TIMEZONE).set(              "-7200");
+    ini.get_acl_field(AUTHID_CONTEXT_TIMEZONE).set(cstr_array_view("-7200"));
 
-    BOOST_CHECK_EQUAL(-7200,                            ini.get<cfg::context::timezone>());
+    BOOST_CHECK_EQUAL(-7200, ini.get<cfg::context::timezone>());
 
 
     // real_target_device
-    ini.get_acl_field(AUTHID_CONTEXT_REAL_TARGET_DEVICE).set(     "10.0.0.1");
+    ini.get_acl_field(AUTHID_CONTEXT_REAL_TARGET_DEVICE).set(cstr_array_view("10.0.0.1"));
 
-    BOOST_CHECK_EQUAL("10.0.0.1",                       ini.get<cfg::context::real_target_device>());
+    BOOST_CHECK_EQUAL("10.0.0.1", ini.get<cfg::context::real_target_device>());
 
-    BOOST_CHECK_EQUAL("10.0.0.1",                       ini.get_acl_field(AUTHID_CONTEXT_REAL_TARGET_DEVICE).c_str());
+    BOOST_CHECK_EQUAL("10.0.0.1", ini.get_acl_field(AUTHID_CONTEXT_REAL_TARGET_DEVICE).c_str());
 
 
     // authentication_challenge
-    ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE).set(     "true");
+    ini.get_acl_field(AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE).set(cstr_array_view("true"));
 
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::context::authentication_challenge>());
+    BOOST_CHECK_EQUAL(true, ini.get<cfg::context::authentication_challenge>());
 }
 
 
@@ -2237,7 +2224,7 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
     BOOST_CHECK(!ini.check_from_acl());
 
     // auth_user has been changed, so check_from_acl() method will notify that something changed
-    ini.get_acl_field(static_cast<authid_t>(cfg::globals::auth_user::index())).set("someoneelse");
+    ini.get_acl_field(static_cast<authid_t>(cfg::globals::auth_user::index())).set(cstr_array_view("someoneelse"));
     BOOST_CHECK(ini.check_from_acl());
     BOOST_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
 

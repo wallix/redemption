@@ -42,6 +42,8 @@ namespace configs {
 template<std::size_t N>
 struct zstr_buffer
 {
+    zstr_buffer() : buf() {}
+
     static constexpr std::size_t size() { return N; }
     char * get() { return this->buf; }
 
@@ -184,55 +186,33 @@ namespace spec_types
 }
 
 
-struct non_owner_string
-{
-    constexpr non_owner_string(char const * s, std::size_t sz) noexcept
-    : s(s)
-    , sz(sz)
-    {}
-
-    template<std::size_t N>
-    constexpr non_owner_string(char const (&s)[N]) noexcept
-    : s(s)
-    , sz(N)
-    {}
-
-    char const * c_str() const { return this->s; }
-    std::size_t size() const { return this->sz; }
-
-private:
-    char const * s;
-    std::size_t sz;
-};
-
-
-//
-// assign_zbuf_from_cfg
-//
 
 template<class> struct cfg_s_type {};
 
-inline non_owner_string assign_zbuf_from_cfg(
+// assign_zbuf_from_cfg (guarantee with null terminal)
+//@{
+
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::string> &,
     cfg_s_type<std::string>,
     std::string const & str
 ) { return {str.c_str(), str.size()}; }
 
-inline non_owner_string assign_zbuf_from_cfg(
+inline array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::string> &,
     cfg_s_type<spec_types::list<std::string>>,
     std::string const & str
 ) { return {str.c_str(), str.size()}; }
 
 template<std::size_t N>
-non_owner_string assign_zbuf_from_cfg(zstr_buffer_from<char[N]> &, cfg_s_type<char[N]>,  char const (&s)[N])
+array_view_const_char assign_zbuf_from_cfg(zstr_buffer_from<char[N]> &, cfg_s_type<char[N]>,  char const (&s)[N])
 { return {s, strlen(s)}; }
 
-inline non_owner_string assign_zbuf_from_cfg(zstr_buffer_from<bool>&, cfg_s_type<bool>, bool x)
-{ return x ? non_owner_string("True") : non_owner_string("False"); }
+inline array_view_const_char assign_zbuf_from_cfg(zstr_buffer_from<bool>&, cfg_s_type<bool>, bool x)
+{ return x ? cstr_array_view("True") : cstr_array_view("False"); }
 
 template<std::size_t N>
-non_owner_string assign_zbuf_from_cfg(
+array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::array<unsigned char, N>> & buf,
     cfg_s_type<spec_types::fixed_binary>,
     std::array<unsigned char, N> const & arr
@@ -244,37 +224,38 @@ non_owner_string assign_zbuf_from_cfg(
         x = c & 0xf;
         *p++ = x < 10 ? ('0' + x) : ('A' + x - 10);
     }
-    return non_owner_string(buf.get(), p-buf.get());
+    return array_view_const_char(buf.get(), p-buf.get());
 }
 
 template<class TInt>
-typename std::enable_if<std::is_integral<TInt>::value, non_owner_string>::type
+typename std::enable_if<std::is_integral<TInt>::value, array_view_const_char>::type
 assign_zbuf_from_cfg(zstr_buffer_from<TInt> & buf, cfg_s_type<TInt>, TInt const & x)
 {
     int sz = (std::is_signed<TInt>::value)
         ? snprintf(buf.get(), buf.size(), "%lld", static_cast<long long>(x))
         : snprintf(buf.get(), buf.size(), "%llu", static_cast<unsigned long long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 template<class E>
-typename std::enable_if<std::is_enum<E>::value, non_owner_string>::type
+typename std::enable_if<std::is_enum<E>::value, array_view_const_char>::type
 assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E>, E const & x)
 {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
 
 
 template<class T, class Ratio>
-non_owner_string assign_zbuf_from_cfg(
+array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::chrono::duration<T, Ratio>> & buf,
     cfg_s_type<std::chrono::duration<T, Ratio>>,
     std::chrono::duration<T, Ratio> const & x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x.count()));
-    return non_owner_string(buf.get(), sz);
+    return array_view_const_char(buf.get(), sz);
 }
+//@}
 
 
 template<class T>
@@ -292,7 +273,7 @@ zstr_buffer_from<T> make_zstr_buffer(T const & x)
 
 struct parse_error
 {
-    constexpr parse_error(char const * err = nullptr) noexcept : s_err(err) {}
+    constexpr explicit parse_error(char const * err) noexcept : s_err(err) {}
 
     explicit operator bool () const { return this->s_err; }
     char const * c_str() const { return this->s_err; }
@@ -314,7 +295,7 @@ template<std::size_t N>
 parse_error parse(char (&x)[N], spec_type<char[N]>, array_view_const_char value)
 {
     if (value.size() >= N-1) {
-        return {"out of bounds"};
+        return parse_error{"out of bounds"};
     }
     memcpy(x, value.data(), value.size());
     x[value.size()] = 0;
@@ -325,7 +306,7 @@ template<std::size_t N>
 parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string>, array_view_const_char value)
 {
     if (value.size() >= N) {
-        return {"out of bounds"};
+        return parse_error{"out of bounds"};
     }
     memcpy(x, value.data(), value.size());
     memset(x + value.size(), 0, N - value.size());
@@ -339,7 +320,7 @@ parse_error parse(
     array_view_const_char value
 ) {
     if (value.size() != N*2) {
-        return {"bad length"};
+        return parse_error{"bad length"};
     }
 
     char   hexval[3] = { 0 };
@@ -349,7 +330,7 @@ parse_error parse(
         hexval[1] = value[i*2+1];
         key[i] = strtol(hexval, &end, 16);
         if (end != hexval+2) {
-            return {"bad format"};
+            return parse_error{"bad format"};
         }
     }
 
@@ -395,7 +376,7 @@ namespace detail
 
             constexpr std::size_t buf_sz = detail::integral_buffer_size<TInt>();
             if (sz >= buf_sz) {
-                return {"too large"};
+                return parse_error{"too large"};
             }
             if (sz == 0) {
                 x = 0;
@@ -413,15 +394,15 @@ namespace detail
                 val = strtoull(buf, &end, base);
             }
             if (errno == ERANGE || std::size_t(end - buf) != sz) {
-                return {"bad format"};
+                return parse_error{"bad format"};
             }
         }
 
         if (val > max) {
-            return {"too large"};
+            return parse_error{"too large"};
         }
         if (val < min) {
-            return {"too short"};
+            return parse_error{"too short"};
         }
 
         x = val;
@@ -457,7 +438,7 @@ namespace detail
             using limits = std::numeric_limits<IntOrigni>;
             if (auto err = parse_integral(i, {r.begin(), r.size()}, limits::min(), limits::max())) {
                 if (strcmp(err.c_str(), "bad format")) {
-                    return {"bad format, expected \"integral(, integral)*\""};
+                    return parse_error{"bad format, expected \"integral(, integral)*\""};
                 }
             }
         }
@@ -509,7 +490,7 @@ parse(T & x, spec_type<bool>, array_view_const_char value)
             return no_parse_error;
         }
     }
-    return {"bad format, expected 1, on, yes, true, 0, no, false"};
+    return parse_error{"bad format, expected 1, on, yes, true, 0, no, false"};
 }
 
 
@@ -540,7 +521,7 @@ parse_error parse_enum_u(E & x, array_view_const_char value, unsigned long max)
         return err;
     }
     //if (~~static_cast<E>(xi) != static_cast<E>(xi)) {
-    //    return {"bad value"};
+    //    return parse_error{"bad value"};
     //}
     //x = ~~static_cast<E>(xi);
     x = static_cast<E>(xi);
@@ -558,7 +539,7 @@ parse_error parse_enum_str(
             return no_parse_error;
         }
     }
-    return {"unknown value"};
+    return parse_error{"unknown value"};
 }
 
 template<class E>
@@ -575,7 +556,7 @@ parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer
             return no_parse_error;
         }
     }
-    return {"unknown value"};
+    return parse_error{"unknown value"};
 }
 
 

@@ -363,7 +363,7 @@
 "#   1: message sent to syslog\n"
 "#   2: User notified (through proxy interface)\n"
 "#   4: admin notified (wab notification)\n"
-"# Values can be added (everyone: 1+2+4=7, mute: 0)\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_hidden\n"
 "server_access_allowed_message = integer(min=0, max=7, default=1)\n\n"
 
@@ -372,7 +372,7 @@
 "#   1: message sent to syslog\n"
 "#   2: User notified (through proxy interface)\n"
 "#   4: admin notified (wab notification)\n"
-"# Values can be added (everyone: 1+2+4=7, mute: 0)\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_hidden\n"
 "server_cert_create_message = integer(min=0, max=7, default=1)\n\n"
 
@@ -381,7 +381,7 @@
 "#   1: message sent to syslog\n"
 "#   2: User notified (through proxy interface)\n"
 "#   4: admin notified (wab notification)\n"
-"# Values can be added (everyone: 1+2+4=7, mute: 0)\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_hidden\n"
 "server_cert_success_message = integer(min=0, max=7, default=1)\n\n"
 
@@ -390,7 +390,7 @@
 "#   1: message sent to syslog\n"
 "#   2: User notified (through proxy interface)\n"
 "#   4: admin notified (wab notification)\n"
-"# Values can be added (everyone: 1+2+4=7, mute: 0)\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_hidden\n"
 "server_cert_failure_message = integer(min=0, max=7, default=1)\n\n"
 
@@ -399,7 +399,7 @@
 "#   1: message sent to syslog\n"
 "#   2: User notified (through proxy interface)\n"
 "#   4: admin notified (wab notification)\n"
-"# Values can be added (everyone: 1+2+4=7, mute: 0)\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_hidden\n"
 "server_cert_error_message = integer(min=0, max=7, default=1)\n\n"
 
@@ -453,6 +453,7 @@
 "#   2: wrm\n"
 "#   4: flv\n"
 "#   8: ocr\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_advanced\n"
 "capture_flags = integer(min=0, max=15, default=3)\n\n"
 
@@ -491,18 +492,21 @@
 "#   0: none\n"
 "#   1: disable keyboard log in syslog\n"
 "#   2: disable keyboard log in recorded sessions\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "disable_keyboard_log = integer(min=0, max=3, default=1)\n\n"
 
 "# Disable clipboard log:\n"
 "#   0: none\n"
 "#   1: disable clipboard log in syslog\n"
 "#   2: disable clipboard log in recorded sessions\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "disable_clipboard_log = integer(min=0, max=3, default=1)\n\n"
 
 "# Disable (redirected) file system log:\n"
 "#   0: none\n"
 "#   1: disable (redirected) file system log in syslog\n"
 "#   2: disable (redirected) file system log in recorded sessions\n"
+"(note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "disable_file_system_log = integer(min=0, max=3, default=1)\n\n"
 
 "#_hidden\n"

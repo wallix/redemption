@@ -202,6 +202,10 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
             }
             ++d;
         }
+
+        if (type_enumeration::flags == e.flag) {
+            this->out() << "\"(note: values can be added (everyone: 1+2+4=7, mute: 0))\\n\"\n";
+        }
     }
 
     void write_desc_value(type_enumeration_set const & e, char const * prefix)

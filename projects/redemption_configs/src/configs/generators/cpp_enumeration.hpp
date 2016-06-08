@@ -67,7 +67,7 @@ namespace cpp_enumeration_writer
             write(e, "template<> struct zstr_buffer_traits<%e> : ");
             out << "zstr_buffer_traits<" << (e.is_icase_parser ? "void" : "unsigned long") << "> {};\n\n";
             write(e,
-                "inline non_owner_string cfg_to_s(\n"
+                "inline array_view_const_char assign_zbuf_from_cfg(\n"
                 "    zstr_buffer_from<%e> & buf,\n"
                 "    cfg_s_type<%e>,\n"
                 "    %e x\n"
@@ -76,8 +76,8 @@ namespace cpp_enumeration_writer
             if (e.is_icase_parser) {
                 out <<
                     "    (void)buf;"
-                    "    constexpr non_owner_string arr[]{\n";
-                loop(e, "        non_owner_string(\"%s\"),\n");
+                    "    static constexpr array_view_const_char arr[]{\n";
+                loop(e, "        cstr_array_view(\"%s\"),\n");
                 write(e,
                     "    };\n"
                     "    assert(static_cast<unsigned long>(x) < %u);\n"
@@ -87,7 +87,7 @@ namespace cpp_enumeration_writer
             else {
                 write(e,
                     "    int sz = snprintf(buf.get(), buf.size(), \"%%lu\", static_cast<unsigned long>(x));\n"
-                    "    return non_owner_string(buf.get(), sz);\n"
+                    "    return array_view_const_char(buf.get(), sz);\n"
                 );
             }
             out << "}\n\n";

@@ -35,14 +35,14 @@
 
 
 using FlatDialogModVariables = vcfg::variables<
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>,
-    vcfg::var<cfg::context::accept_message,             vcfg::set>,
-    vcfg::var<cfg::context::display_message,            vcfg::set>,
-    vcfg::var<cfg::context::password,                   vcfg::set>,
-    vcfg::var<cfg::debug::pass_dialog_box,              vcfg::get>,
-    vcfg::var<cfg::translation::language,               vcfg::get>,
-    vcfg::var<cfg::font,                                vcfg::get>,
-    vcfg::var<cfg::theme,                               vcfg::get>
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::context::accept_message,             vcfg::accessmode::set>,
+    vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::debug::pass_dialog_box,              vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
 class FlatDialogMod : public InternalMod, public NotifyApi

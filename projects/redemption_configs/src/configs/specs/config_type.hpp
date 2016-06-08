@@ -78,8 +78,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("depth24", 24, "24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)")
     ;
 
-    // TODO move information in cpp_writers
-    e.enumeration_flags("ServerNotification", "", "Values can be added (everyone: 1+2+4=7, mute: 0)")
+    e.enumeration_flags("ServerNotification")
       .value("nobody")
       .value("syslog", "message sent to syslog")
       .value("user", "User notified (through proxy interface)")

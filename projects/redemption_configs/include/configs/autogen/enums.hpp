@@ -179,7 +179,6 @@ operator << (std::basic_ostream<Ch, Tr> & os, FileSystemLogFlags e)
 { return os << static_cast<unsigned long>(e); }
 
 
-// Values can be added (everyone: 1+2+4=7, mute: 0)
 enum class ServerNotification {
     nobody = 0,
     // message sent to syslog

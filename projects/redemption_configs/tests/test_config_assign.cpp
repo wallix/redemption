@@ -108,8 +108,6 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::accept_message>(true);
     ini.set<cfg::context::auth_channel_answer>(cs);
     ini.set<cfg::context::auth_channel_answer>(s);
-    ini.set<cfg::context::auth_channel_result>(cs);
-    ini.set<cfg::context::auth_channel_result>(s);
     ini.set_acl<cfg::context::auth_channel_target>(cs);
     ini.set_acl<cfg::context::auth_channel_target>(s);
     ini.set<cfg::context::auth_error_message>(cs);

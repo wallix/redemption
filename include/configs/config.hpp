@@ -97,15 +97,17 @@ namespace configs {
 namespace configs
 {
     template<class T, class U>
-    void parse_and_log(const char * context, const char * key, T & x, U u, array_view_const_char av)
+    parse_error parse_and_log(const char * context, const char * key, T & x, U u, array_view_const_char av)
     {
-        if (auto err = ::configs::parse(x, u, av)) {
+        auto const err = ::configs::parse(x, u, av);
+        if (err) {
             LOG(
                 LOG_ERR,
                 "parsing error with parameter '%s' in section [%s] for \"%*s\": %s",
                 key, context, int(av.size()), av.data(), err.c_str()
             );
         }
+        return err;
     }
 }
 
@@ -113,6 +115,7 @@ class Inifile
 {
 public:
     using authid_t = ::authid_t;
+    using parse_error = configs::parse_error;
 
 
     explicit Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME)
@@ -186,8 +189,9 @@ private:
     struct FieldBase
     {
         bool is_asked() const { return this->asked_; }
-        virtual void parse(configs::VariablesConfiguration & variables, char const * value) = 0;
-        virtual char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const = 0;
+        virtual bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) = 0;
+        virtual array_view_const_char
+        to_string_view(configs::VariablesConfiguration const & variables, Buffers const & buffers) const = 0;
         virtual ~FieldBase() = default;
 
     private:
@@ -198,17 +202,19 @@ private:
     template<class T>
     struct Field : FieldBase
     {
-        void parse(configs::VariablesConfiguration & variables, char const * value) override final
+        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) override final
         {
-            ::configs::parse_and_log(
+            return ! ::configs::parse_and_log(
                 T::section(), T::name(),
                 static_cast<T&>(variables).value,
                 configs::spec_type<typename T::sesman_and_spec_type>{},
-                {value, strlen(value)}
+                value
             );
         }
 
-        char const * c_str(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
+        /// \return array_view_const_char::data() guarantee with null terminal
+        array_view_const_char
+        to_string_view(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
         {
             return ::configs::assign_zbuf_from_cfg(
                 const_cast<configs::zstr_buffer_from<typename T::type> &>(
@@ -218,7 +224,7 @@ private:
                 ),
                 configs::cfg_s_type<typename T::sesman_and_spec_type>{},
                 static_cast<T const &>(variables).value
-            ).c_str();
+            );
         }
     };
 
@@ -253,14 +259,23 @@ public:
             this->field->asked_ = true;
         }
 
-        void set(char const * value) {
-            this->field->parse(this->ini->variables, value);
-            this->field->asked_ = false;
-            this->ini->new_from_acl = true;
+        bool set(char const *) = delete; // use `set(cstr_array_view("blah blah"))` instead
+
+        bool set(array_view_const_char value) {
+            auto const err = this->field->parse(this->ini->variables, value);
+            if (err) {
+                this->field->asked_ = false;
+                this->ini->new_from_acl = true;
+            }
+            return err;
+        }
+
+        array_view_const_char to_string_view() const {
+            return this->field->to_string_view(this->ini->variables, this->ini->buffers);
         }
 
         char const * c_str() const {
-            return this->field->c_str(this->ini->variables, this->ini->buffers);
+            return this->to_string_view().data();
         }
 
         explicit operator bool () const {

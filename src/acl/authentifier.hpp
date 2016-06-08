@@ -432,11 +432,6 @@ public:
         this->ini.set_acl<cfg::context::auth_channel_target>(target);
     }
 
-    //void set_auth_channel_result(const char * result) override
-    //{
-    //    this->ini.get<cfg::context::auth_channel_result>().set_from_cstr(result);
-    //}
-
     void set_auth_error_message(const char * error_message) override {
         this->ini.set<cfg::context::auth_error_message>(error_message);
     }
