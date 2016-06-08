@@ -434,7 +434,6 @@ private:
     {
               uint8_t   fc_bit_mask        = 128;
         const uint8_t * fc_data            = fc.data.get();
-        const bool      skip_padding_pixel = (fc.width % 8);
 
         for (int yy = pos_y + fc.baseline ;
                  yy - (pos_y + fc.baseline) < fc.height; yy++)
@@ -442,22 +441,17 @@ private:
             for (int xx = pos_x + fc.offset ;
                      xx < pos_x + fc.offset + fc.width; xx++)
             {
+                if (!fc_bit_mask)
+                {
+                    fc_data++;
+                    fc_bit_mask = 128;
+                }
                 if (clip.contains_pt(xx, yy)
                 && (fc_bit_mask & (*fc_data)))
                 {
                     this->drawable.draw_pixel(xx, yy, color);
                 }
                 fc_bit_mask >>= 1;
-                if (!fc_bit_mask)
-                {
-                    fc_data++;
-                    fc_bit_mask = 128;
-                }
-            }
-
-            if (skip_padding_pixel) {
-                fc_data++;
-                fc_bit_mask = 128;
             }
         }
     }
