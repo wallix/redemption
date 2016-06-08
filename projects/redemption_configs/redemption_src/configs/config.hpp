@@ -1,7 +1,3 @@
-//
-// ATTENTION -- This file is auto-generated
-//
-
 /*
     This program is free software; you can redistribute it and/or modify it
      under the terms of the GNU General Public License as published by the
@@ -162,9 +158,9 @@ public:
     }
 
 private:
-    template<class...> using void_t = void;
+    template<class> struct void_t { using type = void; };
     template<class T, class = void> struct set_value_spec_type { using type = typename T::type; };
-    template<class T> struct set_value_spec_type<T, void_t<typename T::sesman_and_spec_type>>
+    template<class T> struct set_value_spec_type<T, typename void_t<typename T::sesman_and_spec_type>::type>
     { using type = typename T::sesman_and_spec_type; };
 
     template<class T, class... Args>

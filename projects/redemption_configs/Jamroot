@@ -288,9 +288,6 @@ actions cp_config {
     mkdir -p $dirinstall && \
     cp -R \
         include/configs/* \
-        src/configs/io.hpp \
-        src/configs/config.hpp \
-        src/configs/config_access.hpp \
         $dirinstall && \
     find $dirinstall -type f -exec \
         sed -i '1,+0i//\n// ATTENTION -- This file is auto-generated\n//\n' \
@@ -323,6 +320,7 @@ constant TEST_DEPENDENCIES :
     <implicit-dependency>generate_cpp_configs
     <implicit-dependency>generate_python_spec
     <implicit-dependency>generate_enum
+    <include>redemption_src
 ;
 
 ## Tests
