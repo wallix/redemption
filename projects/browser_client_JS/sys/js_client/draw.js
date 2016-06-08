@@ -409,6 +409,10 @@ function connecting() {
         document.getElementById("emscripten_canvas").style = "display:block";
 
         _connexion(pip, puser, ppassword, port);
+
+        /* Test */
+        _recv_wrapped();
+        /* Test */
     }
 
     /* Test */

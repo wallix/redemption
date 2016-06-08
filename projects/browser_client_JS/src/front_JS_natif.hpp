@@ -878,10 +878,10 @@ extern "C" void recv_wrapped();
 extern "C" void CtrlAltDelPressed() {
     if (front._mod !=  nullptr) {
         /* Test */
-        recv_wrapped();
+        //recv_wrapped();
         /* Test */
 
-        /*
+
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
@@ -890,7 +890,7 @@ extern "C" void CtrlAltDelPressed() {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         EM_ASM_({ console.log('Ctrl Alt Del'); }, 0);
-        */
+
     }
 }
 
@@ -919,7 +919,7 @@ extern "C" void diconnexion() {
     front.disconnect();
 }
 
-extern "C" void recv_value(int value, int i) {
+extern "C" void recv_value(int value) {
     if (front._trans !=  nullptr) {
         static_cast<TransportWebSocket *>(front._trans)->setBufferValue(value);
     }
