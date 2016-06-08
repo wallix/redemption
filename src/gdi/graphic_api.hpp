@@ -578,17 +578,10 @@ static inline void server_draw_text(
         const int cacheId = 7;
         int distance_from_previous_fragment = 0;
         while (data_begin != data_end) {
-            std::cout << "Offset_first_char = " << offset_first_char << "\n";
-            std::cout << "distance_from_previous_fragment = " << distance_from_previous_fragment << "\n";
-            std::cout << "total_width = " << total_width << "\n";
-
             const uint32_t charnum = *unicode_iter;
             if (!charnum) {
                 break ;
             }
-
-            std::cout << "charnum = " << charnum << "\n";
-
             ++unicode_iter;
 
             int cacheIndex = 0;
@@ -597,14 +590,7 @@ static inline void server_draw_text(
                 LOG(LOG_WARNING, "mod_api::server_draw_text_deprecated()"
                                  " - character not defined >0x%02x<", charnum);
             }
-            else {
-                std::cout << "char = " << static_cast<char>(charnum) << "\n";
-            }
             FontChar const & font_item = font.font_items[exists ? charnum : static_cast<unsigned>('?')];
-
-            std::cout << "char incby = " << font_item.incby << "\n";
-            std::cout << "char offset = " << font_item.offset << "\n";
-           
             if (is_first_char) {
                 is_first_char = false;
                 offset_first_char = font_item.offset;
