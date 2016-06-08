@@ -244,7 +244,7 @@ public:
     */
 
 
-    void connexion(char * ip, char * user, char * password, int port) {
+    void connect(char * ip, char * user, char * password, int port) {
         /*
         EM_ASM_({ console.log('connexion '+HEAPU8.subarray($0, $0+1)+' '
                                           +HEAPU8.subarray($1, $1+1)+' '
@@ -661,7 +661,6 @@ public:
     , _mod(nullptr)
     {
         //this->_to_client_sender._front = this;
-        //this->connexion();
     }
 
     ~Front_JS_Natif() {}
@@ -905,14 +904,15 @@ extern "C" void CtrlAltDelPressed() {
 
 extern "C" void recv_wrapped() {
     if (front._mod !=  nullptr) {
-        front._mod->draw_event(time_t(nullptr));
+        EM_ASM_({ getDataOctet(); }, 0);
+        //front._mod->draw_event(time_t(nullptr));
     } else {
         EM_ASM_({ console.log('incoming_data off '); }, 0);
     }
 }
 
 extern "C" void connexion(char * ip, char * user, char * password, int port) {
-    front.connexion(ip, user, password, port);
+    front.connect(ip, user, password, port);
 }
 
 extern "C" void diconnexion() {

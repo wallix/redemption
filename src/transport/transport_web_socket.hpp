@@ -36,11 +36,12 @@
 
 class TransportWebSocket :  public Transport
 {
-    uint8_t * buffer;
+    char * buffer;
     uint8_t   pduState = 0;
-    size_t    size = 0;
+    size_t    filledSize = 0;
     size_t    pduSize = 0;
 
+    size_t    sentSize = 0;
     mod_rdp * callback;
 
     enum : uint8_t {
@@ -55,11 +56,7 @@ class TransportWebSocket :  public Transport
         PUD_HEADER_OCT_3,
         PUD_HEADER_OCT_4,
     };
-    
 
-    void setMod(mod_rdp * mod) {
-        this->callback = mod;
-    }
 
     void do_send(const char * const buffer, size_t len) override {
         EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1 - 1), $1); }, buffer, len);
@@ -68,23 +65,46 @@ class TransportWebSocket :  public Transport
     void do_recv(char ** pbuffer, size_t len) override {
         //pbuffer[0...len] = read(len)
 
-        this->buffer = *pbuffer;
-        int lenInt(len);
-        if (lenInt > 0) {
+        //this->buffer = *pbuffer;
+        int lenMax(len);
 
-            for (this->index = 0; this->index < lenInt; this->index++) {
-                //EM_ASM_({ var funct = getDataOctet(); funct.next(); }, 0);
-                EM_ASM_({ getDataOctet(); }, 0);
-            }
+        if (lenMax > 0) {
+            //int i(0);
 
-            *pbuffer = this->buffer + index;
+            /*for (i = 0; i < lenMax; i++) {
+                //EM_ASM_({ var funct = getDataOctet(); funct.next(); }, 0);l
+                //EM_ASM_({ getDataOctet(); }, 0);
+                (*pbuffer)[i] = this->buffer[i + this->sentSize];
+            }*/
+            this->sentSize += len;
+            *pbuffer = this->buffer + this->sentSize;
         } else {
             EM_ASM_({ console.log('No input data from WebSocket'); }, 0);
         }
     }
 
 public:
+    void setMod(mod_rdp * mod) {
+        this->callback = mod;
+    }
+
     void setBufferValue(uint8_t octet) {
+
+    //      Format of the TPKT packet header
+    //
+    //           -----------------------------
+    //           |         0000 0011         | 1
+    //           -----------------------------
+    //           |         Reserved 2        | 2
+    //           -----------------------------
+    //           | Most significant octet    | 3
+    //           |    of TPKT length         |
+    //           -----------------------------
+    //           | least significant octet   | 4
+    //           |       of TPKT length      |
+    //           -----------------------------
+    //           :         TPDU              : 5-?
+    //           - - - - - - - - - - - - - - -
 
         switch (this->pduState) {
             case PUD_HEADER_EMPTY: if (octet == PDU_HEADER_FLAG) {
@@ -101,23 +121,25 @@ public:
 
             case PUD_HEADER_OCT_3: this->pduSize += octet;
 
-                                   this->buffer = new uint8_t[this->pduSize + PDU_HEADER_SIZE];
+                                   this->buffer = new char[this->pduSize];
                                    this->buffer[0] = PDU_HEADER_FLAG;
                                    this->buffer[1] = 0x00;  // reserved for further study
                                    this->buffer[2] = this->pduSize >> 8;
                                    this->buffer[3] = this->pduSize;
 
-                                   this->pduSize += PDU_HEADER_SIZE;
-                                   this->size = PDU_HEADER_SIZE;
+                                   this->filledSize = PDU_HEADER_SIZE;
                                    this->pduState += PUD_HEADER_OCT_4;
                 break;
 
-            case PUD_HEADER_OCT_4: buffer[size] = octet;
-                                   size++;
-                                   if (this->size == this->pduSize) {
-                                       this->pduState += PUD_HEADER_EMPTY;
-                                       pduSize = 0;
+            case PUD_HEADER_OCT_4: this->buffer[filledSize] = octet;
+                                   this->filledSize++;
+                                   if (this->filledSize == this->pduSize) {
+
                                        this->callback->draw_event(time_t(nullptr));
+                                       
+                                       this->sentSize = 0;
+                                       delete (this->buffer);
+                                       this->pduState += PUD_HEADER_EMPTY;
                                    }
                 break;
 

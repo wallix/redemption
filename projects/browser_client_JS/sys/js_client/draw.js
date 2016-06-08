@@ -452,11 +452,15 @@ var len = 250568;
 
 
 function getDataOctet() {
+    for (var i = 0; i < len; i++) {
+        _recv_value(inData[i]);
+    }
+    /*
     if (current < len) {
         _recv_value(inData[current]);
         current++;
     } else {
         _recv_value(0);
-    }
+    }*/
 }
 
