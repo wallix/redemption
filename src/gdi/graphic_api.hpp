@@ -566,8 +566,7 @@ static inline void server_draw_text(
     static GlyphCache mod_glyph_cache;
 
     UTF8toUnicodeIterator unicode_iter(text);
-    bool is_first_char = true;
-    int offset_first_char = 0;
+
     while (*unicode_iter) {
         int total_width = 0;
         int total_height = 0;
@@ -591,10 +590,6 @@ static inline void server_draw_text(
                                  " - character not defined >0x%02x<", charnum);
             }
             FontChar const & font_item = font.font_items[exists ? charnum : static_cast<unsigned>('?')];
-            if (is_first_char) {
-                is_first_char = false;
-                offset_first_char = font_item.offset;
-            }
 
             TODO(" avoid passing parameters by reference to get results")
             const GlyphCache::t_glyph_cache_result cache_result =
@@ -624,7 +619,7 @@ static inline void server_draw_text(
             // brush
             RDPBrush(0, 0, 3, 0xaa,
                 reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55")),
-            x - offset_first_char, // glyph_x
+            x,                  // glyph_x
             y + total_height,   // glyph_y
             data_begin - data,  // data_len in bytes
             data                // data
