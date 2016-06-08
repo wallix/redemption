@@ -1,3 +1,7 @@
+//
+// ATTENTION -- This file is auto-generated
+//
+
 inline void Inifile::ConfigurationHolder::set_value(const char * context, const char * key, const char * value) {
     array_view_const_char av {value, strlen(value)};
     if (0) {}

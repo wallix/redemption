@@ -110,6 +110,9 @@ namespace cpp_enumeration_writer
         };
 
         out <<
+            "//\n"
+            "// ATTENTION -- This file is auto-generated\n"
+            "//\n\n"
             "#pragma once\n"
             "\n"
             "#include \"configs/io.hpp\"\n"
@@ -186,6 +189,9 @@ namespace cpp_enumeration_writer
 #endif
 
         out <<
+            "//\n"
+            "// ATTENTION -- This file is auto-generated\n"
+            "//\n\n"
             "#pragma once\n"
             "\n"
             "#include <iosfwd>\n"

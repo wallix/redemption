@@ -285,6 +285,9 @@ template<class ConfigCppWriter>
 void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer)
 {
     out_authid <<
+      "//\n"
+      "// ATTENTION -- This file is auto-generated\n"
+      "//\n\n"
       "#pragma once\n"
       "\n"
       "enum authid_t {\n"
@@ -308,6 +311,9 @@ template<class ConfigCppWriter>
 void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter & writer)
 {
     out_varconf <<
+        "//\n"
+        "// ATTENTION -- This file is auto-generated\n"
+        "//\n\n"
         "namespace cfg {\n"
     ;
     for (auto & section : writer.sections) {
@@ -384,6 +390,9 @@ template<class ConfigCppWriter>
 void write_config_set_value(std::ostream & out_set_value, ConfigCppWriter & writer)
 {
     out_set_value <<
+        "//\n"
+        "// ATTENTION -- This file is auto-generated\n"
+        "//\n\n"
         "inline void Inifile::ConfigurationHolder::set_value(const char * context, const char * key, const char * value) {\n"
         "    array_view_const_char av {value, strlen(value)};\n"
         "    if (0) {}\n"

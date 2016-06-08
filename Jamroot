@@ -311,7 +311,12 @@ project redemption
     <include>include
     <include>modules/includes
     <include>src/system/linux/system
+
+    ## configs @{
     <include>projects/redemption_configs/redemption_src
+    <include>projects/redemption_configs/include/autogen
+    <include>projects/redemption_configs/include/variant
+    ## @}
 
     <include>tests
 
