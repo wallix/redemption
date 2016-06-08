@@ -274,7 +274,8 @@ public:
 
         LCGRandom gen(0);
         if (this->_trans != nullptr) {
-            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);;
+            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+            reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
         }
     }
 
@@ -840,6 +841,7 @@ Front_JS_Natif front(0);
 
 extern "C" void mousePressEvent(int x, int y, int button) {
     front.mousePressEvent(x, y, button);
+    EM_ASM_({ console.log('click'); }, 0);
 }
 
 extern "C" void mouseReleaseEvent(int x, int y, int button) {
@@ -870,15 +872,15 @@ extern "C" void backspacePressed() {
 
 
 /* Test */
-extern "C" void recv_wraped();
+extern "C" void recv_wrapped();
 /* Test */
 
 
 extern "C" void CtrlAltDelPressed() {
     if (front._mod !=  nullptr) {
         /* Test */
-         recv_wraped();
-         /* Test */
+        recv_wrapped();
+        /* Test */
 
         /*
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
@@ -901,7 +903,7 @@ extern "C" void CtrlAltDelPressed() {
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
 
-extern "C" void recv_wraped() {
+extern "C" void recv_wrapped() {
     if (front._mod !=  nullptr) {
         front._mod->draw_event(time_t(nullptr));
     } else {
@@ -919,7 +921,7 @@ extern "C" void diconnexion() {
 
 extern "C" void recv_value(int value, int i) {
     if (front._trans !=  nullptr) {
-        static_cast<TransportWebSocket *>(front._trans)->setBufferValue(value, i);
+        static_cast<TransportWebSocket *>(front._trans)->setBufferValue(value);
     }
 }
 

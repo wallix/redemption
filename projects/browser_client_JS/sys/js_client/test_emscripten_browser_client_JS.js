@@ -25063,17 +25063,8 @@ var outData = [
 0x98, 0xcd, 0xa0, 0x7c, 0x00, 0xb4, 0xe4, 0x6a,
 ];
 
-var current = 0;
 
-var len = 250568;
 
-function getDataOctet(i) {
-    if (current < len) {
-        current++;
-        _recv_value(inData[current-1], i);
-    } else {
-        _recv_value(0, i);
-    }
-}
+
 
 

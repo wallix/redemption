@@ -13,7 +13,6 @@ var textField_ = document.getElementById("hidden_input_text");
 
 function setFocuxOnText() {
     textField_.focus();
-    console.log('focusOn');
 }
 
 var textLength = 0;
@@ -385,6 +384,13 @@ var drawable = new Drawable();
 
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//--------------------------------
+//    SOCKET EVENTS FUNCTIONS
+//--------------------------------
+
 function connecting() {
     var ip = document.getElementById("ip").value;
     var user = document.getElementById("user").value;
@@ -392,6 +398,8 @@ function connecting() {
     var port = document.getElementById("port").value;
 
     if (init_socket(ip, user, password, port)) {
+
+        drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);
 
         var pip = allocate(intArrayFromString(ip), 'i8', ALLOC_NORMAL);
         var puser = allocate(intArrayFromString(user), 'i8', ALLOC_NORMAL);
@@ -401,19 +409,20 @@ function connecting() {
         document.getElementById("emscripten_canvas").style = "display:block";
 
         _connexion(pip, puser, ppassword, port);
-
     }
 
     /* Test */
-    /*startTimer();
+    /*
+     * startTimer();
 
     for (var i = 0; i < 80; i++) { //  70 PDU + 10 call when WebSocket is empty
 
-        _recv_wraped(); // call when socket hear something
+        _recv_wrapped(); // call when socket hear something
 
     }
 
-    endTimer();*/
+    endTimer();
+    */
     /* Test */
 }
 
@@ -436,9 +445,18 @@ function send_to_serveur(data, size) {
     console.log('data_sent_to_serveur');
 }
 
-/*
-function getDataOctet(i) {
-    // _recv_value(data[i], i);
+
+var current = 0;
+
+var len = 250568;
+
+
+function getDataOctet() {
+    if (current < len) {
+        _recv_value(inData[current]);
+        current++;
+    } else {
+        _recv_value(0);
+    }
 }
-*/
 
