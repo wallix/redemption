@@ -410,10 +410,18 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-class GraphicsUpdatePDU : public RDPSerializer, public gdi::MouseInputApi {
-    StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
-    StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
+namespace detail
+{
+    // fix: field 'buffer_stream_orders' is uninitialized
+    struct GraphicsUpdatePDUBuffer
+    {
+        StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
+        StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
+    };
+}
 
+class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer, public gdi::MouseInputApi
+{
     uint16_t     & userid;
     int          & shareid;
     int          & encryptionLevel;

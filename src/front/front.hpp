@@ -117,6 +117,9 @@ class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
 
     bool has_activity = true;
 
+    // for printf with %p
+    using voidp = void const *;
+
 public:
     enum CaptureState {
           CAPTURE_STATE_UNKNOWN
@@ -1171,7 +1174,7 @@ public:
         if (this->verbose & 16) {
             LOG( LOG_INFO
                , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)"
-               , channel.name, channel.chanid, chunk, length, chunk_size, flags);
+               , channel.name, channel.chanid, voidp(chunk), length, chunk_size, flags);
         }
 
         if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
@@ -3290,7 +3293,8 @@ private:
             stream.in_skip_bytes(4); /* Session Id */
         }
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.get_current(), stream.get_data_end());
+            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p",
+                voidp(stream.get_current()), voidp(stream.get_data_end()));
         }
     }
 
