@@ -98,7 +98,7 @@ public:
         this->drawable.draw(RDPOpaqueRect(rect4, this->fg_color), clip);
 
         // Right Border
-        auto rect5 = Rect(px + gcx, y + 1, 1, gcy - 1);
+        auto rect5 = Rect(px + gcx, y, 1, gcy);
         this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), clip);
 
 
