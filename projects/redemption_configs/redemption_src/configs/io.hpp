@@ -427,14 +427,14 @@ parse_error parse(
 
 namespace detail
 {
-    template<class IntOrigni>
+    template<class IntOrigin>
     parse_error parse_integral_list(std::string & x, array_view_const_char value) {
         for (auto r : get_split(value, ',')) {
-            IntOrigni i;
-            using limits = std::numeric_limits<IntOrigni>;
+            IntOrigin i;
+            using limits = std::numeric_limits<IntOrigin>;
             if (auto err = parse_integral(i, {r.begin(), r.size()}, limits::min(), limits::max())) {
                 if (strcmp(err.c_str(), "bad format")) {
-                    return parse_error{"bad format, expected \"integral(, integral)*\""};
+                    return parse_error{"bad format, expected \"integral[, integral ...]*\""};
                 }
             }
         }
