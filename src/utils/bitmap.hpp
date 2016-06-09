@@ -1031,6 +1031,7 @@ protected:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
+        // TODO not used alloca !!!
         uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
         uint8_t * green_plane = mem_color + color_plane_size * 1;
@@ -1630,7 +1631,7 @@ public:
         const uint8_t * p = pmin;
 
         // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
-        unsigned foreground = ~(-1 << (Bpp*8));
+        unsigned foreground = ~(-1u << (Bpp*8));
         unsigned new_foreground = foreground;
         unsigned flags = 0;
         uint8_t masks[512];
@@ -1967,6 +1968,7 @@ protected:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
+        // TODO not used alloca !!!
         uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
         uint8_t * green_plane = mem_color + color_plane_size * 1;

@@ -165,8 +165,8 @@ inline static bool ends_case_with(const char * str, size_t str_len, const char *
 inline static void SOHSeparatedStringsToMultiSZ(char * dest, size_t dest_size, const char * src) {
     REDASSERT(dest_size > 1);
 
-    memset(dest, 0, dest_size);
-    snprintf(dest, dest_size - 1, "%s", src);
+    int const len = snprintf(dest, dest_size - 1, "%s", src);
+    memset(dest + len, 0, dest_size - len);
     for (char * p = dest; *p; p++) {
         if ('\x01' == *p) {
             *p = '\0';

@@ -995,40 +995,40 @@ public:
 // Padding (32 bytes): An array of 32 bytes. Reserved. This field can be set
 //  to any value, and MUST be ignored on receipt.
 
-class DeviceCloseRequest {
-    void emit(OutStream & stream) const {
-        stream.out_clear_bytes(32); // Padding(32)
-    }
-
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // Padding(32)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCloseRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-
-        stream.in_skip_bytes(32);   // Padding(32)
-    }
-
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-};
+// class DeviceCloseRequest {
+//     void emit(OutStream & stream) const {
+//         stream.out_clear_bytes(32); // Padding(32)
+//     }
+// 
+//     void receive(InStream & stream) {
+//         {
+//             const unsigned expected = 32;  // Padding(32)
+//
+//             if (!stream.in_check_rem(expected)) {
+//                 LOG(LOG_ERR,
+//                     "Truncated DeviceCloseRequest: expected=%u remains=%zu",
+//                     expected, stream.in_remain());
+//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
+//             }
+//         }
+//
+//         stream.in_skip_bytes(32);   // Padding(32)
+//     }
+//
+// private:
+//     size_t str(char * buffer, size_t size) const {
+//         size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
+//         return ((length < size) ? length : size - 1);
+//     }
+//
+// public:
+//     void log(int level) const {
+//         char buffer[2048];
+//         this->str(buffer, sizeof(buffer));
+//         buffer[sizeof(buffer) - 1] = 0;
+//         LOG(level, "%s", buffer);
+//     }
+// };
 
 // [MS-RDPEFS] - 2.2.1.4.3 Device Read Request (DR_READ_REQ)
 // =========================================================

@@ -127,7 +127,7 @@ struct NTLMContext {
 
     uint32_t verbose;
 
-    NTLMContext(Random & rand)
+    explicit NTLMContext(Random & rand)
         : randgen()
         , lcgrand(0)
         , timesys()

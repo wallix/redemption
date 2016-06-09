@@ -218,8 +218,8 @@ namespace transfil {
             // Encrypt
             unsigned char ciphered_buf[4 + 65536];
             uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
-            
-            /* Encrypt src_buf into dst_buf. 
+
+            /* Encrypt src_buf into dst_buf.
                Update dst_sz with encrypted output size
              */
             {
@@ -486,7 +486,7 @@ namespace transbuf {
 struct OutFilenameTransport
 : OutputTransport<transbuf::ofile_buf>
 {
-    OutFilenameTransport(const char * filename)
+    explicit OutFilenameTransport(const char * filename)
     {
         if (this->buffer().open(filename, 0600) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);

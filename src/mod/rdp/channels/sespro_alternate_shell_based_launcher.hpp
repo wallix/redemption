@@ -37,7 +37,7 @@ private:
     uint32_t verbose;
 
 public:
-    SessionProbeAlternateShellBasedLauncher(uint32_t verbose)
+    explicit SessionProbeAlternateShellBasedLauncher(uint32_t verbose)
     : verbose(verbose) {}
 
     wait_obj* get_event() override { return nullptr; }

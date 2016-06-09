@@ -429,11 +429,11 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
 //    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
 //        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
 //    }
-    ini.set<cfg::video::wrm_compression_algorithm>(static_cast<WrmCompressionAlgorithm>(
+    ini.set<cfg::video::wrm_compression_algorithm>(
         (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
         ? player.info_compression_algorithm
         : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
-    ));
+    );
 
     int return_code = 0;
     try {
@@ -558,7 +558,6 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
 
     bool const enable_rt = false;
     bool const no_timestamp = false;
-    auth_api * authentifier = nullptr;
 
     uint32_t    verbose            = 0;
     uint32_t    clear              = 1; // default on
@@ -926,7 +925,7 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
                             , wrm_compression_algorithm_
                             , enable_rt
                             , no_timestamp
-                            , authentifier
+                            , nullptr
                             , ini, rnd, cctx
                             , file_count, order_count, clear, zoom
                             , png_width, png_height

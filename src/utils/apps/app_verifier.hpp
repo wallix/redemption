@@ -1075,7 +1075,7 @@ static inline int check_encrypted_or_checksumed(
 
             public:
 
-            ReaderBuf3(transbuf::ifile_buf & buf) : buf(buf) {}
+            explicit ReaderBuf3(transbuf::ifile_buf & buf) : buf(buf) {}
 
             ssize_t reader_read(char * buf, size_t len) const {
                 return this->buf.read(buf, len);

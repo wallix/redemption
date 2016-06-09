@@ -30,13 +30,11 @@ static const size_t LAYOUT_SIZE_MAX = 50;
 struct WidgetLayout : public Widget2 {
     Widget2 * items[LAYOUT_SIZE_MAX];
     size_t    nb_items;
-    int bgcolor;
 
     WidgetLayout(mod_api & drawable, const Rect & rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , nb_items(0)
-        , bgcolor(BLACK)
     {
     }
 

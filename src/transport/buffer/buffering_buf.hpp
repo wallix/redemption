@@ -43,7 +43,7 @@ namespace transbuf {
         {}
 
         template<class T>
-        obuffering_buf(const T & params)
+        explicit obuffering_buf(const T & params)
         : Buf(params)
         , p(this->buffer)
         {}

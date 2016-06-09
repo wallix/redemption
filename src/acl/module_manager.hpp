@@ -333,7 +333,7 @@ class ModuleManager : public MMIni
         mod_api * (& mod_api_ptr);
 
     public:
-        CurrentCallback(mod_api * (& mod_api_ptr)) : mod_api_ptr(mod_api_ptr) {
+        explicit CurrentCallback(mod_api * (& mod_api_ptr)) : mod_api_ptr(mod_api_ptr) {
         }
 
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {

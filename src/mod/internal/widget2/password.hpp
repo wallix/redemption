@@ -34,8 +34,6 @@ public:
     int w_char;
     int h_char;
 
-    Font const & font;
-
     WidgetPassword(mod_api& drawable, int16_t x, int16_t y, uint16_t cx,
                    Widget2& parent, NotifyApi* notifier, const char * text,
                    int group_id, int fgcolor, int bgcolor, int focus_color, Font const & font,
@@ -44,7 +42,6 @@ public:
                      group_id, fgcolor, bgcolor, focus_color, font, edit_position, xtext, ytext)
         , masked_text(drawable, 0, 0, *this, nullptr, text, false, 0 , fgcolor, bgcolor, font,
                       xtext, ytext)
-        , font(font)
     {
         this->set_masked_text();
 

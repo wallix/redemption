@@ -46,11 +46,11 @@ class TransportWebSocket :  public Transport
         //pbuffer[0...len] = read(len)
 
         this->buffer = *pbuffer;
-        int i(0);
         int lenInt(len);
         if (lenInt > 0) {
+            int i(0);
 
-            for (i = 0; i < lenInt; i++) {
+            for (; i < lenInt; i++) {
                 EM_ASM_({ getDataOctet($0); }, i);
             }
 

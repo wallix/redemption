@@ -406,6 +406,7 @@ static inline int recursive_delete_directory(const char * directory_path) {
             }
 
             size_t entry_path_length = directory_path_len + strlen(ent->d_name) + 2;
+            // TODO not used alloca !!!
             char * entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
 
             if (entry_path) {

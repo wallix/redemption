@@ -335,7 +335,7 @@ protected:
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
 
-    TextKbd(array_view_u8 buffer)
+    explicit TextKbd(array_view_u8 buffer)
     : kbd_stream(buffer)
     {}
 
@@ -393,7 +393,7 @@ class SyslogKbd : public TextKbd<SyslogKbd>, public gdi::CaptureApi
     timeval last_snapshot;
 
 public:
-    SyslogKbd(timeval const & now)
+    explicit SyslogKbd(timeval const & now)
     : TextKbd<SyslogKbd>(this->kbd_buffer)
     , last_snapshot(now)
     {}
@@ -454,7 +454,7 @@ class SessionLogKbd : public TextKbd<SessionLogKbd>, public gdi::CaptureProbeApi
     auth_api & authentifier;
 
 public:
-    SessionLogKbd(auth_api & authentifier)
+    explicit SessionLogKbd(auth_api & authentifier)
     : TextKbd<SessionLogKbd>({this->buffer + session_log_prefix().size(), buffer_size})
     , authentifier(authentifier)
     {

@@ -430,7 +430,7 @@ namespace detail
     struct ocrypto_filter
     : transfil::encrypt_filter
     {
-        ocrypto_filter(CryptoContext &)
+        explicit ocrypto_filter(CryptoContext &)
         {}
 
         template<class Buf>
@@ -439,7 +439,7 @@ namespace detail
 
             size_t base_len = 0;
             const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-            
+
             cctx.get_derived_key(trace_key, base, base_len);
             unsigned char iv[32];
             cctx.random(iv, 32);
@@ -603,7 +603,7 @@ namespace detail
         transbuf::ochecksum_buf<transbuf::null_buf> sum_buf;
 
     public:
-        ochecksum_filter(CryptoContext & cctx)
+        explicit ochecksum_filter(CryptoContext & cctx)
         : sum_buf(cctx.get_hmac_key())
         {}
 
@@ -627,14 +627,14 @@ namespace detail
     struct cctx_ofile_buf
     : transbuf::ofile_buf
     {
-        cctx_ofile_buf(CryptoContext &)
+        explicit cctx_ofile_buf(CryptoContext &)
         {}
     };
 
     struct cctx_ochecksum_file
     : transbuf::ochecksum_buf<transbuf::ofile_buf>
     {
-        cctx_ochecksum_file(CryptoContext & cctx)
+        explicit cctx_ochecksum_file(CryptoContext & cctx)
         : transbuf::ochecksum_buf<transbuf::ofile_buf>(cctx.get_hmac_key())
         {}
     };
@@ -714,7 +714,7 @@ namespace transbuf {
 
 
 struct OutMetaSequenceTransport
-: 
+:
 RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf<
         detail::empty_ctor<io::posix::fdbuf>,

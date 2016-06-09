@@ -82,7 +82,7 @@ class ochecksum_buf
     size_t file_size = nosize;
 
 public:
-    ochecksum_buf(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    explicit ochecksum_buf(unsigned char (&hmac_key)[MD_HASH_LENGTH])
     : hmac_key(hmac_key)
     {}
 

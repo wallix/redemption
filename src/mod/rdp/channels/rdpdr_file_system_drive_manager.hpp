@@ -357,7 +357,7 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // LastWriteTime(8)
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                           // ChangeTime(8)
                         (this->IsDirectory() ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |    // FileAttributes(4)
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY)
+                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY)
                     );
 
                 if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
@@ -412,7 +412,7 @@ public:
 
                 fscc::FileAttributeTagInformation file_attribute_tag_information(
                         fscc::FILE_ATTRIBUTE_DIRECTORY |                                    // FileAttributes
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
+                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
                         0                                                                   // ReparseTag
                     );
 

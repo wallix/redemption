@@ -24,7 +24,7 @@
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
 
-// TODO: constants below are still globals, 
+// TODO: constants below are still globals,
 // better to move them in the scope of functions/objects using them
 namespace {
     const char* NTLM_PACKAGE_NAME = "NTLM";
@@ -44,7 +44,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     Random & rand;
 
-    Ntlm_SecurityFunctionTable(Random & rand) : rand(rand) {}
+    explicit Ntlm_SecurityFunctionTable(Random & rand) : rand(rand) {}
 
     ~Ntlm_SecurityFunctionTable() override {}
 

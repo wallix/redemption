@@ -127,7 +127,7 @@ public:
         }
     };
 
-    RDPChannelManagerMod(FrontAPI& front)
+    explicit RDPChannelManagerMod(FrontAPI& front)
     : front(front) {}
 
 };  // RDPChannelManagerMod
