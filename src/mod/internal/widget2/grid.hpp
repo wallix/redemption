@@ -25,6 +25,7 @@
 #include "keyboard/keymap2.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
+#include "utils/difftimeval.hpp"
 
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
 static const uint16_t GRID_NB_ROWS_MAX    = 50;
@@ -62,6 +63,7 @@ public:
 protected:
     uint16_t selection_y;   // Index of seleted row.
 
+    // TODO: see why grid object need a difftimer ?
     struct difftimer {
         uint64_t t;
 
