@@ -126,15 +126,17 @@ public:
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
-            gdi::server_draw_text(this->drawable, this->font, this->x_text + this->dx(),
-                                             dy,
-                                             line->str,
-                                             this->fg_color,
-                                             this->bg_color,
-                                             clip.intersect(Rect(this->dx(),
-                                                                 dy,
-                                                                 this->cx(),
-                                                                 this->cy_text))
+            gdi::server_draw_text(this->drawable
+                                 , this->font
+                                 , this->x_text + this->dx()
+                                 , dy
+                                 , line->str
+                                 , this->fg_color
+                                 , this->bg_color
+                                 , clip.intersect(Rect(this->dx()
+                                 , dy
+                                 , this->cx()
+                                 , this->cy_text))
             );
             dy += this->y_text + this->cy_text;
         }

@@ -71,20 +71,14 @@ public:
         auto gcy = this->rect.cy - tm1.height / 2 - border;
         auto gcx = this->rect.cx - border * 2 + 1;
         auto px = this->rect.x + border - 1;
+
         auto wlabel = text_margin * 2 + tm2.width;
         auto y = this->rect.y + tm1.height / 2;
+        
+
+        // Top Line and Label
         auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
         this->drawable.draw(RDPOpaqueRect(rect1, this->fg_color), clip);
-        auto rect2 = Rect(px, y+gcy, gcx+1, 1);        
-        this->drawable.draw(RDPOpaqueRect(rect2, this->fg_color), clip);
-        auto rect3 = Rect(px + wlabel + 4, y, gcx - wlabel + 4, 1);
-        this->drawable.draw(RDPOpaqueRect(rect3, this->fg_color), clip);
-        auto rect4 = Rect(px, gcy, 1, 1);
-        this->drawable.draw(RDPOpaqueRect(rect4, this->fg_color), clip);
-        auto rect5 = Rect(px + gcx, y, 1, gcy);
-        this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), clip);
-
-        // Label.
         gdi::server_draw_text(this->drawable, this->font
                            , this->rect.x + text_indentation
                            , this->rect.y
@@ -93,6 +87,20 @@ public:
                            , this->bg_color
                            , rect_intersect
                            );
+        auto rect2 = Rect(px + wlabel + 4, y, gcx + 1 - wlabel - 4, 1);
+        this->drawable.draw(RDPOpaqueRect(rect2, this->fg_color), clip);
+        // Bottom line
+        auto rect3 = Rect(px, y + gcy, gcx + 1, 1);        
+        this->drawable.draw(RDPOpaqueRect(rect3, this->fg_color), clip);
+
+        // Left border
+        auto rect4 = Rect(px, y + 1, 1, gcy - 1);
+        this->drawable.draw(RDPOpaqueRect(rect4, this->fg_color), clip);
+
+        // Right Border
+        auto rect5 = Rect(px + gcx, y + 1, 1, gcy - 1);
+        this->drawable.draw(RDPOpaqueRect(rect5, this->fg_color), clip);
+
 
         WidgetParent::draw_children(rect_intersect);
     }
