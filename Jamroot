@@ -301,14 +301,13 @@ project redemption
     : requirements
 
     <include>src
+    # TODO move to system
     <include>src/system/linux
     <include>src/capture
-    <include>src/keyboard
-    <include>src/keyboard/reversed_keymaps
-    # TODO move to include
+    # TODO move to system
     <include>src/headers
-
     <include>include
+
     <include>modules/includes
     <include>src/system/linux/system
 

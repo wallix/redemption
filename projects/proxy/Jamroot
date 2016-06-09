@@ -14,6 +14,7 @@ import modules : poke ;
 #variant lenny : release ;
 
 path-constant TOP : . ;
+constant CONFIG_DIR : ../../projects/redemption_configs ;
 constant SRCDIR : ../../src ;
 constant INCLUDEDIR : ../../include ;
 constant TESTDIR : ../../tests ;
@@ -259,7 +260,11 @@ project redemption
     <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/headers
     <include>$(MODULEDIR)/includes
-    <include>/usr/include
+
+    <include>$(CONFIG_DIR)/redemption_src
+    <include>$(CONFIG_DIR)/include/autogen
+    <include>$(CONFIG_DIR)/include/variant
+
 
     <conditional>@defines
 
