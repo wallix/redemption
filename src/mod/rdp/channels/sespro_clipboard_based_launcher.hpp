@@ -699,16 +699,6 @@ public:
         if (this->clipboard_initialized) {
             this->cliprdr_channel->empty_client_clipboard();
         }
-
-        const long     param2 = 0;
-              Keymap2* keymap = nullptr;
-
-        this->mod.rdp_input_scancode(29,
-                                     param2,
-                                     0,
-                                     SlowPath::KBDFLAGS_DOWN |
-                                         SlowPath::KBDFLAGS_RELEASE,
-                                     keymap);
     }
 
 private:
