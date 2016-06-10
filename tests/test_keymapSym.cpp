@@ -33,7 +33,7 @@
 
 #include "utils/log.hpp"
 
-#include "keymapSym.hpp"
+#include "keyboard/keymapSym.hpp"
 
 BOOST_AUTO_TEST_CASE(TestKeymapSym)
 {
