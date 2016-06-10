@@ -105,9 +105,10 @@ public:
         this->screen.set_widget_focus(&this->selector, Widget2::focus_reason_tabkey);
 
         uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
-        int w, h = 0;
-        this->text_metrics(this->vars.get<cfg::font>(), "Édp", w, h);
-        uint16_t line_height = h + 2 * (this->selector.selector_lines.border + this->selector.selector_lines.y_padding_label);
+        gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
+        uint16_t line_height = tm.height + 2 * (
+                                this->selector.selector_lines.border 
+                             +  this->selector.selector_lines.y_padding_label);
 
         this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
         this->ask_page();

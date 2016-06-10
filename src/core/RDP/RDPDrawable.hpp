@@ -55,7 +55,6 @@
 
 #include "utils/drawable.hpp"
 #include "utils/png.hpp"
-#include "utils/text_metrics.hpp"
 
 #include "gdi/graphic_api.hpp"
 
@@ -833,12 +832,6 @@ public:
             return font.font_items[unsigned('?')];
         }
         return font.font_items[c];
-    }
-
-    // for testing purposes
-    void text_metrics(Font const & font, const char * text, int & width, int & height)
-    {
-        ::text_metrics(font, text, width, height);
     }
 
     // for testing purposes

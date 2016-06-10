@@ -1354,7 +1354,6 @@ test-canonical utils/movable_noncopyable.hpp ;
 test-canonical utils/outbound_connection_monitor_rules.hpp ;
 test-canonical utils/range.hpp ;
 #test-canonical utils/server_certificate.hpp ;
-test-canonical utils/text_metrics.hpp ;
 test-canonical utils/timeout.hpp ;
 test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/underlying_cast.hpp ;
