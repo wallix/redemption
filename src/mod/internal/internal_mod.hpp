@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP
+#pragma once
 
 #include "../mod/mod_api.hpp"
 #include "widget2/screen.hpp"
@@ -273,4 +272,3 @@ public:
                                int16_t param1, int16_t param2) override {}
 };
 
-#endif

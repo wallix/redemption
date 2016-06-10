@@ -19,12 +19,12 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_FLAT_BUTTON_HPP)
-#define REDEMPTION_MOD_WIDGET2_FLAT_BUTTON_HPP
+#pragma once
 
 #include "widget.hpp"
 #include "label.hpp"
 #include "keyboard/keymap2.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetFlatButton : public Widget2
 {
@@ -39,7 +39,7 @@ public:
 
     Font const & font;
 
-    WidgetFlatButton(mod_api & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetFlatButton(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
                      NotifyApi* notifier, const char * text, bool auto_resize,
                      int group_id, int fgcolor, int bgcolor,
                      int focuscolor, Font const & font, int xtext = 0, int ytext = 0,
@@ -195,10 +195,8 @@ public:
     }
 
     Dimension get_optimal_dim() override {
-        int w, h;
-        this->drawable.text_metrics(this->font, this->label.buffer, w, h);
-        return Dimension(w + 2*this->label.x_text + 4, h + 2*this->label.y_text + 4);
+        gdi::TextMetrics tm(this->font, this->label.buffer);
+        return Dimension(tm.width + 2*this->label.x_text + 4, tm.height + 2*this->label.y_text + 4);
     }
 };
 
-#endif

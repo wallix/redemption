@@ -18,17 +18,15 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
  *              Meng Tan
  */
-
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_
+#pragma once
 
 #include <vector>
 
 #include "notify_api.hpp"
-#include "mod/mod_api.hpp"
 #include "utils/rect.hpp"
 #include "core/callback.hpp"
 #include "core/RDP/pointer.hpp"
+#include "gdi/graphic_api.hpp"
 
 struct Keymap2;
 
@@ -61,7 +59,7 @@ public:
 
 public:
     Widget2 & parent;
-    mod_api & drawable;
+    gdi::GraphicApi & drawable;
     NotifyApi * notifier;
     Rect rect;
     int group_id;
@@ -72,7 +70,8 @@ public:
     int notify_value;
 
 public:
-    Widget2(mod_api & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
+    Widget2(gdi::GraphicApi & drawable,
+            const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
@@ -281,4 +280,3 @@ public:
     }
 };
 
-#endif

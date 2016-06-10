@@ -241,7 +241,7 @@ int app_proxy(
         desc.add({extra.option_long, extra.description});
     }
 
-    auto options = program_options::parse_command_line(argc, argv, desc);
+    auto options = program_options::parse_command_line(argc, const_cast<char**>(argv), desc);
 
     if (options.count("kill")) {
         int status = shutdown(PID_PATH "/redemption/" LOCKFILE);

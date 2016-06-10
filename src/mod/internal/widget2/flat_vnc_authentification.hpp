@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_VNC_AUTHENTIFICATION_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_VNC_AUTHENTIFICATION_HPP
+#pragma once
 
 #include "edit.hpp"
 #include "edit_valid.hpp"
@@ -32,6 +31,7 @@
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 #include "core/defines.hpp"
+#include "gdi/graphic_api.hpp"
 
 class FlatVNCAuthentification : public WidgetParent
 {
@@ -46,7 +46,7 @@ public:
 
     CompositeArray composite_array;
 
-    FlatVNCAuthentification(mod_api& drawable, uint16_t width, uint16_t height,
+    FlatVNCAuthentification(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
                             Widget2 & parent, NotifyApi* notifier, const char* caption,
                             int group_id, const char * password,
                             Theme const & theme, const char * label_text_message,
@@ -129,4 +129,4 @@ public:
     }
 };
 
-#endif
+

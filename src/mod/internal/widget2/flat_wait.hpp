@@ -19,8 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAIT_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAIT_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "flat_button.hpp"
@@ -32,6 +31,7 @@
 #include "flat_form.hpp"
 #include "utils/translation.hpp"
 #include "flat_button.hpp"
+#include "gdi/graphic_api.hpp"
 
 class FlatWait : public WidgetParent
 {
@@ -47,7 +47,7 @@ public:
     bool hasform;
     CompositeArray composite_array;
 
-    FlatWait(mod_api& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
@@ -155,4 +155,4 @@ public:
     }
 };
 
-#endif
+

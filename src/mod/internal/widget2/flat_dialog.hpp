@@ -19,8 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_DIALOG_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_DIALOG_HPP
+#pragma once 
 
 #include "core/defines.hpp"
 #include "composite.hpp"
@@ -32,6 +31,8 @@
 #include "password.hpp"
 #include "utils/theme.hpp"
 #include "flat_button.hpp"
+#include "gdi/graphic_api.hpp"
+
 
 enum ChallengeOpt {
     NO_CHALLENGE = 0x00,
@@ -56,7 +57,7 @@ public:
 
     Font const & font;
 
-    FlatDialog(mod_api& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    FlatDialog(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
                WidgetFlatButton * extra_button,
@@ -201,4 +202,3 @@ public:
     }
 };
 
-#endif

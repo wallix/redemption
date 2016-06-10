@@ -36,6 +36,7 @@
 #include "transport/buffer/file_buf.hpp"
 #include "transport/cryptofile.hpp"
 #include "utils/urandom_read.hpp"
+#include "utils/fileutils.hpp"
 
 namespace transfil {
 

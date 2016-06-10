@@ -37,6 +37,7 @@
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
+#include <iostream>
 #include "fake_draw.hpp"
 
 BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
@@ -68,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-//    drawable.save_to_png(OUTPUT_FILE_PATH "label5.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "label0.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -136,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label3.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "label3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -398,8 +399,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 
     //ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
+//    wcomposite.rdp_input_invalidate(Rect(0, 0, 800, 600));
 
-   //drawable.save_to_png(OUTPUT_FILE_PATH "label9.png");
+   drawable.save_to_png(OUTPUT_FILE_PATH "label9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,

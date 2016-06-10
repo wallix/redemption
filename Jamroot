@@ -305,14 +305,13 @@ project redemption
     : requirements
 
     <include>src
+    # TODO move to system
     <include>src/system/linux
     <include>src/capture
-    <include>src/keyboard
-    <include>src/keyboard/reversed_keymaps
-    # TODO move to include
+    # TODO move to system
     <include>src/headers
-
     <include>include
+
     <include>modules/includes
     <include>src/system/linux/system
 
@@ -1064,8 +1063,6 @@ unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp 
 #obj test_show_data.o : tests/mod/rdp/test_show_data.cpp
 #    : <cxxflags>-fPIC ;
 
-#obj bitmap_data_allocator.o : src/utils/bitmap_data_allocator.cpp
-#    : <cxxflags>-fPIC ;
 
 #exe test_show_data :
 #    bitmap_data_allocator.o

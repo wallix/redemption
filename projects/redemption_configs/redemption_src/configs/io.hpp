@@ -417,7 +417,7 @@ parse_error parse(
     spec_type<std::chrono::duration<T, Ratio>>,
     array_view_const_char value
 ) {
-    T y;
+    T y{}; // create with default value
     if (parse_error err = detail::parse_integral(y, value, T{0}, std::numeric_limits<T>::max())) {
         return err;
     }

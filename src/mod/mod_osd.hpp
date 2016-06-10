@@ -19,8 +19,7 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
-#define REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
+#pragma once
 
 #include "mod/mod_api.hpp"
 #include "core/front_api.hpp"
@@ -423,12 +422,11 @@ public:
         this->mod.process_session_probe_launcher();
     }
 
-    void server_draw_text_deprecated(
-        const Font& font, int16_t x, int16_t y, const char* text,
-        uint32_t fgcolor, uint32_t bgcolor, const Rect& clip
-    ) override {
-        this->mod.server_draw_text_deprecated(font, x, y, text, fgcolor, bgcolor, clip);
-    }
+//    void server_draw_text_deprecated(
+//        const Font& font, int16_t x, int16_t y, const char* text,
+//        uint32_t fgcolor, uint32_t bgcolor, const Rect& clip
+//    ) override {
+//        mod.server_draw_text_poubelle(font, x, y, text, fgcolor, bgcolor, clip);
+//    }
 };
 
-#endif

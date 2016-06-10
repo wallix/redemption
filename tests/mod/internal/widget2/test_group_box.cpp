@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
+//    drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
 
     char message[1024];
     if (!check_sig( drawable.gd.impl(), message,
