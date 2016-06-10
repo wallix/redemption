@@ -25,7 +25,6 @@
 
 #include "core/callback.hpp"
 #include "core/font.hpp"
-#include "utils/text_metrics.hpp"
 #include "core/wait_obj.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
@@ -69,15 +68,6 @@ public:
 
     uint16_t get_front_width() const { return this->front_width; }
     uint16_t get_front_height() const { return this->front_height; }
-
-    virtual void text_metrics(Font const & font, const char * text, int & width, int & height) {
-        ::text_metrics(font, text, width, height,
-            [](uint32_t charnum) {
-                LOG(LOG_WARNING, "mod_api::text_metrics() - character not defined >0x%02x<", charnum);
-            }
-        );
-    }
-
 
 protected:
 

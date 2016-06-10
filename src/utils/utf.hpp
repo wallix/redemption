@@ -419,7 +419,7 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
             break;
             case 0xF:
                 TODO("Value stored to 'c' is never read")
-                c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                ucode = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:
@@ -442,10 +442,19 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
             continue;
         }
 
-        if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
-        target[i_t] = ucode & 0xFF;
-        target[i_t + 1] = (ucode >> 8) & 0xFF;
-        i_t += 2;
+        if (ucode > 0xFFFF) {
+            // TODO:We should choose a behavior for ucodes larger than 16 bits:
+            //      ignore char, replace by generic char, support multiwords UTF16,
+            //      or raise an error if we are really dealing with UCS-2 and
+            //      those chars are not allowed.
+            //      For now what we do is ignoring that char.
+        }
+        else {
+            if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
+            target[i_t] = ucode & 0xFF;
+            target[i_t + 1] = (ucode >> 8) & 0xFF;
+            i_t += 2;
+        }
     }
     // write final 0
 UTF8toUTF16_exit:

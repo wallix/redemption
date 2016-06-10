@@ -54,11 +54,6 @@ struct TestDraw : gdi::GraphicProxyBase<TestDraw, mod_api>
         gdi::server_draw_text(this->gd, font, x, y, text, fgcolor, bgcolor, clip);
     }
 
-    void text_metrics(Font const & font, const char * text, int & width, int & height) override
-    {
-        this->gd.text_metrics(font, text, width, height);
-    }
-
     void save_to_png(const char * filename)
     {
         std::FILE * file = fopen(filename, "w+");

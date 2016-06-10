@@ -493,14 +493,13 @@ public:
 
     void osd_message(std::string message, bool external_deleting) {
         this->clear_osd_message();
-        int w, h;
         if (!external_deleting) {
             message += "  ";
             message += TR("disable_osd", language(this->ini));
         }
-        this->mod->text_metrics(this->ini.get<cfg::font>(), message.c_str(), w, h);
-        w += padw * 2;
-        h += padh * 2;
+        gdi::TextMetrics tm(this->ini.get<cfg::font>(), message.c_str());
+        int w = tm.width + padw * 2;
+        int h = tm.height + padh * 2;
         uint32_t color = BLACK;
         uint32_t background_color = LIGHT_YELLOW;
         if (24 != this->front.client_info.bpp) {
@@ -518,18 +517,13 @@ public:
                 mod.begin_update();
                 mod.draw(RDPOpaqueRect(r, background_color), r);
 
-
                 StaticOutStream<256> deltaPoints;
-
                 deltaPoints.out_sint16_le(r.cx - 1);
                 deltaPoints.out_sint16_le(0);
-
                 deltaPoints.out_sint16_le(0);
                 deltaPoints.out_sint16_le(r.cy - 1);
-
                 deltaPoints.out_sint16_le(-r.cx + 1);
                 deltaPoints.out_sint16_le(0);
-
                 deltaPoints.out_sint16_le(0);
                 deltaPoints.out_sint16_le(-r.cy + 1);
 
@@ -539,7 +533,6 @@ public:
                 RDPPolyline polyline_box( r.x, r.y
                                         , 0x0D, 0, BLACK, 4, in_deltaPoints);
                 mod.draw(polyline_box, r);
-
 
                 mod.server_draw_text_poubelle(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
                 mod.end_update();
