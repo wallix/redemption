@@ -1465,6 +1465,13 @@ public:
             verbose);
     }
 
+private:
+    uint32_t Length = 0;
+
+    uint32_t remaining_number_of_bytes_to_write = 0;
+    uint32_t current_offset                     = 0;
+
+public:
     void ProcessServerDriveWriteRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, int drive_access_mode,
@@ -1474,14 +1481,9 @@ public:
             uint32_t verbose) override {
         REDASSERT(this->fd > -1);
 
-        static uint32_t Length = 0;
-        static uint64_t Offset = 0;
-
-        static uint32_t remaining_number_of_bytes_to_write = 0;
-        static uint32_t current_offset                     = 0;
-
         if (first_chunk) {
             Length = in_stream.in_uint32_le();
+            uint64_t const
             Offset = in_stream.in_uint64_le();
 
             remaining_number_of_bytes_to_write = Length;

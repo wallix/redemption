@@ -38,7 +38,8 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
 
     DumpPng24FromRDPDrawableAdapter dump_png24_api;
 
-    struct TransportVariant{
+    struct TransportVariant
+    {
         union Variant
         {
             OutMetaSequenceTransportWithSum out_with_sum;

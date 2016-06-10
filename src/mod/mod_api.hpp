@@ -93,7 +93,7 @@ protected:
 
 public:
     void server_draw_text_poubelle(Font const & font, int16_t x, int16_t y, const char * text,
-                uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) 
+                uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         gdi::server_draw_text(*this->gd, font, x, y, text, fgcolor, bgcolor, clip);
     }
@@ -116,9 +116,6 @@ public:
     virtual bool is_up_and_running() { return false; }
 
     virtual void disconnect() {}
-
-    virtual void begin_update() = 0;
-    virtual void end_update() = 0;
 
     virtual void display_osd_message(std::string & message) {}
 };

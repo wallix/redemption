@@ -94,9 +94,6 @@ class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
 
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }
-
-    virtual void begin_update() = 0;
-    virtual void end_update() = 0;
 };
 
 #endif
