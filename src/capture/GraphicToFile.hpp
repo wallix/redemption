@@ -144,12 +144,12 @@ public:
     , dump_png24_api(dump_png24)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , ini(ini)
-    , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
+    , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
     //, verbose(verbose)
     {
-        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_index_algorithm()) {
+        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , this->ini.get<cfg::video::wrm_compression_algorithm>().get());
+               , static_cast<unsigned>(this->ini.get<cfg::video::wrm_compression_algorithm>()));
         }
 
         last_sent_timer.tv_sec = 0;
@@ -230,7 +230,7 @@ public:
           , c4.bmp_size()
           , c4.persistent()
 
-          , this->compression_wrapper.get_index_algorithm()
+          , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
         );
     }
 
@@ -328,7 +328,7 @@ public:
         this->flush_orders();
         this->flush_bitmaps();
         this->send_timestamp_chunk();
-        if (this->compression_wrapper.get_index_algorithm()) {
+        if (bool(this->compression_wrapper.get_algorithm())) {
             this->send_reset_chunk();
         }
         this->trans.next();

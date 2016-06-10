@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     {
         LCGRandom rnd(0);
 
@@ -52,15 +52,14 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         Rect scr(0, 0, 800, 600);
 
-
-        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
-        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
 
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
-        ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
+        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+        ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
         ini.set<cfg::video::record_tmp_path>("./");
         ini.set<cfg::video::record_path>("./");
@@ -194,7 +193,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ::unlink(filename);
     }
 
-    if (ini.get<cfg::globals::trace_type>() == configs::TraceType::cryptofile) {
+    if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
@@ -225,14 +224,14 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Rect scr(0, 0, 12, 10);
 
-        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
-        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
 
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::png);
-        ini.set<cfg::globals::trace_type>(configs::TraceType::localfile);
+        ini.set<cfg::video::capture_flags>(CaptureFlags::png);
+        ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
         ini.set<cfg::video::record_tmp_path>("./");
         ini.set<cfg::video::record_path>("./");

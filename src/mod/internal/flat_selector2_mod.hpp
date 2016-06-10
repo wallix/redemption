@@ -31,23 +31,23 @@
 
 
 using FlatSelector2ModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,                  vcfg::ask | vcfg::set | vcfg::get>,
-    vcfg::var<cfg::context::selector,                   vcfg::ask | vcfg::set>,
-    vcfg::var<cfg::context::target_protocol,            vcfg::ask | vcfg::get>,
-    vcfg::var<cfg::globals::target_device,              vcfg::ask | vcfg::get>,
-    vcfg::var<cfg::globals::target_user,                vcfg::ask | vcfg::get>,
-    vcfg::var<cfg::context::password,                   vcfg::ask>,
-    vcfg::var<cfg::context::selector_current_page,      vcfg::is_asked | vcfg::get | vcfg::set>,
-    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::is_asked | vcfg::get>,
-    vcfg::var<cfg::context::selector_device_filter,     vcfg::get | vcfg::set>,
-    vcfg::var<cfg::context::selector_group_filter,      vcfg::get | vcfg::set>,
-    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::get | vcfg::set>,
-    vcfg::var<cfg::context::selector_proto_filter,      vcfg::get | vcfg::set>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>,
-    vcfg::var<cfg::globals::host,                       vcfg::get>,
-    vcfg::var<cfg::translation::language,               vcfg::get>,
-    vcfg::var<cfg::font,                                vcfg::get>,
-    vcfg::var<cfg::theme,                               vcfg::get>
+    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::selector_current_page,      vcfg::accessmode::is_asked | vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::accessmode::is_asked | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector_device_filter,     vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_group_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_proto_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
 class FlatSelector2Mod : public InternalMod, public NotifyApi
@@ -81,18 +81,21 @@ public:
     FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->selector, *this, front, this->font(), this->theme())
-        , selector(*this, temporary_login(vars).buffer, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this,
-                    vars.is_asked<cfg::context::selector_current_page>()
-                        ? "" : configs::make_c_str_buf(vars.get<cfg::context::selector_current_page>()).get(),
-                    vars.is_asked<cfg::context::selector_number_of_pages>()
-                        ? "" : configs::make_c_str_buf(vars.get<cfg::context::selector_number_of_pages>()).get(),
-                   vars.get<cfg::context::selector_group_filter>().c_str(),
-                   vars.get<cfg::context::selector_device_filter>().c_str(),
-                   vars.get<cfg::context::selector_proto_filter>().c_str(),
-                   &this->language_button,
-                   vars.get<cfg::font>(),
-                   vars.get<cfg::theme>(),
-                   language(vars))
+        , selector(
+            *this, temporary_login(vars).buffer,
+            widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this,
+            vars.is_asked<cfg::context::selector_current_page>()
+                ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_current_page>()).get(),
+            vars.is_asked<cfg::context::selector_number_of_pages>()
+                ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
+            vars.get<cfg::context::selector_group_filter>().c_str(),
+            vars.get<cfg::context::selector_device_filter>().c_str(),
+            vars.get<cfg::context::selector_proto_filter>().c_str(),
+            &this->language_button,
+            vars.get<cfg::font>(),
+            vars.get<cfg::theme>(),
+            language(vars))
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , vars(vars)

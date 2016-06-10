@@ -135,7 +135,7 @@ private:
             case 16: return choose_encoder(decode_color16_opaquerect{}, rng_by_bpp);
             case 24:
             case 32: return choose_encoder(decode_color24_opaquerect{}, rng_by_bpp);
-            default: assert(nullptr); return PtrColorConverter{};
+            default: assert(false && "unknown value in order_bpp"); return PtrColorConverter{};
         }
     }
 

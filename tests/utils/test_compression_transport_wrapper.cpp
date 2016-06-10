@@ -50,15 +50,14 @@ BOOST_AUTO_TEST_CASE(TestCompressionTransportWrapper)
 
     using CompressionTestTransportWrapper = CompressionTransportWrapper<GzipTransport, SnappyTransport>;
 
-    CompressionTestTransportWrapper(trans, 0).get().flush();
-    CompressionTestTransportWrapper(trans, 1).get().flush();
-    CompressionTestTransportWrapper(trans, 2).get().flush();
+    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::no_compression).get().flush();
+    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::gzip).get().flush();
+    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::snappy).get().flush();
 
     std::cout.rdbuf(oldbuf);
 
     BOOST_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
 
-    CompressionTestTransportWrapper t(trans, 2);
-    BOOST_CHECK_EQUAL(t.get_index_algorithm(), 2);
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(t.get_algorithm()), 2);
+    CompressionTestTransportWrapper t(trans, WrmCompressionAlgorithm::gzip);
+    BOOST_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);
 }

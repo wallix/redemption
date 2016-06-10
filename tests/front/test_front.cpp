@@ -86,9 +86,9 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
         ini.set<cfg::client::cache_waiting_list>(true);
         ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-        ini.set<cfg::video::png_interval>(3000);
-        ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
-        ini.set<cfg::video::wrm_compression_algorithm>(0);
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
+        ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
+        ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
         ini.set<cfg::crypto::key0>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -133,10 +133,10 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::client::tls_support>(false);
         ini.set<cfg::client::tls_fallback_legacy>(true);
         ini.set<cfg::client::bogus_user_id>(false);
-        ini.set<cfg::client::rdp_compression>(0);
+        ini.set<cfg::client::rdp_compression>(RdpCompression::none);
         ini.set<cfg::client::fast_path>(fastpath_support);
-        ini.set<cfg::globals::movie>(true);
-        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
+        ini.set<cfg::globals::is_rec>(true);
+        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
         class MyFront : public Front
         {
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                      , cctx, fastpath_support, mem3blt_support
-                     , now - ini.get<cfg::globals::handshake_timeout>());
+                     , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
 
         front.get_event().waked_up_by_time = true;
@@ -317,9 +317,9 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
         ini.set<cfg::client::cache_waiting_list>(true);
         ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-        ini.set<cfg::video::png_interval>(3000);
-        ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
-        ini.set<cfg::video::wrm_compression_algorithm>(0);
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
+        ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
+        ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
         ini.set<cfg::crypto::key0>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -364,10 +364,10 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::client::tls_support>(false);
         ini.set<cfg::client::tls_fallback_legacy>(true);
         ini.set<cfg::client::bogus_user_id>(false);
-        ini.set<cfg::client::rdp_compression>(0);
+        ini.set<cfg::client::rdp_compression>(RdpCompression::none);
         ini.set<cfg::client::fast_path>(fastpath_support);
-        ini.set<cfg::globals::movie>(true);
-        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
+        ini.set<cfg::globals::is_rec>(true);
+        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
         class MyFront : public Front
         {
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                      , cctx, fastpath_support, mem3blt_support
-                     , now - ini.get<cfg::globals::handshake_timeout>() - 1);
+                     , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod(front);
 
         front.get_event().waked_up_by_time = true;
@@ -551,9 +551,9 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
         ini.set<cfg::client::cache_waiting_list>(true);
         ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-        ini.set<cfg::video::png_interval>(3000);
-        ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
-        ini.set<cfg::video::wrm_compression_algorithm>(0);
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
+        ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
+        ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
         ini.set<cfg::crypto::key0>(
             "\x00\x01\x02\x03\x04\x05\x06\x07"
@@ -599,10 +599,10 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         ini.set<cfg::client::tls_support>(false);
         ini.set<cfg::client::tls_fallback_legacy>(true);
         ini.set<cfg::client::bogus_user_id>(false);
-        ini.set<cfg::client::rdp_compression>(0);
+        ini.set<cfg::client::rdp_compression>(RdpCompression::none);
         ini.set<cfg::client::fast_path>(fastpath_support);
-        ini.set<cfg::globals::movie>(true);
-        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm);
+        ini.set<cfg::globals::is_rec>(true);
+        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
         class MyFront : public Front
         {

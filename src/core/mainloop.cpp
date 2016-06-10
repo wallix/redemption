@@ -244,8 +244,8 @@ void redemption_main_loop(Inifile & ini, CryptoContext & cctx, unsigned uid, uns
 
     SessionServer ss(cctx, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-    uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>());
-TODO("-Wold-style-cast is ignored")
+    uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
+// TODO -Wold-style-cast is ignored
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }

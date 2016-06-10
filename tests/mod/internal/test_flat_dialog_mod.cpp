@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL("True", ini.get<cfg::context::accept_message>());
+    BOOST_CHECK_EQUAL(true, ini.get<cfg::context::accept_message>());
 }
 
 
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL("False", ini.get<cfg::context::accept_message>());
+    BOOST_CHECK_EQUAL(false, ini.get<cfg::context::accept_message>());
 }
 
 BOOST_AUTO_TEST_CASE(TestDialogModChallenge)

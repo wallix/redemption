@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     Font font;
 
-    const bool bogus_clipboard_infinite_loop = false;
+    const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
 
     mod_vnc mod(
           t

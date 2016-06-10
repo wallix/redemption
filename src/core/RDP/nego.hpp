@@ -150,7 +150,7 @@ struct RdpNego
 
     void server_event(
         bool server_cert_store,
-        configs::ServerCertCheck server_cert_check,
+        ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
         const char * certif_path)
     {
@@ -310,7 +310,7 @@ struct RdpNego
 
     void recv_connection_confirm(
         bool server_cert_store,
-        configs::ServerCertCheck server_cert_check,
+        ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier,
         const char * certif_path)
     {

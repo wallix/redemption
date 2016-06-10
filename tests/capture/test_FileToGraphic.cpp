@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     Inifile ini;
     ini.set<cfg::debug::primary_orders>(0);
     ini.set<cfg::debug::secondary_orders>(0);
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
@@ -73,8 +73,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    ini.set<cfg::video::frame_interval>(10);
-    ini.set<cfg::video::break_interval>(20);
+    ini.set<cfg::video::frame_interval>(cfg::video::frame_interval::type{10});
+    ini.set<cfg::video::break_interval>(cfg::video::break_interval::type{20});
 
     const struct ToCacheOption {
         ToCacheOption(){}

@@ -2,8 +2,11 @@
 
 cd "$(dirname "$0")"/../..
 
+out=/tmp/scan-build-$$
+
 bjam debug --toolset=clang exe -n -a \
 | grep src/main/'[_a-z]\+\.cpp' \
 | while read l ; do
-  eval scan-build "$@" $l
+  eval scan-build "$@" $(echo $l | sed s'# -o "[^"]\+# -o "'$out'#')
+  rm -- $out
 done

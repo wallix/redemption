@@ -391,17 +391,17 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     const bool disable_clipboard_log_wrm;
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
-    const int  rdp_compression;
+    const RdpCompression rdp_compression;
 
-    const unsigned                               session_probe_launch_timeout;
-    const unsigned                               session_probe_launch_fallback_timeout;
-    const bool                                   session_probe_start_launch_timeout_timer_only_after_logon;
-    const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
-    const unsigned                               session_probe_keepalive_timeout;
-    const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
-    const bool                                   session_probe_end_disconnected_session;
-          std::string                            session_probe_alternate_shell;
-    const bool                                   session_probe_use_clipboard_based_launcher;
+    const std::chrono::milliseconds   session_probe_launch_timeout;
+    const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
+    const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
+    const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+    const std::chrono::milliseconds   session_probe_keepalive_timeout;
+    const bool                        session_probe_on_keepalive_timeout_disconnect_user;
+    const bool                        session_probe_end_disconnected_session;
+          std::string                 session_probe_alternate_shell;
+    const bool                        session_probe_use_clipboard_based_launcher;
 
     std::string session_probe_target_informations;
 
@@ -415,8 +415,8 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
 
     std::string * error_message;
 
-    const bool     disconnect_on_logon_user_change;
-    const uint32_t open_session_timeout;
+    const bool                 disconnect_on_logon_user_change;
+    const std::chrono::seconds open_session_timeout;
 
     Timeout open_session_timeout_checker;
 
@@ -425,8 +425,8 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     std::string end_session_reason;
     std::string end_session_message;
 
-    const bool                     server_cert_store;
-    const configs::ServerCertCheck server_cert_check;
+    const bool            server_cert_store;
+    const ServerCertCheck server_cert_check;
 
     std::unique_ptr<char[]> certif_path;
 
@@ -542,29 +542,26 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     private:
         auth_api * acl;
 
-        const configs::ServerNotification server_access_allowed_message;
-        const configs::ServerNotification server_cert_create_message;
-        const configs::ServerNotification server_cert_success_message;
-        const configs::ServerNotification server_cert_failure_message;
-        const configs::ServerNotification server_cert_error_message;
+        const ServerNotification server_access_allowed_message;
+        const ServerNotification server_cert_create_message;
+        const ServerNotification server_cert_success_message;
+        const ServerNotification server_cert_failure_message;
+        const ServerNotification server_cert_error_message;
 
         uint32_t verbose;
 
-        bool is_syslog_notification_enabled(
-                configs::ServerNotification server_notification) {
-            return
-                ((server_notification & configs::ServerNotification::syslog) ==
-                 configs::ServerNotification::syslog);
+        bool is_syslog_notification_enabled(ServerNotification server_notification) {
+            return ((server_notification & ServerNotification::syslog) == ServerNotification::syslog);
         }
 
     public:
         RDPServerNotifier(
                 auth_api * acl,
-                configs::ServerNotification server_access_allowed_message,
-                configs::ServerNotification server_cert_create_message,
-                configs::ServerNotification server_cert_success_message,
-                configs::ServerNotification server_cert_failure_message,
-                configs::ServerNotification server_cert_error_message,
+                ServerNotification server_access_allowed_message,
+                ServerNotification server_cert_create_message,
+                ServerNotification server_cert_success_message,
+                ServerNotification server_cert_failure_message,
+                ServerNotification server_cert_error_message,
                 uint32_t verbose
             )
         : acl(acl)
@@ -798,7 +795,7 @@ public:
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
-        this->event.object_and_time = (this->open_session_timeout > 0);
+        this->event.object_and_time = (this->open_session_timeout.count() > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel,
@@ -3652,7 +3649,7 @@ public:
             }
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             switch(this->open_session_timeout_checker.check(now)) {
             case Timeout::TIMEOUT_REACHED:
                 if (this->error_message) {
@@ -5239,7 +5236,7 @@ public:
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
             this->event.reset();
@@ -6437,10 +6434,10 @@ public:
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
-                if (this->rdp_compression) {
+                if (bool(this->rdp_compression)) {
                     infoPacket.flags |= INFO_COMPRESSION;
                     infoPacket.flags &= ~CompressionTypeMask;
-                    infoPacket.flags |= ((this->rdp_compression - 1) << 9);
+                    infoPacket.flags |= (static_cast<unsigned>(this->rdp_compression) - 1) << 9;
                 }
 
                 if (this->enable_session_probe) {
@@ -6460,9 +6457,9 @@ public:
             infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
-                now, this->open_session_timeout);
+                now, this->open_session_timeout.count());
             this->event.set(1000000);
         }
         if (this->verbose & 1){

@@ -22,6 +22,7 @@
 #define REDEMPTION_UTILS_RANGE_HPP
 
 #include <iterator>
+#include <type_traits>
 
 using std::begin;
 using std::end;
@@ -33,19 +34,25 @@ struct range
     It last_;
 
     using value_type = typename std::iterator_traits<It>::value_type;
+    using reference = typename std::conditional<
+        std::is_const<decltype(*std::declval<It>())>::value,
+        value_type,
+        value_type const
+    >::type &;
+    using const_reference = value_type const &;
 
     std::size_t size() const { return this->last_ - this->first_; }
 
     bool empty() const { return this->last_ == this->first_; }
 
-    value_type const & front() const { return *(this->first_); }
-    value_type       & front()       { return *(this->first_); }
+    const_reference front() const { return *(this->first_); }
+    reference       front()       { return *(this->first_); }
 
-    value_type const & back() const  { return *(this->last_-1); }
-    value_type       & back()        { return *(this->last_-1); }
+    const_reference back() const  { return *(this->last_-1); }
+    reference       back()        { return *(this->last_-1); }
 
-    value_type const & operator[](std::size_t i) const { return this->first_[i]; }
-    value_type       & operator[](std::size_t i)       { return this->first_[i]; }
+    const_reference operator[](std::size_t i) const { return this->first_[i]; }
+    reference       operator[](std::size_t i)       { return this->first_[i]; }
 
     friend bool operator == (range const & a, range const & b) {
         return a.first_ == b.first_ && a.last_ == b.last_;

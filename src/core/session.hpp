@@ -304,7 +304,7 @@ public:
                             catch (Error const & e) {
                                 if ((e.id == ERR_SESSION_PROBE_LAUNCH) &&
                                     (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
-                                     ::configs::SessionProbeOnLaunchFailure::retry_without_session_probe)) {
+                                     SessionProbeOnLaunchFailure::retry_without_session_probe)) {
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
                                     signal = BACK_EVENT_RETRY_CURRENT;

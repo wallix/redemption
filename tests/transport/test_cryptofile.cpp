@@ -41,6 +41,7 @@
 
 #include <snappy-c.h>
 #include "utils/fdbuf.hpp"
+#include "utils/fileutils.hpp"
 
 #include "transport/cryptofile.hpp"
 

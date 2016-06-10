@@ -3,4 +3,4 @@
 cd "$(dirname "$0")"/../..
 
 find src/capture src/core src/front src/main src/mod src/transport src/utils src/acl include/configs -name '*.?pp' \
- -exec cppcheck -v --enable=all --std=posix --std=c++11 --inline-suppr "$@" '{}' +
+ -exec cppcheck -v --enable=all --std=posix --std=c++11 "$@" '{}' +
