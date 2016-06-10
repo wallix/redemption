@@ -19,32 +19,31 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_LANGUAGE_BUTTON_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_LANGUAGE_BUTTON_HPP
-
+#pragma once
 
 #include "utils/splitter.hpp"
 #include "flat_button.hpp"
 
 #include "utils/algostring.hpp"
+#include "gdi/graphic_api.hpp"
 
 class LanguageButton : public WidgetFlatButton
 {
-        static constexpr size_t locale_name_len = 5;
-        struct Loc {
-            char const * locale_name;
-            int LCID;
-        };
-        std::vector<Loc> locales;
-        unsigned selected_language = 0;
-        FrontAPI & front;
-        Widget2 & parent;
+    static constexpr size_t locale_name_len = 5;
+    struct Loc {
+        char const * locale_name;
+        int LCID;
+    };
+    std::vector<Loc> locales;
+    unsigned selected_language = 0;
+    FrontAPI & front;
+    Widget2 & parent;
 
     public:
-        LanguageButton(
+    LanguageButton(
             std::string const & enable_locales,
             Widget2 & parent,
-            mod_api & drawable,
+            gdi::GraphicApi & drawable,
             FrontAPI & front,
             Font const & font,
             Theme const & theme
@@ -53,65 +52,64 @@ class LanguageButton : public WidgetFlatButton
                            theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font, 7, 7)
         , front(front)
         , parent(parent)
+    {
+        using std::begin;
+        using std::end;
+
+        auto LCID = front.get_keylayout();
+
         {
-            using std::begin;
-            using std::end;
+            auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
+                return k->LCID == LCID;
+            });
+            if (it == end(keylayouts)) {
+                LCID = keylayout_x00000409.LCID;
+                this->locales.push_back({keylayout_x00000409.locale_name, keylayout_x00000409.LCID});
+            }
+            else {
+                this->locales.push_back({(*it)->locale_name, (*it)->LCID});
+            }
+        }
 
-            auto LCID = front.get_keylayout();
 
-            {
-                auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
-                    return k->LCID == LCID;
-                });
-                if (it == end(keylayouts)) {
-                    LCID = keylayout_x00000409.LCID;
-                    this->locales.push_back({keylayout_x00000409.locale_name, keylayout_x00000409.LCID});
-                }
-                else {
+        for (auto && r : get_split(enable_locales, ',')) {
+            auto const trimmed_range = trim(r);
+            auto cstr = begin(trimmed_range).base();
+            auto cend = end(trimmed_range).base();
+
+            auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
+                return strncmp(k->locale_name, cstr, cend-cstr) == 0;
+            });
+            if (it != end(keylayouts)) {
+                if ((*it)->LCID != LCID) {
                     this->locales.push_back({(*it)->locale_name, (*it)->LCID});
                 }
             }
-
-
-            for (auto && r : get_split(enable_locales, ',')) {
-                auto const trimmed_range = trim(r);
-                auto cstr = begin(trimmed_range).base();
-                auto cend = end(trimmed_range).base();
-
-                auto it = std::find_if(begin(keylayouts), end(keylayouts), [&](Keylayout const * k){
-                    return strncmp(k->locale_name, cstr, cend-cstr) == 0;
-                });
-                if (it != end(keylayouts)) {
-                    if ((*it)->LCID != LCID) {
-                        this->locales.push_back({(*it)->locale_name, (*it)->LCID});
-                    }
-                }
-                else {
-                    LOG(LOG_WARNING, "Layout \"%.*s\" not found.", static_cast<int>(cend - cstr), cstr);
-                }
+            else {
+                LOG(LOG_WARNING, "Layout \"%.*s\" not found.", static_cast<int>(cend - cstr), cstr);
             }
+        }
 
-            this->label.set_text(this->locales[0].locale_name);
+        this->label.set_text(this->locales[0].locale_name);
+        this->set_button_cx(this->label.rect.cx);
+        this->set_button_cy(this->label.rect.cy);
+    }
+
+    void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
+        if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {
+            auto rect = this->rect;
+
+            this->selected_language = (this->selected_language + 1) % this->locales.size();
+            this->label.set_text(this->locales[this->selected_language].locale_name);
+
             this->set_button_cx(this->label.rect.cx);
             this->set_button_cy(this->label.rect.cy);
+            rect.cx = std::max(rect.cx, this->rect.cx);
+            rect.cy = std::max(rect.cy, this->rect.cy);
+            this->parent.draw(rect);
+
+            front.set_keylayout(this->locales[this->selected_language].LCID);
         }
+    }
+};
 
-        void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
-            if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {
-                auto rect = this->rect;
-
-                this->selected_language = (this->selected_language + 1) % this->locales.size();
-                this->label.set_text(this->locales[this->selected_language].locale_name);
-
-                this->set_button_cx(this->label.rect.cx);
-                this->set_button_cy(this->label.rect.cy);
-                rect.cx = std::max(rect.cx, this->rect.cx);
-                rect.cy = std::max(rect.cy, this->rect.cy);
-                this->parent.draw(rect);
-
-                front.set_keylayout(this->locales[this->selected_language].LCID);
-            }
-        }
-    };
-
-#endif

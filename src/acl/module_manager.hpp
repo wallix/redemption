@@ -541,7 +541,7 @@ public:
                 mod.draw(polyline_box, r);
 
 
-                mod.server_draw_text_deprecated(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
+                mod.server_draw_text_poubelle(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
                 mod.end_update();
             },
             external_deleting

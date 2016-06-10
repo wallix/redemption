@@ -49,9 +49,9 @@ struct TestDraw : gdi::GraphicProxyBase<TestDraw, mod_api>
     void end_update() override {}
 
     void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char * text,
-                          uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) override
+                          uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-        this->gd.server_draw_text_deprecated(font, x, y, text, fgcolor, bgcolor, clip);
+        gdi::server_draw_text(this->gd, font, x, y, text, fgcolor, bgcolor, clip);
     }
 
     void text_metrics(Font const & font, const char * text, int & width, int & height) override

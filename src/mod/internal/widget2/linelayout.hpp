@@ -20,15 +20,14 @@
  *
  */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET2_LINELAYOUT_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET2_LINELAYOUT_HPP_
+#pragma once
 
 #include "widget.hpp"
 #include "layout.hpp"
 
 struct WidgetLineLayout : public WidgetLayout {
 
-    WidgetLineLayout(mod_api & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLineLayout(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                      NotifyApi * notifier, int group_id = 0)
         : WidgetLayout(drawable, rect, parent, notifier, group_id)
     {
@@ -56,5 +55,3 @@ struct WidgetLineLayout : public WidgetLayout {
 
 };
 
-
-#endif

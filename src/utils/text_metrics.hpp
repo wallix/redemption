@@ -24,26 +24,39 @@
 #include "utils/utf.hpp"
 #include "core/font.hpp"
 
+//template<class NotFoundCallback>
+//void text_metrics(const Font & font, const char * text, int & width, int & height, NotFoundCallback not_found_callback)
+//{
+//    height = 0;
+//    width = 0;
+//    UTF8toUnicodeIterator unicode_iter(text);
+//    if (*unicode_iter) {
+//        for (; uint32_t c = *unicode_iter; ++unicode_iter) {
+//            const FontChar & font_item = [&, c]() -> const FontChar & {
+//                if (!font.glyph_defined(c) || !font.font_items[c]) {
+//                    not_found_callback(c);
+//                    return font.font_items[unsigned('?')];
+//                }
+//                return font.font_items[c];
+//            }();
+//            width += font_item.incby;
+//            height = std::max(height, font_item.height);
+//        }
+//    }
+//}
+
 template<class NotFoundCallback>
 void text_metrics(const Font & font, const char * text, int & width, int & height, NotFoundCallback not_found_callback)
 {
     height = 0;
     width = 0;
     UTF8toUnicodeIterator unicode_iter(text);
-    if (*unicode_iter) {
-        for (; uint32_t c = *unicode_iter; ++unicode_iter) {
-            const FontChar & font_item = [&, c]() -> const FontChar & {
-                if (!font.glyph_defined(c) || !font.font_items[c]) {
-                    not_found_callback(c);
-                    return font.font_items[unsigned('?')];
-                }
-                return font.font_items[c];
-            }();
-            width += font_item.incby;
-            //width += font_item.width + 2;
-            height = std::max(height, font_item.height);
-        }
-        //width -= 1;
+    for (; uint32_t c = *unicode_iter; ++unicode_iter) {
+        bool exists = font.glyph_defined(c) || font.font_items[c];
+        if (!exists){ not_found_callback(c); }
+        const FontChar & font_item = font.font_items[exists ? c : static_cast<unsigned>('?')];
+        width += font_item.incby;
+        height = std::max(height, font_item.height);
     }
 }
 
@@ -51,5 +64,6 @@ inline void text_metrics(const Font & font, const char * text, int & width, int 
 {
     text_metrics(font, text, width, height, [](uint32_t){});
 }
+
 
 #endif

@@ -20,8 +20,7 @@
  *
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_SELECTOR2_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_SELECTOR2_HPP
+#pragma once 
 
 #include "composite.hpp"
 #include "multiline.hpp"
@@ -37,6 +36,8 @@
 #include "flat_button.hpp"
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
+#include "gdi/graphic_api.hpp"
+
 
 class WidgetSelectorFlat2 : public WidgetParent
 {
@@ -102,7 +103,8 @@ IDX_PROTOCOL,
         NAV_SEPARATOR = 15
     };
 public:
-    WidgetSelectorFlat2(mod_api& drawable, const char * device_name, int16_t left, int16_t top, uint16_t width,
+    WidgetSelectorFlat2(gdi::GraphicApi & drawable,
+                        const char * device_name, int16_t left, int16_t top, uint16_t width,
                         uint16_t height, Widget2 & parent, NotifyApi* notifier,
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,
@@ -219,16 +221,12 @@ public:
     }
 
     void rearrange() {
-        int target_group_min_width = 0;
-        int target_min_width = 0;
-        int protocol_min_width = 0;
-        int h = 0;
-        this->drawable.text_metrics(this->font, this->target_group_label.get_text(), target_group_min_width, h);
-        this->drawable.text_metrics(this->font, this->target_label.get_text(), target_min_width, h);
-        this->drawable.text_metrics(this->font, this->protocol_label.get_text(), protocol_min_width, h);
-        target_group_min_width += 5;
-        target_min_width += 5;
-        protocol_min_width += 5;
+        gdi::TextMetrics tm1(this->font, this->target_group_label.get_text());
+        int target_group_min_width = tm1.width + 5;
+        gdi::TextMetrics tm2(this->font, this->target_label.get_text());
+        int target_min_width = tm2.width + 5;
+        gdi::TextMetrics tm(this->font, this->protocol_label.get_text());
+        int protocol_min_width = tm.width + 5;
 
         ColumnWidthStrategy column_width_strategies[] = {
             { static_cast<uint16_t>(target_group_min_width), 200 },
@@ -386,4 +384,3 @@ public:
 
 };
 
-#endif

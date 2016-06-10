@@ -19,8 +19,7 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAB_CLOSE_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAB_CLOSE_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "flat_button.hpp"
@@ -32,6 +31,7 @@
 #include "widget2_rect.hpp"
 #include "utils/theme.hpp"
 #include "core/defines.hpp"
+#include "gdi/graphic_api.hpp"
 
 #include <vector>
 
@@ -62,7 +62,8 @@ private:
     Translation::language_t lang;
 
 public:
-    FlatWabClose(mod_api& drawable, int16_t left, int16_t top, int16_t width, int16_t height, Widget2& parent,
+    FlatWabClose(gdi::GraphicApi & drawable,
+                 int16_t left, int16_t top, int16_t width, int16_t height, Widget2& parent,
                  NotifyApi* notifier, const char * diagnostic_text, int group_id,
                  const char * username, const char * target,
                  bool showtimer, Font const & font, Theme const & theme,
@@ -269,4 +270,3 @@ public:
     }
 };
 
-#endif

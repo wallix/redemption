@@ -19,12 +19,12 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_RECT_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_RECT_HPP
+#pragma once
 
 #include "widget.hpp"
 #include "utils/colors.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetRect : public Widget2
 {
@@ -32,7 +32,7 @@ public:
     int color;
 
 public:
-    WidgetRect(mod_api & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
+    WidgetRect(gdi::GraphicApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
     : Widget2(drawable, rect, parent, notifier, group_id)
     , color(color)
     {
@@ -50,5 +50,4 @@ public:
     }
 };
 
-#endif
 
