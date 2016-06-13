@@ -129,16 +129,8 @@ private:
     uint8_t depth_;
 };
 
-constexpr bool operator == (GraphicDepth const & depth1, GraphicDepth const & depth2) {
-    return depth1.id() == depth2.id();
-}
-
 constexpr bool operator < (GraphicDepth const & depth1, GraphicDepth const & depth2) {
     return depth1.id() < depth2.id();
-}
-
-constexpr bool operator != (GraphicDepth const & depth1, GraphicDepth const & depth2) {
-    return !(depth1 == depth2);
 }
 
 constexpr bool operator > (GraphicDepth const & depth1, GraphicDepth const & depth2) {
@@ -541,7 +533,7 @@ struct TextMetrics
 {
     int width;
     int height;
-    
+
     TextMetrics(const Font & font, const char * text)
         : width(0)
         , height(0)
@@ -561,7 +553,7 @@ TODO("implementation of the server_draw_text function below is a small subset of
 static inline void server_draw_text(
                 GraphicApi & drawable,
                 Font const & font, int16_t x, int16_t y, const char * text,
-                uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) 
+                uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
 {
     static GlyphCache mod_glyph_cache;
 
