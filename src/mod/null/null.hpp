@@ -44,7 +44,7 @@ struct null_mod : public gdi::GraphicBase<null_mod, mod_api> {
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
-    void draw_event(time_t now) override {}
+    void draw_event(time_t now, const GraphicApi & drawable) override {}
 
     void begin_update() override {}
     void end_update() override {}

@@ -131,7 +131,7 @@ public:
         }
     }
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }

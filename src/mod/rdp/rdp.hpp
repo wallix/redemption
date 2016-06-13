@@ -1043,7 +1043,7 @@ public:
         }
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
-            this->draw_event(time(nullptr));
+            this->draw_event(time(nullptr), front);
             if (this->event.signal != BACK_EVENT_NONE){
                 char statestr[256];
                 switch (this->state) {
@@ -1969,9 +1969,10 @@ private:
     }
 
 public:
-    void draw_event(time_t now) override {
-        if (!this->event.waked_up_by_time &&
-            (!this->session_probe_virtual_channel_p || !this->session_probe_virtual_channel_p->is_event_signaled())) {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
+        if (!this->event.waked_up_by_time 
+        && (!this->session_probe_virtual_channel_p 
+          ||!this->session_probe_virtual_channel_p->is_event_signaled())) {
             try{
                 char * hostname = this->hostname;
 
@@ -3053,78 +3054,89 @@ public:
                             while (su.payload.in_remain()) {
                                 FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 
-                                switch (upd.updateCode) {
-                                case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+                                using FU = FastPath::UpdateType;
+                                if (this->verbose & 8) {
+                                    const char * m = "UNKNOWN ORDER";
+                                    switch (static_cast<FastPath::UpdateType>(upd.updateCode))
+                                    {
+                                    case FU::ORDERS:      m = "ORDERS"; break;
+                                    case FU::BITMAP:      m = "BITMAP"; break;
+                                    case FU::PALETTE:     m = "PALETTE"; break;
+                                    case FU::SYNCHRONIZE: m = "SYNCHRONIZE"; break;
+                                    case FU::SURFCMDS:    m = "SYNCHRONIZE"; break;
+                                    case FU::PTR_NULL:    m = "PTR_NULL"; break;
+                                    case FU::PTR_DEFAULT: m = "PTR_DEFAULT"; break;
+                                    case FU::PTR_POSITION:m = "PTR_POSITION"; break;
+                                    case FU::COLOR:       m = "COLOR"; break;
+                                    case FU::CACHED:      m = "CACHED"; break;
+                                    case FU::POINTER:     m = "POINTER"; break;
+                                    }
+                                    LOG(LOG_INFO, "FastPath::UpdateType::%s", m);
+                                }
+
+                                switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
+                                case FastPath::UpdateType::ORDERS:
                                     this->front.begin_update();
                                     this->orders.process_orders(this->bpp, upd.payload, true, *this->gd,
                                                                 this->front_width, this->front_height);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                                case FastPath::UpdateType::BITMAP:
                                     this->front.begin_update();
                                     this->process_bitmap_updates(upd.payload, true);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                                case FastPath::UpdateType::PALETTE:
                                     this->front.begin_update();
                                     this->process_palette(upd.payload, true);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE"); }
+                                case FastPath::UpdateType::SYNCHRONIZE:
+                                    // TODO: we should propagate SYNCHRONIZE to front
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                                case FastPath::UpdateType::SURFCMDS:
+                                    LOG( LOG_ERR
+                                       , "mod::rdp: received unsupported fast-path PUD, updateCode = %s"
+                                       , "FastPath::UPDATETYPE_SURFCMDS");
+                                    throw Error(ERR_RDP_FASTPATH);
+
+                                case FastPath::UpdateType::PTR_NULL:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL"); }
                                         struct Pointer cursor;
                                         memset(cursor.mask, 0xff, sizeof(cursor.mask));
                                         this->front.set_pointer(cursor);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                                case FastPath::UpdateType::PTR_DEFAULT:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT"); }
                                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
                                         this->front.set_pointer(cursor);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                                case FastPath::UpdateType::PTR_POSITION:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION"); }
                                         uint16_t xPos = upd.payload.in_uint16_le();
                                         uint16_t yPos = upd.payload.in_uint16_le();
                                         this->front.update_pointer_position(xPos, yPos);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                                case FastPath::UpdateType::COLOR:
                                     this->process_color_pointer_pdu(upd.payload);
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_COLOR"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_POINTER:
-                                    this->process_new_pointer_pdu(upd.payload);
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_POINTER"); }
-                                    break;
-
-                                case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                                case FastPath::UpdateType::CACHED:
                                     this->process_cached_pointer_pdu(upd.payload);
+                                    break;
 
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_CACHED"); }
+                                case FastPath::UpdateType::POINTER:
+                                    this->process_new_pointer_pdu(upd.payload);
                                     break;
 
                                 default:

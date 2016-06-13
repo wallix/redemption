@@ -616,7 +616,7 @@ protected:
     }
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
         if (this->verbose & 2) {
             LOG(LOG_INFO, "vnc::draw_event");
         }

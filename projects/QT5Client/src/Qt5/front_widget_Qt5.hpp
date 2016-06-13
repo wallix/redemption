@@ -26,7 +26,7 @@
 
 #include "transport/socket_transport.hpp"
 #include "mod/rdp/rdp.hpp"
-
+#include "gdi/graphic_api.hpp"
 #include "Qt5/front_Qt5.hpp"
 
 #include <QtWidgets/QWidget>

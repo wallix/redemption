@@ -167,42 +167,40 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
     if (fastpath_support) {
         uint8_t compressionFlags = 0;
-        uint8_t updateCode       = 0;
+        FastPath::UpdateType updateCode       = FastPath::UpdateType::ORDERS;
 
         switch (type) {
             case SERVER_UPDATE_GRAPHICS_ORDERS:
                 {
-                    updateCode = FastPath::FASTPATH_UPDATETYPE_ORDERS;
-
+                    updateCode = FastPath::UpdateType::ORDERS;
                     StaticOutStream<2> data;
                     data.out_uint16_le(data_extra);
-
                     data_common.copy_to_head(data);
                 }
                 break;
 
             case SERVER_UPDATE_GRAPHICS_BITMAP:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_BITMAP;
+                updateCode = FastPath::UpdateType::BITMAP;
                 break;
 
             case SERVER_UPDATE_GRAPHICS_PALETTE:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_PALETTE;
+                updateCode = FastPath::UpdateType::PALETTE;
                 break;
 
             case SERVER_UPDATE_GRAPHICS_SYNCHRONIZE:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE;
+                updateCode = FastPath::UpdateType::SYNCHRONIZE;
                 break;
 
             case SERVER_UPDATE_POINTER_COLOR:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_COLOR;
+                updateCode = FastPath::UpdateType::COLOR;
                 break;
 
             case SERVER_UPDATE_POINTER_CACHED:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
+                updateCode = FastPath::UpdateType::CACHED;
                 break;
 
             case SERVER_UPDATE_POINTER_POSITION:
-                updateCode = FastPath::FASTPATH_UPDATETYPE_PTR_POSITION;
+                updateCode = FastPath::UpdateType::PTR_POSITION;
                 break;
 
             default:
@@ -236,7 +234,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
         // Fast-Path Update (TS_FP_UPDATE)
         FastPath::Update_Send Upd( update_header
                                  , data_common_.get().get_packet().size()
-                                 , updateCode
+                                 , static_cast<uint8_t>(updateCode)
                                  , FastPath::FASTPATH_FRAGMENT_SINGLE
                                  , compression
                                  , compressionFlags

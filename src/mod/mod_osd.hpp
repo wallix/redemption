@@ -308,8 +308,8 @@ public:
         this->mod.end_update();
     }
 
-    void draw_event(time_t now) override {
-        this->mod.draw_event(now);
+    void draw_event(time_t now, const GraphicApi & drawable) override {
+        this->mod.draw_event(now, drawable);
     }
 
     void rdp_input_invalidate(const Rect & r) override {

@@ -37,7 +37,7 @@ struct TestDraw : gdi::GraphicProxyBase<TestDraw, mod_api>
 
     TestDraw(uint16_t w, uint16_t h) : base_type(w, h), gd(w, h, 24) {}
 
-    void draw_event(time_t now) override {}
+    void draw_event(time_t now, const gdi::GraphicApi& drawable) override {}
     void rdp_input_invalidate(const Rect& r) override {}
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {}
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {}

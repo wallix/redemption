@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 70) break;
-        mod->draw_event(time(nullptr));
+        mod->draw_event(time(nullptr), front);
     }
 
     //front.dump_png("trace_w2008_tls_");
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 40) break;
-        mod->draw_event(time(nullptr));
+        mod->draw_event(time(nullptr), front);
     }
 
 //    front.dump_png("trace_w2008_tls_");

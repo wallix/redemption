@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 38) break;
-            mod->draw_event(now);
+            mod->draw_event(now, front);
             now++;
             LOG(LOG_INFO, "Calling Snapshot");
             front.periodic_snapshot();
@@ -510,7 +510,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 38) break;
-            mod->draw_event(now);
+            mod->draw_event(now, front);
             now++;
             LOG(LOG_INFO, "Calling Snapshot");
             front.periodic_snapshot();
@@ -745,7 +745,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "===================> count = %u", count);
             if (count++ >= 46) break;
-            mod->draw_event(now);
+            mod->draw_event(now, front);
             now++;
             LOG(LOG_INFO, "Calling Snapshot");
             front.periodic_snapshot();

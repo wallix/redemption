@@ -133,7 +133,7 @@ private:
     }
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
         this->event.reset();
     }
 

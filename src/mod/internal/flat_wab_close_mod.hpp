@@ -133,7 +133,7 @@ public:
         }
     }
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;

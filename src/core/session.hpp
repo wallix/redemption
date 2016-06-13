@@ -294,7 +294,7 @@ public:
                             secondary_event_is_set) {
                             try
                             {
-                                mm.mod->draw_event(now);
+                                mm.mod->draw_event(now, *this->front);
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
                                     signal = mm.mod->get_event().signal;

@@ -223,10 +223,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
     uint8_t updateCodes[4] = {
-          FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
-        , FastPath::FASTPATH_UPDATETYPE_BITMAP
-        , FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
-        , FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT
+          static_cast<uint8_t>(FastPath::UpdateType::SYNCHRONIZE)
+        , static_cast<uint8_t>(FastPath::UpdateType::BITMAP)
+        , static_cast<uint8_t>(FastPath::UpdateType::SYNCHRONIZE)
+        , static_cast<uint8_t>(FastPath::UpdateType::PTR_DEFAULT)
     };
 
     uint8_t i = 0;
@@ -282,10 +282,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
     uint8_t updateCodes[4] = {
-          FastPath::FASTPATH_UPDATETYPE_ORDERS
-        , FastPath::FASTPATH_UPDATETYPE_BITMAP
-        , FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
-        , FastPath::FASTPATH_UPDATETYPE_POINTER
+          static_cast<uint8_t>(FastPath::UpdateType::ORDERS)
+        , static_cast<uint8_t>(FastPath::UpdateType::BITMAP)
+        , static_cast<uint8_t>(FastPath::UpdateType::SYNCHRONIZE)
+        , static_cast<uint8_t>(FastPath::UpdateType::POINTER)
     };
 
     uint8_t i = 0;
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     out_s.out_clear_bytes(FastPath::Update_Send::GetSize(false)); // Fast-Path Update (TS_FP_UPDATE structure) size
 
-    uint8_t updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
+    uint8_t updateCode = static_cast<uint8_t>(FastPath::UpdateType::CACHED);
 
     if (in_su.payload.in_remain()) {
         FastPath::Update_Recv in_upd(in_su.payload, nullptr);

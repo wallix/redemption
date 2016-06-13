@@ -518,7 +518,7 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketT
 
             if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 LOG(LOG_INFO, "RDP CLIENT :: draw_event");
-                mod.draw_event(time(nullptr));
+                mod.draw_event(time(nullptr), front);
             }
 
         } catch (Error & e) {

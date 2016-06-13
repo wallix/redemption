@@ -20,8 +20,7 @@
     common fastpath layer at core module
 */
 
-#ifndef _REDEMPTION_CORE_RDP_FASTPATH_HPP_
-#define _REDEMPTION_CORE_RDP_FASTPATH_HPP_
+#pragma once
 
 #include "core/RDP/slowpath.hpp"
 
@@ -977,18 +976,18 @@ namespace FastPath {
 // |                                      | 2.2.9.1.2.1.8).                    |
 // +--------------------------------------+------------------------------------+
 
-    enum {
-          FASTPATH_UPDATETYPE_ORDERS       = 0x0
-        , FASTPATH_UPDATETYPE_BITMAP       = 0x1
-        , FASTPATH_UPDATETYPE_PALETTE      = 0x2
-        , FASTPATH_UPDATETYPE_SYNCHRONIZE  = 0x3
-        , FASTPATH_UPDATETYPE_SURFCMDS     = 0x4
-        , FASTPATH_UPDATETYPE_PTR_NULL     = 0x5
-        , FASTPATH_UPDATETYPE_PTR_DEFAULT  = 0x6
-        , FASTPATH_UPDATETYPE_PTR_POSITION = 0x8
-        , FASTPATH_UPDATETYPE_COLOR        = 0x9
-        , FASTPATH_UPDATETYPE_CACHED       = 0xA
-        , FASTPATH_UPDATETYPE_POINTER      = 0xB
+    enum class UpdateType {
+          ORDERS       = 0x0
+        , BITMAP       = 0x1
+        , PALETTE      = 0x2
+        , SYNCHRONIZE  = 0x3
+        , SURFCMDS     = 0x4
+        , PTR_NULL     = 0x5
+        , PTR_DEFAULT  = 0x6
+        , PTR_POSITION = 0x8
+        , COLOR        = 0x9
+        , CACHED       = 0xA
+        , POINTER      = 0xB
     };
 
 // fragmentation (2 bits): Fast-path fragment sequencing information—support for
@@ -1294,4 +1293,3 @@ namespace FastPath {
 
 } // namespace FastPath
 
-#endif // #ifndef _REDEMPTION_CORE_RDP_FASTPATH_HPP_
