@@ -77,7 +77,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         std::string const & member_name,
         Pack const & infos
     ) {
-        apply_if_contains<spec::attr>(infos, [&, this](auto && attr) {
+        apply_if_contains<spec::attr>(infos, [&, this](auto && attr, auto && infos) {
             auto type = pack_get<spec::type_>(infos);
 
             this->write_description(pack_contains<desc>(infos), type, infos);
@@ -93,7 +93,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
             this->out() << "\"" << member_name << " = ";
             this->inherit().write_type(type, get_default(type, infos));
             this->out() << "\\n\\n\"\n\n";
-        });
+        }, infos);
     }
 
     struct macroio {

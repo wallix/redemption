@@ -156,7 +156,11 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             this->tab(); this->out() << "    using sesman_and_spec_type = ";
             this->inherit().write_type_spec(type_sesman);
             this->out() << ";\n";
-        };
+            this->tab(); this->out() << "    using mapped_type = sesman_and_spec_type;\n";
+        }
+        else {
+            this->tab(); this->out() << "    using mapped_type = type;\n";
+        }
 
         if (std::is_convertible<decltype(type), type_<Font>>::value) {
             this->tab(); this->out() << "    font(char const * filename) : value(filename) {}\n";
@@ -164,7 +168,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         }
         else {
             this->tab(); this->out() << "    type value";
-            this->write_assignable_default(pack_contains<default_>(infos), type, infos);
+            this->write_assignable_default(pack_contains<default_>(infos), type, &infos);
             this->out() << ";\n";
         }
         this->tab(); this->out() << "};\n";
@@ -205,16 +209,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
 
     template<class T, class U>
-    void write_assignable_default(std::true_type, type_<T>, val<default_<U>> const & d)
-    { this->inherit().write_value(d.x.value); }
+    void write_assignable_default(std::true_type, type_<T>, val<default_<U>> const * d)
+    { this->inherit().write_value(d->x.value); }
 
     template<unsigned N, class U>
-    void write_assignable_default(std::true_type, type_<types::fixed_binary<N>>, val<default_<U>> const & d)
+    void write_assignable_default(std::true_type, type_<types::fixed_binary<N>>, val<default_<U>> const * d)
     {
-        if (d.x.value.size() != N) {
+        if (d->x.value.size() != N) {
             throw std::runtime_error("invalide keys size");
         }
-        this->out() << "{{" << io_hexkey{d.x.value.c_str(), N, "0x", ", "} << "}}";
+        this->out() << "{{" << io_hexkey{d->x.value.c_str(), N, "0x", ", "} << "}}";
     }
 
     void write_assignable_default(std::false_type, ...)

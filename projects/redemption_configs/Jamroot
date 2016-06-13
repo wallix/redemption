@@ -216,9 +216,11 @@ constant LIB_SAN_DEPENDENCY :
 project configs
     : requirements
     <include>src
-    <include>include
+    <include>include/autogen
+    <include>include/variant
     <include>../../src/
     <include>../../src/core
+    <include>../../src/system/linux
 
     <conditional>@defines
 

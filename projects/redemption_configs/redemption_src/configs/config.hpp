@@ -158,16 +158,11 @@ public:
     }
 
 private:
-    template<class> struct void_t { using type = void; };
-    template<class T, class = void> struct get_value_spec_type { using type = typename T::type; };
-    template<class T> struct get_value_spec_type<T, typename void_t<typename T::sesman_and_spec_type>::type>
-    { using type = typename T::sesman_and_spec_type; };
-
     template<class T, class... Args>
     void set_value(Args && ... args) {
         configs::set_value(
             static_cast<T&>(this->variables).value,
-            configs::spec_type<typename get_value_spec_type<T>::type>{},
+            configs::spec_type<typename T::mapped_type>{},
             std::forward<Args>(args)...
         );
         this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
