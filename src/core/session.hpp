@@ -354,32 +354,25 @@ public:
 
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-                            if (enddate &&
-                                mm.is_up_and_running()) {
+                            if (enddate && mm.is_up_and_running()) {
                                 if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
-                                    osd_state = [&](uint32_t enddata) -> unsigned {
-                                        if (!enddata || enddata <= static_cast<uint32_t>(now)) {
-                                            return OSD_STATE_INVALID;
-                                        }
-                                        unsigned i = (std::lower_bound(
-                                              timers.rbegin(), timers.rend(), enddata - start_time)
-                                            - timers.rbegin()) * (-1);
-                                        return i ? i : 0;
-                                    }(this->ini.get<cfg::context::end_date_cnx>());
+                                    osd_state = (enddate <= static_cast<uint32_t>(now))
+                                        ? OSD_STATE_INVALID 
+                                        : timers.rbegin() 
+                                            - std::lower_bound(
+                                                timers.rbegin(), 
+                                                timers.rend(), 
+                                                enddate - start_time);
                                 }
-                                else if (osd_state < OSD_STATE_INVALID &&
-                                         enddate - now <= timers[osd_state]) {
+                                else if (osd_state < OSD_STATE_INVALID 
+                                     && enddate - now <= timers[osd_state]) {
                                     std::string mes;
                                     mes.reserve(128);
                                     const unsigned minutes = (enddate - now + 30) / 60;
                                     mes += std::to_string(minutes);
                                     mes += ' ';
                                     mes += TR("minute", language(this->ini));
-                                    if (minutes > 1) {
-                                        mes += "s ";
-                                    } else {
-                                        mes += ' ';
-                                    }
+                                    mes += (minutes > 1) ? "s " : " ";
                                     mes += TR("before_closing", language(this->ini));
                                     mm.osd_message(std::move(mes), false);
                                     ++osd_state;
@@ -417,7 +410,8 @@ public:
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
-        if (!this->ini.is_asked<cfg::globals::host>() && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
+        if (!this->ini.is_asked<cfg::globals::host>() 
+        && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
         this->front->stop_capture();
