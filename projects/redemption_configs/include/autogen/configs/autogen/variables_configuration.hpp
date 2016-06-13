@@ -14,6 +14,7 @@ namespace cfg {
             static constexpr unsigned index() { return 0; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_AUTH_USER
@@ -26,6 +27,7 @@ namespace cfg {
             static constexpr unsigned index() { return 1; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_HOST
@@ -38,6 +40,7 @@ namespace cfg {
             static constexpr unsigned index() { return 2; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET
@@ -50,6 +53,7 @@ namespace cfg {
             static constexpr unsigned index() { return 3; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_DEVICE
@@ -62,6 +66,7 @@ namespace cfg {
             static constexpr unsigned index() { return 4; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_DEVICE_ID
@@ -74,6 +79,7 @@ namespace cfg {
             static constexpr unsigned index() { return 5; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_USER
@@ -86,6 +92,7 @@ namespace cfg {
             static constexpr unsigned index() { return 6; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION
@@ -98,6 +105,7 @@ namespace cfg {
             static constexpr unsigned index() { return 7; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT
@@ -110,6 +118,7 @@ namespace cfg {
             static constexpr unsigned index() { return 8; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD
@@ -122,6 +131,7 @@ namespace cfg {
             static constexpr unsigned index() { return 9; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // Support of Bitmap Cache.
@@ -133,6 +143,7 @@ namespace cfg {
             static constexpr char const * name() { return "bitmap_cache"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // type: bool
@@ -143,6 +154,7 @@ namespace cfg {
             static constexpr char const * name() { return "glyph_cache"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: unsigned int
@@ -153,6 +165,7 @@ namespace cfg {
             static constexpr char const * name() { return "port"; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{3389};
         };
         // type: bool
@@ -163,6 +176,7 @@ namespace cfg {
             static constexpr char const * name() { return "nomouse"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: bool
@@ -173,6 +187,7 @@ namespace cfg {
             static constexpr char const * name() { return "notimestamp"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: Level
@@ -183,6 +198,7 @@ namespace cfg {
             static constexpr char const * name() { return "encryptionLevel"; }
             using type = Level;
             using sesman_and_spec_type = Level;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(0)};
         };
         // type: std::string
@@ -193,6 +209,7 @@ namespace cfg {
             static constexpr char const * name() { return "authfile"; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value = "/var/run/redemption-sesman-sock";
         };
         // Time out during RDP handshake stage.
@@ -204,6 +221,7 @@ namespace cfg {
             static constexpr char const * name() { return "handshake_timeout"; }
             using type = std::chrono::seconds;
             using sesman_and_spec_type = std::chrono::seconds;
+            using mapped_type = sesman_and_spec_type;
             type value{10};
         };
         // No traffic auto disconnection.
@@ -215,6 +233,7 @@ namespace cfg {
             static constexpr char const * name() { return "session_timeout"; }
             using type = std::chrono::seconds;
             using sesman_and_spec_type = std::chrono::seconds;
+            using mapped_type = sesman_and_spec_type;
             type value{900};
         };
         // Keepalive.
@@ -226,6 +245,7 @@ namespace cfg {
             static constexpr char const * name() { return "keepalive_grace_delay"; }
             using type = std::chrono::seconds;
             using sesman_and_spec_type = std::chrono::seconds;
+            using mapped_type = sesman_and_spec_type;
             type value{30};
         };
         // Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
@@ -237,6 +257,7 @@ namespace cfg {
             static constexpr char const * name() { return "authentication_timeout"; }
             using type = std::chrono::seconds;
             using sesman_and_spec_type = std::chrono::seconds;
+            using mapped_type = sesman_and_spec_type;
             type value{120};
         };
         // Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
@@ -248,6 +269,7 @@ namespace cfg {
             static constexpr char const * name() { return "close_timeout"; }
             using type = std::chrono::seconds;
             using sesman_and_spec_type = std::chrono::seconds;
+            using mapped_type = sesman_and_spec_type;
             type value{600};
         };
         // AUTHID_GLOBALS_TRACE_TYPE
@@ -260,6 +282,7 @@ namespace cfg {
             static constexpr unsigned index() { return 10; }
             using type = TraceType;
             using sesman_and_spec_type = TraceType;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // type: std::string
@@ -270,6 +293,7 @@ namespace cfg {
             static constexpr char const * name() { return "listen_address"; }
             using type = std::string;
             using sesman_and_spec_type = ::configs::spec_types::ip;
+            using mapped_type = sesman_and_spec_type;
             type value = "0.0.0.0";
         };
         // Allow IP Transparent.
@@ -281,6 +305,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_ip_transparent"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Proxy certificate password.
@@ -292,6 +317,7 @@ namespace cfg {
             static constexpr char const * name() { return "certificate_password"; }
             using type = char[255];
             using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+            using mapped_type = sesman_and_spec_type;
             type value = "inquisition";
         };
         // type: ::configs::spec_types::directory_path
@@ -302,6 +328,7 @@ namespace cfg {
             static constexpr char const * name() { return "png_path"; }
             using type = ::configs::spec_types::directory_path;
             using sesman_and_spec_type = ::configs::spec_types::directory_path;
+            using mapped_type = sesman_and_spec_type;
             type value = PNG_PATH;
         };
         // type: ::configs::spec_types::directory_path
@@ -312,6 +339,7 @@ namespace cfg {
             static constexpr char const * name() { return "wrm_path"; }
             using type = ::configs::spec_types::directory_path;
             using sesman_and_spec_type = ::configs::spec_types::directory_path;
+            using mapped_type = sesman_and_spec_type;
             type value = WRM_PATH;
         };
         // AUTHID_GLOBALS_IS_REC
@@ -324,6 +352,7 @@ namespace cfg {
             static constexpr unsigned index() { return 11; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_GLOBALS_MOVIE_PATH
@@ -336,6 +365,7 @@ namespace cfg {
             static constexpr unsigned index() { return 12; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // Support of Bitmap Update.
@@ -347,6 +377,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_bitmap_update"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Show close screen.
@@ -358,6 +389,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_close_box"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // type: bool
@@ -368,6 +400,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_osd"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // type: bool
@@ -378,6 +411,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_osd_display_remote_target"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // type: ::configs::spec_types::directory_path
@@ -388,6 +422,7 @@ namespace cfg {
             static constexpr char const * name() { return "persistent_path"; }
             using type = ::configs::spec_types::directory_path;
             using sesman_and_spec_type = ::configs::spec_types::directory_path;
+            using mapped_type = sesman_and_spec_type;
             type value = PERSISTENT_PATH;
         };
         // type: bool
@@ -398,6 +433,7 @@ namespace cfg {
             static constexpr char const * name() { return "disable_proxy_opt"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: bool
@@ -408,6 +444,7 @@ namespace cfg {
             static constexpr char const * name() { return "allow_using_multiple_monitors"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Needed to refresh screen of Windows Server 2012.
@@ -419,6 +456,7 @@ namespace cfg {
             static constexpr char const * name() { return "bogus_refresh_rect"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
     };
@@ -432,6 +470,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_session_log"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // type: KeyboardInputMaskingLevel
@@ -442,6 +481,7 @@ namespace cfg {
             static constexpr char const * name() { return "keyboard_input_masking_level"; }
             using type = KeyboardInputMaskingLevel;
             using sesman_and_spec_type = KeyboardInputMaskingLevel;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(3)};
         };
     };
@@ -457,6 +497,7 @@ namespace cfg {
             static constexpr unsigned index() { return 13; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic
@@ -468,6 +509,7 @@ namespace cfg {
             static constexpr char const * name() { return "keyboard_layout_proposals"; }
             using type = std::string;
             using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
+            using mapped_type = sesman_and_spec_type;
             type value = "en-US, fr-FR, de-DE, ru-RU";
         };
         // If true, ignore password provided by RDP client, user need do login manually.
@@ -479,6 +521,7 @@ namespace cfg {
             static constexpr char const * name() { return "ignore_logon_password"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Enable font smoothing (0x80).
@@ -490,6 +533,7 @@ namespace cfg {
             static constexpr char const * name() { return "performance_flags_default"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{128};
         };
         // Disable theme (0x8).
@@ -502,6 +546,7 @@ namespace cfg {
             static constexpr char const * name() { return "performance_flags_force_present"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{40};
         };
         // type: uint32_t
@@ -512,6 +557,7 @@ namespace cfg {
             static constexpr char const * name() { return "performance_flags_force_not_present"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // If enabled, avoid automatically font smoothing in recorded session.
@@ -523,6 +569,7 @@ namespace cfg {
             static constexpr char const * name() { return "auto_adjust_performance_flags"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Fallback to RDP Legacy Encryption if client does not support TLS.
@@ -534,6 +581,7 @@ namespace cfg {
             static constexpr char const * name() { return "tls_fallback_legacy"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: bool
@@ -544,6 +592,7 @@ namespace cfg {
             static constexpr char const * name() { return "tls_support"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Needed to connect with jrdp, based on bogus X224 layer code.
@@ -555,6 +604,7 @@ namespace cfg {
             static constexpr char const * name() { return "bogus_neg_request"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code.
@@ -566,6 +616,7 @@ namespace cfg {
             static constexpr char const * name() { return "bogus_user_id"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
@@ -579,6 +630,7 @@ namespace cfg {
             static constexpr unsigned index() { return 14; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: RdpCompression
@@ -589,6 +641,7 @@ namespace cfg {
             static constexpr char const * name() { return "rdp_compression"; }
             using type = RdpCompression;
             using sesman_and_spec_type = RdpCompression;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(4)};
         };
         // type: ColorDepth
@@ -599,6 +652,7 @@ namespace cfg {
             static constexpr char const * name() { return "max_color_depth"; }
             using type = ColorDepth;
             using sesman_and_spec_type = ColorDepth;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(24)};
         };
         // Persistent Disk Bitmap Cache on the front side.
@@ -610,6 +664,7 @@ namespace cfg {
             static constexpr char const * name() { return "persistent_disk_bitmap_cache"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
@@ -621,6 +676,7 @@ namespace cfg {
             static constexpr char const * name() { return "cache_waiting_list"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
@@ -632,6 +688,7 @@ namespace cfg {
             static constexpr char const * name() { return "persist_bitmap_cache_on_disk"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Support of Bitmap Compression.
@@ -643,6 +700,7 @@ namespace cfg {
             static constexpr char const * name() { return "bitmap_compression"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Enables support of Clent Fast-Path Input Event PDUs.
@@ -654,6 +712,7 @@ namespace cfg {
             static constexpr char const * name() { return "fast_path"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // type: bool
@@ -664,6 +723,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_suppress_output"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // type: std::string
@@ -674,6 +734,7 @@ namespace cfg {
             static constexpr char const * name() { return "ssl_cipher_list"; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
     };
@@ -687,6 +748,7 @@ namespace cfg {
             static constexpr char const * name() { return "rdp_compression"; }
             using type = RdpCompression;
             using sesman_and_spec_type = RdpCompression;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(4)};
         };
         // type: bool
@@ -697,6 +759,7 @@ namespace cfg {
             static constexpr char const * name() { return "disconnect_on_logon_user_change"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: std::chrono::seconds
@@ -707,6 +770,7 @@ namespace cfg {
             static constexpr char const * name() { return "open_session_timeout"; }
             using type = std::chrono::seconds;
             using sesman_and_spec_type = std::chrono::seconds;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Enables support of additional drawing orders:
@@ -723,6 +787,7 @@ namespace cfg {
             static constexpr char const * name() { return "extra_orders"; }
             using type = std::string;
             using sesman_and_spec_type = ::configs::spec_types::list<unsigned int>;
+            using mapped_type = sesman_and_spec_type;
             type value = "15,16,17,18,22";
         };
         // NLA authentication in secondary target.
@@ -734,6 +799,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_nla"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // If enabled, NLA authentication will try Kerberos before NTLM.
@@ -746,6 +812,7 @@ namespace cfg {
             static constexpr char const * name() { return "enable_kerberos"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Persistent Disk Bitmap Cache on the mod side.
@@ -757,6 +824,7 @@ namespace cfg {
             static constexpr char const * name() { return "persistent_disk_bitmap_cache"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled).
@@ -768,6 +836,7 @@ namespace cfg {
             static constexpr char const * name() { return "cache_waiting_list"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // If enabled, the contents of Persistent Bitmap Caches are stored on disk.
@@ -779,6 +848,7 @@ namespace cfg {
             static constexpr char const * name() { return "persist_bitmap_cache_on_disk"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
@@ -790,6 +860,7 @@ namespace cfg {
             static constexpr char const * name() { return "allow_channels"; }
             using type = std::string;
             using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
+            using mapped_type = sesman_and_spec_type;
             type value = "*";
         };
         // Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
@@ -801,6 +872,7 @@ namespace cfg {
             static constexpr char const * name() { return "deny_channels"; }
             using type = std::string;
             using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // Enables support of Server Fast-Path Update PDUs.
@@ -812,6 +884,7 @@ namespace cfg {
             static constexpr char const * name() { return "fast_path"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Enables Server Redirection Support.
@@ -823,6 +896,7 @@ namespace cfg {
             static constexpr char const * name() { return "server_redirection_support"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: RedirectionInfo
@@ -832,6 +906,7 @@ namespace cfg {
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "redir_info"; }
             using type = RedirectionInfo;
+            using mapped_type = type;
             type value{};
         };
         // Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
@@ -845,6 +920,7 @@ namespace cfg {
             static constexpr unsigned index() { return 15; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // Needed to get the old behavior of cursor rendering.
@@ -856,6 +932,7 @@ namespace cfg {
             static constexpr char const * name() { return "bogus_linux_cursor"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
@@ -868,6 +945,7 @@ namespace cfg {
             static constexpr unsigned index() { return 16; }
             using type = std::string;
             using sesman_and_spec_type = ::configs::spec_types::list<std::string>;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL
@@ -880,6 +958,7 @@ namespace cfg {
             static constexpr unsigned index() { return 17; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.
@@ -891,6 +970,7 @@ namespace cfg {
             static constexpr char const * name() { return "auth_channel"; }
             using type = char[8];
             using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+            using mapped_type = sesman_and_spec_type;
             type value = "*";
         };
         // AUTHID_MOD_RDP_ALTERNATE_SHELL
@@ -903,6 +983,7 @@ namespace cfg {
             static constexpr unsigned index() { return 18; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY
@@ -915,6 +996,7 @@ namespace cfg {
             static constexpr unsigned index() { return 19; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL
@@ -927,6 +1009,7 @@ namespace cfg {
             static constexpr unsigned index() { return 20; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE
@@ -939,6 +1022,7 @@ namespace cfg {
             static constexpr unsigned index() { return 21; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // Minimum supported server : Windows Server 2008.
@@ -953,6 +1037,7 @@ namespace cfg {
             static constexpr unsigned index() { return 22; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // AUTHID_MOD_RDP_ENABLE_SESSION_PROBE_LAUNCH_MASK
@@ -965,6 +1050,7 @@ namespace cfg {
             static constexpr unsigned index() { return 23; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE
@@ -977,6 +1063,7 @@ namespace cfg {
             static constexpr unsigned index() { return 24; }
             using type = SessionProbeOnLaunchFailure;
             using sesman_and_spec_type = SessionProbeOnLaunchFailure;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(2)};
         };
         // This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
@@ -991,6 +1078,7 @@ namespace cfg {
             static constexpr unsigned index() { return 25; }
             using type = std::chrono::milliseconds;
             using sesman_and_spec_type = std::chrono::milliseconds;
+            using mapped_type = sesman_and_spec_type;
             type value{20000};
         };
         // This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
@@ -1005,6 +1093,7 @@ namespace cfg {
             static constexpr unsigned index() { return 26; }
             using type = std::chrono::milliseconds;
             using sesman_and_spec_type = std::chrono::milliseconds;
+            using mapped_type = sesman_and_spec_type;
             type value{7000};
         };
         // Minimum supported server : Windows Server 2008.
@@ -1018,6 +1107,7 @@ namespace cfg {
             static constexpr unsigned index() { return 27; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT
@@ -1030,6 +1120,7 @@ namespace cfg {
             static constexpr unsigned index() { return 28; }
             using type = std::chrono::milliseconds;
             using sesman_and_spec_type = std::chrono::milliseconds;
+            using mapped_type = sesman_and_spec_type;
             type value{5000};
         };
         // AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER
@@ -1042,6 +1133,7 @@ namespace cfg {
             static constexpr unsigned index() { return 29; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // End automatically a disconnected session
@@ -1055,6 +1147,7 @@ namespace cfg {
             static constexpr unsigned index() { return 30; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: bool
@@ -1065,6 +1158,7 @@ namespace cfg {
             static constexpr char const * name() { return "session_probe_customize_executable_name"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: char[512]
@@ -1075,6 +1169,7 @@ namespace cfg {
             static constexpr char const * name() { return "session_probe_alternate_shell"; }
             using type = char[512];
             using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+            using mapped_type = sesman_and_spec_type;
             type value = "cmd /k";
         };
         // Keep known server certificates on WAB
@@ -1088,6 +1183,7 @@ namespace cfg {
             static constexpr unsigned index() { return 31; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // AUTHID_MOD_RDP_SERVER_CERT_CHECK
@@ -1100,6 +1196,7 @@ namespace cfg {
             static constexpr unsigned index() { return 32; }
             using type = ServerCertCheck;
             using sesman_and_spec_type = ServerCertCheck;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Warn if check allow connexion to server.
@@ -1113,6 +1210,7 @@ namespace cfg {
             static constexpr unsigned index() { return 33; }
             using type = ServerNotification;
             using sesman_and_spec_type = ServerNotification;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Warn that new server certificate file was created.
@@ -1126,6 +1224,7 @@ namespace cfg {
             static constexpr unsigned index() { return 34; }
             using type = ServerNotification;
             using sesman_and_spec_type = ServerNotification;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Warn that server certificate file was successfully checked.
@@ -1139,6 +1238,7 @@ namespace cfg {
             static constexpr unsigned index() { return 35; }
             using type = ServerNotification;
             using sesman_and_spec_type = ServerNotification;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Warn that server certificate file checking failed.
@@ -1152,6 +1252,7 @@ namespace cfg {
             static constexpr unsigned index() { return 36; }
             using type = ServerNotification;
             using sesman_and_spec_type = ServerNotification;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Warn that server certificate check raised some internal error.
@@ -1165,6 +1266,7 @@ namespace cfg {
             static constexpr unsigned index() { return 37; }
             using type = ServerNotification;
             using sesman_and_spec_type = ServerNotification;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Do not transmit client machine name or RDP server.
@@ -1176,6 +1278,7 @@ namespace cfg {
             static constexpr char const * name() { return "hide_client_name"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
     };
@@ -1192,6 +1295,7 @@ namespace cfg {
             static constexpr unsigned index() { return 38; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // Enable or disable the clipboard from server (server to client).
@@ -1205,6 +1309,7 @@ namespace cfg {
             static constexpr unsigned index() { return 39; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // Sets the encoding types in which pixel data can be sent by the VNC server:
@@ -1221,6 +1326,7 @@ namespace cfg {
             static constexpr char const * name() { return "encodings"; }
             using type = std::string;
             using sesman_and_spec_type = ::configs::spec_types::list<int>;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: bool
@@ -1231,6 +1337,7 @@ namespace cfg {
             static constexpr char const * name() { return "allow_authentification_retries"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // VNC server clipboard data encoding type.
@@ -1244,6 +1351,7 @@ namespace cfg {
             static constexpr unsigned index() { return 40; }
             using type = ClipboardEncodingType;
             using sesman_and_spec_type = ClipboardEncodingType;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP
@@ -1256,6 +1364,7 @@ namespace cfg {
             static constexpr unsigned index() { return 41; }
             using type = VncBogusClipboardInfiniteLoop;
             using sesman_and_spec_type = VncBogusClipboardInfiniteLoop;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(0)};
         };
     };
@@ -1270,6 +1379,7 @@ namespace cfg {
             static constexpr char const * name() { return "on_end_of_data"; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
     };
@@ -1283,6 +1393,7 @@ namespace cfg {
             static constexpr char const * name() { return "capture_groupid"; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{33};
         };
         // type: CaptureFlags
@@ -1293,6 +1404,7 @@ namespace cfg {
             static constexpr char const * name() { return "capture_flags"; }
             using type = CaptureFlags;
             using sesman_and_spec_type = CaptureFlags;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(3)};
         };
         // Frame interval.
@@ -1304,6 +1416,7 @@ namespace cfg {
             static constexpr char const * name() { return "png_interval"; }
             using type = std::chrono::duration<unsigned int, std::ratio<1, 10>>;
             using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 10>>;
+            using mapped_type = sesman_and_spec_type;
             type value{10};
         };
         // Frame interval.
@@ -1315,6 +1428,7 @@ namespace cfg {
             static constexpr char const * name() { return "frame_interval"; }
             using type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
             using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
+            using mapped_type = sesman_and_spec_type;
             type value{40};
         };
         // Time between 2 wrm movies.
@@ -1326,6 +1440,7 @@ namespace cfg {
             static constexpr char const * name() { return "break_interval"; }
             using type = std::chrono::seconds;
             using sesman_and_spec_type = std::chrono::seconds;
+            using mapped_type = sesman_and_spec_type;
             type value{600};
         };
         // Number of png captures to keep.
@@ -1337,6 +1452,7 @@ namespace cfg {
             static constexpr char const * name() { return "png_limit"; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{5};
         };
         // type: ::configs::spec_types::directory_path
@@ -1347,6 +1463,7 @@ namespace cfg {
             static constexpr char const * name() { return "replay_path"; }
             using type = ::configs::spec_types::directory_path;
             using sesman_and_spec_type = ::configs::spec_types::directory_path;
+            using mapped_type = sesman_and_spec_type;
             type value = "/tmp/";
         };
         // type: ::configs::spec_types::directory_path
@@ -1357,6 +1474,7 @@ namespace cfg {
             static constexpr char const * name() { return "hash_path"; }
             using type = ::configs::spec_types::directory_path;
             using sesman_and_spec_type = ::configs::spec_types::directory_path;
+            using mapped_type = sesman_and_spec_type;
             type value = HASH_PATH;
         };
         // type: ::configs::spec_types::directory_path
@@ -1367,6 +1485,7 @@ namespace cfg {
             static constexpr char const * name() { return "record_tmp_path"; }
             using type = ::configs::spec_types::directory_path;
             using sesman_and_spec_type = ::configs::spec_types::directory_path;
+            using mapped_type = sesman_and_spec_type;
             type value = RECORD_TMP_PATH;
         };
         // type: ::configs::spec_types::directory_path
@@ -1377,6 +1496,7 @@ namespace cfg {
             static constexpr char const * name() { return "record_path"; }
             using type = ::configs::spec_types::directory_path;
             using sesman_and_spec_type = ::configs::spec_types::directory_path;
+            using mapped_type = sesman_and_spec_type;
             type value = RECORD_PATH;
         };
         // type: bool
@@ -1386,6 +1506,7 @@ namespace cfg {
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "inactivity_pause"; }
             using type = bool;
+            using mapped_type = type;
             type value{0};
         };
         // type: std::chrono::seconds
@@ -1395,6 +1516,7 @@ namespace cfg {
             static constexpr char const * section() { return "video"; }
             static constexpr char const * name() { return "inactivity_timeout"; }
             using type = std::chrono::seconds;
+            using mapped_type = type;
             type value{300};
         };
         // Disable keyboard log:
@@ -1406,6 +1528,7 @@ namespace cfg {
             static constexpr char const * name() { return "disable_keyboard_log"; }
             using type = KeyboardLogFlags;
             using sesman_and_spec_type = KeyboardLogFlags;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Disable clipboard log:
@@ -1417,6 +1540,7 @@ namespace cfg {
             static constexpr char const * name() { return "disable_clipboard_log"; }
             using type = ClipboardLogFlags;
             using sesman_and_spec_type = ClipboardLogFlags;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // Disable (redirected) file system log:
@@ -1428,6 +1552,7 @@ namespace cfg {
             static constexpr char const * name() { return "disable_file_system_log"; }
             using type = FileSystemLogFlags;
             using sesman_and_spec_type = FileSystemLogFlags;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // AUTHID_VIDEO_RT_DISPLAY
@@ -1440,6 +1565,7 @@ namespace cfg {
             static constexpr unsigned index() { return 42; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: ColorDepthSelectionStrategy
@@ -1450,6 +1576,7 @@ namespace cfg {
             static constexpr char const * name() { return "wrm_color_depth_selection_strategy"; }
             using type = ColorDepthSelectionStrategy;
             using sesman_and_spec_type = ColorDepthSelectionStrategy;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
         // type: WrmCompressionAlgorithm
@@ -1460,6 +1587,7 @@ namespace cfg {
             static constexpr char const * name() { return "wrm_compression_algorithm"; }
             using type = WrmCompressionAlgorithm;
             using sesman_and_spec_type = WrmCompressionAlgorithm;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
         };
     };
@@ -1475,6 +1603,7 @@ namespace cfg {
             static constexpr unsigned index() { return 43; }
             using type = std::array<unsigned char, 32>;
             using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
+            using mapped_type = sesman_and_spec_type;
             type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
         };
         // AUTHID_CRYPTO_KEY1
@@ -1487,6 +1616,7 @@ namespace cfg {
             static constexpr unsigned index() { return 44; }
             using type = std::array<unsigned char, 32>;
             using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
+            using mapped_type = sesman_and_spec_type;
             type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
         };
     };
@@ -1500,6 +1630,7 @@ namespace cfg {
             static constexpr char const * name() { return "x224"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1510,6 +1641,7 @@ namespace cfg {
             static constexpr char const * name() { return "mcs"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1520,6 +1652,7 @@ namespace cfg {
             static constexpr char const * name() { return "sec"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1530,6 +1663,7 @@ namespace cfg {
             static constexpr char const * name() { return "rdp"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1540,6 +1674,7 @@ namespace cfg {
             static constexpr char const * name() { return "primary_orders"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1550,6 +1685,7 @@ namespace cfg {
             static constexpr char const * name() { return "secondary_orders"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1560,6 +1696,7 @@ namespace cfg {
             static constexpr char const * name() { return "bitmap"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1570,6 +1707,7 @@ namespace cfg {
             static constexpr char const * name() { return "capture"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1580,6 +1718,7 @@ namespace cfg {
             static constexpr char const * name() { return "auth"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1590,6 +1729,7 @@ namespace cfg {
             static constexpr char const * name() { return "session"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1600,6 +1740,7 @@ namespace cfg {
             static constexpr char const * name() { return "front"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1610,6 +1751,7 @@ namespace cfg {
             static constexpr char const * name() { return "mod_rdp"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1620,6 +1762,7 @@ namespace cfg {
             static constexpr char const * name() { return "mod_vnc"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1630,6 +1773,7 @@ namespace cfg {
             static constexpr char const * name() { return "mod_int"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1640,6 +1784,7 @@ namespace cfg {
             static constexpr char const * name() { return "mod_xup"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1650,6 +1795,7 @@ namespace cfg {
             static constexpr char const * name() { return "widget"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1660,6 +1806,7 @@ namespace cfg {
             static constexpr char const * name() { return "input"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1670,6 +1817,7 @@ namespace cfg {
             static constexpr char const * name() { return "password"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1680,6 +1828,7 @@ namespace cfg {
             static constexpr char const * name() { return "compression"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1690,6 +1839,7 @@ namespace cfg {
             static constexpr char const * name() { return "cache"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1700,6 +1850,7 @@ namespace cfg {
             static constexpr char const * name() { return "bitmap_update"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1710,6 +1861,7 @@ namespace cfg {
             static constexpr char const * name() { return "performance"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: uint32_t
@@ -1720,6 +1872,7 @@ namespace cfg {
             static constexpr char const * name() { return "pass_dialog_box"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: unsigned int
@@ -1730,6 +1883,7 @@ namespace cfg {
             static constexpr char const * name() { return "config"; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{2};
         };
     };
@@ -1745,6 +1899,7 @@ namespace cfg {
             static constexpr unsigned index() { return 45; }
             using type = Language;
             using sesman_and_spec_type = Language;
+            using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(0)};
         };
         // AUTHID_TRANSLATION_PASSWORD_EN
@@ -1757,6 +1912,7 @@ namespace cfg {
             static constexpr unsigned index() { return 46; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_TRANSLATION_PASSWORD_FR
@@ -1769,6 +1925,7 @@ namespace cfg {
             static constexpr unsigned index() { return 47; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
     };
@@ -1782,6 +1939,7 @@ namespace cfg {
             static constexpr char const * name() { return "theme"; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
     };
@@ -1794,6 +1952,7 @@ namespace cfg {
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "movie"; }
             using type = ::configs::spec_types::directory_path;
+            using mapped_type = type;
             type value{};
         };
         // AUTHID_CONTEXT_OPT_BITRATE
@@ -1806,6 +1965,7 @@ namespace cfg {
             static constexpr unsigned index() { return 48; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{40000};
         };
         // AUTHID_CONTEXT_OPT_FRAMERATE
@@ -1818,6 +1978,7 @@ namespace cfg {
             static constexpr unsigned index() { return 49; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{5};
         };
         // AUTHID_CONTEXT_OPT_QSCALE
@@ -1830,6 +1991,7 @@ namespace cfg {
             static constexpr unsigned index() { return 50; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{15};
         };
         // AUTHID_CONTEXT_OPT_BPP
@@ -1842,6 +2004,7 @@ namespace cfg {
             static constexpr unsigned index() { return 51; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{24};
         };
         // AUTHID_CONTEXT_OPT_HEIGHT
@@ -1854,6 +2017,7 @@ namespace cfg {
             static constexpr unsigned index() { return 52; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{600};
         };
         // AUTHID_CONTEXT_OPT_WIDTH
@@ -1866,6 +2030,7 @@ namespace cfg {
             static constexpr unsigned index() { return 53; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{800};
         };
         // AUTHID_CONTEXT_AUTH_ERROR_MESSAGE
@@ -1878,6 +2043,7 @@ namespace cfg {
             static constexpr unsigned index() { return 54; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR
@@ -1890,6 +2056,7 @@ namespace cfg {
             static constexpr unsigned index() { return 55; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE
@@ -1902,6 +2069,7 @@ namespace cfg {
             static constexpr unsigned index() { return 56; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER
@@ -1914,6 +2082,7 @@ namespace cfg {
             static constexpr unsigned index() { return 57; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_GROUP_FILTER
@@ -1926,6 +2095,7 @@ namespace cfg {
             static constexpr unsigned index() { return 58; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_PROTO_FILTER
@@ -1938,6 +2108,7 @@ namespace cfg {
             static constexpr unsigned index() { return 59; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE
@@ -1950,6 +2121,7 @@ namespace cfg {
             static constexpr unsigned index() { return 60; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES
@@ -1962,6 +2134,7 @@ namespace cfg {
             static constexpr unsigned index() { return 61; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{1};
         };
         // AUTHID_CONTEXT_TARGET_PASSWORD
@@ -1974,6 +2147,7 @@ namespace cfg {
             static constexpr unsigned index() { return 62; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_TARGET_HOST
@@ -1986,6 +2160,7 @@ namespace cfg {
             static constexpr unsigned index() { return 63; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_TARGET_SERVICE
@@ -1998,6 +2173,7 @@ namespace cfg {
             static constexpr unsigned index() { return 64; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_TARGET_PORT
@@ -2010,6 +2186,7 @@ namespace cfg {
             static constexpr unsigned index() { return 65; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{3389};
         };
         // AUTHID_CONTEXT_TARGET_PROTOCOL
@@ -2022,6 +2199,7 @@ namespace cfg {
             static constexpr unsigned index() { return 66; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value = "RDP";
         };
         // AUTHID_CONTEXT_PASSWORD
@@ -2034,6 +2212,7 @@ namespace cfg {
             static constexpr unsigned index() { return 67; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_REPORTING
@@ -2046,6 +2225,7 @@ namespace cfg {
             static constexpr unsigned index() { return 68; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER
@@ -2058,6 +2238,7 @@ namespace cfg {
             static constexpr unsigned index() { return 69; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_AUTH_CHANNEL_TARGET
@@ -2070,6 +2251,7 @@ namespace cfg {
             static constexpr unsigned index() { return 70; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_MESSAGE
@@ -2082,6 +2264,7 @@ namespace cfg {
             static constexpr unsigned index() { return 71; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_ACCEPT_MESSAGE
@@ -2094,6 +2277,7 @@ namespace cfg {
             static constexpr unsigned index() { return 72; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_DISPLAY_MESSAGE
@@ -2106,6 +2290,7 @@ namespace cfg {
             static constexpr unsigned index() { return 73; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_REJECTED
@@ -2118,6 +2303,7 @@ namespace cfg {
             static constexpr unsigned index() { return 74; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_AUTHENTICATED
@@ -2130,6 +2316,7 @@ namespace cfg {
             static constexpr unsigned index() { return 75; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_KEEPALIVE
@@ -2142,6 +2329,7 @@ namespace cfg {
             static constexpr unsigned index() { return 76; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_SESSION_ID
@@ -2154,6 +2342,7 @@ namespace cfg {
             static constexpr unsigned index() { return 77; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_END_DATE_CNX
@@ -2166,6 +2355,7 @@ namespace cfg {
             static constexpr unsigned index() { return 78; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_END_TIME
@@ -2178,6 +2368,7 @@ namespace cfg {
             static constexpr unsigned index() { return 79; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_MODE_CONSOLE
@@ -2190,6 +2381,7 @@ namespace cfg {
             static constexpr unsigned index() { return 80; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value = "allow";
         };
         // AUTHID_CONTEXT_TIMEZONE
@@ -2202,6 +2394,7 @@ namespace cfg {
             static constexpr unsigned index() { return 81; }
             using type = int;
             using sesman_and_spec_type = int;
+            using mapped_type = sesman_and_spec_type;
             type value{-3600};
         };
         // AUTHID_CONTEXT_REAL_TARGET_DEVICE
@@ -2214,6 +2407,7 @@ namespace cfg {
             static constexpr unsigned index() { return 82; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE
@@ -2226,6 +2420,7 @@ namespace cfg {
             static constexpr unsigned index() { return 83; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_TICKET
@@ -2238,6 +2433,7 @@ namespace cfg {
             static constexpr unsigned index() { return 84; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_COMMENT
@@ -2250,6 +2446,7 @@ namespace cfg {
             static constexpr unsigned index() { return 85; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_DURATION
@@ -2262,6 +2459,7 @@ namespace cfg {
             static constexpr unsigned index() { return 86; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_WAITINFORETURN
@@ -2274,6 +2472,7 @@ namespace cfg {
             static constexpr unsigned index() { return 87; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_SHOWFORM
@@ -2286,6 +2485,7 @@ namespace cfg {
             static constexpr unsigned index() { return 88; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_FORMFLAG
@@ -2298,6 +2498,7 @@ namespace cfg {
             static constexpr unsigned index() { return 89; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_MODULE
@@ -2310,6 +2511,7 @@ namespace cfg {
             static constexpr unsigned index() { return 90; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value = "login";
         };
         // AUTHID_CONTEXT_FORCEMODULE
@@ -2322,6 +2524,7 @@ namespace cfg {
             static constexpr unsigned index() { return 91; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // AUTHID_CONTEXT_PROXY_OPT
@@ -2334,6 +2537,7 @@ namespace cfg {
             static constexpr unsigned index() { return 92; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_PATTERN_KILL
@@ -2346,6 +2550,7 @@ namespace cfg {
             static constexpr unsigned index() { return 93; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_PATTERN_NOTIFY
@@ -2358,6 +2563,7 @@ namespace cfg {
             static constexpr unsigned index() { return 94; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_OPT_MESSAGE
@@ -2370,6 +2576,7 @@ namespace cfg {
             static constexpr unsigned index() { return 95; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES
@@ -2382,6 +2589,7 @@ namespace cfg {
             static constexpr unsigned index() { return 96; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // type: std::string
@@ -2391,6 +2599,7 @@ namespace cfg {
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "manager_disconnect_reason"; }
             using type = std::string;
+            using mapped_type = type;
             type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON
@@ -2403,6 +2612,7 @@ namespace cfg {
             static constexpr unsigned index() { return 97; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
             type value{};
         };
         // AUTHID_CONTEXT_DISCONNECT_REASON_ACK
@@ -2415,6 +2625,7 @@ namespace cfg {
             static constexpr unsigned index() { return 98; }
             using type = bool;
             using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
             type value{0};
         };
         // type: std::string
@@ -2424,6 +2635,7 @@ namespace cfg {
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "ip_target"; }
             using type = std::string;
+            using mapped_type = type;
             type value{};
         };
     };
@@ -2435,6 +2647,7 @@ namespace cfg {
         static constexpr char const * section() { return ""; }
         static constexpr char const * name() { return "theme"; }
         using type = Theme;
+        using mapped_type = type;
         type value{};
     };
     // type: Font
@@ -2444,6 +2657,7 @@ namespace cfg {
         static constexpr char const * section() { return ""; }
         static constexpr char const * name() { return "font"; }
         using type = Font;
+        using mapped_type = type;
         font(char const * filename) : value(filename) {}
         type value;
     };

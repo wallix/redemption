@@ -160,13 +160,20 @@ bool is_empty(std::string const & str) { return str.empty(); }
 template<class T> bool is_empty(cfg_attributes::types::list<T> const &) { return true; }
 
 
-template<class T, class U>
-U const & get_default(cfg_attributes::type_<T>, val<cfg_attributes::default_<U>> const & d)
-{ return d.x.value; }
+namespace detail_
+{
+    template<class T, class U>
+    U const & get_default(cfg_attributes::type_<T>, val<cfg_attributes::default_<U>> const * d)
+    { return d->x.value; }
 
-template<class T>
-T const & get_default(cfg_attributes::type_<T>, ...)
-{ static T r{}; return r; }
+    template<class T>
+    T const & get_default(cfg_attributes::type_<T>, ...)
+    { static T r{}; return r; }
+}
+
+template<class T, class Pack>
+auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
+{ return detail_::get_default<T>(t, &infos); }
 
 
 namespace detail_

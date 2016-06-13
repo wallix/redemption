@@ -489,7 +489,7 @@ struct OutFilenameTransport
 {
     explicit OutFilenameTransport(const char * filename)
     {
-        if (this->buffer().open(filename, 0600) < 0) {
+        if (this->buffer().open(filename, 0440) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -502,7 +502,7 @@ struct CryptoOutFilenameTransport
     CryptoOutFilenameTransport(CryptoContext * crypto_ctx, const char * filename, auth_api * authentifier = nullptr)
     : CryptoOutFilenameTransport::TransportType(crypto_ctx)
     {
-        if (this->buffer().open(filename, 0600) < 0) {
+        if (this->buffer().open(filename, 0440) < 0) {
             LOG(LOG_ERR, "failed opening=%s\n", filename);
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }

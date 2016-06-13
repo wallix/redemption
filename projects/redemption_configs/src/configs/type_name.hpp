@@ -55,7 +55,8 @@ namespace detail
         {
             char const * s = __PRETTY_FUNCTION__;
 #ifdef __clang__
-            return {s + 70, s + strlen(s) - 1};
+            std::size_t const sz = strlen(s);
+            return {s + 47, s + (47 + (sz-68)/2)};
 #elif defined(__GNUG__)
             return {s + 74, s + strlen(s) - 1};
 #endif

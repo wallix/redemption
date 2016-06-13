@@ -35,44 +35,35 @@
 
 #include <array>
 
+using GraphicsColor = gdi::BlackoutGraphic;
 
-using Color4 = std::array<unsigned, 4>;
+using Color4 = std::array<uint32_t, 4>;
 
-struct RngByBpp
-{
-    unsigned igds[4] {0, 1, 2, 3};
-    Color4 & colors;
-
-    RngByBpp(Color4 & colors) : colors(colors) {}
-
-    using iterator = unsigned const *;
-
-    range<iterator> rng8() const { return {&igds[0], &igds[1]}; }
-    range<iterator> rng15() const { return {&igds[1], &igds[2]}; }
-    range<iterator> rng16() const { return {&igds[2], &igds[3]}; }
-    range<iterator> rng24() const { return {&igds[3], &igds[4]}; }
-    range<iterator> rng_all() const { BOOST_CHECK(false); return {&igds[0], &igds[0]}; }
-
-    void apply(unsigned igd, const RDPOpaqueRect& cmd, const Rect&) const {
-        this->colors[igd] = cmd.color;
-    }
-};
-
-template<bool has_enc15, bool has_enc16, bool has_enc24, class Dec>
-Color4 get_colors(Dec dec, uint32_t color) {
+Color4 get_colors(
+    gdi::GraphicDepth order_depth, uint32_t color,
+    GraphicsColor const & gd1, GraphicsColor const & gd2, GraphicsColor const & gd3
+) {
     Color4 colors {{}};
-    RngByBpp rng_by_bpp{colors};
-    gdi::GraphicCmdColorDistributor<RngByBpp, Dec, false, has_enc15, has_enc16, has_enc24>{
-        rng_by_bpp, dec
-    }(RDPOpaqueRect({}, color), Rect{});
+    using GdRef = std::reference_wrapper<GraphicsColor const>;
+    GdRef graphics[3] {gd1, gd2, gd3, };
+    gdi::RngByBpp<GdRef*> rng_by_bpp{order_depth, std::begin(graphics), std::end(graphics)};
+    gdi::draw_cmd_color_convert(
+        [&](GraphicsColor const & gdc, const RDPOpaqueRect& cmd, const Rect&) {
+            colors[gdc.order_depth().id()-1] = cmd.color;
+        }, order_depth, rng_by_bpp, RDPOpaqueRect({}, color), Rect{}
+    );
     return colors;
 }
 
 
 BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
 {
-    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color_trait<RDPOpaqueRect>::value, true);
-    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color_trait<GlyphCache>::value, false);
+    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(RDPOpaqueRect({}, 0)).value, true);
+    BOOST_CHECK_EQUAL(gdi::GraphicCmdColor::is_encodable_cmd_color(GlyphCache{}).value, false);
+
+    gdi::GraphicDepth const depth15 = gdi::GraphicDepth::depth15();
+    gdi::GraphicDepth const depth16 = gdi::GraphicDepth::depth16();
+    gdi::GraphicDepth const depth24 = gdi::GraphicDepth::depth24();
 
     decode_color15_opaquerect dec15;
     decode_color16_opaquerect dec16;
@@ -83,39 +74,72 @@ BOOST_AUTO_TEST_CASE(TestGdCmdConverter)
     encode_color24 enc24;
 
     Color4
-    colors = get_colors<1, 0, 0>(dec15, 0x0000fb);
+    colors = get_colors(depth15, 0x0000fb, depth15, depth15, depth15);
     BOOST_CHECK_EQUAL(colors[0], 0);
     BOOST_CHECK_EQUAL(colors[1], 0x0000fb);
     BOOST_CHECK_EQUAL(colors[2], 0);
     BOOST_CHECK_EQUAL(colors[3], 0);
 
-    colors = get_colors<0, 1, 0>(dec16, 0x0000fb);
+    colors = get_colors(depth16, 0x0000fb, depth16, depth16, depth16);
     BOOST_CHECK_EQUAL(colors[0], 0);
     BOOST_CHECK_EQUAL(colors[1], 0);
     BOOST_CHECK_EQUAL(colors[2], 0x0000fb);
     BOOST_CHECK_EQUAL(colors[3], 0);
 
-    colors = get_colors<0, 0, 1>(dec24, 0x0000fb);
+    colors = get_colors(depth24, 0x0000fb, depth24, depth24, depth24);
     BOOST_CHECK_EQUAL(colors[0], 0);
     BOOST_CHECK_EQUAL(colors[1], 0);
     BOOST_CHECK_EQUAL(colors[2], 0);
     BOOST_CHECK_EQUAL(colors[3], 0x0000fb);
 
-    colors = get_colors<1, 1, 1>(dec24, 0x0000fb);
-    BOOST_CHECK_EQUAL(colors[0], 0);
-    BOOST_CHECK_EQUAL(colors[1], enc15(0x0000fb));
-    BOOST_CHECK_EQUAL(colors[2], enc16(0x0000fb));
-    BOOST_CHECK_EQUAL(colors[3], 0x0000fb);
 
-    colors = get_colors<1, 1, 1>(dec16, 0x0000fb);
+    colors = get_colors(depth15, 0x0000fb, depth24, depth24, depth24);
+    BOOST_CHECK_EQUAL(colors[0], 0);
+    BOOST_CHECK_EQUAL(colors[1], 0);
+    BOOST_CHECK_EQUAL(colors[2], 0);
+    BOOST_CHECK_EQUAL(colors[3], enc24(dec15(0x0000fb)));
+
+    colors = get_colors(depth16, 0x0000fb, depth24, depth24, depth24);
+    BOOST_CHECK_EQUAL(colors[0], 0);
+    BOOST_CHECK_EQUAL(colors[1], 0);
+    BOOST_CHECK_EQUAL(colors[2], 0);
+    BOOST_CHECK_EQUAL(colors[3], enc24(dec16(0x0000fb)));
+
+    colors = get_colors(depth24, 0x0000fb, depth15, depth15, depth15);
+    BOOST_CHECK_EQUAL(colors[0], 0);
+    BOOST_CHECK_EQUAL(colors[1], enc15(dec24(0x0000fb)));
+    BOOST_CHECK_EQUAL(colors[2], 0);
+    BOOST_CHECK_EQUAL(colors[3], 0);
+
+    colors = get_colors(depth24, 0x0000fb, depth16, depth16, depth16);
+    BOOST_CHECK_EQUAL(colors[0], 0);
+    BOOST_CHECK_EQUAL(colors[1], 0);
+    BOOST_CHECK_EQUAL(colors[2], enc16(dec24(0x0000fb)));
+    BOOST_CHECK_EQUAL(colors[3], 0);
+
+
+    colors = get_colors(depth15, 0x0000fb, depth15, depth16, depth24);
+    BOOST_CHECK_EQUAL(colors[0], 0);
+    BOOST_CHECK_EQUAL(colors[1], 0x0000fb);
+    BOOST_CHECK_EQUAL(colors[2], enc16(dec15(0x0000fb)));
+    BOOST_CHECK_EQUAL(colors[3], enc24(dec15(0x0000fb)));
+
+    colors = get_colors(depth16, 0x0000fb, depth15, depth16, depth24);
     BOOST_CHECK_EQUAL(colors[0], 0);
     BOOST_CHECK_EQUAL(colors[1], enc15(dec16(0x0000fb)));
     BOOST_CHECK_EQUAL(colors[2], 0x0000fb);
     BOOST_CHECK_EQUAL(colors[3], enc24(dec16(0x0000fb)));
 
-    colors = get_colors<0, 1, 1>(dec16, 0x0000fb);
+    colors = get_colors(depth24, 0x0000fb, depth15, depth16, depth24);
+    BOOST_CHECK_EQUAL(colors[0], 0);
+    BOOST_CHECK_EQUAL(colors[1], enc15(dec24(0x0000fb)));
+    BOOST_CHECK_EQUAL(colors[2], enc16(dec24(0x0000fb)));
+    BOOST_CHECK_EQUAL(colors[3], 0x0000fb);
+
+
+    colors = get_colors(depth24, 0x0000fb, depth16, depth16, depth24);
     BOOST_CHECK_EQUAL(colors[0], 0);
     BOOST_CHECK_EQUAL(colors[1], 0);
-    BOOST_CHECK_EQUAL(colors[2], 0x0000fb);
-    BOOST_CHECK_EQUAL(colors[3], enc24(dec16(0x0000fb)));
+    BOOST_CHECK_EQUAL(colors[2], enc16(dec24(0x0000fb)));
+    BOOST_CHECK_EQUAL(colors[3], enc24(dec24(0x0000fb)));
 }
