@@ -46,6 +46,9 @@ private:
         std::vector<GdRef> gds;
         std::vector<std::reference_wrapper<gdi::CaptureApi>> snapshoters;
 
+        gdi::GraphicDepth order_depth = gdi::GraphicDepth::unspecified();
+        gdi::RngByBpp<std::vector<GdRef>::iterator> rng_by_bpp;
+
         Graphic(gdi::GraphicDepth const & depth, MouseTrace const & mouse)
         : Graphic::base_type(depth)
         , mouse(mouse)
@@ -60,11 +63,11 @@ private:
         void draw_impl(Cmd const & cmd, Ts const & ... args)
         {
             if (gdi::GraphicCmdColor::is_encodable_cmd_color(cmd)) {
-                assert(bool(this->cmd_color_distributor));
-                this->cmd_color_distributor->draw(cmd, args...);
+                assert(gdi::GraphicDepth::unspecified() != this->order_depth);
+                gdi::draw_cmd_color_convert(order_depth, this->rng_by_bpp, cmd, args...);
             }
             else {
-                Graphic::base_type::draw_impl(cmd, args...);
+                this->get_graphic_proxy().draw(cmd, args...);
             }
         }
 
@@ -85,103 +88,6 @@ private:
             }
         }
     };
-
-    // Graphic::cmd_color_distributor
-    //@{
-    struct RngByBpp
-    {
-        using iterator = std::vector<GdRef>::const_iterator;
-
-        iterator its[5];
-        range<iterator> rng8() const { return {its[0], its[1]}; }
-        range<iterator> rng15() const { return {its[1], its[2]}; }
-        range<iterator> rng16() const { return {its[2], its[3]}; }
-        range<iterator> rng24() const { return {its[3], its[4]}; }
-        range<iterator> rng_all() const { return {its[0], its[4]}; }
-
-        template<class... Ts>
-        void apply(gdi::GraphicApi & gd, Ts const & ... args) const {
-            gd.draw(args...);
-        }
-    };
-
-    static PtrColorConverter choose_color_converter(std::vector<GdRef> & gds, uint8_t order_bpp) {
-        auto const order_depth = gdi::GraphicDepth::from_bpp(order_bpp);
-        assert(order_depth.is_defined());
-        std::sort(gds.begin(), gds.end(), [order_depth](gdi::GraphicApi const & a, gdi::GraphicApi const & b) {
-            return a.order_depth().depth_or(order_depth).id() < b.order_depth().depth_or(order_depth).id();
-        });
-
-        RngByBpp rng_by_bpp{{gds.begin(), gds.begin(), gds.begin(), gds.begin(), gds.end()}};
-
-        struct ge {
-            gdi::GraphicDepth order_depth;
-            gdi::GraphicDepth bpp;
-            bool operator()(gdi::GraphicApi const & x) const {
-                return x.order_depth().depth_or(order_depth).id() >= this->bpp.id();
-            }
-        };
-
-        auto & its = rng_by_bpp.its;
-        its[0] = std::find_if(its[0], its[4], ge{order_depth, gdi::GraphicDepth::depth8()});
-        its[1] = std::find_if(its[0], its[4], ge{order_depth, gdi::GraphicDepth::depth15()});
-        its[2] = std::find_if(its[1], its[4], ge{order_depth, gdi::GraphicDepth::depth16()});
-        its[3] = std::find_if(its[2], its[4], ge{order_depth, gdi::GraphicDepth::depth24()});
-
-        using dec8 = with_color8_palette<decode_color8_opaquerect>;
-        switch (order_bpp) {
-            case 8 : return choose_encoder(dec8{BGRPalette::classic_332_rgb()}, rng_by_bpp);
-            case 15: return choose_encoder(decode_color15_opaquerect{}, rng_by_bpp);
-            case 16: return choose_encoder(decode_color16_opaquerect{}, rng_by_bpp);
-            case 24:
-            case 32: return choose_encoder(decode_color24_opaquerect{}, rng_by_bpp);
-            default: assert(false && "unknown value in order_bpp"); return PtrColorConverter{};
-        }
-    }
-
-    template<class Dec>
-    static PtrColorConverter choose_encoder(Dec dec, RngByBpp const & rng_by_bpp) {
-        return make_converter(
-            dec, rng_by_bpp,
-            rng_by_bpp.its[0] != rng_by_bpp.its[1],
-            rng_by_bpp.its[1] != rng_by_bpp.its[2],
-            rng_by_bpp.its[2] != rng_by_bpp.its[3],
-            rng_by_bpp.its[3] != rng_by_bpp.its[4]
-        );
-    }
-
-    template<class CmdColorDistributor>
-    struct GraphicsConverter : gdi::GraphicBase<GraphicsConverter<CmdColorDistributor>>
-    {
-        friend gdi::GraphicCoreAccess;
-
-        CmdColorDistributor distributor;
-
-        GraphicsConverter(CmdColorDistributor distributor)
-        : distributor(distributor)
-        {}
-
-        template<class... Ts>
-        void draw_impl(Ts const & ... args) {
-            this->distributor(args...);
-        }
-    };
-
-    template<class Dec, bool e8, bool e15, bool e16, bool e24>
-    static PtrColorConverter make_converter(Dec dec, RngByBpp const & rng_by_bpp) {
-        using ColorConv = gdi::GraphicCmdColorDistributor<RngByBpp, Dec, e8, e15, e16, e24>;
-        return PtrColorConverter{new GraphicsConverter<ColorConv>{{rng_by_bpp, dec}}};
-    }
-
-    template<class Dec, bool... Bools, class... Bool>
-    static PtrColorConverter make_converter(Dec dec, RngByBpp const & rng_by_bpp, bool x, Bool ... y) {
-        if (x) {
-            return make_converter<Dec, Bools..., 1>(dec, rng_by_bpp, y...);
-        } else {
-            return make_converter<Dec, Bools..., 0>(dec, rng_by_bpp, y...);
-        }
-    }
-    //@}
 
     Graphic graphic_api;
     RDPDrawable drawable;
@@ -210,10 +116,12 @@ public:
         }
     }
 
-    void start() {
-        this->graphic_api.cmd_color_distributor = this->choose_color_converter(
-            this->graphic_api.gds, this->order_bpp
-        );
+    void start()
+    {
+        auto const order_depth = gdi::GraphicDepth::from_bpp(this->order_bpp);
+        auto & gds = this->graphic_api.gds;
+        this->graphic_api.rng_by_bpp = {order_depth, gds.begin(), gds.end()};
+        this->graphic_api.order_depth = order_depth;
     }
 
     GraphicApi & get_graphic_api() { return this->graphic_api; }
