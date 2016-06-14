@@ -1947,6 +1947,7 @@ private:
     }
 
 public:
+
     void draw_event(time_t now, const GraphicApi & drawable) override {
         if (!this->event.waked_up_by_time
         && (!this->session_probe_virtual_channel_p
@@ -3078,7 +3079,7 @@ public:
                                 switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
                                 case FastPath::UpdateType::ORDERS:
                                     this->front.begin_update();
-                                    this->orders.process_orders(this->bpp, upd.payload, true, *this->gd,
+                                    this->orders.process_orders(this->bpp, upd.payload, true, drawable,
                                                                 this->front_width, this->front_height);
                                     this->front.end_update();
                                     break;
@@ -3398,8 +3399,7 @@ public:
                                                         case RDP_UPDATE_ORDERS:
                                                             if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                                             this->front.begin_update();
-                                                            this->orders.process_orders(this->bpp, sdata.payload, false, *this->gd,
-                                                                                        this->front_width, this->front_height);
+                                                            this->orders.process_orders(this->bpp, sdata.payload, false, drawable,this->front_width, this->front_height);
                                                             this->front.end_update();
                                                             break;
                                                         case RDP_UPDATE_BITMAP:

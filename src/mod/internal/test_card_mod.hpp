@@ -63,7 +63,7 @@ public:
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    void draw_event(time_t now, const GraphicApi & drawable) override {
+    void draw_event(time_t now, GraphicApi & drawable) override {
         this->draw();
         this->event.reset();
     }
