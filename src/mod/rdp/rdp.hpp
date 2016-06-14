@@ -22,9 +22,7 @@
   rdp module main header file
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_HPP_
-
+#pragma once
 #include "mod/rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -96,7 +94,7 @@
 
 #include <cstdlib>
 
-class RDPChannelManagerMod : public mod_api
+class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, mod_api>
 {
 private:
     std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
@@ -202,96 +200,6 @@ protected:
         }
     };
 
-    RDPChannelManagerMod(const uint16_t front_width,
-        const uint16_t front_height, FrontAPI& front)
-    : mod_api(front_width, front_height)
-    , front(front) {}
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-        const char* channel_name) const = 0;
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-        const char* channel_name) = 0;
-
-public:
-    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
-        if (!this->clipboard_virtual_channel) {
-            REDASSERT(!this->clipboard_to_client_sender &&
-                !this->clipboard_to_server_sender);
-
-            this->clipboard_to_client_sender =
-                this->create_to_client_sender(channel_names::cliprdr);
-            this->clipboard_to_server_sender =
-                this->create_to_server_sender(channel_names::cliprdr);
-
-            this->clipboard_virtual_channel =
-                std::make_unique<ClipboardVirtualChannel>(
-                    this->clipboard_to_client_sender.get(),
-                    this->clipboard_to_server_sender.get(),
-                    this->front,
-                    this->get_clipboard_virtual_channel_params());
-        }
-
-        return *this->clipboard_virtual_channel;
-    }
-
-    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
-        if (!this->file_system_virtual_channel) {
-            REDASSERT(!this->file_system_to_client_sender &&
-                !this->file_system_to_server_sender);
-
-            this->file_system_to_client_sender =
-                this->create_to_client_sender(channel_names::rdpdr);
-            this->file_system_to_server_sender =
-                this->create_to_server_sender(channel_names::rdpdr);
-
-            this->file_system_virtual_channel =
-                std::make_unique<FileSystemVirtualChannel>(
-                    this->file_system_to_client_sender.get(),
-                    this->file_system_to_server_sender.get(),
-                    this->file_system_drive_manager,
-                    this->front,
-                    this->get_file_system_virtual_channel_params());
-        }
-
-        return *this->file_system_virtual_channel;
-    }
-
-    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
-        if (!this->session_probe_virtual_channel) {
-            REDASSERT(!this->session_probe_to_server_sender);
-
-            this->session_probe_to_server_sender =
-                this->create_to_server_sender(channel_names::sespro);
-
-            FileSystemVirtualChannel& file_system_virtual_channel =
-                get_file_system_virtual_channel();
-
-            this->session_probe_virtual_channel =
-                std::make_unique<SessionProbeVirtualChannel>(
-                    this->session_probe_to_server_sender.get(),
-                    this->front,
-                    *this,
-                    file_system_virtual_channel,
-                    this->get_session_probe_virtual_channel_params());
-        }
-
-        return *this->session_probe_virtual_channel;
-    }
-
-protected:
-    virtual const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const = 0;
-
-    virtual const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const = 0;
-
-    virtual const SessionProbeVirtualChannel::Params
-        get_session_probe_virtual_channel_params() const = 0;
-};  // RDPChannelManagerMod
-
-class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
-{
     friend gdi::GraphicCoreAccess;
 
     CHANNELS::ChannelDefArray mod_channel_list;
@@ -518,6 +426,71 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
         }
     };
 
+    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
+        if (!this->clipboard_virtual_channel) {
+            REDASSERT(!this->clipboard_to_client_sender &&
+                !this->clipboard_to_server_sender);
+
+            this->clipboard_to_client_sender =
+                this->create_to_client_sender(channel_names::cliprdr);
+            this->clipboard_to_server_sender =
+                this->create_to_server_sender(channel_names::cliprdr);
+
+            this->clipboard_virtual_channel =
+                std::make_unique<ClipboardVirtualChannel>(
+                    this->clipboard_to_client_sender.get(),
+                    this->clipboard_to_server_sender.get(),
+                    this->front,
+                    this->get_clipboard_virtual_channel_params());
+        }
+
+        return *this->clipboard_virtual_channel;
+    }
+
+    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
+        if (!this->file_system_virtual_channel) {
+            REDASSERT(!this->file_system_to_client_sender &&
+                !this->file_system_to_server_sender);
+
+            this->file_system_to_client_sender =
+                this->create_to_client_sender(channel_names::rdpdr);
+            this->file_system_to_server_sender =
+                this->create_to_server_sender(channel_names::rdpdr);
+
+            this->file_system_virtual_channel =
+                std::make_unique<FileSystemVirtualChannel>(
+                    this->file_system_to_client_sender.get(),
+                    this->file_system_to_server_sender.get(),
+                    this->file_system_drive_manager,
+                    this->front,
+                    this->get_file_system_virtual_channel_params());
+        }
+
+        return *this->file_system_virtual_channel;
+    }
+
+    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
+        if (!this->session_probe_virtual_channel) {
+            REDASSERT(!this->session_probe_to_server_sender);
+
+            this->session_probe_to_server_sender =
+                this->create_to_server_sender(channel_names::sespro);
+
+            FileSystemVirtualChannel& file_system_virtual_channel =
+                get_file_system_virtual_channel();
+
+            this->session_probe_virtual_channel =
+                std::make_unique<SessionProbeVirtualChannel>(
+                    this->session_probe_to_server_sender.get(),
+                    this->front,
+                    *this,
+                    file_system_virtual_channel,
+                    this->get_session_probe_virtual_channel_params());
+        }
+
+        return *this->session_probe_virtual_channel;
+    }
+
     TODO("duplicated code in front")
     struct write_x224_dt_tpdu_fn
     {
@@ -646,7 +619,8 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_rdp::base_type(info.width - (info.width % 4), info.height, front)
+        : mod_rdp::base_type(info.width - (info.width % 4), info.height)
+        , front(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -1140,7 +1114,7 @@ public:
 
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-            const char* channel_name) const override
+            const char* channel_name) const
     {
         if (!this->authorization_channels.is_authorized(channel_name))
         {
@@ -1166,7 +1140,7 @@ protected:
     }
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-            const char* channel_name) override
+            const char* channel_name)
     {
         const CHANNELS::ChannelDef* channel =
             this->mod_channel_list.get_by_name(channel_name);
@@ -1207,7 +1181,7 @@ protected:
     }
 
     const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const override
+        get_clipboard_virtual_channel_params() const
     {
         ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
@@ -1237,7 +1211,7 @@ protected:
     }
 
     const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const override
+        get_file_system_virtual_channel_params() const
     {
         FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -1281,7 +1255,7 @@ protected:
     }
 
     const SessionProbeVirtualChannel::Params
-        get_session_probe_virtual_channel_params() const override
+        get_session_probe_virtual_channel_params() const
     {
         SessionProbeVirtualChannel::Params
             session_probe_virtual_channel_params;
@@ -6654,4 +6628,3 @@ public:
     }
 };
 
-#endif
