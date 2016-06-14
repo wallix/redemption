@@ -226,7 +226,7 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->gd->draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         drawable.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa,
                             reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
                             ), r);
@@ -242,7 +242,7 @@ enum {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->gd->draw(scrblt, r);
+                        drawable.draw(scrblt, r);
                     }
                     break;
                     case 5:
@@ -259,7 +259,7 @@ enum {
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
                         Bitmap bmp(this->bpp, bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
-                        this->gd->draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
+                        drawable.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -302,7 +302,7 @@ enum {
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
                                                RDPPen(this->pen.style, this->pen.width, this->fgcolor));
-                        this->gd->draw(lineto, Rect(0,0,1,1));
+                        drawable.draw(lineto, Rect(0,0,1,1));
                     }
                     break;
                     case 19:

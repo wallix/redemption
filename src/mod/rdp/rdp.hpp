@@ -3086,7 +3086,7 @@ public:
 
                                 case FastPath::UpdateType::BITMAP:
                                     this->front.begin_update();
-                                    this->process_bitmap_updates(upd.payload, true);
+                                    this->process_bitmap_updates(upd.payload, true, drawable);
                                     this->front.end_update();
                                     break;
 
@@ -3405,7 +3405,7 @@ public:
                                                         case RDP_UPDATE_BITMAP:
                                                             if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
                                                             this->front.begin_update();
-                                                            this->process_bitmap_updates(sdata.payload, false);
+                                                            this->process_bitmap_updates(sdata.payload, false, drawable);
                                                             this->front.end_update();
                                                             break;
                                                         case RDP_UPDATE_PALETTE:
@@ -6270,7 +6270,8 @@ public:
         }
     }   // process_new_pointer_pdu
 
-    void process_bitmap_updates(InStream & stream, bool fast_path) {
+private:
+    void process_bitmap_updates(InStream & stream, bool fast_path, GraphicApi & drawable) {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
@@ -6460,7 +6461,7 @@ public:
                      );
             }
 
-            this->gd->draw(bmpdata, bitmap);
+            drawable.draw(bmpdata, bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");

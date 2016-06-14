@@ -663,7 +663,7 @@ public:
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
                 this->front.begin_update();
                 RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
-                this->gd->draw(orect, Rect(0, 0, this->width, this->height));
+                drawable.draw(orect, Rect(0, 0, this->width, this->height));
                 this->front.end_update();
 
                 this->state = UP_AND_RUNNING;
@@ -759,10 +759,10 @@ public:
                     this->t.recv(&end, 1);
                     switch (type) {
                         case 0: /* framebuffer update */
-                            this->lib_framebuffer_update();
+                            this->lib_framebuffer_update(drawable);
                         break;
                         case 1: /* palette */
-                            this->lib_palette_update();
+                            this->lib_palette_update(drawable);
                         break;
                         case 3: /* clipboard */ /* ServerCutText */
                             this->lib_clip_data();
@@ -1297,7 +1297,7 @@ private:
         ZRLEUpdateContext() {}
     };
 
-    void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context)
+    void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context, gdi::GraphicApi & drawable)
     {
         uint8_t         tile_data[16384];    // max size with 16 bpp
 
@@ -1617,7 +1617,7 @@ private:
                 this->front.begin_update();
                 this->draw_tile(Rect(update_context.tile_x, update_context.tile_y,
                                      tile_cx, tile_cy),
-                                tile_data_p);
+                                tile_data_p, drawable);
                 this->front.end_update();
 
                 update_context.cx_remain -= tile_cx;
@@ -1645,7 +1645,7 @@ private:
         }
     }
     //==============================================================================================================
-    void lib_framebuffer_update() {
+    void lib_framebuffer_update(GraphicApi & drawable) {
     //==============================================================================================================
         uint8_t data_rec[256];
         InStream stream_rec(data_rec);
@@ -1680,7 +1680,7 @@ private:
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
                     this->t.recv(&tmp, cyy*cx*Bpp);
                     //LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
-                    this->draw_tile(Rect(x, yy, cx, cyy), raw.get());
+                    this->draw_tile(Rect(x, yy, cx, cyy), raw.get(), drawable);
                 }
             }
             break;
@@ -1695,12 +1695,7 @@ private:
                 //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
                 update_lock<FrontAPI> lock(this->front);
-                if (this->gd == this) {
-                    this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
-                }
-                else {
-                    this->gd->draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
-                }
+                drawable.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
             }
             break;
             case 2: /* RRE */
@@ -1768,7 +1763,7 @@ private:
                 }
 
                 update_lock<FrontAPI> lock(this->front);
-                this->draw_tile(Rect(x, y, cx, cy), raw.get());
+                this->draw_tile(Rect(x, y, cx, cy), raw.get(), drawable);
             }
             break;
             case 5: /* Hextile */
@@ -1857,7 +1852,7 @@ private:
                         zrle_update_context.data_remain.rewind();
                     }
 
-                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, zrle_update_context);
+                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, zrle_update_context, drawable);
                 }
             }
             break;
@@ -1974,7 +1969,7 @@ private:
     } // lib_framebuffer_update
 
     //==============================================================================================================
-    void lib_palette_update(void) {
+    void lib_palette_update(gdi::GraphicApi & drawable) {
     //==============================================================================================================
         uint8_t buf[5];
         InStream stream(buf);
@@ -2008,7 +2003,7 @@ private:
         this->front.set_palette(this->palette);
         this->front.begin_update();
         RDPColCache cmd(0, this->palette);
-        this->gd->draw(cmd);
+        drawable.draw(cmd);
         this->front.end_update();
     } // lib_palette_update
 
@@ -2762,7 +2757,7 @@ public:
     }
 
 private:
-    void draw_tile(const Rect & rect, const uint8_t * raw) const
+    void draw_tile(const Rect & rect, const uint8_t * raw, gdi::GraphicApi & drawable) const
     {
         const uint16_t TILE_CX = 32;
         const uint16_t TILE_CY = 32;
@@ -2777,7 +2772,7 @@ private:
                 const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
                 const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                 const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-                this->gd->draw(cmd2, dst_tile, tiled_bmp);
+                drawable.draw(cmd2, dst_tile, tiled_bmp);
             }
         }
     }

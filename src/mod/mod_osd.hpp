@@ -86,10 +86,10 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
             }
         } auto_disabler(this->disable_filter);
 
-        this->drawable_fn(this->mod, rect, this->fg_rect);
+        this->drawable_fn(this->mod, rect.intersect(this->fg_rect));
     }
 
-    using drawable_function_type = std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)>;
+    using drawable_function_type = std::function<void(mod_api & mod, const Rect & clip)>;
 
     const Rect fg_rect;
     mod_api & mod;
@@ -110,7 +110,7 @@ public:
         if (call_f) {
             this->draw_fg(this->fg_rect);
         }
-        this->set_gd(mod, this);
+// TODO         this->set_gd(mod, this);
     }
 
 private:
@@ -131,7 +131,7 @@ public:
     , drawable_fn(dispatch_bmp_draw{bmp, x - this->fg_rect.x, y - this->fg_rect.y})
     {
         this->draw_fg(this->fg_rect);
-        this->set_gd(mod, this);
+// TODO         this->set_gd(mod, this);
     }
 
     ~mod_osd() override {
@@ -147,18 +147,19 @@ public:
 
     bool is_active() const
     {
-        return this->get_gd(this->mod) == this;
+// TODO        return this->get_gd(this->mod) == this;
+        return true;
     }
 
     void swap_active()
     {
         if (this->is_active()) {
-            this->set_gd(this->mod, &this->mod);
+// TODO             this->set_gd(this->mod, &this->mod);
             this->remove_osd();
         }
         else {
             this->redraw_osd();
-            this->set_gd(this->mod, this);
+// TODO             this->set_gd(this->mod, this);
         }
     }
 

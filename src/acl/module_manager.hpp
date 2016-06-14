@@ -330,10 +330,10 @@ class ModuleManager : public MMIni
 
     class CurrentCallback : public Callback {
     private:
-        mod_api * (& mod_api_ptr);
+        mod_api * & mod_api_ptr;
 
     public:
-        explicit CurrentCallback(mod_api * (& mod_api_ptr)) : mod_api_ptr(mod_api_ptr) {
+        explicit CurrentCallback(mod_api * & mod_api_ptr) : mod_api_ptr(mod_api_ptr) {
         }
 
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
@@ -396,7 +396,7 @@ class ModuleManager : public MMIni
             this->manager.osd = nullptr;
             // disable draw hidden
             if (this->is_active()) {
-                this->set_gd(*this, nullptr);
+// TODO                this->set_gd(*this, nullptr);
             }
         }
 
@@ -506,36 +506,40 @@ public:
             color = color_encode(color, this->front.client_info.bpp);
             background_color = color_encode(background_color, this->front.client_info.bpp);
         }
+        Rect const rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h);
         this->mod = new module_osd(
-            *this,
-            Rect(this->front.client_info.width < w ? 0 : (this->front.client_info.width - w) / 2, 0, w, h),
-            (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
-             this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-             (this->front.client_info.cs_monitor.monitorCount > 1)),
-            [this, message, color, background_color](mod_api & mod, const Rect & rect, const Rect & clip) {
-                const Rect r = rect.intersect(clip);
-                mod.begin_update();
-                mod.draw(RDPOpaqueRect(r, background_color), r);
+            *this, rect
+          , (this->ini.get<cfg::globals::bogus_refresh_rect>()
+             && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
+             && (this->front.client_info.cs_monitor.monitorCount > 1))
+          , [this, message, color, background_color, rect](gdi::GraphicApi & drawable, const Rect & clip) {
+                drawable.begin_update();
+                drawable.draw(RDPOpaqueRect(clip, background_color), clip);
 
                 StaticOutStream<256> deltaPoints;
-                deltaPoints.out_sint16_le(r.cx - 1);
+                deltaPoints.out_sint16_le(clip.cx - 1);
                 deltaPoints.out_sint16_le(0);
                 deltaPoints.out_sint16_le(0);
-                deltaPoints.out_sint16_le(r.cy - 1);
-                deltaPoints.out_sint16_le(-r.cx + 1);
+                deltaPoints.out_sint16_le(clip.cy - 1);
+                deltaPoints.out_sint16_le(-clip.cx + 1);
                 deltaPoints.out_sint16_le(0);
                 deltaPoints.out_sint16_le(0);
-                deltaPoints.out_sint16_le(-r.cy + 1);
+                deltaPoints.out_sint16_le(-clip.cy + 1);
 
                 InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
                 TODO("Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)")
-                RDPPolyline polyline_box( r.x, r.y
+                RDPPolyline polyline_box( clip.x, clip.y
                                         , 0x0D, 0, BLACK, 4, in_deltaPoints);
-                mod.draw(polyline_box, r);
+                drawable.draw(polyline_box, clip);
 
-                mod.server_draw_text_poubelle(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
-                mod.end_update();
+                gdi::server_draw_text(
+                    drawable, this->ini.get<cfg::font>(),
+                    rect.x + padw, padh,
+                    message.c_str(),
+                    color, background_color, clip
+                );
+                drawable.end_update();
             },
             external_deleting
         );
