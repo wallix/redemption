@@ -332,24 +332,24 @@ namespace X224
             size_t nbbytes = 0;
             Parse data(*end);
             TODO("We should have less calls to read, one to get length, the other to get data, other short packets are error")
-            EM_ASM_({ console.log('draw_event RecvFactory 1'); }, 0);
+            //EM_ASM_({ console.log('draw_event RecvFactory 1'); }, 0);
             t.recv(end, 1);
 
-            EM_ASM_({ console.log('draw_event RecvFactory 2'); }, 0);
+            //EM_ASM_({ console.log('draw_event RecvFactory 2'); }, 0);
             nbbytes++;
             uint8_t tpkt_version = data.in_uint8();
 
 
-            EM_ASM_({ console.log('tpkt_version = '+$0); }, tpkt_version);
+            //EM_ASM_({ console.log('tpkt_version = '+$0); }, tpkt_version);
             int action = tpkt_version & 0x03;
 
             if (action == FastPath::FASTPATH_OUTPUT_ACTION_FASTPATH) {
-                EM_ASM_({ console.log('draw_event RecvFactory 3 wrong'); }, 0);
+                //EM_ASM_({ console.log('draw_event RecvFactory 3 wrong'); }, 0);
                 if (!support_fast_path) {                   // !
                     LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event RecvFactory 4 wrong'); }, 0);
+                //EM_ASM_({ console.log('draw_event RecvFactory 4 wrong'); }, 0);
                 this->fast_path = true;
 
                 if (action != 0) {
@@ -361,12 +361,12 @@ namespace X224
                 nbbytes++;
 
                 uint16_t lg = data.in_uint8();
-                EM_ASM_({ console.log('lg = '+$0); }, lg);
+                //EM_ASM_({ console.log('lg = '+$0); }, lg);
                 if (lg & 0x80){
                     t.recv(end, 1);
                     nbbytes++;
                     uint8_t byte = data.in_uint8();
-                    EM_ASM_({ console.log('end[0] = '+$0); }, byte);
+                    //EM_ASM_({ console.log('end[0] = '+$0); }, byte);
                     lg = (lg & 0x7F) << 8 | byte;
                 }
 
@@ -381,30 +381,30 @@ namespace X224
                 return;
             }
             else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
-                EM_ASM_({ console.log('draw_event RecvFactory 3'); }, 0);
+                //EM_ASM_({ console.log('draw_event RecvFactory 3'); }, 0);
                 /* 4 bytes */
                 t.recv(end, X224::TPKT_HEADER_LEN - nbbytes);
                 nbbytes = X224::TPKT_HEADER_LEN;
                 data.in_skip_bytes(1);
-                EM_ASM_({ console.log('draw_event RecvFactory 4'); }, 0);
+                //EM_ASM_({ console.log('draw_event RecvFactory 4'); }, 0);
                 uint16_t tpkt_len = data.in_uint16_be();
-                EM_ASM_({ console.log('tpkt_len = '+$0); }, tpkt_len);
+                //EM_ASM_({ console.log('tpkt_len = '+$0); }, tpkt_len);
                 if (tpkt_len < 6) {
                     LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event RecvFactory 5'); }, 0);
+                //EM_ASM_({ console.log('draw_event RecvFactory 5'); }, 0);
                 this->length = tpkt_len;
                 if (bufsize < this->length){
                     LOG(LOG_ERR, "Buffer too small to read data need=%zu available=%zu",
                         this->length, bufsize );
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event RecvFactory 6'); }, 0);
+                //EM_ASM_({ console.log('draw_event RecvFactory 6'); }, 0);
                 t.recv(end, tpkt_len - nbbytes );
                 data.in_skip_bytes(1);
                 uint8_t tpdu_type = data.in_uint8();
-                EM_ASM_({ console.log('draw_event RecvFactory 7 '+$0); }, tpdu_type);
+                //EM_ASM_({ console.log('draw_event RecvFactory 7 '+$0); }, tpdu_type);
                 switch (tpdu_type & 0xF0) {
                 case X224::CR_TPDU: // Connection Request 1110 xxxx
                 case X224::CC_TPDU: // Connection Confirm 1101 xxxx
@@ -419,14 +419,14 @@ namespace X224
                     LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event RecvFactory 8'); }, 0);
+                //EM_ASM_({ console.log('draw_event RecvFactory 8'); }, 0);
             }
             else {
                 LOG(LOG_ERR, "Bad X224 header, unknown TPKT version (%.2x)", tpkt_version);
                 throw Error(ERR_X224);
             }
 
-            EM_ASM_({ console.log('draw_event RecvFactory end'); }, 0);
+            //EM_ASM_({ console.log('draw_event RecvFactory end'); }, 0);
 
         }
     };
@@ -978,35 +978,35 @@ namespace X224
                     LOG(LOG_ERR, "Truncated TPDU header: expected=7 remains=%zu", stream.in_remain());
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda start'); }, 0);
+                //EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda start'); }, 0);
                 uint8_t LI = stream.in_uint8();
-                EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda LI '+$0); },LI);
-                EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda 1'); }, 0);
+                //EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda LI '+$0); },LI);
+                //EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda 1'); }, 0);
                 uint8_t code = stream.in_uint8();
-                EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda 2 code='+$0); }, code);
+                //EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda 2 code='+$0); }, code);
                 if (!(code == X224::CC_TPDU)){
                     LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", code);
-                    EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda throw '+$0); },code);
+                    //EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda throw '+$0); },code);
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda 3'); }, 0);
+                //EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda 3'); }, 0);
                 uint16_t dst_ref = stream.in_uint16_le();
                 uint16_t src_ref = stream.in_uint16_le();
                 uint8_t class_option = stream.in_uint8();
-                EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda end'); }, 0);
+                //EM_ASM_({ console.log('draw_event CC_TPDU_Recv lambda end'); }, 0);
                 return CC_Header{LI, code, dst_ref, src_ref, class_option};
             }())
             , _header_size(X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1)
         {
-            EM_ASM_({ console.log('draw_event CC_TPDU_Recv start'); }, 0);
+            //EM_ASM_({ console.log('draw_event CC_TPDU_Recv start'); }, 0);
             unsigned expected = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
-            EM_ASM_({ console.log('draw_event CC_TPDU_Recv get_capacity='+$0+' expected='+$1); }, stream.get_capacity(), expected);
+            //EM_ASM_({ console.log('draw_event CC_TPDU_Recv get_capacity='+$0+' expected='+$1); }, stream.get_capacity(), expected);
             if (stream.get_capacity() < expected){
                 LOG(LOG_ERR, "Truncated CC TPDU header: expected %u, got %zu",
                     expected, stream.get_capacity());
                 throw Error(ERR_X224);
             }
-            EM_ASM_({ console.log('draw_event CC_TPDU_Recv 1'); }, 0);
+            //EM_ASM_({ console.log('draw_event CC_TPDU_Recv 1'); }, 0);
             // extended negotiation header
             this->rdp_neg_type = 0;
             this->rdp_neg_flags = 0;
@@ -1031,7 +1031,7 @@ namespace X224
                         this->rdp_neg_code);
                     throw Error(ERR_X224);
                 }
-                EM_ASM_({ console.log('draw_event CC_TPDU_Recv 2'); }, 0);
+                //EM_ASM_({ console.log('draw_event CC_TPDU_Recv 2'); }, 0);
                 if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation %s Structure",
                         (this->rdp_neg_type == X224::RDP_NEG_RSP)?"Response":"Failure");
@@ -1090,14 +1090,14 @@ namespace X224
                     break;
                 }
             }
-            EM_ASM_({ console.log('draw_event CC_TPDU_Recv 3'); }, 0);
+            //EM_ASM_({ console.log('draw_event CC_TPDU_Recv 3'); }, 0);
             if (end_of_header != stream.get_current()){
                 LOG(LOG_ERR, "CC TPDU header should be terminated, got trailing data %" PRIdPTR , end_of_header - stream.get_current());
                 throw Error(ERR_X224);
             }
             this->_header_size = stream.get_offset();
 
-            EM_ASM_({ console.log('draw_event CC_TPDU_Recv end'); }, 0);
+            //EM_ASM_({ console.log('draw_event CC_TPDU_Recv end'); }, 0);
         }
 
         void throw_error() {

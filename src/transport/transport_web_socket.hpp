@@ -29,20 +29,22 @@
 #include <emscripten.h>
 #endif
 
+
 #include "transport/transport.hpp"
 #include "mod/rdp/rdp.hpp"
 
-
+class FrontAPI;
 
 class TransportWebSocket :  public Transport
 {
-    char    * buffer = nullptr;
-    uint8_t   pduState = 0;
-    size_t    filledSize = 0;
-    size_t    pduSize = 0;
+    char     *  buffer = nullptr;
+    uint8_t     pduState = 0;
+    size_t      filledSize = 0;
+    size_t      pduSize = 0;
 
-    size_t    sentSize = 0;
-    mod_rdp * callback;
+    size_t      sentSize = 0;
+    mod_rdp  *  callback;
+    const FrontAPI * drawable;
 
     enum : uint8_t {
         PDU_HEADER_FLAG = 0x03,
@@ -58,6 +60,7 @@ class TransportWebSocket :  public Transport
     };
 
 
+
     void do_send(const char * const buffer, size_t len) override {
         EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1 - 1), $1); }, buffer, len);
     }
@@ -65,14 +68,13 @@ class TransportWebSocket :  public Transport
     void do_recv(char ** pbuffer, size_t len) override {
         //pbuffer[0...len] = read(len)
 
-        this->buffer = *pbuffer;
-        int lenInt(len);
-        if (lenInt > 0) {
-            int i(0);
+        if (this->buffer !=  nullptr) {
+            int lenMax(len);
 
-            for (; i < lenInt; i++) {
-                EM_ASM_({ getDataOctet($0); }, i);
-            }
+            if (lenMax > 0) {
+
+                int i(0);
+
 
                 for (i = 0; i < len; i++) {
                     //EM_ASM_({ console.log('indata['+$0 +']='+$1 +' pbuffer['+$0 +']='+$2); }, i, this->buffer[i],  (*pbuffer)[i]);
@@ -93,6 +95,11 @@ class TransportWebSocket :  public Transport
     }
 
 public:
+    TransportWebSocket(const FrontAPI * draw)
+      : Transport()
+      , drawable(draw)
+      {}
+
     void setMod(mod_rdp * mod) {
         this->callback = mod;
     }
@@ -152,7 +159,7 @@ public:
 
                                        if (this->callback !=  nullptr) {
                                            while (this->sentSize < this->pduSize) {
-                                                this->callback->draw_event(time_t(nullptr));
+                                                this->callback->draw_event(time_t(nullptr), *(this->drawable));
                                            }
                                            this->sentSize = 0;
                                            this->pduSize  = 0;
@@ -172,5 +179,6 @@ public:
 
 
 };
+
 
 #endif

@@ -270,7 +270,7 @@ public:
         mod_rdp_params.enable_new_pointer              = false;
         mod_rdp_params.server_redirection_support      = true;
 
-        this->_trans = new TransportWebSocket();
+        this->_trans = new TransportWebSocket(this);
 
         LCGRandom gen(0);
         if (this->_trans != nullptr) {
