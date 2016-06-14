@@ -126,6 +126,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BOOST_CHECK_EQUAL(mod->get_front_width(),  1024);
     BOOST_CHECK_EQUAL(mod->get_front_height(), 768);
 
+    time_t now = 1450864840;
+
+    while (!mod->is_up_and_running())
+            mod->draw_event(now);
+
     uint32_t    count = 0;
     BackEvent_t res   = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE) {

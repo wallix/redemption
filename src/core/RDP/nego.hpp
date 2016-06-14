@@ -154,6 +154,7 @@ struct RdpNego
         ServerNotifier & server_notifier,
         const char * certif_path)
     {
+        EM_ASM_({ console.log('draw_event server_event start ' + $0); }, this->state);
         switch (this->state){
         case NEGO_STATE_INITIAL:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
@@ -188,6 +189,7 @@ struct RdpNego
                 );
         break;
         case NEGO_STATE_RDP:
+            EM_ASM_({ console.log('draw_event server_event NEGO_STATE_RDP'); }, 0);
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
             this->recv_connection_confirm(
                     server_cert_store,
@@ -197,6 +199,7 @@ struct RdpNego
                 );
         break;
         }
+        EM_ASM_({ console.log('draw_event server_event end'); }, 0);
     }
 
 
@@ -314,14 +317,17 @@ struct RdpNego
         ServerNotifier & server_notifier,
         const char * certif_path)
     {
+        EM_ASM_({ console.log('draw_event recv_connection_confirm start'); }, 0);
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
         constexpr size_t array_size = AUTOSIZE;
         uint8_t array[array_size];
         uint8_t * end = array;
+        EM_ASM_({ console.log('draw_event recv_connection_confirm 1'); }, 0);
         X224::RecvFactory f(this->trans, &end, array_size);
         InStream stream(array, end - array);
         X224::CC_TPDU_Recv x224(stream);
+        EM_ASM_({ console.log('draw_event recv_connection_confirm 3'); }, 0);
 
         if (x224.rdp_neg_type == 0){
             this->tls = false;

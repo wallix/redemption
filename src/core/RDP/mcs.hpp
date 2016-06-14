@@ -309,6 +309,7 @@ namespace MCS
                         for (uint8_t i = 0 ; i < nbbytes ; i++) {
                             len = (len << 8) | this->stream.in_uint8();
                         }
+                        EM_ASM_({ console.log('len='+$0); }, len);
                         return len;
                     }
                     else {
@@ -939,6 +940,7 @@ namespace MCS
         CONNECT_RESPONSE_PDU_Recv(InStream & stream, int encoding)
             : ber_stream(stream)
             , tag([&stream, encoding, this](){
+                EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda A start'); }, 0);
                     if (encoding != BER_ENCODING){
                         LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
                         throw Error(ERR_MCS);
@@ -959,6 +961,7 @@ namespace MCS
                     return MCSPDU_CONNECT_RESPONSE;
                 }())
             , tag_len([&stream, this](){
+                EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda B start'); }, 0);
                 bool in_result;
                 size_t tag_len = this->ber_stream.in_ber_len_with_check(in_result);
                 if (!in_result) {
@@ -968,6 +971,7 @@ namespace MCS
                 return tag_len;
             }())
             , result([&stream, this](){
+                EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda C start'); }, 0);
                 bool in_result;
                 uint8_t tag = this->ber_stream.in_uint8_with_check(in_result);
                 if (!in_result){
@@ -997,6 +1001,7 @@ namespace MCS
                 return result;
             }())
             , connectId([&stream, this](){
+                EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda D start'); }, 0);
                 bool in_result;
                 uint8_t tag = this->ber_stream.in_uint8_with_check(in_result);
                 if (!in_result){
@@ -1022,6 +1027,7 @@ namespace MCS
                 return this->ber_stream.in_bytes_le(len); /* connect id */
             }())
             , domainParameters([&stream, this](){
+                EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda E start'); }, 0);
                     struct DomainParameters domainParameters;
                     if (-1 == domainParameters.recv(this->ber_stream)){
                         LOG(LOG_ERR, "Connect Response::bad domainParameters");
@@ -1030,6 +1036,7 @@ namespace MCS
                     return domainParameters;
             }())
             , payload([&stream, this](){
+                EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda F start'); }, 0);
                 // userData OCTET STRING
                     TODO("Octets below are part of GCC Conference User Data");
                     bool in_result;
@@ -1038,25 +1045,31 @@ namespace MCS
                         LOG(LOG_ERR, "Truncated Connect Response PDU payload tag: expected=1, remains=0");
                         throw Error(ERR_MCS);
                     }
+                    EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda F 1'); }, 0);
                     if (InBerStream::BER_TAG_OCTET_STRING != tag){
                         LOG(LOG_ERR, "ConnectInitial::BER payload tag mismatch, expected BER_TAG_OCTET_STRING(%u), got %u",
                             InBerStream::BER_TAG_OCTET_STRING, tag);
                         throw Error(ERR_MCS);
                     }
+                    EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda F 2'); }, 0);
                     size_t payload_size = this->ber_stream.in_ber_len_with_check(in_result);
                     if (!in_result){
                         LOG(LOG_ERR, "Connect Response::bad connectId length");
                         throw Error(ERR_MCS);
                     }
+                    EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda F 3'); }, 0);
+                    EM_ASM_({ console.log('draw_event in_remain='+$0); }, this->ber_stream.in_remain());
                     if (payload_size != this->ber_stream.in_remain()){
                         LOG(LOG_ERR, "ConnectResponse::BER payload size (%zu) does not match available data size (%zu)",
                             payload_size, this->ber_stream.in_remain());
                         throw Error(ERR_MCS);
                     }
 
+                    EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv lambda F end'); }, 0);
                     return InStream(stream.get_current(), payload_size);
             }())
         {
+            EM_ASM_({ console.log('draw_event CONNECT_RESPONSE_PDU_Recv start'); }, 0);
 
             if (this->result){
                 LOG(LOG_ERR, "Check Result Error (0x%02X): %s", this->result, RT_RESULT[this->result]);

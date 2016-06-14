@@ -255,7 +255,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         front.clear_channels();
         mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
         mod_api * mod = &mod_;
-         BOOST_CHECK(true);
+        BOOST_CHECK(true);
 
 
         if (verbose > 2){
@@ -264,6 +264,10 @@ BOOST_AUTO_TEST_CASE(TestFront)
         BOOST_CHECK(t.get_status());
         BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+
+
+        while (!mod->is_up_and_running())
+            mod->draw_event(now);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.
@@ -495,6 +499,9 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         BOOST_CHECK(t.get_status());
         BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+
+        while (!mod->is_up_and_running())
+            mod->draw_event(now);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.

@@ -183,9 +183,11 @@ public:
                 FD_ZERO(&wfds);
                 timeval timeout = time_mark;
 
-                this->front->get_event().add_to_fd_set(front_trans.sck, rfds, max, timeout);
-                if (this->front->capture) {
-                    this->front->capture->get_capture_event().add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
+                if (mm.mod->is_up_and_running()) {
+                    this->front->get_event().add_to_fd_set(front_trans.sck, rfds, max, timeout);
+                    if (this->front->capture) {
+                        this->front->capture->get_capture_event().add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
+                    }
                 }
                 if (this->client) {
                     this->client->add_to_fd_set(rfds, max, timeout);

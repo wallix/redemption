@@ -36,7 +36,7 @@
 
 class TransportWebSocket :  public Transport
 {
-    char * buffer;
+    char    * buffer = nullptr;
     uint8_t   pduState = 0;
     size_t    filledSize = 0;
     size_t    pduSize = 0;
@@ -65,21 +65,28 @@ class TransportWebSocket :  public Transport
     void do_recv(char ** pbuffer, size_t len) override {
         //pbuffer[0...len] = read(len)
 
-        //this->buffer = *pbuffer;
-        int lenMax(len);
+        if (this->buffer !=  nullptr) {
+            int lenMax(len);
 
-        if (lenMax > 0) {
-            //int i(0);
+            if (lenMax > 0) {
 
-            /*for (i = 0; i < lenMax; i++) {
-                //EM_ASM_({ var funct = getDataOctet(); funct.next(); }, 0);l
-                //EM_ASM_({ getDataOctet(); }, 0);
-                (*pbuffer)[i] = this->buffer[i + this->sentSize];
-            }*/
-            this->sentSize += len;
-            *pbuffer = this->buffer + this->sentSize;
+                int i(0);
+
+                for (i = 0; i < len; i++) {
+                    //EM_ASM_({ console.log('indata['+$0 +']='+$1 +' pbuffer['+$0 +']='+$2); }, i, this->buffer[i],  (*pbuffer)[i]);
+                    (*pbuffer)[i] = this->buffer[i + this->sentSize];
+                    //EM_ASM_({ console.log('indata['+$0 +']='+$1 +' pbuffer['+$0 +']='+$2); }, i, this->buffer[i],  (*pbuffer)[i]);
+                }
+                this->sentSize += i;
+                //this->buffer += this->sentSize;
+                *pbuffer += lenMax;                    // + this->sentSize;
+
+
+            } else {
+                EM_ASM_({ console.log('do_recv len='+$0); }, len);
+            }
         } else {
-            EM_ASM_({ console.log('No input data from WebSocket'); }, 0);
+
         }
     }
 
@@ -108,38 +115,51 @@ public:
 
         switch (this->pduState) {
             case PUD_HEADER_EMPTY: if (octet == PDU_HEADER_FLAG) {
-                                        this->pduState += PUD_HEADER_OCT_1;
+                                        this->pduState = PUD_HEADER_OCT_1;
                                    }
                 break;
 
-            case PUD_HEADER_OCT_1: this->pduState += PUD_HEADER_OCT_2;
+            case PUD_HEADER_OCT_1: this->pduState = PUD_HEADER_OCT_2;
                 break;
 
-            case PUD_HEADER_OCT_2: this->pduSize += octet << 8;
-                                   this->pduState += PUD_HEADER_OCT_3;
+            case PUD_HEADER_OCT_2: this->sentSize = 0;
+                                   this->pduSize += octet << 8;
+                                   this->pduState = PUD_HEADER_OCT_3;
                 break;
 
             case PUD_HEADER_OCT_3: this->pduSize += octet;
-
-                                   this->buffer = new char[this->pduSize];
+                                   if (this->callback !=  nullptr) {
+                                        this->buffer = new char[this->pduSize];
+                                   }
                                    this->buffer[0] = PDU_HEADER_FLAG;
                                    this->buffer[1] = 0x00;  // reserved for further study
-                                   this->buffer[2] = this->pduSize >> 8;
-                                   this->buffer[3] = this->pduSize;
+                                   this->buffer[2] = uint8_t(this->pduSize >> 8);
+                                   this->buffer[3] = uint8_t(this->pduSize);
 
                                    this->filledSize = PDU_HEADER_SIZE;
-                                   this->pduState += PUD_HEADER_OCT_4;
+                                   this->pduState = PUD_HEADER_OCT_4;
+                                  /* EM_ASM_({ console.log('indata[0] = '+$0); }, this->buffer[0]);
+                                EM_ASM_({ console.log('indata[1] = '+$0); }, this->buffer[1]);
+                                EM_ASM_({ console.log('indata[2] = '+$0); }, this->buffer[2]);
+                                EM_ASM_({ console.log('indata[3] = '+$0); }, this->buffer[3]);*/
                 break;
 
             case PUD_HEADER_OCT_4: this->buffer[filledSize] = octet;
                                    this->filledSize++;
                                    if (this->filledSize == this->pduSize) {
 
-                                       this->callback->draw_event(time_t(nullptr));
-                                       
-                                       this->sentSize = 0;
-                                       delete (this->buffer);
-                                       this->pduState += PUD_HEADER_EMPTY;
+                                       if (this->callback !=  nullptr) {
+                                           while (this->sentSize < this->pduSize) {
+                                                this->callback->draw_event(time_t(nullptr));
+                                           }
+                                           this->sentSize = 0;
+                                           this->pduSize  = 0;
+                                            //delete (this->buffer -= this->sentSize);
+                                            //this->buffer = nullptr;
+
+                                       }
+
+                                       this->pduState = PUD_HEADER_EMPTY;
                                    }
                 break;
 

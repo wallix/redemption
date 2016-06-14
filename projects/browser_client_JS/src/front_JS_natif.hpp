@@ -90,7 +90,7 @@
 // . ./emsdk_env.sh
 
 
-
+extern "C" void recv_wrapped();
 
 
 
@@ -869,19 +869,8 @@ extern "C" void backspacePressed() {
     }
 }
 
-
-/* Test */
-extern "C" void recv_wrapped();
-/* Test */
-
-
 extern "C" void CtrlAltDelPressed() {
     if (front._mod !=  nullptr) {
-        /* Test */
-        //recv_wrapped();
-        /* Test */
-
-
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
@@ -903,12 +892,14 @@ extern "C" void CtrlAltDelPressed() {
 //--------------------------------
 
 extern "C" void recv_wrapped() {
-    if (front._mod !=  nullptr) {
-        EM_ASM_({ getDataOctet(); }, 0);
+    //if (front._mod !=  nullptr) {
+        //for (int i = 0; i < len; i++) {
+            EM_ASM_({ getDataOctet(); }, 0);
+        //}
         //front._mod->draw_event(time_t(nullptr));
-    } else {
-        EM_ASM_({ console.log('incoming_data off '); }, 0);
-    }
+    //} else {
+        //EM_ASM_({ console.log('incoming_data off '); }, 0);
+    //}
 }
 
 extern "C" void connexion(char * ip, char * user, char * password, int port) {
