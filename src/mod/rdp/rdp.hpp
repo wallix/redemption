@@ -1948,7 +1948,7 @@ private:
 
 public:
 
-    void draw_event(time_t now, const GraphicApi & drawable) override {
+    void draw_event(time_t now, GraphicApi & drawable) override {
         if (!this->event.waked_up_by_time
         && (!this->session_probe_virtual_channel_p
           ||!this->session_probe_virtual_channel_p->is_event_signaled())) {

@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
 
         while (!mod->is_up_and_running())
-            mod->draw_event(now);
+            mod->draw_event(now, front);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.
@@ -501,7 +501,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
 
         while (!mod->is_up_and_running())
-            mod->draw_event(now);
+            mod->draw_event(now, front);
 
         // Force Front to be up and running after Deactivation-Reactivation
         //  Sequence initiated by mod_rdp.
