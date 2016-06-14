@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,

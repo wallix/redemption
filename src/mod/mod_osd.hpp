@@ -19,8 +19,7 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
-#define REDEMPTION_PUBLIC_MOD_MOD_OSD_HPP
+#pragma once
 
 #include "mod/mod_api.hpp"
 #include "core/front_api.hpp"
@@ -79,7 +78,7 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
         class AutoDisabler {
             bool & ref;
         public:
-            AutoDisabler(bool & ref) : ref(ref) {
+            explicit AutoDisabler(bool & ref) : ref(ref) {
                 this->ref = true;
             }
             ~AutoDisabler() {
@@ -100,7 +99,7 @@ class mod_osd : public gdi::GraphicBase<mod_osd, mod_api>
 
 public:
     mod_osd(
-        /*FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,*/ 
+        /*FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,*/
         mod_api & mod, Rect const & rect, bool bogus_refresh_rect_ex, drawable_function_type f, bool call_f = true)
     : mod_osd::base_type(mod.get_front_width(), mod.get_front_height())
     , fg_rect(Rect(0, 0, mod.get_front_width(), mod.get_front_height()).intersect(rect))
@@ -309,8 +308,8 @@ public:
         this->mod.end_update();
     }
 
-    void draw_event(time_t now) override {
-        this->mod.draw_event(now);
+    void draw_event(time_t now, const GraphicApi & drawable) override {
+        this->mod.draw_event(now, drawable);
     }
 
     void rdp_input_invalidate(const Rect & r) override {
@@ -423,12 +422,11 @@ public:
         this->mod.process_session_probe_launcher();
     }
 
-    void server_draw_text_deprecated(
-        const Font& font, int16_t x, int16_t y, const char* text,
-        uint32_t fgcolor, uint32_t bgcolor, const Rect& clip
-    ) override {
-        this->mod.server_draw_text_deprecated(font, x, y, text, fgcolor, bgcolor, clip);
-    }
+//    void server_draw_text_deprecated(
+//        const Font& font, int16_t x, int16_t y, const char* text,
+//        uint32_t fgcolor, uint32_t bgcolor, const Rect& clip
+//    ) override {
+//        mod.server_draw_text_poubelle(font, x, y, text, fgcolor, bgcolor, clip);
+//    }
 };
 
-#endif

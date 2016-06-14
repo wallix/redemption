@@ -28,7 +28,7 @@ TODO("temporary")
 struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api  {
     RDPDrawable & drawable;
 
-    DumpPng24FromRDPDrawableAdapter(RDPDrawable & drawable) : drawable(drawable) {}
+    explicit DumpPng24FromRDPDrawableAdapter(RDPDrawable & drawable) : drawable(drawable) {}
 
     void dump_png24(Transport& trans, bool bgr) const override {
       ::dump_png24(this->drawable.impl(), trans, bgr);

@@ -92,7 +92,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
             OutStream                  device_announce_stream;
 
         public:
-            ToDeviceAnnounceCollectionSender(
+            explicit ToDeviceAnnounceCollectionSender(
                 device_announce_collection_type& device_announces)
             : device_announces(device_announces) {}
 

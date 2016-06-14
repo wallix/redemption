@@ -34,6 +34,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "utils/colors.hpp"
+#include "utils/range.hpp"
 
 #include "graphic_api.hpp"
 
@@ -44,51 +45,62 @@ namespace gdi {
 
 struct GraphicCmdColor
 {
-    static uint32_t & cmd_color(RDPMultiOpaqueRect & cmd) { return cmd._Color; }
+    struct color1_val
+    {
+        uint32_t color1;
+    };
 
-    static uint32_t & cmd_color1(RDP::RDPMultiPatBlt & cmd) { return cmd.BackColor; }
-    static uint32_t & cmd_color2(RDP::RDPMultiPatBlt & cmd) { return cmd.ForeColor; }
+    struct color1_ref
+    {
+        uint32_t & color1;
+        template<class Enc> void encode(Enc const & enc) { color1 = enc(color1); }
+        void assign(color1_val other) { color1 = other.color1; }
+        color1_val to_colors() const { return {color1}; }
+    };
 
-    static uint32_t & cmd_color1(RDPPatBlt & cmd) { return cmd.back_color; }
-    static uint32_t & cmd_color2(RDPPatBlt & cmd) { return cmd.fore_color; }
+    struct color2_val
+    {
+        uint32_t color1;
+        uint32_t color2;
+    };
 
-    static uint32_t & cmd_color1(RDPMem3Blt & cmd) { return cmd.back_color; }
-    static uint32_t & cmd_color2(RDPMem3Blt & cmd) { return cmd.fore_color; }
+    struct color2_ref
+    {
+        uint32_t & color1;
+        uint32_t & color2;
+        template<class Enc> void encode(Enc const & enc) { color1 = enc(color1); color2 = enc(color2); }
+        void assign(color2_val other) { color1 = other.color1; color2 = other.color2; }
+        color2_val to_colors() const { return {color1, color2}; }
+    };
 
-    static uint32_t & cmd_color(RDPOpaqueRect & cmd) { return cmd.color; }
+    static color1_ref cmd_color(RDPMultiOpaqueRect & cmd) { return {cmd._Color}; }
 
-    static uint32_t & cmd_color1(RDPLineTo & cmd) { return cmd.back_color; }
-    static uint32_t & cmd_color2(RDPLineTo & cmd) { return cmd.pen.color; }
+    static color2_ref cmd_color(RDP::RDPMultiPatBlt & cmd) { return {cmd.BackColor, cmd.ForeColor}; }
 
-    static uint32_t & cmd_color1(RDPGlyphIndex & cmd) { return cmd.back_color; }
-    static uint32_t & cmd_color2(RDPGlyphIndex & cmd) { return cmd.fore_color; }
+    static color2_ref cmd_color(RDPPatBlt & cmd) { return {cmd.back_color, cmd.fore_color}; }
 
-    static uint32_t & cmd_color(RDPPolygonSC & cmd) { return cmd.BrushColor; }
+    static color2_ref cmd_color(RDPMem3Blt & cmd) { return {cmd.back_color, cmd.fore_color}; }
 
-    static uint32_t & cmd_color1(RDPPolygonCB & cmd) { return cmd.backColor; }
-    static uint32_t & cmd_color2(RDPPolygonCB & cmd) { return cmd.foreColor; }
+    static color1_ref cmd_color(RDPOpaqueRect & cmd) { return {cmd.color}; }
 
-    static uint32_t & cmd_color(RDPPolyline & cmd) { return cmd.PenColor; }
+    static color2_ref cmd_color(RDPLineTo & cmd) { return {cmd.back_color, cmd.pen.color}; }
 
-    static uint32_t & cmd_color(RDPEllipseSC & cmd) { return cmd.color; }
+    static color2_ref cmd_color(RDPGlyphIndex & cmd) { return {cmd.back_color, cmd.fore_color}; }
 
-    static uint32_t & cmd_color1(RDPEllipseCB & cmd) { return cmd.back_color; }
-    static uint32_t & cmd_color2(RDPEllipseCB & cmd) { return cmd.fore_color; }
+    static color1_ref cmd_color(RDPPolygonSC & cmd) { return {cmd.BrushColor}; }
+
+    static color2_ref cmd_color(RDPPolygonCB & cmd) { return {cmd.backColor, cmd.foreColor}; }
+
+    static color1_ref cmd_color(RDPPolyline & cmd) { return {cmd.PenColor}; }
+
+    static color1_ref cmd_color(RDPEllipseSC & cmd) { return {cmd.color}; }
+
+    static color2_ref cmd_color(RDPEllipseCB & cmd) { return {cmd.back_color, cmd.fore_color}; }
 
 private:
-    template<class Enc, class Cmd>
-    static auto encode_cmd_color_(Enc const & enc, Cmd & cmd) -> decltype(cmd_color(cmd), void()) {
-        cmd_color(cmd) = enc(cmd_color(cmd));
-    }
-
-    template<class Enc, class Cmd>
-    static auto encode_cmd_color_(Enc const & enc, Cmd & cmd) -> decltype(cmd_color2(cmd), void()) {
-        cmd_color1(cmd) = enc(cmd_color1(cmd));
-        cmd_color2(cmd) = enc(cmd_color2(cmd));
-    }
-
     template<class Cmd>
-    struct abort_const_cmd {
+    struct abort_const_cmd
+    {
         static_assert(!std::is_const<Cmd>::value, "cmd is const qualified");
         using type = Cmd;
     };
@@ -96,16 +108,12 @@ private:
 public:
     template<class Enc, class Cmd>
     static auto encode_cmd_color(Enc const & enc, Cmd & cmd)
-    -> decltype(encode_cmd_color_(enc, std::declval<typename abort_const_cmd<Cmd>::type&>())) {
-        encode_cmd_color_(enc, cmd);
-    }
+    -> decltype(cmd_color(std::declval<typename abort_const_cmd<Cmd>::type&>()).encode(enc), void())
+    { cmd_color(cmd).encode(enc); }
 
 private:
     template<class Cmd>
     static auto is_encodable_(int, Cmd & cmd) -> decltype(cmd_color(cmd), std::true_type());
-
-    template<class Cmd>
-    static auto is_encodable_(int, Cmd & cmd) -> decltype(cmd_color2(cmd), std::true_type());
 
     template<class Cmd>
     static std::false_type is_encodable_(char, Cmd & cmd);
@@ -113,154 +121,148 @@ private:
 public:
     template<class Cmd>
     static auto is_encodable_cmd_color(Cmd const & cmd)
-    -> decltype(is_encodable_(1, std::declval<Cmd&>())) {
-        return {};
-    }
-
-    template<class Cmd>
-    struct is_encodable_cmd_color_trait
-    : decltype(is_encodable_(1, std::declval<Cmd&>()))
-    {};
+    -> decltype(is_encodable_(1, std::declval<Cmd&>()))
+    { return {}; }
 };
 
 
-// struct RngByBpp {
-//   Range rng8();
-//   Range rng15();
-//   Range rng16();
-//   Range rng24();
-//   Range rng_all(); [optional]
-//   void apply(T, Cmd, Args);
-// };
-template<class RngByBpp, class Dec, bool Enc8, bool Enc15, bool Enc16, bool Enc24>
-struct GraphicCmdColorDistributor : private GraphicCmdColor, private Dec
+template<class Iterator>
+struct RngByBpp
 {
-    GraphicCmdColorDistributor(RngByBpp const & rng_by_bpp, Dec const & dec)
-    : Dec(dec)
-    , rng_by_bpp(rng_by_bpp)
-    {}
+    using iterator = Iterator;
 
-    template<class Cmd, class... Ts>
-    void operator()(Cmd const & cmd, Ts const & ... args) const {
-        this->encode_cmd(1, cmd, args...);
+    RngByBpp() = default;
+
+    RngByBpp(gdi::GraphicDepth order_depth, iterator first, iterator last)
+    : its{first, first, first, first, last}
+    {
+        assert(order_depth.is_defined());
+
+        std::sort(first, last, [order_depth](gdi::GraphicApi const & a, gdi::GraphicApi const & b) {
+            return a.order_depth().depth_or(order_depth).id() < b.order_depth().depth_or(order_depth).id();
+        });
+
+        struct ge {
+            gdi::GraphicDepth order_depth;
+            gdi::GraphicDepth bpp;
+            bool operator()(gdi::GraphicApi const & x) const {
+                return x.order_depth().depth_or(order_depth).id() >= this->bpp.id();
+            }
+        };
+
+        this->its[0] = std::find_if(this->its[0], this->its[4], ge{order_depth, gdi::GraphicDepth::depth8()});
+        this->its[1] = std::find_if(this->its[0], this->its[4], ge{order_depth, gdi::GraphicDepth::depth15()});
+        this->its[2] = std::find_if(this->its[1], this->its[4], ge{order_depth, gdi::GraphicDepth::depth16()});
+        this->its[3] = std::find_if(this->its[2], this->its[4], ge{order_depth, gdi::GraphicDepth::depth24()});
     }
+
+    range<iterator> rng8() const { return {this->its[0], this->its[1]}; }
+    range<iterator> rng15() const { return {this->its[1], this->its[2]}; }
+    range<iterator> rng16() const { return {this->its[2], this->its[3]}; }
+    range<iterator> rng24() const { return {this->its[3], this->its[4]}; }
+    range<iterator> rng(std::size_t i) const { return {this->its[i], this->its[i+1]}; }
+    range<iterator> rng_all() const { return {this->its[0], this->its[4]}; }
+
+    constexpr static std::size_t count_range() { return 4; }
 
 private:
-    template<bool b> using bool_ = std::integral_constant<bool, b>;
-    using true_ = std::true_type;
-    using false_ = std::false_type;
+    iterator its[5];
+};
 
-    template<class Range, class... Ts>
-    void dispatch_if(true_, Range && rng, Ts const & ... args) const {
-        for (auto && gd : rng) {
-            this->rng_by_bpp.apply(gd, args...);
-        }
-    }
-
-    template<class Range, class... Ts>
-    void dispatch_if(false_, Range const &, Ts const & ...) const {
-    }
-
-
-    template<class Mut, class Enc, class Range, class Cmd, class... Ts>
-    auto encode_if(int, Mut is_imut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
-    -> decltype(cmd_color(cmd), void()) {
-        if (!is_imut) {
-            this->cmd_color(cmd) = enc(this->cmd_color(cmd));
-            this->dispatch_if(true_{}, rng, cmd, args...);
-        }
-        else {
-            auto c1 = this->cmd_color(cmd); this->cmd_color(cmd) = enc(c1);
-            this->dispatch_if(true_{}, rng, cmd, args...);
-            this->cmd_color(cmd) = c1;
-        }
-    }
-
-    template<class Mut, class Enc, class Range, class Cmd, class... Ts>
-    auto encode_if(int, Mut is_imut, true_, Enc enc, Range && rng, Cmd & cmd, Ts const & ... args) const
-    -> decltype(cmd_color2(cmd), void()) {
-        if (!is_imut) {
-            this->cmd_color1(cmd) = enc(this->cmd_color1(cmd));
-            this->cmd_color2(cmd) = enc(this->cmd_color2(cmd));
-            this->dispatch_if(true_{}, rng, cmd, args...);
-        }
-        else {
-            auto c1 = this->cmd_color1(cmd); this->cmd_color1(cmd) = enc(c1);
-            auto c2 = this->cmd_color2(cmd); this->cmd_color2(cmd) = enc(c2);
-            this->dispatch_if(true_{}, rng, cmd, args...);
-            this->cmd_color1(cmd) = c1;
-            this->cmd_color2(cmd) = c2;
-        }
-    }
-
-    template<class Mut, class Bool, class Enc, class Range, class Cmd, class... Ts>
-    void encode_if(unsigned, Mut, Bool, Enc, Range && rng, Cmd & cmd, Ts const & ... args) const {
-        this->dispatch_if(Bool{}, rng, cmd, args...);
-    }
-
-    Dec const & decoder() const { return static_cast<Dec const&>(*this); }
+struct graphic_draw_fn
+{
+    template<class Cmd, class... Ts>
+    void operator()(GraphicApi & api, Cmd const & cmd, Ts const & ... args) const
+    { api.draw(cmd, args...); }
 
     template<class Cmd, class... Ts>
-    typename std::enable_if<GraphicCmdColor::is_encodable_cmd_color_trait<Cmd>::value>::type
-    encode_cmd(int, Cmd const & cmd, Ts const & ... args) const {
-        this->dispatch_if(bool_<Enc8  && Dec::bpp == 8 >{}, this->rng_by_bpp.rng8 (), cmd, args...);
-        this->dispatch_if(bool_<Enc15 && Dec::bpp == 15>{}, this->rng_by_bpp.rng15(), cmd, args...);
-        this->dispatch_if(bool_<Enc16 && Dec::bpp == 16>{}, this->rng_by_bpp.rng16(), cmd, args...);
-        this->dispatch_if(bool_<Enc24 && Dec::bpp == 24>{}, this->rng_by_bpp.rng24(), cmd, args...);
+    void operator()(GraphicApi * api, Cmd const & cmd, Ts const & ... args) const
+    { api->draw(cmd, args...); }
+};
 
-        if (Enc8 + Enc15 + Enc16 + Enc24 == 1 && !(
-            (Enc8  && Dec::bpp == 8)
-         || (Enc15 && Dec::bpp == 15)
-         || (Enc16 && Dec::bpp == 16)
-         || (Enc24 && Dec::bpp == 24)
-        )) {
-            return ;
+namespace detail
+{
+    template<class Fn, class Rng, class Cmd, class... Ts>
+    void draw_rng(Fn & apply, Rng && rng, Cmd const & cmd, Ts const & ... args) {
+        for (auto && gd : rng) {
+            apply(gd, cmd, args...);
+        }
+    }
+
+    template<class Fn, class Iterator, class Cmd, class... Ts>
+    void draw_cmd_color_convert(
+        std::false_type, Fn & apply, GraphicDepth, RngByBpp<Iterator> const & rng_by_bpp,
+        Cmd const & cmd, Ts const & ... args
+    ) { draw_rng(apply, rng_by_bpp.rng_all(), cmd, args...); }
+
+    template<class Fn, class Iterator, class Cmd, class... Ts>
+    void draw_cmd_color_convert(
+        std::true_type, Fn & apply, GraphicDepth order_depth, RngByBpp<Iterator> const & rng_by_bpp,
+        Cmd const & cmd, Ts const & ... args
+    ) {
+        for (std::size_t i = rng_by_bpp.count_range(); i > 0; --i) {
+            if (order_depth.id() == i) {
+                draw_rng(apply, rng_by_bpp.rng(i-1), cmd, args...);
+                if (rng_by_bpp.rng_all().size() == rng_by_bpp.rng(i-1).size()) {
+                    return;
+                }
+                break;
+            }
         }
 
         auto new_cmd = cmd;
-        this->encode_cmd_color(this->decoder(), new_cmd);
+        auto new_cmd_colors_ref = GraphicCmdColor::cmd_color(new_cmd);
 
-        this->dispatch_if(bool_<Enc24 && Dec::bpp != 24>{}, this->rng_by_bpp.rng24(), new_cmd, args...);
-        this->encode_if(1, bool_<bool(Enc15+Enc16)>{}, bool_<Enc8 && Dec::bpp != 8>{},
-            encode_color8 {}, this->rng_by_bpp.rng8 (), new_cmd, args...);
-        this->encode_if(1, bool_<bool(Enc16)>{}, bool_<Enc15 && Dec::bpp != 15>{},
-            encode_color15{}, this->rng_by_bpp.rng15(), new_cmd, args...);
-        this->encode_if(1, false_{}, bool_<Enc16 && Dec::bpp != 16>{},
-            encode_color16{}, this->rng_by_bpp.rng16(), new_cmd, args...);
+        using dec8 = with_color8_palette<decode_color8_opaquerect>;
+        switch (order_depth) {
+            case GraphicDepth::depth24() : /*new_cmd_colors_ref.encode(decode_color24_opaquerect{});*/ break;
+            case GraphicDepth::depth16() : new_cmd_colors_ref.encode(decode_color16_opaquerect{}); break;
+            case GraphicDepth::depth15() : new_cmd_colors_ref.encode(decode_color15_opaquerect{}); break;
+            case GraphicDepth::depth8() : new_cmd_colors_ref.encode(dec8{BGRPalette::classic_332_rgb()}); break;
+            case GraphicDepth::unspecified() : assert(false && "unknown value in order_bpp"); break;
+        }
+
+        if (GraphicDepth::depth24() != order_depth) {
+            draw_rng(apply, rng_by_bpp.rng24(), new_cmd, args...);
+        }
+
+        auto decoded_colors = new_cmd_colors_ref.to_colors();
+
+        if (GraphicDepth::depth16() != order_depth) {
+            new_cmd_colors_ref.encode(encode_color16{});
+            draw_rng(apply, rng_by_bpp.rng16(), new_cmd, args...);
+        }
+        if (GraphicDepth::depth15() != order_depth) {
+            new_cmd_colors_ref.assign(decoded_colors);
+            new_cmd_colors_ref.encode(encode_color15{});
+            draw_rng(apply, rng_by_bpp.rng15(), new_cmd, args...);
+        }
+        if (GraphicDepth::depth8() != order_depth) {
+            new_cmd_colors_ref.assign(decoded_colors);
+            new_cmd_colors_ref.encode(encode_color8{});
+            draw_rng(apply, rng_by_bpp.rng8(), new_cmd, args...);
+        }
     }
+}
 
-    template<class Cmd, class... Ts>
-    void encode_cmd(unsigned, Cmd const & cmd, Ts const & ... args) const {
-        this->dispatch_all(1, cmd, args...);
-    }
 
-    template<class... Ts>
-    auto dispatch_all(int, Ts const & ... args) const
-    -> decltype(std::declval<RngByBpp const &>().rng_all(), void()) {
-        this->dispatch_if(true_{}, this->rng_by_bpp.rng_all(), args...);
-    }
+template<class Fn, class Iterator, class Cmd, class... Ts>
+void draw_cmd_color_convert(
+    Fn apply, GraphicDepth order_depth, RngByBpp<Iterator> rng,
+    Cmd const & cmd, Ts const & ... args
+) {
+    detail::draw_cmd_color_convert(
+        GraphicCmdColor::is_encodable_cmd_color(cmd),
+        apply, order_depth, rng, cmd, args...
+    );
+}
 
-    template<class... Ts>
-    void dispatch_all(unsigned, Ts const & ... args) const {
-        this->dispatch_if(bool_<Enc8 >{}, this->rng_by_bpp.rng8 (), args...);
-        this->dispatch_if(bool_<Enc15>{}, this->rng_by_bpp.rng15(), args...);
-        this->dispatch_if(bool_<Enc16>{}, this->rng_by_bpp.rng16(), args...);
-        this->dispatch_if(bool_<Enc24>{}, this->rng_by_bpp.rng24(), args...);
-    }
 
-    RngByBpp rng_by_bpp;
-};
-
-template<class RngByBpp, class Dec>
-struct GraphicCmdColorDistributor<RngByBpp, Dec, false, false, false, false>
-{
-    GraphicCmdColorDistributor(RngByBpp const &, Dec const &)
-    {}
-
-    template<class Cmd, class... Ts>
-    void operator()(Cmd const &, Ts const & ...) const {
-    }
-};
+template<class Iterator, class Cmd, class... Ts>
+void draw_cmd_color_convert(
+    GraphicDepth order_depth, RngByBpp<Iterator> rng,
+    Cmd const & cmd, Ts const & ... args
+) { return draw_cmd_color_convert(graphic_draw_fn{}, order_depth, rng, cmd, args...); }
 
 
 struct GraphicColorConverterAccess : GraphicCoreAccess

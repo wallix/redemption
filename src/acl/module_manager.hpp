@@ -272,12 +272,11 @@ public:
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "==========> INTERNAL test");
                 }
-                auto & user = this->ini.get<cfg::globals::target_user>();
-                this->ini.set<cfg::context::movie>(user.c_str());
-                const size_t len_user = user.size();
-                if ((len_user < 5 || !std::equal(user.end() - 5u, user.end(), ".mwrm")) && len_user + 5 < this->ini.get<cfg::context::movie>().max_size()) {
-                    strcpy(this->ini.get_ref<cfg::context::movie>().data() + len_user, ".mwrm");
+                std::string user = this->ini.get<cfg::globals::target_user>();
+                if (user.size() < 5 || !std::equal(user.end() - 5u, user.end(), ".mwrm")) {
+                    user += ".mwrm";
                 }
+                this->ini.set<cfg::context::movie>(std::move(user));
                 res = MODULE_INTERNAL_TEST;
             }
             else if (target == "widget2_message") {
@@ -334,7 +333,7 @@ class ModuleManager : public MMIni
         mod_api * (& mod_api_ptr);
 
     public:
-        CurrentCallback(mod_api * (& mod_api_ptr)) : mod_api_ptr(mod_api_ptr) {
+        explicit CurrentCallback(mod_api * (& mod_api_ptr)) : mod_api_ptr(mod_api_ptr) {
         }
 
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
@@ -494,14 +493,13 @@ public:
 
     void osd_message(std::string message, bool external_deleting) {
         this->clear_osd_message();
-        int w, h;
         if (!external_deleting) {
             message += "  ";
             message += TR("disable_osd", language(this->ini));
         }
-        this->mod->text_metrics(this->ini.get<cfg::font>(), message.c_str(), w, h);
-        w += padw * 2;
-        h += padh * 2;
+        gdi::TextMetrics tm(this->ini.get<cfg::font>(), message.c_str());
+        int w = tm.width + padw * 2;
+        int h = tm.height + padh * 2;
         uint32_t color = BLACK;
         uint32_t background_color = LIGHT_YELLOW;
         if (24 != this->front.client_info.bpp) {
@@ -519,18 +517,13 @@ public:
                 mod.begin_update();
                 mod.draw(RDPOpaqueRect(r, background_color), r);
 
-
                 StaticOutStream<256> deltaPoints;
-
                 deltaPoints.out_sint16_le(r.cx - 1);
                 deltaPoints.out_sint16_le(0);
-
                 deltaPoints.out_sint16_le(0);
                 deltaPoints.out_sint16_le(r.cy - 1);
-
                 deltaPoints.out_sint16_le(-r.cx + 1);
                 deltaPoints.out_sint16_le(0);
-
                 deltaPoints.out_sint16_le(0);
                 deltaPoints.out_sint16_le(-r.cy + 1);
 
@@ -541,8 +534,7 @@ public:
                                         , 0x0D, 0, BLACK, 4, in_deltaPoints);
                 mod.draw(polyline_box, r);
 
-
-                mod.server_draw_text_deprecated(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
+                mod.server_draw_text_poubelle(this->ini.get<cfg::font>(), clip.x + padw, padh, message.c_str(), color, background_color, r);
                 mod.end_update();
             },
             external_deleting
@@ -607,8 +599,8 @@ public:
         case MODULE_INTERNAL_TEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
             this->mod = new ReplayMod(  this->front
-                                     , this->ini.get<cfg::video::replay_path>()
-                                     , this->ini.get<cfg::context::movie>()
+                                     , this->ini.get<cfg::video::replay_path>().c_str()
+                                     , this->ini.get<cfg::context::movie>().c_str()
                                      , this->front.client_info.width
                                      , this->front.client_info.height
                                      , this->ini.get_ref<cfg::context::auth_error_message>()
@@ -1003,10 +995,10 @@ public:
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_customize_executable_name>();
                 mod_rdp_params.session_probe_alternate_shell       = this->ini.get<cfg::mod_rdp::session_probe_alternate_shell>();
 
-                mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::syslog);
-                mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & configs::ClipboardLogFlags::wrm);
-                mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_file_system_log>() & configs::FileSystemLogFlags::syslog);
-                mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_file_system_log>() & configs::FileSystemLogFlags::wrm);
+                mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
+                mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
+                mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
+                mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
                 mod_rdp_params.acl                                 = acl;
                 mod_rdp_params.outbound_connection_blocking_rules  =
                     this->ini.get<cfg::context::outbound_connection_blocking_rules>().c_str();
@@ -1056,11 +1048,11 @@ public:
                 mod_rdp_params.allow_using_multiple_monitors       = this->ini.get<cfg::globals::allow_using_multiple_monitors>();
 
                 mod_rdp_params.adjust_performance_flags_for_recording
-                                                                   = (this->ini.get<cfg::globals::movie>() &&
+                                                                   = (this->ini.get<cfg::globals::is_rec>() &&
                                                                       this->ini.get<cfg::client::auto_adjust_performance_flags>() &&
                                                                       ((this->ini.get<cfg::video::capture_flags>() &
-                                                                        (configs::CaptureFlags::wrm | configs::CaptureFlags::ocr)) !=
-                                                                       configs::CaptureFlags::none));
+                                                                        (CaptureFlags::wrm | CaptureFlags::ocr)) !=
+                                                                       CaptureFlags::none));
 
                 try {
                     const char * const name = "RDP Target";
@@ -1149,7 +1141,7 @@ public:
                       , this->ini.get<cfg::mod_vnc::allow_authentification_retries>()
                       , true
                       , this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
-                      != configs::ClipboardEncodingType::latin1
+                      != ClipboardEncodingType::latin1
                         ? mod_vnc::ClipboardEncodingType::UTF8
                         : mod_vnc::ClipboardEncodingType::Latin1
                       , this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>()
@@ -1181,8 +1173,8 @@ public:
 
     // Check movie start/stop/pause
     void record(auth_api * acl) override {
-        if (this->ini.get<cfg::globals::movie>() ||
-            !bool(this->ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog) ||
+        if (this->ini.get<cfg::globals::is_rec>() ||
+            !bool(this->ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) ||
             this->ini.get<cfg::session_log::enable_session_log>() ||
             ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str()) ||
             ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str())

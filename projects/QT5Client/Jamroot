@@ -19,7 +19,7 @@ constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 constant INCLUDEDIR : ../../include ;
 constant SYSTEMDIR : ../../src/system/linux ;
-
+constant CONFIG_DIR : ../../projects/redemption_configs ;
 
 # Returns environment value if it exists or default otherwise.
 # Allow us to customize install path with shell variables like $PREFIX...
@@ -254,6 +254,10 @@ project redemption
     <include>$(SRCDIR)/headers
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
+
+    <include>$(CONFIG_DIR)/redemption_src
+    <include>$(CONFIG_DIR)/include/autogen
+    <include>$(CONFIG_DIR)/include/variant
 
     <conditional>@defines
 

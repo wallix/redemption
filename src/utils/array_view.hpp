@@ -23,13 +23,18 @@
 
 #include <type_traits>
 
-#include <cstddef>
+#include <cstdint>
 #include <cassert>
 
 template<class T>
 struct array_view
 {
     using type = T;
+    using iterator = T *;
+    using const_iterator = T *;
+    using value_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+    using reference = T&;
+    using const_reference = T const &;
 
     constexpr array_view() = default;
 

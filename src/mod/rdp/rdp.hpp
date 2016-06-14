@@ -22,9 +22,7 @@
   rdp module main header file
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_HPP_
-
+#pragma once
 #include "mod/rdp/rdp_orders.hpp"
 
 /* include "ther h files */
@@ -96,7 +94,7 @@
 
 #include <cstdlib>
 
-class RDPChannelManagerMod : public mod_api
+class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, mod_api>
 {
 private:
     std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
@@ -202,96 +200,6 @@ protected:
         }
     };
 
-    RDPChannelManagerMod(const uint16_t front_width,
-        const uint16_t front_height, FrontAPI& front)
-    : mod_api(front_width, front_height)
-    , front(front) {}
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-        const char* channel_name) const = 0;
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-        const char* channel_name) = 0;
-
-public:
-    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
-        if (!this->clipboard_virtual_channel) {
-            REDASSERT(!this->clipboard_to_client_sender &&
-                !this->clipboard_to_server_sender);
-
-            this->clipboard_to_client_sender =
-                this->create_to_client_sender(channel_names::cliprdr);
-            this->clipboard_to_server_sender =
-                this->create_to_server_sender(channel_names::cliprdr);
-
-            this->clipboard_virtual_channel =
-                std::make_unique<ClipboardVirtualChannel>(
-                    this->clipboard_to_client_sender.get(),
-                    this->clipboard_to_server_sender.get(),
-                    this->front,
-                    this->get_clipboard_virtual_channel_params());
-        }
-
-        return *this->clipboard_virtual_channel;
-    }
-
-    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
-        if (!this->file_system_virtual_channel) {
-            REDASSERT(!this->file_system_to_client_sender &&
-                !this->file_system_to_server_sender);
-
-            this->file_system_to_client_sender =
-                this->create_to_client_sender(channel_names::rdpdr);
-            this->file_system_to_server_sender =
-                this->create_to_server_sender(channel_names::rdpdr);
-
-            this->file_system_virtual_channel =
-                std::make_unique<FileSystemVirtualChannel>(
-                    this->file_system_to_client_sender.get(),
-                    this->file_system_to_server_sender.get(),
-                    this->file_system_drive_manager,
-                    this->front,
-                    this->get_file_system_virtual_channel_params());
-        }
-
-        return *this->file_system_virtual_channel;
-    }
-
-    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
-        if (!this->session_probe_virtual_channel) {
-            REDASSERT(!this->session_probe_to_server_sender);
-
-            this->session_probe_to_server_sender =
-                this->create_to_server_sender(channel_names::sespro);
-
-            FileSystemVirtualChannel& file_system_virtual_channel =
-                get_file_system_virtual_channel();
-
-            this->session_probe_virtual_channel =
-                std::make_unique<SessionProbeVirtualChannel>(
-                    this->session_probe_to_server_sender.get(),
-                    this->front,
-                    *this,
-                    file_system_virtual_channel,
-                    this->get_session_probe_virtual_channel_params());
-        }
-
-        return *this->session_probe_virtual_channel;
-    }
-
-protected:
-    virtual const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const = 0;
-
-    virtual const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const = 0;
-
-    virtual const SessionProbeVirtualChannel::Params
-        get_session_probe_virtual_channel_params() const = 0;
-};  // RDPChannelManagerMod
-
-class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
-{
     friend gdi::GraphicCoreAccess;
 
     CHANNELS::ChannelDefArray mod_channel_list;
@@ -391,17 +299,17 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     const bool disable_clipboard_log_wrm;
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
-    const int  rdp_compression;
+    const RdpCompression rdp_compression;
 
-    const unsigned                               session_probe_launch_timeout;
-    const unsigned                               session_probe_launch_fallback_timeout;
-    const bool                                   session_probe_start_launch_timeout_timer_only_after_logon;
-    const ::configs::SessionProbeOnLaunchFailure session_probe_on_launch_failure;
-    const unsigned                               session_probe_keepalive_timeout;
-    const bool                                   session_probe_on_keepalive_timeout_disconnect_user;
-    const bool                                   session_probe_end_disconnected_session;
-          std::string                            session_probe_alternate_shell;
-    const bool                                   session_probe_use_clipboard_based_launcher;
+    const std::chrono::milliseconds   session_probe_launch_timeout;
+    const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
+    const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
+    const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+    const std::chrono::milliseconds   session_probe_keepalive_timeout;
+    const bool                        session_probe_on_keepalive_timeout_disconnect_user;
+    const bool                        session_probe_end_disconnected_session;
+          std::string                 session_probe_alternate_shell;
+    const bool                        session_probe_use_clipboard_based_launcher;
 
     std::string session_probe_target_informations;
 
@@ -415,8 +323,8 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
 
     std::string * error_message;
 
-    const bool     disconnect_on_logon_user_change;
-    const uint32_t open_session_timeout;
+    const bool                 disconnect_on_logon_user_change;
+    const std::chrono::seconds open_session_timeout;
 
     Timeout open_session_timeout_checker;
 
@@ -425,8 +333,8 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     std::string end_session_reason;
     std::string end_session_message;
 
-    const bool                     server_cert_store;
-    const configs::ServerCertCheck server_cert_check;
+    const bool            server_cert_store;
+    const ServerCertCheck server_cert_check;
 
     std::unique_ptr<char[]> certif_path;
 
@@ -520,6 +428,71 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
         }
     };
 
+    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
+        if (!this->clipboard_virtual_channel) {
+            REDASSERT(!this->clipboard_to_client_sender &&
+                !this->clipboard_to_server_sender);
+
+            this->clipboard_to_client_sender =
+                this->create_to_client_sender(channel_names::cliprdr);
+            this->clipboard_to_server_sender =
+                this->create_to_server_sender(channel_names::cliprdr);
+
+            this->clipboard_virtual_channel =
+                std::make_unique<ClipboardVirtualChannel>(
+                    this->clipboard_to_client_sender.get(),
+                    this->clipboard_to_server_sender.get(),
+                    this->front,
+                    this->get_clipboard_virtual_channel_params());
+        }
+
+        return *this->clipboard_virtual_channel;
+    }
+
+    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
+        if (!this->file_system_virtual_channel) {
+            REDASSERT(!this->file_system_to_client_sender &&
+                !this->file_system_to_server_sender);
+
+            this->file_system_to_client_sender =
+                this->create_to_client_sender(channel_names::rdpdr);
+            this->file_system_to_server_sender =
+                this->create_to_server_sender(channel_names::rdpdr);
+
+            this->file_system_virtual_channel =
+                std::make_unique<FileSystemVirtualChannel>(
+                    this->file_system_to_client_sender.get(),
+                    this->file_system_to_server_sender.get(),
+                    this->file_system_drive_manager,
+                    this->front,
+                    this->get_file_system_virtual_channel_params());
+        }
+
+        return *this->file_system_virtual_channel;
+    }
+
+    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
+        if (!this->session_probe_virtual_channel) {
+            REDASSERT(!this->session_probe_to_server_sender);
+
+            this->session_probe_to_server_sender =
+                this->create_to_server_sender(channel_names::sespro);
+
+            FileSystemVirtualChannel& file_system_virtual_channel =
+                get_file_system_virtual_channel();
+
+            this->session_probe_virtual_channel =
+                std::make_unique<SessionProbeVirtualChannel>(
+                    this->session_probe_to_server_sender.get(),
+                    this->front,
+                    *this,
+                    file_system_virtual_channel,
+                    this->get_session_probe_virtual_channel_params());
+        }
+
+        return *this->session_probe_virtual_channel;
+    }
+
     TODO("duplicated code in front")
     struct write_x224_dt_tpdu_fn
     {
@@ -544,29 +517,26 @@ class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, RDPChannelManagerMod>
     private:
         auth_api * acl;
 
-        const configs::ServerNotification server_access_allowed_message;
-        const configs::ServerNotification server_cert_create_message;
-        const configs::ServerNotification server_cert_success_message;
-        const configs::ServerNotification server_cert_failure_message;
-        const configs::ServerNotification server_cert_error_message;
+        const ServerNotification server_access_allowed_message;
+        const ServerNotification server_cert_create_message;
+        const ServerNotification server_cert_success_message;
+        const ServerNotification server_cert_failure_message;
+        const ServerNotification server_cert_error_message;
 
         uint32_t verbose;
 
-        bool is_syslog_notification_enabled(
-                configs::ServerNotification server_notification) {
-            return
-                ((server_notification & configs::ServerNotification::syslog) ==
-                 configs::ServerNotification::syslog);
+        bool is_syslog_notification_enabled(ServerNotification server_notification) {
+            return ((server_notification & ServerNotification::syslog) == ServerNotification::syslog);
         }
 
     public:
         RDPServerNotifier(
                 auth_api * acl,
-                configs::ServerNotification server_access_allowed_message,
-                configs::ServerNotification server_cert_create_message,
-                configs::ServerNotification server_cert_success_message,
-                configs::ServerNotification server_cert_failure_message,
-                configs::ServerNotification server_cert_error_message,
+                ServerNotification server_access_allowed_message,
+                ServerNotification server_cert_create_message,
+                ServerNotification server_cert_success_message,
+                ServerNotification server_cert_failure_message,
+                ServerNotification server_cert_error_message,
                 uint32_t verbose
             )
         : acl(acl)
@@ -651,7 +621,8 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_rdp::base_type(info.width - (info.width % 4), info.height, front)
+        : mod_rdp::base_type(info.width - (info.width % 4), info.height)
+        , front(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -800,7 +771,7 @@ public:
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
-        this->event.object_and_time = (this->open_session_timeout > 0);
+        this->event.object_and_time = (this->open_session_timeout.count() > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel,
@@ -1049,7 +1020,7 @@ public:
 
 /*
         while (UP_AND_RUNNING != this->connection_finalization_state){
-            this->draw_event(time(nullptr));
+            this->draw_event(time(nullptr), front);
             if (this->event.signal != BACK_EVENT_NONE){
                 char statestr[256];
                 switch (this->state) {
@@ -1147,7 +1118,7 @@ public:
 
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-            const char* channel_name) const override
+            const char* channel_name) const
     {
         if (!this->authorization_channels.is_authorized(channel_name))
         {
@@ -1173,7 +1144,7 @@ protected:
     }
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-            const char* channel_name) override
+            const char* channel_name)
     {
         const CHANNELS::ChannelDef* channel =
             this->mod_channel_list.get_by_name(channel_name);
@@ -1214,7 +1185,7 @@ protected:
     }
 
     const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const override
+        get_clipboard_virtual_channel_params() const
     {
         ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
@@ -1244,7 +1215,7 @@ protected:
     }
 
     const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const override
+        get_file_system_virtual_channel_params() const
     {
         FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -1288,7 +1259,7 @@ protected:
     }
 
     const SessionProbeVirtualChannel::Params
-        get_session_probe_virtual_channel_params() const override
+        get_session_probe_virtual_channel_params() const
     {
         SessionProbeVirtualChannel::Params
             session_probe_virtual_channel_params;
@@ -1976,9 +1947,10 @@ private:
     }
 
 public:
-    void draw_event(time_t now) override {
-        if (!this->event.waked_up_by_time &&
-            (!this->session_probe_virtual_channel_p || !this->session_probe_virtual_channel_p->is_event_signaled())) {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
+        if (!this->event.waked_up_by_time 
+        && (!this->session_probe_virtual_channel_p 
+          ||!this->session_probe_virtual_channel_p->is_event_signaled())) {
             try{
                 EM_ASM_({ console.log('draw_event start'); }, 0);
                 char * hostname = this->hostname;
@@ -3083,78 +3055,89 @@ public:
                             while (su.payload.in_remain()) {
                                 FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 
-                                switch (upd.updateCode) {
-                                case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+                                using FU = FastPath::UpdateType;
+                                if (this->verbose & 8) {
+                                    const char * m = "UNKNOWN ORDER";
+                                    switch (static_cast<FastPath::UpdateType>(upd.updateCode))
+                                    {
+                                    case FU::ORDERS:      m = "ORDERS"; break;
+                                    case FU::BITMAP:      m = "BITMAP"; break;
+                                    case FU::PALETTE:     m = "PALETTE"; break;
+                                    case FU::SYNCHRONIZE: m = "SYNCHRONIZE"; break;
+                                    case FU::SURFCMDS:    m = "SYNCHRONIZE"; break;
+                                    case FU::PTR_NULL:    m = "PTR_NULL"; break;
+                                    case FU::PTR_DEFAULT: m = "PTR_DEFAULT"; break;
+                                    case FU::PTR_POSITION:m = "PTR_POSITION"; break;
+                                    case FU::COLOR:       m = "COLOR"; break;
+                                    case FU::CACHED:      m = "CACHED"; break;
+                                    case FU::POINTER:     m = "POINTER"; break;
+                                    }
+                                    LOG(LOG_INFO, "FastPath::UpdateType::%s", m);
+                                }
+
+                                switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
+                                case FastPath::UpdateType::ORDERS:
                                     this->front.begin_update();
                                     this->orders.process_orders(this->bpp, upd.payload, true, *this->gd,
                                                                 this->front_width, this->front_height);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                                case FastPath::UpdateType::BITMAP:
                                     this->front.begin_update();
                                     this->process_bitmap_updates(upd.payload, true);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                                case FastPath::UpdateType::PALETTE:
                                     this->front.begin_update();
                                     this->process_palette(upd.payload, true);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE"); }
+                                case FastPath::UpdateType::SYNCHRONIZE:
+                                    // TODO: we should propagate SYNCHRONIZE to front
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                                case FastPath::UpdateType::SURFCMDS:
+                                    LOG( LOG_ERR
+                                       , "mod::rdp: received unsupported fast-path PUD, updateCode = %s"
+                                       , "FastPath::UPDATETYPE_SURFCMDS");
+                                    throw Error(ERR_RDP_FASTPATH);
+
+                                case FastPath::UpdateType::PTR_NULL:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL"); }
                                         struct Pointer cursor;
                                         memset(cursor.mask, 0xff, sizeof(cursor.mask));
                                         this->front.set_pointer(cursor);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                                case FastPath::UpdateType::PTR_DEFAULT:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT"); }
                                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
                                         this->front.set_pointer(cursor);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                                case FastPath::UpdateType::PTR_POSITION:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION"); }
                                         uint16_t xPos = upd.payload.in_uint16_le();
                                         uint16_t yPos = upd.payload.in_uint16_le();
                                         this->front.update_pointer_position(xPos, yPos);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                                case FastPath::UpdateType::COLOR:
                                     this->process_color_pointer_pdu(upd.payload);
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_COLOR"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_POINTER:
-                                    this->process_new_pointer_pdu(upd.payload);
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_POINTER"); }
-                                    break;
-
-                                case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                                case FastPath::UpdateType::CACHED:
                                     this->process_cached_pointer_pdu(upd.payload);
+                                    break;
 
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_CACHED"); }
+                                case FastPath::UpdateType::POINTER:
+                                    this->process_new_pointer_pdu(upd.payload);
                                     break;
 
                                 default:
@@ -3714,7 +3697,7 @@ public:
             }
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             switch(this->open_session_timeout_checker.check(now)) {
             case Timeout::TIMEOUT_REACHED:
                 if (this->error_message) {
@@ -5303,7 +5286,7 @@ public:
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
             this->event.reset();
@@ -6501,10 +6484,10 @@ public:
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
-                if (this->rdp_compression) {
+                if (bool(this->rdp_compression)) {
                     infoPacket.flags |= INFO_COMPRESSION;
                     infoPacket.flags &= ~CompressionTypeMask;
-                    infoPacket.flags |= ((this->rdp_compression - 1) << 9);
+                    infoPacket.flags |= (static_cast<unsigned>(this->rdp_compression) - 1) << 9;
                 }
 
                 if (this->enable_session_probe) {
@@ -6524,9 +6507,9 @@ public:
             infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
-                now, this->open_session_timeout);
+                now, this->open_session_timeout.count());
             this->event.set(1000000);
         }
         if (this->verbose & 1){
@@ -6743,4 +6726,3 @@ public:
 
 };
 
-#endif

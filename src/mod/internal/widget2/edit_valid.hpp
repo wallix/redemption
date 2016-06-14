@@ -19,8 +19,7 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_EDIT_VALID_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_EDIT_VALID_HPP
+#pragma once
 
 #include "widget.hpp"
 #include "label.hpp"
@@ -29,6 +28,7 @@
 #include "flat_button.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/colors.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetEditValid : public Widget2 {
 public:
@@ -36,7 +36,7 @@ public:
     WidgetEdit * editbox;
     WidgetLabel * label;
 
-    WidgetEditValid(mod_api& drawable, int16_t x, int16_t y, uint16_t cx,
+    WidgetEditValid(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
                     int group_id, int fgcolor, int bgcolor,
                     int focus_color, Font const & font, std::size_t edit_position = -1,
@@ -217,4 +217,3 @@ public:
     }
 };
 
-#endif

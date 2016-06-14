@@ -48,15 +48,15 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     Inifile ini;
 
-    ini.set<cfg::globals::keepalive_grace_delay>(30);
-    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
+    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
     ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
 
     char outdata[] =
         // Time: 10011
-           "\x00\x00\x01\xA1"
+           "\x00\x00\x01\x85"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -65,7 +65,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
-           "selector\n!False\n"
            "selector_current_page\n!1\n"
            "selector_device_filter\n!\n"
            "selector_group_filter\n!\n"
@@ -76,10 +75,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
            "proto_dest\nASK\n"
            "password\nASK\n"
            "reporting\n!\n"
-           "auth_channel_result\n!\n"
            "auth_channel_target\n!\n"
-           "accept_message\n!\n"
-           "display_message\n!\n"
+           "accept_message\n!False\n"
+           "display_message\n!False\n"
            "real_target_device\n!\n"
 
         // Time: 10043
@@ -134,8 +132,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     // If no keepalive is received after 30 seconds => disconnection
     sesman.check(mm, 10073, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true);
-
-
 }
 
 
@@ -147,15 +143,15 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     Inifile ini;
 
-    ini.set<cfg::globals::keepalive_grace_delay>(30);
-    ini.set<cfg::globals::session_timeout>(900);
+    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
+    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
     ini.set<cfg::debug::auth>(255);
 
     MMIni mm(ini);
 
     char outdata[] =
         // Time 10011
-           "\x00\x00\x01\xA1"
+           "\x00\x00\x01\x85"
            "login\nASK\n"
            "ip_client\n!\n"
            "ip_target\n!\n"
@@ -164,7 +160,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
            "bpp\n!24\n"
            "height\n!600\n"
            "width\n!800\n"
-           "selector\n!False\n"
            "selector_current_page\n!1\n"
            "selector_device_filter\n!\n"
            "selector_group_filter\n!\n"
@@ -175,10 +170,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
            "proto_dest\nASK\n"
            "password\nASK\n"
            "reporting\n!\n"
-           "auth_channel_result\n!\n"
            "auth_channel_target\n!\n"
-           "accept_message\n!\n"
-           "display_message\n!\n"
+           "accept_message\n!False\n"
+           "display_message\n!False\n"
            "real_target_device\n!\n"
 
         // Time 10043
@@ -267,14 +261,14 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     BackEvent_t signal = BACK_EVENT_NONE;
 
     Inifile ini;
-    ini.set<cfg::globals::keepalive_grace_delay>(30);
-    ini.set<cfg::globals::session_timeout>(240); // = 8*30 = 240secs inactivity>
+    ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
+    ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{240}); // = 8*30 = 240secs inactivity>
     ini.set<cfg::debug::auth>(255);
     MMIni mm(ini);
 
     char outdata[] =
         // Time 10011
-        "\x00\x00\x01\xA1"
+        "\x00\x00\x01\x85"
         "login\nASK\n"
         "ip_client\n!\n"
         "ip_target\n!\n"
@@ -283,7 +277,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "bpp\n!24\n"
         "height\n!600\n"
         "width\n!800\n"
-        "selector\n!False\n"
         "selector_current_page\n!1\n"
         "selector_device_filter\n!\n"
         "selector_group_filter\n!\n"
@@ -294,10 +287,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "proto_dest\nASK\n"
         "password\nASK\n"
         "reporting\n!\n"
-        "auth_channel_result\n!\n"
         "auth_channel_target\n!\n"
-        "accept_message\n!\n"
-        "display_message\n!\n"
+        "accept_message\n!False\n"
+        "display_message\n!False\n"
         "real_target_device\n!\n"
     ;
 

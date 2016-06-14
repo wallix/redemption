@@ -357,7 +357,7 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_mtime),                           // LastWriteTime(8)
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),                           // ChangeTime(8)
                         (this->IsDirectory() ? fscc::FILE_ATTRIBUTE_DIRECTORY : 0) |    // FileAttributes(4)
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY)
+                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY)
                     );
 
                 if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
@@ -412,7 +412,7 @@ public:
 
                 fscc::FileAttributeTagInformation file_attribute_tag_information(
                         fscc::FILE_ATTRIBUTE_DIRECTORY |                                    // FileAttributes
-                            (sb.st_mode & S_IWUSR ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
+                            ((sb.st_mode & S_IWUSR) ? 0 : fscc::FILE_ATTRIBUTE_READONLY),
                         0                                                                   // ReparseTag
                     );
 
@@ -1465,6 +1465,13 @@ public:
             verbose);
     }
 
+private:
+    uint32_t Length = 0;
+
+    uint32_t remaining_number_of_bytes_to_write = 0;
+    uint32_t current_offset                     = 0;
+
+public:
     void ProcessServerDriveWriteRequest(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, int drive_access_mode,
@@ -1474,14 +1481,9 @@ public:
             uint32_t verbose) override {
         REDASSERT(this->fd > -1);
 
-        static uint32_t Length = 0;
-        static uint64_t Offset = 0;
-
-        static uint32_t remaining_number_of_bytes_to_write = 0;
-        static uint32_t current_offset                     = 0;
-
         if (first_chunk) {
             Length = in_stream.in_uint32_le();
+            uint64_t const
             Offset = in_stream.in_uint64_le();
 
             remaining_number_of_bytes_to_write = Length;

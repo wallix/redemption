@@ -124,7 +124,7 @@ static inline timeval operator-(timeval const & endtime, timeval const & startti
         result.tv_usec = endtime.tv_usec - starttime.tv_usec;
     }
     else {
-        result.tv_usec--;
+        result.tv_sec--;
 
         result.tv_usec = 1000000LL - starttime.tv_usec + endtime.tv_usec;
     }

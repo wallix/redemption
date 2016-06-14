@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 8) break;
-        mod->draw_event(time(nullptr));
+        mod->draw_event(time(nullptr), front);
     }
 
     char message[1024];

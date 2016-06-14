@@ -19,8 +19,7 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_FORM_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_FORM_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "flat_button.hpp"
@@ -33,6 +32,8 @@
 #include "group_box.hpp"
 #include "utils/translation.hpp"
 #include "regex/regex.hpp"
+#include "gdi/graphic_api.hpp"
+
 
 class FlatForm : public WidgetParent
 {
@@ -70,7 +71,7 @@ enum {
     CompositeArray composite_array;
     int flags;
 
-    FlatForm(mod_api& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
+    FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
              int flags = 0)
@@ -311,4 +312,3 @@ enum {
     }
 };
 
-#endif

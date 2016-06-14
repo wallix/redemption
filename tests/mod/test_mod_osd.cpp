@@ -46,7 +46,7 @@ struct FakeMod : gdi::GraphicProxyBase<FakeMod, mod_api>
     , gd(front_width, front_height, 24)
     {}
 
-    void draw_event(time_t now) override {}
+    void draw_event(time_t now, const GraphicApi & drawable) override {}
     void rdp_input_invalidate(const Rect& r) override {}
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {}
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {}
@@ -54,10 +54,9 @@ struct FakeMod : gdi::GraphicProxyBase<FakeMod, mod_api>
     void end_update() override {}
     void send_to_front_channel(const char*const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
     void begin_update() override {}
-    void text_metrics(Font const & font, const char * text, int & width, int & height) override {}
 
-    void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char * text,
-                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) override
+    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {}
 
 protected:

@@ -19,8 +19,7 @@
               Martin Potier, Poelen Jonathan, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
-#define _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
+#pragma once
 
 #include <utility>
 
@@ -56,7 +55,6 @@
 
 #include "utils/drawable.hpp"
 #include "utils/png.hpp"
-#include "utils/text_metrics.hpp"
 
 #include "gdi/graphic_api.hpp"
 
@@ -430,36 +428,265 @@ private:
         }
     }
 
-private:
-    void draw_glyph( FontChar const & fc, int16_t pos_x, int16_t pos_y, Color color, Rect const & clip)
-    {
-              uint8_t   fc_bit_mask        = 128;
-        const uint8_t * fc_data            = fc.data.get();
-        const bool      skip_padding_pixel = (fc.width % 8);
 
-        for (int yy = pos_y + fc.baseline ;
-                 yy - (pos_y + fc.baseline) < fc.height; yy++)
+
+
+
+// [MS-RDPEGDI] - 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
+// =============================================================
+
+// The GlyphIndex Primary Drawing Order encodes a set of glyph indices at a
+//  specified position.
+
+//  Encoding order number: 27 (0x1B)
+//  Negotiation order number: 27 (0x1B)
+//  Number of fields: 22
+//  Number of field encoding bytes: 3
+//  Maximum encoded field length: 297 bytes
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |    cacheId    |    flAccel    |   ulCharInc   |   BackColor   |
+// |   (optional)  |   (optional)  |   (optional)  |   (optional)  |
+// +---------------+---------------+---------------+---------------+
+// |            fOpRedundant (optional)            |   ForeColor   |
+// |                                               |   (optional)  |
+// +-----------------------------------------------+---------------+
+// |              ...              |       BkLeft (optional)       |
+// +-------------------------------+---------------+---------------+
+// |        BkTop (optional)       |       BkRight (optional)      |
+// +-------------------------------+-------------------------------+
+// |      BkBottom (optional)      |       OpLeft (optional)       |
+// +-------------------------------+-------------------------------+
+// |        OpTop (optional)       |       OpRight (optional)      |
+// +-------------------------------+---------------+---------------+
+// |      OpBottom (optional)      |   BrushOrgX   |   BrushOrgY   |
+// |                               |   (optional)  |   (optional)  |
+// +---------------+---------------+---------------+---------------+
+// |   BrushStyle  |   BrushHatch  |     BrushExtra (optional)     |
+// |   (optional)  |   (optional)  |                               |
+// +---------------+---------------+-------------------------------+
+// |                              ...                              |
+// +---------------+-------------------------------+---------------+
+// |      ...      |          X (optional)         |  Y (optional) |
+// +---------------+-------------------------------+---------------+
+// |      ...      |    VariableBytes (variable)   |
+// +---------------+-------------------------------+
+
+// cacheId (1 byte): An 8-bit, unsigned integer. The ID of the glyph cache in
+//  which the glyph data MUST be stored. This value MUST be in the range 0 to
+//  9 (inclusive).
+
+// flAccel (1 byte): An 8-bit, unsigned integer. Accelerator flags. For glyph
+//  related terminology, see [YUAN] figures 14-17 and 15-1. For information
+//  about string widths and heights, see [MSDN-SWH]. For information about
+//  character widths, see [MSDN-CW]. This field MUST contain a combination of
+//  the following flags.
+
+//  +---------------------------+----------------------------------------------+
+//  | Value                     | Meaning                                      |
+//  +---------------------------+----------------------------------------------+
+//  | SO_FLAG_DEFAULT_PLACEMENT | This flag MUST be set.                       |
+//  | 0x01                      |                                              |
+//  +---------------------------+----------------------------------------------+
+//  | SO_HORIZONTAL             | Text is horizontal, left-to-right or         |
+//  | 0x02                      | right-to-left, depending on SO_REVERSED.     |
+//  +---------------------------+----------------------------------------------+
+//  | SO_VERTICAL               | Text is vertical, top-to-bottom or           |
+//  | 0x04                      | bottom-to-top, depending on SO_REVERSED.     |
+//  +---------------------------+----------------------------------------------+
+//  | SO_REVERSED               | Set if horizontal text is right-to-left or   |
+//  | 0x08                      | vertical text is bottom-to-top.              |
+//  +---------------------------+----------------------------------------------+
+//  | SO_ZERO_BEARINGS          | For a given glyph in the font, the A-width   |
+//  | 0x10                      | (left-side bearing) and C-width (right-side  |
+//  |                           | bearing) associated with the glyph have a    |
+//  |                           | value of zero.                               |
+//  +---------------------------+----------------------------------------------+
+//  | SO_CHAR_INC_EQUAL_BM_BASE | For a given glyph in the font, the B-width   |
+//  | 0x20                      | associated with the glyph equals the advance |
+//  |                           | width of the glyph.                          |
+//  +---------------------------+----------------------------------------------+
+//  | SO_MAXEXT_EQUAL_BM_SIDE   | The height of the bitmap associated with a   |
+//  | 0x40                      | given glyph in the font is always equal to   |
+//  |                           | the sum of the ascent and descent. This      |
+//  |                           | implies that the tops and bottoms of all     |
+//  |                           | glyph bitmaps lie on the same line in the    |
+//  |                           | direction of writing.                        |
+//  +---------------------------+----------------------------------------------+
+
+// ulCharInc (1 byte): An 8-bit, unsigned integer. Specifies whether or not
+//  the font is a fixed-pitch (monospace) font. If so, this member is equal
+//  to the advance width of the glyphs in pixels (see [YUAN] figures 14-17);
+//  if not, this field is set to 0x00. The minimum value for this field is
+//  0x00 (inclusive), and the maximum value is 0xFF (inclusive).
+
+// fOpRedundant (1 byte): An 8-bit, unsigned integer. A Boolean value
+//  indicating whether or not the opaque rectangle is redundant. Redundant,
+//  in this context, means that the text background is transparent.
+
+//  +-------+-----------------------------+
+//  | Value | Meaning                     |
+//  +-------+-----------------------------+
+//  | FALSE | Rectangle is not redundant. |
+//  | 0x00  |                             |
+//  +-------+-----------------------------+
+//  | TRUE  | Rectangle is redundant.     |
+//  | 0x01  |                             |
+//  +-------+-----------------------------+
+
+// BackColor (3 bytes): The text color described by using a Generic Color
+//  (section 2.2.2.2.1.1.1.8) structure.
+
+// ForeColor (3 bytes): Color of the opaque rectangle described by using a
+//  Generic Color (section 2.2.2.2.1.1.1.8) structure.
+
+// BkLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the
+//  text background rectangle.
+
+// BkTop (2 bytes): A 16-bit, signed integer. The top coordinate of the text
+//  background rectangle.
+
+// BkRight (2 bytes): A 16-bit, signed integer. The right coordinate of the
+//  text background rectangle.
+
+// BkBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the
+//  text background rectangle.
+
+// OpLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// OpTop (2 bytes): A 16-bit, signed integer. The top coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// OpRight (2 bytes): A 16-bit, signed integer. The right coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// OpBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// BrushOrgX (1 byte): An 8-bit, signed integer. The x-coordinate of the
+//  point where the top leftmost pixel of a brush pattern MUST be anchored.
+
+// BrushOrgY (1 byte): An 8-bit, signed integer. The y-coordinate of the
+//  point where the top leftmost pixel of a brush pattern MUST be anchored.
+
+// BrushStyle (1 byte): An 8-bit, unsigned integer. This field MUST be set to
+//  BS_SOLID (0x00), as the GlyphIndex Primary Drawing Order MUST only use
+//  solid color brushes to render the opaque rectangle.
+
+// BrushHatch (1 byte): An 8-bit, unsigned integer. This field MUST be set to
+//  0x00, as the GlyphIndex Primary Drawing Order MUST only use solid color
+//  brushes to render the opaque rectangle.
+
+// BrushExtra (7 bytes): This field is not used, as the GlyphIndex Primary
+//  Drawing Order MUST only use solid color brushes to render the opaque
+//  rectangle.
+
+// X (2 bytes): A 16-bit, signed integer. The x-coordinate of the point where
+//  the origin of the starting glyph MUST be positioned.
+
+// Y (2 bytes): A 16-bit, signed integer. The y-coordinate of the point where
+//  the origin of the starting glyph MUST be positioned.
+
+// VariableBytes (variable): A One-Byte Header Variable Field (section
+//  2.2.2.2.1.1.1.2) structure. This field MUST contain glyph fragments
+//  (which are composed of a series of one or more glyph cache indices) and
+//  instructions to use entries previously stored in the glyph fragment
+//  cache. Multiple glyph fragments can be contained in this field. The first
+//  byte of each fragment is either a USE (0xFE) operation byte or a glyph
+//  index (0x00 to 0x0FD) byte:
+
+//  * A value of 0xFE (USE) indicates that a previously stored fragment MUST
+//    be displayed. The byte following the USE byte is the index in the
+//    fragment cache where the fragment is located. This fragment MUST be
+//    read and displayed. If the ulCharInc field is set to 0 and the flAccel
+//    field does not contain the SO_CHAR_INC_EQUAL_BM_BASE (0x20) flag, then
+//    the index byte MUST be followed by a delta byte that indicates the
+//    distance between two consecutive fragments; this distance is measured
+//    in pixels from the beginning of the first fragment to the beginning of
+//    the next. If the distance is greater than 127 (0x7F), then the value
+//    0x80 MUST be used, and the following two bytes will be set to contain
+//    the actual distance formatted as an unsigned integer in little-endian
+//    order.
+
+//  * If not preceded by 0xFE, a value of 0x00 to 0xFD identifies a glyph
+//    stored at the given index in the glyph cache. Multiple glyphs can be
+//    sent at one time. If the ulCharInc field is set to 0 and the flAccel
+//    field does not contain the SO_CHAR_INC_EQUAL_BM_BASE (0x20) flag, then
+//    the index byte MUST be followed by a delta byte that indicates the
+//    distance between two consecutive glyphs; this distance is measured in
+//    pixels from the beginning of the first glyph to the beginning of the
+//    next. If the distance is greater than 127 (0x7F), then the value 0x80
+//    MUST be used, and the following two bytes will be set to contain the
+//    actual distance formatted as an unsigned integer in little-endian
+//    order.
+
+//  If a series of glyph indices ends with an ADD (0xFF) operation byte, the
+//   preceding glyph information MUST be collected, displayed, and then
+//   stored in the fragment cache. The byte following the ADD byte is the
+//   index of the cache where the fragment MUST be stored. A final byte that
+//   indicates the size of the fragment follows the index byte. (The ADD
+//   byte, index byte, and size byte MUST NOT be counted when calculating the
+//   value of the size byte.)
+
+//  All glyph cache indices MUST be greater than or equal to 0, and less than
+//   the maximum number of entries allowed in the glyph cache with the ID
+//   specified by the cacheId field. The maximum number of entries allowed in
+//   each of the ten glyph caches is specified in the GlyphCache field of the
+//   Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8).
+
+//  All fragment cache indices MUST be in the range 0 to 255 (inclusive).
+
+//                const int16_t px = x + fc.offset * use_offset;
+//                if (Rect(0,0,0,0) != screen_rect.intersect(Rect(x, y, fc.incby, fc.height))){
+//                    const uint8_t * fc_data            = fc.data.get();
+//                    for (int yy = 0 ; yy < fc.height; yy++) {
+//                        unsigned char fc_bit_mask = 128;
+//                        for (int xx = 0 ; xx < fc.width ; xx++) {
+//                            if (!fc_bit_mask) {
+//                                fc_bit_mask = 128;
+//                                fc_data++;
+//                            }
+//                            if (screen_rect.contains_pt(px + xx, y + yy) 
+//                                && (*fc_data & fc_bit_mask)){
+//                                this->drawable.draw_pixel(px + xx, y + yy, fg_color);
+//                             }
+//                            fc_bit_mask >>= 1;
+//                         }
+//                         fc_data++;
+//                     }
+//                }
+
+
+private:
+    void draw_glyph( FontChar const & fc, int16_t px, int16_t pos_y, Color fg_color, Rect const & clip)
+    {
+        const uint8_t * fc_data            = fc.data.get();
+        for (int yy = 0 ; yy < fc.height; yy++)
         {
-            for (int xx = pos_x + fc.offset ;
-                     xx < pos_x + fc.offset + fc.width; xx++)
+            uint8_t   fc_bit_mask        = 128;
+            for (int xx = 0 ; xx < fc.width; xx++)
             {
-                if (clip.contains_pt(xx, yy)
-                && (fc_bit_mask & (*fc_data)))
-                {
-                    this->drawable.draw_pixel(xx, yy, color);
-                }
-                fc_bit_mask >>= 1;
                 if (!fc_bit_mask)
                 {
                     fc_data++;
                     fc_bit_mask = 128;
                 }
+                if (clip.contains_pt(px + xx, pos_y + fc.baseline + yy)
+                && (fc_bit_mask & *fc_data))
+                {
+                    this->drawable.draw_pixel(px + xx, pos_y + fc.baseline + yy, fg_color);
+                }
+                fc_bit_mask >>= 1;
             }
-
-            if (skip_padding_pixel) {
-                fc_data++;
-                fc_bit_mask = 128;
-            }
+            fc_data++;
         }
     }
 
@@ -501,7 +728,11 @@ public:
 
                 if (fc)
                 {
-                    this->draw_glyph(fc, draw_pos_ref + bmp_pos_x, offset_y + bmp_pos_y, color, clip);
+                    const int16_t x = draw_pos_ref + bmp_pos_x;
+                    const int16_t y = offset_y + bmp_pos_y;
+                    if (Rect(0,0,0,0) != clip.intersect(Rect(x, y, fc.incby, fc.height))){
+                        this->draw_glyph(fc, x + fc.offset, y, color, clip);
+                    }
                 }
             }
             else if (data == 0xFE)
@@ -560,8 +791,16 @@ public:
         }
     }
 
+
+
     void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        if (!cmd.bk.has_intersection(clip)) {
+        Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
+        if (screen_rect.isempty()){
+            return ;
+        }
+
+        Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(screen_rect);
+        if (clipped_glyph_fragment_rect.isempty()) {
             return;
         }
 
@@ -570,7 +809,7 @@ public:
             Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
             if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
                 ajusted.cy--;
-                this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
+                this->drawable.opaquerect(ajusted.intersect(screen_rect), this->u32rgb_to_color(cmd.fore_color));
             }
         }
 
@@ -580,8 +819,6 @@ public:
         const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
 
         uint16_t draw_pos = 0;
-
-        Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
 
         this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
             draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
@@ -595,12 +832,6 @@ public:
             return font.font_items[unsigned('?')];
         }
         return font.font_items[c];
-    }
-
-    // for testing purposes
-    void text_metrics(Font const & font, const char * text, int & width, int & height)
-    {
-        ::text_metrics(font, text, width, height);
     }
 
     // for testing purposes
@@ -752,4 +983,3 @@ void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {
         bgr);
 }
 
-#endif

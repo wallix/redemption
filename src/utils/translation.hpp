@@ -251,7 +251,7 @@ inline Translation::language_t language(Inifile const & ini) {
     return static_cast<Translation::language_t>(ini.get<cfg::translation::language>());
 }
 
-inline Translation::language_t language(configs::Language lang) {
+inline Translation::language_t language(Language lang) {
     return static_cast<Translation::language_t>(lang);
 }
 

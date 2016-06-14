@@ -34,19 +34,22 @@
 
 #include "utils/timeout.hpp"
 
+# include <chrono>
+
+
 using FlatLoginModVariables = vcfg::variables<
-    vcfg::var<cfg::context::password,                   vcfg::set>,
-    vcfg::var<cfg::globals::auth_user,                  vcfg::set>,
-    vcfg::var<cfg::context::selector,                   vcfg::ask>,
-    vcfg::var<cfg::context::target_protocol,            vcfg::ask>,
-    vcfg::var<cfg::globals::target_device,              vcfg::ask>,
-    vcfg::var<cfg::globals::target_user,                vcfg::ask>,
-    vcfg::var<cfg::translation::language,               vcfg::get>,
-    vcfg::var<cfg::font,                                vcfg::get>,
-    vcfg::var<cfg::theme,                               vcfg::get>,
-    vcfg::var<cfg::context::opt_message,                vcfg::get>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>,
-    vcfg::var<cfg::globals::authentication_timeout,     vcfg::get>
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>
 >;
 
 
@@ -77,11 +80,12 @@ public:
                 vars.get<cfg::context::opt_message>().c_str(),
                 &this->language_button,
                 this->font(), Translator(language(vars)), this->theme())
-        , timeout(now, vars.get<cfg::globals::authentication_timeout>())
+        , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())
         , vars(vars)
     {
-        if (vars.get<cfg::globals::authentication_timeout>()) {
-            LOG(LOG_INFO, "LoginMod: Ending session in %u seconds", vars.get<cfg::globals::authentication_timeout>());
+        if (vars.get<cfg::globals::authentication_timeout>().count()) {
+            LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
+                static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));
         }
         this->screen.add_widget(&this->login);
 
@@ -127,7 +131,7 @@ public:
         }
     }
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }

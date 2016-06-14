@@ -130,7 +130,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     this->_keymap.init_layout(this->_info.keylayout);
 
 
-    // Winodws and socket contrainer
+    // Windows and socket contrainer
     this->_form      = new Form_Qt(this);
     this->_connector = new Connector_Qt(this, this->_form);
 
@@ -2293,7 +2293,7 @@ void Front_Qt::end_update() {
 void Front_Qt::call_Draw() {
     if (this->_callback != nullptr) {
         try {
-            this->_callback->draw_event(time(nullptr));
+            this->_callback->draw_event(time(nullptr), *this);
         } catch (const Error & e) {
             this->dropScreen();
             const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");

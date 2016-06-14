@@ -253,37 +253,37 @@ public:
 
         while (data.in_remain()) {
             FastPath::Update_Recv fp_upd_r(data, &this->mppc_dec);
-            switch (fp_upd_r.updateCode) {
-                case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+            switch (static_cast<FastPath::UpdateType>(fp_upd_r.updateCode)) {
+                case FastPath::UpdateType::ORDERS:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_ORDERS(0x%X)", fp_upd_r.updateCode);
                     this->process_orders(fp_upd_r.payload, true);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                case FastPath::UpdateType::BITMAP:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", fp_upd_r.updateCode);
                     this->statistic.bitmapupdate_count++;
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                case FastPath::UpdateType::PALETTE:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PALETTE(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
+                case FastPath::UpdateType::SYNCHRONIZE:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_SYNCHRONIZE(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                case FastPath::UpdateType::PTR_NULL:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_NULL(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                case FastPath::UpdateType::PTR_DEFAULT:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_DEFAULT(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                case FastPath::UpdateType::PTR_POSITION:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_POSITION(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                case FastPath::UpdateType::COLOR:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_COLOR(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_POINTER:
+                case FastPath::UpdateType::POINTER:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_POINTER(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                case FastPath::UpdateType::CACHED:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_CACHED(0x%X)", fp_upd_r.updateCode);
                 break;
                 default:

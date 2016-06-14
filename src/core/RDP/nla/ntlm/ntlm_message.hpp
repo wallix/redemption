@@ -544,7 +544,7 @@ struct NtlmField {
             auto p = this->ostream.get_data();
             if (sz > this->sz_buf) {
                 p = this->buf;
-                if (sz > sizeof(sizeof(this->buf))) {
+                if (sz > sizeof(this->buf)) {
                     p = new uint8_t[sz];
                     this->dynbuf.reset(p);
                     this->sz_buf = sz;

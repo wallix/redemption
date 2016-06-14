@@ -35,14 +35,14 @@
 
 
 using FlatDialogModVariables = vcfg::variables<
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>,
-    vcfg::var<cfg::context::accept_message,             vcfg::set>,
-    vcfg::var<cfg::context::display_message,            vcfg::set>,
-    vcfg::var<cfg::context::password,                   vcfg::set>,
-    vcfg::var<cfg::debug::pass_dialog_box,              vcfg::get>,
-    vcfg::var<cfg::translation::language,               vcfg::get>,
-    vcfg::var<cfg::font,                                vcfg::get>,
-    vcfg::var<cfg::theme,                               vcfg::get>
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::context::accept_message,             vcfg::accessmode::set>,
+    vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::debug::pass_dialog_box,              vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
 class FlatDialogMod : public InternalMod, public NotifyApi
@@ -98,10 +98,10 @@ private:
             this->vars.set_acl<cfg::context::password>(this->dialog_widget.challenge->get_text());
         }
         else if (this->dialog_widget.cancel) {
-            this->vars.set_acl<cfg::context::accept_message>("True");
+            this->vars.set_acl<cfg::context::accept_message>(true);
         }
         else {
-            this->vars.set_acl<cfg::context::display_message>("True");
+            this->vars.set_acl<cfg::context::display_message>(true);
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
@@ -112,10 +112,10 @@ private:
     {
         if (!this->dialog_widget.challenge) {
             if (this->dialog_widget.cancel) {
-                this->vars.set_acl<cfg::context::accept_message>("False");
+                this->vars.set_acl<cfg::context::accept_message>(false);
             }
             else {
-                this->vars.set_acl<cfg::context::display_message>("False");
+                this->vars.set_acl<cfg::context::display_message>(false);
             }
         }
         this->event.signal = BACK_EVENT_NEXT;
@@ -123,7 +123,7 @@ private:
     }
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->accepted();

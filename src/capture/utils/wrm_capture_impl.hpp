@@ -38,7 +38,8 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
 
     DumpPng24FromRDPDrawableAdapter dump_png24_api;
 
-    struct TransportVariant{
+    struct TransportVariant
+    {
         union Variant
         {
             OutMetaSequenceTransportWithSum out_with_sum;
@@ -52,7 +53,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
         ::Transport * trans;
 
         template<class... Ts>
-        TransportVariant(configs::TraceType trace_type, Ts && ... args)
+        TransportVariant(TraceType trace_type, Ts && ... args)
         {
             TODO("there should only be one outmeta, not two."
                 " Capture code should not really care if file is encrypted or not."
@@ -61,11 +62,11 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
                 "(This is related to the path split between png and wrm)."
                 "We should stop and consider what we should actually do")
             switch (trace_type) {
-                case configs::TraceType::cryptofile:
+                case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
                     CryptoOutMetaSequenceTransport(std::forward<Ts>(args)...);
                     break;
-                case configs::TraceType::localfile_hashed:
+                case TraceType::localfile_hashed:
                     this->trans = new (&this->variant.out_with_sum)
                     OutMetaSequenceTransportWithSum(std::forward<Ts>(args)...);
                     break;
@@ -126,7 +127,7 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
 
 public:
     WrmCaptureImpl(
-        const timeval & now, uint8_t capture_bpp, configs::TraceType trace_type,
+        const timeval & now, uint8_t capture_bpp, TraceType trace_type,
         CryptoContext & cctx,
         const char * record_path, const char * hash_path, const char * basename,
         int groupid, auth_api * authentifier,
@@ -156,7 +157,7 @@ public:
         apis_register.external_capture_list.push_back(this->nc);
         apis_register.capture_probe_list.push_back(this->graphic_to_file);
 
-        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::wrm)) {
+        if (!bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::wrm)) {
             this->kbd_element = {apis_register.kbd_input_list, this->graphic_to_file};
             this->graphic_to_file.impl = this;
         }

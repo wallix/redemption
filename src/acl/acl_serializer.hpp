@@ -151,7 +151,7 @@ private:
             return this->getc() == '\n';
         }
 
-        char const * get_val() {
+        array_view_const_char get_val() {
             if (this->p == this->e) {
                 this->read_packet();
             }
@@ -159,9 +159,10 @@ private:
                 ++this->p;
             }
             auto m = std::find(this->p, this->e, '\n');
-            if (m != e) {
+            if (m != this->e) {
                 *m = 0;
-                return exchange(this->p, m+1);
+                std::size_t const sz = m - this->p;
+                return {exchange(this->p, m+1), sz};
             }
             data_multipacket.clear();
             do {
@@ -175,7 +176,7 @@ private:
             } while (m == e);
             data_multipacket.insert(data_multipacket.end(), this->p, m);
             this->p = m + 1;
-            return data_multipacket.c_str();
+            return {data_multipacket.data(), data_multipacket.size()};
         }
 
         void hexdump() const {
@@ -232,8 +233,7 @@ public:
             auto authid = authid_from_string(key);
             if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {
-                    field.set(reader.get_val());
-                    if (this->verbose & 0x02) {
+                    if (field.set(reader.get_val()) && (this->verbose & 0x02)) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
                         if (cfg::crypto::key0::index() == authid ||
@@ -359,18 +359,18 @@ public:
             try {
                 Buffers buffers(this->auth_trans, this->verbose);
 
-                for (auto && bfield : this->ini.get_fields_changed()) {
-                    char const * key = string_from_authid(bfield.authid());
+                for (auto && field : this->ini.get_fields_changed()) {
+                    char const * key = string_from_authid(field.authid());
                     buffers.push(key);
                     buffers.push('\n');
-                    if (bfield.is_asked()) {
+                    if (field.is_asked()) {
                         buffers.push("ASK\n");
                         if (this->verbose & 0x02) {
                             LOG(LOG_INFO, "sending %s=ASK", key);
                         }
                     }
                     else {
-                        char const * val = bfield.c_str();
+                        char const * val = field.c_str();
                         buffers.push('!');
                         buffers.push(val);
                         buffers.push('\n');

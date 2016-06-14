@@ -19,16 +19,16 @@
  *              Meng Tan, Raphael Zhou
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_)
-#define REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_
+#pragma once 
 
 #include "widget.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/region.hpp"
 #include "utils/colors.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 
-inline void fill_region(mod_api & drawable, const Region & region, int bg_color) {
+inline void fill_region(gdi::GraphicApi & drawable, const Region & region, int bg_color) {
     for (const Rect & rect : region.rects) {
         drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
     }
@@ -164,7 +164,7 @@ protected:
 public:
     Widget2 * current_focus;
 
-    WidgetParent(mod_api & drawable, const Rect & rect, Widget2 & parent,
+    WidgetParent(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , pressed(nullptr)
@@ -527,7 +527,7 @@ class WidgetComposite: public WidgetParent {
     CompositeArray composite_array;
 
 public:
-    WidgetComposite(mod_api & drawable, const Rect & rect, Widget2 & parent,
+    WidgetComposite(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                     NotifyApi * notifier, int group_id = 0)
     : WidgetParent(drawable, rect, parent, notifier, group_id) {
         this->impl = & composite_array;
@@ -541,4 +541,3 @@ public:
     }
 };
 
-#endif

@@ -20,11 +20,9 @@
  */
 
 
-#if !defined(REDEMPTION_MOD_WIDGET2_RADIO_LIST_HPP)
-#define REDEMPTION_MOD_WIDGET2_RADIO_LIST_HPP
-
 #include "widget.hpp"
 #include "label.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetRadioButton : public Widget2
 {
@@ -32,7 +30,7 @@ public:
     WidgetLabel label;
     bool selected;
 
-    WidgetRadioButton(mod_api & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetRadioButton(gdi::GraphicApi & drawable,
                       NotifyApi* notifier, const char * text, bool auto_resize,
                       int group_id, int fgcolor, int bgcolor,
                       int xtext = 0, int ytext = 0)
@@ -217,4 +215,3 @@ public:
 
 };
 
-#endif

@@ -2290,10 +2290,10 @@ void Front_Qt::end_update() {
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
 
-void Front_Qt::call_Draw() {
+void Front_Qt::call_Draw(const GraphicApi & drawable) {
     if (this->_callback != nullptr) {
         try {
-            this->_callback->draw_event(time(nullptr));
+            this->_callback->draw_event(time(nullptr), drawable);
         } catch (const Error & e) {
             this->dropScreen();
             const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");

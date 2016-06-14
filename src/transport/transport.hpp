@@ -32,7 +32,7 @@
 #include "acl/auth_api.hpp"
 #include "utils/noncopyable.hpp"
 
-#include "configs/types.hpp"
+#include "configs/autogen/enums.hpp"
 
 #include "core/server_notifier_api.hpp"
 
@@ -111,7 +111,7 @@ public:
 
     virtual void enable_client_tls(
             bool server_cert_store,
-            configs::ServerCertCheck server_cert_check,
+            ServerCertCheck server_cert_check,
             ServerNotifier & server_notifier,
             const char * certif_path
         )

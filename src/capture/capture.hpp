@@ -97,7 +97,7 @@ public:
         bool enable_rt, bool no_timestamp, auth_api * authentifier,
         const Inifile & ini, Random & rnd, CryptoContext & cctx,
         bool full_video)
-    : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
+    : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , capture_api(now, width / 2, height / 2)
     {
@@ -105,10 +105,10 @@ public:
         (void)full_video;
 
         bool const enable_kbd
-          = !bool(ini.get<cfg::video::disable_keyboard_log>() & configs::KeyboardLogFlags::syslog)
+          = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || (ini.get<cfg::session_log::enable_session_log>() &&
               (ini.get<cfg::session_log::keyboard_input_masking_level>()
-               != ::configs::KeyboardInputMaskingLevel::fully_masked)
+               != ::KeyboardInputMaskingLevel::fully_masked)
              )
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
@@ -124,9 +124,9 @@ public:
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const bool capture_drawable = this->capture_wrm || this->capture_png;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>();
-        const char * record_path = ini.get<cfg::video::record_path>();
-        const char * hash_path = ini.get<cfg::video::hash_path>();
+        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        const char * record_path = ini.get<cfg::video::record_path>().c_str();
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
         char path[1024];
         char basename[1024];

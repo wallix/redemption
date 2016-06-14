@@ -32,15 +32,15 @@
 #include "widget2/language_button.hpp"
 
 using InteractiveTargetModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::target_user,                vcfg::is_asked | vcfg::set | vcfg::get>,
-    vcfg::var<cfg::context::target_password,            vcfg::is_asked | vcfg::set>,
-    vcfg::var<cfg::context::target_host,                vcfg::is_asked | vcfg::set>,
-    vcfg::var<cfg::globals::target_device,              vcfg::get>,
-    vcfg::var<cfg::context::display_message,            vcfg::set>,
-    vcfg::var<cfg::translation::language,               vcfg::get>,
-    vcfg::var<cfg::font,                                vcfg::get>,
-    vcfg::var<cfg::theme,                               vcfg::get>,
-    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::get>
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::is_asked | vcfg::accessmode::set | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::target_password,            vcfg::accessmode::is_asked | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::target_host,                vcfg::accessmode::is_asked | vcfg::accessmode::set>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::get>,
+    vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>
 >;
 
 class InteractiveTargetMod : public InternalMod, public NotifyApi
@@ -118,7 +118,7 @@ private:
         if (this->ask_password) {
             this->vars.set_acl<cfg::context::target_password>(this->challenge.password_edit.get_text());
         }
-        this->vars.set_acl<cfg::context::display_message>("True");
+        this->vars.set_acl<cfg::context::display_message>(true);
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
@@ -127,13 +127,13 @@ private:
     void refused()
     {
         this->vars.set_acl<cfg::context::target_password>("");
-        this->vars.set_acl<cfg::context::display_message>("False");
+        this->vars.set_acl<cfg::context::display_message>(false);
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, const GraphicApi & drawable) override {
         this->event.reset();
     }
 

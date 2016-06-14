@@ -19,8 +19,7 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP
+#pragma once
 
 #include "core/font.hpp"
 #include "composite.hpp"
@@ -28,6 +27,7 @@
 #include "utils/theme.hpp"
 
 #include <typeinfo>
+#include "gdi/graphic_api.hpp"
 
 class WidgetScreen : public WidgetParent
 {
@@ -43,7 +43,7 @@ public:
 
     Font const & font;
 
-    WidgetScreen(mod_api& drawable, uint16_t width, uint16_t height, Font const & font,
+    WidgetScreen(gdi::GraphicApi& drawable, uint16_t width, uint16_t height, Font const & font,
                  NotifyApi * notifier = nullptr, Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme)
@@ -164,4 +164,3 @@ public:
     }
 };
 
-#endif

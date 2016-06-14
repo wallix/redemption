@@ -72,7 +72,7 @@ class ReaderLine2
     }
 
 public:
-    explicit ReaderLine2(Reader reader) noexcept
+    ReaderLine2(Reader reader) noexcept
     : eof(buf)
     , cur(buf)
     , reader(reader)
@@ -1021,9 +1021,9 @@ static inline int check_encrypted_or_checksumed(
                 auto hash_header = read_hash_headers(reader);
 
                 if (read_hash_file_v2( reader
-                                             , hash_header
-                                             , infile_is_checksumed
-                                             , hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
+                                     , hash_header
+                                     , infile_is_checksumed
+                                     , hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
                     if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
                         hash_ok = true;
                     }
@@ -1106,7 +1106,7 @@ static inline int check_encrypted_or_checksumed(
                           , sizeof(cctx->get_hmac_key())
                           , (quick_check ? QUICK_CHECK_LENGTH : 0)
                           , is_status_enabled
-                          , (quick_check ? meta_line_wrm : meta_line_wrm)) == false) {
+                          , meta_line_wrm) == false) {
                 result = false;
                 break;
             }

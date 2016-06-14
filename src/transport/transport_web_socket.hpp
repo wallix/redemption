@@ -65,12 +65,14 @@ class TransportWebSocket :  public Transport
     void do_recv(char ** pbuffer, size_t len) override {
         //pbuffer[0...len] = read(len)
 
-        if (this->buffer !=  nullptr) {
-            int lenMax(len);
+        this->buffer = *pbuffer;
+        int lenInt(len);
+        if (lenInt > 0) {
+            int i(0);
 
-            if (lenMax > 0) {
-
-                int i(0);
+            for (; i < lenInt; i++) {
+                EM_ASM_({ getDataOctet($0); }, i);
+            }
 
                 for (i = 0; i < len; i++) {
                     //EM_ASM_({ console.log('indata['+$0 +']='+$1 +' pbuffer['+$0 +']='+$2); }, i, this->buffer[i],  (*pbuffer)[i]);
@@ -170,7 +172,5 @@ public:
 
 
 };
-
-
 
 #endif

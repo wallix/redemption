@@ -26,7 +26,6 @@ public:
     virtual ~auth_api() = default;
 
     virtual void set_auth_channel_target(const char * target) = 0;
-    //virtual void set_auth_channel_result(const char * result) = 0;
 
     virtual void set_auth_error_message(const char * error_message) = 0;
 
@@ -41,7 +40,6 @@ public:
 
 class NullAuthentifier : public auth_api {
     void set_auth_channel_target(const char * target) override {}
-    //virtual void set_auth_channel_result(const char * result) {}
 
     void set_auth_error_message(const char * error_message) override {}
 

@@ -134,7 +134,6 @@ class Sesman():
         self.shared[u'keyboard_layout'] = MAGICASK
 
         self.shared[u'auth_channel_answer'] = u''
-        self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
 
         self.internal_target = False

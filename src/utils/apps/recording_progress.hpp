@@ -44,7 +44,7 @@ public:
     , stop_record(end_capture ? end_capture : end_record)
     , processing_start_time(::time(nullptr))
     , last_written_time_percentage(0) {
-        this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+        this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP);
         if (this->fd != -1) {
             int write_result = ::write(this->fd, "0 -1", 4);
 (void)write_result;

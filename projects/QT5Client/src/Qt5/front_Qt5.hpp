@@ -49,6 +49,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "gdi/graphic_api.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -61,7 +62,7 @@
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
-#include "utils/bitmap_without_png.hpp"
+#include "utils/bitmap.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"

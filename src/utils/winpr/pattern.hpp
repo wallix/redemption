@@ -203,9 +203,6 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
 
 static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
 {
-    bool match;
-    const char * lpTail;
-    size_t cchTail;
     size_t cchPattern;
     size_t cchFileName;
     unsigned int dwFlags;
@@ -257,8 +254,8 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
 
     if (lpPattern[0] == '*')
     {
-        lpTail = &lpPattern[1];
-        cchTail = strlen(lpTail);
+        const char * const lpTail = &lpPattern[1];
+        size_t const cchTail = strlen(lpTail);
 
         if (!FilePatternFindNextWildcardA(lpTail, &dwFlags))
         {
@@ -329,7 +326,7 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
             const char * lpY = &lpSubPattern[cchX + cchWildcard];
             size_t cchY = (cchSubPattern - (lpY - lpSubPattern));
 
-            match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
+            bool match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
                     lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
 
             return match;
@@ -347,7 +344,7 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
                 const char * lpY = &lpSubPattern[cchX + cchWildcard];
                 size_t cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
 
-                match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
+                bool match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
                         lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
 
                 if (!match)
