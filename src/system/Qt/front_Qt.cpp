@@ -2288,7 +2288,7 @@ void Front_Qt::set_mod_palette(const BGRPalette & palette) {
 void Front_Qt::call_Draw() {
     if (this->_callback != nullptr) {
         try {
-            this->_callback->draw_event(time(nullptr), const GraphicApi & drawable);
+            this->_callback->draw_event(time(nullptr), GraphicApi & drawable);
         } catch (const Error & e) {
             this->dropScreen();
             const std::string errorMsg("Error: connexion to [" + this->_targetIP +  "] is closed.");

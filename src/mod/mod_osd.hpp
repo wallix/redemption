@@ -308,7 +308,7 @@ public:
         this->mod.end_update();
     }
 
-    void draw_event(time_t now, const GraphicApi & drawable) override {
+    void draw_event(time_t now, GraphicApi & drawable) override {
         this->mod.draw_event(now, drawable);
     }
 

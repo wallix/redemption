@@ -82,7 +82,7 @@ public:
     void notify(Widget2 * sender, notify_event_t event) override {}
 
 public:
-    void draw_event(time_t now, const GraphicApi & drawable) override {
+    void draw_event(time_t now, GraphicApi & drawable) override {
         this->event.reset();
     }
 };
