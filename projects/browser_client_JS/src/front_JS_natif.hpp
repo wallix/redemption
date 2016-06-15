@@ -19,9 +19,6 @@
 */
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
-#define  LOG_JS(s) EM_ASM_({ console.log($0); }, s);
-#else
-#define  LOG_JS(s)
 #endif
 
 

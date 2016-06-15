@@ -44,7 +44,7 @@ class TransportWebSocket :  public Transport
 
     size_t      sentSize = 0;
     mod_rdp  *  callback;
-    const FrontAPI * drawable;
+    FrontAPI * drawable;
 
     enum : uint8_t {
         PDU_HEADER_FLAG = 0x03,
@@ -95,7 +95,7 @@ class TransportWebSocket :  public Transport
     }
 
 public:
-    TransportWebSocket(const FrontAPI * draw)
+    TransportWebSocket(FrontAPI * draw)
       : Transport()
       , drawable(draw)
       {}
@@ -163,8 +163,8 @@ public:
                                            }
                                            this->sentSize = 0;
                                            this->pduSize  = 0;
-                                            //delete (this->buffer -= this->sentSize);
-                                            //this->buffer = nullptr;
+                                           delete (this->buffer -= this->sentSize);
+                                           this->buffer = nullptr;
 
                                        }
 

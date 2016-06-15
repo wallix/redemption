@@ -243,10 +243,18 @@ protected:
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
+#ifdef __EMSCRIPTEN__
+    size_t num_channels_JS;
+    size_t index_JS;
+#endif
+
     enum {
           MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
+#ifdef __EMSCRIPTEN__
+        , MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS
+#endif
         , MOD_RDP_GET_LICENSE
         , MOD_RDP_CONNECTED
     };
@@ -1948,7 +1956,7 @@ private:
 
 public:
 
-    void draw_event(time_t now, const GraphicApi & drawable) override {
+    void draw_event(time_t now, GraphicApi & drawable) override {
         if (!this->event.waked_up_by_time
         && (!this->session_probe_virtual_channel_p
           ||!this->session_probe_virtual_channel_p->is_event_signaled())) {
@@ -2579,6 +2587,9 @@ public:
 
                         {
                             size_t num_channels = this->mod_channel_list.size();
+
+    #ifndef __EMSCRIPTEN__
+
                             uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
                             channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
                             channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
@@ -2604,9 +2615,7 @@ public:
                                 constexpr size_t array_size = AUTOSIZE;
                                 uint8_t array[array_size];
                                 uint8_t * end = array;
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 4'); }, 0);
                                 X224::RecvFactory f(this->nego.trans, &end, array_size);
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 5'); }, 0);
                                 InStream x224_data(array, end - array);
                                 X224::DT_TPDU_Recv x224(x224_data);
                                 InStream & mcs_cjcf_data = x224.payload;
@@ -2616,6 +2625,10 @@ public:
                                     LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
                                 }
                             }
+    #else
+                            this->index_JS = 0;
+                            this->num_channels_JS = num_channels + 2;
+    #endif
                         }
 
                         // RDP Security Commencement
@@ -2683,10 +2696,76 @@ public:
                         }
 
                         this->send_client_info_pdu(this->userid, this->password, now);
-
+    #ifndef __EMSCRIPTEN__
                         this->state = MOD_RDP_GET_LICENSE;
+    #else
+                        this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+    #endif
                     }
+                            break;
+
+    #ifdef __EMSCRIPTEN__
+
+                case MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS:
+                    {
+                        uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
+                        channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
+                        channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
+
+                        size_t index = this->index_JS;
+                        write_packets(
+                            this->nego.trans,
+                            [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
+                                MCS::ChannelJoinRequest_Send mcs(
+                                    mcs_cjrq_data, this->userid,
+                                    channels_id[index], MCS::PER_ENCODING
+                                );
+                                (void)mcs;
+                            },
+                            write_x224_dt_tpdu_fn{}
+                        );
+
+                        constexpr size_t array_size = AUTOSIZE;
+                        uint8_t array[array_size];
+                        uint8_t * end = array;
+                        X224::RecvFactory f(this->nego.trans, &end, array_size);
+                        InStream x224_data(array, end - array);
+                        X224::DT_TPDU_Recv x224(x224_data);
+                        InStream & mcs_cjcf_data = x224.payload;
+                        MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
+                        TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
+
+                        if (this->encryptionLevel){
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
+                                    this->server_public_key_len);
+                            }
+
+                            this->send_data_request(
+                                GCC::MCS_GLOBAL_CHANNEL,
+                                dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                                    SEC::SecExchangePacket_Send mcs(
+                                        stream, this->client_crypt_random, this->server_public_key_len
+                                    );
+                                    (void)mcs;
+                                })
+                            );
+                        }
+
+                        this->send_client_info_pdu(this->userid, this->password, now);
+
+                        this->num_channels_JS--;
+                        this->index_JS++;
+
+                        if (this->num_channels_JS == 0) {
+                            this->state = MOD_RDP_GET_LICENSE;
+                        } else {
+                            this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+                        }
+                    }
+
                     break;
+    #endif
 
                 case MOD_RDP_GET_LICENSE:
                     //EM_ASM_({ console.log('draw_event MOD_RDP_GET_LICENSE'); }, 0);

@@ -460,7 +460,7 @@ function send_to_serveur(data, size) {
 
 var current = 0;
 
-var len = 250568 + 1;
+var len = 250568;
 
 
 function getDataOctet() {
