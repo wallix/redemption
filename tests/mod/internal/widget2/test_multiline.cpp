@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                                "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                                "Nam non magna sit amet dui vestibulum feugiat.<br>"

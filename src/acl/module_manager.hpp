@@ -380,8 +380,10 @@ class ModuleManager : public MMIni
         bool external_deleting;
     public:
         module_osd(
-            ModuleManager & manager, const Rect & rect, bool bogus_refresh_rect_ex,
-            std::function<void(mod_api & mod, const Rect & rect, const Rect & clip)> f,
+            ModuleManager & manager,
+            const Rect & rect,
+            bool bogus_refresh_rect_ex,
+            mod_osd::drawable_function_type f,
             bool external_deleting)
         : mod_osd(*manager.mod, rect, bogus_refresh_rect_ex, std::move(f))
         , external_deleting(external_deleting)

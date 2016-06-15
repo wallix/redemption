@@ -37,7 +37,7 @@ public:
     int color;
 
     WidgetCompositeRect(TestDraw & drawable)
-    : WidgetComposite(drawable, Rect(0, 0,
+    : WidgetComposite(drawable.gd, Rect(0, 0,
                                       drawable.gd.width(),
                                       drawable.gd.height()),
                       *this, nullptr)
@@ -61,17 +61,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     int id = 0;
 
     WidgetCompositeRect wcomposite(drawable);
-    WidgetRect wrect1(drawable, Rect(0,0,100,100),
+    WidgetRect wrect1(drawable.gd, Rect(0,0,100,100),
                       wcomposite, notifier, id++, CYAN);
-    WidgetRect wrect2(drawable, Rect(0,100,100,100),
+    WidgetRect wrect2(drawable.gd, Rect(0,100,100,100),
                       wcomposite, notifier, id++, RED);
-    WidgetRect wrect3(drawable, Rect(100,100,100,100),
+    WidgetRect wrect3(drawable.gd, Rect(100,100,100,100),
                       wcomposite, notifier, id++, BLUE);
-    WidgetRect wrect4(drawable, Rect(300,300,100,100),
+    WidgetRect wrect4(drawable.gd, Rect(300,300,100,100),
                       wcomposite, notifier, id++, GREEN);
-    WidgetRect wrect5(drawable, Rect(700,-50,100,100),
+    WidgetRect wrect5(drawable.gd, Rect(700,-50,100,100),
                       wcomposite, notifier, id++, WHITE);
-    WidgetRect wrect6(drawable, Rect(-50,550,100,100),
+    WidgetRect wrect6(drawable.gd, Rect(-50,550,100,100),
                       wcomposite, notifier, id++, GREY);
     wcomposite.add_widget(&wrect1);
     wcomposite.add_widget(&wrect2);
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     wcomposite.add_widget(&wrect6);
 
     {
-        WidgetRect wrect7(drawable, Rect(0, 0, 800, 600),
+        WidgetRect wrect7(drawable.gd, Rect(0, 0, 800, 600),
                           wcomposite, notifier, id++, GREY);
         wcomposite.add_widget(&wrect7);
         wcomposite.remove_widget(&wrect7);

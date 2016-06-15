@@ -37,41 +37,29 @@
 #include "mod/mod_osd.hpp"
 #include "utils/bitmap_with_png.hpp"
 
-struct FakeMod : gdi::GraphicProxyBase<FakeMod, mod_api>
+struct FakeMod : mod_api
 {
-    RDPDrawable gd;
-
-    FakeMod(const uint16_t front_width, const uint16_t front_height)
-    : FakeMod::base_type(front_width, front_height)
-    , gd(front_width, front_height, 24)
+    FakeMod()
+    : mod_api(0, 0)
     {}
 
-    void draw_event(time_t now, GraphicApi & drawable) override {}
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {}
     void rdp_input_invalidate(const Rect& r) override {}
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {}
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {}
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {}
-    void end_update() override {}
     void send_to_front_channel(const char*const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
-    void begin_update() override {}
 
     void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {}
-
-protected:
-    friend gdi::GraphicCoreAccess;
-
-    RDPDrawable & get_graphic_proxy() {
-        return this->gd;
-    }
 };
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
-    FakeMod mod(screen_rect.cx, screen_rect.cy);
-    RDPDrawable & drawable = mod.gd;
+    FakeMod mod;
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
 
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid);
@@ -88,39 +76,32 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
 
     drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), RED), screen_rect);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
 
     {
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH "."
-#endif
-        mod_osd osd(mod, Bitmap_PNG(FIXTURES_PATH "/ad8b.bmp"), 200, 200);
+        Bitmap_PNG const bmp(FIXTURES_PATH "/ad8b.bmp");
+        int const bmp_x = 200;
+        int const bmp_y = 200;
+        Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
+        Rect const rect = bmp_rect.intersect(screen_rect.cx, screen_rect.cy);
+        drawable.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), rect, bmp);
 
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
 
-        RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), GREEN);
-        osd.draw(cmd1, screen_rect);
+        struct OSD : ProtectGraphics
+        {
+            using ProtectGraphics::ProtectGraphics;
+            void refresh_rects(array_view<Rect const>) {}
+        } osd(drawable, rect);
+        osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect);
         now.tv_sec++;
         consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     }
 
-    now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
-
-    RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
-    drawable.draw(cmd1, screen_rect);
-    now.tv_sec++;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
-
     trans.disconnect();
 
-    BOOST_CHECK_EQUAL(5021, ::filesize(trans.seqgen()->get(1)));
-    BOOST_CHECK_EQUAL(5047, ::filesize(trans.seqgen()->get(2)));
-    BOOST_CHECK_EQUAL(5054, ::filesize(trans.seqgen()->get(3)));
+    BOOST_CHECK_EQUAL(5021, ::filesize(trans.seqgen()->get(0)));
+    BOOST_CHECK_EQUAL(5047, ::filesize(trans.seqgen()->get(1)));
     ::unlink(trans.seqgen()->get(0));
     ::unlink(trans.seqgen()->get(1));
-    ::unlink(trans.seqgen()->get(2));
-    ::unlink(trans.seqgen()->get(3));
-    ::unlink(trans.seqgen()->get(4));
 }

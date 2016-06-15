@@ -28,9 +28,10 @@
 
 class FrontAPI;
 
-struct null_mod : public gdi::GraphicBase<null_mod, mod_api> {
+struct null_mod : public mod_api
+{
     explicit null_mod(FrontAPI & front)
-    : null_mod::base_type(0, 0)
+    : mod_api(0, 0)
     {}
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {}
@@ -44,18 +45,9 @@ struct null_mod : public gdi::GraphicBase<null_mod, mod_api> {
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
-    void draw_event(time_t now, GraphicApi & drawable) override {}
-
-    void begin_update() override {}
-    void end_update() override {}
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {}
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
-
-private:
-    friend gdi::GraphicCoreAccess;
-
-    template<class... Args>
-    void draw_impl(Args const & ...) {}
 };
 
 #endif

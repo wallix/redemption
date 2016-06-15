@@ -83,7 +83,7 @@ public:
                     FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now,
                     bool showtimer = false, bool back_selector = false)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , close_widget(*this, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this,
+        , close_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this,
                        vars.get<cfg::context::auth_error_message>().c_str(), 0,
                        (vars.is_asked<cfg::globals::auth_user>()
                         || vars.is_asked<cfg::globals::target_device>()) ?
@@ -133,7 +133,7 @@ public:
         }
     }
 
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;

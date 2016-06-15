@@ -212,7 +212,7 @@ public:
            )
     //==============================================================================================================
     : InternalMod(front, front_width, front_height, font, theme)
-    , challenge(*this, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
+    , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
                 0, nullptr, this->theme(),
                 tr("Authentification required"),
@@ -616,7 +616,7 @@ protected:
     }
 
 public:
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         if (this->verbose & 2) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -1645,7 +1645,7 @@ private:
         }
     }
     //==============================================================================================================
-    void lib_framebuffer_update(GraphicApi & drawable) {
+    void lib_framebuffer_update(gdi::GraphicApi & drawable) {
     //==============================================================================================================
         uint8_t data_rec[256];
         InStream stream_rec(data_rec);
@@ -2745,16 +2745,15 @@ private:
     }
 
 public:
-    using InternalMod::draw;
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        /// NOTE force resize cliping with rdesktop...
-        if (this->is_first_membelt && clip.cx != 1 && clip.cy != 1) {
-            this->front.draw(cmd, Rect(clip.x,clip.y,1,1), bmp);
-            this->is_first_membelt = false;
-        }
-        this->front.draw(cmd, clip, bmp);
-    }
+    // TODO new_mod: reimplemented
+    //void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
+    //    /// NOTE force resize cliping with rdesktop...
+    //    if (this->is_first_membelt && clip.cx != 1 && clip.cy != 1) {
+    //        this->front.draw(cmd, Rect(clip.x,clip.y,1,1), bmp);
+    //        this->is_first_membelt = false;
+    //    }
+    //    this->front.draw(cmd, clip, bmp);
+    //}
 
 private:
     void draw_tile(const Rect & rect, const uint8_t * raw, gdi::GraphicApi & drawable) const

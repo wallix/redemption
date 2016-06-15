@@ -94,7 +94,7 @@
 
 #include <cstdlib>
 
-class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, mod_api>
+class mod_rdp : public mod_api
 {
 private:
     std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
@@ -199,8 +199,6 @@ protected:
                 chunk_data_length);
         }
     };
-
-    friend gdi::GraphicCoreAccess;
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
@@ -621,7 +619,7 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_rdp::base_type(info.width - (info.width % 4), info.height)
+        : mod_api(info.width - (info.width % 4), info.height)
         , front(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
@@ -1948,7 +1946,7 @@ private:
 
 public:
 
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         if (!this->event.waked_up_by_time
         && (!this->session_probe_virtual_channel_p
           ||!this->session_probe_virtual_channel_p->is_event_signaled())) {
@@ -6271,7 +6269,7 @@ public:
     }   // process_new_pointer_pdu
 
 private:
-    void process_bitmap_updates(InStream & stream, bool fast_path, GraphicApi & drawable) {
+    void process_bitmap_updates(InStream & stream, bool fast_path, gdi::GraphicApi & drawable) {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
@@ -6518,20 +6516,6 @@ private:
         }
     }
 
-    void begin_update() override {
-        this->front.begin_update();
-    }
-
-    void end_update() override {
-        this->front.end_update();
-    }
-
-protected:
-    FrontAPI & get_graphic_proxy() {
-        return this->front;
-    }
-
-public:
     bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }

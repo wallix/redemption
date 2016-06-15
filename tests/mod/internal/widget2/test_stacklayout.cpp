@@ -39,16 +39,16 @@ BOOST_AUTO_TEST_CASE(Testtab)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int id = 0;
 
-    WidgetStackLayout stack(drawable, Rect(30, 20, 500, 400), parent, notifier, id);
-    WidgetLineLayout control(drawable, Rect(0,0,1,1), parent, &stack, id);
+    WidgetStackLayout stack(drawable.gd, Rect(30, 20, 500, 400), parent, notifier, id);
+    WidgetLineLayout control(drawable.gd, Rect(0,0,1,1), parent, &stack, id);
 
-    WidgetRect page0(drawable, Rect(0, 0, 300, 300), stack, &parent, id, BLUE);
-    WidgetRect page1(drawable, Rect(0, 0, 250, 300), stack, &parent, id, RED);
-    WidgetRect page2(drawable, Rect(0, 0, 300, 350), stack, &parent, id, GREEN);
+    WidgetRect page0(drawable.gd, Rect(0, 0, 300, 300), stack, &parent, id, BLUE);
+    WidgetRect page1(drawable.gd, Rect(0, 0, 250, 300), stack, &parent, id, RED);
+    WidgetRect page2(drawable.gd, Rect(0, 0, 300, 350), stack, &parent, id, GREEN);
     stack.add_widget(&page0);
     stack.add_widget(&page1);
     stack.add_widget(&page2);

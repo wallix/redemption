@@ -45,12 +45,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int id = 0;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
+    FlatLogin flat_login(drawable.gd, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
                          false, id, "rec", "rec", "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
@@ -73,10 +73,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test2",
+    FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test2",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
@@ -115,9 +115,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
+    FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test3",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
@@ -163,11 +163,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test4",
+    FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test4",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
@@ -204,11 +204,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
+    FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
@@ -234,11 +234,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
+    FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     } notifier;
     WidgetFlatButton * extra_button = nullptr;
 
-    FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test6",
                          false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     BOOST_CHECK(notifier.sender == nullptr);

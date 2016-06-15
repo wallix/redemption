@@ -99,7 +99,7 @@ public:
     }
 
     // This should come from BACK!
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         this->interaction();
         // Calculating new speedx and speedy
         if (this->dancing_rect.x <= 0 && this->speedx < 0) {

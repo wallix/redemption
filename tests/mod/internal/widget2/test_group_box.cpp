@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int         fg_color = RED;
@@ -60,14 +60,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetGroupBox wgroupbox( drawable, x, y, cx, cy, parent, notifier, "Group 1", group_id
+    WidgetGroupBox wgroupbox( drawable.gd, x, y, cx, cy, parent, notifier, "Group 1", group_id
                             , fg_color, bg_color, font);
 
     bool auto_resize = true;
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
-    WidgetFlatButton wbutton(drawable, 10, 20, wgroupbox, notifier, "Button 1",
+    WidgetFlatButton wbutton(drawable.gd, 10, 20, wgroupbox, notifier, "Button 1",
                              auto_resize, group_id, fg_color, bg_color, focuscolor, font,
                              xtext, ytext);
 
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
     int         fg_color = RED;
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetGroupBox wgroupbox( drawable, x, y, cx, cy, parent, notifier, text, group_id
+    WidgetGroupBox wgroupbox( drawable.gd, x, y, cx, cy, parent, notifier, text, group_id
                             , fg_color, bg_color, font);
 
     BOOST_CHECK_EQUAL(0, memcmp(wgroupbox.get_text(), text, sizeof(text) - 3));
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     int  focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;
     int  ytext       = 1;
-    WidgetFlatButton wbutton(drawable, 10, 20, wgroupbox, notifier, "Button 1",
+    WidgetFlatButton wbutton(drawable.gd, 10, 20, wgroupbox, notifier, "Button 1",
                              auto_resize, group_id, fg_color, bg_color, focuscolor, font,
                              xtext, ytext);
 

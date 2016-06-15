@@ -36,7 +36,7 @@ public:
                 Theme const & theme = Theme())
         : mod_api(front_width, front_height)
         , front(front)
-        , screen(*this, front_width, front_height, font, nullptr, theme)
+        , screen(front, front_width, front_height, font, nullptr, theme)
     {
         this->front.server_resize(front_width, front_height, 24);
     }
@@ -142,118 +142,6 @@ public:
         else {
             LOG(LOG_ERR, "Channel \"%s\" is not fonud!", mod_channel_name);
         }
-    }
-
-    void begin_update() override {
-        this->front.begin_update();
-    }
-
-    void end_update() override {
-        this->front.end_update();
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        this->front.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDPColCache & cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        this->front.draw(bitmap_data, bmp);
-    }
-
-    void draw(const RDPBrushCache& cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void set_pointer(const Pointer & cursor) override {
-        this->front.set_pointer(cursor);
     }
 
     void rdp_input_invalidate(const Rect& r) override {
