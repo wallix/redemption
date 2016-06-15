@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     time_t now = 1450864840;
 
     while (!mod->is_up_and_running())
-            mod->draw_event(now);
+            mod->draw_event(now, front);
 
     uint32_t    count = 0;
     BackEvent_t res   = BACK_EVENT_NONE;
