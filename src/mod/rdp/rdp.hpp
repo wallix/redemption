@@ -1961,9 +1961,8 @@ public:
         && (!this->session_probe_virtual_channel_p
           ||!this->session_probe_virtual_channel_p->is_event_signaled())) {
             try{
-                //EM_ASM_({ console.log('draw_event start'); }, 0);
                 char * hostname = this->hostname;
-                //EM_ASM_({ console.log('draw_event '+$0); }, this->state);
+
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     if (this->verbose & 1){
@@ -1971,7 +1970,6 @@ public:
                     }
                     switch (this->nego.state){
                     default:
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_NEGO default 1'); }, 0);
                         this->nego.server_event(
                                 this->server_cert_store,
                                 this->server_cert_check,
@@ -1979,10 +1977,8 @@ public:
                                 this->certif_path.get()
                             );
 
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_NEGO default 2'); }, 0);
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_NEGO NEGO_STATE_FINAL'); }, 0);
                         // Basic Settings Exchange
                         // -----------------------
 
@@ -2257,7 +2253,6 @@ public:
                     break;
 
                 case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE start'); }, 0);
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
                     }
@@ -2265,22 +2260,16 @@ public:
                         constexpr std::size_t array_size = 65536;
                         uint8_t array[array_size];
                         uint8_t * end = array;
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 1'); }, 0);
                         X224::RecvFactory f(this->nego.trans, &end, array_size);
                         InStream x224_data(array, end - array);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 2'); }, 0);
                         X224::DT_TPDU_Recv x224(x224_data);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 3'); }, 0);
                         MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 4'); }, 0);
                         GCC::Create_Response_Recv gcc_cr(mcs.payload);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 5'); }, 0);
                         while (gcc_cr.payload.in_check_rem(4)) {
                             GCC::UserData::RecvFactory f(gcc_cr.payload);
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 6'); }, 0);
+
                             switch (f.tag) {
                             case SC_CORE:
-                             //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE SC_CORE'); }, 0);
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
                                 {
                                     GCC::UserData::SCCore sc_core;
@@ -2294,7 +2283,6 @@ public:
                                 }
                                 break;
                             case SC_SECURITY:
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE SC_SECURITY'); }, 0);
                                 LOG(LOG_INFO, "=================== SC_SECURITY =============");
                                 {
                                     GCC::UserData::SCSecurity sc_sec1;
@@ -2454,7 +2442,6 @@ public:
                                 }
                                 break;
                             case SC_NET:
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE SC_NET'); }, 0);
 //                            LOG(LOG_INFO, "=================== SC_NET =============");
 
                                 {
@@ -2484,7 +2471,7 @@ public:
                                 LOG(LOG_ERR, "unsupported GCC UserData response tag 0x%x", f.tag);
                                 throw Error(ERR_GCC);
                             }
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE end'); }, 0);
+
                         }
 
                         if (gcc_cr.payload.in_check_rem(1)) {
@@ -2563,7 +2550,6 @@ public:
                     break;
 
                 case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER'); }, 0);
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
                     }
@@ -2572,9 +2558,7 @@ public:
                             constexpr size_t array_size = AUTOSIZE;
                             uint8_t array[array_size];
                             uint8_t * end = array;
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 1'); }, 0);
                             X224::RecvFactory f(this->nego.trans, &end, array_size);
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 2'); }, 0);
                             InStream stream(array, end - array);
                             X224::DT_TPDU_Recv x224(stream);
                             InStream & mcs_cjcf_data = x224.payload;
@@ -2582,7 +2566,6 @@ public:
                             if (mcs.initiator_flag){
                                 this->userid = mcs.initiator;
                             }
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 3'); }, 0);
                         }
 
                         {
@@ -2768,7 +2751,7 @@ public:
     #endif
 
                 case MOD_RDP_GET_LICENSE:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_GET_LICENSE'); }, 0);
+
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "mod_rdp::Licensing");
                     }
@@ -3107,7 +3090,6 @@ public:
                     // between client-side plug-ins and server-side applications).
 
                 case MOD_RDP_CONNECTED:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_CONNECTED'); }, 0);
                     {
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -3812,7 +3794,6 @@ public:
             this->session_probe_virtual_channel_p->process_event();
         }
 
-        //EM_ASM_({ console.log('draw_event end'); }, 0);
     }   // draw_event
 
     wait_obj * get_secondary_event() override {

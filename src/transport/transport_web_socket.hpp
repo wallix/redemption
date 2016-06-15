@@ -72,19 +72,13 @@ class TransportWebSocket :  public Transport
             int lenMax(len);
 
             if (lenMax > 0) {
-
                 int i(0);
 
-
                 for (i = 0; i < len; i++) {
-                    //EM_ASM_({ console.log('indata['+$0 +']='+$1 +' pbuffer['+$0 +']='+$2); }, i, this->buffer[i],  (*pbuffer)[i]);
                     (*pbuffer)[i] = this->buffer[i + this->sentSize];
-                    //EM_ASM_({ console.log('indata['+$0 +']='+$1 +' pbuffer['+$0 +']='+$2); }, i, this->buffer[i],  (*pbuffer)[i]);
                 }
                 this->sentSize += i;
-                //this->buffer += this->sentSize;
-                *pbuffer += lenMax;                    // + this->sentSize;
-
+                *pbuffer += lenMax; 
 
             } else {
                 EM_ASM_({ console.log('do_recv len='+$0); }, len);

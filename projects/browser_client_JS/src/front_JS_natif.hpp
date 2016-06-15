@@ -903,7 +903,7 @@ extern "C" void connexion(char * ip, char * user, char * password, int port) {
     front.connect(ip, user, password, port);
 }
 
-extern "C" void diconnexion() {
+extern "C" void disconnexion() {
     front.disconnect();
 }
 
