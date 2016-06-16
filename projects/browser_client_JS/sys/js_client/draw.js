@@ -413,12 +413,15 @@ function connecting() {
         /* Test */
         startTimer();
 
-        _recv_wrapped();
+        getDataOctet();
 
         endTimer();
         /* Test */
     }
 }
+
+
+
 
 function disconnecting() {
     document.getElementById("form").style = "display:block";
@@ -431,16 +434,13 @@ function disconnecting() {
     _disconnexion();
 }
 
-
-
-
 function init_socket(ip, user, password, port) { // ip = string; port = int
     console.log('init_socket');
 
     return true;
 }
 
-function send_to_serveur(data, size) { // data = [uint_8];  size = size_t
+function send_to_serveur(data, size) { // data = [uint8_t];  size = size_t
     console.log('data_sent_to_serveur');
 }
 

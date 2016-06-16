@@ -281,6 +281,8 @@ public:
         this->_mod = nullptr;
     }
 
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //---------------------------------------
@@ -837,7 +839,6 @@ Front_JS_Natif front(0);
 
 extern "C" void mousePressEvent(int x, int y, int button) {
     front.mousePressEvent(x, y, button);
-    EM_ASM_({ console.log('click'); }, 0);
 }
 
 extern "C" void mouseReleaseEvent(int x, int y, int button) {
@@ -875,8 +876,6 @@ extern "C" void CtrlAltDelPressed() {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-        EM_ASM_({ console.log('Ctrl Alt Del'); }, 0);
-
     }
 }
 
@@ -887,17 +886,6 @@ extern "C" void CtrlAltDelPressed() {
 //--------------------------------
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
-
-extern "C" void recv_wrapped() {
-    //if (front._mod !=  nullptr) {
-        //for (int i = 0; i < len; i++) {
-            EM_ASM_({ getDataOctet(); }, 0);
-        //}
-        //front._mod->draw_event(time_t(nullptr));
-    //} else {
-        //EM_ASM_({ console.log('incoming_data off '); }, 0);
-    //}
-}
 
 extern "C" void connexion(char * ip, char * user, char * password, int port) {
     front.connect(ip, user, password, port);

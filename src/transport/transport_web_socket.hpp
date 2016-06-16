@@ -37,14 +37,14 @@ class FrontAPI;
 
 class TransportWebSocket :  public Transport
 {
-    char     *  buffer = nullptr;
-    uint8_t     pduState = 0;
-    size_t      filledSize = 0;
-    size_t      pduSize = 0;
+    char     *  buffer;
+    uint8_t     pduState;
+    size_t      filledSize;
+    size_t      pduSize;
 
-    size_t      sentSize = 0;
+    size_t      sentSize;
     mod_rdp  *  callback;
-    FrontAPI * drawable;
+    FrontAPI *  drawable;
 
     enum : uint8_t {
         PDU_HEADER_FLAG = 0x03,
@@ -66,19 +66,18 @@ class TransportWebSocket :  public Transport
     }
 
     void do_recv(char ** pbuffer, size_t len) override {
-        //pbuffer[0...len] = read(len)
-
         if (this->buffer !=  nullptr) {
             int lenMax(len);
 
             if (lenMax > 0) {
-                int i(0);
 
-                for (i = 0; i < len; i++) {
+                //std::copy(std::begin(this->buffer), std::end(this->buffer+len), std::begin(*pbuffer));
+
+                for (int i = 0; i < len; i++) {
                     (*pbuffer)[i] = this->buffer[i + this->sentSize];
                 }
-                this->sentSize += i;
-                *pbuffer += lenMax; 
+                this->sentSize += len;
+                *pbuffer += lenMax;
 
             } else {
                 EM_ASM_({ console.log('do_recv len='+$0); }, len);
@@ -88,9 +87,16 @@ class TransportWebSocket :  public Transport
         }
     }
 
+
 public:
     TransportWebSocket(FrontAPI * draw)
       : Transport()
+      , buffer(nullptr)
+      , pduState(0)
+      , filledSize(0)
+      , pduSize(0)
+      , sentSize(0)
+      , callback(nullptr)
       , drawable(draw)
       {}
 
@@ -141,10 +147,6 @@ public:
 
                                    this->filledSize = PDU_HEADER_SIZE;
                                    this->pduState = PUD_HEADER_OCT_4;
-                                  /* EM_ASM_({ console.log('indata[0] = '+$0); }, this->buffer[0]);
-                                EM_ASM_({ console.log('indata[1] = '+$0); }, this->buffer[1]);
-                                EM_ASM_({ console.log('indata[2] = '+$0); }, this->buffer[2]);
-                                EM_ASM_({ console.log('indata[3] = '+$0); }, this->buffer[3]);*/
                 break;
 
             case PUD_HEADER_OCT_4: this->buffer[filledSize] = octet;
