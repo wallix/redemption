@@ -79,6 +79,8 @@ public:
             }
         }
     }
+
+    bool is_up_and_running() override { return true; }
 };
 
 #endif  // #ifndef REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP
