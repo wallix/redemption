@@ -132,6 +132,8 @@ public:
         this->event.set(33333); // 0.3s is 30fps
     }
 
+    bool is_up_and_running() override { return true; }
+
     void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip) {
         oldrect.difference(newrect, [&](const Rect & a) {
             this->front.draw(RDPOpaqueRect(a, color), clip);
