@@ -29,7 +29,7 @@
 #include <cstdlib>
 
 #include "utils/algostring.hpp"
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/splitter.hpp"
 
 

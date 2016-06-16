@@ -1331,7 +1331,7 @@ test-canonical utils/apps/app_recorder.hpp ;
 test-canonical utils/apps/app_verifier.hpp ;
 test-canonical utils/apps/recording_progress.hpp ;
 test-canonical utils/array.hpp ;
-test-canonical utils/array_view.hpp ;
+test-canonical utils/sugar/array_view.hpp ;
 test-canonical utils/asynchronous_task_manager.hpp ;
 test-canonical utils/bitmap_data_allocator.hpp ;
 test-canonical utils/bytes_t.hpp ;

@@ -39,7 +39,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 
 
 inline Rect const & clip_from_cmd(RDPScrBlt const & cmd) { return cmd.rect; }

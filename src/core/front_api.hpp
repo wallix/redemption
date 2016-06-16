@@ -28,7 +28,7 @@
 #include "gdi/input_pointer_api.hpp"
 
 #include "core/wait_obj.hpp"
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 
 struct Capability;
 class InStream;

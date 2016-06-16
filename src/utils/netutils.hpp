@@ -37,7 +37,7 @@
 #include <unistd.h>
 #include <netdb.h>
 
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/log.hpp"
 
 TODO("-Wold-style-cast is ignored")

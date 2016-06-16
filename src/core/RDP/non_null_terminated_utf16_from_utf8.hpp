@@ -25,7 +25,7 @@
 #include "utils/cast.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <string>
 

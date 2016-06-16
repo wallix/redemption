@@ -27,7 +27,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <string>
 
