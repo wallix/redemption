@@ -49,13 +49,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -105,13 +105,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 640, 480, font);
+    WidgetScreen parent(drawable.gd, 640, 480, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
+    WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
                                 "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
@@ -162,13 +162,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
@@ -190,13 +190,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -222,13 +222,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -253,13 +253,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP");
@@ -390,13 +390,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
     WidgetFlatButton * extra_button = nullptr;
 
-    WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+    WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
     selector.add_device("reptile", "snake@10.10.14.111",
                         "RDP");
@@ -571,7 +571,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     TestDraw drawable(800, 600);
 
 //     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
@@ -580,7 +580,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     // ini.set<cfg::translation::target>_from_cstr("Target");
 //     WidgetFlatButton * extra_button = nullptr;
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+//     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -716,7 +716,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     TestDraw drawable(640, 480);
 
 //     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-//     WidgetScreen parent(drawable, 640, 480);
+//     WidgetScreen parent(drawable.gd, 640, 480);
 //     NotifyApi * notifier = nullptr;
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
@@ -725,7 +725,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     // ini.set<cfg::translation::target>_from_cstr("Target");
 //     WidgetFlatButton * extra_button = nullptr;
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+//     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -865,7 +865,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     TestDraw drawable(1280, 1024);
 
 //     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-//     WidgetScreen parent(drawable, 1280, 1024);
+//     WidgetScreen parent(drawable.gd, 1280, 1024);
 //     NotifyApi * notifier = nullptr;
 //     int16_t w = drawable.gd.width();
 //     int16_t h = drawable.gd.height();
@@ -874,7 +874,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     // ini.set<cfg::translation::target>_from_cstr("Target");
 //     WidgetFlatButton * extra_button = nullptr;
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
+//     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", w, h, parent, notifier, "1", "1", nullptr, nullptr, nullptr, extra_button, font, Theme(), Translation::EN);
 
 //     selector.add_device("reptile", "snake@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -1014,7 +1014,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     TestDraw drawable(800, 600);
 
 //     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -1038,7 +1038,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     ini.set<cfg::translation::target>_from_cstr("Target");
 //     WidgetFlatButton * extra_button = nullptr;
 
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_VISIBLE | COMMENT_VISIBLE);
+//     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_VISIBLE | COMMENT_VISIBLE);
 
 //     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -1078,7 +1078,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     TestDraw drawable(800, 600);
 
 //     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -1101,7 +1101,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     ini.set<cfg::translation::target>_from_cstr("Target");
 //     WidgetFlatButton * extra_button = nullptr;
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_VISIBLE | COMMENT_MANDATORY);
+//     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_VISIBLE | COMMENT_MANDATORY);
 
 //     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -1156,7 +1156,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     TestDraw drawable(800, 600);
 
 //     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -1179,7 +1179,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     ini.set<cfg::translation::target>_from_cstr("Target");
 //     WidgetFlatButton * extra_button = nullptr;
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_MANDATORY | COMMENT_VISIBLE);
+//     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_MANDATORY | COMMENT_VISIBLE);
 
 //     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");
@@ -1252,7 +1252,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 //     TestDraw drawable(800, 600);
 
 //     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -1275,7 +1275,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 //     ini.set<cfg::translation::target>_from_cstr("Target");
 //     WidgetFlatButton * extra_button = nullptr;
-//     WidgetSelectorFlat2 selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_MANDATORY | COMMENT_MANDATORY);
+//     WidgetSelectorFlat2 selector(drawable.gd, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, extra_button, ini, TICKET_MANDATORY | COMMENT_MANDATORY);
 
 //     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
 //                         "RDP", "2013-04-20 19:56:50");

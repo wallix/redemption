@@ -58,8 +58,8 @@ public:
                   const char * caption, const char * message, const char * cancel_text,
                   time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget, *this, front, this->font(), this->theme())
-        , dialog_widget(*this, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget, front, front, this->font(), this->theme())
+        , dialog_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
                         &this->language_button,
                         vars.get<cfg::theme>(), vars.get<cfg::font>(),
                         TR("OK", language(vars)),
@@ -123,7 +123,7 @@ private:
     }
 
 public:
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->accepted();

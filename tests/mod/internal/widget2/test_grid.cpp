@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetGrid wgrid(drawable, Rect(x, y, 640, 480), parent, notifier, line_number, column_number,
+    WidgetGrid wgrid(drawable.gd, Rect(x, y, 640, 480), parent, notifier, line_number, column_number,
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
 
@@ -83,11 +83,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
             char text[256];
             snprintf(text, sizeof(text), "Label %ux%u", unsigned(line_index), unsigned(column_index));
             if ((line_index == 2) && (column_index == 3)) {
-                widgetTable[widget_count] = new WidgetFlatButton(drawable, 0, 0, wgrid, notifier,
+                widgetTable[widget_count] = new WidgetFlatButton(drawable.gd, 0, 0, wgrid, notifier,
                                                             text, auto_resize, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, font, 2, 2);
             }
             else {
-                widgetTable[widget_count] = new WidgetLabel(drawable, 0, 0, wgrid, notifier,
+                widgetTable[widget_count] = new WidgetLabel(drawable.gd, 0, 0, wgrid, notifier,
                                                             text, auto_resize, id, fg_color, bg_color, font);
             }
             wgrid.set_widget(line_index, column_index, widgetTable[widget_count]);
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -334,7 +334,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.dx(),
@@ -357,7 +357,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
@@ -389,7 +389,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -398,7 +398,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wlabel.rdp_input_invalidate(Rect(20 + wlabel.dx(),
@@ -425,7 +425,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), *this, nullptr)
+        : Widget2(drawable.gd, Rect(), *this, nullptr)
         , sender(nullptr)
         , event(0)
         {}
@@ -446,7 +446,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE);
+    WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);
@@ -469,22 +469,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     TestDraw drawable(800, 600);
 
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
 
-    WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
+    WidgetComposite wcomposite(drawable.gd, Rect(0,0,800,600), parent, notifier);
 
-    WidgetLabel wlabel1(drawable, 0,0, wcomposite, notifier,
+    WidgetLabel wlabel1(drawable.gd, 0,0, wcomposite, notifier,
                         "abababab", true, 0, YELLOW, BLACK);
-    WidgetLabel wlabel2(drawable, 0,100, wcomposite, notifier,
+    WidgetLabel wlabel2(drawable.gd, 0,100, wcomposite, notifier,
                         "ggghdgh", true, 0, WHITE, BLUE);
-    WidgetLabel wlabel3(drawable, 100,100, wcomposite, notifier,
+    WidgetLabel wlabel3(drawable.gd, 100,100, wcomposite, notifier,
                         "lldlslql", true, 0, BLUE, RED);
-    WidgetLabel wlabel4(drawable, 300,300, wcomposite, notifier,
+    WidgetLabel wlabel4(drawable.gd, 300,300, wcomposite, notifier,
                         "LLLLMLLM", true, 0, PINK, DARK_GREEN);
-    WidgetLabel wlabel5(drawable, 700,-10, wcomposite, notifier,
+    WidgetLabel wlabel5(drawable.gd, 700,-10, wcomposite, notifier,
                         "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetLabel wlabel6(drawable, -10,550, wcomposite, notifier,
+    WidgetLabel wlabel6(drawable.gd, -10,550, wcomposite, notifier,
                         "xxwwp", true, 0, ANTHRACITE, PALE_GREEN);
 
     wcomposite.add_widget(&wlabel1);

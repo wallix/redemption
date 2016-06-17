@@ -60,8 +60,8 @@ public:
         , ask_device(vars.is_asked<cfg::context::target_host>())
         , ask_login(vars.is_asked<cfg::globals::target_user>())
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, *this, front, this->font(), this->theme())
-        , challenge(*this, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, 0,
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, front, front, this->font(), this->theme())
+        , challenge(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, 0,
                     this->ask_device, this->ask_login, this->ask_password,
                     vars.get<cfg::theme>(),
                     TR("target_info_required", language(vars)),
@@ -133,7 +133,7 @@ private:
     }
 
 public:
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         this->event.reset();
     }
 

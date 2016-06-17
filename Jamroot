@@ -850,6 +850,7 @@ unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp 
 unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
+unit-test test_protect_graphics : tests/utils/protect_graphics.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
 unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_remote_programs : tests/core/RDP/test_remote_programs.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_server : tests/core/test_server.cpp : $(TEST_DEPENDENCIES) ;
@@ -858,7 +859,6 @@ unit-test test_session_server : tests/core/test_session_server.cpp : $(TEST_DEPE
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_front : tests/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_mod_osd : tests/mod/test_mod_osd.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
 unit-test test_null : tests/mod/null/test_null.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : $(TEST_DEPENDENCIES) ;

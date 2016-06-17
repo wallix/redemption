@@ -145,8 +145,8 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(mod, info.width, info.height, font);
-    WidgetEdit edit(mod, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
+    WidgetScreen parent(mod.gd, info.width, info.height, font);
+    WidgetEdit edit(mod.gd, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
 
     BOOST_REQUIRE(copy_paste.ready(front));
 
@@ -162,25 +162,25 @@ BOOST_AUTO_TEST_CASE(TestPaste)
             BOOST_CHECK_MESSAGE(false, message);
         }
     };
-    edit_paste("", 
+    edit_paste("",
         "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c",
         __LINE__);
-    edit_paste("", 
+    edit_paste("",
         "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c",
         __LINE__);
     front.copy("plop");
-    edit_paste("plop", 
+    edit_paste("plop",
         "\x23\x7f\x9c\xa5\xbb\x4a\xdb\x79\x97\x8e\x53\xb7\x14\x56\xa7\x26\x6d\xaa\xec\x2d",
         __LINE__);
     edit.decrement_edit_pos();
-    edit_paste("ploplopp", 
+    edit_paste("ploplopp",
         "\x76\x0d\xa0\x57\x73\xc1\x96\xc5\x4c\xb2\x67\x00\xe9\x51\x54\xa2\x27\x73\x45\xd2",
         __LINE__);
     front.copy("xxx");
-    edit_paste("ploplopxxxp", 
+    edit_paste("ploplopxxxp",
         "\x4f\xf1\xdf\x1c\x52\xe1\x44\x31\x0e\xd5\x7e\x0b\x5f\x5a\x0a\x43\x31\x0e\x6e\xf6",
         __LINE__);
-    edit_paste("ploplopxxxxxxp", 
+    edit_paste("ploplopxxxxxxp",
         "\x97\x5d\xb1\x21\xb1\xce\x9d\x66\x27\xbb\x85\xf1\xc5\xb4\xef\x4d\x70\x71\xbb\xab",
         __LINE__);
 }

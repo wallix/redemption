@@ -183,7 +183,7 @@ enum {
         this->t.send(stream.get_data(), len);
     }
 
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         try{
             uint8_t buf[32768];
             {
@@ -226,7 +226,7 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->gd->draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         drawable.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa,
                             reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
                             ), r);
@@ -242,7 +242,7 @@ enum {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->gd->draw(scrblt, r);
+                        drawable.draw(scrblt, r);
                     }
                     break;
                     case 5:
@@ -259,7 +259,7 @@ enum {
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
                         Bitmap bmp(this->bpp, bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
-                        this->gd->draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
+                        drawable.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -302,7 +302,7 @@ enum {
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
                                                RDPPen(this->pen.style, this->pen.width, this->fgcolor));
-                        this->gd->draw(lineto, Rect(0,0,1,1));
+                        drawable.draw(lineto, Rect(0,0,1,1));
                     }
                     break;
                     case 19:
@@ -325,112 +325,6 @@ enum {
             this->event.signal = BACK_EVENT_NEXT;
         }
     }
-
-    void begin_update() override {
-        this->front.begin_update();
-    }
-
-    void end_update() override {
-        this->front.end_update();
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
-        this->front.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolyline& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        this->front.draw(bitmap_data, bmp);
-    }
-
-    void set_pointer(const Pointer & cursor) override {
-        this->front.set_pointer(cursor);
-    }
-
-    using gdi::GraphicApi::draw;
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
     }

@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen wscreen(drawable, drawable.gd.width(), drawable.gd.height(), font);
+    WidgetScreen wscreen(drawable.gd, drawable.gd.width(), drawable.gd.height(), font);
 
     wscreen.refresh(wscreen.rect);
     wscreen.tab_flag = Widget2::NORMAL_TAB;
@@ -68,13 +68,13 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     Notify notifier3;
     Notify notifier4;
 
-    WidgetFlatButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1",
+    WidgetFlatButton wbutton1(drawable.gd, 0, 0, wscreen, &notifier1, "button 1",
                               true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
-    WidgetFlatButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2",
+    WidgetFlatButton wbutton2(drawable.gd, 0, 30, wscreen, &notifier2, "button 2",
                               true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
-    WidgetFlatButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3",
+    WidgetFlatButton wbutton3(drawable.gd, 100, 0, wscreen, &notifier3, "button 3",
                               true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
-    WidgetFlatButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4",
+    WidgetFlatButton wbutton4(drawable.gd, 100, 30, wscreen, &notifier4, "button 4",
                               true, 0, WHITE, DARK_BLUE_BIS, WINBLUE, font);
 
     wscreen.add_widget(&wbutton1);

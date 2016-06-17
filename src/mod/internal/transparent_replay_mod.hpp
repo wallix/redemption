@@ -57,7 +57,7 @@ public:
         close(this->fd);
     }
 
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         try {
             if (!this->player.interpret_chunk()) {
                 this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
