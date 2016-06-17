@@ -94,7 +94,7 @@ public:
 
     virtual void disconnect() {}
 
-    virtual void display_osd_message(std::string & message) {}
+    virtual void display_osd_message(std::string const & message) {}
 };
 
 #endif

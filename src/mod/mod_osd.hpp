@@ -46,6 +46,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
 #include <functional>
@@ -53,7 +54,7 @@
 
 class mod_osd : public mod_api
 {
-    struct subrect_t {
+    struct subrect4_t {
         Rect top;
         Rect right;
         Rect bottom;
@@ -62,7 +63,7 @@ class mod_osd : public mod_api
 
     bool disable_filter = false;
 
-    subrect_t subrect(const Rect & rect) const
+    subrect4_t subrect(const Rect & rect) const
     {
         const Rect inter = rect.intersect(this->fg_rect);
         return {
@@ -189,7 +190,7 @@ public:
 //             //nada
 //         }
 //         else if (rect.has_intersection(this->fg_rect)) {
-//             const subrect_t rect4 = this->subrect(rect);
+//             const subrect4_t rect4 = this->subrect(rect);
 //             this->mod.begin_update();
 //             if (!rect4.top.isempty()) {
 //                 this->mod.draw(cmd, rect4.top, args...);
@@ -216,7 +217,7 @@ public:
 //                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 //
 //         if (!this->disable_filter && rectBmp.has_intersection(this->fg_rect)) {
-//             const subrect_t rect4 = this->subrect(rectBmp);
+//             const subrect4_t rect4 = this->subrect(rectBmp);
 //
 //             auto draw_bitmap_rect = [this, &rectBmp, &bmp](Rect const & rect) {
 //                 if (!rect.isempty()) {
@@ -269,7 +270,7 @@ public:
 private:
     void subrect_input_invalidate(const Rect & rect)
     {
-        subrect_t rect4 = this->subrect(rect);
+        subrect4_t rect4 = this->subrect(rect);
 
         if (!rect4.top.isempty()){
             this->mod.rdp_input_invalidate(rect4.top);
@@ -378,7 +379,7 @@ public:
         this->mod.send_disconnect_ultimatum();
     }
 
-    void rdp_input_invalidate2(array_view<Rect> vr) override {
+    void rdp_input_invalidate2(array_view<Rect const> vr) override {
         this->mod.rdp_input_invalidate2(vr);
     }
 
@@ -434,9 +435,25 @@ public:
 };
 
 
+using subrect4_t = std::array<Rect, 4>;
+inline subrect4_t subrect4(const Rect & rect, const Rect & protected_rect)
+{
+    const Rect inter = rect.intersect(protected_rect);
+    return {{
+        // top
+        Rect(rect.x, rect.y, rect.cx, inter.y - rect.y),
+        // right
+        Rect(inter.right(), inter.y, rect.right() - inter.right(), inter.cy),
+        // bottom
+        Rect(rect.x, inter.bottom(), rect.cx, rect.bottom() - inter.bottom()),
+        // left
+        Rect(rect.x, inter.y, inter.x - rect.x, inter.cy)
+    }};
+}
+
 class ProtectGraphics : public gdi::GraphicProxyBase<ProtectGraphics>
 {
-    const Rect protected_rect;
+    Rect protected_rect;
     GraphicApi & drawable;
 
 public:
@@ -444,9 +461,15 @@ public:
     : ProtectGraphics::base_type(drawable.order_depth())
     , protected_rect(rect)
     , drawable(drawable)
-    {
-    }
+    {}
 
+    Rect const & get_protected_rect() const
+    { return this->protected_rect; }
+
+    void set_protected_rect(Rect const & rect)
+    { this->protected_rect = rect; }
+
+protected:
     virtual void refresh_rects(array_view<Rect const>) = 0;
 
 private:
@@ -454,23 +477,6 @@ private:
 
     GraphicApi & get_graphic_proxy() const
     { return this->drawable; }
-
-    using subrect_t = std::array<Rect, 4>;
-
-    subrect_t subrect(const Rect & rect) const
-    {
-        const Rect inter = rect.intersect(this->protected_rect);
-        return {{
-            // top
-            Rect(rect.x, rect.y, rect.cx, inter.y - rect.y),
-            // right
-            Rect(inter.right(), inter.y, rect.right() - inter.right(), inter.cy),
-            // bottom
-            Rect(rect.x, inter.bottom(), rect.cx, rect.bottom() - inter.bottom()),
-            // left
-            Rect(rect.x, inter.y, inter.x - rect.x, inter.cy)
-        }};
-    }
 
     template<class Command>
     void draw_impl(Command const & cmd)
@@ -486,7 +492,7 @@ private:
         else if (rect.has_intersection(this->protected_rect)) {
             this->drawable.begin_update();
             // TODO used multi orders
-            for (const Rect & subrect : this->subrect(rect)) {
+            for (const Rect & subrect : subrect4(rect, this->protected_rect)) {
                 if (!subrect.isempty()) {
                     this->drawable.draw(cmd, subrect, args...);
                 }
@@ -506,7 +512,7 @@ private:
 
         if (rectBmp.has_intersection(this->protected_rect)) {
             this->drawable.begin_update();
-            for (const Rect & subrect : this->subrect(rectBmp)) {
+            for (const Rect & subrect : subrect4(rectBmp, this->protected_rect)) {
                 if (!subrect.isempty()) {
                     this->drawable.draw(
                         RDPMemBlt(0, subrect, 0xCC, subrect.x - rectBmp.x, subrect.y - rectBmp.y, 0),
@@ -538,7 +544,7 @@ private:
         }
         else {
             this->drawable.begin_update();
-            subrect_t rects = this->subrect(drect);
+            subrect4_t rects = subrect4(drect, this->protected_rect);
             auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return !rect.isempty(); });
             auto av = make_array_view(rects.begin(), e);
             this->refresh_rects(av);

@@ -5815,7 +5815,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate2(array_view<Rect> vr) override {
+    void rdp_input_invalidate2(array_view<Rect const> vr) override {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }

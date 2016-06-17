@@ -27,6 +27,7 @@
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "core/error.hpp"
+#include "mod/mod_api.hpp"
 
 #include <memory>
 #include <chrono>
