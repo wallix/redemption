@@ -25,7 +25,7 @@
 #include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/stream.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_api.hpp"

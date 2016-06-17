@@ -22,7 +22,7 @@
 #define REDEMPTION_CORE_RDP_NON_NULL_TERMINATED_UTF16_FROM_UTF8_HPP
 
 #include "core/error.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"

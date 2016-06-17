@@ -32,7 +32,7 @@
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "recording_progress.hpp"
-#include "utils/iter.hpp"
+#include "utils/sugar/iter.hpp"
 #include "program_options/program_options.hpp"
 #include "acl/auth_api.hpp"
 

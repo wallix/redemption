@@ -22,7 +22,7 @@
 #define REDEMPTION_SRC_CORE_CONFIG_ACCESS_HPP
 
 #include "config.hpp"
-#include "utils/underlying_cast.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 
 #include <type_traits>
 

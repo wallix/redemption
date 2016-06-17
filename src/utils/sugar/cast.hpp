@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,25 +15,31 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 
-   Unit test to conversion of RDP drawing orders to PNG images
+    simple usual casts
+
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
-#include "system/redemption_unit_tests.hpp"
+#pragma once
+#include <stdint.h>
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
-#define LOGNULL
-//#define LOGPRINT
-
-//#include "path/to/file.hpp"
-
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+static inline uint8_t * byte_ptr_cast(char * data)
 {
-    BOOST_CHECK(true);
+    return reinterpret_cast<uint8_t *>(data);
+}
+
+static inline const uint8_t * byte_ptr_cast(const char * data)
+{
+    return reinterpret_cast<const uint8_t *>(data);
+}
+
+static inline char * char_ptr_cast(uint8_t * data)
+{
+    return reinterpret_cast<char *>(data);
+}
+
+static inline const char * char_ptr_cast(const uint8_t * data)
+{
+    return reinterpret_cast<const char *>(data);
 }

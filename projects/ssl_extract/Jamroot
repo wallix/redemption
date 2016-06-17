@@ -750,7 +750,7 @@ test-canonical capture/utils/match_finder.hpp : <covflag>nocover ;
 
 ## Test facility functions or classes
 ## @{
-test-canonical utils/iter.hpp ;
+test-canonical utils/sugar/iter.hpp ;
 test-canonical utils/noncopyable.hpp ;
 test-canonical utils/splitter.hpp ;
 test-canonical utils/algostring.hpp ;
@@ -1335,7 +1335,7 @@ test-canonical utils/sugar/array_view.hpp ;
 test-canonical utils/asynchronous_task_manager.hpp ;
 test-canonical utils/bitmap_data_allocator.hpp ;
 test-canonical utils/bytes_t.hpp ;
-test-canonical utils/cast.hpp ;
+test-canonical utils/sugar/cast.hpp ;
 test-canonical utils/cfgloader.hpp ;
 test-canonical utils/exchange.hpp ;
 test-canonical utils/fdbuf.hpp ;
@@ -1348,7 +1348,7 @@ test-canonical utils/socket_transport_utility.hpp ;
 test-canonical utils/text_metrics.hpp ;
 test-canonical utils/timeout.hpp ;
 test-canonical utils/timeval_ops.hpp ;
-test-canonical utils/underlying_cast.hpp ;
+test-canonical utils/sugar/underlying_cast.hpp ;
 test-canonical utils/update_lock.hpp ;
 test-canonical utils/urandom_read.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;

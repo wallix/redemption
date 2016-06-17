@@ -24,7 +24,7 @@
 #include "widget.hpp"
 #include "label.hpp"
 #include "keyboard/keymap2.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "gdi/graphic_api.hpp"
 
 class WidgetEdit : public Widget2 {
