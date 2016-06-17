@@ -744,7 +744,7 @@ unit-test test_wrm_label : tests/capture/test_wrm_label.cpp : $(TEST_DEPENDENCIE
 
 ## Test facility functions or classes
 ## @{
-unit-test test_iter : tests/utils/test_iter.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_iter : tests/utils/sugar/test_iter.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_noncopyable : tests/utils/test_noncopyable.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_splitter : tests/utils/test_splitter.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_algostring : tests/utils/test_algostring.cpp : $(TEST_DEPENDENCIES) ;

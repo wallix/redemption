@@ -421,8 +421,8 @@ struct ssh_socket_struct {
     ssh_buffer_struct* in_buffer;
   
     ssh_socket_struct() 
-        : fd_in(SSH_INVALID_SOCKET)
-        , fd_out(SSH_INVALID_SOCKET)
+        : fd_in(INVALID_SOCKET)
+        , fd_out(INVALID_SOCKET)
         , fd_is_socket(1)
         , last_errno(-1)
         , read_wontblock(0)
@@ -443,13 +443,13 @@ struct ssh_socket_struct {
 
     void close(){
         syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-        if (this->fd_in != SSH_INVALID_SOCKET) {
+        if (this->fd_in != INVALID_SOCKET) {
             ::close(this->fd_in);
-            if(this->fd_out != this->fd_in && this->fd_out != SSH_INVALID_SOCKET){
+            if(this->fd_out != this->fd_in && this->fd_out != INVALID_SOCKET){
                 ::close(this->fd_out);
             }
             this->last_errno = errno;
-            this->fd_in = this->fd_out = SSH_INVALID_SOCKET;
+            this->fd_in = this->fd_out = INVALID_SOCKET;
         }
         this->state = SSH_SOCKET_CLOSED;
     }
@@ -539,7 +539,7 @@ struct ssh_agent_struct {
   }
 
     bool agent_is_running(ssh_session_struct * session) {
-        if (this->sock->fd_in != SSH_INVALID_SOCKET){
+        if (this->sock->fd_in != INVALID_SOCKET){
             syslog(LOG_INFO, "%s : true: agent socket open", __FUNCTION__);    
             return true;
         }

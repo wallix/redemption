@@ -175,7 +175,7 @@ int SshServerSession::ssh_channel_open_auth_agent_server(ssh_channel channel){
 void ssh_disconnect_server(SshServerSession * server_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);    
 
-    if (server_session->socket != nullptr && server_session->socket->fd_in != SSH_INVALID_SOCKET) {
+    if (server_session->socket != nullptr && server_session->socket->fd_in != INVALID_SOCKET) {
         server_session->out_buffer->out_uint8(SSH_MSG_DISCONNECT);
         server_session->out_buffer->out_uint32_be(SSH2_DISCONNECT_BY_APPLICATION);
         server_session->out_buffer->out_length_prefixed_cstr("Bye Bye");
@@ -183,7 +183,7 @@ void ssh_disconnect_server(SshServerSession * server_session) {
         // we should send the disconnect message then wait for socket close
     }
 
-    server_session->opts.fd = SSH_INVALID_SOCKET;
+    server_session->opts.fd = INVALID_SOCKET;
     server_session->session_state = SSH_SESSION_STATE_DISCONNECTED;
 
     if(server_session->current_crypto){
