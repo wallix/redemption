@@ -30,7 +30,7 @@
 
 #include "utils/sugar/cast.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCast
+BOOST_AUTO_TEST_CASE(TestCast)
 {
     BOOST_CHECK(true);
 
