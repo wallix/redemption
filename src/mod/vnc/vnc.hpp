@@ -2744,7 +2744,7 @@ private:
         return (UP_AND_RUNNING == this->state);
     }
 
-    void draw_tile(const Rect & rect, const uint8_t * raw, gdi::GraphicApi & drawable) const
+    void draw_tile(const Rect & rect, const uint8_t * raw, gdi::GraphicApi & drawable)
     {
         const uint16_t TILE_CX = 32;
         const uint16_t TILE_CY = 32;
