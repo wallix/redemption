@@ -32,7 +32,7 @@
 #define LOGNULL
 
 #include <string>
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/utf.hpp"
 
 BOOST_AUTO_TEST_CASE(TestString)

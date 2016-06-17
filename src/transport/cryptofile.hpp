@@ -36,7 +36,7 @@
 
 #include "utils/genrandom.hpp"
 #include "system/ssl_calls.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include "openssl_crypto.hpp"

@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"

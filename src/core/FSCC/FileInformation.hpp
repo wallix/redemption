@@ -25,7 +25,7 @@
 
 #include "core/error.hpp"
 
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
 
 namespace fscc {

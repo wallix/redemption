@@ -21,9 +21,7 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_CAST_HPP_
-#define _REDEMPTION_UTILS_CAST_HPP_
-
+#pragma once
 #include <stdint.h>
 
 static inline uint8_t * byte_ptr_cast(char * data)
@@ -45,5 +43,3 @@ static inline const char * char_ptr_cast(const uint8_t * data)
 {
     return reinterpret_cast<const char *>(data);
 }
-
-#endif

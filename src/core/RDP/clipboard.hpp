@@ -25,7 +25,7 @@
 
 #include "utils/stream.hpp"
 #include "core/error.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 
 namespace RDPECLIP {
 
