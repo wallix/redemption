@@ -2744,18 +2744,6 @@ private:
         return (UP_AND_RUNNING == this->state);
     }
 
-public:
-    // TODO new_mod: reimplemented
-    //void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-    //    /// NOTE force resize cliping with rdesktop...
-    //    if (this->is_first_membelt && clip.cx != 1 && clip.cy != 1) {
-    //        this->front.draw(cmd, Rect(clip.x,clip.y,1,1), bmp);
-    //        this->is_first_membelt = false;
-    //    }
-    //    this->front.draw(cmd, clip, bmp);
-    //}
-
-private:
     void draw_tile(const Rect & rect, const uint8_t * raw, gdi::GraphicApi & drawable) const
     {
         const uint16_t TILE_CX = 32;
@@ -2771,6 +2759,11 @@ private:
                 const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
                 const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                 const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
+                /// NOTE force resize cliping with rdesktop...
+                if (this->is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
+                    drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
+                    this->is_first_membelt = false;
+                }
                 drawable.draw(cmd2, dst_tile, tiled_bmp);
             }
         }
