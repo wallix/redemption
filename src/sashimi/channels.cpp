@@ -170,7 +170,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             opts.username = ssh_get_local_username();
         break;
         case SSH_OPTIONS_FD:
-            opts.fd = SSH_INVALID_SOCKET;
+            opts.fd = INVALID_SOCKET;
         default:
             ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
             return -1;
@@ -253,7 +253,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             {
                 const socket_t *x = reinterpret_cast<const socket_t *>(value);
                 if (*x < 0) {
-                    opts.fd = SSH_INVALID_SOCKET;
+                    opts.fd = INVALID_SOCKET;
                     ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                     return -1;
                 }
@@ -668,7 +668,7 @@ int options_set_port_str(options_struct & opts, const void *value, error_struct 
 int options_set_fd(options_struct & opts, socket_t value, error_struct & error)
 {
     if (value < 0) {
-        opts.fd = SSH_INVALID_SOCKET;
+        opts.fd = INVALID_SOCKET;
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
     }
@@ -1204,7 +1204,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
         ctx->front_session->poll->lock);
 
     /* Do not do anything if this socket was already closed */
-    if(front_pollfd->fd != SSH_INVALID_SOCKET && front_pollfd->revents){
+    if(front_pollfd->fd != INVALID_SOCKET && front_pollfd->revents){
         ctx->front_session->do_front_event(front_pollfd->revents);
         
         if (ctx->front_session->waiting_list.size() > 0){
@@ -1754,7 +1754,7 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
                                
     syslog(LOG_INFO, "%s --- [E]", __FUNCTION__);    
                                               
-    socket_t fd = SSH_INVALID_SOCKET;
+    socket_t fd = INVALID_SOCKET;
     struct addrinfo *ai;
     struct addrinfo *itr;
     struct addrinfo hints;
@@ -1805,7 +1805,7 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
             ssh_set_error(*error, SSH_FATAL,
                 "Failed to set socket non-blocking for %s:%d", host, session->opts.port);
             ::close(fd);
-            fd = SSH_INVALID_SOCKET;
+            fd = INVALID_SOCKET;
             continue;
         }
         break;
@@ -1815,7 +1815,7 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
     syslog(LOG_INFO, "%s --- [H]", __FUNCTION__);    
 
     syslog(LOG_INFO,"Nonblocking connection socket: %d",fd);
-    if(fd == SSH_INVALID_SOCKET){
+    if(fd == INVALID_SOCKET){
         syslog(LOG_INFO,"Invalid socket");
         session->pending_call_state = SSH_PENDING_CALL_NONE;
         return nullptr;

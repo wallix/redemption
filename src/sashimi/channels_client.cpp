@@ -107,7 +107,7 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
 void ssh_disconnect_client(SshClientSession * client_session) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
-    if (client_session->socket != NULL && client_session->socket->fd_in != SSH_INVALID_SOCKET) {
+    if (client_session->socket != NULL && client_session->socket->fd_in != INVALID_SOCKET) {
         client_session->out_buffer->out_uint8(SSH_MSG_DISCONNECT);
         client_session->out_buffer->out_uint32_be(SSH2_DISCONNECT_BY_APPLICATION);
         client_session->out_buffer->out_length_prefixed_cstr("Bye Bye");
@@ -115,7 +115,7 @@ void ssh_disconnect_client(SshClientSession * client_session) {
         // we should send the disconnect message then wait for socket close
     }
 
-    client_session->opts.fd = SSH_INVALID_SOCKET;
+    client_session->opts.fd = INVALID_SOCKET;
     client_session->session_state = SSH_SESSION_STATE_DISCONNECTED;
 
     if(client_session->current_crypto){
@@ -4537,7 +4537,7 @@ int ssh_event_set_fd_client(ssh_poll_ctx_struct * ctx, socket_t fd, ssh_event_ca
     syslog(LOG_WARNING, "ssh_event_add_fd = %u", fd);
 
 
-    if(ctx == nullptr || pw_cb == nullptr || fd == SSH_INVALID_SOCKET) {
+    if(ctx == nullptr || pw_cb == nullptr || fd == INVALID_SOCKET) {
         syslog(LOG_WARNING, "ssh_event_add_fd failed = %u", fd);
         return SSH_ERROR;
     }
