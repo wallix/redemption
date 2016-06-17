@@ -38,7 +38,7 @@
 #include "utils/log.hpp"
 #include "acl/auth_api.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/iter.hpp"
+#include "utils/sugar/iter.hpp"
 
 #include "transport/cryptofile.hpp" // MD_HASH_LENGTH
 

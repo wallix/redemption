@@ -288,7 +288,7 @@ test-canonical capture/wrm_label.hpp ;
 
 ### Test facility functions or classes
 ### @{
-test-canonical utils/iter.hpp ;
+test-canonical utils/sugar/iter.hpp ;
 test-canonical utils/noncopyable.hpp ;
 test-canonical utils/splitter.hpp ;
 test-canonical utils/algostring.hpp ;
