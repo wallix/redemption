@@ -420,9 +420,6 @@ function connecting() {
     }
 }
 
-
-
-
 function disconnecting() {
     document.getElementById("form").style = "display:block";
     document.getElementById("emscripten_canvas").style = "display:none";

@@ -33,6 +33,11 @@
 #include "transport/transport.hpp"
 #include "mod/rdp/rdp.hpp"
 
+
+// bjam -a test_transport_web_socket |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/test_transport_web_socket.html
+
+// source emsdk_portable/emsdk_env.sh
+
 class FrontAPI;
 
 class TransportWebSocket :  public Transport
