@@ -215,8 +215,8 @@ public:
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION,
                 0, nullptr, this->theme(),
-                tr("Authentification required"),
-                tr("VNC password"),
+                tr("authentication_required"),
+                tr("password"),
                 this->font())
     , mod_name{0}
     , palette(nullptr)
