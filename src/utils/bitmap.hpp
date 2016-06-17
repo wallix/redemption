@@ -50,7 +50,7 @@
 #include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "system/ssl_sha1.hpp"
 
 #ifndef FAR

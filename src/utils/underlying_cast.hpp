@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_UTILS_UNDERLYING_CAST_HPP
-#define REDEMPTION_SRC_UTILS_UNDERLYING_CAST_HPP
+#pragma once
 
 #include <type_traits>
 
@@ -27,4 +26,3 @@ template<class E>
 constexpr typename std::underlying_type<E>::type underlying_cast(E e)
 { return static_cast<typename std::underlying_type<E>::type>(e); }
 
-#endif

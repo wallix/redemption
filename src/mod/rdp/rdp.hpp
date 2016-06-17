@@ -241,10 +241,18 @@ protected:
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
+#ifdef __EMSCRIPTEN__
+    size_t num_channels_JS;
+    size_t index_JS;
+#endif
+
     enum {
           MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
+#ifdef __EMSCRIPTEN__
+        , MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS
+#endif
         , MOD_RDP_GET_LICENSE
         , MOD_RDP_CONNECTED
     };
@@ -375,7 +383,7 @@ protected:
 
     const bool allow_using_multiple_monitors;
 
-    bool session_probe_enabled = false;
+    bool already_upped_and_running = false;
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -768,8 +776,6 @@ public:
         }
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
-
-        this->event.object_and_time = (this->open_session_timeout.count() > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel,
@@ -1945,15 +1951,26 @@ private:
     }
 
 public:
+    wait_obj& get_event() override {
+        if ((this->state == MOD_RDP_NEGO) &&
+            ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
+             (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
+            this->event.object_and_time = true;
+            this->event.set();
+        }
+        return this->event;
+    }
 
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
-        if (!this->event.waked_up_by_time
-        && (!this->session_probe_virtual_channel_p
-          ||!this->session_probe_virtual_channel_p->is_event_signaled())) {
+        if ((!this->event.waked_up_by_time &&
+             (!this->session_probe_virtual_channel_p ||
+              !this->session_probe_virtual_channel_p->is_event_signaled())) ||
+            ((this->state == MOD_RDP_NEGO) &&
+             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
+              (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
-                //EM_ASM_({ console.log('draw_event start'); }, 0);
                 char * hostname = this->hostname;
-                //EM_ASM_({ console.log('draw_event '+$0); }, this->state);
+
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     if (this->verbose & 1){
@@ -1961,7 +1978,6 @@ public:
                     }
                     switch (this->nego.state){
                     default:
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_NEGO default 1'); }, 0);
                         this->nego.server_event(
                                 this->server_cert_store,
                                 this->server_cert_check,
@@ -1969,10 +1985,8 @@ public:
                                 this->certif_path.get()
                             );
 
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_NEGO default 2'); }, 0);
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_NEGO NEGO_STATE_FINAL'); }, 0);
                         // Basic Settings Exchange
                         // -----------------------
 
@@ -2247,7 +2261,6 @@ public:
                     break;
 
                 case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE start'); }, 0);
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
                     }
@@ -2255,22 +2268,16 @@ public:
                         constexpr std::size_t array_size = 65536;
                         uint8_t array[array_size];
                         uint8_t * end = array;
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 1'); }, 0);
                         X224::RecvFactory f(this->nego.trans, &end, array_size);
                         InStream x224_data(array, end - array);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 2'); }, 0);
                         X224::DT_TPDU_Recv x224(x224_data);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 3'); }, 0);
                         MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 4'); }, 0);
                         GCC::Create_Response_Recv gcc_cr(mcs.payload);
-                        //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 5'); }, 0);
                         while (gcc_cr.payload.in_check_rem(4)) {
                             GCC::UserData::RecvFactory f(gcc_cr.payload);
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE 6'); }, 0);
+
                             switch (f.tag) {
                             case SC_CORE:
-                             //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE SC_CORE'); }, 0);
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
                                 {
                                     GCC::UserData::SCCore sc_core;
@@ -2284,7 +2291,6 @@ public:
                                 }
                                 break;
                             case SC_SECURITY:
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE SC_SECURITY'); }, 0);
                                 LOG(LOG_INFO, "=================== SC_SECURITY =============");
                                 {
                                     GCC::UserData::SCSecurity sc_sec1;
@@ -2444,7 +2450,6 @@ public:
                                 }
                                 break;
                             case SC_NET:
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE SC_NET'); }, 0);
 //                            LOG(LOG_INFO, "=================== SC_NET =============");
 
                                 {
@@ -2474,7 +2479,7 @@ public:
                                 LOG(LOG_ERR, "unsupported GCC UserData response tag 0x%x", f.tag);
                                 throw Error(ERR_GCC);
                             }
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_BASIC_SETTINGS_EXCHANGE end'); }, 0);
+
                         }
 
                         if (gcc_cr.payload.in_check_rem(1)) {
@@ -2553,7 +2558,6 @@ public:
                     break;
 
                 case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER'); }, 0);
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
                     }
@@ -2562,9 +2566,7 @@ public:
                             constexpr size_t array_size = AUTOSIZE;
                             uint8_t array[array_size];
                             uint8_t * end = array;
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 1'); }, 0);
                             X224::RecvFactory f(this->nego.trans, &end, array_size);
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 2'); }, 0);
                             InStream stream(array, end - array);
                             X224::DT_TPDU_Recv x224(stream);
                             InStream & mcs_cjcf_data = x224.payload;
@@ -2572,11 +2574,13 @@ public:
                             if (mcs.initiator_flag){
                                 this->userid = mcs.initiator;
                             }
-                            //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 3'); }, 0);
                         }
 
                         {
                             size_t num_channels = this->mod_channel_list.size();
+
+    #ifndef __EMSCRIPTEN__
+
                             uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
                             channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
                             channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
@@ -2602,9 +2606,7 @@ public:
                                 constexpr size_t array_size = AUTOSIZE;
                                 uint8_t array[array_size];
                                 uint8_t * end = array;
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 4'); }, 0);
                                 X224::RecvFactory f(this->nego.trans, &end, array_size);
-                                //EM_ASM_({ console.log('draw_event MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER 5'); }, 0);
                                 InStream x224_data(array, end - array);
                                 X224::DT_TPDU_Recv x224(x224_data);
                                 InStream & mcs_cjcf_data = x224.payload;
@@ -2614,6 +2616,10 @@ public:
                                     LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
                                 }
                             }
+    #else
+                            this->index_JS = 0;
+                            this->num_channels_JS = num_channels + 2;
+    #endif
                         }
 
                         // RDP Security Commencement
@@ -2681,13 +2687,79 @@ public:
                         }
 
                         this->send_client_info_pdu(this->userid, this->password, now);
-
+    #ifndef __EMSCRIPTEN__
                         this->state = MOD_RDP_GET_LICENSE;
+    #else
+                        this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+    #endif
                     }
+                            break;
+
+    #ifdef __EMSCRIPTEN__
+
+                case MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS:
+                    {
+                        uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
+                        channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
+                        channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
+
+                        size_t index = this->index_JS;
+                        write_packets(
+                            this->nego.trans,
+                            [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
+                                MCS::ChannelJoinRequest_Send mcs(
+                                    mcs_cjrq_data, this->userid,
+                                    channels_id[index], MCS::PER_ENCODING
+                                );
+                                (void)mcs;
+                            },
+                            write_x224_dt_tpdu_fn{}
+                        );
+
+                        constexpr size_t array_size = AUTOSIZE;
+                        uint8_t array[array_size];
+                        uint8_t * end = array;
+                        X224::RecvFactory f(this->nego.trans, &end, array_size);
+                        InStream x224_data(array, end - array);
+                        X224::DT_TPDU_Recv x224(x224_data);
+                        InStream & mcs_cjcf_data = x224.payload;
+                        MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
+                        TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
+
+                        if (this->encryptionLevel){
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
+                                    this->server_public_key_len);
+                            }
+
+                            this->send_data_request(
+                                GCC::MCS_GLOBAL_CHANNEL,
+                                dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                                    SEC::SecExchangePacket_Send mcs(
+                                        stream, this->client_crypt_random, this->server_public_key_len
+                                    );
+                                    (void)mcs;
+                                })
+                            );
+                        }
+
+                        this->send_client_info_pdu(this->userid, this->password, now);
+
+                        this->num_channels_JS--;
+                        this->index_JS++;
+
+                        if (this->num_channels_JS == 0) {
+                            this->state = MOD_RDP_GET_LICENSE;
+                        } else {
+                            this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+                        }
+                    }
+
                     break;
+    #endif
 
                 case MOD_RDP_GET_LICENSE:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_GET_LICENSE'); }, 0);
+
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "mod_rdp::Licensing");
                     }
@@ -3026,7 +3098,6 @@ public:
                     // between client-side plug-ins and server-side applications).
 
                 case MOD_RDP_CONNECTED:
-                    //EM_ASM_({ console.log('draw_event MOD_RDP_CONNECTED'); }, 0);
                     {
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -3341,10 +3412,12 @@ public:
 
                                             this->deactivation_reactivation_in_progress = false;
 
-                                            if (!this->session_probe_enabled) {
+                                            if (!this->already_upped_and_running) {
                                                 this->do_enable_session_probe();
 
-                                                this->session_probe_enabled = true;
+                                                this->event.object_and_time = (this->open_session_timeout.count() > 0);
+
+                                                this->already_upped_and_running = true;
                                             }
                                             break;
                                         case UP_AND_RUNNING:
@@ -3731,7 +3804,6 @@ public:
             this->session_probe_virtual_channel_p->process_event();
         }
 
-        //EM_ASM_({ console.log('draw_event end'); }, 0);
     }   // draw_event
 
     wait_obj * get_secondary_event() override {

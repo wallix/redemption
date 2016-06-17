@@ -47,6 +47,8 @@ struct null_mod : public mod_api
     // the null module never finish and accept any incoming event
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {}
 
+    bool is_up_and_running() override { return true; }
+
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
 };
 

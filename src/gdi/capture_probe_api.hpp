@@ -22,7 +22,7 @@
 #define REDEMPTION_GDI_CAPTURE_PROBE_API_HPP
 
 #include "utils/noncopyable.hpp"
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 
 struct timeval;
 

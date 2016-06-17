@@ -68,6 +68,8 @@ public:
         this->event.reset();
     }
 
+    bool is_up_and_running() override { return true; }
+
     void draw(gdi::GraphicApi & drawable)
     {
         this->front.begin_update();

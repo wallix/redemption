@@ -19,9 +19,6 @@
 */
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
-#define  LOG_JS(s) EM_ASM_({ console.log($0); }, s);
-#else
-#define  LOG_JS(s)
 #endif
 
 
@@ -81,13 +78,7 @@
 
 // bjam -a client_rdp_JS_natif |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/client_rdp_JS_natif.html
 
-// bjam -a test_transport_web_socket |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/test_transport_web_socket.html
-
-// #--shell-file templates/penta_template.html
-// -s EXPORTED_FUNCTIONS="['_run_main']"
-
-// source emsdk_env.sh
-// . ./emsdk_env.sh
+// source emsdk_portable/emsdk_env.sh
 
 
 extern "C" void recv_wrapped();
@@ -144,8 +135,9 @@ public:
     int                  _fps;
 
     // Graphic members
-    uint8_t                 _mod_bpp;
+    uint8_t     _mod_bpp;
     BGRPalette  mod_palette;
+    Rect        _clipRect;
 
 
     // Connexion socket members
@@ -171,7 +163,7 @@ public:
     //int                  _bufferRDPClipboardMetaFilePicBPP;
     const Keylayout_r  * _keylayout;
 
-    enum: int {
+    enum: uint16_t {
         KBD_FLAGS_EXTENDED = 0x0100,
     };
 
@@ -193,6 +185,7 @@ public:
         this->_info = info;
         this->_mod_bpp = this->_info.bpp;
         this->setKeyboardLayout(this->_info.keylayout);
+        this->_clipRect = Rect(0, 0, this->_info.width, this->_info.height);
     }
 
     void setKeyboardLayout(int LCID) {
@@ -245,15 +238,8 @@ public:
 
 
     void connect(char * ip, char * user, char * password, int port) {
-        /*
-        EM_ASM_({ console.log('connexion '+HEAPU8.subarray($0, $0+1)+' '
-                                          +HEAPU8.subarray($1, $1+1)+' '
-                                          +HEAPU8.subarray($2, $2+1)+' '
-                                          +$3); },
-                                          ip, user, password, port);*/
 
         Inifile ini;
-
         ModRDPParams mod_rdp_params( user                   //"administrateur"
                                    , password               //"S3cur3!1nux"
                                    , ip                     //"10.10.47.35"
@@ -283,6 +269,8 @@ public:
         delete(this->_mod);
         this->_mod = nullptr;
     }
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -595,8 +583,7 @@ public:
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
                      (bitmap_data.dest_right  - bitmap_data.dest_left + 5),
                      (bitmap_data.dest_bottom - bitmap_data.dest_top  + 5));
-        const Rect clipRect(0, 0, this->_info.width, this->_info.height);
-        const Rect rect = rectBmp.intersect(clipRect);
+        const Rect rect = rectBmp.intersect(this->_clipRect);
 
         Bitmap bitmapBpp(32, bmp);
         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
@@ -707,7 +694,7 @@ public:
 
     void charPressed(int code) {
         if (this->_mod !=  nullptr) {
-            int flag = 0;
+            uint16_t flag = 0;
 
             if (code < 0) {
                 code += 256;
@@ -840,7 +827,6 @@ Front_JS_Natif front(0);
 
 extern "C" void mousePressEvent(int x, int y, int button) {
     front.mousePressEvent(x, y, button);
-    EM_ASM_({ console.log('click'); }, 0);
 }
 
 extern "C" void mouseReleaseEvent(int x, int y, int button) {
@@ -878,8 +864,6 @@ extern "C" void CtrlAltDelPressed() {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-        EM_ASM_({ console.log('Ctrl Alt Del'); }, 0);
-
     }
 }
 
@@ -891,22 +875,11 @@ extern "C" void CtrlAltDelPressed() {
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
 
-extern "C" void recv_wrapped() {
-    //if (front._mod !=  nullptr) {
-        //for (int i = 0; i < len; i++) {
-            EM_ASM_({ getDataOctet(); }, 0);
-        //}
-        //front._mod->draw_event(time_t(nullptr));
-    //} else {
-        //EM_ASM_({ console.log('incoming_data off '); }, 0);
-    //}
-}
-
 extern "C" void connexion(char * ip, char * user, char * password, int port) {
     front.connect(ip, user, password, port);
 }
 
-extern "C" void diconnexion() {
+extern "C" void disconnexion() {
     front.disconnect();
 }
 

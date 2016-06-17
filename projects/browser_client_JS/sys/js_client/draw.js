@@ -59,6 +59,7 @@ function CTRL_ALT_DELETE() {
 
 var canvas_ = document.getElementById("canvas");
 
+/* test */
 canvas_.addEventListener("mouseup", function(event) {
     _mouseReleaseEvent(event.pageX - canvas_.offsetLeft,
                         event.pageY - canvas_.offsetTop,
@@ -75,6 +76,8 @@ canvas_.addEventListener("mousemove", function(event) {
     _mouseMoveEvent(event.pageX - canvas_.offsetLeft,
                     event.pageY - canvas_.offsetTop);
 });
+/* test */
+
 /*
 canvas_.addEventListener("click", function(event) {
     _mousePressEvent(event.pageX - canvas_.offsetLeft,
@@ -391,10 +394,6 @@ var drawable = new Drawable();
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
 
-var current = 0;
-
-var len = 250568;
-
 function connecting() {
     var ip = document.getElementById("ip").value;
     var user = document.getElementById("user").value;
@@ -403,6 +402,7 @@ function connecting() {
 
     if (init_socket(ip, user, password, port)) {
 
+        document.getElementById("errorMsgDiv").style = "display:none";
         drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);
 
         var pip = allocate(intArrayFromString(ip), 'i8', ALLOC_NORMAL);
@@ -417,25 +417,15 @@ function connecting() {
         /* Test */
         startTimer();
 
-        _recv_wrapped();
+        getDataOctet();
 
         endTimer();
         /* Test */
+    } else {
+        var errorDiv = document.getElementById("errorMsgDiv");
+        errorDiv.textContent = "Connection failed";
+        errorDiv.style = "display:block";
     }
-
-    /* Test */
-    /*
-     * startTimer();
-
-    for (var i = 0; i < 80; i++) { //  70 PDU + 10 call when WebSocket is empty
-
-        _recv_wrapped(); // call when socket hear something
-
-    }
-
-    endTimer();
-    */
-    /* Test */
 }
 
 function disconnecting() {
@@ -444,24 +434,24 @@ function disconnecting() {
 
     drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);
 
-    _diconnexion();
+    // socket.onclose();
+
+    _disconnexion();
 }
 
-function init_socket(ip, user, password, port) {
+function init_socket(ip, user, password, port) { // ip = string; port = int
     console.log('init_socket');
 
-    return true;
+    return true; 
 }
 
-function send_to_serveur(data, size) {
+function send_to_serveur(data, size) { // data = [uint8_t];  size = size_t
     console.log('data_sent_to_serveur');
 }
 
-
-var current = 0;
-
-var len = 250568 + 1;
-
+/* test */
+var len = 250568;
+/* test */
 
 function getDataOctet() {
     for (var i = 0; i < len; i++) {

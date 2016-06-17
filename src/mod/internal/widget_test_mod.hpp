@@ -85,6 +85,8 @@ public:
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         this->event.reset();
     }
+
+    bool is_up_and_running() override { return true; }
 };
 
 #endif  // #ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP

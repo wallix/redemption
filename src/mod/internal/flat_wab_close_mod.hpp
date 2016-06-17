@@ -150,6 +150,8 @@ public:
             break;
         }
     }
+
+    bool is_up_and_running() override { return true; }
 };
 
 #endif
