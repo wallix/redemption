@@ -22,7 +22,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestModOSD
+#define BOOST_TEST_MODULE GraphicsOSD
 #include "system/redemption_unit_tests.hpp"
 
 #undef SHARE_PATH
@@ -34,31 +34,12 @@
 #include "transport/out_filename_sequence_transport.hpp"
 #include "capture/image_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "mod/mod_osd.hpp"
+#include "utils/protect_graphics.hpp"
 #include "utils/bitmap_with_png.hpp"
-
-struct FakeMod : mod_api
-{
-    FakeMod()
-    : mod_api(0, 0)
-    {}
-
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {}
-    void rdp_input_invalidate(const Rect& r) override {}
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {}
-    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {}
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {}
-    void send_to_front_channel(const char*const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
-
-    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
-                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {}
-};
 
 BOOST_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
-    FakeMod mod;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, 24);
 
     const int groupid = 0;
@@ -91,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
         struct OSD : ProtectGraphics
         {
             using ProtectGraphics::ProtectGraphics;
-            void refresh_rects(array_view<Rect const>) {}
+            void refresh_rects(array_view<Rect const>) override {}
         } osd(drawable, rect);
         osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), GREEN), screen_rect);
         now.tv_sec++;

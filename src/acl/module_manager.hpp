@@ -49,7 +49,7 @@
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 
-#include "mod/mod_osd.hpp"
+#include "utils/protect_graphics.hpp"
 #include "mm_api.hpp"
 
 Rect get_widget_rect(uint16_t width, uint16_t height,
