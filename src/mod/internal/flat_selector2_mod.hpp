@@ -107,7 +107,7 @@ public:
         uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
         gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
         uint16_t line_height = tm.height + 2 * (
-                                this->selector.selector_lines.border 
+                                this->selector.selector_lines.border
                              +  this->selector.selector_lines.y_padding_label);
 
         this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
@@ -351,6 +351,8 @@ public:
         }
         this->event.reset();
     }
+
+    bool is_up_and_running() override { return true; }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {

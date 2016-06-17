@@ -19,8 +19,7 @@
                Jonathan Poelen, Raphael Zhou, Meng Tan
 */
 
-#ifndef CAPTURE_NEW_KBDCAPTURE_HPP
-#define CAPTURE_NEW_KBDCAPTURE_HPP
+#pragma once
 
 #include "transport/transport.hpp"
 #include "utils/match_finder.hpp"
@@ -32,7 +31,7 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/capture_probe_api.hpp"
 
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/bytes_t.hpp"
 #include "utils/make_unique.hpp"
 
@@ -495,4 +494,3 @@ public:
     }
 };
 
-#endif

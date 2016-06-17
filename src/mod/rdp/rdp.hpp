@@ -385,7 +385,7 @@ protected:
 
     const bool allow_using_multiple_monitors;
 
-    bool session_probe_enabled = false;
+    bool already_upped_and_running = false;
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -778,8 +778,6 @@ public:
         }
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
-
-        this->event.object_and_time = (this->open_session_timeout.count() > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel,
@@ -1955,11 +1953,23 @@ private:
     }
 
 public:
+    wait_obj& get_event() override {
+        if ((this->state == MOD_RDP_NEGO) &&
+            ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
+             (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
+            this->event.object_and_time = true;
+            this->event.set();
+        }
+        return this->event;
+    }
 
     void draw_event(time_t now, GraphicApi & drawable) override {
-        if (!this->event.waked_up_by_time
-        && (!this->session_probe_virtual_channel_p
-          ||!this->session_probe_virtual_channel_p->is_event_signaled())) {
+        if ((!this->event.waked_up_by_time &&
+             (!this->session_probe_virtual_channel_p ||
+              !this->session_probe_virtual_channel_p->is_event_signaled())) ||
+            ((this->state == MOD_RDP_NEGO) &&
+             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
+              (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
                 char * hostname = this->hostname;
 
@@ -3404,10 +3414,12 @@ public:
 
                                             this->deactivation_reactivation_in_progress = false;
 
-                                            if (!this->session_probe_enabled) {
+                                            if (!this->already_upped_and_running) {
                                                 this->do_enable_session_probe();
 
-                                                this->session_probe_enabled = true;
+                                                this->event.object_and_time = (this->open_session_timeout.count() > 0);
+
+                                                this->already_upped_and_running = true;
                                             }
                                             break;
                                         case UP_AND_RUNNING:

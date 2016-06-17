@@ -28,7 +28,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "utils/bitmap_with_png.hpp"
- 
+
 class TestCardMod : public InternalMod
 {
     BGRPalette const & palette332 = BGRPalette::classic_332();
@@ -67,6 +67,8 @@ public:
         this->draw();
         this->event.reset();
     }
+
+    bool is_up_and_running() override { return true; }
 
     using InternalMod::draw;
 

@@ -129,9 +129,9 @@ template<std::size_t N>
 constexpr array_view<char const> cstr_array_view(char const (&str)[N])
 { return {str, N-1}; }
 
+// forbidden: array_view is for litterals
 template<std::size_t N>
-array_view<char> cstr_array_view(char (&str)[N])
-{ return {str, N-1}; }
+array_view<char> cstr_array_view(char (&str)[N]) = delete;
 
 
 using array_view_u8 = array_view<uint8_t>;

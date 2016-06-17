@@ -359,14 +359,14 @@ public:
                             if (enddate && mm.is_up_and_running()) {
                                 if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
                                     osd_state = (enddate <= static_cast<uint32_t>(now))
-                                        ? OSD_STATE_INVALID 
-                                        : timers.rbegin() 
+                                        ? OSD_STATE_INVALID
+                                        : timers.rbegin()
                                             - std::lower_bound(
-                                                timers.rbegin(), 
-                                                timers.rend(), 
+                                                timers.rbegin(),
+                                                timers.rend(),
                                                 enddate - start_time);
                                 }
-                                else if (osd_state < OSD_STATE_INVALID 
+                                else if (osd_state < OSD_STATE_INVALID
                                      && enddate - now <= timers[osd_state]) {
                                     std::string mes;
                                     mes.reserve(128);
@@ -412,7 +412,7 @@ public:
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
-        if (!this->ini.is_asked<cfg::globals::host>() 
+        if (!this->ini.is_asked<cfg::globals::host>()
         && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }

@@ -26,7 +26,7 @@
 #ifndef _REDEMPTION_CORE_CALLBACK_HPP_
 #define _REDEMPTION_CORE_CALLBACK_HPP_
 
-#include "utils/array_view.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/rect.hpp"
 
 class InStream;
