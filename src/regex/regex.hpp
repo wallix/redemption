@@ -23,7 +23,7 @@
 
 #include "regex_automate.hpp"
 #include "regex_parser.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 struct Tracer;
 namespace re {

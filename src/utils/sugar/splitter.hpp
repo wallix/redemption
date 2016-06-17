@@ -24,7 +24,7 @@
 #include <iterator>
 #include <cstring>
 
-#include "utils/range.hpp"
+#include "utils/sugar/range.hpp"
 
 
 template<class ForwardIterator, class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>

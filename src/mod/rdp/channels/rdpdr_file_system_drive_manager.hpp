@@ -31,7 +31,7 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/make_unique.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 #include "utils/winpr/pattern.hpp"
 

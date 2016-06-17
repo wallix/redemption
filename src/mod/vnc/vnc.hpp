@@ -37,10 +37,10 @@
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "utils/update_lock.hpp"
+#include "utils/sugar/update_lock.hpp"
 #include "transport/socket_transport.hpp"
 #include "core/channel_names.hpp"
-#include "utils/strutils.hpp"
+#include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
 
 #include <cstdlib>

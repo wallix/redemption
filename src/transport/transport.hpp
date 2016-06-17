@@ -30,7 +30,7 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 #include "configs/autogen/enums.hpp"
 

@@ -34,7 +34,7 @@
 #include <cerrno>
 
 #include <algorithm>
-#include "utils/make_unique.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitfu.hpp"

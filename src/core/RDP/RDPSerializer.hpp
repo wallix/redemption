@@ -107,7 +107,7 @@
 
 #include "transport/transport.hpp"
 
-#include "utils/finally.hpp"
+#include "utils/sugar/finally.hpp"
 #include "utils/stream.hpp"
 
 #include "capture/utils/save_state_chunk.hpp"

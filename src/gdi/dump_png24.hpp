@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_GDI_DUMP_PNG24_HPP
 #define REDEMPTION_GDI_DUMP_PNG24_HPP
 
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 class Transport;
 

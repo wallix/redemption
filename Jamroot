@@ -744,11 +744,13 @@ unit-test test_wrm_label : tests/capture/test_wrm_label.cpp : $(TEST_DEPENDENCIE
 
 ## Test facility functions or classes
 ## @{
+unit-test test_strutils : tests/utils/sugar/test_strutils.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_finally : tests/utils/sugar/test_finally.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_iter : tests/utils/sugar/test_iter.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_noncopyable : tests/utils/test_noncopyable.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_splitter : tests/utils/test_splitter.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_algostring : tests/utils/test_algostring.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_make_unique : tests/utils/test_make_unique.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_noncopyable : tests/utils/sugar/test_noncopyable.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_splitter : tests/utils/sugar/test_splitter.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_algostring : tests/utils/sugar/test_algostring.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_make_unique : tests/utils/sugar/test_make_unique.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_array_view : tests/utils/sugar/test_array_view.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
@@ -1046,11 +1048,9 @@ unit-test test_flat_form : tests/mod/internal/widget2/test_flat_form.cpp : $(TES
 
 unit-test test_authorization_channels : tests/utils/test_authorization_channels.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_pattutils : tests/utils/test_pattutils.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_strutils : tests/utils/test_strutils.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp : $(TEST_DEPENDENCIES) ;
 
-unit-test test_finally : tests/utils/test_finally.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 

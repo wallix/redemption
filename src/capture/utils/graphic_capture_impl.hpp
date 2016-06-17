@@ -27,7 +27,7 @@
 #include "gdi/graphic_cmd_color_converter.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
-#include "utils/range.hpp"
+#include "utils/sugar/range.hpp"
 
 
 class GraphicCaptureImpl

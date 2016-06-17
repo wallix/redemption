@@ -26,7 +26,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 

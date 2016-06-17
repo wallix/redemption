@@ -87,9 +87,9 @@
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "utils/algostring.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
-#include "utils/splitter.hpp"
+#include "utils/sugar/splitter.hpp"
 #include "utils/timeout.hpp"
 
 #include <cstdlib>

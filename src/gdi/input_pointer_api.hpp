@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_GDI_INPUT_POINTER_API_HPP
 #define REDEMPTION_GDI_INPUT_POINTER_API_HPP
 
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 namespace gdi {
 

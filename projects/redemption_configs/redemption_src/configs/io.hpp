@@ -28,9 +28,9 @@
 
 #include <cstdlib>
 
-#include "utils/algostring.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/splitter.hpp"
+#include "utils/sugar/splitter.hpp"
 
 
 namespace configs {

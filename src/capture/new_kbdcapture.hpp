@@ -32,8 +32,8 @@
 #include "gdi/capture_probe_api.hpp"
 
 #include "utils/sugar/array_view.hpp"
-#include "utils/bytes_t.hpp"
-#include "utils/make_unique.hpp"
+#include "utils/sugar/bytes_t.hpp"
+#include "utils/sugar/make_unique.hpp"
 
 #include <algorithm>
 #include <memory>

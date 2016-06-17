@@ -26,24 +26,31 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "utils/algostring.hpp"
+#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/algostring.hpp"
 #include <string>
 
-BOOST_AUTO_TEST_CASE(TestTrim)
+BOOST_AUTO_TEST_CASE(TestSplitter)
 {
-    char const s[] = " \t abcd   ";
-    auto left_s = s+3;
-    auto right_s = s+7;
-    auto first = std::begin(s);
-    auto last = std::end(s) - 1;
+    const char text[] = "abc,de,efg,h,ijk,lmn";
+    std::string s;
+    for (auto r : get_line(text, ',')) {
+        s.append(r.begin(), r.size()) += ':';
+    }
+    BOOST_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
+}
 
-    BOOST_CHECK_EQUAL(ltrim(first, last), left_s);
-    BOOST_CHECK_EQUAL(rtrim(first, last), right_s);
+BOOST_AUTO_TEST_CASE(TestSplitter2)
+{
+    const char * drives = " export ,, , \t share \t ,";
 
-    using range_type = range<char const *>;
-    range_type trimmed{left_s, right_s};
-    range_type r{first, last};
+    std::string s;
+    for (auto r : get_line(drives, ',')) {
+        auto trimmed_range = trim(r);
 
-    BOOST_CHECK(trim(first, last) == trimmed);
-    BOOST_CHECK(trim(r) == trimmed);
+        if (trimmed_range.empty()) continue;
+
+        s.append(begin(trimmed_range), end(trimmed_range)) += ',';
+    }
+    BOOST_CHECK_EQUAL(s, "export,share,");
 }

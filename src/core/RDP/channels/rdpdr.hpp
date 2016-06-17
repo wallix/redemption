@@ -25,7 +25,7 @@
 
 #include "utils/sugar/cast.hpp"
 #include "core/error.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
 

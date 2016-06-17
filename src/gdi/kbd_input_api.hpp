@@ -23,7 +23,7 @@
 
 #include <sys/time.h> // timeval
 
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 
 namespace gdi {

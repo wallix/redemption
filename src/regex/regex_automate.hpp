@@ -32,7 +32,7 @@
 #include <stdint.h>
 
 #include "regex_utils.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 namespace re {
 #ifdef DISPLAY_TRACE

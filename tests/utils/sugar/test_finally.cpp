@@ -27,7 +27,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "utils/finally.hpp"
+#include "utils/sugar/finally.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFinally)
 {

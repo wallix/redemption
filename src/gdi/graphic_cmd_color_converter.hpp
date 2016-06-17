@@ -34,7 +34,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "utils/colors.hpp"
-#include "utils/range.hpp"
+#include "utils/sugar/range.hpp"
 
 #include "graphic_api.hpp"
 

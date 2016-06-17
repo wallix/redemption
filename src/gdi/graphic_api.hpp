@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <iostream>
 
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"

@@ -15,25 +15,35 @@
 *
 *   Product name: redemption, a FLOSS RDP proxy
 *   Copyright (C) Wallix 2010-2014
-*   Author(s): Jonathan Poelen
+*   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_EXCHANGE_HPP
-#define REDEMPTION_UTILS_EXCHANGE_HPP
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE TestNonCopyable
+#include "system/redemption_unit_tests.hpp"
 
-#if __cplusplus > 201103L
-#include <utility>
-using std::exchange;
-#else
-#include <algorithm>
-/// Assign @p new_val to @p obj and return its previous value.
-template <typename T, typename U = T>
-T exchange(T & obj, U && new_val)
+#define LOGNULL
+//#define LOGPRINT
+
+#include "utils/sugar/noncopyable.hpp"
+#include <type_traits>
+
+struct Copyable {
+
+};
+struct NonCopyable : noncopyable{
+
+};
+
+BOOST_AUTO_TEST_CASE(TestSplitter)
 {
-  T old_val = std::move(obj);
-  obj = std::forward<U>(new_val);
-  return old_val;
-}
-#endif
+    BOOST_CHECK_EQUAL(std::is_copy_constructible<Copyable>::value, true);
+    BOOST_CHECK_EQUAL(std::is_copy_assignable<Copyable>::value, true);
 
-#endif
+    BOOST_CHECK_EQUAL(std::is_copy_constructible<NonCopyable>::value, false);
+    BOOST_CHECK_EQUAL(std::is_copy_assignable<NonCopyable>::value, false);
+
+    // test default constructible
+    NonCopyable x; (void)x;
+}
