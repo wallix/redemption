@@ -18,6 +18,8 @@ constant SRCDIR : ../../src ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 constant INCLUDEDIR : ../../include ;
+path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
+
 
 
 # Returns environment value if it exists or default otherwise.
@@ -250,6 +252,9 @@ project redemption
     <include>$(SRCDIR)/main
     <include>$(MODULEDIR)/includes
     <include>$(INCLUDEDIR)
+    <include>$(REDCONFIGSDIR)/include/autogen
+    <include>$(REDCONFIGSDIR)/redemption_src
+    <include>$(REDCONFIGSDIR)/include/variant
 
     <conditional>@defines
 
