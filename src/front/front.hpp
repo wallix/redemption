@@ -104,7 +104,7 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/timeout.hpp"
-#include "utils/underlying_cast.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 #include "utils/non_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
