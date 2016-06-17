@@ -351,12 +351,13 @@ private:
         void disable_osd()
         {
             if (this->bogus_refresh_rect_ex) {
-                this->mm.mod->rdp_suppress_display_updates();
-                this->mm.mod->rdp_allow_display_updates(0, 0,
-                    this->mm.mod->get_front_width(), this->mm.mod->get_front_height());
+                this->mm.internal_mod->rdp_suppress_display_updates();
+                this->mm.internal_mod->rdp_allow_display_updates(0, 0,
+                    this->mm.internal_mod->get_front_width(), this->mm.internal_mod->get_front_height());
             }
 
-            this->mm.mod->rdp_input_invalidate(this->get_protected_rect());
+            this->mm.mod = this->mm.internal_mod;
+            this->mm.internal_mod->rdp_input_invalidate(this->get_protected_rect());
             this->set_protected_rect(Rect{});
         }
 
@@ -386,6 +387,7 @@ private:
             }
             this->rect = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
             this->clip = this->rect;
+            this->set_protected_rect(this->clip);
         }
 
         static constexpr int padw = 16;
