@@ -18,8 +18,7 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_GET_S_HPP
-#define REDEMPTION_UTILS_GET_S_HPP
+#pragma once
 
 #include <iterator>
 #include <cstring>
@@ -147,4 +146,3 @@ inline splitter<char *> get_line(char * s, char sep = '\n') {
     return {s, s+strlen(s), sep};
 }
 
-#endif

@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_RANGE_HPP
-#define REDEMPTION_UTILS_RANGE_HPP
+#pragma once
 
 #include <iterator>
 #include <type_traits>
@@ -76,4 +75,3 @@ range<It> make_range(It first, It last) {
     return {first, last};
 }
 
-#endif
