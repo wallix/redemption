@@ -18,6 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
+#pragma once
+
 #include "core/error.hpp"
 #include "utils/log.hpp"
 
