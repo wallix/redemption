@@ -344,7 +344,6 @@ private:
     public:
         ModOSD(ModuleManager & mm)
         : ProtectGraphics(mm.front, Rect{})
-        , mod_api(0, 0)
         , mm(mm)
         {}
 
@@ -353,7 +352,7 @@ private:
             if (this->bogus_refresh_rect_ex) {
                 this->mm.internal_mod->rdp_suppress_display_updates();
                 this->mm.internal_mod->rdp_allow_display_updates(0, 0,
-                    this->mm.internal_mod->get_front_width(), this->mm.internal_mod->get_front_height());
+                    this->mm.front.client_info.width, this->mm.front.client_info.height);
             }
 
             this->mm.mod = this->mm.internal_mod;
@@ -363,8 +362,6 @@ private:
 
         void set_message(std::string message, bool external_deleting)
         {
-            this->front_width = this->mm.internal_mod->get_front_width();
-            this->front_height = this->mm.internal_mod->get_front_height();
             this->osd_message = std::move(message);
             this->external_deleting = external_deleting;
             this->bogus_refresh_rect_ex = (this->mm.ini.get<cfg::globals::bogus_refresh_rect>()

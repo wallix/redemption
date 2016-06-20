@@ -30,8 +30,7 @@ class FrontAPI;
 
 struct null_mod : public mod_api
 {
-    explicit null_mod(FrontAPI & front)
-    : mod_api(0, 0)
+    explicit null_mod(FrontAPI &)
     {}
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {}

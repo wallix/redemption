@@ -90,30 +90,30 @@ class MyFront : public Front
             , now
             , server_capabilities_filename
             , persistent_key_list_transport)
-        {
-        }
+    {
+    }
 
-        void clear_channels()
-        {
-            this->channel_list.clear_channels();
-        }
+    void clear_channels()
+    {
+        this->channel_list.clear_channels();
+    }
 
-        const CHANNELS::ChannelDefArray & get_channel_list(void) const override
-        {
-            return this->channel_list;
-        }
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override
+    {
+        return this->channel_list;
+    }
 
-        void send_to_channel(
-            const CHANNELS::ChannelDef & channel,
-            uint8_t const * data,
-            size_t length,
-            size_t chunk_size,
-            int flags) override
-        {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            LOG(LOG_INFO, "send_to_channel");
-            LOG(LOG_INFO, "========================================\n");
-        }
+    void send_to_channel(
+        const CHANNELS::ChannelDef & channel,
+        uint8_t const * data,
+        size_t length,
+        size_t chunk_size,
+        int flags) override
+    {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        LOG(LOG_INFO, "send_to_channel");
+        LOG(LOG_INFO, "========================================\n");
+    }
 };
 
 BOOST_AUTO_TEST_CASE(TestFront)
@@ -190,7 +190,8 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
+        char const * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME;
+        MyFront front( front_trans, default_font_name, gen1, ini
                      , cctx, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
@@ -263,8 +264,9 @@ BOOST_AUTO_TEST_CASE(TestFront)
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
         BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-        BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+        // incoming connexion data
+        BOOST_CHECK_EQUAL(front.client_info.width, 1024);
+        BOOST_CHECK_EQUAL(front.client_info.height, 768);
 
 
         while (!mod->is_up_and_running())
@@ -374,7 +376,8 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
+        char const * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME;
+        MyFront front( front_trans, default_font_name, gen1, ini
                      , cctx, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod(front);
@@ -447,8 +450,8 @@ BOOST_AUTO_TEST_CASE(TestFront2)
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
         }
         BOOST_CHECK(t.get_status());
-        BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-        BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+        BOOST_CHECK_EQUAL(front.client_info.width, 800);
+        BOOST_CHECK_EQUAL(front.client_info.height, 600);
 
         while (!mod->is_up_and_running())
             mod->draw_event(now, front);

@@ -114,6 +114,8 @@ private:
 protected:
     FileSystemDriveManager file_system_drive_manager;
 
+    uint16_t front_width;
+    uint16_t front_height;
     FrontAPI& front;
 
     class ToClientSender : public VirtualChannelDataSender
@@ -627,7 +629,8 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_api(info.width - (info.width % 4), info.height)
+        : front_width(info.width - (info.width % 4))
+        , front_height(info.height)
         , front(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},

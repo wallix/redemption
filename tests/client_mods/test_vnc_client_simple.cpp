@@ -282,8 +282,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     mod.rdp_input_up_and_running();
     mod.draw_event(time(nullptr), front);
 
-    BOOST_CHECK_EQUAL(mod.get_front_width(), 1024);
-    BOOST_CHECK_EQUAL(mod.get_front_height(), 768);
+    BOOST_CHECK_EQUAL(front.info.width, 800);
+    BOOST_CHECK_EQUAL(front.info.height, 600);
 
 //    mod.draw_event(time(nullptr), front);
 ////    BOOST_CHECK(t.status);
