@@ -25,7 +25,7 @@ class Cover:
     def __init__(self):
         self.modules = {}
         self.functions = {}
-        self.verbose = 0
+        self.verbose = 2
 
     def compute_coverage(self, module, ftags, fgcov):
 
@@ -39,7 +39,7 @@ class Cover:
             for line in open(ftags):
                 if re.match(r'^\s*,', line):
                     continue
-                if re.match(r'^.*(TODO|REDOC|BODY)', line):
+                if re.match(r'^.*(TODO|REDOC|BODY|static_cast)', line):
                     continue
                 res = re.match(r'^(.*[(].*)\x7F.*\x01(\d+)[,].*$', line)
                 if res is None:
