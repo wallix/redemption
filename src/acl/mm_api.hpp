@@ -46,18 +46,11 @@ public:
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
     };
-    //virtual bool is_last_module() {
-    //    return this->last_module;
-    //}
     virtual bool is_connected() {
         return this->connected;
     }
     virtual bool is_up_and_running() {
-        bool res = false;
-        if (this->mod) {
-            res = this->mod->is_up_and_running();
-        }
-        return res;
+        return this->mod && this->mod->is_up_and_running();
     }
     virtual void record(auth_api * acl) {}
     virtual void stop_record() {}
