@@ -25,7 +25,7 @@ class Cover:
     def __init__(self):
         self.modules = {}
         self.functions = {}
-        self.verbose = 2
+        self.verbose = 0
 
     def compute_coverage(self, module, ftags, fgcov):
 
