@@ -21,7 +21,7 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#pragma ocne
+#pragma once
 
 #include <stdlib.h>
 #include <stdio.h>
