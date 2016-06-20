@@ -20,8 +20,8 @@
     New RDP Orders Coder / Decoder : GlyphCache Secondary Drawing Order
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
+
+#pragma once
 
 #include <memory>
 
@@ -254,4 +254,3 @@ public:
     }
 };
 
-#endif

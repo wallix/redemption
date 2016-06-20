@@ -20,8 +20,8 @@
    New RDP Orders Coder / Decoder : Primary Order Mem 3 Blt
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEM3BLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEM3BLT_HPP_
+
+#pragma once
 
 // MS-RDPEGDI 2.2.2.2.1.1.2.10 Mem3Blt (MEM3BLT_ORDER)
 // ---------------------------------------------------
@@ -391,4 +391,3 @@ class RDPMem3Blt {
     }
 };
 
-#endif

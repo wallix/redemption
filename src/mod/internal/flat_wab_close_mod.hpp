@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAB_CLOSE_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_WAB_CLOSE_MOD_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "mod/mod_api.hpp"
@@ -154,4 +154,3 @@ public:
     bool is_up_and_running() override { return true; }
 };
 
-#endif

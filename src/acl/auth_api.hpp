@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_ACL_AUTH_API_HPP_
-#define _REDEMPTION_ACL_AUTH_API_HPP_
+
+#pragma once
 
 class auth_api {
 public:
@@ -56,4 +56,3 @@ inline NullAuthentifier * get_null_authentifier() {
     return &auth;
 }
 
-#endif  // #ifndef _REDEMPTION_ACL_AUTH_API_HPP_

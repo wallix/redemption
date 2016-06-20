@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_WINDOW_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_WINDOW_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "virchan.hpp"
@@ -116,4 +116,3 @@ struct WindowListCaps : public Capability {
 
 
 
-#endif

@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_LOG_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_LOG_HPP_
+
+#pragma once
 
 #define MODRDP_LOGLEVEL_FSDRVMGR            0x00002000
 #define MODRDP_LOGLEVEL_SESPROBE_LAUNCHER   0x00004000
@@ -33,4 +33,3 @@
 #define MODRDP_LOGLEVEL_CLIPRDR_DUMP        0x40000000
 #define MODRDP_LOGLEVEL_RDPDR_DUMP          0x80000000
 
-#endif  // #ifndef _REDEMPTION_MOD_RDP_RDP_LOG_HPP_

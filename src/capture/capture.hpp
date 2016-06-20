@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
-#define _REDEMPTION_CAPTURE_CAPTURE_HPP_
+
+#pragma once
 
 #include "core/wait_obj.hpp"
 
@@ -324,4 +324,3 @@ public:
     }
 };
 
-#endif

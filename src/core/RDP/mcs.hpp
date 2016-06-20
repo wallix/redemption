@@ -21,8 +21,8 @@
    MCS Channel Management, complies with T.125
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MCS_HPP_
-#define _REDEMPTION_CORE_RDP_MCS_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -2938,4 +2938,3 @@ namespace MCS
 
 }
 
-#endif

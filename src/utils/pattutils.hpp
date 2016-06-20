@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#ifndef _REDEMPTION_UTILS_PATTUTILS_HPP_
-#define _REDEMPTION_UTILS_PATTUTILS_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -96,4 +96,3 @@ inline static bool contains_ocr_pattern(const char * soh_separated_patterns) {
         );
 }
 
-#endif  // #ifndef _REDEMPTION_UTILS_PATTUTILS_HPP_

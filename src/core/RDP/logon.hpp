@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_LOGON_HPP_
-#define _REDEMPTION_CORE_RDP_LOGON_HPP_
+
+#pragma once
 
 #include <stdint.h>
 
@@ -1185,4 +1185,3 @@ struct InfoPacket {
     } // END FUNCT : log()
 }; // END STRUCT : InfoPacket
 
-#endif

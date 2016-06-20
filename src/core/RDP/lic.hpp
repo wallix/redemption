@@ -21,8 +21,8 @@
    Licence Management
 */
 
-#ifndef _REDEMPTION_CORE_RDP_LIC_HPP_
-#define _REDEMPTION_CORE_RDP_LIC_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -3510,4 +3510,3 @@ namespace LIC
     // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
     // (0x0003). The following table lists valid values for this field.
 
-#endif

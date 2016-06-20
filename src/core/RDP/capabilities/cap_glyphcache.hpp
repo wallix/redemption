@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_GLYPHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_GLYPHCACHE_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "utils/stream.hpp"
@@ -220,4 +220,4 @@ struct GlyphCacheCaps : public Capability {
     }
 };  // struct GlyphCacheCaps
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_GLYPHCACHE_HPP_
+// #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_GLYPHCACHE_HPP_

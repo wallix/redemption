@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Meng Tan, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_MOD_MOD_API_HPP_
-#define _REDEMPTION_MOD_MOD_API_HPP_
+
+#pragma once
 
 #include <ctime>
 
@@ -97,4 +97,3 @@ public:
     virtual void display_osd_message(std::string const & message) {}
 };
 
-#endif

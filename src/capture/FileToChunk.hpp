@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_FILETOCHUNK_HPP_
-#define _REDEMPTION_CAPTURE_FILETOCHUNK_HPP_
+
+#pragma once
 
 #include "FileToGraphic.hpp"
 #include "transport/transport.hpp"
@@ -241,4 +241,3 @@ public:
     }
 };
 
-#endif

@@ -18,8 +18,8 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
+
+#pragma once
 
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
@@ -603,4 +603,3 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     }
 };
 
-#endif

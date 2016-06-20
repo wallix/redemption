@@ -19,8 +19,8 @@
 
    Transport layer abstraction
 */
-#ifndef REDEMPTION_CORE_SERVER_NOTIFIER_API_HPP_
-#define REDEMPTION_CORE_SERVER_NOTIFIER_API_HPP_
+
+#pragma once
 
 class ServerNotifier {
 public:
@@ -42,4 +42,3 @@ public:
     void server_cert_error(const char * str_error) override {}
 };
 
-#endif

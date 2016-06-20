@@ -20,8 +20,8 @@
    wrapper class around byte pointer used to parse
 */
 
-#ifndef _REDEMPTION_UTILS_PARSE_HPP_
-#define _REDEMPTION_UTILS_PARSE_HPP_
+
+#pragma once
 
 #include <stdint.h> // for sized types
 #include <string.h> // for memcpy
@@ -289,6 +289,4 @@ public:
     }
 
 };
-
-#endif
 

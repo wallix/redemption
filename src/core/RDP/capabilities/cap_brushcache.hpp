@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BRUSHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BRUSHCACHE_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "utils/stream.hpp"
@@ -98,4 +98,3 @@ struct BrushCacheCaps : public Capability {
     }
 };
 
-#endif

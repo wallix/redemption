@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROALTERNATESHELLBASEDLAUNCHER_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_SESPROALTERNATESHELLBASEDLAUNCHER_HPP
+
+#pragma once
 
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
@@ -144,5 +144,3 @@ public:
         }
     }
 };
-
-#endif  // #endif REDEMPTION_MOD_RDP_CHANNELS_SESPROALTERNATESHELLBASEDLAUNCHER_HPP

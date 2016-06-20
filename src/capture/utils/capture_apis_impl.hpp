@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_CAPTURE_APIS_IMPL_HPP
-#define REDEMPTION_UTILS_CAPTURE_APIS_IMPL_HPP
+
+#pragma once
 
 #include <sys/time.h> // timeval
 
@@ -183,4 +183,3 @@ struct CaptureApisImpl
     };
 };
 
-#endif

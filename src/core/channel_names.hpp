@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CORE_CHANNEL_NAMES_HPP
-#define REDEMPTION_CORE_CHANNEL_NAMES_HPP
+
+#pragma once
 
 namespace CHANNELS {
 #define DEF_NAME(name) static constexpr const char * name = #name
@@ -50,4 +50,3 @@ using CHANNELS::channel_names;
 //         DEF_NAME(echo = "echo";
 //         DEF_NAME(usb = "urbdrc";
 
-#endif

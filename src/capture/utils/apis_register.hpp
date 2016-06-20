@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CAPTURE_UTILS_APIS_REGISTER_HPP
-#define REDEMPTION_CAPTURE_UTILS_APIS_REGISTER_HPP
+
+#pragma once
 
 #include <vector>
 #include <functional>
@@ -75,4 +75,3 @@ private:
     std::size_t i = ~std::size_t{};
 };
 
-#endif

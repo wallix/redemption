@@ -20,8 +20,8 @@
    Transport layer abstraction, socket implementation with TLS support
 */
 
-#ifndef REDEMPTION_SYSTEM_OPENSSL_OPENSSL_HPP
-#define REDEMPTION_SYSTEM_OPENSSL_OPENSSL_HPP
+
+#pragma once
 
 #include "fcntl.h"
 #include "openssl_crypto.hpp"
@@ -1216,4 +1216,3 @@ struct TLSContext
 
 };
 
-#endif

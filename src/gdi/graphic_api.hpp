@@ -529,6 +529,7 @@ public:
     using base_type_::base_type_;
 };
 
+
 struct TextMetrics
 {
     int width;
@@ -623,6 +624,4 @@ static inline void server_draw_text(
     }
 }
 
-
 }
-

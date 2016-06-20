@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
+
+#pragma once
 
 #include "internal_mod.hpp"
 
@@ -89,4 +89,3 @@ public:
     bool is_up_and_running() override { return true; }
 };
 
-#endif  // #ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP

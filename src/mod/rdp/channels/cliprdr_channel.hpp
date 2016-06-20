@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "core/RDP/clipboard.hpp"
@@ -1483,4 +1483,3 @@ public:
     }
 };  // class ClipboardVirtualChannel
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_CLIPRDRCHANNEL_HPP

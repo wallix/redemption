@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_BITFU_HPP_
-#define _REDEMPTION_UTILS_BITFU_HPP_
+
+#pragma once
 
 #include <cstdint>
 #include <cstddef>
@@ -97,4 +97,3 @@ static inline void reverseit(uint8_t *buffer, size_t n) noexcept
     }
 }
 
-#endif

@@ -18,6 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
+#pragma once
+
 #if __cplusplus > 201103L
 #include <utility>
 using std::exchange;

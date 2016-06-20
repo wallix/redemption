@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CAPTURE_UTILS_KBD_CAPTURE_IMPL_HPP
-#define REDEMPTION_CAPTURE_UTILS_KBD_CAPTURE_IMPL_HPP
+
+#pragma once
 
 #include "configs/config.hpp"
 #include "apis_register.hpp"
@@ -66,4 +66,3 @@ public:
     }
 };
 
-#endif

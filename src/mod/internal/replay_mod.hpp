@@ -22,8 +22,8 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
+
+#pragma once
 
 #include "FileToGraphic.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
@@ -182,4 +182,3 @@ public:
     bool is_up_and_running() override { return true; }
 };
 
-#endif

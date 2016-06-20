@@ -24,8 +24,8 @@
    Copyright (C) Matthew Chapman 1999-2007
 */
 
-#ifndef _REDEMPTION_UTILS_SSL_CALLS_HPP_
-#define _REDEMPTION_UTILS_SSL_CALLS_HPP_
+
+#pragma once
 
 #include <cstdint>
 #include <cstdlib>
@@ -36,7 +36,7 @@
 //#include "openssl_crypto.hpp" // jenni todo : à commenter et coder notre implémentation en ne gardant que les API necessaires !!!!!!!!!!!
 
 #include "ossl_typ_c.h"
-#include "ossl_struct_c.h"  
+#include "ossl_struct_c.h"
 
 #include "utils/log.hpp"
 
@@ -620,7 +620,3 @@ struct CryptContext
     }
 };
 
-
-/*****************************************************************************/
-
-#endif

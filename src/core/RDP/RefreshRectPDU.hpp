@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_REFRESH_RECT_PDU_HPP_
-#define _REDEMPTION_CORE_RDP_REFRESH_RECT_PDU_HPP_
+
+#pragma once
 
 #include "core/RDP/x224.hpp"
 #include "core/RDP/mcs.hpp"
@@ -227,4 +227,3 @@ struct RefreshRectPDU {
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_REFRESH_RECT_PDU_HPP_

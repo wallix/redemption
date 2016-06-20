@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_NETUTILS_HPP_
-#define _REDEMPTION_UTILS_NETUTILS_HPP_
+
+#pragma once
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -266,4 +266,3 @@ static inline int local_connect(const char* sck_name,
 
 #pragma GCC diagnostic pop
 
-#endif

@@ -21,8 +21,8 @@
    used to communicate with RDP client or other drawing backends
 */
 
-#ifndef _REDEMPTION_CORE_FRONT_API_HPP_
-#define _REDEMPTION_CORE_FRONT_API_HPP_
+
+#pragma once
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/input_pointer_api.hpp"
@@ -96,4 +96,3 @@ class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
     virtual int get_keylayout() const { return -1; }
 };
 
-#endif

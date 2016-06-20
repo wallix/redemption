@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYOPAQUERECT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYOPAQUERECT_HPP_
+
+#pragma once
 
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 
@@ -163,4 +163,3 @@ class RDPOpaqueRect {
 
 };
 
-#endif

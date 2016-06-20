@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSECB_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSECB_HPP_
+
+#pragma once
 
 #include "utils/ellipse.hpp"
 #include "RDPOrdersCommon.hpp"
@@ -301,4 +301,3 @@ public:
         printf("%s", buffer);
     }
 };
-#endif

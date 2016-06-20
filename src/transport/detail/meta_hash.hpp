@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_TRANSPORT_DETAIL_META_HASH_HPP
-#define REDEMPTION_TRANSPORT_DETAIL_META_HASH_HPP
+
+#pragma once
 
 
 #include <cstdio>
@@ -35,6 +35,4 @@ namespace detail {
 
 
 }
-
-#endif
 

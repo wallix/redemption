@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
-#define REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
+
+#pragma once
 
 /* for HMAC calculations */
 #define MD_HASH_FUNC   SHA256
@@ -246,4 +246,3 @@ public:
     }
 };
 
-#endif

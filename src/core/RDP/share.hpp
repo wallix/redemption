@@ -21,8 +21,8 @@
    rdp module main header file
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SHARE_HPP_
-#define _REDEMPTION_CORE_RDP_SHARE_HPP_
+
+#pragma once
 
 #include <stdlib.h>
 
@@ -657,4 +657,3 @@ struct FlowPDU_Send
 // -- MCS User ID of sending ASCE
 // }
 
-#endif

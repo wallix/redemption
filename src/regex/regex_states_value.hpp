@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_REGEX_STATES_VALUE_HPP
-#define REDEMPTION_REGEX_STATES_VALUE_HPP
+
+#pragma once
 
 #include <vector>
 #include <algorithm>
@@ -64,4 +64,3 @@ namespace re {
 
 }
 
-#endif

@@ -20,8 +20,8 @@
     New RDP Orders Coder / Decoder : Primary Order GlyphIndex
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYGLYPHINDEX_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYGLYPHINDEX_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -575,4 +575,3 @@ public:
     }
 };
 
-#endif

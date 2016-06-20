@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBRUSHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBRUSHCACHE_HPP_
+
+#pragma once
 
 #include "utils/stream.hpp"
 #include "RDPOrdersCommon.hpp"
@@ -241,4 +241,3 @@ public:
     }
 };
 
-#endif

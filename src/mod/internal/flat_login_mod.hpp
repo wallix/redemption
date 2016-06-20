@@ -19,8 +19,8 @@
  *              Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
+
+#pragma once
 
 #include "main/version.hpp"
 #include "core/front_api.hpp"
@@ -159,4 +159,3 @@ public:
     }
 };
 
-#endif

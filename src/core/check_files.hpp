@@ -21,8 +21,8 @@
    header file. Check object, used to check file's existance
 */
 
-#ifndef _REDEMPTION_CORE_CHECK_FILES_HPP_
-#define _REDEMPTION_CORE_CHECK_FILES_HPP_
+
+#pragma once
 
 #include <cstring>
 #include <cstdio>
@@ -238,4 +238,3 @@ struct CheckFile {
     }
 };
 
-#endif

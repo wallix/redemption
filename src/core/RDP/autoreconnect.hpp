@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_AUTO_RECONNECT_HPP_
-#define _REDEMPTION_CORE_RDP_AUTO_RECONNECT_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -113,4 +113,3 @@ struct ServerAutoReconnectPacket_Recv {
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_AUTO_RECONNECT_HPP_

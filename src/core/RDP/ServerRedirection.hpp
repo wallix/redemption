@@ -19,8 +19,8 @@
                Meng Tan, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SERVERREDIRECTION_HPP_
-#define _REDEMPTION_CORE_RDP_SERVERREDIRECTION_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -639,4 +639,3 @@ struct ServerRedirectionPDU {
 
 };
 
-#endif

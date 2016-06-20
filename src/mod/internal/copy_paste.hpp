@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_COPY_PASTE_UTILITY_HPP
-#define REDEMPTION_MOD_INTERNAL_COPY_PASTE_UTILITY_HPP
+
+#pragma once
 
 #include "core/RDP/clipboard.hpp"
 #include "core/channel_list.hpp"
@@ -268,4 +268,3 @@ void copy_paste_process_event(CopyPaste & copy_paste, WidgetEdit & widget_edit, 
     }
 }
 
-#endif

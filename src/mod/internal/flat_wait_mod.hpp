@@ -19,8 +19,8 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "configs/config.hpp"
@@ -150,4 +150,3 @@ public:
     }
 };
 
-#endif

@@ -22,8 +22,8 @@
 */
 
 
-#ifndef _REDEMPTION_KEYLAYOUT_HPP_
-#define _REDEMPTION_KEYLAYOUT_HPP_
+
+#pragma once
 
 //====================================
 // SCANCODES PHYSICAL LAYOUT REFERENCE
@@ -154,4 +154,3 @@ struct Keylayout
 }; // END STRUCT - Keylayout
 
 
-#endif

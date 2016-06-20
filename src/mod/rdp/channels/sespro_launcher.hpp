@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP
+
+#pragma once
 
 #include "core/wait_obj.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
@@ -59,4 +59,3 @@ public:
     virtual void stop(bool bLaunchSuccessful) = 0;
 };
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROLAUNCHER_HPP

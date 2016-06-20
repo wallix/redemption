@@ -21,8 +21,8 @@
    Error exception object
 */
 
-#ifndef REDEMPTION_CORE_ERROR_HPP
-#define REDEMPTION_CORE_ERROR_HPP
+
+#pragma once
 
 #include <stdio.h>
 
@@ -404,4 +404,3 @@ public:
     }
 };
 
-#endif

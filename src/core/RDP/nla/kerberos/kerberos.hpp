@@ -18,8 +18,8 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_KERBEROS_KERBEROS_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_KERBEROS_KERBEROS_HPP_
+
+#pragma once
 
 #include <gssapi/gssapi.h>
 #include "core/RDP/nla/sspi.hpp"
@@ -659,4 +659,3 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
 #pragma GCC diagnostic pop
 
-#endif

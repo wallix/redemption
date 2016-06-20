@@ -20,8 +20,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_ELLIPSE_HPP_
-#define _REDEMPTION_UTILS_ELLIPSE_HPP_
+
+#pragma once
 
 #include <cstddef>
 #include "utils/rect.hpp"
@@ -98,4 +98,3 @@ public:
     }
 };
 
-#endif

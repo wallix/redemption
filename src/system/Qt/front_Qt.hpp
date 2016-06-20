@@ -19,8 +19,8 @@
 
 */
 
-#ifndef FRONT_QT_HPP
-#define FRONT_QT_HPP
+
+#pragma once
 
 #define QT4
 //#define QT5
@@ -443,4 +443,3 @@ public:
 
 
 
-#endif

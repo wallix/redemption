@@ -23,8 +23,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_CALLBACK_HPP_
-#define _REDEMPTION_CORE_CALLBACK_HPP_
+
+#pragma once
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/rect.hpp"
@@ -101,4 +101,3 @@ struct Callback : RdpInput
     virtual void send_disconnect_ultimatum() {}
 };
 
-#endif

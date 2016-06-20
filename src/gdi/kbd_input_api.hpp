@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_KBD_INPUT_API_HPP
-#define REDEMPTION_GDI_KBD_INPUT_API_HPP
+
+#pragma once
 
 #include <sys/time.h> // timeval
 
@@ -38,4 +38,3 @@ struct KbdInputApi : private noncopyable
 
 }
 
-#endif

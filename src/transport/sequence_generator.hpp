@@ -19,8 +19,8 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_TRANSPORT_SEQUENCE_GENERATOR_HPP
-#define REDEMPTION_TRANSPORT_SEQUENCE_GENERATOR_HPP
+
+#pragma once
 
 #include "core/error.hpp"
 
@@ -116,4 +116,3 @@ private:
 
 typedef FilenameGenerator::Format FilenameFormat;
 
-#endif

@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_CREDSSP_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_CREDSSP_HPP_
+
+#pragma once
 
 #include "core/RDP/nla/asn1/ber.hpp"
 #include "core/RDP/nla/sspi.hpp"
@@ -482,4 +482,3 @@ struct TSCredentials {
 // };
 
 
-#endif

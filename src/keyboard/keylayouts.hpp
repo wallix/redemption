@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUTS_HPP_
-#define _REDEMPTION_KEYBOARD_KEYLAYOUTS_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 #include "keylayout_x0000201a.hpp" // Bosnian (Cyrillic) (Bosnia and Herzegovina))
@@ -113,4 +113,3 @@
 #include "keylayout_x00000843.hpp" // Uzbek (Cyrillic, Uzbekistan) Uzbek Cyrillic
 #include "keylayout_x00000452.hpp" // Welsh (United Kingdom)
 
-#endif

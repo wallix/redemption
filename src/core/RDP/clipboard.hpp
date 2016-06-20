@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
-#define _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -1545,4 +1545,3 @@ public:
 
 }   // namespace RDPECLIP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_

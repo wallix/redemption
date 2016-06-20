@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_LISTEN_HPP_
-#define _REDEMPTION_CORE_LISTEN_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -183,4 +183,3 @@ struct Listen {
     }
 };
 
-#endif

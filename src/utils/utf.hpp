@@ -22,8 +22,8 @@
    entities
 */
 
-#ifndef _REDEMPTION_UTILS_UTF_HPP_
-#define _REDEMPTION_UTILS_UTF_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -936,4 +936,3 @@ static inline size_t UTF16StrLen(const uint8_t * utf16_s) {
     return length;
 }
 
-#endif

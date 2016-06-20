@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP
+
+#pragma once
 
 #include "transport/in_file_transport.hpp"
 #include "transparentplayer.hpp"
@@ -83,4 +83,3 @@ public:
     bool is_up_and_running() override { return true; }
 };
 
-#endif  // #ifndef REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP

@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_RECT_HPP_
-#define _REDEMPTION_UTILS_RECT_HPP_
+
+#pragma once
 
 #include <utility>
 #include <iosfwd>
@@ -413,4 +413,3 @@ class DeltaRect {
 };
 
 
-#endif

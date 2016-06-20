@@ -19,8 +19,8 @@
 *              Jonathan Poelen, Raphael Zhou, Meng Tan
 */
 
-#ifndef REDEMPTION_CAPTURE_UTILS_MATCH_FINDER_HPP
-#define REDEMPTION_CAPTURE_UTILS_MATCH_FINDER_HPP
+
+#pragma once
 
 #include "acl/auth_api.hpp"
 #include "regex/regex.hpp"
@@ -206,4 +206,3 @@ public:
 
 }
 
-#endif

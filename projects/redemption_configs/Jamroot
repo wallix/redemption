@@ -256,6 +256,7 @@ lib libasan : : <name>asan ;
 constant AUTOGENDIR : include/autogen/configs/autogen ;
 constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
 constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
+constant FILEGEN_INI : $(AUTOGENDIR)/str_ini.hpp ;
 constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
 
 actions generate_cpp_configs {
@@ -269,6 +270,10 @@ actions generate_python_spec {
     $(>[0]) $(FILEGEN_SPEC)
 }
 
+actions generate_ini {
+    $(>[0]) $(FILEGEN_INI)
+}
+
 actions generate_enum {
     $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
 }
@@ -276,14 +281,17 @@ actions generate_enum {
 make $(FILEGEN_CONF) : make_cpp_config generate_enum : @generate_cpp_configs : <location>. ;
 make $(FILEGEN_SPEC) : make_python_spec generate_enum : @generate_python_spec : <location>. ;
 make $(FILEGEN_ENUM) : make_cpp_enum : @generate_enum : <location>. ;
+make $(FILEGEN_INI) : make_ini : @generate_ini : <location>. ;
 
 alias generate_cpp_configs : $(FILEGEN_CONF) ;
 alias generate_python_spec : $(FILEGEN_SPEC) ;
 alias generate_enum : $(FILEGEN_ENUM) ;
+alias generate_ini : $(FILEGEN_INI) ;
 
 exe make_cpp_config : src/configs/write_cpp_config.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_python_spec : src/configs/write_python_spec.cpp : $(LIB_SAN_DEPENDENCY) ;
 exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : $(LIB_SAN_DEPENDENCY) ;
+exe make_ini : src/configs/write_ini.cpp : $(LIB_SAN_DEPENDENCY) ;
 
 
 alias generate_types :
@@ -291,6 +299,7 @@ alias generate_types :
 ;
 
 alias generate_descs :
+    generate_ini
     generate_python_spec
     generate_cpp_configs
 ;

@@ -24,8 +24,8 @@
    Copyright 2012 Jiten Pathy
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include <cinttypes>
@@ -695,5 +695,3 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
 
 
 static const size_t RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH = 3;
-
-#endif  /* _REDEMPTION_CORE_RDP_MPPC_HPP_ */

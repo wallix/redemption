@@ -18,6 +18,8 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
+#pragma once
+
 #include <cstdlib>
 
 template<class Iterator>

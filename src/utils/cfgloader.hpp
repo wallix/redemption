@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_CFG_LOADER_HPP_
-#define _REDEMPTION_UTILS_CFG_LOADER_HPP_
+
+#pragma once
 
 #include <istream>
 #include <fstream>
@@ -137,4 +137,3 @@ struct ConfigurationLoader {
         //               , ConfigurationHolder & configuration_holder)
 };  // struct ConfigurationLoader
 
-#endif  // #ifndef _REDEMPTION_UTILS_CFG_LOADER_HPP_

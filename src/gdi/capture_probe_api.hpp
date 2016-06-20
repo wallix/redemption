@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_CAPTURE_PROBE_API_HPP
-#define REDEMPTION_GDI_CAPTURE_PROBE_API_HPP
+
+#pragma once
 
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -39,4 +39,3 @@ struct CaptureProbeApi : private noncopyable
 
 }
 
-#endif

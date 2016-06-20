@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
-#define _REDEMPTION_CORE_RDP_NEGO_HPP_
+
+#pragma once
 
 
 #include "core/RDP/nla/nla.hpp"
@@ -679,4 +679,3 @@ struct RdpNego
 };
 
 
-#endif

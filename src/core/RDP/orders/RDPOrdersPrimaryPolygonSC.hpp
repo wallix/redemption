@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONSC_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONSC_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -412,4 +412,3 @@ public:
     }
 };  // class RDPPolygonSC
 
-#endif

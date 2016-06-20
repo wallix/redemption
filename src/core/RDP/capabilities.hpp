@@ -20,8 +20,8 @@
    RDP Capabilities :
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_HPP_
+
+#pragma once
 
 #include "capabilities/common.hpp"
 
@@ -54,4 +54,3 @@
 // #include "capabilities/virchan.hpp"
 // #include "capabilities/window.hpp"
 
-#endif

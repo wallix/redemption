@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
+
+#pragma once
 
 #include "transport/in_file_transport.hpp"
 #include "utils/asynchronous_task_manager.hpp"
@@ -279,4 +279,3 @@ public:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_

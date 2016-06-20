@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include "RDPOrdersCommon.hpp"
@@ -120,4 +120,3 @@ public:
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_

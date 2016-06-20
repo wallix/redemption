@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_GENRANDOM_HPP_
-#define _REDEMPTION_UTILS_GENRANDOM_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -185,4 +185,3 @@ class UdevRandom : public Random
     }
 };
 
-#endif

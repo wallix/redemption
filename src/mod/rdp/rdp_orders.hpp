@@ -20,8 +20,8 @@
    rdp module process orders
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
+
+#pragma once
 
 #include <string.h>
 #include <string>
@@ -580,4 +580,3 @@ public:
     }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, gdi::GraphicApi & gd)
 };
 
-#endif

@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_IMAGE_CAPTURE_IMPL_HPP
-#define REDEMPTION_UTILS_IMAGE_CAPTURE_IMPL_HPP
+
+#pragma once
 
 #include <algorithm>
 
@@ -159,4 +159,3 @@ private:
     }
 };
 
-#endif

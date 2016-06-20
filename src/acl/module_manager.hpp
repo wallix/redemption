@@ -22,8 +22,8 @@
   find out the next module to run from context reading
 */
 
-#ifndef _REDEMPTION_ACL_MODULES_MANAGER_HPP_
-#define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
+
+#pragma once
 
 #include "transport/socket_transport.hpp"
 #include "configs/config.hpp"
@@ -1327,4 +1327,3 @@ public:
     }
 };
 
-#endif

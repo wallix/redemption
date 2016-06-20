@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#ifndef _REDEMPTION_UTILS_PNG_HPP_
-#define _REDEMPTION_UTILS_PNG_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include <png.h>
@@ -196,4 +196,3 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
     png_destroy_read_struct(&ppng, &pinfo, nullptr);
 }
 
-#endif

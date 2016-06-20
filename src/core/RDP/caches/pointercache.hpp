@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_
+
+#pragma once
 
 
 #include "utils/sugar/noncopyable.hpp"
@@ -115,4 +115,3 @@ public:
     }
 };  // struct PointerCache
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_

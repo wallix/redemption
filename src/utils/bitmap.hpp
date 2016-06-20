@@ -27,8 +27,8 @@
    color model.
 */
 
-#ifndef _REDEMPTION_UTILS_BITMAP_HPP__
-#define _REDEMPTION_UTILS_BITMAP_HPP__
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2165,4 +2165,3 @@ inline void swap(Bitmap & a, Bitmap & b) noexcept {
     a.swap(b);
 }
 
-#endif

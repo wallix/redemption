@@ -22,8 +22,8 @@
    Font header file
 */
 
-#ifndef _REDEMPTION_CORE_FONT_HPP_
-#define _REDEMPTION_CORE_FONT_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -357,4 +357,3 @@ ErrorReadingFontFile:
     }
 }; // END STRUCT - Font
 
-#endif

@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_APPS_APP_PROXY_HPP
-#define REDEMPTION_UTILS_APPS_APP_PROXY_HPP
+
+#pragma once
 
 #include <signal.h>
 #include <sys/un.h>
@@ -397,4 +397,3 @@ int app_proxy(
     return 0;
 }
 
-#endif

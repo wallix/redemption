@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_PUBLIC_UTILS_URANDOM_READ_HPP
-#define REDEMPTION_PUBLIC_UTILS_URANDOM_READ_HPP
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -46,4 +46,3 @@ inline int urandom_read(unsigned char *buf, int sz)
     return read_ret;
 }
 
-#endif

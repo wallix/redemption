@@ -20,8 +20,8 @@
    out_per_bstream object, formatted buffering for entities expecting per format
 */
 
-#ifndef _REDEMPTION_CORE_RDP_OUT_PER_BSTREAM_HPP_
-#define _REDEMPTION_CORE_RDP_OUT_PER_BSTREAM_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -163,6 +163,4 @@ public:
 
 template<std::size_t N>
 using StaticOutPerStream = BasicStaticStream<N, OutPerStream>;
-
-#endif
 

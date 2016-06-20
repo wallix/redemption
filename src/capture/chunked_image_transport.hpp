@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
-#define _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
+
+#pragma once
 
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
@@ -91,4 +91,3 @@ private:
     }
 };
 
-#endif
