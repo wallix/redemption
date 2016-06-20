@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event) override
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;

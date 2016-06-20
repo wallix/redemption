@@ -1501,7 +1501,7 @@ public:
         }
     }
 
-    virtual wait_obj * get_session_probe_launcher_event() override {
+    wait_obj * get_session_probe_launcher_event() override {
         if (this->session_probe_launcher) {
             return this->session_probe_launcher->get_event();
         }
@@ -1509,7 +1509,7 @@ public:
         return nullptr;
     }
 
-    virtual void process_session_probe_launcher() override {
+    void process_session_probe_launcher() override {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }

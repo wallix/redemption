@@ -45,7 +45,7 @@ struct Notify : public NotifyApi {
 
     Notify() = default;
 
-    virtual void notify(Widget2* sender, notify_event_t event) override
+    void notify(Widget2* sender, notify_event_t event) override
     {
         this->sender = sender;
         this->event = event;

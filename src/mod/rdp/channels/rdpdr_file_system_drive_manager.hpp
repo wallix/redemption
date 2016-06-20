@@ -1200,7 +1200,7 @@ public:
 
     bool IsDirectory() const override { return false; }
 
-    virtual bool IsSessionProbeImage() const override { return this->is_session_probe_image; }
+    bool IsSessionProbeImage() const override { return this->is_session_probe_image; }
 
     void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,

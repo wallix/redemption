@@ -64,6 +64,58 @@ namespace dump2008_PatBlt {
     #include "fixtures/dump_w2008_PatBlt.hpp"
 }
 
+
+class MyFront : public Front
+{
+    public:
+
+    MyFront( Transport & trans
+            , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
+            , Random & gen
+            , Inifile & ini
+            , CryptoContext & cctx
+            , bool fp_support // If true, fast-path must be supported
+            , bool mem3blt_support
+            , time_t now
+            , const char * server_capabilities_filename = ""
+            , Transport * persistent_key_list_transport = nullptr
+            )
+    : Front( trans
+            , default_font_name
+            , gen
+            , ini
+            , cctx
+            , fp_support
+            , mem3blt_support
+            , now
+            , server_capabilities_filename
+            , persistent_key_list_transport)
+        {
+        }
+
+        void clear_channels()
+        {
+            this->channel_list.clear_channels();
+        }
+
+        const CHANNELS::ChannelDefArray & get_channel_list(void) const override
+        {
+            return this->channel_list;
+        }
+
+        void send_to_channel(
+            const CHANNELS::ChannelDef & channel,
+            uint8_t const * data,
+            size_t length,
+            size_t chunk_size,
+            int flags) override
+        {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "send_to_channel");
+            LOG(LOG_INFO, "========================================\n");
+        }
+};
+
 BOOST_AUTO_TEST_CASE(TestFront)
 {
     try {
@@ -137,57 +189,6 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::client::fast_path>(fastpath_support);
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
-
-        class MyFront : public Front
-        {
-            public:
-
-            MyFront( Transport & trans
-                   , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
-                   , Random & gen
-                   , Inifile & ini
-                   , CryptoContext & cctx
-                   , bool fp_support // If true, fast-path must be supported
-                   , bool mem3blt_support
-                   , time_t now
-                   , const char * server_capabilities_filename = ""
-                   , Transport * persistent_key_list_transport = nullptr
-                   )
-            : Front( trans
-                   , default_font_name
-                   , gen
-                   , ini
-                   , cctx
-                   , fp_support
-                   , mem3blt_support
-                   , now
-                   , server_capabilities_filename
-                   , persistent_key_list_transport)
-                {
-                }
-
-                void clear_channels()
-                {
-                    this->channel_list.clear_channels();
-                }
-
-                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override
-                {
-                    return this->channel_list;
-                }
-
-                virtual void send_to_channel(
-                    const CHANNELS::ChannelDef & channel,
-                    uint8_t const * data,
-                    size_t length,
-                    size_t chunk_size,
-                    int flags) override
-                {
-                    LOG(LOG_INFO, "--------- FRONT ------------------------");
-                    LOG(LOG_INFO, "send_to_channel");
-                    LOG(LOG_INFO, "========================================\n");
-                }
-        };
 
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                      , cctx, fastpath_support, mem3blt_support
@@ -372,57 +373,6 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::client::fast_path>(fastpath_support);
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
-
-        class MyFront : public Front
-        {
-            public:
-
-            MyFront( Transport & trans
-                   , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
-                   , Random & gen
-                   , Inifile & ini
-                   , CryptoContext & cctx
-                   , bool fp_support // If true, fast-path must be supported
-                   , bool mem3blt_support
-                   , time_t now
-                   , const char * server_capabilities_filename = ""
-                   , Transport * persistent_key_list_transport = nullptr
-                   )
-            : Front( trans
-                   , default_font_name
-                   , gen
-                   , ini
-                   , cctx
-                   , fp_support
-                   , mem3blt_support
-                   , now
-                   , server_capabilities_filename
-                   , persistent_key_list_transport)
-                {
-                }
-
-                void clear_channels()
-                {
-                    this->channel_list.clear_channels();
-                }
-
-                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override
-                {
-                    return this->channel_list;
-                }
-
-                virtual void send_to_channel(
-                    const CHANNELS::ChannelDef & channel,
-                    uint8_t const * data,
-                    size_t length,
-                    size_t chunk_size,
-                    int flags) override
-                {
-                    LOG(LOG_INFO, "--------- FRONT ------------------------");
-                    LOG(LOG_INFO, "send_to_channel");
-                    LOG(LOG_INFO, "========================================\n");
-                }
-        };
 
         MyFront front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen1, ini
                      , cctx, fastpath_support, mem3blt_support
@@ -644,12 +594,12 @@ BOOST_AUTO_TEST_CASE(TestFront3)
                     this->channel_list.clear_channels();
                 }
 
-                virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override
+                const CHANNELS::ChannelDefArray & get_channel_list(void) const override
                 {
                     return this->channel_list;
                 }
 
-                virtual void send_to_channel(
+                void send_to_channel(
                     const CHANNELS::ChannelDef & channel,
                     uint8_t const * data,
                     size_t length,

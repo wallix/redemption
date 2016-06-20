@@ -118,7 +118,7 @@ public:
     : copy_paste(copy_paste)
     {}
 
-    virtual void notify(Widget2 * sender, notify_event_t event) override {
+    void notify(Widget2 * sender, notify_event_t event) override {
         BOOST_REQUIRE(sender);
         copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
     }

@@ -44,10 +44,7 @@ public:
     , color(0x27642F)
     {}
 
-    virtual ~WidgetCompositeRect()
-    {}
-
-    virtual void draw(const Rect& clip) override
+    void draw(const Rect& clip) override
     {
         this->drawable.draw(RDPOpaqueRect(clip, color), this->rect);
         this->WidgetComposite::draw(clip);
