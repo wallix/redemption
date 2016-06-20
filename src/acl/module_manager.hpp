@@ -519,9 +519,6 @@ private:
         void send_auth_channel_data(const char * data) override
         { this->mm.internal_mod->send_auth_channel_data(data); }
 
-        void send_disconnect_ultimatum() override
-        { this->mm.internal_mod->send_disconnect_ultimatum(); }
-
         wait_obj & get_event() override
         { return this->mm.internal_mod->get_event(); }
 

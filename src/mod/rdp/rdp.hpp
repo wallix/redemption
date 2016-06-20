@@ -6626,7 +6626,7 @@ private:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void send_disconnect_ultimatum() override {
+    void send_disconnect_ultimatum() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }
