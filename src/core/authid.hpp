@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_CORE_AUTHID_HPP
-#define REDEMPTION_SRC_CORE_AUTHID_HPP
+
+#pragma once
 
 #include "configs/autogen/authid.hpp"
 
@@ -42,4 +42,3 @@ static inline const char * string_from_authid(authid_t authid) {
     return authstr[static_cast<unsigned>(authid)];
 }
 
-#endif

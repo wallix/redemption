@@ -22,8 +22,8 @@
   find out the next module to run from context reading
 */
 
-#ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
-#define _REDEMPTION_ACL_AUTHENTIFIER_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include "configs/config.hpp"
@@ -526,4 +526,3 @@ public:
     }
 };
 
-#endif

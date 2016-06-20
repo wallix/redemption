@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_TRANSLATION_HPP
-#define REDEMPTION_TRANSLATION_HPP
+
+#pragma once
 
 #include <array>
 #include <algorithm>
@@ -255,4 +255,3 @@ inline Translation::language_t language(Language lang) {
     return static_cast<Translation::language_t>(lang);
 }
 
-#endif

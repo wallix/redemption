@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_TRANSPORT_BUFFER_NULL_BUF_HPP
-#define REDEMPTION_TRANSPORT_BUFFER_NULL_BUF_HPP
+
+#pragma once
 
 #include <cstddef>
 
@@ -40,4 +40,3 @@ namespace transbuf
     };
 }
 
-#endif

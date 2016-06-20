@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCHANNEL_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_SESPROCHANNEL_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
@@ -864,4 +864,3 @@ public:
     }
 };  // class SessionProbeVirtualChannel
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCHANNEL_HPP

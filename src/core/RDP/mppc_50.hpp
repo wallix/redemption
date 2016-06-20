@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_50_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_50_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -767,4 +767,3 @@ public:
     }
 };  // struct rdp_mppc_50_enc
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_50_HPP_

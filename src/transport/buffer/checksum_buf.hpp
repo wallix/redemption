@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_TRANSPORT_BUFFER_CHECKSUM_BUF_HPP
-#define REDEMPTION_TRANSPORT_BUFFER_CHECKSUM_BUF_HPP
+
+#pragma once
 
 #include "transport/cryptofile.hpp"
 #include "system/ssl_calls.hpp"
@@ -127,4 +127,3 @@ public:
 
 }
 
-#endif

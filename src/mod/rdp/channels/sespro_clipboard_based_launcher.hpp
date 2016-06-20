@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCLIPBOARDBASEDLAUNCHER_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_SESPROCLIPBOARDBASEDLAUNCHER_HPP
+
+#pragma once
 
 #include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
@@ -754,4 +754,3 @@ private:
     }
 };  // class SessionProbeClipboardBasedLauncher
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCLIPBOARDBASEDLAUNCHER_HPP

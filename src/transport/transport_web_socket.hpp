@@ -21,8 +21,8 @@
 */
 
 
-#ifndef TRANSPORT_WEB_SOCKET_HPP
-#define TRANSPORT_WEB_SOCKET_HPP
+
+#pragma once
 
 
 #ifdef __EMSCRIPTEN__
@@ -182,4 +182,3 @@ public:
 };
 
 
-#endif

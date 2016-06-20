@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_BMPCACHEPERSISTER_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_BMPCACHEPERSISTER_HPP_
+
+#pragma once
 
 #include <map>
 #include "bmpcache.hpp"
@@ -428,4 +428,3 @@ private:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_CACHES_BMPCACHEPERSISTER_HPP_

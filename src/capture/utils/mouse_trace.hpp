@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CAPTURE_UTILS_MOUSE_TRACE_HPP
-#define REDEMPTION_CAPTURE_UTILS_MOUSE_TRACE_HPP
+
+#pragma once
 
 #include <sys/time.h>
 
@@ -30,4 +30,3 @@ struct MouseTrace
     int     last_y;
 };
 
-#endif

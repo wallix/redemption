@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEMBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEMBLT_HPP_
+
+#pragma once
 
 //  MS-RDPEGDI 2.2.2.2.1.1.2.9 MemBlt (MEMBLT_ORDER)
 // -------------------------------------------------
@@ -245,4 +245,3 @@ class RDPMemBlt {
 };
 
 
-#endif

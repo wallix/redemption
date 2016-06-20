@@ -21,8 +21,8 @@
   Updating context dictionnary from incoming acl traffic
 */
 
-#ifndef _REDEMPTION_ACL_SERIALIZER_HPP_
-#define _REDEMPTION_ACL_SERIALIZER_HPP_
+
+#pragma once
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -398,4 +398,3 @@ public:
     }
 };
 
-#endif

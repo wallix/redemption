@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYCOLORCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYCOLORCACHE_HPP_
+
+#pragma once
 
 /*****************************************************************************/
 // [MS-RDPGDI] 2.2.2.2.1.2.4 Cache Color Table (CACHE_COLOR_TABLE_ORDER)
@@ -178,4 +178,3 @@ public:
     }
 };
 
-#endif

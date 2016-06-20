@@ -19,8 +19,8 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
+
+#pragma once
 
 #include "utils/translation.hpp"
 #include "core/front_api.hpp"
@@ -140,4 +140,3 @@ public:
     bool is_up_and_running() override { return true; }
 };
 
-#endif

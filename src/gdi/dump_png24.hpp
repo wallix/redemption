@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_DUMP_PNG24_HPP
-#define REDEMPTION_GDI_DUMP_PNG24_HPP
+
+#pragma once
 
 #include "utils/sugar/noncopyable.hpp"
 
@@ -36,4 +36,3 @@ struct DumpPng24Api : private noncopyable
 
 }
 
-#endif

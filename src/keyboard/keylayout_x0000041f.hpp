@@ -21,8 +21,8 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000041F_HPP_
-#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X0000041F_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
@@ -294,4 +294,3 @@ static const Keylayout keylayout_x0000041f( x0000041f::LCID
                                           , x0000041f::nbDeadkeys
 );
 
-#endif

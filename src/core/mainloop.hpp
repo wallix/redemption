@@ -21,8 +21,8 @@
    main include "ile
 */
 
-#ifndef _REDEMPTION_CORE_MAINLOOP_HPP_
-#define _REDEMPTION_CORE_MAINLOOP_HPP_
+
+#pragma once
 
 #include <string>
 
@@ -33,4 +33,3 @@ int g_is_term(void);
 void redemption_main_loop(Inifile & ini, CryptoContext & cctx, unsigned uid, unsigned gid, std::string config_filename);
 void redemption_new_session(CryptoContext & cctx, char const * config_filename);
 
-#endif

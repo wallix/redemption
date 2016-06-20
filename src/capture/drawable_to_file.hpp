@@ -22,8 +22,8 @@
 *   with some other target image format.
 */
 
-#ifndef REDEMPTION_DRAWABLE_TO_FILE_HPP
-#define REDEMPTION_DRAWABLE_TO_FILE_HPP
+
+#pragma once
 
 #include "utils/png.hpp"
 #include "utils/drawable.hpp"
@@ -142,4 +142,3 @@ private:
     }
 };
 
-#endif

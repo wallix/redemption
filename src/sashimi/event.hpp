@@ -21,8 +21,8 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#ifndef SASHIMI_EVENT_HPP_
-#define SASHIMI_EVENT_HPP_
+
+#pragma once
 
 class Event {
 public:
@@ -32,4 +32,3 @@ public:
     virtual ~Event(){}
 };
 
-#endif

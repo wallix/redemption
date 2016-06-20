@@ -20,8 +20,8 @@
    New RDP Orders Coder / Decoder : Common parts and constants
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
+
+#pragma once
 
 #include <assert.h>
 
@@ -1235,4 +1235,3 @@ class RDPSecondaryOrderHeader {
     }
 };
 
-#endif

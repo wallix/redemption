@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_TEST_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_TEST_TRANSPORT_HPP
+
+#pragma once
 
 #include "transport/transport.hpp"
 #include "transport/mixin_transport.hpp"
@@ -267,6 +267,4 @@ public:
         this->out_stream.out_copy_bytes(buffer, len);
     }
 };
-
-#endif
 

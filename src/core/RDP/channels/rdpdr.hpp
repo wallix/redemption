@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
-#define REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
+
+#pragma once
 
 #include <cinttypes>
 
@@ -3551,4 +3551,3 @@ public:
 
 }   // namespace rdpdr
 
-#endif

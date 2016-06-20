@@ -21,8 +21,7 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#ifndef SASHIMI_LIBCRYPTO_H_
-#define SASHIMI_LIBCRYPTO_H_
+#pragma ocne
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1747,5 +1746,3 @@ static inline struct ssh_cipher_struct *cipher_new_by_name(const SSHString & nam
     }
     return nullptr;
 }
-
-#endif /* LIBCRYPTO_H_ */

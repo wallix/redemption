@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_TRANSPORT_HPP
+
+#pragma once
 
 #include <sys/time.h>
 #include <stdint.h>
@@ -204,4 +204,3 @@ private:
     Transport& operator=(const Transport &) = delete;
 };
 
-#endif

@@ -17,8 +17,8 @@
     Copyright (C) Wallix 2013
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
-#ifndef _REDEMPTION_CORE_RDP_NLA_ASN1_BER_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_ASN1_BER_HPP_
+
+#pragma once
 
 #include "utils/stream.hpp"
 
@@ -444,4 +444,3 @@ namespace BER {
     //}
 }
 
-#endif

@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
-#define _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
+
+#pragma once
 
 #include "utils/stream.hpp"
 
@@ -843,4 +843,3 @@ struct LogonErrorsInfo_Recv {
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_

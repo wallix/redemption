@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -421,4 +421,3 @@ public:
     }
 };  // class RDPPolyLine
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_

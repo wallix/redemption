@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_BUFFER_BUFFERING_BUF_HPP
-#define REDEMPTION_TRANSPORT_BUFFER_BUFFERING_BUF_HPP
+
+#pragma once
 
 #include <cstddef>
 #include <cstring>
@@ -110,4 +110,3 @@ namespace transbuf {
     };
 }
 
-#endif

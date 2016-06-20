@@ -20,8 +20,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_RDTSC_HPP_
-#define _REDEMPTION_UTILS_RDTSC_HPP_
+
+#pragma once
 
 
 #if defined(__i386__)
@@ -74,4 +74,3 @@ static __inline__ unsigned long long rdtsc(void)
  *  $Revision: 1.6 $  $Date: 2005/04/13 18:49:58 $
  */
 
-#endif

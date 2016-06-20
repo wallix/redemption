@@ -22,8 +22,8 @@
    entities
 */
 
-#ifndef _REDEMPTION_UTILS_ARRAY_HPP_
-#define _REDEMPTION_UTILS_ARRAY_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -111,4 +111,3 @@ public:
     }
 };
 
-#endif

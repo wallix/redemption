@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CAPTURE_UTILS_GRAPHIC_CAPTURE_IMPL_HPP
-#define REDEMPTION_CAPTURE_UTILS_GRAPHIC_CAPTURE_IMPL_HPP
+
+#pragma once
 
 #include "apis_register.hpp"
 #include "mouse_trace.hpp"
@@ -130,4 +130,3 @@ public:
     RDPDrawable & rdp_drawable() { return this->drawable; }
 };
 
-#endif

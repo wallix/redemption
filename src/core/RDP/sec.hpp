@@ -21,8 +21,8 @@
    common sec layer at core module
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SEC_HPP_
-#define _REDEMPTION_CORE_RDP_SEC_HPP_
+
+#pragma once
 
 #include <assert.h>
 #include <stdint.h>
@@ -1878,4 +1878,3 @@ enum {
 
 }
 
-#endif

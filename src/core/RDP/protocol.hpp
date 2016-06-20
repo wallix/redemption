@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
-#define _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
+
+#pragma once
 
 #include "utils/stream.hpp"
 #include "utils/colors.hpp"
@@ -679,4 +679,3 @@ struct ConfirmActivePDU_Send {
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_PROTOCOL_HPP_

@@ -21,8 +21,8 @@
    Colors object. Contains generic colors
 */
 
-#ifndef _REDEMPTION_UTILS_COLORS_HPP_
-#define _REDEMPTION_UTILS_COLORS_HPP_
+
+#pragma once
 
 #include <iterator>
 
@@ -437,4 +437,3 @@ struct color_converter : Dec, Enc
     }
 };
 
-#endif

@@ -20,8 +20,8 @@
    header file. KeymapSym object for keymap translation from RDP to X (VNC)
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
-#define _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include <string.h>
@@ -3088,4 +3088,3 @@ struct KeymapSym {
 }; // STRUCT - KeymapSym
 
 
-#endif

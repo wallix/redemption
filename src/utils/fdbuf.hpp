@@ -19,8 +19,8 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
-#define REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
+
+#pragma once
 
 #include "utils/sugar/exchange.hpp"
 
@@ -187,4 +187,3 @@ inline void swap(fdbuf & a, fdbuf & b) noexcept
 } //posix
 } //io
 
-#endif

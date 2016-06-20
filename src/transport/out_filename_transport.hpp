@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_OUT_FILENAME_TRANSPORT_HPP
+
+#pragma once
 
 #include "openssl_crypto.hpp"
 #include <cerrno>
@@ -513,4 +513,3 @@ struct CryptoOutFilenameTransport
     }
 };
 
-#endif

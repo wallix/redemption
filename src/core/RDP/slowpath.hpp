@@ -21,8 +21,8 @@
    common slowpath layer at core module
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SLOWPATH_HPP_
-#define _REDEMPTION_CORE_RDP_SLOWPATH_HPP_
+
+#pragma once
 
 #include "utils/stream.hpp"
 
@@ -945,4 +945,3 @@ struct GraphicsUpdate_Recv {
 
 } // namespace SlowPath
 
-#endif // #ifndef _REDEMPTION_CORE_RDP_SLOWPATH_HPP_

@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_VIRCHAN_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_VIRCHAN_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "utils/stream.hpp"
@@ -95,4 +95,3 @@ struct VirtualChannelCaps : public Capability {
     }
 };
 
-#endif

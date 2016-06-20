@@ -19,8 +19,8 @@
 
 */
 
-#ifndef FORM_QT_HPP
-#define FORM_QT_HPP
+
+#pragma once
 
 //#define LOGPRINT
 
@@ -1015,4 +1015,3 @@ public Q_SLOTS:
 };
 
 
-#endif

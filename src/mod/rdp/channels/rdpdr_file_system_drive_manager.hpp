@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
-#define REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
+
+#pragma once
 
 #include "core/channel_list.hpp"
 #include "core/defines.hpp"
@@ -2206,5 +2206,3 @@ public:
         this->session_probe_image_read_notifier   = launcher;
     }
 };  // FileSystemDriveManager
-
-#endif  // REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP

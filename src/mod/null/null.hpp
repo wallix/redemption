@@ -19,8 +19,8 @@
 
 */
 
-#ifndef _REDEMPTION_MOD_NULL_NULL_HPP_
-#define _REDEMPTION_MOD_NULL_NULL_HPP_
+
+#pragma once
 
 #include "mod/mod_api.hpp"
 
@@ -52,4 +52,3 @@ struct null_mod : public mod_api
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
 };
 
-#endif

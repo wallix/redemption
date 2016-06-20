@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CAPTURE_WRM_LABEL_HPP
-#define REDEMPTION_CAPTURE_WRM_LABEL_HPP
+
+#pragma once
 
 // TODO enum class
 enum {
@@ -35,4 +35,3 @@ enum {
     INVALID_CHUNK       = 0x8000
 };
 
-#endif

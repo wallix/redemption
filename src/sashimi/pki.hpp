@@ -21,9 +21,6 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#ifndef SASHIMI_PKI_H_
-#define SASHIMI_PKI_H_
-
 #include <assert.h>
 #include "system/ssl_calls.hpp"
 #include "openssl_crypto.hpp"
@@ -41,7 +38,7 @@ struct ssh_public_key_struct {
     int type;
     DSA *dsa_pub;
     RSA *rsa_pub;
-    
+
     ssh_public_key_struct()
         : type(0)
         , dsa_pub(nullptr)
@@ -64,8 +61,8 @@ struct ssh_key_struct {
     RSA *rsa;
     EC_KEY *ecdsa;
     void *cert;
-    
-    ssh_key_struct(ssh_keytypes_e type, int flags) 
+
+    ssh_key_struct(ssh_keytypes_e type, int flags)
         : type(type)
         , flags(flags)
         , ecdsa_nid(0)
@@ -75,7 +72,7 @@ struct ssh_key_struct {
         , cert(nullptr)
     {
     }
-    
+
     const char *type_c() const {
         switch (this->type) {
         case SSH_KEYTYPE_DSS:
@@ -104,7 +101,7 @@ struct ssh_key_struct {
                 break;
         }
         return "ssh-keytype-ecdsa-unknown";
-    }  
+    }
 };
 
 struct ssh_signature_struct {
@@ -113,9 +110,9 @@ struct ssh_signature_struct {
     DSA_SIG *dsa_sig;
     SSHString rsa_sig;
     ECDSA_SIG *ecdsa_sig;
-    
+
     ssh_signature_struct()
-        : sig_type(SSH_KEYTYPE_UNKNOWN) 
+        : sig_type(SSH_KEYTYPE_UNKNOWN)
         , ecdsa_nid(0)
         , dsa_sig(nullptr)
         , rsa_sig(0)
@@ -152,7 +149,7 @@ struct ssh_signature_struct {
         }
         return "ssh-keytype-ecdsa-unknown";
     }
-    
+
 };
 
 //typedef struct ssh_signature_struct *ssh_signature;
@@ -186,5 +183,3 @@ int pki_signature_verify(ssh_session_struct * session,
                          const ssh_key_struct *key,
                          const unsigned char *hash,
                          size_t hlen);
-
-#endif /* PKI_H_ */

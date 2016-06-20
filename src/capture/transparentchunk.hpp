@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_TRANSPARENTCHUNK_HPP_
-#define _REDEMPTION_CAPTURE_TRANSPARENTCHUNK_HPP_
+
+#pragma once
 
 enum {
       CHUNK_TYPE_META
@@ -33,4 +33,3 @@ enum {
       TRANSPARENT_CHUNK_HEADER_SIZE = 11
 };
 
-#endif  // #ifndef _REDEMPTION_CAPTURE_TRANSPARENTCHUNK_HPP_

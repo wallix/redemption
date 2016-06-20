@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
+
+#pragma once
 
 #include <set>
 #include <memory>
@@ -764,4 +764,3 @@ public:
 };
 //const uint8_t BmpCache::MAXIMUM_NUMBER_OF_CACHES;
 
-#endif

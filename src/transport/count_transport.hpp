@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
+
+#pragma once
 
 #include "transport/transport.hpp"
 
@@ -39,4 +39,3 @@ class CountTransport
     }
 };
 
-#endif

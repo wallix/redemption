@@ -22,8 +22,8 @@
 
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "internal_mod.hpp"
@@ -141,4 +141,3 @@ public:
     }
 };
 
-#endif

@@ -22,8 +22,8 @@
 */
 
 
-#ifndef _REDEMPTION_KEYLAYOUT_R_HPP_
-#define _REDEMPTION_KEYLAYOUT_R_HPP_
+
+#pragma once
 
 #include <unordered_map>
 
@@ -201,4 +201,3 @@ struct Keylayout_r
 }; // END STRUCT - Keylayout_r
 
 
-#endif

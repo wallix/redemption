@@ -19,8 +19,8 @@
               Martin Potier, Meng Tan
 */
 
-#ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
-#define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
+
+#pragma once
 
 #include "utils/difftimeval.hpp"
 #include "capture/GraphicToFile.hpp"
@@ -104,4 +104,3 @@ private:
     }
 };
 
-#endif

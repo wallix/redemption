@@ -20,8 +20,8 @@
    RDP Capabilities : Color Table Cache Capability Set (see [MS-RDPEGDI] section 2.2.1.1)
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COLCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_COLCACHE_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "utils/stream.hpp"
@@ -87,4 +87,3 @@ struct ColorCacheCaps : public Capability {
     }
 };
 
-#endif

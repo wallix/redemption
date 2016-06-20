@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP
+
+#pragma once
 
 #include "utils/asynchronous_task_manager.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
@@ -126,4 +126,3 @@ protected:
     }
 };  // class BaseVirtualChannel
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP

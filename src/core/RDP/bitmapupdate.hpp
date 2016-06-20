@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_BITMAPUPDATE_HPP_
-#define _REDEMPTION_CORE_RDP_BITMAPUPDATE_HPP_
+
+#pragma once
 
 #include "utils/stream.hpp"
 #include "capabilities/general.hpp"
@@ -698,4 +698,3 @@ struct RDPBitmapData {
 // | 0xFE            |                                                         |
 // +-----------------+---------------------------------------------------------+
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_BITMAPUPDATE_HPP_

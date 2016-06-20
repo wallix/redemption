@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "utils/stream.hpp"
@@ -74,4 +74,3 @@ struct MultiFragmentUpdateCaps : public Capability {
         LOG(LOG_INFO, "MultifragmentUpdate caps::MaxRequestSize %u", this->MaxRequestSize);
     }
 };
-#endif

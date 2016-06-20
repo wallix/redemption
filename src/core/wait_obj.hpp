@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_WAIT_OBJ_HPP_
-#define _REDEMPTION_CORE_WAIT_OBJ_HPP_
+
+#pragma once
 
 #include "utils/difftimeval.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -135,4 +135,3 @@ public:
 #pragma GCC diagnostic pop
 };
 
-#endif

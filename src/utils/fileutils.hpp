@@ -20,8 +20,8 @@
    File related utility functions
 */
 
-#ifndef _REDEMPTION_UTILS_FILEUTILS_HPP_
-#define _REDEMPTION_UTILS_FILEUTILS_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -435,4 +435,3 @@ static inline int recursive_delete_directory(const char * directory_path) {
     return return_value;
 }
 
-#endif

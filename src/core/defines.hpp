@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CORE_DEFINES_HPP
-#define REDEMPTION_CORE_DEFINES_HPP
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -108,4 +108,3 @@ TODO("move these into configuration")
 #define DH2048_PEM "dh2048.pem"
 #define DH_PEM DH2048_PEM
 
-#endif

@@ -27,8 +27,8 @@
    color model.
 */
 
-#ifndef _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
-#define _REDEMPTION_UTILS_BITMAP_WITH_PNG_HPP__
+
+#pragma once
 
 //#include "utils/png_bitmap.hpp"
 #include "utils/png.hpp"
@@ -474,4 +474,3 @@ public:
 
 
 
-#endif

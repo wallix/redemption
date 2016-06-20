@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_OUT_FILENAME_SEQUENCE_TRANSPORT_HPP
+
+#pragma once
 
 // #include "buffer/buffering_buf.hpp"
 #include "transport/detail/meta_writer.hpp"
@@ -93,4 +93,3 @@ struct OutFilenameSequenceSeekableTransport
 };
 
 
-#endif

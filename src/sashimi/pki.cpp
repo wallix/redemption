@@ -21,6 +21,8 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
+#pragma once
+
 #include <errno.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -69,7 +71,7 @@ static int get_equals(char *string);
  * @returns A buffer containing the decoded string, nullptr if something went
  *          wrong (e.g. incorrect char).
  */
- 
+
 // TODO: refactor that shit
 ssh_buffer_struct* base64_to_bin(const char *source) {
   ssh_buffer_struct* buffer = nullptr;
@@ -270,7 +272,7 @@ static void _bin_to_base64(unsigned char *dest, const unsigned char source[3],
  * @returns the converted string
  */
 unsigned char *bin_to_base64(const unsigned char *source, int len) {
-  
+
   unsigned char *ptr;
   int flen = len + (3 - (len % 3)); /* round to upper 3 multiple */
   flen = (4 * flen) / 3 + 1;
@@ -374,27 +376,27 @@ const char *ssh_key_type_to_char(enum ssh_keytypes_e type) {
  * @see ssh_key_free()
  */
 int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey) {
-    syslog(LOG_INFO, "%s common 1", __FUNCTION__);        
+    syslog(LOG_INFO, "%s common 1", __FUNCTION__);
     if (sizeof(uint32_t) > buffer.in_remain()) {
-        syslog(LOG_INFO, "%s common error 2", __FUNCTION__);        
+        syslog(LOG_INFO, "%s common error 2", __FUNCTION__);
         //ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
-    syslog(LOG_INFO, "%s common 2", __FUNCTION__);        
+    syslog(LOG_INFO, "%s common 2", __FUNCTION__);
     uint32_t str_len = buffer.in_uint32_be();
     if (str_len > buffer.in_remain()) {
-        syslog(LOG_INFO, "%s error 2", __FUNCTION__);        
+        syslog(LOG_INFO, "%s error 2", __FUNCTION__);
         //ERRRRRRRRRRRRRRRRRRRRRRRRRR
     }
     SSHString name(str_len);
     buffer.buffer_get_data(name.data.get(), str_len);
 
     std::initializer_list<std::pair<const char *, enum ssh_keytypes_e>> l = {
-         {"rsa1", SSH_KEYTYPE_RSA1}, 
-         {"ssh-rsa1", SSH_KEYTYPE_RSA1}, 
-         {"rsa", SSH_KEYTYPE_RSA}, 
-         {"ssh-rsa", SSH_KEYTYPE_RSA}, 
-         {"dsa", SSH_KEYTYPE_DSS}, 
-         {"ssh-dss", SSH_KEYTYPE_DSS}, 
+         {"rsa1", SSH_KEYTYPE_RSA1},
+         {"ssh-rsa1", SSH_KEYTYPE_RSA1},
+         {"rsa", SSH_KEYTYPE_RSA},
+         {"ssh-rsa", SSH_KEYTYPE_RSA},
+         {"dsa", SSH_KEYTYPE_DSS},
+         {"ssh-dss", SSH_KEYTYPE_DSS},
          {"ecdsa", SSH_KEYTYPE_ECDSA},
          {"ssh-ecdsa", SSH_KEYTYPE_ECDSA},
          {"ecdsa-sha2-nistp256", SSH_KEYTYPE_ECDSA},
@@ -409,7 +411,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
             break;
         }
     }
-    
+
     *pkey = new ssh_key_struct(type, SSH_KEY_FLAG_PUBLIC);
 
     switch (type){
@@ -426,7 +428,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         }
         SSHString e(e_len);
         buffer.buffer_get_data(e.data.get(),e_len);
-    
+
         if (sizeof(uint32_t) > buffer.in_remain()) {
             //ERRRRRRRRRRRRRRRRRRRRRRRRRR
         }
@@ -453,7 +455,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
             return SSH_ERROR;
         }
 
-        syslog(LOG_INFO, "%s RSA OK", __FUNCTION__);        
+        syslog(LOG_INFO, "%s RSA OK", __FUNCTION__);
         return SSH_OK;
     }
     break;
@@ -502,7 +504,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
 
         (*pkey)->dsa = DSA_new();
         if ((*pkey)->dsa == nullptr) {
-            syslog(LOG_INFO, "%s DSS ERR", __FUNCTION__);        
+            syslog(LOG_INFO, "%s DSS ERR", __FUNCTION__);
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
@@ -511,15 +513,15 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         (*pkey)->dsa->q = BN_bin2bn(q.data.get(), q.size, nullptr);
         (*pkey)->dsa->g = BN_bin2bn(g.data.get(), g.size, nullptr);
         (*pkey)->dsa->pub_key = BN_bin2bn(pubkey.data.get(), pubkey.size, nullptr);
-        if ((*pkey)->dsa->p == nullptr || (*pkey)->dsa->q == nullptr 
+        if ((*pkey)->dsa->p == nullptr || (*pkey)->dsa->q == nullptr
          || (*pkey)->dsa->g == nullptr || (*pkey)->dsa->pub_key == nullptr) {
             DSA_free((*pkey)->dsa);
-            syslog(LOG_INFO, "%s DSS ERR", __FUNCTION__);        
+            syslog(LOG_INFO, "%s DSS ERR", __FUNCTION__);
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
 
-        syslog(LOG_INFO, "%s DSS OK", __FUNCTION__);        
+        syslog(LOG_INFO, "%s DSS OK", __FUNCTION__);
         return SSH_OK;
     }
     case SSH_KEYTYPE_ECDSA:
@@ -538,7 +540,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
                 : (strncmp(name, "nistp521", i_len) == 0)? NID_secp521r1
                 : -1;
         if (nid == -1) {
-            syslog(LOG_INFO, "%s ECDSA ERR", __FUNCTION__);        
+            syslog(LOG_INFO, "%s ECDSA ERR", __FUNCTION__);
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
@@ -564,7 +566,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
 
         EC_POINT *p = EC_POINT_new(g);
         if (p == nullptr) {
-            syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);        
+            syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
@@ -572,7 +574,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         int ok = EC_POINT_oct2point(g, p, e.data.get(), e.size, nullptr);
         if (!ok) {
             EC_POINT_free(p);
-            syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);        
+            syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
@@ -581,16 +583,16 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         ok = EC_KEY_set_public_key((*pkey)->ecdsa, p);
         EC_POINT_free(p);
         if (!ok) {
-            syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);        
+            syslog(LOG_INFO, "%s ECDSA ERR 2", __FUNCTION__);
             ssh_key_free(*pkey);
             return SSH_ERROR;
         }
 
-        syslog(LOG_INFO, "%s ECDSA OK", __FUNCTION__);        
+        syslog(LOG_INFO, "%s ECDSA OK", __FUNCTION__);
         return SSH_OK;
     }
     default:
-        syslog(LOG_INFO, "%s Unknown key type found!", __FUNCTION__);        
+        syslog(LOG_INFO, "%s Unknown key type found!", __FUNCTION__);
         break;
     }
     LOG(LOG_INFO, "Unknown key type found!");
@@ -653,7 +655,7 @@ int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
             syslog(LOG_INFO, "%s SSH_KEYTYPE_ECDSA", __FUNCTION__);
             ssh_buffer_struct buffer;
             buffer.out_length_prefixed_cstr(pubkey->type_c());
-            
+
             buffer.out_length_prefixed_cstr(
                 (pubkey->ecdsa_nid == NID_X9_62_prime256v1) ? "nistp256" :
                 (pubkey->ecdsa_nid == NID_secp384r1)        ? "nistp384" :
@@ -717,7 +719,7 @@ SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
         case SSH_KEYTYPE_DSS:
         {
             SSHString sig_blob(40);
-            
+
             unsigned int len3 = BN_num_bytes(sig->dsa_sig->r);
             unsigned int bits3 = BN_num_bits(sig->dsa_sig->r);
             /* If the first bit is set we have a negative number, padding needed */
@@ -732,7 +734,7 @@ SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
             int r_offset_out = (r.size < 20) ? (20 - r.size) : 0;
 
             memcpy(sig_blob.data.get() + r_offset_out, r.data.get() + r_offset_in, r.size - r_offset_in);
-            
+
             unsigned int len4 = BN_num_bytes(sig->dsa_sig->s);
             unsigned int bits4 = BN_num_bits(sig->dsa_sig->s);
             /* If the first bit is set we have a negative number, padding needed */
@@ -747,7 +749,7 @@ SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
             int s_offset_out = (s.size < 20) ? (20 - s.size) : 0;
 
             memcpy(sig_blob.data.get() + 20 + s_offset_out, s.data.get() + s_offset_in, s.size - s_offset_in);
-            
+
             return sig_blob;
         }
         case SSH_KEYTYPE_RSA:
@@ -771,9 +773,9 @@ SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
             /* if pad we have a negative number henceforth we need a leading zero */
             r.data[0] = 0;
             BN_bn2bin(sig->ecdsa_sig->r, r.data.get() + pad3);
-            
+
             b.out_uint32_be(r.size);
-            b.out_blob(r.data.get(), r.size);               
+            b.out_blob(r.data.get(), r.size);
 
             unsigned int len4 = BN_num_bytes(sig->ecdsa_sig->s);
             unsigned int bits4 = BN_num_bits(sig->ecdsa_sig->s);
@@ -785,7 +787,7 @@ SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
             BN_bn2bin(sig->ecdsa_sig->s, s.data.get() + pad4);
 
             b.out_uint32_be(s.size);
-            b.out_blob(s.data.get(), s.size);               
+            b.out_blob(s.data.get(), s.size);
 
             SSHString sig_blob(static_cast<uint32_t>(b.in_remain()));
             memcpy(sig_blob.data.get(), b.get_pos_ptr(), b.in_remain());
@@ -843,7 +845,7 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
 
     ssh_buffer_struct* buf = new ssh_buffer_struct;
 
-    const char * type_c = sig->type_c(); 
+    const char * type_c = sig->type_c();
     SSHString str(type_c);
 
     buf->out_uint32_be(str.size);
@@ -856,7 +858,7 @@ SSHString ssh_pki_export_signature_blob(const ssh_key_struct *key, const unsigne
 
     SSHString sig_blob(static_cast<uint32_t>(buf->in_remain()));
     memcpy(sig_blob.data.get(), buf->get_pos_ptr(), buf->in_remain());
-    
+
     delete buf;
     delete sig;
 
@@ -923,7 +925,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
             if (sig_blob.size == rsalen) {
                     sig->rsa_sig = SSHString(sig_blob.size);
                     memcpy(sig->rsa_sig.data.get(), sig_blob.data.get(), sig_blob.size);
-            } 
+            }
             else {
                 /* pad the blob to the expected rsalen size */
                 LOG(LOG_INFO, "RSA signature len %u < %lu", sig_blob.size, rsalen);
@@ -996,7 +998,7 @@ static ssh_signature_struct * pki_signature_from_blob(const ssh_key_struct *pubk
                     ssh_signature_free(sig);
                     return nullptr;
                 }
-                
+
                 uint8_t * s = new uint8_t[s_len];
                 b->buffer_get_data(s, s_len);
                 // TODO: is there error management for BN_bin2bn
@@ -1053,12 +1055,12 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
     buf->buffer_get_data(str.data.get(),str_len);
 
     std::initializer_list<std::pair<const char *, enum ssh_keytypes_e>> l = {
-         {"rsa1", SSH_KEYTYPE_RSA1}, 
-         {"ssh-rsa1", SSH_KEYTYPE_RSA1}, 
-         {"rsa", SSH_KEYTYPE_RSA}, 
-         {"ssh-rsa", SSH_KEYTYPE_RSA}, 
-         {"dsa", SSH_KEYTYPE_DSS}, 
-         {"ssh-dss", SSH_KEYTYPE_DSS}, 
+         {"rsa1", SSH_KEYTYPE_RSA1},
+         {"ssh-rsa1", SSH_KEYTYPE_RSA1},
+         {"rsa", SSH_KEYTYPE_RSA},
+         {"ssh-rsa", SSH_KEYTYPE_RSA},
+         {"dsa", SSH_KEYTYPE_DSS},
+         {"ssh-dss", SSH_KEYTYPE_DSS},
          {"ecdsa", SSH_KEYTYPE_ECDSA},
          {"ssh-ecdsa", SSH_KEYTYPE_ECDSA},
          {"ecdsa-sha2-nistp256", SSH_KEYTYPE_ECDSA},
@@ -1086,18 +1088,18 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
 
     ssh_signature_struct * sig = pki_signature_from_blob(key, std::move(tmp), type);
     delete buf;
-    
+
     syslog(LOG_INFO, "Going to verify a %s type signature", key->type_c());
 
     // max(SHA_DIGEST_LENGTH, SHA256_DIGEST_LENGTH, EVP_DIGEST_LEN)
-    
+
     union any_hash {
         unsigned char evp[SHA256_DIGEST_LENGTH];
         unsigned char sha256[SHA256_DIGEST_LENGTH];
         unsigned char sha1[SHA256_DIGEST_LENGTH];
     };
     unsigned char hash[sizeof(any_hash)] = {0};
-    
+
     uint32_t elen = 0;
 
     switch (key->type)
@@ -1134,7 +1136,7 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
             default:
                 ;
         }
-       
+
         int rc = ECDSA_do_verify(hash,
                                  elen,
                                  sig->ecdsa_sig,

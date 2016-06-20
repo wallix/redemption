@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUTS_REVERSED_HPP_
-#define _REDEMPTION_KEYBOARD_KEYLAYOUTS_REVERSED_HPP_
+
+#pragma once
 
 #include "../src/keyboard/reversed_keymaps/keylayout_r.hpp"
 #include "../src/keyboard/reversed_keymaps/keylayout_x8000201a.hpp" // Bosnian (Cyrillic) (Bosnia and Herzegovina))
@@ -180,8 +180,4 @@ enum KEYBOARDS : int {
     EL_GR_220_LATIN           = 0x30408,     EN_US_DVORAK_LEFT         = 0x30409,     EL_GR_319_LATIN           = 0x40408,
     EN_US_DVORAK_RIGHT        = 0x40409,     EL_GR_LATIN               = 0x50408,     EL_GR_POLYTONIC           = 0x60408
 };
-
-#endif
-
-
 

@@ -21,8 +21,8 @@
   Channels descriptors
 */
 
-#ifndef _REDEMPTION_CORE_CHANNEL_LIST_HPP_
-#define _REDEMPTION_CORE_CHANNEL_LIST_HPP_
+
+#pragma once
 
 #include "utils/stream.hpp"
 #include "transport/transport.hpp"
@@ -410,4 +410,3 @@ namespace CHANNELS {
     };  // struct VirtualChannelPDU
 }   // namespace CHANNELS
 
-#endif

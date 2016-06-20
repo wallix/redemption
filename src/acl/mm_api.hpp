@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_ACL_MM_API_HPP
-#define REDEMPTION_ACL_MM_API_HPP
+
+#pragma once
 
 #include "mod/mod_api.hpp"
 
@@ -64,4 +64,3 @@ public:
     virtual void check_module() { }
 };
 
-#endif

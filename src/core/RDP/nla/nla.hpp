@@ -18,8 +18,8 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NLA_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NLA_HPP_
+
+#pragma once
 
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
@@ -923,4 +923,3 @@ public:
 
 
 
-#endif

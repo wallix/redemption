@@ -21,8 +21,8 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
  */
 
-#ifndef SASHIMI_SESSION_HPP_
-#define SASHIMI_SESSION_HPP_
+
+#pragma once
 
 #include <vector>
 
@@ -7583,4 +7583,3 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
 int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_channel channel, const char *terminal, int col, int row);
 
 
-#endif

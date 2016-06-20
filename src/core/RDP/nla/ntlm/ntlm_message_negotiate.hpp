@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGENEGOTIATE_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGENEGOTIATE_HPP_
+
+#pragma once
 
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
 
@@ -214,4 +214,3 @@ struct NTLMNegotiateMessage : public NTLMMessage {
 
 };
 
-#endif

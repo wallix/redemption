@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_MIXIN_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_MIXIN_TRANSPORT_HPP
+
+#pragma once
 
 #include "transport/transport.hpp"
 #include <cerrno>
@@ -165,4 +165,3 @@ protected:
     typedef FlushingTransport TransportType;
 };
 
-#endif

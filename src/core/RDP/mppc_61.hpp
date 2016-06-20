@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_61_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_61_HPP_
+
+#pragma once
 
 #include "mppc_50.hpp"
 
@@ -793,4 +793,3 @@ public:
 
 typedef rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> rdp_mppc_61_enc_hash_based;
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_61_HPP_

@@ -22,8 +22,8 @@
    RFC 1006, ISO transport services on top of the TCP
 */
 
-#ifndef _REDEMPTION_CORE_RDP_X224_HPP_
-#define _REDEMPTION_CORE_RDP_X224_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include "transport/transport.hpp"
@@ -1463,4 +1463,3 @@ namespace X224
     };
 } // end namespace X224
 
-#endif

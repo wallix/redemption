@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -147,4 +147,3 @@ struct InputCaps : public Capability {
     }
 };
 
-#endif

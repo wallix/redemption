@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
+
+#pragma once
 
 #include <vector>
 
@@ -1730,4 +1730,3 @@ public:
 }   // namespace RAIL
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_

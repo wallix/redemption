@@ -19,8 +19,8 @@
                Meng Tan, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_REDIRECTIONINFO_HPP_
-#define _REDEMPTION_UTILS_REDIRECTIONINFO_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -92,4 +92,3 @@ struct RedirectionInfo {
     }
 };
 
-#endif

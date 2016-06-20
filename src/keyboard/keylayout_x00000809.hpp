@@ -21,8 +21,8 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000809_HPP_
-#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X00000809_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
@@ -224,4 +224,3 @@ static const Keylayout keylayout_x00000809( x00000809::LCID
                                           , x00000809::nbDeadkeys
 );
 
-#endif

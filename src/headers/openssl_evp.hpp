@@ -23,8 +23,5 @@
 
 */
 
-#ifndef _REDEMPTION_HEADERS_OPENSSL_EVP_HPP_
-#define _REDEMPTION_HEADERS_OPENSSL_EVP_HPP_
 
-
-#endif
+#pragma once
