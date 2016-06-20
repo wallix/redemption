@@ -81,7 +81,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
             auto type = pack_get<spec::type_>(infos);
 
             this->write_description(pack_contains<desc>(infos), type, infos);
-            this->write_type_info(type);
+            this->inherit().write_type_info(type);
             this->write_enumeration_value_description(pack_contains<prefix_value>(infos), type, infos);
 
             if (bool(attr & spec::attr::iptables)) this->out() << "\"#_iptables\\n\"\n";
@@ -204,7 +204,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         }
 
         if (type_enumeration::flags == e.flag) {
-            this->out() << "\"(note: values can be added (everyone: 1+2+4=7, mute: 0))\\n\"\n";
+            this->out() << "\"# (note: values can be added (everyone: 1+2+4=7, mute: 0))\\n\"\n";
         }
     }
 
