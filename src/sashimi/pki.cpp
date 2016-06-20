@@ -21,8 +21,6 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#pragma once
-
 #include <errno.h>
 #include <ctype.h>
 #include <stdio.h>
