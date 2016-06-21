@@ -48,13 +48,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test1",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, notifier, "test1",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -82,13 +82,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test2",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 640, 480, parent, notifier, "test2",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -120,13 +120,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test3",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 1280, 1024, parent, notifier, "test3",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -158,13 +158,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 1280, 1024, font);
+    WidgetScreen parent(drawable.gd, 1280, 1024, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 1280, 1024, parent, notifier, "test4",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 1280, 1024, parent, notifier, "test4",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -196,13 +196,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 640, 480, font);
+    WidgetScreen parent(drawable.gd, 640, 480, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 640, 480, parent, notifier, "test5",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 640, 480, parent, notifier, "test5",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -234,13 +234,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 300, 600, font);
+    WidgetScreen parent(drawable.gd, 300, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 350, 500, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 350, 500, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -272,13 +272,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 300, 600, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 300, 600, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -310,13 +310,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -347,12 +347,12 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
 
-        virtual void notify(Widget2* sender, notify_event_t event) override
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
@@ -454,14 +454,14 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
 
         Notify() = default;
 
-        virtual void notify(Widget2* sender, notify_event_t event) override
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -471,7 +471,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     WidgetFlatButton * extra_button = nullptr;
-    FlatDialog flat_dialog(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test6",
                            "Lorem ipsum dolor sit amet, consectetur<br>"
                            "adipiscing elit. Nam purus lacus, luctus sit<br>"
                            "amet suscipit vel, posuere quis turpis. Sed<br>"

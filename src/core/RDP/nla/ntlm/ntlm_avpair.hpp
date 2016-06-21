@@ -17,8 +17,8 @@
     Copyright (C) Wallix 2013
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMAVPAIR_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMAVPAIR_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
@@ -261,4 +261,3 @@ struct NtlmAvPairList {
 
 
 
-#endif

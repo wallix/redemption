@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
-#define REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP
+
+#pragma once
 
 #include "core/channel_list.hpp"
 #include "core/defines.hpp"
@@ -31,7 +31,7 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/make_unique.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 #include "utils/winpr/pattern.hpp"
 
@@ -1200,7 +1200,7 @@ public:
 
     bool IsDirectory() const override { return false; }
 
-    virtual bool IsSessionProbeImage() const override { return this->is_session_probe_image; }
+    bool IsSessionProbeImage() const override { return this->is_session_probe_image; }
 
     void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
@@ -2206,5 +2206,3 @@ public:
         this->session_probe_image_read_notifier   = launcher;
     }
 };  // FileSystemDriveManager
-
-#endif  // REDEMPTION_CORE_RDP_CHANNELS_RDPDRFILESYSTEMDRIVEMANAGER_HPP

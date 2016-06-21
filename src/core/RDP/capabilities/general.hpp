@@ -20,8 +20,8 @@
    RDP Capabilities : General Capabilities
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "utils/stream.hpp"
@@ -309,4 +309,3 @@ struct GeneralCaps : public Capability {
     }
 };
 
-#endif

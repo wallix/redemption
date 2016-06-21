@@ -21,8 +21,8 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#ifndef SASHIMI_BUFFER_HPP_
-#define SASHIMI_BUFFER_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include <string.h> // for memset
@@ -69,9 +69,9 @@ struct ssh_buffer_struct {
     uint32_t used;
     uint32_t allocated;
     uint32_t pos;
-    
-    ssh_buffer_struct() 
-    : data(nullptr) 
+
+    ssh_buffer_struct()
+    : data(nullptr)
     , used(0)
     , allocated(0)
     , pos(0)
@@ -106,19 +106,19 @@ struct ssh_buffer_struct {
 #endif
     }
 
-    
+
     ~ssh_buffer_struct() {
       this->buffer_verify();
 
       if (this->data) {
         /* burn the data */
         memset(this->data, 0, this->allocated);
-        free(this->data); 
+        free(this->data);
         this->data = nullptr;
       }
       memset(this, 'X', sizeof(*this));
     }
-    
+
     /**
      * @internal
      *
@@ -144,20 +144,20 @@ struct ssh_buffer_struct {
      {
 //        syslog(LOG_INFO, "headroom for %d allocated=%d used=%d pos=%d", len, this->allocated, this->used, this->pos);
         if (this->pos >= len) { return; }
-        if ((this->pos == this->used) 
-        && (this->allocated > 16384) 
+        if ((this->pos == this->used)
+        && (this->allocated > 16384)
         && (len <= 4096)) {
             this->pos = this->used = 4096;
             return;
         }
-         
+
         // New buffer: we keep some headroom for prepending
         // we also keep the size big enough for our purposes
         size_t newpos = (this->pos<4096)?4096:this->pos;
         if (newpos < len){
             newpos = power2up(len);
         }
-        
+
         size_t needed = power2up(16000 | (this->used + len - this->pos + newpos)) ;
 
 //        syslog(LOG_INFO, "allocating %d allocated=%d used=%d pos=%d newpos=%d", needed, this->allocated, this->used, this->pos, newpos);
@@ -172,7 +172,7 @@ struct ssh_buffer_struct {
         this->data = newb;
         this->allocated = needed;
         this->buffer_verify();
-    }     
+    }
 
      void make_tailroom_for(size_t len)
      {
@@ -180,11 +180,11 @@ struct ssh_buffer_struct {
         if ((this->pos == this->used) && (this->allocated > 4096)){
             this->pos = this->used = 4096;
         }
-        
+
         if (this->allocated >= (this->used + len)) {
             return;
         }
-        
+
         // New buffer: we keep some headroom for prepending
         // we also keep the size big enough for our purposes
         size_t newpos = (this->pos<4096)?4096:this->pos;
@@ -205,7 +205,7 @@ struct ssh_buffer_struct {
 //        syslog(LOG_INFO, "done %d allocated=%d used=%d pos=%d", needed, this->allocated, this->used, this->pos);
 
         this->buffer_verify();
-    }     
+    }
 
 
 
@@ -384,7 +384,7 @@ struct ssh_buffer_struct {
         p.out_uint32_le(v);
         this->used += p.p - (this->data+this->used);
     }
-    
+
 
     // Output some zero terminated C string to
     // ssh network format length prefixed string (uint32 prefixed)
@@ -437,14 +437,14 @@ struct ssh_buffer_struct {
     }
 
     uint8_t * get_pos_ptr() const {
-        return this->data + this->pos;    
+        return this->data + this->pos;
     }
-    
+
     void in_skip_bytes(size_t len)
     {
         this->pos+=len;
     }
-    
+
     uint32_t buffer_pass_bytes_end(uint32_t len)
     {
       this->buffer_verify();
@@ -501,5 +501,3 @@ static inline void hexdump(const char * data, size_t size, unsigned line_length)
         }
     }
 }
-
-#endif /* BUFFER_H_ */

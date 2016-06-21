@@ -18,12 +18,12 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_FTESTS_REGEX_REGEX_HPP
-#define REDEMPTION_FTESTS_REGEX_REGEX_HPP
+
+#pragma once
 
 #include "regex_automate.hpp"
 #include "regex_parser.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 struct Tracer;
 namespace re {
@@ -424,4 +424,3 @@ namespace re {
     };
 }
 
-#endif

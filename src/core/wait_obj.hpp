@@ -22,11 +22,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_WAIT_OBJ_HPP_
-#define _REDEMPTION_CORE_WAIT_OBJ_HPP_
+
+#pragma once
 
 #include "utils/difftimeval.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "utils/invalid_socket.hpp"
 
 enum BackEvent_t {
@@ -135,4 +135,3 @@ public:
 #pragma GCC diagnostic pop
 };
 
-#endif

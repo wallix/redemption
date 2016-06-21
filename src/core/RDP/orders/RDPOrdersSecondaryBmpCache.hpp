@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBMPCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBMPCACHE_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include "utils/colors.hpp"
@@ -1279,4 +1279,3 @@ class RDPBmpCache {
     }
 };
 
-#endif

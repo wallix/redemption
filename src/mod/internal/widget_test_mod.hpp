@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
+
+#pragma once
 
 #include "internal_mod.hpp"
 
@@ -66,7 +66,7 @@ class WidgetTestMod : public InternalMod, public NotifyApi {
 public:
     WidgetTestMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, Theme const & theme)
     : InternalMod(front, width, height, font, theme)
-    , wbutton_selector_language(*this, 300, 300, this->screen, &this->language_picker, "ab", true, 5, YELLOW, RED, GREEN, font){
+    , wbutton_selector_language(front, 300, 300, this->screen, &this->language_picker, "ab", true, 5, YELLOW, RED, GREEN, font){
         this->screen.add_widget(&this->wbutton_selector_language);
         this->language_picker.attach_label(&this->wbutton_selector_language.label);
         this->screen.set_widget_focus(&this->wbutton_selector_language, Widget2::focus_reason_tabkey);
@@ -82,11 +82,10 @@ public:
     void notify(Widget2 * sender, notify_event_t event) override {}
 
 public:
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         this->event.reset();
     }
 
     bool is_up_and_running() override { return true; }
 };
 
-#endif  // #ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP

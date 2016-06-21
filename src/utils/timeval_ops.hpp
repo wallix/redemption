@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_UTILS_TIMEVAL_OPS_HPP
-#define REDEMPTION_UTILS_TIMEVAL_OPS_HPP
+
+#pragma once
 
 #include <sys/time.h>
 #include <stdint.h>
@@ -50,4 +50,3 @@ inline bool operator>=(const timeval & a, const timeval & b) noexcept {
     return !(a < b);
 }
 
-#endif

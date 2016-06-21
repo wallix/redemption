@@ -87,14 +87,14 @@
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "utils/algostring.hpp"
-#include "utils/cast.hpp"
-#include "utils/splitter.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/sugar/splitter.hpp"
 #include "utils/timeout.hpp"
 
 #include <cstdlib>
 
-class mod_rdp : public gdi::GraphicProxyBase<mod_rdp, mod_api>
+class mod_rdp : public mod_api
 {
 private:
     std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
@@ -114,6 +114,8 @@ private:
 protected:
     FileSystemDriveManager file_system_drive_manager;
 
+    uint16_t front_width;
+    uint16_t front_height;
     FrontAPI& front;
 
     class ToClientSender : public VirtualChannelDataSender
@@ -199,8 +201,6 @@ protected:
                 chunk_data_length);
         }
     };
-
-    friend gdi::GraphicCoreAccess;
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
@@ -629,7 +629,8 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_rdp::base_type(info.width - (info.width % 4), info.height)
+        : front_width(info.width - (info.width % 4))
+        , front_height(info.height)
         , front(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
@@ -1509,7 +1510,7 @@ public:
         }
     }
 
-    virtual wait_obj * get_session_probe_launcher_event() override {
+    wait_obj * get_session_probe_launcher_event() override {
         if (this->session_probe_launcher) {
             return this->session_probe_launcher->get_event();
         }
@@ -1517,7 +1518,7 @@ public:
         return nullptr;
     }
 
-    virtual void process_session_probe_launcher() override {
+    void process_session_probe_launcher() override {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }
@@ -1969,7 +1970,7 @@ public:
         return this->event;
     }
 
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         if ((!this->event.waked_up_by_time &&
              (!this->session_probe_virtual_channel_p ||
               !this->session_probe_virtual_channel_p->is_event_signaled())) ||
@@ -3163,7 +3164,7 @@ public:
 
                                 case FastPath::UpdateType::BITMAP:
                                     this->front.begin_update();
-                                    this->process_bitmap_updates(upd.payload, true);
+                                    this->process_bitmap_updates(upd.payload, true, drawable);
                                     this->front.end_update();
                                     break;
 
@@ -3484,7 +3485,7 @@ public:
                                                         case RDP_UPDATE_BITMAP:
                                                             if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
                                                             this->front.begin_update();
-                                                            this->process_bitmap_updates(sdata.payload, false);
+                                                            this->process_bitmap_updates(sdata.payload, false, drawable);
                                                             this->front.end_update();
                                                             break;
                                                         case RDP_UPDATE_PALETTE:
@@ -5899,7 +5900,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate2(array_view<Rect> vr) override {
+    void rdp_input_invalidate2(array_view<Rect const> vr) override {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
@@ -6352,7 +6353,8 @@ public:
         }
     }   // process_new_pointer_pdu
 
-    void process_bitmap_updates(InStream & stream, bool fast_path) {
+private:
+    void process_bitmap_updates(InStream & stream, bool fast_path, gdi::GraphicApi & drawable) {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
@@ -6542,7 +6544,7 @@ public:
                      );
             }
 
-            this->gd->draw(bmpdata, bitmap);
+            drawable.draw(bmpdata, bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
@@ -6599,20 +6601,6 @@ public:
         }
     }
 
-    void begin_update() override {
-        this->front.begin_update();
-    }
-
-    void end_update() override {
-        this->front.end_update();
-    }
-
-protected:
-    FrontAPI & get_graphic_proxy() {
-        return this->front;
-    }
-
-public:
     bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
@@ -6651,7 +6639,7 @@ public:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void send_disconnect_ultimatum() override {
+    void send_disconnect_ultimatum() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }

@@ -27,8 +27,8 @@
 
 #include "core/authid.hpp"
 
-#include "utils/underlying_cast.hpp"
-#include "utils/exchange.hpp"
+#include "utils/sugar/underlying_cast.hpp"
+#include "utils/sugar/exchange.hpp"
 #include "core/defines.hpp"
 #include "core/font.hpp"
 #include "utils/log.hpp"

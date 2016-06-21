@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_GENRANDOM_HPP_
-#define _REDEMPTION_UTILS_GENRANDOM_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -72,7 +72,7 @@ class LCGRandom : public Random
         }
     }
 
-    virtual uint32_t rand32() override
+    uint32_t rand32() override
     {
         return this->seed = 999331UL * this->seed + 200560490131ULL;
     }
@@ -95,7 +95,7 @@ class LCGRand : public Random
         }
     }
 
-    virtual uint32_t rand32() override
+    uint32_t rand32() override
     {
         return this->seed = 999331UL * this->seed + 7913UL;
     }
@@ -175,7 +175,7 @@ class UdevRandom : public Random
         }
     }
 
-    virtual uint32_t rand32() override
+    uint32_t rand32() override
     {
         uint32_t result = 0;
         char buffer[sizeof(result)];
@@ -185,4 +185,3 @@ class UdevRandom : public Random
     }
 };
 
-#endif

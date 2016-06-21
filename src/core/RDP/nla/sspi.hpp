@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_SSPI_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_SSPI_HPP_
+
+#pragma once
 
 #include <stdio.h>
 #include "utils/utf.hpp"
@@ -740,4 +740,3 @@ enum SecInterface {
 
 
 
-#endif

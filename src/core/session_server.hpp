@@ -18,8 +18,8 @@
   Author(s): Christophe Grosjean
 */
 
-#ifndef _REDEMPTION_CORE_SESSION_SERVER_HPP_
-#define _REDEMPTION_CORE_SESSION_SERVER_HPP_
+
+#pragma once
 
 #include "configs/config.hpp"
 #include "core/server.hpp"
@@ -47,7 +47,7 @@ public:
     {
     }
 
-    virtual Server_status start(int incoming_sck) override
+    Server_status start(int incoming_sck) override
     {
         union
         {
@@ -199,4 +199,3 @@ public:
     }
 };
 
-#endif

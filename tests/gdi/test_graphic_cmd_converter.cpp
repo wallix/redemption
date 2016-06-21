@@ -31,7 +31,7 @@
 #define LOGNULL
 
 #include "gdi/graphic_cmd_color_converter.hpp"
-#include "utils/range.hpp"
+#include "utils/sugar/range.hpp"
 
 #include <array>
 

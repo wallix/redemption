@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROALTERNATESHELLBASEDLAUNCHER_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_SESPROALTERNATESHELLBASEDLAUNCHER_HPP
+
+#pragma once
 
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
@@ -63,7 +63,7 @@ public:
         return false;
     }
 
-    virtual bool on_drive_redirection_initialize() override {
+    bool on_drive_redirection_initialize() override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_drive_redirection_initialize");
@@ -144,5 +144,3 @@ public:
         }
     }
 };
-
-#endif  // #endif REDEMPTION_MOD_RDP_CHANNELS_SESPROALTERNATESHELLBASEDLAUNCHER_HPP

@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_60_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include "mppc.hpp"
@@ -1005,6 +1005,4 @@ public:
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
     }
 };  // struct rdp_mppc_60_enc
-
-#endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
 

@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_GRAPHIC_CMD_COLOR_CONVERTOR_HPP
-#define REDEMPTION_GDI_GRAPHIC_CMD_COLOR_CONVERTOR_HPP
+
+#pragma once
 
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
@@ -34,7 +34,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "utils/colors.hpp"
-#include "utils/range.hpp"
+#include "utils/sugar/range.hpp"
 
 #include "graphic_api.hpp"
 
@@ -292,4 +292,3 @@ private:
 
 }
 
-#endif

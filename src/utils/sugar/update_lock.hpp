@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_UTILS_UPDATE_LOCK_HPP
-#define REDEMPTION_UTILS_UPDATE_LOCK_HPP
+#pragma once
 
 template <class T>
 class update_lock
@@ -43,4 +42,3 @@ private:
     update_lock&operator=(update_lock const &);
 };
 
-#endif

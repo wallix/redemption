@@ -19,8 +19,8 @@
               Poelen Jonathan
 */
 
-#ifndef _REDEMPTION_UTILS_DRAWABLE_HPP_
-#define _REDEMPTION_UTILS_DRAWABLE_HPP_
+
+#pragma once
 
 #include <utility>
 #include <memory>
@@ -2712,4 +2712,3 @@ private:
     }
 };
 
-#endif

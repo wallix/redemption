@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_CLIP_FROM_CMD_HPP
-#define REDEMPTION_GDI_CLIP_FROM_CMD_HPP
+
+#pragma once
 
 #include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
@@ -121,4 +121,3 @@ inline Rect clip_from_cmd(RDPPolyline const & cmd) {
     );
 }
 
-#endif

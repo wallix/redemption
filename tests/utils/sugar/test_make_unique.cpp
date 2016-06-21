@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestUniquePtr
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/make_unique.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include <type_traits>
 #include <iostream>
 #include <sstream>

@@ -18,10 +18,10 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_INPUT_POINTER_API_HPP
-#define REDEMPTION_GDI_INPUT_POINTER_API_HPP
 
-#include "utils/noncopyable.hpp"
+#pragma once
+
+#include "utils/sugar/noncopyable.hpp"
 
 namespace gdi {
 
@@ -34,4 +34,3 @@ struct MouseInputApi : private noncopyable
 
 }
 
-#endif

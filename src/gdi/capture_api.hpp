@@ -18,10 +18,10 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_GDI_CAPTURE_API_HPP
-#define REDEMPTION_GDI_CAPTURE_API_HPP
 
-#include "utils/noncopyable.hpp"
+#pragma once
+
+#include "utils/sugar/noncopyable.hpp"
 
 #include <chrono>
 
@@ -88,4 +88,3 @@ struct UpdateConfigCaptureApi : private noncopyable
 
 }
 
-#endif

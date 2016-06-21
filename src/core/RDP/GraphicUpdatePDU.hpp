@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
-#define _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -806,4 +806,3 @@ public:
     }
 };
 
-#endif

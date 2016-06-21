@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
-#define REDEMPTION_TRANSPORT_FILTER_CRYPTO_FILTER_HPP
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -35,4 +35,3 @@
 
 #include "transport/cryptofile.hpp"
 
-#endif

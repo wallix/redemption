@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_PARSER_HPP_
-#define _REDEMPTION_UTILS_PARSER_HPP_
+
+#pragma once
 
 #include <string.h>
 #include <stdlib.h>
@@ -58,4 +58,3 @@ static inline bool bool_from_cstr(const char * str) noexcept
         || (0 == strcasecmp("true",str));
 }
 
-#endif

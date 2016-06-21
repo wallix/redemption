@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
-#define REDEMPTION_TRANSPORT_CRYPTOFILE_HPP
+
+#pragma once
 
 /* for HMAC calculations */
 #define MD_HASH_FUNC   SHA256
@@ -36,7 +36,7 @@
 
 #include "utils/genrandom.hpp"
 #include "system/ssl_calls.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include "openssl_crypto.hpp"
@@ -246,4 +246,3 @@ public:
     }
 };
 
-#endif

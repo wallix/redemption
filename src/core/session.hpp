@@ -183,7 +183,7 @@ public:
                 FD_ZERO(&wfds);
                 timeval timeout = time_mark;
 
-                if (mm.mod->is_up_and_running()) {
+                if (mm.mod->is_up_and_running() || !this->front->up_and_running) {
                     this->front->get_event().add_to_fd_set(front_trans.sck, rfds, max, timeout);
                     if (this->front->capture) {
                         this->front->capture->get_capture_event().add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
@@ -238,7 +238,7 @@ public:
 
                 if (this->front->get_event().is_set(front_trans.sck, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
                     try {
-                        this->front->incoming(*mm.get_callback(), now);
+                        this->front->incoming(mm.get_callback(), now);
                     } catch (Error & e) {
                         if (
                             // Can be caused by client disconnect.
@@ -296,7 +296,7 @@ public:
                             secondary_event_is_set) {
                             try
                             {
-                                mm.mod->draw_event(now, *this->front);
+                                mm.mod->draw_event(now, mm.get_graphic_wrapper(*this->front));
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
                                     signal = mm.mod->get_event().signal;

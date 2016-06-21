@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIOPAQUERECT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIOPAQUERECT_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -383,4 +383,3 @@ public:
     }
 };  // class RDPMultiOpaqueRect
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIOPAQUERECT_HPP_

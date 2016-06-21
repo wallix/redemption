@@ -20,8 +20,8 @@
     RDP Capabilities : Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "utils/stream.hpp"
@@ -124,4 +124,3 @@ struct RailCaps : public Capability {
     }
 };
 
-#endif

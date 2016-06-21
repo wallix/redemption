@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -356,4 +356,3 @@ public:
     }
 };  // class RDPMultiDstBlt
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_

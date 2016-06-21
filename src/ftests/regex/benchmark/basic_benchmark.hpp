@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_FTESTS_REGEX_BENCHMARK_BASE_TEST_HPP
-#define REDEMPTION_FTESTS_REGEX_BENCHMARK_BASE_TEST_HPP
+
+#pragma once
 
 #include <iostream>
 #include <boost/timer.hpp>
@@ -86,4 +86,3 @@ struct basic_test
     {}
 };
 
-#endif

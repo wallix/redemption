@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
-#define _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 
@@ -67,4 +67,3 @@ public:
         const uint8_t * chunk_data, uint32_t chunk_data_length) = 0;
 };
 
-#endif // #ifndef _REDEMPTION_UTILS_VIRTUAL_CHANNEL_DATA_SENDER_HPP_

@@ -18,11 +18,11 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
-#define REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 
-#include "movable_noncopyable.hpp"
-#include "utils/splitter.hpp"
+#pragma once
+
+#include "utils/sugar/movable_noncopyable.hpp"
+#include "utils/sugar/splitter.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -32,7 +32,7 @@
 
 #include "core/RDP/channels/rdpdr.hpp"
 
-#include "utils/algostring.hpp"
+#include "utils/sugar/algostring.hpp"
 
 class AuthorizationChannels
 : public movable_noncopyable
@@ -378,4 +378,3 @@ private:
 
 
 
-#endif

@@ -18,11 +18,11 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CORE_RDP_NON_NULL_TERMINATED_UTF16_FROM_UTF8_HPP
-#define REDEMPTION_CORE_RDP_NON_NULL_TERMINATED_UTF16_FROM_UTF8_HPP
+
+#pragma once
 
 #include "core/error.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -100,4 +100,3 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
         out, byte_ptr_cast(utf8_string), maximum_length_in_bytes);
 }
 
-#endif

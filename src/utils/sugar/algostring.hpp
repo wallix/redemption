@@ -18,13 +18,12 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_ALGOSTRING_HPP
-#define REDEMPTION_UTILS_ALGOSTRING_HPP
+#pragma once
 
 #include <iterator>
 #include <algorithm>
 
-#include "utils/range.hpp"
+#include "utils/sugar/range.hpp"
 
 struct is_blanck_fn
 {
@@ -56,4 +55,3 @@ auto trim(R & r, Pred pred = Pred()) -> range<decltype(r.begin())> {
     return trim(begin(r), end(r), pred);
 }
 
-#endif

@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_SERVER_HPP_
-#define _REDEMPTION_CORE_SERVER_HPP_
+
+#pragma once
 
 class Server
 {
@@ -38,4 +38,3 @@ class Server
     virtual Server_status start(int sck) = 0;
 };
 
-#endif

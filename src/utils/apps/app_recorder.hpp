@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_APPS_APP_RECORDER_HPP
-#define REDEMPTION_UTILS_APPS_APP_RECORDER_HPP
+
+#pragma once
 
 #include <signal.h>
 
@@ -32,7 +32,7 @@
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "recording_progress.hpp"
-#include "utils/iter.hpp"
+#include "utils/sugar/iter.hpp"
 #include "program_options/program_options.hpp"
 #include "acl/auth_api.hpp"
 
@@ -971,4 +971,3 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
                 infile_is_encrypted?1:0, 0) );
 }
 
-#endif

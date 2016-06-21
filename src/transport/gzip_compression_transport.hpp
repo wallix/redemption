@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_TRANSPORT_GZIP_COMPRESSION_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_GZIP_COMPRESSION_TRANSPORT_HPP
+
+#pragma once
 
 #include <zlib.h>
 
@@ -379,4 +379,3 @@ public:
 
 #pragma GCC diagnostic pop
 
-#endif  // #ifndef REDEMPTION_TRANSPORT_GZIP_COMPRESSION_TRANSPORT_HPP

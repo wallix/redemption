@@ -23,8 +23,8 @@
    the provided buffer is full).
 */
 
-#ifndef _REDEMPTION_CORE_RDP_RDPSERIALIZER_HPP_
-#define _REDEMPTION_CORE_RDP_RDPSERIALIZER_HPP_
+
+#pragma once
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
@@ -107,7 +107,7 @@
 
 #include "transport/transport.hpp"
 
-#include "utils/finally.hpp"
+#include "utils/sugar/finally.hpp"
 #include "utils/stream.hpp"
 
 #include "capture/utils/save_state_chunk.hpp"
@@ -690,4 +690,3 @@ public:
     void set_palette(const BGRPalette& palette) override {}
 };
 
-#endif

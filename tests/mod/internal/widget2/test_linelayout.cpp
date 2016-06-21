@@ -43,20 +43,20 @@ BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int id = 0;
 
-    WidgetColumnLayout wcolumn(drawable, 50, 60, parent, notifier, id);
+    WidgetColumnLayout wcolumn(drawable.gd, 50, 60, parent, notifier, id);
 
 
-    WidgetLineLayout wline1(drawable, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
+    WidgetLineLayout wline1(drawable.gd, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
 
-    WidgetLabel label11(drawable, 1, 1, wline1, notifier, "target_group", true,
+    WidgetLabel label11(drawable.gd, 1, 1, wline1, notifier, "target_group", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
-    WidgetLabel label12(drawable, 1, 1, wline1, notifier, "target", true,
+    WidgetLabel label12(drawable.gd, 1, 1, wline1, notifier, "target", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
-    WidgetLabel label13(drawable, 1, 1, wline1, notifier, "protocol", true,
+    WidgetLabel label13(drawable.gd, 1, 1, wline1, notifier, "protocol", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
     label11.rect.cx = 120;
     label12.rect.cx = 400;
@@ -66,12 +66,12 @@ BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
     wline1.add_widget(&label13);
     wcolumn.add_widget(&wline1);
 
-    WidgetLineLayout wline2(drawable, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
-    WidgetLabel label21(drawable, 1, 1, wline2, notifier, "wingroup", true,
+    WidgetLineLayout wline2(drawable.gd, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
+    WidgetLabel label21(drawable.gd, 1, 1, wline2, notifier, "wingroup", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
-    WidgetLabel label22(drawable, 1, 1, wline2, notifier, "tartempion@wallix.fr", true,
+    WidgetLabel label22(drawable.gd, 1, 1, wline2, notifier, "tartempion@wallix.fr", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
-    WidgetLabel label23(drawable, 1, 1, wline2, notifier, "RDP", true,
+    WidgetLabel label23(drawable.gd, 1, 1, wline2, notifier, "RDP", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
     label21.rect.cx = 120;
     label22.rect.cx = 400;
@@ -81,12 +81,12 @@ BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
     wline2.add_widget(&label23);
     wcolumn.add_widget(&wline2);
 
-    WidgetLineLayout wline3(drawable, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
-    WidgetLabel label31(drawable, 1, 1, wline3, notifier, "anothergroup", true,
+    WidgetLineLayout wline3(drawable.gd, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
+    WidgetLabel label31(drawable.gd, 1, 1, wline3, notifier, "anothergroup", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
-    WidgetLabel label32(drawable, 1, 1, wline3, notifier, "jambon@eau", true,
+    WidgetLabel label32(drawable.gd, 1, 1, wline3, notifier, "jambon@eau", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
-    WidgetLabel label33(drawable, 1, 1, wline3, notifier, "WTF", true,
+    WidgetLabel label33(drawable.gd, 1, 1, wline3, notifier, "WTF", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
     label31.rect.cx = 120;
     label32.rect.cx = 400;
@@ -97,12 +97,12 @@ BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
     wcolumn.add_widget(&wline3);
 
 
-    WidgetLineLayout wline4(drawable, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
-    WidgetLabel label41(drawable, 1, 1, wline4, notifier, "wingroup", true,
+    WidgetLineLayout wline4(drawable.gd, Rect(0, 0, 1, 1), wcolumn, &wcolumn, id);
+    WidgetLabel label41(drawable.gd, 1, 1, wline4, notifier, "wingroup", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
-    WidgetLabel label42(drawable, 1, 1, wline4, notifier, "tartempion@wallix.fr", true,
+    WidgetLabel label42(drawable.gd, 1, 1, wline4, notifier, "tartempion@wallix.fr", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
-    WidgetLabel label43(drawable, 1, 1, wline4, notifier, "RDP", true,
+    WidgetLabel label43(drawable.gd, 1, 1, wline4, notifier, "RDP", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
     label41.rect.cx = 120;
     label42.rect.cx = 400;
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestLineLayoutwithColumns)
     wcolumn.rdp_input_invalidate(parent.rect);
     //drawable.save_to_png(OUTPUT_FILE_PATH "layout-columnline.png");
 
-    WidgetFlatButton button(drawable, 0, 0, wcolumn, &wcolumn, "un boutton", true, id,
+    WidgetFlatButton button(drawable.gd, 0, 0, wcolumn, &wcolumn, "un boutton", true, id,
                             WHITE, DARK_BLUE, DARK_BLUE);
 
     wcolumn.insert_widget(&button, 2);

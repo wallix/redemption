@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
     flag += FlatForm::DURATION_MANDATORY;
 
-    FlatForm form(drawable, 0, 0, 600, 150, parent, notifier, 0, font, colors, Translation::EN, flag);
+    FlatForm form(drawable.gd, 0, 0, 600, 150, parent, notifier, 0, font, colors, Translation::EN, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.rect);
@@ -77,12 +77,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     TestDraw drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 640, 480, parent, notifier, "test2",
+//     FlatWait flat_dialog(drawable.gd, 640, 480, parent, notifier, "test2",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -114,12 +114,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     TestDraw drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 1280, 1024, parent, notifier, "test3",
+//     FlatWait flat_dialog(drawable.gd, 1280, 1024, parent, notifier, "test3",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -151,12 +151,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     TestDraw drawable(1280, 1024);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-//     WidgetScreen parent(drawable, 1280, 1024);
+//     WidgetScreen parent(drawable.gd, 1280, 1024);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 1280, 1024, parent, notifier, "test4",
+//     FlatWait flat_dialog(drawable.gd, 1280, 1024, parent, notifier, "test4",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -188,12 +188,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     TestDraw drawable(640, 480);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-//     WidgetScreen parent(drawable, 640, 480);
+//     WidgetScreen parent(drawable.gd, 640, 480);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 640, 480, parent, notifier, "test5",
+//     FlatWait flat_dialog(drawable.gd, 640, 480, parent, notifier, "test5",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -225,12 +225,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     TestDraw drawable(350, 500);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-//     WidgetScreen parent(drawable, 300, 600);
+//     WidgetScreen parent(drawable.gd, 300, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 350, 500, parent, notifier, "test6",
+//     FlatWait flat_dialog(drawable.gd, 350, 500, parent, notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -263,12 +263,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     TestDraw drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 300, 600, parent, notifier, "test6",
+//     FlatWait flat_dialog(drawable.gd, 300, 600, parent, notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -300,12 +300,12 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     TestDraw drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "test6",
+//     FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     TestDraw drawable(800, 600);
 
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
+//     FlatWait flat_dialog(drawable.gd, 800, 600, parent, &notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -468,7 +468,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 
 //     TestDraw drawable(800, 600);
 
-//     WidgetScreen parent(drawable, 800, 600);
+//     WidgetScreen parent(drawable.gd, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -487,7 +487,7 @@ BOOST_AUTO_TEST_CASE(TestFlatForm)
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
+//     FlatWait flat_dialog(drawable.gd, 800, 600, parent, &notifier, "test6",
 //                            "Lorem ipsum dolor sit amet, consectetur<br>"
 //                            "adipiscing elit. Nam purus lacus, luctus sit<br>"
 //                            "amet suscipit vel, posuere quis turpis. Sed<br>"

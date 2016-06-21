@@ -284,11 +284,6 @@ public:
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
-    virtual bool get_status() const
-    {
-        return this->status;
-    }
-
 private:
     ssize_t privrecv(char * data, size_t len)
     {

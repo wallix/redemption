@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_FINALLY_HPP
-#define REDEMPTION_UTILS_FINALLY_HPP
+#pragma once
 
 template<class F>
 struct basic_finally {
@@ -91,4 +90,3 @@ rethrow_try_except(F f, Finally finally)
     return ret;
 }
 
-#endif

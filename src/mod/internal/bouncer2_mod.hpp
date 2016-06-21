@@ -22,8 +22,8 @@
 
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "internal_mod.hpp"
@@ -99,7 +99,7 @@ public:
     }
 
     // This should come from BACK!
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         this->interaction();
         // Calculating new speedx and speedy
         if (this->dancing_rect.x <= 0 && this->speedx < 0) {
@@ -141,4 +141,3 @@ public:
     }
 };
 
-#endif

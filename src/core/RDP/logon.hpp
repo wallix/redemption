@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_LOGON_HPP_
-#define _REDEMPTION_CORE_RDP_LOGON_HPP_
+
+#pragma once
 
 #include <stdint.h>
 
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"
@@ -1185,4 +1185,3 @@ struct InfoPacket {
     } // END FUNCT : log()
 }; // END STRUCT : InfoPacket
 
-#endif

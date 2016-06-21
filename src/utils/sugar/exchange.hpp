@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_EXCHANGE_HPP
-#define REDEMPTION_UTILS_EXCHANGE_HPP
+#pragma once
 
 #if __cplusplus > 201103L
 #include <utility>
@@ -36,4 +35,3 @@ T exchange(T & obj, U && new_val)
 }
 #endif
 
-#endif

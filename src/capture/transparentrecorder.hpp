@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_
-#define _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_
+
+#pragma once
 
 #include "transport/transport.hpp"
 #include "transparentchunk.hpp"
@@ -107,4 +107,3 @@ private:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_

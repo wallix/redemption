@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_CLIENT_INFO_HPP_
-#define _REDEMPTION_CORE_CLIENT_INFO_HPP_
+
+#pragma once
 
 #include <array>
 #include <cstring>
@@ -173,4 +173,3 @@ struct ClientInfo {
     }
 };
 
-#endif

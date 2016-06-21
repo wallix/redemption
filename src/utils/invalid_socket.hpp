@@ -21,4 +21,4 @@
 #pragma once
 
 constexpr int INVALID_SOCKET = -1;
-constexpr int SSH_INVALID_SOCKET = -1;
+

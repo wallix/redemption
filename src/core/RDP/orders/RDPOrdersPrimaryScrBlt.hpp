@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYSCRBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYSCRBLT_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -257,4 +257,3 @@ class RDPScrBlt {
 };
 
 
-#endif

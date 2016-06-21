@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_UTILS_ASYNCHRONOUS_TASK_MANAGER_HPP
-#define REDEMPTION_UTILS_ASYNCHRONOUS_TASK_MANAGER_HPP
+
+#pragma once
 
 #include "core/wait_obj.hpp"
 
@@ -34,4 +34,3 @@ public:
     virtual bool run(const wait_obj & wait_object) = 0;
 };
 
-#endif  // #ifndef REDEMPTION_UTILS_ASYNCHRONOUS_TASK_MANAGER_HPP

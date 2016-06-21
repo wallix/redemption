@@ -21,14 +21,14 @@
   Updating context dictionnary from incoming acl traffic
 */
 
-#ifndef _REDEMPTION_ACL_SERIALIZER_HPP_
-#define _REDEMPTION_ACL_SERIALIZER_HPP_
+
+#pragma once
 #include <unistd.h>
 #include <fcntl.h>
 
 #include <cinttypes>
 
-#include "utils/exchange.hpp"
+#include "utils/sugar/exchange.hpp"
 #include "utils/stream.hpp"
 #include "configs/config.hpp"
 #include "core/authid.hpp"
@@ -398,4 +398,3 @@ public:
     }
 };
 
-#endif

@@ -18,8 +18,7 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_NONCOPYABLE_HPP
-#define REDEMPTION_UTILS_NONCOPYABLE_HPP
+#pragma once
 
 namespace adl_barrier
 {
@@ -55,4 +54,3 @@ using noncopyable_but_movable = adl_barrier::noncopyable_but_movable;
     class_name(const class_name&) = delete; \
     class_name& operator=(const class_name&) = delete
 
-#endif

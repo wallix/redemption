@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_BYTES_T_HPP
-#define REDEMPTION_UTILS_BYTES_T_HPP
+#pragma once
 
 #include "utils/sugar/array_view.hpp"
 
@@ -203,4 +202,3 @@ private:
     }
 };
 
-#endif

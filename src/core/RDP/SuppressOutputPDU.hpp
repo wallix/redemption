@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SUPPRESS_OUTPUT_PDU_HPP_
-#define _REDEMPTION_CORE_RDP_SUPPRESS_OUTPUT_PDU_HPP_
+
+#pragma once
 
 namespace RDP {
 
@@ -231,4 +231,3 @@ public:
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_SUPPRESS_OUTPUT_PDU_HPP_

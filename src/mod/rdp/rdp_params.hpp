@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
@@ -273,4 +273,3 @@ struct ModRDPParams {
     }   // void log() const
 };  // struct ModRDPParams
 
-#endif  // #ifndef _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_

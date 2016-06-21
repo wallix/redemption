@@ -23,7 +23,7 @@
 #include <iosfwd>
 #include <cstdio>
 #include <cstdlib>
-#include "utils/underlying_cast.hpp"
+#include "utils/sugar/underlying_cast.hpp"
 #include "configs/c_str_buf.hpp"
 #include <initializer_list>
 

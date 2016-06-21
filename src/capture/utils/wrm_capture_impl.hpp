@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CAPTURE_UTILS_WRM_CAPTURE_IMPL_HPP
-#define REDEMPTION_CAPTURE_UTILS_WRM_CAPTURE_IMPL_HPP
+
+#pragma once
 
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
@@ -197,4 +197,3 @@ private:
     }
 };
 
-#endif

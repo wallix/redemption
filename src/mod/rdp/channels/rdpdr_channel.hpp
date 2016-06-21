@@ -18,14 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "utils/strutils.hpp"
+#include "utils/sugar/strutils.hpp"
 
 #include <deque>
 
@@ -2530,4 +2530,3 @@ public:
     }
 };  // class FileSystemVirtualChannel
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP

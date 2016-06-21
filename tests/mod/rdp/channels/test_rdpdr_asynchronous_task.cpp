@@ -30,7 +30,7 @@
 #include "utils/fdbuf.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
-#include "utils/make_unique.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "transport/test_transport.hpp"
 

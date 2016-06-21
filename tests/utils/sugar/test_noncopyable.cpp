@@ -20,37 +20,30 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSplitter
+#define BOOST_TEST_MODULE TestNonCopyable
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "utils/splitter.hpp"
-#include "utils/algostring.hpp"
-#include <string>
+#include "utils/sugar/noncopyable.hpp"
+#include <type_traits>
+
+struct Copyable {
+
+};
+struct NonCopyable : noncopyable{
+
+};
 
 BOOST_AUTO_TEST_CASE(TestSplitter)
 {
-    const char text[] = "abc,de,efg,h,ijk,lmn";
-    std::string s;
-    for (auto r : get_line(text, ',')) {
-        s.append(r.begin(), r.size()) += ':';
-    }
-    BOOST_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
-}
+    BOOST_CHECK_EQUAL(std::is_copy_constructible<Copyable>::value, true);
+    BOOST_CHECK_EQUAL(std::is_copy_assignable<Copyable>::value, true);
 
-BOOST_AUTO_TEST_CASE(TestSplitter2)
-{
-    const char * drives = " export ,, , \t share \t ,";
+    BOOST_CHECK_EQUAL(std::is_copy_constructible<NonCopyable>::value, false);
+    BOOST_CHECK_EQUAL(std::is_copy_assignable<NonCopyable>::value, false);
 
-    std::string s;
-    for (auto r : get_line(drives, ',')) {
-        auto trimmed_range = trim(r);
-
-        if (trimmed_range.empty()) continue;
-
-        s.append(begin(trimmed_range), end(trimmed_range)) += ',';
-    }
-    BOOST_CHECK_EQUAL(s, "export,share,");
+    // test default constructible
+    NonCopyable x; (void)x;
 }

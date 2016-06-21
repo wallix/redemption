@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BMPCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BMPCACHE_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -168,4 +168,3 @@ struct BmpCacheCaps : public Capability {
     }
 };
 
-#endif

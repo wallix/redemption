@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <iostream>
 
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
@@ -529,6 +529,7 @@ public:
     using base_type_::base_type_;
 };
 
+
 struct TextMetrics
 {
     int width;
@@ -578,8 +579,7 @@ static inline void server_draw_text(
             int cacheIndex = 0;
             bool exists = font.glyph_defined(charnum) && font.font_items[charnum];
             if (!exists){
-                LOG(LOG_WARNING, "mod_api::server_draw_text_deprecated()"
-                                 " - character not defined >0x%02x<", charnum);
+                LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
             }
             FontChar const & font_item = font.font_items[exists ? charnum : static_cast<unsigned>('?')];
 
@@ -623,6 +623,4 @@ static inline void server_draw_text(
     }
 }
 
-
 }
-

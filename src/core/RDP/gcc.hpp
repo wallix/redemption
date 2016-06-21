@@ -27,8 +27,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_GCC_HPP_
-#define _REDEMPTION_CORE_RDP_GCC_HPP_
+
+#pragma once
 
 #include "core/RDP/out_per_bstream.hpp"
 #include "system/ssl_calls.hpp"
@@ -3018,5 +3018,3 @@ struct CSMultiTransport {
 
     } /* namespace UserData */
 } /* namespace GCC */
-
-#endif

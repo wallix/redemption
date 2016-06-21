@@ -18,15 +18,15 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
+
+#pragma once
 
 #include <vector>
 
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 
@@ -1730,4 +1730,3 @@ public:
 }   // namespace RAIL
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_

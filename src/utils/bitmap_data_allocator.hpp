@@ -27,8 +27,8 @@
    color model.
 */
 
-#ifndef _REDEMPTION_UTILS_BITMAP_DATA_ALLOCATOR_HPP__
-#define _REDEMPTION_UTILS_BITMAP_DATA_ALLOCATOR_HPP__
+
+#pragma once
 
 #include <new>
 
@@ -154,4 +154,3 @@ namespace aux_ {
     } bitmap_data_allocator;
 }
 
-#endif

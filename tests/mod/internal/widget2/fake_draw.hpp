@@ -31,11 +31,11 @@
 #define FIXTURES_PATH
 #endif
 
-struct TestDraw : gdi::GraphicProxyBase<TestDraw, mod_api>
+struct TestDraw : mod_api
 {
     RDPDrawable gd;
 
-    TestDraw(uint16_t w, uint16_t h) : base_type(w, h), gd(w, h, 24) {}
+    TestDraw(uint16_t w, uint16_t h) : gd(w, h, 24) {}
 
     void draw_event(time_t now, gdi::GraphicApi& drawable) override {}
     void rdp_input_invalidate(const Rect& r) override {}
@@ -43,10 +43,6 @@ struct TestDraw : gdi::GraphicProxyBase<TestDraw, mod_api>
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {}
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {}
     void send_to_front_channel(const char*const mod_channel_name, const uint8_t* data, size_t length, size_t chunk_size, int flags) override {}
-
-    void begin_update() override {}
-
-    void end_update() override {}
 
     void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char * text,
                           uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)

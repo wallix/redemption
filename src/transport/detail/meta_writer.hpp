@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_DETAIL_META_WRITER_HPP
-#define REDEMPTION_TRANSPORT_DETAIL_META_WRITER_HPP
+
+#pragma once
 
 #include <limits>
 #include <cerrno>
@@ -38,7 +38,7 @@
 #include "utils/log.hpp"
 #include "acl/auth_api.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/iter.hpp"
+#include "utils/sugar/iter.hpp"
 
 #include "transport/cryptofile.hpp" // MD_HASH_LENGTH
 
@@ -577,4 +577,3 @@ namespace detail
     using out_meta_sequence_filename_buf = CloseWrapper<out_meta_sequence_filename_buf_impl<Buf, BufMeta>>;
 }
 
-#endif

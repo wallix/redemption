@@ -19,10 +19,10 @@
  *              Loïc Michaux
  */
 
-#ifndef REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
-#define REDEMPTION_PUBLIC_UTILS_FDBUF_HPP
 
-#include "utils/exchange.hpp"
+#pragma once
+
+#include "utils/sugar/exchange.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -187,4 +187,3 @@ inline void swap(fdbuf & a, fdbuf & b) noexcept
 } //posix
 } //io
 
-#endif

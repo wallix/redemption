@@ -18,8 +18,8 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CORE_RDP_MPPC_UNIFIED_DEC_HPP
-#define REDEMPTION_CORE_RDP_MPPC_UNIFIED_DEC_HPP
+
+#pragma once
 
 #include "mppc_40.hpp"
 #include "mppc_50.hpp"
@@ -67,4 +67,3 @@ public:
     }
 };  // struct rdp_mppc_unified_dec
 
-#endif

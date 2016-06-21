@@ -18,14 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
-#define _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
 #include "utils/stream.hpp"
 #include "core/error.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 
 namespace RDPECLIP {
 
@@ -1545,4 +1545,3 @@ public:
 
 }   // namespace RDPECLIP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_CLIPBOARD_HPP_

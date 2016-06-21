@@ -21,8 +21,8 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#ifndef SASHIMI_CHANNELS_HPP_
-#define SASHIMI_CHANNELS_HPP_
+
+#pragma once
 
 #include <errno.h>
 #include <netinet/in.h>
@@ -40,7 +40,7 @@
  * uncompressed payload length of 32768 bytes or less and a total packet
  * size of 35000 bytes or less.
  */
-#define CHANNEL_TOTAL_PACKET_SIZE 35000 
+#define CHANNEL_TOTAL_PACKET_SIZE 35000
 #define CHANNEL_MAX_PACKET 32768
 #define CHANNEL_INITIAL_WINDOW 64000
 
@@ -63,9 +63,9 @@ struct options_struct {
     char *gss_server_identity;
     char *gss_client_identity;
     int gss_delegate_creds;
-    
-    options_struct() 
-    : nbidentity(0) 
+
+    options_struct()
+    : nbidentity(0)
     , identity{}
     , username(nullptr)
     , host(nullptr)
@@ -168,7 +168,7 @@ enum ssh_channel_request_state_e {
 #define SSH_CHANNEL_FLAG_NOT_BOUND 0x4
 
 struct ssh_channel_struct {
-    enum class ssh_channel_state_e { 
+    enum class ssh_channel_state_e {
       SSH_CHANNEL_STATE_NOT_OPEN = 0,
       SSH_CHANNEL_STATE_OPENING,
       SSH_CHANNEL_STATE_OPEN_DENIED,
@@ -202,10 +202,10 @@ struct ssh_channel_struct {
     enum ssh_channel_request_state_e request_state;
     ssh_channel_callbacks callbacks;
     char show_buffer[256];
-    
-    ssh_channel_struct(ssh_session_struct * session, ssh_channel_callbacks callbacks, int dummy) 
-    : 
-//    session(session), 
+
+    ssh_channel_struct(ssh_session_struct * session, ssh_channel_callbacks callbacks, int dummy)
+    :
+//    session(session),
       local_channel(0)
     , local_window(0)
     , local_eof(false)
@@ -239,22 +239,22 @@ struct ssh_channel_struct {
 
 
     char * show(){
-        sprintf(this->show_buffer, "Channel %s %s (%d%s:%d%s)", 
+        sprintf(this->show_buffer, "Channel %s %s (%d%s:%d%s)",
            ((this->state == ssh_channel_state_e::SSH_CHANNEL_STATE_NOT_OPEN)   ? "NOT_OPEN"   :
             (this->state == ssh_channel_state_e::SSH_CHANNEL_STATE_OPENING)    ? "OPENING"    :
             (this->state == ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN_DENIED)? "OPEN DENIED":
-            (this->state == ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN)       ? "OPEN"       : 
-            (this->state == ssh_channel_state_e::SSH_CHANNEL_STATE_CLOSED)     ? "CLOSED" : "?STATE"),   
-            
+            (this->state == ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN)       ? "OPEN"       :
+            (this->state == ssh_channel_state_e::SSH_CHANNEL_STATE_CLOSED)     ? "CLOSED" : "?STATE"),
+
            ((this->request_state == ssh_channel_request_state_e::SSH_CHANNEL_REQ_STATE_NONE)    ? "REQ NONE"     :
             (this->request_state == ssh_channel_request_state_e::SSH_CHANNEL_REQ_STATE_PENDING) ? "REQ PENDING"  :
             (this->request_state == ssh_channel_request_state_e::SSH_CHANNEL_REQ_STATE_ACCEPTED)? "REQ ACCEPTED" :
-            (this->request_state == ssh_channel_request_state_e::SSH_CHANNEL_REQ_STATE_DENIED)  ? "REQ DENIED"   : 
+            (this->request_state == ssh_channel_request_state_e::SSH_CHANNEL_REQ_STATE_DENIED)  ? "REQ DENIED"   :
             (this->request_state == ssh_channel_request_state_e::SSH_CHANNEL_REQ_STATE_ERROR)   ? "REQ ERROR" : "?REQ"),
-            
-            this->local_channel, (this->local_eof ?"E":""), 
+
+            this->local_channel, (this->local_eof ?"E":""),
             this->remote_channel, (this->remote_eof?"E":""));
-            
+
             return this->show_buffer;
     }
 
@@ -276,7 +276,7 @@ struct ssh_channel_struct {
      *
      * @param[in]  payload   The buffer containing additional payload for the query.
      */
-    // TODO: I'm not sure constructor should be different of open ? 
+    // TODO: I'm not sure constructor should be different of open ?
     // Well, maybe if channel is opened from the remote side when receiving a message
     // instead of sending an open request.
     void channel_open(uint32_t id, const char *channel_type_c, uint32_t maxpacket, uint32_t window, ssh_buffer_struct* buffer) {
@@ -294,7 +294,7 @@ struct ssh_channel_struct {
         buffer->out_uint32_be(this->local_channel);
         buffer->out_uint32_be(this->local_window);
         buffer->out_uint32_be(this->local_maxpacket);
-        
+
         this->state = ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPENING;
     }
 
@@ -351,16 +351,16 @@ enum ssh_socket_states_e {
 struct ssh_poll_handle_struct {
     int lock;
     struct ssh_socket_struct * socket;
-  
-    ssh_poll_handle_struct(ssh_socket_struct * socket) 
+
+    ssh_poll_handle_struct(ssh_socket_struct * socket)
     : lock(0)
     , socket(socket)
     {
     }
-    
+
     ~ssh_poll_handle_struct() {
     }
-    
+
 };
 
 struct ssh_poll_handle_fd_struct {
@@ -369,8 +369,8 @@ struct ssh_poll_handle_fd_struct {
     struct ssh_socket_struct * socket;
     ssh_event_callback pw_cb;
     void * pw_userdata;
-  
-    ssh_poll_handle_fd_struct(socket_t fd, ssh_event_callback pw_cb, void * pw_userdata) 
+
+    ssh_poll_handle_fd_struct(socket_t fd, ssh_event_callback pw_cb, void * pw_userdata)
     : x_fd(fd)
     , lock(0)
     , socket(nullptr)
@@ -381,7 +381,7 @@ struct ssh_poll_handle_fd_struct {
 
     ~ssh_poll_handle_fd_struct() {
     }
-    
+
 };
 
 
@@ -391,7 +391,7 @@ struct ssh_poll_ctx_struct {
 
     ssh_poll_handle_fd_struct * fd_poll;
 
-    ssh_poll_ctx_struct() 
+    ssh_poll_ctx_struct()
     : front_session(nullptr)
     , target_session(nullptr)
     , fd_poll(nullptr   )
@@ -419,10 +419,10 @@ struct ssh_socket_struct {
     enum ssh_socket_states_e state;
     ssh_buffer_struct* out_buffer;
     ssh_buffer_struct* in_buffer;
-  
-    ssh_socket_struct() 
-        : fd_in(SSH_INVALID_SOCKET)
-        , fd_out(SSH_INVALID_SOCKET)
+
+    ssh_socket_struct()
+        : fd_in(INVALID_SOCKET)
+        , fd_out(INVALID_SOCKET)
         , fd_is_socket(1)
         , last_errno(-1)
         , read_wontblock(0)
@@ -442,14 +442,14 @@ struct ssh_socket_struct {
 
 
     void close(){
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-        if (this->fd_in != SSH_INVALID_SOCKET) {
+        syslog(LOG_INFO, "%s ---", __FUNCTION__);
+        if (this->fd_in != INVALID_SOCKET) {
             ::close(this->fd_in);
-            if(this->fd_out != this->fd_in && this->fd_out != SSH_INVALID_SOCKET){
+            if(this->fd_out != this->fd_in && this->fd_out != INVALID_SOCKET){
                 ::close(this->fd_out);
             }
             this->last_errno = errno;
-            this->fd_in = this->fd_out = SSH_INVALID_SOCKET;
+            this->fd_in = this->fd_out = INVALID_SOCKET;
         }
         this->state = SSH_SOCKET_CLOSED;
     }
@@ -471,8 +471,8 @@ struct ssh_agent_struct {
   ssh_buffer_struct* ident;
   unsigned int count;
   ssh_channel channel;
-  
-  ssh_agent_struct(ssh_session_struct *session, ssh_socket_struct * sock) 
+
+  ssh_agent_struct(ssh_session_struct *session, ssh_socket_struct * sock)
   : sock(sock)
   , ident(nullptr)
   , count(0)
@@ -482,7 +482,7 @@ struct ssh_agent_struct {
 
     /* caller has to free comment */
     ssh_key_struct *ssh_agent_get_next_ident(char **comment) {
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+        syslog(LOG_INFO, "%s ---", __FUNCTION__);
         // TODO: add boundary checks
         uint32_t blob_len = this->ident->in_uint32_be();
         SSHString blob(blob_len);
@@ -513,13 +513,13 @@ struct ssh_agent_struct {
         __FUNCTION__,
         reinterpret_cast<void*>(channel),
         reinterpret_cast<void*>(this->channel),
-        reinterpret_cast<void*>(this));    
+        reinterpret_cast<void*>(this));
     this->channel = channel;
     syslog(LOG_INFO, "%s : set channel to channel=%p this->channel=%p agent=%p",
         __FUNCTION__,
         reinterpret_cast<void*>(channel),
         reinterpret_cast<void*>(this->channel),
-        reinterpret_cast<void*>(this));    
+        reinterpret_cast<void*>(this));
   }
 
   void agent_close() {
@@ -528,7 +528,7 @@ struct ssh_agent_struct {
     }
   }
 
-  ~ssh_agent_struct() 
+  ~ssh_agent_struct()
   {
       if (this->ident) {
         delete this->ident;
@@ -539,37 +539,37 @@ struct ssh_agent_struct {
   }
 
     bool agent_is_running(ssh_session_struct * session) {
-        if (this->sock->fd_in != SSH_INVALID_SOCKET){
-            syslog(LOG_INFO, "%s : true: agent socket open", __FUNCTION__);    
+        if (this->sock->fd_in != INVALID_SOCKET){
+            syslog(LOG_INFO, "%s : true: agent socket open", __FUNCTION__);
             return true;
         }
         if (this->channel){
             syslog(LOG_INFO, "%s : true: agent channel OK %p", __FUNCTION__,
-                reinterpret_cast<void*>(this->channel));    
+                reinterpret_cast<void*>(this->channel));
             return true;
         }
         syslog(LOG_INFO, "%s : false agent=%p channel=%p session=%p",
             __FUNCTION__,
             reinterpret_cast<void*>(this),
             reinterpret_cast<void*>(this->channel),
-            reinterpret_cast<void*>(session));    
+            reinterpret_cast<void*>(session));
         return false;
     }
 
-    int agent_talk_channel_server(ssh_session_struct * server_session, struct ssh_buffer_struct *request, struct ssh_buffer_struct *reply, struct error_struct & error) 
+    int agent_talk_channel_server(ssh_session_struct * server_session, struct ssh_buffer_struct *request, struct ssh_buffer_struct *reply, struct error_struct & error)
     {
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+        syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
         /* send length and then the request packet */
         size_t len = request->in_remain();
         uint8_t buf[sizeof(uint32_t)];
         Serialize s(buf);
         s.out_uint32_be(len);
-        
+
         size_t pos = 0;
         /* using an SSH channel */
         while (4 > pos){
-            syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+            syslog(LOG_INFO, "%s ---", __FUNCTION__);
             ssize_t res = channel_write_common_server(server_session, this->channel, buf + pos, 4 - pos);
             switch (res){
             default:
@@ -598,7 +598,7 @@ struct ssh_agent_struct {
 
         uint8_t payload[1024] = {0};
         /* wait for response, read the length of the response packet */
-        
+
         size_t pos2 = 0;
 
         while (4 > pos2){
@@ -612,7 +612,7 @@ struct ssh_agent_struct {
             }
             pos2 += static_cast<size_t>(res);
         }
-        
+
         len = Parse(payload).in_uint32_be();
         if (len > 256 * 1024) {
             ssh_set_error(error, SSH_FATAL, "Authentication response too long: %u", static_cast<unsigned>(len));
@@ -622,7 +622,7 @@ struct ssh_agent_struct {
         while (len > 0) {
             syslog(LOG_INFO, "%s len=%u", __FUNCTION__, static_cast<unsigned>(len));
 
-            ssize_t res = ssh_channel_read_stdout_server(server_session, this->channel, payload, 
+            ssize_t res = ssh_channel_read_stdout_server(server_session, this->channel, payload,
                                 (len > sizeof(payload))?sizeof(payload):len);
             syslog(LOG_INFO, "res=%u", static_cast<unsigned>(res));
 
@@ -652,9 +652,9 @@ struct ssh_agent_struct {
         syslog(LOG_ERR, "%s", error.error_buffer);
     }
 
-    int ssh_agent_get_ident_count_channel_ssh2_server(ssh_session_struct * server_session, error_struct & error) 
+    int ssh_agent_get_ident_count_channel_ssh2_server(ssh_session_struct * server_session, error_struct & error)
     {
-        syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+        syslog(LOG_INFO, "%s ---", __FUNCTION__);
         ssh_buffer_struct request;
         /* send message to the agent requesting the list of identities */
         request.out_uint8(SSH2_AGENTC_REQUEST_IDENTITIES);
@@ -663,37 +663,37 @@ struct ssh_agent_struct {
         try {
 
             if (this->agent_talk_channel_server(server_session, &request, reply, error) < 0) {
-                syslog(LOG_INFO, "%s agent talk channel error ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s agent talk channel error ---", __FUNCTION__);
                 this->set_error(error, 0, SSH_NO_ERROR, __FUNCTION__, "");
                 throw error;
             }
 
-            syslog(LOG_INFO, "%s back from agent talk channel 1 ---", __FUNCTION__);    
-            
+            syslog(LOG_INFO, "%s back from agent talk channel 1 ---", __FUNCTION__);
+
 
             /* get message type and verify the answer */
             unsigned int type = reply->in_uint8();
 
-            syslog(LOG_WARNING, "Answer type: %d, expected answer: SSH2_AGENT_IDENTITIES_ANSWER (%d)", 
+            syslog(LOG_WARNING, "Answer type: %d, expected answer: SSH2_AGENT_IDENTITIES_ANSWER (%d)",
                 type, SSH2_AGENT_IDENTITIES_ANSWER);
 
             if ((type == SSH_AGENT_FAILURE) || (type == SSH_COM_AGENT2_FAILURE) || (type == SSH2_AGENT_FAILURE)) {
-                syslog(LOG_INFO, "%s type = FAILURE ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s type = FAILURE ---", __FUNCTION__);
                 this->set_error(error, 0, SSH_NO_ERROR, __FUNCTION__, "");
                 throw error;
             }
-              
+
             if (type != SSH2_AGENT_IDENTITIES_ANSWER) {
                 this->set_error(error, -1, SSH_FATAL, __FUNCTION__, "Bad authentication reply message type: %d", type);
-                syslog(LOG_INFO, "%s type = not SSH2_AGENT_IDENTITIES_ANSWER ---", __FUNCTION__);    
+                syslog(LOG_INFO, "%s type = not SSH2_AGENT_IDENTITIES_ANSWER ---", __FUNCTION__);
                 throw error;
             }
 
             this->count = reply->in_uint32_be();
             syslog(LOG_INFO, "Agent count: %d", this->count);
-              
+
             if (this->count > 1024) {
-                this->set_error(error, -1, SSH_FATAL, __FUNCTION__, 
+                this->set_error(error, -1, SSH_FATAL, __FUNCTION__,
                     "Too many identities in authentication reply: %d", this->count);
                 throw error;
             }
@@ -725,7 +725,7 @@ struct ssh_kbdint_struct {
     char **prompts;
     unsigned char *echo; /* bool array */
     char **answers;
-    
+
     ssh_kbdint_struct()
         : nprompts(0)
         , nanswers(0)
@@ -864,8 +864,8 @@ struct ssh_auth_auto_state_struct {
     int it;
     ssh_key_struct *privkey;
     ssh_key_struct *pubkey;
-    
-    ssh_auth_auto_state_struct() 
+
+    ssh_auth_auto_state_struct()
         : state(SSH_AUTH_AUTO_STATE_NONE)
         , it(-1)
         , privkey(nullptr)
@@ -878,5 +878,3 @@ struct ssh_auth_auto_state_struct {
 
 int ssh_poll_ctx_dopoll(struct ssh_poll_ctx_struct * ctx, int timeout);
 int dopoll(ssh_poll_ctx_struct * ctx, int timeout);
-
-#endif /* CHANNELS_HPP_ */

@@ -21,6 +21,8 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
  */
 
+#include "utils/invalid_socket.hpp"
+
 #pragma once
 
 #if __GNUC__ >= 4 && !defined(__OS2__)
@@ -124,8 +126,6 @@ extern "C" {
 #ifndef socket_t
 typedef int socket_t;
 #endif
-
-#define SSH_INVALID_SOCKET -1
 
 typedef struct ssh_channel_struct * ssh_channel;
  

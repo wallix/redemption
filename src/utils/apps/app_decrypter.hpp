@@ -6,8 +6,8 @@
    redrec video converter program
 */
 
-#ifndef REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
-#define REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
+
+#pragma once
 
 #include <type_traits>
 #include <iostream>
@@ -113,4 +113,3 @@ int app_decrypter(int argc, char const * const * argv, const char * copyright_no
     return 0;
 }
 
-#endif

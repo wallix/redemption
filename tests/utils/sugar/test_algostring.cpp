@@ -20,30 +20,30 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNonCopyable
+#define BOOST_TEST_MODULE TestSplitter
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "utils/noncopyable.hpp"
-#include <type_traits>
+#include "utils/sugar/algostring.hpp"
+#include <string>
 
-struct Copyable {
-
-};
-struct NonCopyable : noncopyable{
-
-};
-
-BOOST_AUTO_TEST_CASE(TestSplitter)
+BOOST_AUTO_TEST_CASE(TestTrim)
 {
-    BOOST_CHECK_EQUAL(std::is_copy_constructible<Copyable>::value, true);
-    BOOST_CHECK_EQUAL(std::is_copy_assignable<Copyable>::value, true);
+    char const s[] = " \t abcd   ";
+    auto left_s = s+3;
+    auto right_s = s+7;
+    auto first = std::begin(s);
+    auto last = std::end(s) - 1;
 
-    BOOST_CHECK_EQUAL(std::is_copy_constructible<NonCopyable>::value, false);
-    BOOST_CHECK_EQUAL(std::is_copy_assignable<NonCopyable>::value, false);
+    BOOST_CHECK_EQUAL(ltrim(first, last), left_s);
+    BOOST_CHECK_EQUAL(rtrim(first, last), right_s);
 
-    // test default constructible
-    NonCopyable x; (void)x;
+    using range_type = range<char const *>;
+    range_type trimmed{left_s, right_s};
+    range_type r{first, last};
+
+    BOOST_CHECK(trim(first, last) == trimmed);
+    BOOST_CHECK(trim(r) == trimmed);
 }

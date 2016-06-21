@@ -23,7 +23,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "mod/internal/widget2/widget.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "gdi/graphic_api.hpp"
 
 class WidgetLabel : public Widget2

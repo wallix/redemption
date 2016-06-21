@@ -18,8 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_ARRAY_VIEW_HPP
-#define REDEMPTION_UTILS_ARRAY_VIEW_HPP
+#pragma once
 
 #include <type_traits>
 
@@ -155,4 +154,3 @@ using array_view_const_s64 = array_view<int64_t const>;
 using array_view_char = array_view<char>;
 using array_view_const_char = array_view<char const>;
 
-#endif

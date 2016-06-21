@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_TEST_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_TEST_TRANSPORT_HPP
+
+#pragma once
 
 #include "transport/transport.hpp"
 #include "transport/mixin_transport.hpp"
@@ -213,15 +213,15 @@ public:
         memcpy(this->public_key.get(), data, data_size);
     }
 
-    virtual const uint8_t * get_public_key() const override {
+    const uint8_t * get_public_key() const override {
         return this->public_key.get();
     }
 
-    virtual size_t get_public_key_length() const override {
+    size_t get_public_key_length() const override {
         return this->public_key_length;
     }
 
-    virtual bool get_status() const {
+    bool get_status() const override {
         return this->check.get_status() && this->gen.get_status();
     }
 
@@ -257,16 +257,14 @@ public:
     InStream    in_stream{buf};
     OutStream   out_stream{buf};
 
-    virtual void do_recv(char ** pbuffer, size_t len) override {
+    void do_recv(char ** pbuffer, size_t len) override {
         char * buffer = *pbuffer;
         this->in_stream.in_copy_bytes(buffer, len);
         (*pbuffer) = buffer + len;
     }
 
-    virtual void do_send(const char * const buffer, size_t len) override {
+    void do_send(const char * const buffer, size_t len) override {
         this->out_stream.out_copy_bytes(buffer, len);
     }
 };
-
-#endif
 

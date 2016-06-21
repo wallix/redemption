@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
+
+#pragma once
 
 #include <string.h>
 #include "common.hpp"
@@ -501,4 +501,3 @@ struct BitmapCodecCaps : public Capability {
 
 
 
-#endif

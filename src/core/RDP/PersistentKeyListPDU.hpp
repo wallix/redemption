@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
-#define _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
@@ -394,4 +394,3 @@ private:
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_PERSISTENTKEYLISTPDU_HPP_

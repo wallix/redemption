@@ -19,8 +19,8 @@
  *	(GEnie : OUTER; CIS : [71755,204])
  */
 
-#ifndef _REDEMPTION_UTILS_D3DES_HPP_
-#define _REDEMPTION_UTILS_D3DES_HPP_
+
+#pragma once
 
 #define EN0	0	/* MODE == encrypt */
 #define DE1	1	/* MODE == decrypt */
@@ -62,4 +62,3 @@ void rfbDesText(unsigned char *, unsigned char *, unsigned long, unsigned char *
  ********************************************************************/
 }
 
-#endif

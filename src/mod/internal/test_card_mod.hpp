@@ -63,16 +63,14 @@ public:
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    void draw_event(time_t now, GraphicApi & drawable) override {
-        this->draw();
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        this->draw(drawable);
         this->event.reset();
     }
 
     bool is_up_and_running() override { return true; }
 
-    using InternalMod::draw;
-
-    void draw()
+    void draw(gdi::GraphicApi & drawable)
     {
         this->front.begin_update();
 
@@ -130,11 +128,11 @@ public:
             RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        gdi::server_draw_text(*this->gd, this->font, 30, 30, "White", WHITE, BLACK, clip);
-        gdi::server_draw_text(*this->gd, this->font, 30, 50, "Red  ", RED, BLACK, clip);
-        gdi::server_draw_text(*this->gd, this->font, 30, 70, "Green", GREEN, BLACK, clip);
-        gdi::server_draw_text(*this->gd, this->font, 30, 90, "Blue ", BLUE, BLACK, clip);
-        gdi::server_draw_text(*this->gd, this->font, 30, 110, "Black", BLACK, WHITE, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 30, "White", WHITE, BLACK, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 50, "Red  ", RED, BLACK, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 70, "Green", GREEN, BLACK, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 90, "Blue ", BLUE, BLACK, clip);
+        gdi::server_draw_text(drawable, this->font, 30, 110, "Black", BLACK, WHITE, clip);
 
         Bitmap_PNG card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,

@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_POINTER_HPP_
-#define _REDEMPTION_CORE_RDP_POINTER_HPP_
+
+#pragma once
 
 #include "utils/log.hpp"
 #include "utils/bitfu.hpp"
@@ -469,4 +469,3 @@ public:
     }
 };
 
-#endif

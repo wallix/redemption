@@ -18,8 +18,8 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_CORE_ACTIVITY_CHECKER_HPP
-#define REDEMPTION_CORE_ACTIVITY_CHECKER_HPP
+
+#pragma once
 
 struct ActivityChecker
 {
@@ -27,4 +27,3 @@ struct ActivityChecker
     virtual ~ActivityChecker() {}
 };
 
-#endif

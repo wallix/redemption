@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
-#define REDEMPTION_TRANSPORT_DETAIL_META_OPENER_HPP
+
+#pragma once
 
 #include <cerrno>
 #include <fcntl.h>
@@ -383,4 +383,3 @@ namespace detail
     };
 }
 
-#endif

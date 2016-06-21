@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Meng Tan
  */
 
-#ifndef REDEMPTION_UTILS_THEME_HPP
-#define REDEMPTION_UTILS_THEME_HPP
+
+#pragma once
 
 #include "utils/colors.hpp"
 #include "cfgloader.hpp"
@@ -191,4 +191,3 @@ struct Theme : public ConfigurationHolder {
 };
 
 
-#endif

@@ -18,8 +18,8 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_GET_PRINTABLE_PASSWORD_HPP
-#define REDEMPTION_UTILS_GET_PRINTABLE_PASSWORD_HPP
+
+#pragma once
 
 inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
     switch (printing_mode) {
@@ -32,4 +32,3 @@ inline const char * get_printable_password(const char * password, uint32_t print
     }
 }
 
-#endif

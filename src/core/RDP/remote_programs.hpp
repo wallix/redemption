@@ -18,10 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
-#define _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
 
-#include "utils/cast.hpp"
+#pragma once
+
+#include "utils/sugar/cast.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
@@ -724,4 +724,3 @@ public:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_

@@ -18,29 +18,39 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_MOVABLE_NONCOPYABLE_HPP
-#define REDEMPTION_UTILS_MOVABLE_NONCOPYABLE_HPP
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE TestSplitter
+#include "system/redemption_unit_tests.hpp"
 
-namespace adl_barrier
+#define LOGNULL
+//#define LOGPRINT
+
+#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/algostring.hpp"
+#include <string>
+
+BOOST_AUTO_TEST_CASE(TestSplitter)
 {
-    class movable_noncopyable
-    {
-    protected:
-        movable_noncopyable() = default;
-        ~movable_noncopyable() = default;
-
-        movable_noncopyable(const movable_noncopyable&) = delete;
-        movable_noncopyable& operator=(movable_noncopyable&&) = default;
-
-        movable_noncopyable(movable_noncopyable&&) = default;
-        movable_noncopyable& operator=(const movable_noncopyable&) = delete;
-    };
+    const char text[] = "abc,de,efg,h,ijk,lmn";
+    std::string s;
+    for (auto r : get_line(text, ',')) {
+        s.append(r.begin(), r.size()) += ':';
+    }
+    BOOST_CHECK_EQUAL(s, "abc:de:efg:h:ijk:lmn:");
 }
 
-using movable_noncopyable = adl_barrier::movable_noncopyable;
+BOOST_AUTO_TEST_CASE(TestSplitter2)
+{
+    const char * drives = " export ,, , \t share \t ,";
 
-#define REDEMPTION_MOVABLE(class_name)  \
-    class_name(class_name&&) = default; \
-    class_name& operator=(class_name&&) = default
+    std::string s;
+    for (auto r : get_line(drives, ',')) {
+        auto trimmed_range = trim(r);
 
-#endif
+        if (trimmed_range.empty()) continue;
+
+        s.append(begin(trimmed_range), end(trimmed_range)) += ',';
+    }
+    BOOST_CHECK_EQUAL(s, "export,share,");
+}

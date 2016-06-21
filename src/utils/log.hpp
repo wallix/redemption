@@ -21,8 +21,8 @@
    log file including syslog
 */
 
-#ifndef _REDEMPTION_UTILS_LOG_HPP_
-#define _REDEMPTION_UTILS_LOG_HPP_
+
+#pragma once
 
 #include <string.h>
 
@@ -486,4 +486,3 @@ inline void hexdump8_c(const unsigned char * data, size_t size)
 
 } // anonymous namespace
 
-#endif

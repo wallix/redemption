@@ -21,14 +21,14 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
-#define _REDEMPTION_CORE_RDP_NEGO_HPP_
+
+#pragma once
 
 
 #include "core/RDP/nla/nla.hpp"
 #include "core/RDP/x224.hpp"
 
-#include "utils/strutils.hpp"
+#include "utils/sugar/strutils.hpp"
 
 struct RdpNego
 {
@@ -679,4 +679,3 @@ struct RdpNego
 };
 
 
-#endif

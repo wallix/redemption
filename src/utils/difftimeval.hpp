@@ -19,8 +19,8 @@
    Martin Potier, Jonathan Poelen, Meng Tan
 */
 
-#ifndef _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
-#define _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
+
+#pragma once
 
 #include "timeval_ops.hpp"
 
@@ -168,4 +168,3 @@ static inline timeval how_long_to_wait(const timeval & alarm, const timeval & no
  * @}
  */
 
-#endif

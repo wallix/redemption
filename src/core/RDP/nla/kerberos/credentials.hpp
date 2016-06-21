@@ -18,8 +18,8 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_KERBEROS_CREDENTIALS_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_KERBEROS_CREDENTIALS_HPP_
+
+#pragma once
 
 #include <cstring>
 #include <krb5.h>
@@ -144,4 +144,3 @@ public:
     }
 };
 
-#endif

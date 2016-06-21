@@ -18,11 +18,11 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_
+
+#pragma once
 
 #include "core/font.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 
 #include <array>
@@ -147,4 +147,3 @@ public:
     }
 };  // class GlyphCache
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_CACHES_GLYPHCACHE_HPP_

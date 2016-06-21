@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_IN_FILE_TRANSPORT_HPP
+
+#pragma once
 
 #include "core/error.hpp"
 #include "transport/transport.hpp"
@@ -93,4 +93,3 @@ struct InFileSeekableTransport : public InFileTransport
     }
 };
 
-#endif

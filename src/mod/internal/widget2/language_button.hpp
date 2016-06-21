@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "utils/splitter.hpp"
+#include "utils/sugar/splitter.hpp"
 #include "flat_button.hpp"
 
-#include "utils/algostring.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "gdi/graphic_api.hpp"
 
 class LanguageButton : public WidgetFlatButton

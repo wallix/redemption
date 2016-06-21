@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_TIMEOUT_HPP_
-#define _REDEMPTION_UTILS_TIMEOUT_HPP_
+
+#pragma once
 
 class Timeout {
     time_t timeout;
@@ -146,4 +146,3 @@ static inline timeval operator+(timeval const & a, timeval const & b) {
     return result;
 }
 
-#endif  // #ifndef _REDEMPTION_UTILS_TIMEOUT_HPP_

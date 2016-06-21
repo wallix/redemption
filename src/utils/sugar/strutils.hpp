@@ -18,8 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#ifndef _REDEMPTION_UTILS_STRUTILS_HPP_
-#define _REDEMPTION_UTILS_STRUTILS_HPP_
+#pragma once
 
 #include "core/error.hpp"
 #include "utils/log.hpp"
@@ -194,4 +193,3 @@ inline static void MultiSZCopy(char * dest, size_t dest_size, const char * src) 
 }
 
 
-#endif  // #ifndef _REDEMPTION_UTILS_STRUTILS_HPP_

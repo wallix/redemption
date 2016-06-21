@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     TestDraw drawable(800, 600);
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
 
     NotifyApi * notifier = nullptr;
     // int         fg_color = RED;
@@ -55,10 +55,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrame)
     uint16_t    cx       = 400;
     uint16_t    cy       = 300;
 
-    WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
-    // WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/Philips_PM5544_192.bmp", parent, notifier);
-    // WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/color_image.png", parent, notifier);
-    WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
+    WidgetFrame frame(drawable.gd, Rect(x, y, cx, cy), parent, notifier, group_id);
+    // WidgetImage wimage(drawable.gd, 0, 0, FIXTURES_PATH"/Philips_PM5544_192.bmp", parent, notifier);
+    // WidgetImage wimage(drawable.gd, 0, 0, FIXTURES_PATH"/color_image.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
 
     frame.set_widget(&wimage);
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarVertical)
     TestDraw drawable(800, 600);
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
 
     NotifyApi * notifier    = nullptr;
     int         fg_color    = MEDIUM_BLUE;
@@ -160,9 +160,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarVertical)
     uint16_t    cx          = 750;
     uint16_t    cy          = 267;
 
-    WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
-    WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
-    WidgetVScrollBar bar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+    WidgetFrame frame(drawable.gd, Rect(x, y, cx, cy), parent, notifier, group_id);
+    WidgetImage wimage(drawable.gd, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
+    WidgetVScrollBar bar(drawable.gd, parent, notifier, fg_color, bg_color, focus_color,
                          group_id);
 
     parent.add_widget(&frame);
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarHorizontal)
     TestDraw drawable(800, 600);
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
 
     NotifyApi * notifier    = nullptr;
     int         fg_color    = MEDIUM_BLUE;
@@ -272,9 +272,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarHorizontal)
     uint16_t    cx          = 379;
     uint16_t    cy          = 267;
 
-    WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
-    WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
-    WidgetHScrollBar bar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+    WidgetFrame frame(drawable.gd, Rect(x, y, cx, cy), parent, notifier, group_id);
+    WidgetImage wimage(drawable.gd, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
+    WidgetHScrollBar bar(drawable.gd, parent, notifier, fg_color, bg_color, focus_color,
                          group_id);
 
     parent.add_widget(&frame);
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     TestDraw drawable(800, 600);
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
 
     NotifyApi * notifier    = nullptr;
     int         fg_color    = MEDIUM_BLUE;
@@ -384,11 +384,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFrameScrollbarControl)
     uint16_t    cx          = 400;
     uint16_t    cy          = 300;
 
-    WidgetFrame frame(drawable, Rect(x, y, cx, cy), parent, notifier, group_id);
-    WidgetImage wimage(drawable, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
-    WidgetVScrollBar vbar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+    WidgetFrame frame(drawable.gd, Rect(x, y, cx, cy), parent, notifier, group_id);
+    WidgetImage wimage(drawable.gd, 0, 0, FIXTURES_PATH"/win2008capture10.png", parent, notifier);
+    WidgetVScrollBar vbar(drawable.gd, parent, notifier, fg_color, bg_color, focus_color,
                           group_id);
-    WidgetHScrollBar hbar(drawable, parent, notifier, fg_color, bg_color, focus_color,
+    WidgetHScrollBar hbar(drawable.gd, parent, notifier, fg_color, bg_color, focus_color,
                           group_id);
 
     parent.add_widget(&frame);

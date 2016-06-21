@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_CHUNKTOFILE_HPP_
-#define _REDEMPTION_CAPTURE_CHUNKTOFILE_HPP_
+
+#pragma once
 
 #include "RDPChunkedDevice.hpp"
 #include "utils/compression_transport_wrapper.hpp"
@@ -235,4 +235,3 @@ public:
     }
 };
 
-#endif

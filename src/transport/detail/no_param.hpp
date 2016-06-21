@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_TRANSPORT_DETAIL_NO_PARAM_HPP
-#define REDEMPTION_TRANSPORT_DETAIL_NO_PARAM_HPP
+
+#pragma once
 
 namespace detail {
     struct no_param {};
@@ -33,4 +33,3 @@ namespace detail {
     };
 }
 
-#endif

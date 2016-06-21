@@ -18,8 +18,7 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_ITER_HPP
-#define REDEMPTION_UTILS_ITER_HPP
+#pragma once
 
 #include <cstdlib>
 
@@ -116,4 +115,3 @@ iter(const T & cont, std::size_t n)
 { return {cont.begin(), cont.begin()+n}; }
 //@}
 
-#endif

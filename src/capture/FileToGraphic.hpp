@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Jonathan Poelen
 */
 
-#ifndef _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
-#define _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
+
+#pragma once
 
 #include "transport/transport.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
@@ -47,7 +47,7 @@
 #include "utils/compression_transport_wrapper.hpp"
 #include "chunked_image_transport.hpp"
 #include "wrm_label.hpp"
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/png.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/graphic_api.hpp"
@@ -1030,4 +1030,3 @@ private:
     }
 };
 
-#endif

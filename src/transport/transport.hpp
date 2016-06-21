@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_TRANSPORT_HPP
+
+#pragma once
 
 #include <sys/time.h>
 #include <stdint.h>
@@ -30,7 +30,7 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 #include "configs/autogen/enums.hpp"
 
@@ -88,7 +88,7 @@ public:
     uint64_t get_last_quantum_sent() const
     { return this->last_quantum_sent; }
 
-    bool get_status() const
+    virtual bool get_status() const
     { return this->status; }
 
     void set_authentifier(auth_api * authentifier)
@@ -204,4 +204,3 @@ private:
     Transport& operator=(const Transport &) = delete;
 };
 
-#endif

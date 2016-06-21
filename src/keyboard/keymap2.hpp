@@ -21,8 +21,8 @@
    header file. Keymap2 object, used to manage key stroke events
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
-#define _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
@@ -978,4 +978,3 @@ public:
 
 }; // END STRUCT - Keymap2
 
-#endif

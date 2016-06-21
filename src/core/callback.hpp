@@ -23,8 +23,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_CALLBACK_HPP_
-#define _REDEMPTION_CORE_CALLBACK_HPP_
+
+#pragma once
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/rect.hpp"
@@ -82,7 +82,7 @@ struct RdpInput
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_invalidate(const Rect & r) = 0;
-    virtual void rdp_input_invalidate2(array_view<Rect> vr) {
+    virtual void rdp_input_invalidate2(array_view<Rect const> vr) {
         for (Rect const & rect : vr) {
             if (!rect.isempty()) {
                 this->rdp_input_invalidate(rect);
@@ -104,8 +104,5 @@ struct Callback : RdpInput
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
     virtual void send_auth_channel_data(const char * data) {}
-
-    virtual void send_disconnect_ultimatum() {}
 };
 
-#endif

@@ -29,7 +29,7 @@
 
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
-#include "utils/make_unique.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "utils/stream.hpp"
 #include "transport/test_transport.hpp"
 #include "utils/virtual_channel_data_sender.hpp"

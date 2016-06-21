@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Jonathan Poelen, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
-#define _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
+
+#pragma once
 
 #include "utils/colors.hpp"
 #include "utils/compression_transport_wrapper.hpp"
@@ -445,4 +445,3 @@ public:
     using RDPSerializer::set_pointer;
 };  // struct GraphicToFile
 
-#endif

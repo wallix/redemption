@@ -28,8 +28,8 @@
 #include "utils/bitfu.hpp"
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
-#include "utils/make_unique.hpp"
-#include "bytes_t.hpp"
+#include "utils/sugar/make_unique.hpp"
+#include "utils/sugar/bytes_t.hpp"
 
 #include <memory>
 #include <initializer_list>

@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
+
+#pragma once
 
 #include <cinttypes>
 
@@ -238,4 +238,3 @@ public:
     }
 };  // class SnappyCompressionOutTransport
 
-#endif  // #ifndef REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP

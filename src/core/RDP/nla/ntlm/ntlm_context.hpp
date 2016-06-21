@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
+
+#pragma once
 
 //#include "system/ssl_calls.hpp"
 #include "utils/genrandom.hpp"
@@ -1223,4 +1223,3 @@ struct NTLMContext {
     }
 };
 
-#endif

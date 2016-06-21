@@ -18,9 +18,7 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_SRC_UTILS_MAKE_UNIQUE_HPP
-#define REDEMPTION_SRC_UTILS_MAKE_UNIQUE_HPP
-
+#pragma once
 #include <memory>
 
 #if __cplusplus == 201103L
@@ -56,4 +54,3 @@ namespace std {
 }
 #endif
 
-#endif

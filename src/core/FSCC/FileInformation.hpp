@@ -18,14 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_
-#define _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_
+
+#pragma once
 
 #include <cinttypes>
 
 #include "core/error.hpp"
 
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
 
 namespace fscc {
@@ -2625,4 +2625,3 @@ enum {
 
 }   // namespace fscc
 
-#endif  // #ifndef _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_

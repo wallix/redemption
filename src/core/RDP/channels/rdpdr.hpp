@@ -18,14 +18,14 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
-#define REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
+
+#pragma once
 
 #include <cinttypes>
 
-#include "utils/cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "core/error.hpp"
-#include "utils/noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
 
@@ -3551,4 +3551,3 @@ public:
 
 }   // namespace rdpdr
 
-#endif

@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_DUMP_PNG24_FROM_RDP_DRAWABLE_ADAPTER_HPP
-#define REDEMPTION_UTILS_DUMP_PNG24_FROM_RDP_DRAWABLE_ADAPTER_HPP
+
+#pragma once
 
 #include "gdi/dump_png24.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -35,4 +35,3 @@ struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api  {
     }
 };
 
-#endif

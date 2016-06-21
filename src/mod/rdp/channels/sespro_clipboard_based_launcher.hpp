@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCLIPBOARDBASEDLAUNCHER_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_SESPROCLIPBOARDBASEDLAUNCHER_HPP
+
+#pragma once
 
 #include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
@@ -155,7 +155,7 @@ public:
         return false;
     }
 
-    virtual bool on_drive_redirection_initialize() override {
+    bool on_drive_redirection_initialize() override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_drive_redirection_initialize");
@@ -644,7 +644,7 @@ public:
         this->sesprob_channel = static_cast<SessionProbeVirtualChannel*>(channel);
     }
 
-    virtual void stop(bool bLaunchSuccessful) override {
+    void stop(bool bLaunchSuccessful) override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> stop");
@@ -754,4 +754,3 @@ private:
     }
 };  // class SessionProbeClipboardBasedLauncher
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_SESPROCLIPBOARDBASEDLAUNCHER_HPP

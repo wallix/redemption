@@ -18,32 +18,27 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestSplitter
-#include "system/redemption_unit_tests.hpp"
+#pragma once
 
-#define LOGNULL
-//#define LOGPRINT
-
-#include "utils/algostring.hpp"
-#include <string>
-
-BOOST_AUTO_TEST_CASE(TestTrim)
+namespace adl_barrier
 {
-    char const s[] = " \t abcd   ";
-    auto left_s = s+3;
-    auto right_s = s+7;
-    auto first = std::begin(s);
-    auto last = std::end(s) - 1;
+    class movable_noncopyable
+    {
+    protected:
+        movable_noncopyable() = default;
+        ~movable_noncopyable() = default;
 
-    BOOST_CHECK_EQUAL(ltrim(first, last), left_s);
-    BOOST_CHECK_EQUAL(rtrim(first, last), right_s);
+        movable_noncopyable(const movable_noncopyable&) = delete;
+        movable_noncopyable& operator=(movable_noncopyable&&) = default;
 
-    using range_type = range<char const *>;
-    range_type trimmed{left_s, right_s};
-    range_type r{first, last};
-
-    BOOST_CHECK(trim(first, last) == trimmed);
-    BOOST_CHECK(trim(r) == trimmed);
+        movable_noncopyable(movable_noncopyable&&) = default;
+        movable_noncopyable& operator=(const movable_noncopyable&) = delete;
+    };
 }
+
+using movable_noncopyable = adl_barrier::movable_noncopyable;
+
+#define REDEMPTION_MOVABLE(class_name)  \
+    class_name(class_name&&) = default; \
+    class_name& operator=(class_name&&) = default
+

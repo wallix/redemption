@@ -19,8 +19,8 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
+
+#pragma once
 
 #include "core/front_api.hpp"
 #include "configs/config.hpp"
@@ -60,8 +60,8 @@ public:
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, *this, front, this->font(), this->theme())
-        , wait_widget(*this, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
+        , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
                       &this->language_button,
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),
@@ -124,7 +124,7 @@ private:
     }
 
 public:
-    void draw_event(time_t now, GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->refused();
@@ -150,4 +150,3 @@ public:
     }
 };
 
-#endif

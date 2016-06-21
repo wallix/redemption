@@ -21,8 +21,8 @@
    Copyright (c) 2003-2013 by Aris Adamantiadis
 */
 
-#ifndef STRING_HPP_
-#define STRING_HPP_
+
+#pragma once
 
 #include <memory>
 
@@ -87,4 +87,3 @@ struct SSHString
 
 };
 
-#endif

@@ -39,19 +39,19 @@ BOOST_AUTO_TEST_CASE(TraceWidgetColumn)
 
 
     // WidgetButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     NotifyApi * notifier = nullptr;
     int id = 0;
 
-    WidgetColumnLayout wcolumn(drawable, 50, 60, parent, notifier, id);
+    WidgetColumnLayout wcolumn(drawable.gd, 50, 60, parent, notifier, id);
 
-    WidgetLabel label1(drawable, 1, 1, wcolumn, notifier, "premier widget", true,
+    WidgetLabel label1(drawable.gd, 1, 1, wcolumn, notifier, "premier widget", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
-    WidgetLabel label2(drawable, 1, 1, wcolumn, notifier, "deuxieme widget", true,
+    WidgetLabel label2(drawable.gd, 1, 1, wcolumn, notifier, "deuxieme widget", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
-    WidgetLabel label3(drawable, 1, 1, wcolumn, notifier, "troisieme widget", true,
+    WidgetLabel label3(drawable.gd, 1, 1, wcolumn, notifier, "troisieme widget", true,
                        0, 0x000000, LIGHT_BLUE, 2, 2);
-    WidgetLabel label4(drawable, 1, 1, wcolumn, notifier, "quatrieme widget", true,
+    WidgetLabel label4(drawable.gd, 1, 1, wcolumn, notifier, "quatrieme widget", true,
                        0, 0x000000, MEDIUM_BLUE, 2, 2);
     label1.rect.cx = 500;
     label2.rect.cx = 500;

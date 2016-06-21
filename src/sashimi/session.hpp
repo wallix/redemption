@@ -21,8 +21,8 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
  */
 
-#ifndef SASHIMI_SESSION_HPP_
-#define SASHIMI_SESSION_HPP_
+
+#pragma once
 
 #include <vector>
 
@@ -1166,7 +1166,7 @@ struct SshServerSession : public ssh_session_struct
 
                 /* If buffered data is pending, write it */
                 if(this->socket->out_buffer->in_remain() > 0){
-                    if (this->socket->fd_in == SSH_INVALID_SOCKET) {
+                    if (this->socket->fd_in == INVALID_SOCKET) {
                         ssh_set_error(error, SSH_FATAL,
                           "[A]Writing packet: error on socket %d (or connection closed): %s",
                           this->socket->fd_in, strerror(this->socket->last_errno));
@@ -7267,7 +7267,7 @@ struct SshClientSession : public ssh_session_struct
             int err=0;
             socklen_t errlen=sizeof(err);
             /* Do not do anything if this socket was already closed */
-            if(this->socket->fd_in == SSH_INVALID_SOCKET){
+            if(this->socket->fd_in == INVALID_SOCKET){
                 this->poll->lock = 1;
                 return;
             }
@@ -7583,4 +7583,3 @@ int ssh_channel_request_exec_client(SshClientSession * client_session, ssh_chann
 int ssh_channel_request_pty_size_client(SshClientSession * client_session, ssh_channel channel, const char *terminal, int col, int row);
 
 
-#endif
