@@ -65,6 +65,7 @@
 #include "core/RDP/pointer.hpp"
 #include "core/channel_list.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/utf.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "keyboard/keymap2.hpp"
@@ -151,7 +152,7 @@ public:
     Keymap2              _keymap;
     bool                 _ctrl_alt_delete; // currentinit_frontly not used and always false
     StaticOutStream<256> _decoded_data;    // currently not initialised
-    uint8_t              _keyboardMods;
+    //uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     //uint32_t             _requestedFormatId;
     //std::string          _requestedFormatShortName;
@@ -161,7 +162,7 @@ public:
     //int                  _bufferRDPCLipboardMetaFilePic_width;
     //int                  _bufferRDPCLipboardMetaFilePic_height;
     //int                  _bufferRDPClipboardMetaFilePicBPP;
-    const Keylayout_r  * _keylayout;
+    //const Keylayout_r  * _keylayout;
 
 
     enum : uint8_t {
@@ -190,11 +191,11 @@ public:
     void setClientInfo(ClientInfo & info) {
         this->_info = info;
         this->_mod_bpp = this->_info.bpp;
-        this->setKeyboardLayout(this->_info.keylayout);
+        //this->setKeyboardLayout(this->_info.keylayout);
         this->_clipRect = Rect(0, 0, this->_info.width, this->_info.height);
     }
 
-    void setKeyboardLayout(int LCID) {
+    /*void setKeyboardLayout(int LCID) {
         bool found = false;
         for (uint8_t i = 0 ; i < KEYLAYOUTS_LIST_SIZE; i++) {
             if (keylayoutsList[i]->LCID == LCID){
@@ -207,7 +208,7 @@ public:
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
 
-    }
+    }*/
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->_cl;
@@ -702,15 +703,17 @@ public:
         }
     }
 
-    void charPressed(int code) {
+    void charPressed(uint8_t code) {
         if (this->_mod !=  nullptr) {
-            uint16_t flag = 0;
+            uint8_t flag = 0;
 
-            if (code < 0) {
+            /*if (code < 0) {
                 code += 256;
-            }
+            }*/
 
-            uint16_t uniCode = 0;  //  code >> uniCode
+            uint8_t * seqUniCode = nullptr;
+            UTF8toUTF16(&code, seqUniCode, 2);
+            uint16_t uniCode = seqUniCode[0] + (seqUniCode[1] << 8);
 
             switch (code) {
 
