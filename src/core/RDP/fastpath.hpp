@@ -449,6 +449,17 @@ namespace FastPath {
         }
     };
 
+    struct KeyboardEventUniCode_Send {
+        KeyboardEventUniCode_Send(OutStream & stream, uint8_t eventFlags, uint16_t uniCode) {
+            stream.out_uint8(                          // eventHeader
+                  (FASTPATH_INPUT_EVENT_UNICODE  << 5)
+                | eventFlags
+            );
+
+            stream.out_uint16_le(uniCode);
+        }
+    };
+
     struct KeyboardEvent_Send {
         KeyboardEvent_Send(OutStream & stream, uint8_t eventFlags, uint8_t keyCode) {
             stream.out_uint8(                          // eventHeader

@@ -1452,6 +1452,12 @@ public:
         }
     }
 
+    void rdp_input_unicode(uint16_t unicode, uint8_t flag) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
+        }
+    }
+
     void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
                                         , int16_t param2) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
@@ -5830,6 +5836,10 @@ public:
                 switch (message_type) {
                 case RDP_INPUT_SCANCODE:
                     FastPath::KeyboardEvent_Send(stream, device_flags, param1);
+                    break;
+
+                case RDP_INPUT_UNICODE:
+                    FastPath::KeyboardEventUniCode_Send(stream, device_flags, param1);
                     break;
 
                 case RDP_INPUT_SYNCHRONIZE:
