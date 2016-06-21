@@ -421,7 +421,9 @@ function connecting() {
 
         endTimer();
         /* Test */
+
     } else {
+        
         var errorDiv = document.getElementById("errorMsgDiv");
         errorDiv.textContent = "Connection failed";
         errorDiv.style = "display:block";
@@ -442,7 +444,7 @@ function disconnecting() {
 function init_socket(ip, user, password, port) { // ip = string; port = int
     console.log('init_socket');
 
-    return true; 
+    return true;
 }
 
 function send_to_serveur(data, size) { // data = [uint8_t];  size = size_t

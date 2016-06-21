@@ -63,7 +63,7 @@ public:
         return false;
     }
 
-    virtual bool on_drive_redirection_initialize() override {
+    bool on_drive_redirection_initialize() override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_drive_redirection_initialize");

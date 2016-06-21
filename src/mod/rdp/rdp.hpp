@@ -114,6 +114,8 @@ private:
 protected:
     FileSystemDriveManager file_system_drive_manager;
 
+    uint16_t front_width;
+    uint16_t front_height;
     FrontAPI& front;
 
     class ToClientSender : public VirtualChannelDataSender
@@ -627,7 +629,8 @@ public:
            , Random & gen
            , const ModRDPParams & mod_rdp_params
            )
-        : mod_api(info.width - (info.width % 4), info.height)
+        : front_width(info.width - (info.width % 4))
+        , front_height(info.height)
         , front(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
@@ -1450,6 +1453,12 @@ public:
         }
     }
 
+    void rdp_input_unicode(uint16_t unicode, uint8_t flag) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
+        }
+    }
+
     void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
                                         , int16_t param2) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
@@ -1501,7 +1510,7 @@ public:
         }
     }
 
-    virtual wait_obj * get_session_probe_launcher_event() override {
+    wait_obj * get_session_probe_launcher_event() override {
         if (this->session_probe_launcher) {
             return this->session_probe_launcher->get_event();
         }
@@ -1509,7 +1518,7 @@ public:
         return nullptr;
     }
 
-    virtual void process_session_probe_launcher() override {
+    void process_session_probe_launcher() override {
         if (this->session_probe_launcher) {
             this->session_probe_launcher->on_event();
         }
@@ -5830,6 +5839,10 @@ public:
                     FastPath::KeyboardEvent_Send(stream, device_flags, param1);
                     break;
 
+                case RDP_INPUT_UNICODE:
+                    FastPath::KeyboardEventUniCode_Send(stream, device_flags, param1);
+                    break;
+
                 case RDP_INPUT_SYNCHRONIZE:
                     FastPath::SynchronizeEvent_Send(stream, param1);
                     break;
@@ -6626,7 +6639,7 @@ private:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void send_disconnect_ultimatum() override {
+    void send_disconnect_ultimatum() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }

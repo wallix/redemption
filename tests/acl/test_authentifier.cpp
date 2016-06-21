@@ -35,10 +35,10 @@
 #include "acl/authentifier.hpp"
 
 struct ActivityAlwaysTrue : ActivityChecker {
-    virtual bool check_and_reset_activity() override { return true; };
+    bool check_and_reset_activity() override { return true; };
 };
 struct ActivityAlwaysFalse : ActivityChecker {
-    virtual bool check_and_reset_activity() override { return false; };
+    bool check_and_reset_activity() override { return false; };
 };
 
 

@@ -155,7 +155,7 @@ public:
         return false;
     }
 
-    virtual bool on_drive_redirection_initialize() override {
+    bool on_drive_redirection_initialize() override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_drive_redirection_initialize");
@@ -644,7 +644,7 @@ public:
         this->sesprob_channel = static_cast<SessionProbeVirtualChannel*>(channel);
     }
 
-    virtual void stop(bool bLaunchSuccessful) override {
+    void stop(bool bLaunchSuccessful) override {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> stop");

@@ -91,9 +91,7 @@ public:
         const timeval & now, bool enable_rt, auth_api * authentifier, Drawable & drawable,
         const char * record_tmp_path, const char * basename, int groupid,
         const Inifile & ini)
-    : png_interval(
-        std::chrono::duration<std::chrono::microseconds::rep, std::ratio<1, 10>>(
-            ini.get<cfg::video::png_interval>()))
+    : png_interval(ini.get<cfg::video::png_interval>())
     , trans_builder(record_tmp_path, basename, groupid, authentifier, enable_rt, ini)
     , ic(now, drawable, this->trans_builder.get_transport(), this->png_interval)
     {}

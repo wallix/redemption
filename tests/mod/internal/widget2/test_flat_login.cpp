@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
         Notify() = default;
 
-        virtual void notify(Widget2* sender, notify_event_t event) override
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 
         Notify() = default;
 
-        virtual void notify(Widget2* sender, notify_event_t event) override
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;

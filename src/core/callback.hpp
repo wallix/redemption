@@ -37,6 +37,7 @@ enum {
     RDP_INPUT_CODEPOINT            = 1,
     RDP_INPUT_VIRTKEY              = 2,
     RDP_INPUT_SCANCODE             = 4,
+    RDP_INPUT_UNICODE              = 5,
     RDP_INPUT_MOUSE                = 0x8001
 };
 
@@ -47,6 +48,7 @@ enum {
     KBD_FLAG_QUIET                 = 0x1000,
     KBD_FLAG_DOWN                  = 0x4000,
     KBD_FLAG_UP                    = 0x8000
+
 };
 
 /* These are for synchronization; not for keystrokes */
@@ -68,10 +70,15 @@ enum {
     MOUSE_FLAG_WHEEL_NEGATIVE      = 0x0100
 };
 
+enum {
+    FASTPATH_INPUT_KBDFLAGS_RELEASE = 0x01
+};
+
 struct RdpInput
 {
     virtual ~RdpInput() {}
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
+    virtual void rdp_input_unicode(uint16_t unicode, uint8_t flag) {}
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_invalidate(const Rect & r) = 0;
@@ -97,7 +104,5 @@ struct Callback : RdpInput
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
     virtual void send_auth_channel_data(const char * data) {}
-
-    virtual void send_disconnect_ultimatum() {}
 };
 

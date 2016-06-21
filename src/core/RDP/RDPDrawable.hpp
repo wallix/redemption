@@ -654,7 +654,7 @@ private:
 //                                fc_bit_mask = 128;
 //                                fc_data++;
 //                            }
-//                            if (screen_rect.contains_pt(px + xx, y + yy) 
+//                            if (screen_rect.contains_pt(px + xx, y + yy)
 //                                && (*fc_data & fc_bit_mask)){
 //                                this->drawable.draw_pixel(px + xx, y + yy, fg_color);
 //                             }
@@ -832,44 +832,6 @@ public:
             return font.font_items[unsigned('?')];
         }
         return font.font_items[c];
-    }
-
-    // for testing purposes
-    void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor,  const Rect& clip, bool use_offset = true)
-    {
-        if (text[0] != 0) {
-            Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
-            if (screen_rect.isempty()){
-                return ;
-            }
-
-            const Color fg_color = this->u32_to_color(fgcolor);
-            UTF8toUnicodeIterator unicode_iter(text);
-
-            for (; *unicode_iter ; ++unicode_iter) {
-                const FontChar & fc = this->get_font(font, *unicode_iter);
-                const int16_t px = x + fc.offset * use_offset;
-                if (Rect(0,0,0,0) != screen_rect.intersect(Rect(x, y, fc.incby, fc.height))){
-                    const uint8_t * fc_data            = fc.data.get();
-                    for (int yy = 0 ; yy < fc.height; yy++) {
-                        unsigned char fc_bit_mask = 128;
-                        for (int xx = 0 ; xx < fc.width ; xx++) {
-                            if (!fc_bit_mask) {
-                                fc_bit_mask = 128;
-                                fc_data++;
-                            }
-                            if (screen_rect.contains_pt(px + xx, y + yy) 
-                                && (*fc_data & fc_bit_mask)){
-                                this->drawable.draw_pixel(px + xx, y + yy, fg_color);
-                             }
-                            fc_bit_mask >>= 1;
-                         }
-                         fc_data++;
-                     }
-                }
-                x += fc.incby;
-             }
-        }
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {

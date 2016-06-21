@@ -28,13 +28,16 @@
 
 struct InternalMod : public mod_api {
 public:
+    uint16_t front_width;
+    uint16_t front_height;
     FrontAPI & front;
 
     WidgetScreen screen;
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
                 Theme const & theme = Theme())
-        : mod_api(front_width, front_height)
+        : front_width(front_width)
+        , front_height(front_height)
         , front(front)
         , screen(front, front_width, front_height, font, nullptr, theme)
     {

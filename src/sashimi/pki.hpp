@@ -21,10 +21,11 @@
    Copyright (c) 2003-2009 by Aris Adamantiadis
 */
 
-#include <assert.h>
+#pragma once
+
+#include <cassert>
 #include "system/ssl_calls.hpp"
 #include "openssl_crypto.hpp"
-
 
 #define MAX_PUBKEY_SIZE 0x100000 /* 1M */
 #define MAX_PRIVKEY_SIZE 0x400000 /* 4M */

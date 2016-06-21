@@ -205,8 +205,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
     BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+    BOOST_CHECK_EQUAL(front.info.width, 800);
+    BOOST_CHECK_EQUAL(front.info.height, 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

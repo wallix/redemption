@@ -88,7 +88,7 @@ public:
     uint64_t get_last_quantum_sent() const
     { return this->last_quantum_sent; }
 
-    bool get_status() const
+    virtual bool get_status() const
     { return this->status; }
 
     void set_authentifier(auth_api * authentifier)

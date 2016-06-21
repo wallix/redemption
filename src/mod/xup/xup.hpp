@@ -76,14 +76,13 @@ enum {
 
     xup_mod( Transport & t
            , FrontAPI & front
-           , uint16_t front_width
-           , uint16_t front_height
+           , uint16_t /*front_width*/
+           , uint16_t /*front_height*/
            , int context_width
            , int context_height
            , int context_bpp
            )
-    : mod_api(front_width, front_height)
-    , front(front)
+    : front(front)
     , width(context_width)
     , height(context_height)
     , bpp(context_bpp)
