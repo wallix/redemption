@@ -97,7 +97,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "nomouse", set(false));
         W.member(A, type_<bool>(), "notimestamp", set(false));
         W.member(A, type_<Level>(), "encryptionLevel", set(Level::low));
-        W.member(A, type_<std::string>(), "authfile", set("/var/run/redemption-sesman-sock"));
+        W.member(A, type_<std::string>(), "authfile", set("/tmp/redemption-sesman-sock"));
         W.sep();
         W.member(V, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(V, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));

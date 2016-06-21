@@ -21,7 +21,7 @@
 "encryptionLevel = option('low', 'medium', 'high', default='low')\n\n"
 
 "#_advanced\n"
-"authfile = string(default='/var/run/redemption-sesman-sock')\n\n"
+"authfile = string(default='/tmp/redemption-sesman-sock')\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"
