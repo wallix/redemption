@@ -1344,9 +1344,15 @@ test-canonical transport/detail/meta_hash.hpp ;
 test-canonical transport/detail/no_param.hpp ;
 test-canonical transport/filter/crypto_filter.hpp ;
 test-canonical transport/mixin_transport.hpp ;
-test-canonical utils/apps/app_decrypter.hpp ;
+
+test-canonical utils/apps/app_decrypter.hpp :
+    <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+    
 test-canonical utils/apps/app_proxy.hpp ;
-test-canonical utils/apps/app_recorder.hpp ;
+
+test-canonical utils/apps/app_recorder.hpp :
+    <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+    
 test-canonical utils/apps/app_verifier.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
