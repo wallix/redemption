@@ -16,7 +16,6 @@
 #include "transport/in_meta_sequence_transport.hpp"
 #include "system/ssl_calls.hpp"
 #include "configs/config.hpp"
-#include "utils/fdbuf.hpp"
 
 #include "program_options/program_options.hpp"
 
@@ -1143,10 +1142,6 @@ static inline int is_file_encrypted(const std::string & full_filename)
     while (remaining_len) {
         ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
         if (ret < 0){
-            if (ret == 0){
-                std::cerr << "Input file truncated\n";
-                return -1;
-            }
             if (errno == EINTR){
                 continue;
             }
