@@ -416,11 +416,6 @@ namespace transbuf {
             }
         }
 
-        int close()
-        {
-            return this->cfb_file_close();
-        }
-
         bool is_open() const noexcept
         {
             return this->cfb_file_is_open();
@@ -498,8 +493,35 @@ public:
         }
     }
 
-    int read_hash_file_v2(HashHeader const & /*hash_header*/, bool has_hash, MetaLine2 & hash_line) {
-       return this->read_meta_file_v2_impl2<false>(has_hash, hash_line);
+    MetaHeader2 read_meta_headers()
+    {
+        MetaHeader2 header{1, false};
+
+        char line[32];
+        auto sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
+        if (sz < 0) {
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+
+        // v2
+        if (line[0] == 'v') {
+            if (this->next_line()
+             || (sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
+            ) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            header.version = 2;
+            header.has_checksum = (line[0] == 'c');
+        }
+        // else v1
+
+        if (this->next_line()
+         || this->next_line()
+        ) {
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+
+        return header;
     }
 
     int read_meta_file_v1(MetaLine2 & meta_line)
@@ -715,79 +737,6 @@ HashHeader read_hash_headers(ReaderLine2ReaderBuf2 & reader)
 }
 
 
-int read_meta_file_v1(ReaderLine2ReaderBuf2 & reader, MetaLine2 & meta_line)
-{
-    char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
-    ssize_t len = reader.read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
-    if (len < 0) {
-        return -len;
-    }
-    line[len] = 0;
-
-    // Line format "fffff sssss eeeee hhhhh HHHHH"
-    //                               ^  ^  ^  ^
-    //                               |  |  |  |
-    //                               |hash1|  |
-    //                               |     |  |
-    //                           space3    |hash2
-    //                                     |
-    //                                   space4
-    //
-    // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-    //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-    typedef std::reverse_iterator<char*> reverse_iterator;
-
-    using std::begin;
-
-    reverse_iterator last(line);
-    reverse_iterator first(line + len);
-    reverse_iterator e1 = std::find(first, last, ' ');
-    if (e1 - first == 64) {
-        int err = 0;
-        auto phash = begin(meta_line.hash2);
-        for (char * b = e1.base(), * e = b + 64; e != b; ++b, ++phash) {
-            *phash = (chex_to_int(*b, err) << 4);
-            *phash |= chex_to_int(*++b, err);
-        }
-        REDASSERT(!err);
-    }
-
-    reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
-    if (e2 - (e1 + 1) == 64) {
-        int err = 0;
-        auto phash = begin(meta_line.hash1);
-        for (char * b = e2.base(), * e = b + 64; e != b; ++b, ++phash) {
-            *phash = (chex_to_int(*b, err) << 4);
-            *phash |= chex_to_int(*++b, err);
-        }
-        REDASSERT(!err);
-    }
-
-    if (e1 - first == 64 && e2 != last) {
-        first = e2 + 1;
-        e1 = std::find(first, last, ' ');
-        e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
-    }
-
-    meta_line.stop_time = meta_parse_sec(e1.base(), first.base());
-    if (e1 != last) {
-        ++e1;
-    }
-    meta_line.start_time = meta_parse_sec(e2.base(), e1.base());
-
-    if (e2 != last) {
-        *e2 = 0;
-    }
-
-    auto path_len = std::min(int(e2.base() - line), PATH_MAX);
-    memcpy(meta_line.filename, line, path_len);
-    meta_line.filename[path_len] = 0;
-
-    return 0;
-}
-
-
-
 
 template<bool read_start_stop_time>
 int read_meta_file_v2_impl2(
@@ -865,81 +814,10 @@ int read_meta_file_v2_impl2(
 }
 
 
-int read_meta_file_v2(ReaderLine2ReaderBuf2 & reader, MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
-    return read_meta_file_v2_impl2<true>(reader, meta_header.has_checksum, meta_line);
-}
-
 
 int read_hash_file_v2(ReaderLine2ReaderBuf2 & reader, HashHeader const & /*hash_header*/, bool has_hash, MetaLine2 & hash_line) {
    return read_meta_file_v2_impl2<false>(reader, has_hash, hash_line);
 }
-
-
-
-MetaHeader2 read_meta_headers(ReaderLine2ReaderBuf2 & reader)
-{
-    MetaHeader2 header{1, false};
-
-    char line[32];
-    auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-    if (sz < 0) {
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-    }
-
-    // v2
-    if (line[0] == 'v') {
-        if (reader.next_line()
-         || (sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
-        ) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-        }
-        header.version = 2;
-        header.has_checksum = (line[0] == 'c');
-    }
-    // else v1
-
-    if (reader.next_line()
-     || reader.next_line()
-    ) {
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-    }
-
-    return header;
-}
-
-
-MetaHeader2 read_meta_headers(ReaderLine2ReaderBuf3 & reader)
-{
-    MetaHeader2 header{1, false};
-
-    char line[32];
-    auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-    if (sz < 0) {
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-    }
-
-    // v2
-    if (line[0] == 'v') {
-        if (reader.next_line()
-         || (sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
-        ) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-        }
-        header.version = 2;
-        header.has_checksum = (line[0] == 'c');
-    }
-    // else v1
-
-    if (reader.next_line()
-     || reader.next_line()
-    ) {
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-    }
-
-    return header;
-}
-
-
 
 
 static inline bool check_file_hash_sha256(
@@ -1067,19 +945,6 @@ static inline bool check_file(
     }
 
     return true;
-}
-
-int read_meta_file2(
-    ReaderLine2ReaderBuf2 & reader,
-    MetaHeader2 const & meta_header,
-    MetaLine2 & meta_line
-) {
-    if (meta_header.version == 1) {
-        return read_meta_file_v1(reader, meta_line);
-    }
-    else {
-        return read_meta_file_v2(reader, meta_header, meta_line);
-    }
 }
 
 static inline int check_encrypted_or_checksumed(
@@ -1343,7 +1208,7 @@ static inline int check_encrypted_or_checksumed(
         }
 
         ReaderLine2ReaderBuf3 reader(ifile);
-        auto meta_header = read_meta_headers(reader);
+        auto meta_header = reader.read_meta_headers();
 
         MetaLine2 meta_line_wrm;
 
