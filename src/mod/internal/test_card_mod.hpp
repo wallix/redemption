@@ -86,7 +86,7 @@ public:
         this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
 
 
-        Bitmap_PNG bitmap(SHARE_PATH "/" "Philips_PM5544_640.png");
+        Bitmap bitmap = bitmap_from_file(SHARE_PATH "/" "Philips_PM5544_640.png");
 
         this->front.draw(RDPMemBlt(0,
             Rect(winrect.x + (winrect.cx - bitmap.cx())/2,
@@ -134,7 +134,7 @@ public:
         gdi::server_draw_text(drawable, this->font, 30, 90, "Blue ", BLUE, BLACK, clip);
         gdi::server_draw_text(drawable, this->font, 30, 110, "Black", BLACK, WHITE, clip);
 
-        Bitmap_PNG card(SHARE_PATH "/" REDEMPTION_LOGO24);
+        Bitmap card = bitmap_from_file(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,
             Rect(this->get_screen_rect().cx - card.cx() - 30,
                  this->get_screen_rect().cy - card.cy() - 30, card.cx(), card.cy()),
@@ -147,13 +147,13 @@ public:
             0xf0, 0xc0, 0x0f,
         };
 
-        Bitmap_PNG bloc64x64(24, 24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
+        Bitmap bloc64x64(24, 24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
         this->front.draw(RDPMemBlt(0,
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
              32, 32, 0), clip, bloc64x64);
 
         //Bitmap_PNG logo(SHARE_PATH "/ad8b.bmp");
-        Bitmap_PNG logo(SHARE_PATH "/ad8b.png");
+        Bitmap logo = bitmap_from_file(SHARE_PATH "/ad8b.png");
         this->front.draw(RDPMemBlt(0,
             Rect(100, 100, 26, 32),
             0xCC,
@@ -163,7 +163,7 @@ public:
             //this->front.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip);
             this->front.sync();
 
-            Bitmap_PNG wab_logo_blue(SHARE_PATH "/" "wablogoblue.png");
+            Bitmap wab_logo_blue = bitmap_from_file(SHARE_PATH "/" "wablogoblue.png");
 
 
             const uint16_t startx = 5;

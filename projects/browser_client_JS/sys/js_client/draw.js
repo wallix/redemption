@@ -394,6 +394,12 @@ var drawable = new Drawable();
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
 
+/* test */
+var len = 250568;
+
+var current = 0;
+/* test */
+
 function connecting() {
     var ip = document.getElementById("ip").value;
     var user = document.getElementById("user").value;
@@ -417,13 +423,14 @@ function connecting() {
         /* Test */
         startTimer();
 
-        getDataOctet();
+        current = 0;
+        //getDataOctet();
 
         endTimer();
         /* Test */
 
     } else {
-        
+
         var errorDiv = document.getElementById("errorMsgDiv");
         errorDiv.textContent = "Connection failed";
         errorDiv.style = "display:block";
@@ -451,13 +458,18 @@ function send_to_serveur(data, size) { // data = [uint8_t];  size = size_t
     console.log('data_sent_to_serveur');
 }
 
-/* test */
-var len = 250568;
-/* test */
+
 
 function getDataOctet() {
-    for (var i = 0; i < len; i++) {
-        _recv_value(inData[i]);
+    /* Test */
+    var i = 0;
+    for (i = current; i < (current + 2000); i++) {
+        if (i < len) {
+            _recv_value(inData[i]);
+        }
     }
+
+    current = i;
+    /* Test */
 }
 

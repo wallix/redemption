@@ -21,7 +21,7 @@
 "encryptionLevel = option('low', 'medium', 'high', default='low')\n\n"
 
 "#_advanced\n"
-"authfile = string(default='/var/run/redemption-sesman-sock')\n\n"
+"authfile = string(default='/tmp/redemption-sesman-sock')\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"
@@ -73,7 +73,7 @@
 "wrm_path = string(max=4096, default='" WRM_PATH "')\n\n"
 
 "#_hidden\n"
-"movie = boolean(default=False)\n\n"
+"is_rec = boolean(default=False)\n\n"
 
 "#_advanced\n"
 "movie_path = string(default='')\n\n"

@@ -61,6 +61,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
         // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
     } catch (Error & e) {
         LOG(LOG_INFO, "e=%u", e.id);
+        BOOST_CHECK(false);
     };
 
     char message[1024];

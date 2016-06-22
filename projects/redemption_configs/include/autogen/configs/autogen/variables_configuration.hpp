@@ -210,7 +210,7 @@ namespace cfg {
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
-            type value = "/var/run/redemption-sesman-sock";
+            type value = "/tmp/redemption-sesman-sock";
         };
         // Time out during RDP handshake stage.
         // type: std::chrono::seconds

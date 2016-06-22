@@ -82,8 +82,6 @@
 // source emsdk_portable/emsdk_env.sh
 
 
-extern "C" void recv_wrapped();
-
 
 
 class Front_JS_Natif : public FrontAPI
@@ -171,7 +169,7 @@ public:
     };
 
     enum : uint16_t {
-        KBD_FLAGS_EXTENDED = 0x100
+        KBD_FLAGS_EXTENDED = 0x0100
     };
 
     enum: uint8_t {
@@ -269,6 +267,10 @@ public:
         if (this->_trans != nullptr) {
             this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
+        }
+
+        while (!this->_mod->is_up_and_running()) {
+            this->_mod->draw_event(time(nullptr), *(this));
         }
     }
 
@@ -783,7 +785,8 @@ extern "C" void backspacePressed() {
 }
 
 extern "C" void CtrlAltDelPressed() {
-    if (front._mod !=  nullptr) {
+    EM_ASM_({ getDataOctet(); }, 0);
+    /*if (front._mod !=  nullptr) {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
@@ -791,7 +794,7 @@ extern "C" void CtrlAltDelPressed() {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-    }
+    }*/
 }
 
 
