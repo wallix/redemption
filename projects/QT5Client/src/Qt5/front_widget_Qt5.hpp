@@ -908,6 +908,10 @@ public:
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
 
+            while (!this->_callback->is_up_and_running()) {
+                this->_callback->draw_event(time(nullptr), *(this->_front));
+            }
+
         } catch (const Error & e) {
             const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is closed.");
             std::cout << errorMsg << std::endl;

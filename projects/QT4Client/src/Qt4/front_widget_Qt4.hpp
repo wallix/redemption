@@ -910,7 +910,6 @@ public:
 
             while (!this->_callback->is_up_and_running()) {
                 this->_callback->draw_event(time(nullptr), *(this->_front));
-                std::cout << "call" <<  std::endl;
             }
 
         } catch (const Error & e) {
