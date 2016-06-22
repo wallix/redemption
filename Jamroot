@@ -868,6 +868,7 @@ unit-test test_vnc : tests/mod/vnc/test_vnc.cpp : $(TEST_DEPENDENCIES) <library>
 unit-test test_xup : tests/mod/xup/test_xup.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_bitmap : tests/utils/test_bitmap.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+unit-test test_bitmap_with_png : tests/utils/test_bitmap_with_png.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
 unit-test test_colors : tests/utils/test_colors.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_d3des : tests/utils/test_d3des.cpp : $(TEST_DEPENDENCIES) ;
