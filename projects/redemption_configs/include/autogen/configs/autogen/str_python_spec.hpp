@@ -73,7 +73,7 @@
 "wrm_path = string(max=4096, default='" WRM_PATH "')\n\n"
 
 "#_hidden\n"
-"movie = boolean(default=False)\n\n"
+"is_rec = boolean(default=False)\n\n"
 
 "#_advanced\n"
 "movie_path = string(default='')\n\n"

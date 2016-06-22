@@ -309,7 +309,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     // test we can read a config file with a global section
     std::stringstream oss(
         "[globals]\n"
-        "movie=yes\n"
         "bitmap_cache=yes\n"
         "glyph_cache=yes\n"
         "port=3390\n"
@@ -396,7 +395,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     ConfigurationLoader cfg_loader(ini.configuration_holder(), oss);
 
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::is_rec>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());

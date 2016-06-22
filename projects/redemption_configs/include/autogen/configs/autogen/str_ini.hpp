@@ -73,7 +73,7 @@
 "wrm_path = " WRM_PATH "\n\n"
 
 "#_hidden\n"
-"movie = 0\n\n"
+"is_rec = 0\n\n"
 
 "#_advanced\n"
 "movie_path = \n\n"

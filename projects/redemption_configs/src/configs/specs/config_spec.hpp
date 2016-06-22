@@ -116,7 +116,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::path>(), "png_path", set(CPP_MACRO(PNG_PATH)));
         W.member(A, type_<types::path>(), "wrm_path", set(CPP_MACRO(WRM_PATH)));
         W.sep();
-        W.member(H, type_<bool>(), "is_rec", spec::name{"movie"}, set(false), r);
+        W.member(type_<bool>(), "is_rec", set(false), r);
         W.member(A, type_<std::string>(), "movie_path", sesman::name{"rec_path"}, r);
         W.member(A, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
         W.sep();
