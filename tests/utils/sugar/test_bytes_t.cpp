@@ -22,18 +22,15 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
+#define BOOST_TEST_MODULE TestBytesT
 #include "system/redemption_unit_tests.hpp"
-
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINT
 
-//#include "path/to/file.hpp"
+#include "utils/sugar/bytes_t.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+BOOST_AUTO_TEST_CASE(TestBytesT)
 {
     BOOST_CHECK(true);
 }

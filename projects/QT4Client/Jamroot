@@ -343,16 +343,6 @@ constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) ;
 
 using qt : /usr ; #4
 
-#using qt5
-#    : /usr/lib/x86_64-linux-gnu/qt5
-#    : 5.3
-#    :
-#    :
-#    :
-#    :
-#    : /usr/include/x86_64-linux-gnu/qt5
-#    : /usr/lib/x86_64-linux-gnu
-#    ;
 
 obj front_Qt4.o : src/Qt4/front_Qt4.cpp
     :

@@ -65,6 +65,7 @@
 #include "core/RDP/pointer.hpp"
 #include "core/channel_list.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/utf.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "keyboard/keymap2.hpp"
@@ -80,8 +81,6 @@
 
 // source emsdk_portable/emsdk_env.sh
 
-
-extern "C" void recv_wrapped();
 
 
 
@@ -151,7 +150,7 @@ public:
     Keymap2              _keymap;
     bool                 _ctrl_alt_delete; // currentinit_frontly not used and always false
     StaticOutStream<256> _decoded_data;    // currently not initialised
-    uint8_t              _keyboardMods;
+    //uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     //uint32_t             _requestedFormatId;
     //std::string          _requestedFormatShortName;
@@ -161,13 +160,19 @@ public:
     //int                  _bufferRDPCLipboardMetaFilePic_width;
     //int                  _bufferRDPCLipboardMetaFilePic_height;
     //int                  _bufferRDPClipboardMetaFilePicBPP;
-    const Keylayout_r  * _keylayout;
+    //const Keylayout_r  * _keylayout;
 
-    enum: uint16_t {
-        KBD_FLAGS_EXTENDED = 0x0100,
+
+    enum : uint8_t {
+          FASTPATH_INPUT_KBDFLAGS_RELEASE  = 0x01
+        , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
     };
 
-    enum: int {
+    enum : uint16_t {
+        KBD_FLAGS_EXTENDED = 0x0100
+    };
+
+    enum: uint8_t {
         SCANCODE_ALTGR  = 0x38,
         SCANCODE_SHIFT  = 0x36,
         SCANCODE_ENTER  = 0x1C,
@@ -184,11 +189,11 @@ public:
     void setClientInfo(ClientInfo & info) {
         this->_info = info;
         this->_mod_bpp = this->_info.bpp;
-        this->setKeyboardLayout(this->_info.keylayout);
+        //this->setKeyboardLayout(this->_info.keylayout);
         this->_clipRect = Rect(0, 0, this->_info.width, this->_info.height);
     }
 
-    void setKeyboardLayout(int LCID) {
+    /*void setKeyboardLayout(int LCID) {
         bool found = false;
         for (uint8_t i = 0 ; i < KEYLAYOUTS_LIST_SIZE; i++) {
             if (keylayoutsList[i]->LCID == LCID){
@@ -201,7 +206,7 @@ public:
             this->setKeyboardLayout(KEYBOARDS::EN_US_INTERNATIONAL);
         }
 
-    }
+    }*/
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->_cl;
@@ -263,11 +268,17 @@ public:
             this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
         }
+
+        while (!this->_mod->is_up_and_running()) {
+            this->_mod->draw_event(time(nullptr), *(this));
+        }
     }
 
     void disconnect() {
         delete(this->_mod);
         this->_mod = nullptr;
+        delete(this->_trans);
+        this->_trans = nullptr;
     }
 
 
@@ -650,7 +661,9 @@ public:
         //this->_to_client_sender._front = this;
     }
 
-    ~Front_JS_Natif() {}
+    ~Front_JS_Natif() {
+        this->disconnect();
+    }
 
 
 
@@ -692,110 +705,26 @@ public:
         }
     }
 
-    void charPressed(int code) {
+    void charPressed(uint8_t code) {
         if (this->_mod !=  nullptr) {
-            uint16_t flag = 0;
+            uint8_t flag = 0;
 
-            if (code < 0) {
+            /*if (code < 0) {
                 code += 256;
-            }
+            }*/
+
+            uint8_t * seqUniCode = nullptr;
+            UTF8toUTF16(&code, seqUniCode, 2);
+            uint16_t uniCode = seqUniCode[0] + (seqUniCode[1] << 8);
 
             switch (code) {
 
-                //-----------------------
-                //  Keylayout SHIFT MOD
-                //-----------------------
-                case 168 : /* ¨ */  code = this->_keylayout->deadkeys.at(code);
-                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
-                                break;
-                case 37  : /* % */
-                case 43  : /* + */
-                case 46  : /* . */
-                case 63  : /* ? */
-                case 65  : /* A */
-                case 90  : /* Z */
-                case 69  : /* E */
-                case 82  : /* R */
-                case 84  : /* T */
-                case 89  : /* Y */
-                case 85  : /* U */
-                case 73  : /* I */
-                case 79  : /* O */
-                case 80  : /* P */
-                case 81  : /* Q */
-                case 83  : /* S */
-                case 68  : /* D */
-                case 70  : /* F */
-                case 71  : /* G */
-                case 72  : /* H */
-                case 74  : /* J */
-                case 75  : /* K */
-                case 76  : /* L */
-                case 77  : /* M */
-                case 87  : /* W */
-                case 88  : /* X */
-                case 67  : /* C */
-                case 86  : /* V */
-                case 66  : /* B */
-                case 78  : /* N */
-                case 162 : /* > */
-                case 163 : /* £ */
-                case 167 : /* § */
-                case 176 : /* ° */
-                case 181 : /* µ */  code = this->_keylayout->getshift()->at(code);
-                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
-                                break;
+                case 47  : /* / */ flag = FASTPATH_INPUT_KBDFLAGS_EXTENDED;
 
+                default  : this->_mod->rdp_input_unicode(uniCode, flag);
+                           this->_mod->rdp_input_unicode(uniCode, flag | FASTPATH_INPUT_KBDFLAGS_RELEASE);
 
-                //-----------------------
-                //  Keylayout ALTGR MOD
-                //-----------------------
-                case 96  : /* ` */  code = this->_keylayout->deadkeys.at(code);
-                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(this->_keymap));
-                                break;
-                case 35  : /* # */
-                case 64  : /* @ */
-                case 91  : /* [ */
-                case 92  : /* \ */
-                case 93  : /* ] */
-                case 123 : /* { */
-                case 124 : /* | */
-                case 125 : /* } */
-                case 126 : /* ~ */
-                case 234 : /* ê */  code = this->_keylayout->getaltGr()->at(code);
-                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(this->_keymap));
-                                break;
-
-
-                //-----------------------
-                //   Keylayout NO MOD
-                //-----------------------
-                case 94  : /* ^ */  code = this->_keylayout->deadkeys.at(code);
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
-                                break;
-                case 47  : /* / */ flag = KBD_FLAGS_EXTENDED;
-                case 224 : /* à */
-                case 231 : /* ç */
-                case 232 : /* è */
-                case 233 : /* é */
-                case 249 : /* ù */
-                default  :          code = this->_keylayout->getnoMod()->at(code);
-                                    this->_mod->rdp_input_scancode(code, 0, flag | KBD_FLAG_DOWN, 0, &(this->_keymap));
-                                    this->_mod->rdp_input_scancode(code, 0, flag | KBD_FLAG_UP  , 0, &(this->_keymap));
-                                break;
+                    break;
             }
         }
     }
@@ -856,7 +785,8 @@ extern "C" void backspacePressed() {
 }
 
 extern "C" void CtrlAltDelPressed() {
-    if (front._mod !=  nullptr) {
+    EM_ASM_({ getDataOctet(); }, 0);
+    /*if (front._mod !=  nullptr) {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
@@ -864,7 +794,7 @@ extern "C" void CtrlAltDelPressed() {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-    }
+    }*/
 }
 
 
@@ -889,8 +819,103 @@ extern "C" void recv_value(int value) {
     }
 }
 
+ //           switch (code) {
+
+                //-----------------------
+                //  Keylayout SHIFT MOD
+                //-----------------------
+ //               case 168 : /* ¨ */  code = this->_keylayout->deadkeys.at(code);
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                               break;
+ //               case 37  : /* % */
+ //               case 43  : /* + */
+ //               case 46  : /* . */
+ //               case 63  : /* ? */
+ //               case 65  : /* A */
+ //               case 90  : /* Z */
+ //               case 69  : /* E */
+ //               case 82  : /* R */
+ //               case 84  : /* T */
+ //               case 89  : /* Y */
+ //               case 85  : /* U */
+ //               case 73  : /* I */
+ //               case 79  : /* O */
+ //               case 80  : /* P */
+ //               case 81  : /* Q */
+ //               case 83  : /* S */
+ //               case 68  : /* D */
+ //               case 70  : /* F */
+ //               case 71  : /* G */
+ //               case 72  : /* H */
+ //               case 74  : /* J */
+ //               case 75  : /* K */
+ //               case 76  : /* L */
+ //               case 77  : /* M */
+ //               case 87  : /* W */
+ //               case 88  : /* X */
+ //               case 67  : /* C */
+ //               case 86  : /* V */
+ //               case 66  : /* B */
+ //               case 78  : /* N */
+ //               case 162 : /* > */
+ //               case 163 : /* £ */
+ //               case 167 : /* § */
+ //               case 176 : /* ° */
+ //               case 181 : /* µ */  code = this->_keylayout->getshift()->at(code);
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_SHIFT, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                               break;
 
 
+                //-----------------------
+                //  Keylayout ALTGR MOD
+                //-----------------------
+ //             case 96  : /* ` */  code = this->_keylayout->deadkeys.at(code);
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                               break;
+ //               case 35  : /* # */
+ //               case 64  : /* @ */
+ //               case 91  : /* [ */
+ //               case 92  : /* \ */
+ //               case 93  : /* ] */
+ //               case 123 : /* { */
+ //               case 124 : /* | */
+ //               case 125 : /* } */
+ //               case 126 : /* ~ */
+ //               case 234 : /* ê */  code = this->_keylayout->getaltGr()->at(code);
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(SCANCODE_ALTGR, 0, KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                               break;
+
+
+                //-----------------------
+                //   Keylayout NO MOD
+                //-----------------------
+ //               case 94  : /* ^ */  code = this->_keylayout->deadkeys.at(code);
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                               break;
+ //               case 47  : /* / */ flag = KBD_FLAGS_EXTENDED;
+ //               case 224 : /* à */
+ //               case 231 : /* ç */
+ //               case 232 : /* è */
+ //               case 233 : /* é */
+ //               case 249 : /* ù */
+ //               default  :          code = this->_keylayout->getnoMod()->at(code);
+ //                                   this->_mod->rdp_input_scancode(code, 0, flag | KBD_FLAG_DOWN, 0, &(this->_keymap));
+ //                                   this->_mod->rdp_input_scancode(code, 0, flag | KBD_FLAG_UP  , 0, &(this->_keymap));
+ //                               break;
+ //           }
 
 /*
 int main(int argc, char** argv){

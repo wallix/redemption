@@ -821,7 +821,7 @@ public:
         this->emptyBuffer();
 
         if (this->_callback != nullptr) {
-            this->_callback->send_disconnect_ultimatum();
+            this->_callback->disconnect();
             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->_callback = nullptr;
@@ -907,6 +907,10 @@ public:
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
             this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
+
+            while (!this->_callback->is_up_and_running()) {
+                this->_callback->draw_event(time(nullptr), *(this->_front));
+            }
 
         } catch (const Error & e) {
             const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is closed.");

@@ -1053,7 +1053,7 @@ unit-test test_pattutils : tests/utils/test_pattutils.cpp : $(TEST_DEPENDENCIES)
 unit-test test_diffiehellman : tests/utils/test_diffiehellman.cpp : $(TEST_DEPENDENCIES) ;
 
 
-unit-test test_verifier : tests/test_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+unit-test test_app_verifier : tests/utils/apps/test_app_verifier.cpp : $(TEST_DEPENDENCIES) <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 
 unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp : $(TEST_DEPENDENCIES) ;
