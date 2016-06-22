@@ -711,32 +711,6 @@ public:
 };
 
 
-
-HashHeader read_hash_headers(ReaderLine2ReaderBuf2 & reader)
-{
-    HashHeader header{1};
-
-    char line[32];
-    auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-    if (sz < 0) {
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-    }
-
-    // v2
-    REDASSERT(line[0] == 'v');
-    header.version = 2;
-
-    if (reader.next_line()
-     || reader.next_line()
-    ) {
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-    }
-
-    return header;
-}
-
-
-
 template<bool read_start_stop_time>
 int read_meta_file_v2_impl2(
     ReaderLine2ReaderBuf2 & reader, bool has_checksum, MetaLine2 & meta_line
@@ -820,7 +794,7 @@ static inline bool check_file_hash_sha256(
     size_t          key_len,
     uint8_t const * hash_buf,
     size_t          hash_len,
-    size_t len_to_check
+    bool quick_check
 ) {
     REDASSERT(SHA256_DIGEST_LENGTH == hash_len);
 
@@ -869,15 +843,15 @@ static inline bool check_file_hash_sha256(
     int len_read = 0;
     do {
         len_read = file.read_all(buf,
-                ((len_to_check == 0) ||(number_of_bytes_read + sizeof(buf) < len_to_check))
+                (!quick_check ||(number_of_bytes_read + sizeof(buf) < QUICK_CHECK_LENGTH))
                 ? sizeof(buf)
-                : len_to_check - number_of_bytes_read);
+                : (quick_check ? QUICK_CHECK_LENGTH : 0) - number_of_bytes_read);
         if (len_read <= 0){
             break;
         }
         hmac.update(buf, static_cast<size_t>(len_read));
         number_of_bytes_read += len_read;
-    } while (number_of_bytes_read < len_to_check || len_to_check == 0);
+    } while (number_of_bytes_read < QUICK_CHECK_LENGTH || !quick_check);
 
     if (len_read < 0){
         LOG(LOG_ERR, "failed reading=%s", full_mwrm_filename.c_str());
@@ -896,47 +870,41 @@ static inline bool check_file_hash_sha256(
 static inline bool check_file(
         std::string const & input_filename,
         std::string const & mwrm_path,
-        bool is_checksumed,
-        uint8_t const * crypto_key, size_t key_len, size_t len_to_check,
-        bool is_status_enabled, MetaLine2 const & meta_line) {
+        bool infile_is_checksumed,
+        bool is_checksum_ok,
+        bool is_status_enabled,
+        MetaLine2 & meta_line) {
 
-    std::string const full_mwrm_filename = mwrm_path + input_filename;
+    if (infile_is_checksumed) {
+        // if checksum is enabled, we just check the size also match
+        bool is_status_ok = true;
+        if (is_status_enabled) {
+            struct stat64 sb;
+            memset(&sb, 0, sizeof(sb));
+            std::string const full_mwrm_filename = mwrm_path + input_filename;
+            lstat64(full_mwrm_filename.c_str(), &sb);
+            is_status_ok = meta_line.size == sb.st_size;
+        }
+        return is_checksum_ok && is_status_ok;
+    }
 
-    struct stat64 sb;
-    memset(&sb, 0, sizeof(sb));
+    // if checksum is disabled we also check uid, etc.
+    // (it means the file didn't change on disk since it was recorded)
     if (is_status_enabled) {
+        struct stat64 sb;
+        memset(&sb, 0, sizeof(sb));
+        std::string const full_mwrm_filename = mwrm_path + input_filename;
         lstat64(full_mwrm_filename.c_str(), &sb);
-    }
-
-    bool is_checksum_ok = false;
-    if (is_checksumed) {
-        is_checksum_ok = check_file_hash_sha256(input_filename, mwrm_path, crypto_key,
-            key_len, (len_to_check ? meta_line.hash1 : meta_line.hash2),
-            (len_to_check ? sizeof(meta_line.hash1) : sizeof(meta_line.hash2)),
-            len_to_check);
-    }
-
-    if (is_checksumed && is_status_enabled) {
-        return (is_checksum_ok && (meta_line.size == sb.st_size));
-    }
-
-    if (is_checksumed) {
-        return is_checksum_ok;
-    }
-
-    if (is_status_enabled) {
-        return (
-                (meta_line.dev   == sb.st_dev  ) &&
-                (meta_line.ino   == sb.st_ino  ) &&
-                (meta_line.mode  == sb.st_mode ) &&
-                (meta_line.uid   == sb.st_uid  ) &&
-                (meta_line.gid   == sb.st_gid  ) &&
-                (meta_line.size  == sb.st_size ) &&
-                (meta_line.mtime == sb.st_mtime) &&
-                (meta_line.ctime == sb.st_ctime)
+        return ((meta_line.dev   == sb.st_dev  ) 
+            &&  (meta_line.ino   == sb.st_ino  ) 
+            &&  (meta_line.mode  == sb.st_mode ) 
+            &&  (meta_line.uid   == sb.st_uid  ) 
+            &&  (meta_line.gid   == sb.st_gid  ) 
+            &&  (meta_line.size  == sb.st_size ) 
+            &&  (meta_line.mtime == sb.st_mtime) 
+            &&  (meta_line.ctime == sb.st_ctime)
             );
     }
-
     return true;
 }
 
@@ -1149,7 +1117,22 @@ static inline int check_encrypted_or_checksumed(
                 }
 
                 ReaderLine2ReaderBuf2 reader({temp_buffer, number_of_bytes_read});
-                auto hash_header = read_hash_headers(reader);
+
+                char line[32];
+                auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
+                if (sz < 0) {
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+
+                // v2
+                REDASSERT(line[0] == 'v');
+
+                if (reader.next_line()
+                 || reader.next_line()
+                ) {
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+                
 
                 if (read_meta_file_v2_impl2<false>(reader, 
                         infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA)
@@ -1182,12 +1165,18 @@ static inline int check_encrypted_or_checksumed(
     const bool is_status_enabled = (infile_version > 1);
     bool result = false;
 
+    bool is_checksum_ok = !infile_is_checksumed 
+        || check_file_hash_sha256(input_filename, mwrm_path, cctx->get_hmac_key(),
+            sizeof(cctx->get_hmac_key()),
+            (quick_check ? hash_line.hash1 : hash_line.hash2),
+            (quick_check ? sizeof(hash_line.hash1) : sizeof(hash_line.hash2)),
+            quick_check);
+
+
     if (check_file( input_filename
                   , mwrm_path
                   , infile_is_checksumed
-                  , cctx->get_hmac_key()
-                  , sizeof(cctx->get_hmac_key())
-                  , (quick_check ? QUICK_CHECK_LENGTH : 0)
+                  , is_checksum_ok
                   , is_status_enabled
                   , hash_line) == true)
     {
@@ -1215,12 +1204,17 @@ static inline int check_encrypted_or_checksumed(
 
             std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
 
+            bool is_checksum_ok = !infile_is_checksumed 
+                || check_file_hash_sha256(meta_line_wrm_filename, mwrm_path, cctx->get_hmac_key(),
+                    sizeof(cctx->get_hmac_key()),
+                    ((quick_check ? QUICK_CHECK_LENGTH : 0) ? meta_line_wrm.hash1 : meta_line_wrm.hash2),
+                    ((quick_check ? QUICK_CHECK_LENGTH : 0) ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
+                    quick_check);
+
             if (check_file( meta_line_wrm_filename
                           , mwrm_path
                           , infile_is_checksumed
-                          , cctx->get_hmac_key()
-                          , sizeof(cctx->get_hmac_key())
-                          , (quick_check ? QUICK_CHECK_LENGTH : 0)
+                          , is_checksum_ok
                           , is_status_enabled
                           , meta_line_wrm) == false) {
                 result = false;
