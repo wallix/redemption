@@ -37,7 +37,6 @@
 
 #include "system/ssl_calls.hpp"
 #include "utils/apps/app_verifier.hpp"
-#include "utils/apps/app_decrypter.hpp"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -57,33 +56,10 @@
 #define FIXTURES_PATH ""
 #endif
 
-extern "C" {
-
-/**********************************************
- *                Public API                  *
- **********************************************/
-
-struct crypto_file
-{
-  transfil::encrypt_filter encrypt;
-  io::posix::fdbuf file;
-
-  crypto_file(int fd)
-  : file(fd)
-  {}
-};
-
-} // extern "C"
-
 #ifdef HASH_LEN
 #undef HASH_LEN
 #endif  // #ifdef HASH_LEN
 #define HASH_LEN 64
-
-int libc_read(int fd, char *buf, unsigned int count)
-{
-   return read(fd, buf, count);
-}   /* int libc_read(int fd, char *buf, unsigned int count) */
 
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
@@ -149,7 +125,16 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         BOOST_CHECK(false);
     }
 
-    crypto_file * cf_struct = new (std::nothrow) crypto_file(system_fd);
+    struct crypto_file
+    {
+      transfil::encrypt_filter encrypt;
+      io::posix::fdbuf file;
+
+      crypto_file(int fd)
+      : file(fd)
+      {}
+    } * cf_struct = new (std::nothrow) crypto_file(system_fd);
+    
     if (cf_struct) {
         if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
             delete cf_struct;
@@ -300,77 +285,3 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
         BOOST_CHECK_EQUAL(0, res);
 }
 
-// tests/fixtures/verifier/recorded/toto@10.10.43.13\,Administrateur@QA@cible\,20160218-181658\,wab-5-0-0.yourdomain\,7681.mwrm
-
-// python tools/decrypter.py -i tests/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -o decrypted.out
-
-BOOST_AUTO_TEST_CASE(TestDecrypterEncryptedData)
-{
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
-
-        char const * argv[] {
-            "decrypter.py",
-            "-i",
-                FIXTURES_PATH "/verifier/recorded/"
-                "toto@10.10.43.13,Administrateur@QA@cible,"
-                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
-            "-o",
-                "decrypted.out",
-            "--verbose",
-                "10",
-        };
-        int argc = sizeof(argv)/sizeof(char*);
-
-        int res = -1;
-        try {
-            res = app_decrypter(argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
-        }
-        BOOST_CHECK_EQUAL(0, unlink("decrypted.out"));
-        BOOST_CHECK_EQUAL(0, res);
-}
-
-BOOST_AUTO_TEST_CASE(TestDecrypterClearData)
-{
-        Inifile ini;
-        ini.set<cfg::debug::config>(false);
-        UdevRandom rnd;
-        CryptoContext cctx(rnd, ini);
-        cctx.set_get_hmac_key_cb(hmac_fn);
-        cctx.set_get_trace_key_cb(trace_fn);
-
-        char const * argv[] {
-            "decrypter.py",
-            "-i",
-                FIXTURES_PATH "/verifier/recorded/"
-                 "toto@10.10.43.13,Administrateur@QA@cible"
-                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-           "-o",
-                "decrypted.2.out",
-            "--verbose",
-                "10",
-        };
-        int argc = sizeof(argv)/sizeof(char*);
-
-        int res = -1;
-        try {
-            res = app_decrypter(argc, argv
-              , "ReDemPtion VERifier " VERSION ".\n"
-                "Copyright (C) Wallix 2010-2016.\n"
-                "Christophe Grosjean, Raphael Zhou."
-              , cctx);
-        } catch (const Error & e) {
-            printf("verify failed: with id=%d\n", e.id);
-        }
-        BOOST_CHECK_EQUAL(0, res);
-}
