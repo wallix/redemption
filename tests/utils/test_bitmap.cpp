@@ -4461,9 +4461,6 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Bitmap bitmap_1_(bitmap_0_);
 
     Bitmap bitmap_2_ = bitmap_1_;
-
-    bmp2.compute_bmp_size(32,  20,  20);
-
 }
 
 

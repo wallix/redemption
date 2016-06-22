@@ -66,21 +66,8 @@ class Bitmap
         mutable uint8_t sha1_[20];
         mutable bool sha1_is_init_;
 
-        DataBitmapBase(uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
-        : cx_(cx)
-        , cy_(cy)
-        , bpp_(24)
-        , counter_(1)
-        , line_size_(this->cx_ * 3)
-        , bmp_size_(this->line_size_ * cy)
-        , ptr_(ptr)
-        , data_compressed_(nullptr)
-        , size_compressed_(0)
-        , sha1_is_init_(false)
-        {}
-
         DataBitmapBase(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
-        : cx_(align4(cx))
+        : cx_(cx)
         , cy_(cy)
         , bpp_(bpp)
         , counter_(1)
@@ -98,11 +85,11 @@ protected:
     class DataBitmap : DataBitmapBase
     {
         DataBitmap(uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
-        : DataBitmapBase(cx, cy, ptr)
+        : DataBitmapBase(24, cx, cy, ptr)
         {}
 
         DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
-        : DataBitmapBase(bpp, cx, cy, ptr)
+        : DataBitmapBase(bpp, align4(cx), cy, ptr)
         {}
 
         ~DataBitmap()
@@ -116,14 +103,9 @@ protected:
         static const size_t palette_index = sizeof(typename std::aligned_storage<sizeof(DataBitmapBase), alignof(BGRColor)>::type);
 
     public:
-        static size_t compute_bmp_size(uint8_t bpp, uint16_t cx, uint16_t cy) noexcept
-        {
-            return align4(cx) * nbbytes(bpp) * cy;
-        }
-
         static DataBitmap * construct(uint8_t bpp, uint16_t cx, uint16_t cy)
         {
-            const size_t sz = compute_bmp_size(bpp, cx, cy);
+            const size_t sz = align4(cx) * nbbytes(bpp) * cy;
             const size_t sz_struct = bpp == 8 ? palette_index + sizeof(BGRPalette) : sizeof(DataBitmap);
             uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
             return new (p) DataBitmap(bpp, cx, cy, p + sz_struct);
@@ -2022,11 +2004,6 @@ public:
         this->data_bitmap->copy_sha1(sig);
     }
 
-    static size_t compute_bmp_size(uint8_t bpp, uint16_t cx, uint16_t cy)
-    {
-        return DataBitmap::compute_bmp_size(bpp, cx, cy);
-    }
-
     Bitmap(uint8_t out_bpp, const Bitmap& bmp)
     {
         //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
@@ -2044,7 +2021,7 @@ public:
                     uint32_t pixel = in_uint32_from_nb_bytes_le(src_nbbytes, src);
 
                     pixel = color_decode(pixel, bmp.bpp(), bmp.palette());
-                    if (out_bpp == 16 || out_bpp == 15 || out_bpp == 8){
+                    if (out_bpp != 24){
                         pixel = RGBtoBGR(pixel);
                     }
                     pixel = color_encode(pixel, out_bpp);
@@ -2053,14 +2030,8 @@ public:
                     src += src_nbbytes;
                     dest += Bpp;
                 }
-                //TODO("padding code should not be necessary as source bmp width is already aligned");
-                //if (this->line_size < bmp.cx() * Bpp){
-                //    uint16_t padding = this->line_size - bmp.cx() * Bpp;
-                //    memset(dest, 0, padding);
-                //    dest += padding;
-                //}
-                //TODO("padding code should not be necessary for source either as source bmp width is already aligned");
-                //src += bmp.line_size - bmp.cx * src_nbbytes;
+                src += bmp.line_size() - bmp.cx() * src_nbbytes;
+                dest += this->line_size() - bmp.cx() * Bpp;
             }
 
             if (out_bpp == 8){

@@ -218,9 +218,9 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
     if (png_bytep * row_pointers = new(std::nothrow) png_bytep[height]) {
         std::unique_ptr<png_bytep[]> u(row_pointers);
         Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize_png(bitmap, width, height);
-        png_bytep row = data.get() + rowbytes * height - rowbytes;
+        png_bytep row = data.get() + data.bmp_size() - data.line_size();
         for (uint i = 0; i < height; ++i) {
-            row_pointers[i] = row - i * rowbytes;
+            row_pointers[i] = row - i * data.line_size();
         }
         png_read_image(png_ptr, row_pointers);
         png_read_end(png_ptr, info_ptr);
