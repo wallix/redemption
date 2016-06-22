@@ -174,6 +174,7 @@ public:
     virtual void writeClientInfo() = 0;
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
+
 };
 
 
@@ -213,10 +214,10 @@ public:
 
     enum : int {
         COMMAND_VALID = 15
-      , NAME_GOTTEN   =  1
-      , PWD_GOTTEN    =  2
-      , IP_GOTTEN     =  4
-      , PORT_GOTTEN   =  8
+      , NAME_GOTTEN   = 1
+      , PWD_GOTTEN    = 2
+      , IP_GOTTEN     = 4
+      , PORT_GOTTEN   = 8
     };
 
 
@@ -338,34 +339,6 @@ public:
     //------------------------
 
     Front_Qt(char* argv[], int argc, uint32_t verbose);
-
-    // -------- Start of system wide SSL_Ctx option ------------------------------
-
-    // ERR_load_crypto_strings() registers the error strings for all libcrypto
-    // functions. SSL_load_error_strings() does the same, but also registers the
-    // libssl error strings.
-
-    // One of these functions should be called before generating textual error
-    // messages. However, this is not required when memory usage is an issue.
-
-    // ERR_free_strings() frees all previously loaded error strings.
-
-    //SSL_load_error_strings();
-
-    // SSL_library_init() registers the available SSL/TLS ciphers and digests.
-    // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
-    // for SSL_library_init().
-
-    // - SSL_library_init() must be called before any other action takes place.
-    // - SSL_library_init() is not reentrant.
-    // - SSL_library_init() always returns "1", so it is safe to discard the return
-    // value.
-
-    // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
-    // SSL_library_init(). Applications which need to use SHA2 in earlier versions
-    // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
-
-    //SSL_library_init();
 
     ~Front_Qt();
 

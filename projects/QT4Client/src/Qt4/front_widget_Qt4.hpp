@@ -821,7 +821,7 @@ public:
         this->emptyBuffer();
 
         if (this->_callback != nullptr) {
-            this->_callback->send_disconnect_ultimatum();
+            this->_callback->disconnect();
             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->_callback = nullptr;

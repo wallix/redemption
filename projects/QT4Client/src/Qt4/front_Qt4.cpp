@@ -345,6 +345,7 @@ void Front_Qt::keyPressEvent(QKeyEvent *e) {
     this->_qtRDPKeymap.keyEvent(0     , e);
     if (this->_qtRDPKeymap.scanCode != 0) {
         this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
+        //this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, 0);
     }
 }
 
@@ -433,6 +434,10 @@ void Front_Qt::send_rdp_scanCode(int keyCode, int flag) {
     if (this->_callback != nullptr) {
         this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap));
     }
+/*
+    if (this->_callback != nullptr) {
+        this->_callback->rdp_input_unicode(keyCode, flag);
+    }*/
 }
 
 
@@ -2313,7 +2318,7 @@ int main(int argc, char** argv){
 
     //" -name QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389";
 
-    //bjam client_rdp_Qt |& grep error || ./bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.73 -p 3389
+    //bjam -a client_rdp_Qt4 |& grep error || bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.73 -p 3389
 
     QApplication app(argc, argv);
 
