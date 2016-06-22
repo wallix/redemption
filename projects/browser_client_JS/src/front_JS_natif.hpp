@@ -268,6 +268,10 @@ public:
             this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
             reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
         }
+
+        while (!this->_mod->is_up_and_running()) {
+            this->_mod->draw_event(time(nullptr), *(this));
+        }
     }
 
     void disconnect() {

@@ -6601,10 +6601,12 @@ private:
         }
     }
 
+public:
     bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
+private:
     void disconnect() override {
         if (this->is_up_and_running()) {
             if (this->verbose & 1){

@@ -276,6 +276,7 @@ void Front_Qt::connect() {
         this->_form->hide();
         this->_screen = new Screen_Qt(this);
         this->_screen->show();
+
         this->_connector->listen();
         //this->_clipboard_channel.process_server_clipboard_capabilities_pdu();
     }
