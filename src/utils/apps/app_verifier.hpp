@@ -596,8 +596,7 @@ public:
     }
 
     template<bool read_start_stop_time>
-    int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line
-    ) {
+    int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line) {
         char line[
             PATH_MAX + 1 + 1 +
             (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -811,12 +810,6 @@ int read_meta_file_v2_impl2(
     }
 
     return 0;
-}
-
-
-
-int read_hash_file_v2(ReaderLine2ReaderBuf2 & reader, HashHeader const & /*hash_header*/, bool has_hash, MetaLine2 & hash_line) {
-   return read_meta_file_v2_impl2<false>(reader, has_hash, hash_line);
 }
 
 
@@ -1156,13 +1149,11 @@ static inline int check_encrypted_or_checksumed(
                 }
 
                 ReaderLine2ReaderBuf2 reader({temp_buffer, number_of_bytes_read});
-
                 auto hash_header = read_hash_headers(reader);
 
-                if (read_hash_file_v2( reader
-                                     , hash_header
-                                     , infile_is_checksumed
-                                     , hash_line) != ERR_TRANSPORT_NO_MORE_DATA) {
+                if (read_meta_file_v2_impl2<false>(reader, 
+                        infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA)
+                {
                     if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
                         hash_ok = true;
                     }
