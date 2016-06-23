@@ -27,12 +27,12 @@
 
 class WidgetImage : public Widget2
 {
-    Bitmap_PNG bmp;
+    Bitmap bmp;
 
 public:
     WidgetImage(gdi::GraphicApi & drawable, int x, int y, const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , bmp(filename)
+    , bmp(bitmap_from_file(filename))
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;

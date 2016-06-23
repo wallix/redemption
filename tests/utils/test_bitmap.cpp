@@ -29,7 +29,6 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "utils/png.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_with_png.hpp"
 #include "utils/drawable.hpp"
@@ -3985,67 +3984,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
     }
 }
 
-// TODO: Move this one to bitmap_with_png.hpp
-BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
-    const BGRPalette & palette332 = BGRPalette::classic_332();
-
-    int bpp = 8;
-    const uint8_t * const data = nullptr;
-    Bitmap_PNG bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-
-    Bitmap_PNG::openfile_t res;
-
-    // const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
-    const char * filename = FIXTURES_PATH "/xrdp24b.bmp";
-    res = bmp.check_file_type(filename);
-    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_BMP);
-
-    // const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
-    const char * filename2 = FIXTURES_PATH "/xrdp24b.jpg";
-    res = bmp.check_file_type(filename2);
-    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
-
-    // const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
-    const char * filename3 = FIXTURES_PATH "/xrdp24b.png";
-    res = bmp.check_file_type(filename3);
-    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_PNG);
-
-    res = bmp.check_file_type("wrong/access/directory/image.png");
-    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
-
-    // res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
-    res = bmp.check_file_type(FIXTURES_PATH "/cursor1.cur");
-    BOOST_CHECK_EQUAL(res, Bitmap_PNG::OPEN_FILE_UNKNOWN);
-
-
-    bool boolres = bmp.open_png_file(filename3);
-    BOOST_CHECK_EQUAL(boolres, true);
-
-    try {
-        Bitmap_PNG file(filename);
-    }
-    catch (const Error & e){
-        // this test is not supposed to be executed
-        BOOST_CHECK_EQUAL(0, e.id);
-    }
-
-    try {
-        Bitmap_PNG file(filename2);
-    }
-    catch (const Error & e){
-        // this test is supposed to be executed
-        BOOST_CHECK_EQUAL(ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, e.id);
-    }
-    try {
-        Bitmap_PNG file(filename3);
-    }
-    catch (const Error & e){
-        // this test is not supposed to be executed
-        BOOST_CHECK_EQUAL(0, e.id);
-    }
-}
-
-
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapGetRun) {
     uint32_t run_length;
     uint32_t raw_bytes;
@@ -4243,14 +4181,14 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
     BOOST_CHECK_EQUAL(0, memcmp(outbuffer.get_data(), result, outbuffer.get_offset()));
 }
 
-/*
+
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
+
 
     const char * filename = FIXTURES_PATH "/color_image_160x120.png";
 
-    Bitmap bmp(filename);
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4261,12 +4199,12 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
+
 
     const char * filename = FIXTURES_PATH "/color_image_40x30.png";
 
-    Bitmap bmp(filename);
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4277,12 +4215,12 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
+
 
     const char * filename = FIXTURES_PATH "/red_box.png";
 
-    Bitmap bmp(filename);
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4293,12 +4231,12 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
+
 
     const char * filename = FIXTURES_PATH "/wablogoblue_220x76.png";
 
-    Bitmap bmp(filename);
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4307,14 +4245,14 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
 
     BOOST_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
-*/
+
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
     const BGRPalette & palette332 = BGRPalette::classic_332();
 
     const char * filename = FIXTURES_PATH "/red_box_20x20.png";
 
-    Bitmap_PNG bmp(filename);
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4523,9 +4461,6 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Bitmap bitmap_1_(bitmap_0_);
 
     Bitmap bitmap_2_ = bitmap_1_;
-
-    bmp2.compute_bmp_size(32,  20,  20);
-
 }
 
 
@@ -4562,7 +4497,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
 
     Bitmap bmp16(16, source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false);
     BOOST_CHECK_EQUAL(24, bmp16.bmp_size());
-    
+
     TODO("Check that: cx is now forced to be a multiple of 4 when creating bitmap, previous behaviour was only forcing line size to be aligned as a multiple of 4 (RDP constraint). See it has not effect on provided data and not other unwanted effect");
     BOOST_CHECK_EQUAL(8, bmp16.line_size());
     BOOST_CHECK_EQUAL(4, bmp16.cx());

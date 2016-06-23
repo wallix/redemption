@@ -21,7 +21,7 @@
 "encryptionLevel = low\n\n"
 
 "#_advanced\n"
-"authfile = /var/run/redemption-sesman-sock\n\n"
+"authfile = /tmp/redemption-sesman-sock\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"
@@ -73,7 +73,7 @@
 "wrm_path = " WRM_PATH "\n\n"
 
 "#_hidden\n"
-"movie = 0\n\n"
+"is_rec = 0\n\n"
 
 "#_advanced\n"
 "movie_path = \n\n"

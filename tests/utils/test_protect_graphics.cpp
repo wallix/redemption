@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestModOSD)
     now.tv_sec++;
 
     {
-        Bitmap_PNG const bmp(FIXTURES_PATH "/ad8b.bmp");
+        Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp");
         int const bmp_x = 200;
         int const bmp_y = 200;
         Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());

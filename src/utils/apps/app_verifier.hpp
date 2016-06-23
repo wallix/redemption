@@ -812,59 +812,38 @@ static inline bool check_file_hash_sha256(
         int fd;
         explicit fdbuf(int fd) noexcept : fd(fd) {}
         ~fdbuf() {::close(this->fd);}
-
-        ssize_t read_all(void * data, size_t len)
-        {
-            size_t remaining_len = len;
-            while (remaining_len) {
-                ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                if (ret < 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    // Error should still be there next time we try to read
-                    if (remaining_len != len){
-                        return len - remaining_len;
-                    }
-                    return ret;
-                }
-                // We must exit loop or we will enter infinite loop
-                if (ret == 0){
-                    break;
-                }
-                remaining_len -= ret;
-            }
-            return len - remaining_len;
-        }
     } file(fd);
 
     uint8_t buf[4096] = {};
     size_t  number_of_bytes_read = 0;
-    int len_read = 0;
-    do {
-        len_read = file.read_all(buf,
-                (!quick_check ||(number_of_bytes_read + sizeof(buf) < QUICK_CHECK_LENGTH))
-                ? sizeof(buf)
-                : (quick_check ? QUICK_CHECK_LENGTH : 0) - number_of_bytes_read);
-        if (len_read <= 0){
+    for (; !quick_check || (number_of_bytes_read < QUICK_CHECK_LENGTH) ; ){
+        ssize_t ret = ::read(file.fd, buf, 
+            sizeof(buf)- quick_check*number_of_bytes_read);
+        // signal interruption, not really an error
+        if ((ret < 0) && (errno == EINTR)){
+            continue;
+        }
+        // error
+        if (ret < 0){
+            LOG(LOG_ERR, "failed reading=%s", full_mwrm_filename.c_str());
+            return false;
+        }
+        // end_of_file, exit loop
+        if (ret == 0){
             break;
         }
-        hmac.update(buf, static_cast<size_t>(len_read));
-        number_of_bytes_read += len_read;
-    } while (number_of_bytes_read < QUICK_CHECK_LENGTH || !quick_check);
-
-    if (len_read < 0){
-        LOG(LOG_ERR, "failed reading=%s", full_mwrm_filename.c_str());
-        return false;
+        hmac.update(buf, ret);
+        number_of_bytes_read += ret;
+        printf("ret=%d number_of_bytes_read=%d\n", ret, number_of_bytes_read);
     }
 
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
-
-    if (memcmp(hash, hash_buf, hash_len)) {
+    int hash_result = 0 == memcmp(hash, hash_buf, hash_len);
+    if (!hash_result) {
         LOG(LOG_ERR, "failed checking hash=%s", full_mwrm_filename.c_str());
     }
-    return (memcmp(hash, hash_buf, hash_len) == 0);
+    return hash_result ;
 }
 
 static inline bool check_file(

@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {
     {
         BOOST_CHECK(true);
-        Bitmap_PNG bigbmp(FIXTURES_PATH "/color_image.bmp");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.bmp");
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
     {
         int bpp = 24;
-        Bitmap_PNG bigbmp(FIXTURES_PATH "/logo-redemption.bmp");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.bmp");
         // make it large enough to hold any image
         auto sz = 2u*bigbmp.bmp_size();
         auto uptr = std::make_unique<uint8_t[]>(sz);
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 {
     {
         BOOST_CHECK(true);
-        Bitmap_PNG bigbmp(FIXTURES_PATH "/color_image.png");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.png");
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 
     {
         int bpp = 24;
-        Bitmap_PNG bigbmp(FIXTURES_PATH "/logo-redemption.png");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.png");
         // make it large enough to hold any image
         auto sz = 2u*bigbmp.bmp_size();
         auto uptr = std::make_unique<uint8_t[]>(sz);
