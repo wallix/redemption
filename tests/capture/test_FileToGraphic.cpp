@@ -40,14 +40,10 @@
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
     const char * input_filename = FIXTURES_PATH "/sample0.wrm";
-    char path[1024];
-    size_t len = strlen(input_filename);
-    memcpy(path, input_filename, len);
-    path[len] = 0;
 
-    int fd = ::open(path, O_RDONLY);
+    int fd = ::open(input_filename, O_RDONLY);
     if (fd == -1){
-        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
+        LOG(LOG_INFO, "open '%s' failed with error : %s", input_filename, strerror(errno));
         BOOST_CHECK(false);
         return;
     }

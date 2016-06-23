@@ -48,6 +48,7 @@
 #include <new>
 
 #include "utils/fdbuf.hpp"
+#include "utils/sugar/local_fd.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/cryptofile.hpp"
@@ -134,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
       : file(fd)
       {}
     } * cf_struct = new (std::nothrow) crypto_file(system_fd);
-    
+
     if (cf_struct) {
         if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
             delete cf_struct;
@@ -162,30 +163,22 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     BOOST_CHECK_EQUAL(0, res);
 
+    std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
     {
-        std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
-        int fd = ::open(test_full_mwrm_filename.c_str(), O_RDONLY);
-        if (fd < 0) {
-            std::cerr << "Error opening file \"" << test_full_mwrm_filename << std::endl << std::endl;
-            BOOST_CHECK(false);
-        }
-
-        BOOST_CHECK_EQUAL(true, check_file_hash_sha256(fd, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-                                                       hash, HASH_LEN / 2, true));
-    }                                              
+        local_fd lfd(test_full_mwrm_filename, O_RDONLY);
+        BOOST_CHECK_MESSAGE(lfd.is_open(), "Error opening file \"" << test_full_mwrm_filename << "\n\n");
+        BOOST_CHECK_EQUAL(true, check_file_hash_sha256(
+            lfd.get(), cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+            hash, HASH_LEN / 2, true));
+    }
 
     {
-        std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
-        int fd = ::open(test_full_mwrm_filename.c_str(), O_RDONLY);
-        if (fd < 0) {
-            std::cerr << "Error opening file \"" << test_full_mwrm_filename << std::endl << std::endl;
-            BOOST_CHECK(false);
-        }
-
-        BOOST_CHECK_EQUAL(true, check_file_hash_sha256(fd, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-                                                   hash + (HASH_LEN / 2), HASH_LEN / 2, false));
-    }                                              
-    
+        local_fd lfd(test_full_mwrm_filename, O_RDONLY);
+        BOOST_CHECK_MESSAGE(lfd.is_open(), "Error opening file \"" << test_full_mwrm_filename << "\n\n");
+        BOOST_CHECK_EQUAL(true, check_file_hash_sha256(
+            lfd.get(), cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+            hash + (HASH_LEN / 2), HASH_LEN / 2, false));
+    }
 
     unlink(full_test_file_name.c_str());
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */
