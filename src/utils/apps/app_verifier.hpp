@@ -47,6 +47,15 @@ struct HashHeader {
     unsigned version;
 };
 
+static inline char const * sread_filename2(char * p, char const * e, char const * pline)
+{
+    e -= 1;
+    for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
+        *p = *pline;
+    }
+    *p = 0;
+    return pline;
+}
 
 struct ReaderBuf2
 {
@@ -135,6 +144,81 @@ public:
         this->cur = pos+1;
         return 0;
     }
+
+    int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line, 
+                                bool read_start_stop_time) 
+    {
+        char line[
+            PATH_MAX + 1 + 1 +
+            (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
+            (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
+            (1 + MD_HASH_LENGTH*2) * 2 +
+            2
+        ];
+        ssize_t len = this->read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+        if (len < 0) {
+            return -len;
+        }
+        line[len] = 0;
+
+        // Line format "fffff
+        // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
+        // sssss eeeee hhhhh HHHHH"
+        //            ^  ^  ^  ^
+        //            |  |  |  |
+        //            |hash1|  |
+        //            |     |  |
+        //        space3    |hash2
+        //                  |
+        //                space4
+        //
+        // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
+        //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+
+        using std::begin;
+        using std::end;
+
+        auto pline = line + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), line) - line);
+
+        int err = 0;
+        auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.uid        = strtoll (pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.gid        = strtoll (pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.dev        = strtoull(pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
+        if (read_start_stop_time) {
+        err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
+        err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+        }
+
+        if (has_checksum
+         && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
+        ) {
+            auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
+                auto phash = begin(hash);
+                for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
+                    *phash = (chex_to_int(*pend, err) << 4);
+                    *phash |= chex_to_int(*++pend, err);
+                }
+            };
+            read(meta_line.hash1);
+            err |= (*pend != ' ');
+            read(meta_line.hash2);
+        }
+
+        err |= bool(*pend);
+
+        if (err) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        return 0;
+    }
+
 };
 
 namespace transbuf {
@@ -430,16 +514,6 @@ struct MetaHeader2 {
     bool has_checksum;
 };
 
-static inline char const * sread_filename2(char * p, char const * e, char const * pline)
-{
-    e -= 1;
-    for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
-        *p = *pline;
-    }
-    *p = 0;
-    return pline;
-}
-
 struct ReaderBuf3
 {
     private:
@@ -595,8 +669,7 @@ public:
         return 0;
     }
 
-    template<bool read_start_stop_time>
-    int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line) {
+    int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line, bool read_start_stop_time) {
         char line[
             PATH_MAX + 1 + 1 +
             (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -669,7 +742,7 @@ public:
     }
 
     int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
-        return this->read_meta_file_v2_impl2<true>(meta_header.has_checksum, meta_line);
+        return this->read_meta_file_v2_impl2(meta_header.has_checksum, meta_line, true);
     }
 
     ssize_t read_line(char * dest, size_t len, int err)
@@ -711,80 +784,6 @@ public:
 };
 
 
-template<bool read_start_stop_time>
-int read_meta_file_v2_impl2(
-    ReaderLine2ReaderBuf2 & reader, bool has_checksum, MetaLine2 & meta_line
-) {
-    char line[
-        PATH_MAX + 1 + 1 +
-        (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
-        (1 + MD_HASH_LENGTH*2) * 2 +
-        2
-    ];
-    ssize_t len = reader.read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
-    if (len < 0) {
-        return -len;
-    }
-    line[len] = 0;
-
-    // Line format "fffff
-    // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
-    // sssss eeeee hhhhh HHHHH"
-    //            ^  ^  ^  ^
-    //            |  |  |  |
-    //            |hash1|  |
-    //            |     |  |
-    //        space3    |hash2
-    //                  |
-    //                space4
-    //
-    // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
-    //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-    //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-
-    using std::begin;
-    using std::end;
-
-    auto pline = line + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), line) - line);
-
-    int err = 0;
-    auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.uid        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.gid        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.dev        = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
-    if (read_start_stop_time) {
-    err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
-    }
-
-    if (has_checksum
-     && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
-    ) {
-        auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
-            auto phash = begin(hash);
-            for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
-                *phash = (chex_to_int(*pend, err) << 4);
-                *phash |= chex_to_int(*++pend, err);
-            }
-        };
-        read(meta_line.hash1);
-        err |= (*pend != ' ');
-        read(meta_line.hash2);
-    }
-
-    err |= bool(*pend);
-
-    if (err) {
-        throw Error(ERR_TRANSPORT_READ_FAILED);
-    }
-
-    return 0;
-}
 
 struct FileChecker
 {
@@ -1075,7 +1074,9 @@ static inline int check_encrypted_or_checksumed(
                     LOG(LOG_INFO, "Hash data v2 or higher");
                 }
 
-                ReaderLine2ReaderBuf2 reader({temp_buffer, number_of_bytes_read});
+                ReaderBuf2 rb({temp_buffer, number_of_bytes_read});
+
+                ReaderLine2ReaderBuf2 reader(rb);
 
                 char line[32];
                 auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
@@ -1093,8 +1094,7 @@ static inline int check_encrypted_or_checksumed(
                 }
                 
 
-                if (read_meta_file_v2_impl2<false>(reader, 
-                        infile_is_checksumed, hash_line) != ERR_TRANSPORT_NO_MORE_DATA)
+                if (reader.read_meta_file_v2_impl2(infile_is_checksumed, hash_line, false) != ERR_TRANSPORT_NO_MORE_DATA)
                 {
                     if (!memcmp(hash_line.filename, input_filename.c_str(), filename_len)) {
                         hash_ok = true;
