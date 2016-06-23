@@ -45,7 +45,6 @@ from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
 from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
 from engine import TargetContext
-from engine import parse_auth
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 def mundane(value):
@@ -69,6 +68,42 @@ def mdecode(item):
 
 def truncat_string(item, maxsize=20):
     return (item[:maxsize] + '..') if len(item) > maxsize else item
+
+def parse_auth(username):
+    """
+    Extract actual username and target if provided
+    from authentication identity
+
+    string format is <secondaryuser>@<target>:<service>:<group>:<primaryuser>
+    always return primaryuser and either secondary target or None
+
+    Note: primary user can be a path instead when this function
+    is called to parse scp or sftp arguments.
+
+    Because of compatibility issues with some ssh command line tools
+    '+' can be used instead of ':'
+
+    fields can be missing (typically service and group if there is no ambiguity)
+
+    """
+    user_at_dev_service_group, sep, primary = username.rpartition(':')
+    if not sep:
+        user_at_dev_service_group, sep, primary = username.rpartition('+')
+    if sep:
+        user_at_dev_service, sep, group = user_at_dev_service_group.rpartition(sep)
+        if not sep:
+            # service and group not provided
+            user_at_dev, service, group = user_at_dev_service_group, '', ''
+        else:
+            user_at_dev, sep, service = user_at_dev_service.rpartition(sep)
+            if not sep:
+                # group not provided
+                user_at_dev, service, group = user_at_dev_service, group, ''
+        user, sep, dev = user_at_dev.rpartition('@')
+        if sep:
+            return primary, (user, dev, service, group)
+    return username, None
+
 
 class AuthentifierSocketClosed(Exception):
     pass
@@ -134,6 +169,7 @@ class Sesman():
         self.shared[u'keyboard_layout'] = MAGICASK
 
         self.shared[u'auth_channel_answer'] = u''
+        self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
 
         self.internal_target = False
@@ -1214,7 +1250,6 @@ class Sesman():
                             connectionpolicy_kv[u'session_probe_end_disconnected_session']= session_probe_section.get('end_disconnected_session')
 
                             connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
-                        connectionpolicy_kv[u'outbound_connection_blocking_rules'] = "10.10.0.0/16:3389"
 
                         server_cert_section = conn_opts.get('server_cert')
                         if server_cert_section is not None:
