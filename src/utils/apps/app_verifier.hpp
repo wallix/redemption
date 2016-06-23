@@ -911,8 +911,11 @@ static inline int check_encrypted_or_checksumed(
                     LOG(LOG_INFO, "Hash data v2 or higher");
                 }
 
-                struct ReaderBuf2
+                class ReaderLine2ReaderBuf2
                 {
+                    char buf[1024];
+                    char * eof;
+                    char * cur;
                     char    * remaining_data_buf;
                     ssize_t   remaining_data_length;
 
@@ -929,18 +932,10 @@ static inline int check_encrypted_or_checksumed(
 
                         return number_of_bytes_to_read;
                     }
-                } rb({temp_buffer, number_of_bytes_read});
-
-                class ReaderLine2ReaderBuf2
-                {
-                    char buf[1024];
-                    char * eof;
-                    char * cur;
-                    ReaderBuf2 reader;
 
                     int read(int err)
                     {
-                        ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
+                        ssize_t ret = this->reader_read(this->buf, sizeof(this->buf));
 
                         if (ret < 0 && errno != EINTR) {
                             return -ERR_TRANSPORT_READ_FAILED;
@@ -954,12 +949,14 @@ static inline int check_encrypted_or_checksumed(
                     }
 
                 public:
-                    ReaderLine2ReaderBuf2(ReaderBuf2 reader) noexcept
+                    ReaderLine2ReaderBuf2(char * remaining_data_buf, ssize_t remaining_data_length)
                     : eof(buf)
                     , cur(buf)
-                    , reader(reader)
+                    , remaining_data_buf(remaining_data_buf)
+                    , remaining_data_length(remaining_data_length)
                     {
                     }
+
 
                     ssize_t read_line(char * dest, size_t len, int err)
                     {
@@ -1072,7 +1069,7 @@ static inline int check_encrypted_or_checksumed(
                         return 0;
                     }
 
-                } reader(rb);
+                } reader(temp_buffer, number_of_bytes_read);
 
                 char line[32];
                 auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
