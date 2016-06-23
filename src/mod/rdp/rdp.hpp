@@ -3747,7 +3747,8 @@ public:
                 }
 
 
-                if (UP_AND_RUNNING != this->connection_finalization_state){
+                if (UP_AND_RUNNING != this->connection_finalization_state &&
+                    !this->already_upped_and_running) {
                     char statestr[256];
                     switch (this->state) {
                     case MOD_RDP_NEGO:
