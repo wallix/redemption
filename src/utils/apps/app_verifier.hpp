@@ -893,48 +893,6 @@ struct FileChecker
     }
 };
 
-
-static inline bool check_file(
-        std::string const & input_filename,
-        std::string const & mwrm_path,
-        bool infile_is_checksumed,
-        bool is_checksum_ok,
-        bool is_status_enabled,
-        MetaLine2 & meta_line) {
-
-    if (infile_is_checksumed) {
-        // if checksum is enabled, we just check the size also match
-        bool is_status_ok = true;
-        if (is_status_enabled) {
-            struct stat64 sb;
-            memset(&sb, 0, sizeof(sb));
-            std::string const full_mwrm_filename = mwrm_path + input_filename;
-            lstat64(full_mwrm_filename.c_str(), &sb);
-            is_status_ok = meta_line.size == sb.st_size;
-        }
-        return is_checksum_ok && is_status_ok;
-    }
-
-    // if checksum is disabled we also check uid, etc.
-    // (it means the file didn't change on disk since it was recorded)
-    if (is_status_enabled) {
-        struct stat64 sb;
-        memset(&sb, 0, sizeof(sb));
-        std::string const full_mwrm_filename = mwrm_path + input_filename;
-        lstat64(full_mwrm_filename.c_str(), &sb);
-        return ((meta_line.dev   == sb.st_dev  ) 
-            &&  (meta_line.ino   == sb.st_ino  ) 
-            &&  (meta_line.mode  == sb.st_mode ) 
-            &&  (meta_line.uid   == sb.st_uid  ) 
-            &&  (meta_line.gid   == sb.st_gid  ) 
-            &&  (meta_line.size  == sb.st_size ) 
-            &&  (meta_line.mtime == sb.st_mtime) 
-            &&  (meta_line.ctime == sb.st_ctime)
-            );
-    }
-    return true;
-}
-
 static inline int check_encrypted_or_checksumed(
                                        std::string const & input_filename,
                                        std::string const & mwrm_path,
@@ -1223,43 +1181,30 @@ static inline int check_encrypted_or_checksumed(
         while (reader.read_meta_file2(meta_header, meta_line_wrm) !=
                ERR_TRANSPORT_NO_MORE_DATA) {
 
-
             size_t tmp_wrm_filename_len = 0;
-            const char * tmp_wrm_filename =
-                    basename_len(meta_line_wrm.filename
-                                , tmp_wrm_filename_len);
-
+            const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
             std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
             std::string const full_meta_mwrm_filename = mwrm_path + meta_line_wrm_filename;
-            int part_fd = ::open(full_meta_mwrm_filename.c_str(), O_RDONLY);
-            if (part_fd < 0) {
-                LOG(LOG_ERR, "failed opening=%s", full_meta_mwrm_filename.c_str());
-                std::cerr << "Error opening part file \"" 
-                          << full_meta_mwrm_filename << "\""
-                          << std::endl << std::endl;
-                return 1;
-            }
 
-            bool is_checksum_ok = true;
+            FileChecker check(full_meta_mwrm_filename);
             if (infile_is_checksumed){
-                is_checksum_ok = check_file_hash_sha256(part_fd, 
-                    cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
-                    (quick_check ? meta_line_wrm.hash1 : meta_line_wrm.hash2),
-                    (quick_check ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
-                    quick_check);
-                if (!is_checksum_ok){
+                check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
+                            (quick_check ? meta_line_wrm.hash1 : meta_line_wrm.hash2),
+                            (quick_check ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
+                            quick_check);
+                if (check.failed){
                      std::cerr << "Bad checksum for part file \"" 
                                << full_meta_mwrm_filename << "\""
                                << std::endl << std::endl;
                 }
+                check.check_short_stat(meta_line_wrm);
             }
-
-            if (check_file( meta_line_wrm_filename
-                          , mwrm_path
-                          , infile_is_checksumed
-                          , is_checksum_ok
-                          , is_status_enabled
-                          , meta_line_wrm) == false) {
+            else {
+                check.check_full_stat(meta_line_wrm);
+            }
+            
+            if (check.failed)
+            {
                 result = false;
                 break;
             }
