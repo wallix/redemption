@@ -179,8 +179,6 @@ class SessionManager : public auth_api {
     KeepAlive keepalive;
     Inactivity inactivity;
 
-    bool wait_for_capture;
-
     mutable std::string session_type;
 
 public:
@@ -192,7 +190,6 @@ public:
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), ini.get<cfg::debug::auth>())
         , inactivity(activity_checker, ini.get<cfg::globals::session_timeout>(),
                      acl_start_time, ini.get<cfg::debug::auth>())
-        , wait_for_capture(true)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
@@ -301,7 +298,6 @@ public:
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
-                    mm.stop_record();
                     this->keepalive.stop();
                 }
                 mm.remove_mod();
@@ -367,11 +363,6 @@ public:
                     this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
                 }
             }
-        }
-        if (this->wait_for_capture && mm.is_up_and_running()) {
-            this->ini.check_record_config();
-            mm.record(this);
-            this->wait_for_capture = false;
         }
 
         // LOG(LOG_INFO, "connect=%s ini.check=%s", this->connected?"Y":"N", this->ini.check()?"Y":"N");
@@ -487,14 +478,22 @@ class PauseRecord {
     time_t last_record_activity_time;
     uint64_t last_total_received;
     uint64_t last_total_sent;
+    Front & front;
+    MMApi & mm;
+    Inifile & ini;
 
 public:
-    explicit PauseRecord(std::chrono::seconds timeout)
-        : stop_record_inactivity(false)
-        , stop_record_time(std::max<time_t>(timeout.count(), 30))
-        , last_record_activity_time(0)
-        , last_total_received(0)
-        , last_total_sent(0)
+    explicit PauseRecord(
+        std::chrono::seconds timeout,
+        Front & front, MMApi & mm, Inifile & ini)
+    : stop_record_inactivity(false)
+    , stop_record_time(std::max<time_t>(timeout.count(), 30))
+    , last_record_activity_time(0)
+    , last_total_received(0)
+    , last_total_sent(0)
+    , front(front)
+    , mm(mm)
+    , ini(ini)
     {
     }
 
@@ -506,7 +505,7 @@ public:
             if (!this->stop_record_inactivity &&
                 (now > this->last_record_activity_time + this->stop_record_time)) {
                 this->stop_record_inactivity = true;
-                front.pause_capture();
+                front.can_be_pause_capture();
             }
         }
         else {
@@ -519,8 +518,16 @@ public:
             // quantum received when checking for inactivity
             if (this->stop_record_inactivity) {
                 this->stop_record_inactivity = false;
-                front.resume_capture();
-                // resume capture
+                if (front.can_be_resume_capture()) {
+                    if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                        this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                        (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                        this->mm.mod->rdp_suppress_display_updates();
+                        this->mm.mod->rdp_allow_display_updates(0, 0,
+                            this->front.client_info.width, this->front.client_info.height);
+                    }
+                    this->mm.mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+                }
             }
         }
     }

@@ -652,6 +652,7 @@ public:
             this->mod = &this->no_mod;
             this->mod_transport = nullptr;
         }
+        this->front.must_be_stop_capture();
     }
 
     ~ModuleManager() override {
@@ -670,7 +671,7 @@ public:
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
         this->connected = false;
-        if (this->last_module) this->front.stop_capture();
+        if (this->last_module) this->front.must_be_stop_capture();
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
@@ -1272,51 +1273,6 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Unknown backend exception\n");
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
-        }
-    }
-
-    // Check movie start/stop/pause
-    void record(auth_api * acl) override {
-        if (this->ini.get<cfg::globals::is_rec>() ||
-            !bool(this->ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) ||
-            this->ini.get<cfg::session_log::enable_session_log>() ||
-            ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str()) ||
-            ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str())
-           ) {
-            //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?
-            if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                this->front.start_capture(this->front.client_info.width,
-                                          this->front.client_info.height,
-                                          this->ini,
-                                          acl);
-                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
-                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
-                    this->mod->rdp_suppress_display_updates();
-                    this->mod->rdp_allow_display_updates(0, 0,
-                        this->front.client_info.width, this->front.client_info.height);
-                }
-                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
-            }
-            else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
-                this->front.resume_capture();
-                if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
-                    this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                    (this->front.client_info.cs_monitor.monitorCount > 1)) {
-                    this->mod->rdp_suppress_display_updates();
-                    this->mod->rdp_allow_display_updates(0, 0,
-                        this->front.client_info.width, this->front.client_info.height);
-                }
-                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
-            }
-        }
-        else if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
-            this->front.pause_capture();
-        }
-    }
-    void stop_record() override {
-        if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
-            this->front.stop_capture();
         }
     }
 };

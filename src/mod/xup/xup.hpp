@@ -322,6 +322,7 @@ enum {
         }
         catch(...){
             this->event.signal = BACK_EVENT_NEXT;
+            this->front.must_be_stop_capture();
         }
     }
 

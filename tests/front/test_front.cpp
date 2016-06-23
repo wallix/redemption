@@ -67,7 +67,11 @@ namespace dump2008_PatBlt {
 
 class MyFront : public Front
 {
-    public:
+public:
+    bool can_be_start_capture(auth_api*) override { return false; }
+    bool can_be_pause_capture() override { return false; }
+    bool can_be_resume_capture() override { return false; }
+    bool must_be_stop_capture() override { return false; }
 
     MyFront( Transport & trans
             , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -279,7 +283,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         LOG(LOG_INFO, "Before Start Capture");
 
         NullAuthentifier blackhole;
-        front.start_capture(800, 600, ini, &blackhole);
+        front.can_be_start_capture(&blackhole);
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -292,7 +296,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
             front.periodic_snapshot();
         }
 
-        front.stop_capture();
+        front.must_be_stop_capture();
 
     //    front.dump_png("trace_w2008_");
     } catch (...) {
@@ -463,7 +467,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         LOG(LOG_INFO, "Before Start Capture");
 
         NullAuthentifier blackhole;
-        front.start_capture(800, 600, ini, &blackhole);
+        front.can_be_start_capture(&blackhole);
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
@@ -476,7 +480,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
             front.periodic_snapshot();
         }
 
-        front.stop_capture();
+        front.must_be_stop_capture();
 
     //    front.dump_png("trace_w2008_");
     } catch (const Error & e) {
