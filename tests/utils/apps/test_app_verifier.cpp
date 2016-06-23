@@ -165,19 +165,16 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
     {
-        local_fd lfd(test_full_mwrm_filename, O_RDONLY);
-        BOOST_CHECK_MESSAGE(lfd.is_open(), "Error opening file \"" << test_full_mwrm_filename << "\n\n");
-        BOOST_CHECK_EQUAL(true, check_file_hash_sha256(
-            lfd.get(), cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-            hash, HASH_LEN / 2, true));
+        FileChecker check(test_full_mwrm_filename);
+        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()), hash, HASH_LEN / 2, true);
+        BOOST_CHECK_EQUAL(false, check.failed);
     }
 
     {
-        local_fd lfd(test_full_mwrm_filename, O_RDONLY);
-        BOOST_CHECK_MESSAGE(lfd.is_open(), "Error opening file \"" << test_full_mwrm_filename << "\n\n");
-        BOOST_CHECK_EQUAL(true, check_file_hash_sha256(
-            lfd.get(), cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-            hash + (HASH_LEN / 2), HASH_LEN / 2, false));
+        FileChecker check(test_full_mwrm_filename);
+        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+                                hash + (HASH_LEN / 2), HASH_LEN / 2, false);
+        BOOST_CHECK_EQUAL(false, check.failed);
     }
 
     unlink(full_test_file_name.c_str());
