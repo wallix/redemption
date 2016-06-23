@@ -57,169 +57,6 @@ static inline char const * sread_filename2(char * p, char const * e, char const 
     return pline;
 }
 
-struct ReaderBuf2
-{
-    char    * remaining_data_buf;
-    ssize_t   remaining_data_length;
-
-    ssize_t reader_read(char * buf, size_t len) {
-        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-        if (number_of_bytes_to_read == 0) {
-            return -1;
-        }
-
-        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-        this->remaining_data_buf    += number_of_bytes_to_read;
-        this->remaining_data_length -= number_of_bytes_to_read;
-
-        return number_of_bytes_to_read;
-    }
-};
-
-
-class ReaderLine2ReaderBuf2
-{
-    char buf[1024];
-    char * eof;
-    char * cur;
-    ReaderBuf2 reader;
-
-    int read(int err)
-    {
-        ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
-
-        if (ret < 0 && errno != EINTR) {
-            return -ERR_TRANSPORT_READ_FAILED;
-        }
-        if (ret == 0) {
-            return -err;
-        }
-        this->eof = this->buf + ret;
-        this->cur = this->buf;
-        return 0;
-    }
-
-public:
-    ReaderLine2ReaderBuf2(ReaderBuf2 reader) noexcept
-    : eof(buf)
-    , cur(buf)
-    , reader(reader)
-    {
-    }
-
-    ssize_t read_line(char * dest, size_t len, int err)
-    {
-        ssize_t total_read = 0;
-        while (1) {
-            char * pos = std::find(this->cur, this->eof, '\n');
-            if (len < size_t(pos - this->cur)) {
-                total_read += len;
-                memcpy(dest, this->cur, len);
-                this->cur += len;
-                break;
-            }
-            total_read += pos - this->cur;
-            memcpy(dest, this->cur, pos - this->cur);
-            dest += pos - this->cur;
-            this->cur = pos + 1;
-            if (pos != this->eof) {
-                break;
-            }
-            if (int e = this->read(err)) {
-                return e;
-            }
-        }
-        return total_read;
-    }
-
-    int next_line()
-    {
-        char * pos;
-        while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-            if (int e = this->read(ERR_TRANSPORT_READ_FAILED)) {
-                return e;
-            }
-        }
-        this->cur = pos+1;
-        return 0;
-    }
-
-    int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line, 
-                                bool read_start_stop_time) 
-    {
-        char line[
-            PATH_MAX + 1 + 1 +
-            (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
-            (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
-            (1 + MD_HASH_LENGTH*2) * 2 +
-            2
-        ];
-        ssize_t len = this->read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
-        if (len < 0) {
-            return -len;
-        }
-        line[len] = 0;
-
-        // Line format "fffff
-        // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
-        // sssss eeeee hhhhh HHHHH"
-        //            ^  ^  ^  ^
-        //            |  |  |  |
-        //            |hash1|  |
-        //            |     |  |
-        //        space3    |hash2
-        //                  |
-        //                space4
-        //
-        // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
-        //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-
-        using std::begin;
-        using std::end;
-
-        auto pline = line + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), line) - line);
-
-        int err = 0;
-        auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.uid        = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.gid        = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.dev        = strtoull(pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
-        if (read_start_stop_time) {
-        err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
-        err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
-        }
-
-        if (has_checksum
-         && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
-        ) {
-            auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
-                auto phash = begin(hash);
-                for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
-                    *phash = (chex_to_int(*pend, err) << 4);
-                    *phash |= chex_to_int(*++pend, err);
-                }
-            };
-            read(meta_line.hash1);
-            err |= (*pend != ' ');
-            read(meta_line.hash2);
-        }
-
-        err |= bool(*pend);
-
-        if (err) {
-            throw Error(ERR_TRANSPORT_READ_FAILED);
-        }
-
-        return 0;
-    }
-
-};
 
 namespace transbuf {
 
@@ -1074,9 +911,168 @@ static inline int check_encrypted_or_checksumed(
                     LOG(LOG_INFO, "Hash data v2 or higher");
                 }
 
-                ReaderBuf2 rb({temp_buffer, number_of_bytes_read});
+                struct ReaderBuf2
+                {
+                    char    * remaining_data_buf;
+                    ssize_t   remaining_data_length;
 
-                ReaderLine2ReaderBuf2 reader(rb);
+                    ssize_t reader_read(char * buf, size_t len) {
+                        ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
+                        if (number_of_bytes_to_read == 0) {
+                            return -1;
+                        }
+
+                        memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
+
+                        this->remaining_data_buf    += number_of_bytes_to_read;
+                        this->remaining_data_length -= number_of_bytes_to_read;
+
+                        return number_of_bytes_to_read;
+                    }
+                } rb({temp_buffer, number_of_bytes_read});
+
+                class ReaderLine2ReaderBuf2
+                {
+                    char buf[1024];
+                    char * eof;
+                    char * cur;
+                    ReaderBuf2 reader;
+
+                    int read(int err)
+                    {
+                        ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
+
+                        if (ret < 0 && errno != EINTR) {
+                            return -ERR_TRANSPORT_READ_FAILED;
+                        }
+                        if (ret == 0) {
+                            return -err;
+                        }
+                        this->eof = this->buf + ret;
+                        this->cur = this->buf;
+                        return 0;
+                    }
+
+                public:
+                    ReaderLine2ReaderBuf2(ReaderBuf2 reader) noexcept
+                    : eof(buf)
+                    , cur(buf)
+                    , reader(reader)
+                    {
+                    }
+
+                    ssize_t read_line(char * dest, size_t len, int err)
+                    {
+                        ssize_t total_read = 0;
+                        while (1) {
+                            char * pos = std::find(this->cur, this->eof, '\n');
+                            if (len < size_t(pos - this->cur)) {
+                                total_read += len;
+                                memcpy(dest, this->cur, len);
+                                this->cur += len;
+                                break;
+                            }
+                            total_read += pos - this->cur;
+                            memcpy(dest, this->cur, pos - this->cur);
+                            dest += pos - this->cur;
+                            this->cur = pos + 1;
+                            if (pos != this->eof) {
+                                break;
+                            }
+                            if (int e = this->read(err)) {
+                                return e;
+                            }
+                        }
+                        return total_read;
+                    }
+
+                    int next_line()
+                    {
+                        char * pos;
+                        while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
+                            if (int e = this->read(ERR_TRANSPORT_READ_FAILED)) {
+                                return e;
+                            }
+                        }
+                        this->cur = pos+1;
+                        return 0;
+                    }
+
+                    int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line, 
+                                                bool read_start_stop_time) 
+                    {
+                        char line[
+                            PATH_MAX + 1 + 1 +
+                            (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
+                            (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
+                            (1 + MD_HASH_LENGTH*2) * 2 +
+                            2
+                        ];
+                        ssize_t len = this->read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+                        if (len < 0) {
+                            return -len;
+                        }
+                        line[len] = 0;
+
+                        // Line format "fffff
+                        // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
+                        // sssss eeeee hhhhh HHHHH"
+                        //            ^  ^  ^  ^
+                        //            |  |  |  |
+                        //            |hash1|  |
+                        //            |     |  |
+                        //        space3    |hash2
+                        //                  |
+                        //                space4
+                        //
+                        // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
+                        //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+                        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+
+                        using std::begin;
+                        using std::end;
+
+                        auto pline = line + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), line) - line);
+
+                        int err = 0;
+                        auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.uid        = strtoll (pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.gid        = strtoll (pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.dev        = strtoull(pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
+                        if (read_start_stop_time) {
+                        err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
+                        err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+                        }
+
+                        if (has_checksum
+                         && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
+                        ) {
+                            auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
+                                auto phash = begin(hash);
+                                for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
+                                    *phash = (chex_to_int(*pend, err) << 4);
+                                    *phash |= chex_to_int(*++pend, err);
+                                }
+                            };
+                            read(meta_line.hash1);
+                            err |= (*pend != ' ');
+                            read(meta_line.hash2);
+                        }
+
+                        err |= bool(*pend);
+
+                        if (err) {
+                            throw Error(ERR_TRANSPORT_READ_FAILED);
+                        }
+
+                        return 0;
+                    }
+
+                } reader(rb);
 
                 char line[32];
                 auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
