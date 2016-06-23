@@ -352,10 +352,10 @@ actions gen_redcryptofile {
 
 explicit pycryptofile redcryptofile.so ;
 
-obj dummypng :
-        $(SRCDIR)/utils/dummypng.cpp
-    :
-    ;
+#obj dummypng :
+#        $(SRCDIR)/utils/dummypng.cpp
+#    :
+#    ;
 
 lib pycryptofile :
         tools/redcryptofile/pycrypto.cpp
@@ -732,8 +732,8 @@ rule test-canonical ( base : requirements * )
 ## Acl tests
 ## @{
 test-canonical acl/acl_serializer.hpp ;
-test-canonical acl/authentifier.hpp : <library>crypto <library>dummypng ;
-test-canonical acl/module_manager.hpp : <library>crypto <library>dummypng ;
+test-canonical acl/authentifier.hpp : <library>crypto <library>png ;
+test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
 test-canonical acl/auth_api.hpp ;
 
 ## @}
