@@ -218,7 +218,7 @@ protected:
     void * operator new(size_t n) = delete;
 
 public:
-    Bitmap() noexcept = default;
+    Bitmap() noexcept {}
 
     struct PrivateData
     {
