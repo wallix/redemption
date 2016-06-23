@@ -786,10 +786,8 @@ int read_meta_file_v2_impl2(
     return 0;
 }
 
-
 static inline bool check_file_hash_sha256(
-    std::string const & input_filename,
-    std::string const & mwrm_path,
+    int fd,
     uint8_t const * crypto_key,
     size_t          key_len,
     uint8_t const * hash_buf,
@@ -797,54 +795,104 @@ static inline bool check_file_hash_sha256(
     bool quick_check
 ) {
     REDASSERT(SHA256_DIGEST_LENGTH == hash_len);
-
     SslHMAC_Sha256 hmac(crypto_key, key_len);
-
-    std::string const full_mwrm_filename = mwrm_path + input_filename;
-    int fd = ::open(full_mwrm_filename.c_str(), O_RDONLY);
-    if (fd < 0) {
-        LOG(LOG_ERR, "failed opening=%s", full_mwrm_filename.c_str());
-        return false;
-    }
-
-    struct fdbuf
-    {
-        int fd;
-        explicit fdbuf(int fd) noexcept : fd(fd) {}
-        ~fdbuf() {::close(this->fd);}
-    } file(fd);
 
     uint8_t buf[4096] = {};
     size_t  number_of_bytes_read = 0;
     for (; !quick_check || (number_of_bytes_read < QUICK_CHECK_LENGTH) ; ){
-        ssize_t ret = ::read(file.fd, buf, 
-            sizeof(buf)- quick_check*number_of_bytes_read);
+        ssize_t ret = ::read(fd, buf, sizeof(buf)- quick_check*number_of_bytes_read);
         // signal interruption, not really an error
         if ((ret < 0) && (errno == EINTR)){
             continue;
         }
         // error
         if (ret < 0){
-            LOG(LOG_ERR, "failed reading=%s", full_mwrm_filename.c_str());
+            LOG(LOG_ERR, "failed reading");
             return false;
         }
         // end_of_file, exit loop
-        if (ret == 0){
-            break;
-        }
+        if (ret == 0){ break; }
         hmac.update(buf, ret);
         number_of_bytes_read += ret;
-        printf("ret=%d number_of_bytes_read=%d\n", ret, number_of_bytes_read);
     }
 
     uint8_t         hash[SHA256_DIGEST_LENGTH];
     hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
-    int hash_result = 0 == memcmp(hash, hash_buf, hash_len);
-    if (!hash_result) {
-        LOG(LOG_ERR, "failed checking hash=%s", full_mwrm_filename.c_str());
-    }
-    return hash_result ;
+    return 0 == memcmp(hash, hash_buf, hash_len);
 }
+
+struct FileChecker
+{
+    const std::string & full_filename;
+    bool failed;
+    explicit FileChecker(const std::string & full_filename) noexcept 
+        : full_filename(full_filename)
+        , failed(false) 
+    {
+    }
+    void check_hash_sha256(uint8_t const * crypto_key,
+                           size_t          key_len,
+                           uint8_t const * hash_buf,
+                           size_t          hash_len,
+                           bool quick_check)
+    {
+
+        if (!this->failed){
+            struct fdwrap
+            {
+                int fd;
+                fdwrap(int fd) : fd(fd) {}
+                ~fdwrap(){ if (fd >=0) {::close(fd);} }
+            } file(::open(this->full_filename.c_str(), O_RDONLY));
+
+            if (file.fd < 0) {
+                LOG(LOG_ERR, "failed opening=%s", this->full_filename.c_str());
+                std::cerr << "Error opening file \"" << this->full_filename << std::endl << std::endl;
+                this->failed = true;
+                return;
+            }
+
+            std::cerr << "computing sha256 check for file " << this->full_filename << std::endl;
+
+            this->failed = !check_file_hash_sha256(file.fd, 
+                                    crypto_key, key_len,
+                                    hash_buf,
+                                    hash_len,
+                                    quick_check);
+        }
+    }
+    
+    void check_short_stat(const MetaLine2 & meta_line)
+    {
+        // we just check the size match
+        // used when checksum is active
+        if (!this->failed){
+            struct stat64 sb;
+            memset(&sb, 0, sizeof(sb));
+            lstat64(full_filename.c_str(), &sb);
+            this->failed = (meta_line.size != sb.st_size);
+        }
+    }
+
+    void check_full_stat(const MetaLine2 & meta_line)
+    {
+        if (!this->failed){
+            struct stat64 sb;
+            memset(&sb, 0, sizeof(sb));
+            lstat64(full_filename.c_str(), &sb);
+            this->failed = ((meta_line.dev   != sb.st_dev  ) 
+                        ||  (meta_line.ino   != sb.st_ino  ) 
+                        ||  (meta_line.mode  != sb.st_mode ) 
+                        ||  (meta_line.uid   != sb.st_uid  ) 
+                        ||  (meta_line.gid   != sb.st_gid  ) 
+                        ||  (meta_line.size  != sb.st_size ) 
+                        ||  (meta_line.mtime != sb.st_mtime) 
+                        ||  (meta_line.ctime != sb.st_ctime)
+                        );
+        }
+    }
+};
+
 
 static inline bool check_file(
         std::string const & input_filename,
@@ -1144,24 +1192,24 @@ static inline int check_encrypted_or_checksumed(
     const bool is_status_enabled = (infile_version > 1);
     bool result = false;
 
-    bool is_checksum_ok = !infile_is_checksumed 
-        || check_file_hash_sha256(input_filename, mwrm_path, cctx->get_hmac_key(),
-            sizeof(cctx->get_hmac_key()),
-            (quick_check ? hash_line.hash1 : hash_line.hash2),
-            (quick_check ? sizeof(hash_line.hash1) : sizeof(hash_line.hash2)),
-            quick_check);
-
-
-    if (check_file( input_filename
-                  , mwrm_path
-                  , infile_is_checksumed
-                  , is_checksum_ok
-                  , is_status_enabled
-                  , hash_line) == true)
+    FileChecker check(full_mwrm_filename);
+    if (infile_is_checksumed){
+        check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
+                    (quick_check ? hash_line.hash1 : hash_line.hash2),
+                    (quick_check ? sizeof(hash_line.hash1) : sizeof(hash_line.hash2)),
+                    quick_check);
+        check.check_short_stat(hash_line);
+    }
+    else {
+        check.check_full_stat(hash_line);
+    }
+    
+    if (!check.failed)
     {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         if (ifile.open(full_mwrm_filename.c_str()) < 0) {
             LOG(LOG_ERR, "failed opening=%s", full_mwrm_filename.c_str());
+            std::cerr << "Failed opening file " << full_mwrm_filename << std::endl; 
             std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
             return 1;;
         }
@@ -1182,13 +1230,29 @@ static inline int check_encrypted_or_checksumed(
                                 , tmp_wrm_filename_len);
 
             std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
+            std::string const full_meta_mwrm_filename = mwrm_path + meta_line_wrm_filename;
+            int part_fd = ::open(full_meta_mwrm_filename.c_str(), O_RDONLY);
+            if (part_fd < 0) {
+                LOG(LOG_ERR, "failed opening=%s", full_meta_mwrm_filename.c_str());
+                std::cerr << "Error opening part file \"" 
+                          << full_meta_mwrm_filename << "\""
+                          << std::endl << std::endl;
+                return 1;
+            }
 
-            bool is_checksum_ok = !infile_is_checksumed 
-                || check_file_hash_sha256(meta_line_wrm_filename, mwrm_path, cctx->get_hmac_key(),
-                    sizeof(cctx->get_hmac_key()),
-                    ((quick_check ? QUICK_CHECK_LENGTH : 0) ? meta_line_wrm.hash1 : meta_line_wrm.hash2),
-                    ((quick_check ? QUICK_CHECK_LENGTH : 0) ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
+            bool is_checksum_ok = true;
+            if (infile_is_checksumed){
+                is_checksum_ok = check_file_hash_sha256(part_fd, 
+                    cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
+                    (quick_check ? meta_line_wrm.hash1 : meta_line_wrm.hash2),
+                    (quick_check ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
                     quick_check);
+                if (!is_checksum_ok){
+                     std::cerr << "Bad checksum for part file \"" 
+                               << full_meta_mwrm_filename << "\""
+                               << std::endl << std::endl;
+                }
+            }
 
             if (check_file( meta_line_wrm_filename
                           , mwrm_path
