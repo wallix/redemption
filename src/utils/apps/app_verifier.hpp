@@ -786,41 +786,6 @@ int read_meta_file_v2_impl2(
     return 0;
 }
 
-static inline bool check_file_hash_sha256(
-    int fd,
-    uint8_t const * crypto_key,
-    size_t          key_len,
-    uint8_t const * hash_buf,
-    size_t          hash_len,
-    bool quick_check
-) {
-    REDASSERT(SHA256_DIGEST_LENGTH == hash_len);
-    SslHMAC_Sha256 hmac(crypto_key, key_len);
-
-    uint8_t buf[4096] = {};
-    size_t  number_of_bytes_read = 0;
-    for (; !quick_check || (number_of_bytes_read < QUICK_CHECK_LENGTH) ; ){
-        ssize_t ret = ::read(fd, buf, sizeof(buf)- quick_check*number_of_bytes_read);
-        // signal interruption, not really an error
-        if ((ret < 0) && (errno == EINTR)){
-            continue;
-        }
-        // error
-        if (ret < 0){
-            LOG(LOG_ERR, "failed reading");
-            return false;
-        }
-        // end_of_file, exit loop
-        if (ret == 0){ break; }
-        hmac.update(buf, ret);
-        number_of_bytes_read += ret;
-    }
-
-    uint8_t         hash[SHA256_DIGEST_LENGTH];
-    hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
-    return 0 == memcmp(hash, hash_buf, hash_len);
-}
-
 struct FileChecker
 {
     const std::string & full_filename;
@@ -852,13 +817,32 @@ struct FileChecker
                 return;
             }
 
-            std::cerr << "computing sha256 check for file " << this->full_filename << std::endl;
+            REDASSERT(SHA256_DIGEST_LENGTH == hash_len);
+            SslHMAC_Sha256 hmac(crypto_key, key_len);
 
-            this->failed = !check_file_hash_sha256(file.fd, 
-                                    crypto_key, key_len,
-                                    hash_buf,
-                                    hash_len,
-                                    quick_check);
+            uint8_t buf[4096] = {};
+            size_t  number_of_bytes_read = 0;
+            for (; !quick_check || (number_of_bytes_read < QUICK_CHECK_LENGTH) ; ){
+                ssize_t ret = ::read(file.fd, buf, sizeof(buf)- quick_check*number_of_bytes_read);
+                // interruption signal, not really an error
+                if ((ret < 0) && (errno == EINTR)){
+                    continue;
+                }
+                // error
+                if (ret < 0){
+                    LOG(LOG_ERR, "failed reading %s", this->full_filename.c_str());
+                    this->failed = true;
+                    return;
+                }
+                // end_of_file, exit loop
+                if (ret == 0){ break; }
+                hmac.update(buf, ret);
+                number_of_bytes_read += ret;
+            }
+
+            uint8_t         hash[SHA256_DIGEST_LENGTH];
+            hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
+            this->failed = 0 != memcmp(hash, hash_buf, hash_len);
         }
     }
     
