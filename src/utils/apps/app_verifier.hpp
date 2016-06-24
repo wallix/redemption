@@ -660,40 +660,21 @@ static inline int check_encrypted_or_checksumed(
                         ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * remaining_data_buf, ssize_t remaining_data_length, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
                         {
                             char buf[1024];
-                            char * eof = buf;
-                            char * cur = buf;
-                            char linem[32];
-                            char * dest1 = linem;
+                            char * eof = &remaining_data_buf[remaining_data_length];
+                            char * cur = &remaining_data_buf[0];
+                            // v2
+                            REDASSERT(remaining_data_buf[0] == 'v');
 
-                            while (1) {
-                                char * pos = std::find(cur, eof, '\n');
-                                if (sizeof(linem) < size_t(pos - cur)) {
-                                    memcpy(dest1, cur, sizeof(linem));
-                                    cur += sizeof(linem);
-                                    break;
-                                }
-                                memcpy(dest1, cur, pos - cur);
-                                dest1 += pos - cur;
-                                cur = pos + 1;
-                                if (pos != eof) {
-                                    break;
-                                }
-                                
-                                if (remaining_data_length == 0) {
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-
-                                ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(buf));
-                                memcpy(buf, remaining_data_buf, ret);
-
-                                remaining_data_buf    += ret;
-                                remaining_data_length -= ret;
-                                eof = buf + ret;
-                                cur = buf;
+                            char * pos = std::find(cur, eof, '\n');
+                            if (pos == eof) {
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
+                            remaining_data_buf += pos - cur;
+                            remaining_data_length -= pos - cur;
+                            cur = pos + 1;
 
                             // v2
-                            REDASSERT(linem[0] == 'v');
+//                            REDASSERT(linem[0] == 'v');
                             {
                                 char * pos;
                                 while ((pos = std::find(cur, eof, '\n')) == eof) {
