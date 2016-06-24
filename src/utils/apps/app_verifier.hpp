@@ -669,8 +669,7 @@ static inline int check_encrypted_or_checksumed(
                         , remaining_data_length(remaining_data_length)
                         {
                             char linem[32];
-                            auto sz = this->read_line(linem, sizeof(linem), ERR_TRANSPORT_READ_FAILED);
-                            if (sz < 0) {
+                            if (this->read_line(linem, sizeof(linem), ERR_TRANSPORT_READ_FAILED) < 0) {
                                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
 
