@@ -741,7 +741,7 @@ static inline int check_encrypted_or_checksumed(
                             return 0;
                         }
 
-                        int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line) 
+                        int read_meta_file_v2_impl2(bool infile_is_checksumed, MetaLine2 & meta_line) 
                         {
                             char line[
                                 PATH_MAX + 1 + 1 +
@@ -809,7 +809,7 @@ static inline int check_encrypted_or_checksumed(
                             
                             meta_line.ctime = strtoll (pline, &pend, 10);
 
-                            if (has_checksum
+                            if (infile_is_checksumed
                              && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
                             ) {
                                 err |= (*pend != ' ');
