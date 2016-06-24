@@ -470,7 +470,7 @@ static inline int check_encrypted_or_checksumed(
             MetaHeader2 meta_header;
 
             explicit ReaderLine2ReaderBuf1(CryptoContext * cctx, int encryption, 
-                const std::string & full_mwrm_filename) noexcept
+                const std::string & full_mwrm_filename)
             : eof(buf)
             , cur(buf)
             , ibuf(cctx, encryption)
@@ -544,19 +544,25 @@ static inline int check_encrypted_or_checksumed(
 
                 // v2
                 if (line[0] == 'v') {
-                    if (this->next_line()
-                     || (sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
-                    ) {
+                    if (this->next_line()) 
+                    {
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    if ((sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0)
+                    {
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     this->meta_header.version = 2;
                     this->meta_header.has_checksum = (line[0] == 'c');
                 }
                 // else v1
+                if (this->next_line()) 
+                {
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
 
-                if (this->next_line()
-                 || this->next_line()
-                ) {
+                if (this->next_line()) 
+                {
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
             }
