@@ -605,10 +605,19 @@ static inline int check_encrypted_or_checksumed(
                 char * pend = nullptr;
                 long long int res = strtoll(cur, &pend, 10);
                 if (pend != pos){
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    throw Error(err);
                 }
                 cur = pos + 1;
                 return res;
+            }
+
+            void in_copy_bytes(uint8_t * hash, int len, char * & cur, char * eof, int err)
+            {
+                if (eof - cur < len){
+                    throw Error(err);
+                }
+                memcpy(hash, cur, len);
+                cur += len;
             }
 
             HashLoad(const std::string & full_hash_path, const std::string & input_filename,
@@ -620,57 +629,48 @@ static inline int check_encrypted_or_checksumed(
             {
                 transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
                 in_hash_fb.open(full_hash_path.c_str());
-                if (verbose) {
-                    LOG(LOG_INFO, "File buffer created");
-                }
 
                 char temp_buffer[8192];
                 memset(temp_buffer, 0, sizeof(temp_buffer));
 
                 ssize_t number_of_bytes_read = in_hash_fb.read(temp_buffer, sizeof(temp_buffer));
-                if (verbose) {
-                    LOG(LOG_INFO, "Hash data received. Length=%zd", number_of_bytes_read);
-                }
 
-                ssize_t filename_len = input_filename.length();
+                char * eof =  &temp_buffer[number_of_bytes_read];
+                char * cur = &temp_buffer[0];
 
                 if (infile_version == 1) {
                     if (verbose) {
                         LOG(LOG_INFO, "Hash data v1");
                     }
-
                     // Filename HASH_64_BYTES
                     //         ^
                     //         |
                     //     separator
-                    if (0 == memcmp(temp_buffer, input_filename.c_str(), filename_len)
-                    // Separator
-                    &&  (temp_buffer[filename_len] == ' ')) {
 
-                        if (verbose) {
-                            LOG(LOG_INFO, "Copy hash");
-                        }
+                    int len = input_filename.length()+1;
+                    if (eof-cur < len){
+                        throw Error(ERR_TRANSPORT_READ_FAILED);
+                    }
 
-                        memcpy(this->hash_line.hash1, 
-                               &temp_buffer[filename_len + 1], 
-                               sizeof(this->hash_line.hash1));
-                        memcpy(this->hash_line.hash2, 
-                               &temp_buffer[filename_len + 1 + sizeof(this->hash_line.hash1)],
-                               sizeof(this->hash_line.hash2));
-                        this->hash_ok = true;
+                    if (0 != memcmp(cur, input_filename.c_str(), input_filename.length()))
+                    {
+                        throw Error(ERR_TRANSPORT_READ_FAILED);
                     }
-                    else {
-                        std::cerr << "File name mismatch: \"" << full_hash_path << "\"" << std::endl << std::endl;
+                    cur += input_filename.length();
+                    if (cur[0] != ' '){
+                        throw Error(ERR_TRANSPORT_READ_FAILED);
                     }
+                    cur++;
+                    this->in_copy_bytes(this->hash_line.hash1, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
+                    this->in_copy_bytes(this->hash_line.hash2, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
+
+                    this->hash_ok = true;
                 }
                 else {
                     if (verbose) {
                         LOG(LOG_INFO, "Hash data v2 or higher");
                     }
                     
-                    char * cur = temp_buffer;
-                    char * eof =  &temp_buffer[number_of_bytes_read];
-
                     // v2
                     if (cur == eof || cur[0] != 'v'){
                         Error(ERR_TRANSPORT_READ_FAILED, errno);
@@ -681,7 +681,7 @@ static inline int check_encrypted_or_checksumed(
                     {
                         char * pos = std::find(cur, eof, '\n');
                         if (pos == eof) {
-                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            throw Error(ERR_TRANSPORT_READ_FAILED);
                         }
                         cur = pos + 1;
                     }
