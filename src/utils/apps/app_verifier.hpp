@@ -672,13 +672,12 @@ static inline int check_encrypted_or_checksumed(
 
 
                     public:
-                        ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * remaining_data_buf, ssize_t remaining_data_length, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
+                        ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * cur, char * eof, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
                         {
-                            char buf[1024];
-                            char * eof = &remaining_data_buf[remaining_data_length];
-                            char * cur = &remaining_data_buf[0];
                             // v2
-                            REDASSERT(remaining_data_buf[0] == 'v');
+                            if (cur == eof || cur[0] != 'v'){
+                                Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
 
                             // skip 3 lines
                             for (auto i = 0 ; i < 3 ; i++)
@@ -687,18 +686,9 @@ static inline int check_encrypted_or_checksumed(
                                 if (pos == eof) {
                                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                                 }
-                                remaining_data_buf += pos - cur;
-                                remaining_data_length -= pos - cur;
                                 cur = pos + 1;
                             }
 
-                            char * line = cur;
-                            ssize_t len = eof-cur-1;
-                            
-                            if (len <= 0) {
-                                throw Error(ERR_TRANSPORT_READ_FAILED);
-                            }
-                                
                             // Line format "fffff
                             // st_size st_mode st_uid st_gid st_dev st_ino st_mtime
                             // st_ctime hhhhh HHHHH"
@@ -787,7 +777,7 @@ static inline int check_encrypted_or_checksumed(
                             }
                             hash_ok = true;
                         }
-                    } reader(full_hash_path, input_filename, temp_buffer, number_of_bytes_read, infile_is_checksumed, hash_line, this->hash_ok);
+                    } reader(full_hash_path, input_filename, temp_buffer, &temp_buffer[number_of_bytes_read], infile_is_checksumed, hash_line, this->hash_ok);
                 }
             }
         };
