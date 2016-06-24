@@ -661,30 +661,18 @@ static inline int check_encrypted_or_checksumed(
                         char    * remaining_data_buf;
                         ssize_t   remaining_data_length;
 
-                        ssize_t reader_read(char * buf, size_t len) {
-                            ssize_t number_of_bytes_to_read = std::min<ssize_t>(remaining_data_length, len);
-                            if (number_of_bytes_to_read == 0) {
-                                return -1;
-                            }
-
-                            memcpy(buf, remaining_data_buf, number_of_bytes_to_read);
-
-                            this->remaining_data_buf    += number_of_bytes_to_read;
-                            this->remaining_data_length -= number_of_bytes_to_read;
-
-                            return number_of_bytes_to_read;
-                        }
-
                         int read(int err)
                         {
-                            ssize_t ret = this->reader_read(this->buf, sizeof(this->buf));
 
-                            if (ret < 0 && errno != EINTR) {
-                                return -ERR_TRANSPORT_READ_FAILED;
-                            }
+                            ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
                             if (ret == 0) {
                                 return -err;
                             }
+
+                            memcpy(this->buf, remaining_data_buf, ret);
+
+                            this->remaining_data_buf    += ret;
+                            this->remaining_data_length -= ret;
                             this->eof = this->buf + ret;
                             this->cur = this->buf;
                             return 0;
