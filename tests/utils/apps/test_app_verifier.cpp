@@ -48,6 +48,7 @@
 #include <new>
 
 #include "utils/fdbuf.hpp"
+#include "utils/sugar/local_fd.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/cryptofile.hpp"
@@ -134,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
       : file(fd)
       {}
     } * cf_struct = new (std::nothrow) crypto_file(system_fd);
-    
+
     if (cf_struct) {
         if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
             delete cf_struct;
@@ -167,15 +168,14 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
         FileChecker check(test_full_mwrm_filename);
         check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()), hash, HASH_LEN / 2, true);
         BOOST_CHECK_EQUAL(false, check.failed);
-    }                                              
+    }
 
     {
         FileChecker check(test_full_mwrm_filename);
-        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()), 
+        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
                                 hash + (HASH_LEN / 2), HASH_LEN / 2, false);
         BOOST_CHECK_EQUAL(false, check.failed);
-    }                                              
-    
+    }
 
     unlink(full_test_file_name.c_str());
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */

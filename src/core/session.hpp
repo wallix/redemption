@@ -153,7 +153,7 @@ public:
             BackEvent_t signal = BACK_EVENT_NONE;
 
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
-            PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>());
+            PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>(), *this->front, mm, ini);
 
             if (this->ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -416,7 +416,7 @@ public:
         && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
-        this->front->stop_capture();
+        this->front->must_be_stop_capture();
     }
 
     Session(Session const &) = delete;

@@ -40,6 +40,9 @@ cmd_run='r'
 break_line=
 break_file=
 
+nl='
+'
+
 TEMP=`getopt -o hqsfer:l:p: --long help -n "$0" -- "$@"`
 [ $? -ne 0 ] && exit 1
 eval set -- "$TEMP"
@@ -48,7 +51,7 @@ while true ; do
     -h|--help) usage ; exit 0 ;;
     -q) filter=qbt ; shift ;;
     -s) filter=hbt ; shift ;;
-    -e) cmd_extra='catch throw' ; shift ;;
+    -e) cmd_extra="catch throw"$nl ; shift ;;
     -f) nogdb=1 ; shift ;;
     -l) break_line="$2" ; shift 2 ;;
     -p) break_file="$2" ; shift 2 ;;
@@ -70,11 +73,10 @@ shift
 
 if [ ! -z "$break_line" ] ; then
   [ -z "$break_file" ] && break_file="${command/*\//}.cpp"
-  cmd_extra+=$(echo -e "\nb ${break_file}:$break_line\n$cmd_run\nc")
+  cmd_extra+=$(echo -e "b ${break_file}:$break_line\n$cmd_run\nc")
 elif [ ! -z "$break_file" ] ; then
-  cmd_extra+=$(echo -e "\nb ${break_file}\n$cmd_run\nc")
+  cmd_extra+=$(echo -e "b ${break_file}\n$cmd_run\nc")
 else
-  [ ! -z "$cmd_extra" ] && cmd_extra+=$(echo)
   cmd_extra+="$cmd_run"
 fi
 

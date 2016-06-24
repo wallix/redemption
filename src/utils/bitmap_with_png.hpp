@@ -32,6 +32,7 @@
 //#include "utils/png_bitmap.hpp"
 #include "utils/png.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/sugar/local_fd.hpp"
 #include "log.hpp"
 
 #include <png.h>
@@ -44,29 +45,6 @@
 
 
 using std::size_t;
-
-struct local_fd
-{
-    local_fd(int fd) noexcept : fd(fd) {}
-
-    local_fd(char const * pathname, int flags) noexcept : fd(::open(pathname, flags)) {}
-    local_fd(char const * pathname, int flags, mode_t mode) noexcept : fd(::open(pathname, flags, mode)) {}
-
-    ~local_fd() { ::close(fd); }
-
-    local_fd(local_fd const &) = delete;
-    local_fd & operator=(local_fd const &) = delete;
-
-    explicit operator bool () const noexcept { return this->is_open(); }
-    bool operator!() const noexcept { return !this->is_open(); }
-    bool is_open() const noexcept { return this->fd; }
-
-    int get() const noexcept { return fd; }
-
-private:
-    int fd;
-};
-
 
 inline bool read_all(int fd, void * data_, std::size_t len)
 {

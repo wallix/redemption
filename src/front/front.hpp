@@ -809,9 +809,8 @@ public:
                 {
                     CaptureState original_capture_state = this->capture_state;
 
-                    auth_api * authentifier = this->authentifier;
-                    this->stop_capture();
-                    this->start_capture(width, height, this->ini, authentifier);
+                    this->must_be_stop_capture();
+                    this->can_be_start_capture(this->authentifier);
 
                     this->capture_state = original_capture_state;
                 }
@@ -857,7 +856,7 @@ public:
     }
 
     // ===========================================================================
-    void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
+    bool can_be_start_capture(auth_api * authentifier) override
     {
         LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
@@ -869,21 +868,20 @@ public:
 //            ini.get<cfg::context::pattern_notify>().empty()
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
             !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-           ) {
+        ) {
             LOG(LOG_INFO, "No Capture 1");
-            return;
+            return false;
         }
 
         if (this->capture) {
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
 
             LOG(LOG_INFO, "No Capture 2");
-            return;
+            return false;
         }
 
         if (!ini.get<cfg::globals::is_rec>()) {
             ini.set<cfg::video::capture_flags>(
-//                (!ini.get<cfg::context::pattern_kill>().empty() || !ini.get<cfg::context::pattern_notify>().empty()) ?
                 (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
                  ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())) ?
                 CaptureFlags::ocr : CaptureFlags::none);
@@ -905,7 +903,9 @@ public:
         TODO("remove this after unifying capture interface");
         bool full_video = false;
         this->capture = new Capture(
-            now, width, height, this->mod_bpp, this->capture_bpp
+            now,
+            this->client_info.width, this->client_info.height,
+            this->mod_bpp, this->capture_bpp
           , true, false, authentifier
           , ini, this->gen, this->cctx
           , full_video
@@ -923,24 +923,29 @@ public:
         this->update_keyboard_input_mask_state();
 
         this->authentifier = authentifier;
+
+        return true;
     }
 
-    void pause_capture() {
+    bool can_be_pause_capture() override
+    {
         LOG(LOG_INFO, "---<>  Front::pause_capture  <>---");
         if (this->capture_state != CAPTURE_STATE_STARTED) {
-            return;
+            return false;
         }
 
         timeval now = tvtime();
         this->capture->pause_capture(now);
         this->capture_state = CAPTURE_STATE_PAUSED;
         this->set_gd(this->orders.graphics_update_pdu());
+        return true;
     }
 
-    void resume_capture() {
+    bool can_be_resume_capture() override
+    {
         LOG(LOG_INFO, "---<>  Front::resume_capture <>---");
         if (this->capture_state != CAPTURE_STATE_PAUSED) {
-            return;
+            return false;
         }
 
         timeval now = tvtime();
@@ -949,9 +954,10 @@ public:
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
         }
+        return true;
     }
 
-    void stop_capture()
+    bool must_be_stop_capture() override
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
@@ -962,7 +968,9 @@ public:
             this->capture_state = CAPTURE_STATE_STOPED;
 
             this->set_gd(this->orders.get_graphics_api());
+            return true;
         }
+        return false;
     }
 
     void update_config(Inifile & ini) {

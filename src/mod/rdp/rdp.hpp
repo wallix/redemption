@@ -1453,7 +1453,7 @@ public:
         }
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint8_t flag) {
+    void rdp_input_unicode(uint16_t unicode, uint8_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
         }
@@ -3428,6 +3428,17 @@ public:
 
                                                 this->already_upped_and_running = true;
                                             }
+
+                                            if (this->front.can_be_start_capture(this->acl)) {
+                                                if (this->bogus_refresh_rect
+                                                 && allow_using_multiple_monitors
+                                                 && this->cs_monitor.monitorCount > 1
+                                                ) {
+                                                    this->rdp_suppress_display_updates();
+                                                    this->rdp_allow_display_updates(0, 0, this->front_width, this->front_height);
+                                                }
+                                                this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+                                            }
                                             break;
                                         case UP_AND_RUNNING:
                                             if (this->enable_transparent_mode)
@@ -3694,6 +3705,8 @@ public:
                 }
             }
             catch(Error const & e){
+                this->front.must_be_stop_capture();
+
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     throw;
                 }

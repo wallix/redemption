@@ -33,14 +33,21 @@
 struct Capability;
 class InStream;
 struct OrderCaps;
+class auth_api;
 
 namespace CHANNELS {
     class ChannelDefArray;
     struct ChannelDef;
 }
 
-class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
-    public:
+class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi
+{
+public:
+    virtual bool can_be_start_capture(auth_api * auth) = 0;
+    virtual bool can_be_pause_capture() = 0;
+    virtual bool can_be_resume_capture() = 0;
+    virtual bool must_be_stop_capture() = 0;
+
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , std::size_t length, std::size_t chunk_size, int flags) = 0;
@@ -53,7 +60,7 @@ class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
     bool notimestamp;
     bool nomouse;
 
-    protected:
+protected:
     wait_obj event;
 
     FrontAPI(bool notimestamp, bool nomouse)
@@ -62,7 +69,7 @@ class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi {
         , notimestamp(notimestamp)
         , nomouse(nomouse) {}
 
-    public:
+public:
     virtual wait_obj& get_event() { return this->event; }
 
     // TODO("RZ : Move these methods in OrderCaps class, give more generic access to front order caps?")
