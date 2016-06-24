@@ -706,12 +706,18 @@ static inline int check_encrypted_or_checksumed(
                             using std::begin;
                             using std::end;
 
-                            auto pline = line + (sread_filename2(begin(hash_line.filename), end(hash_line.filename), line) - line);
+                            // filename(1 or >) followed by space
+                            char * pos = std::find(cur, eof, ' ');
+                            if (pos == eof){
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
+                            memcpy(hash_line.filename, cur, pos - cur);
+                            auto pline = pos + 1;
 
                             int err = 0;
                             auto pend = pline;
                             
-                            hash_line.size = strtoll (pline, &pend, 10);
+                            hash_line.size = strtoll(pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
