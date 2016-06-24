@@ -596,6 +596,21 @@ static inline int check_encrypted_or_checksumed(
             MetaLine2 & hash_line;
             bool hash_ok;
 
+            long long int get_ll(char * & cur, char * eof, char sep, int err)
+            {
+                char * pos = std::find(cur, eof, sep);
+                if (pos == eof || (pos - cur < 2)){
+                    throw Error(err);
+                }
+                char * pend = nullptr;
+                long long int res = strtoll(cur, &pend, 10);
+                if (pend != pos){
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+                cur = pos + 1;
+                return res;
+            }
+
             HashLoad(const std::string & full_hash_path, const std::string & input_filename,
                      unsigned int infile_version, bool infile_is_checksumed,
                      MetaLine2 & hash_line,
@@ -652,132 +667,112 @@ static inline int check_encrypted_or_checksumed(
                     if (verbose) {
                         LOG(LOG_INFO, "Hash data v2 or higher");
                     }
+                    
+                    char * cur = temp_buffer;
+                    char * eof =  &temp_buffer[number_of_bytes_read];
 
-                    class ReaderLine2ReaderBuf2
+                    // v2
+                    if (cur == eof || cur[0] != 'v'){
+                        Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+
+                    // skip 3 lines
+                    for (auto i = 0 ; i < 3 ; i++)
                     {
-                        long long int get_ll(char * & cur, char * eof, char sep, int err)
+                        char * pos = std::find(cur, eof, '\n');
+                        if (pos == eof) {
+                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                        }
+                        cur = pos + 1;
+                    }
+
+                    // Line format "fffff
+                    // st_size st_mode st_uid st_gid st_dev st_ino st_mtime
+                    // st_ctime hhhhh HHHHH"
+                    //         ^  ^  ^  ^
+                    //         |  |  |  |
+                    //         |hash1|  |
+                    //         |     |  |
+                    //       space   |hash2
+                    //                  |
+                    //                space
+                    //
+                    // filename(1 or >) + space(1) 
+                    // + stat_info(ll|ull * 8) + space(1)
+                    // + hash1(64) + space(1) + hash2(64) >= 135
+
+                    // filename(1 or >) followed by space
+                    {
+                        char * pos = std::find(cur, eof, ' ');
+                        if (pos == eof){
+                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                        }
+                        if (0 != strncmp(cur, input_filename.c_str(), pos-cur)) 
                         {
-                            char * pos = std::find(cur, eof, sep);
-                            if (pos == eof || (pos - cur < 2)){
-                                throw Error(err);
+                            std::cerr << "File name mismatch: \"" 
+                                      << input_filename 
+                                      << "\"" << std::endl 
+                                      << std::endl;
+                            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                        }
+                        memcpy(hash_line.filename, cur, pos - cur);
+                        hash_line.filename[pos-cur]=0;
+                        cur = pos + 1;
+                    }
+                    // st_size + space
+                    hash_line.size = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                    // st_mode + space
+                    hash_line.mode = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                    // st_uid + space
+                    hash_line.uid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                    // st_gid + space
+                    hash_line.gid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                    // st_dev + space
+                    hash_line.dev = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                    // st_ino + space
+                    hash_line.ino = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                    // st_mtime + space
+                    hash_line.mtime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                    // st_ctime + space
+                    hash_line.ctime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+
+                    if (infile_is_checksumed){
+                        // HASH1 + space
+                        {
+                            int err = 0;
+                            char * pos = std::find(cur, eof, ' ');
+                            if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
-                            char * pend = nullptr;
-                            long long int res = strtoll(cur, &pend, 10);
-                            if (pend != pos){
+                            for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
+                                hash_line.hash1[i] = (chex_to_int(cur[i*2u], err)*16)
+                                                   + chex_to_int(cur[i*2u+1], err);
+                            }
+                            if (err){
+                                printf("throw 2\n");
                                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
                             cur = pos + 1;
-                            return res;
                         }
 
-
-                    public:
-                        ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * cur, char * eof, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
+                        // HASH1 + CR
                         {
-                            // v2
-                            if (cur == eof || cur[0] != 'v'){
-                                Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            int err = 0;
+                            char * pos = std::find(cur, eof, '\n');
+                            if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
-
-                            // skip 3 lines
-                            for (auto i = 0 ; i < 3 ; i++)
-                            {
-                                char * pos = std::find(cur, eof, '\n');
-                                if (pos == eof) {
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
+                            for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
+                                hash_line.hash2[i] = (chex_to_int(cur[i*2u], err)*16)
+                                                   + chex_to_int(cur[i*2u+1], err);
                             }
-
-                            // Line format "fffff
-                            // st_size st_mode st_uid st_gid st_dev st_ino st_mtime
-                            // st_ctime hhhhh HHHHH"
-                            //         ^  ^  ^  ^
-                            //         |  |  |  |
-                            //         |hash1|  |
-                            //         |     |  |
-                            //       space   |hash2
-                            //                  |
-                            //                space
-                            //
-                            // filename(1 or >) + space(1) 
-                            // + stat_info(ll|ull * 8) + space(1)
-                            // + hash1(64) + space(1) + hash2(64) >= 135
-
-                            // filename(1 or >) followed by space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                if (0 != strncmp(cur, input_filename.c_str(), pos-cur)) 
-                                {
-                                    std::cerr << "File name mismatch: \"" 
-                                              << input_filename 
-                                              << "\"" << std::endl 
-                                              << std::endl;
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                memcpy(hash_line.filename, cur, pos - cur);
-                                hash_line.filename[pos-cur]=0;
-                                cur = pos + 1;
+                            if (err){
+                                throw Error(ERR_TRANSPORT_READ_FAILED);
                             }
-                            // st_size + space
-                            hash_line.size = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                            // st_mode + space
-                            hash_line.mode = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                            // st_uid + space
-                            hash_line.uid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                            // st_gid + space
-                            hash_line.gid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                            // st_dev + space
-                            hash_line.dev = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                            // st_ino + space
-                            hash_line.ino = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                            // st_mtime + space
-                            hash_line.mtime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                            // st_ctime + space
-                            hash_line.ctime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-
-                            if (infile_is_checksumed){
-                                // HASH1 + space
-                                {
-                                    int err = 0;
-                                    char * pos = std::find(cur, eof, ' ');
-                                    if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
-                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                    }
-                                    for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                        hash_line.hash1[i] = (chex_to_int(cur[i*2u], err)*16)
-                                                           + chex_to_int(cur[i*2u+1], err);
-                                    }
-                                    if (err){
-                                        printf("throw 2\n");
-                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                    }
-                                    cur = pos + 1;
-                                }
-
-                                // HASH1 + CR
-                                {
-                                    int err = 0;
-                                    char * pos = std::find(cur, eof, '\n');
-                                    if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
-                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                    }
-                                    for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                        hash_line.hash2[i] = (chex_to_int(cur[i*2u], err)*16)
-                                                           + chex_to_int(cur[i*2u+1], err);
-                                    }
-                                    if (err){
-                                        throw Error(ERR_TRANSPORT_READ_FAILED);
-                                    }
-                                    cur = pos + 1;
-                                }
-                            }
-                            hash_ok = true;
+                            cur = pos + 1;
                         }
-                    } reader(full_hash_path, input_filename, temp_buffer, &temp_buffer[number_of_bytes_read], infile_is_checksumed, hash_line, this->hash_ok);
+                    }
+                    this->hash_ok = true;
                 }
             }
         };
