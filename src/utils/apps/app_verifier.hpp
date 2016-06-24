@@ -573,6 +573,24 @@ static inline int check_encrypted_or_checksumed(
                 cur += len;
             }
 
+            void in_hex256(uint8_t * hash, int len, char * & cur, char * eof, char sep, int exc)
+            {
+                int err = 0;
+                char * pos = std::find(cur, eof, sep);
+                if (pos == eof || (pos - cur != 2*len)){
+                    throw Error(exc);
+                }
+                for (int i = 0 ; i < len ; i++){
+                    hash[i] = (chex_to_int(cur[i*2u], err)*16)
+                             + chex_to_int(cur[i*2u+1], err);
+                }
+                if (err){
+                    throw Error(err);
+                }
+                cur = pos + 1;
+            }
+
+
             HashLoad(const std::string & full_hash_path, const std::string & input_filename,
                      unsigned int infile_version, bool infile_is_checksumed,
                      MetaLine2 & hash_line,
@@ -660,7 +678,8 @@ static inline int check_encrypted_or_checksumed(
                         if (pos == eof){
                             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                         }
-                        if (0 != strncmp(cur, input_filename.c_str(), pos-cur)) 
+                        if (size_t(pos-cur) != input_filename.length()
+                        || (0 != strncmp(cur, input_filename.c_str(), pos-cur))) 
                         {
                             std::cerr << "File name mismatch: \"" 
                                       << input_filename 
@@ -691,39 +710,9 @@ static inline int check_encrypted_or_checksumed(
 
                     if (infile_is_checksumed){
                         // HASH1 + space
-                        {
-                            int err = 0;
-                            char * pos = std::find(cur, eof, ' ');
-                            if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-                            for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                hash_line.hash1[i] = (chex_to_int(cur[i*2u], err)*16)
-                                                   + chex_to_int(cur[i*2u+1], err);
-                            }
-                            if (err){
-                                printf("throw 2\n");
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-                            cur = pos + 1;
-                        }
-
+                        this->in_hex256(hash_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                         // HASH1 + CR
-                        {
-                            int err = 0;
-                            char * pos = std::find(cur, eof, '\n');
-                            if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-                            for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                hash_line.hash2[i] = (chex_to_int(cur[i*2u], err)*16)
-                                                   + chex_to_int(cur[i*2u+1], err);
-                            }
-                            if (err){
-                                throw Error(ERR_TRANSPORT_READ_FAILED);
-                            }
-                            cur = pos + 1;
-                        }
+                        this->in_hex256(hash_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
                     }
                 }
             }
