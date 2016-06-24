@@ -839,10 +839,6 @@ static inline int check_encrypted_or_checksumed(
                             return 0;
                         }
 
-                        void read_meta()
-                        {
-                        }
-
                     } reader(full_hash_path, input_filename, temp_buffer, number_of_bytes_read, infile_is_checksumed, hash_line, this->hash_ok);
                 }
             }
@@ -959,23 +955,24 @@ static inline int check_encrypted_or_checksumed(
 
                 // v2
                 if (line[0] == 'v') {
-                    if (this->next_line()
-                     || (sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
-                    ) {
+                    if (this->next_line()){
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    if ((sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0)
+                    {
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     header.version = 2;
                     header.has_checksum = (line[0] == 'c');
                 }
                 // else v1
-
-                if (this->next_line()
-                 || this->next_line()
-                ) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
-                return header;
+                    if (this->next_line()){
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    if (this->next_line()){
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    return header;
             }
 
             int read_meta_file_v1(MetaLine2 & meta_line)
