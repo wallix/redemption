@@ -665,32 +665,24 @@ static inline int check_encrypted_or_checksumed(
                             // v2
                             REDASSERT(remaining_data_buf[0] == 'v');
 
-                            char * pos = std::find(cur, eof, '\n');
-                            if (pos == eof) {
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-                            remaining_data_buf += pos - cur;
-                            remaining_data_length -= pos - cur;
-                            cur = pos + 1;
-
-                            // v2
-//                            REDASSERT(linem[0] == 'v');
                             {
-                                char * pos;
-                                while ((pos = std::find(cur, eof, '\n')) == eof) {
-                                    ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(buf));
-                                    if (ret == 0) {
-                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                    }
-
-                                    memcpy(buf, remaining_data_buf, ret);
-
-                                    remaining_data_buf    += ret;
-                                    remaining_data_length -= ret;
-                                    eof = buf + ret;
-                                    cur = buf;
+                                char * pos = std::find(cur, eof, '\n');
+                                if (pos == eof) {
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                                 }
-                                cur = pos+1;
+                                remaining_data_buf += pos - cur;
+                                remaining_data_length -= pos - cur;
+                                cur = pos + 1;
+                            }
+
+                            {
+                                char * pos = std::find(cur, eof, '\n');
+                                if (pos == eof) {
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                remaining_data_buf += pos - cur;
+                                remaining_data_length -= pos - cur;
+                                cur = pos + 1;
                             }
 
                             {
