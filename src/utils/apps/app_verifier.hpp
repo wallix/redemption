@@ -665,16 +665,13 @@ static inline int check_encrypted_or_checksumed(
                             char linem[32];
                             char * dest1 = linem;
 
-                            ssize_t total_read = 0;
                             while (1) {
                                 char * pos = std::find(cur, eof, '\n');
                                 if (sizeof(linem) < size_t(pos - cur)) {
-                                    total_read += sizeof(linem);
                                     memcpy(dest1, cur, sizeof(linem));
                                     cur += sizeof(linem);
                                     break;
                                 }
-                                total_read += pos - cur;
                                 memcpy(dest1, cur, pos - cur);
                                 dest1 += pos - cur;
                                 cur = pos + 1;
