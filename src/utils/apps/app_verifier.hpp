@@ -655,6 +655,21 @@ static inline int check_encrypted_or_checksumed(
 
                     class ReaderLine2ReaderBuf2
                     {
+                        long long int get_ll(char * & cur, char * eof, char sep, int err)
+                        {
+                            char * pos = std::find(cur, eof, sep);
+                            if (pos == eof || (pos - cur < 2)){
+                                throw Error(err);
+                            }
+                            char * pend = nullptr;
+                            long long int res = strtoll(cur, &pend, 10);
+                            if (pend != pos){
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
+                            cur = pos + 1;
+                            return res;
+                        }
+
 
                     public:
                         ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * remaining_data_buf, ssize_t remaining_data_length, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
@@ -718,116 +733,21 @@ static inline int check_encrypted_or_checksumed(
                                 cur = pos + 1;
                             }
                             // st_size + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.size = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
-
+                            hash_line.size = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                             // st_mode + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.mode = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
-
+                            hash_line.mode = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                             // st_uid + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.uid = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
-
+                            hash_line.uid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                             // st_gid + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.gid = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
-
+                            hash_line.gid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                             // st_dev + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.dev = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
-
+                            hash_line.dev = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                             // st_ino + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.ino = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
-
+                            hash_line.ino = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                             // st_mtime + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.mtime = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
-
+                            hash_line.mtime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                             // st_ctime + space
-                            {
-                                char * pos = std::find(cur, eof, ' ');
-                                if (pos == eof || (pos - cur < 2)){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                char * pend = nullptr;
-                                hash_line.ctime = strtoll(cur, &pend, 10);
-                                if (pend != pos){
-                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                                }
-                                cur = pos + 1;
-                            }
+                            hash_line.ctime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
 
                             if (infile_is_checksumed){
                                 // HASH1 + space
