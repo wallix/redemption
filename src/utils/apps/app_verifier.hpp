@@ -669,8 +669,36 @@ static inline int check_encrypted_or_checksumed(
                         , remaining_data_length(remaining_data_length)
                         {
                             char linem[32];
-                            if (this->read_line(linem, sizeof(linem), ERR_TRANSPORT_READ_FAILED) < 0) {
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            char * dest = linem;
+
+                            ssize_t total_read = 0;
+                            while (1) {
+                                char * pos = std::find(this->cur, this->eof, '\n');
+                                if (sizeof(linem) < size_t(pos - this->cur)) {
+                                    total_read += sizeof(linem);
+                                    memcpy(dest, this->cur, sizeof(linem));
+                                    this->cur += sizeof(linem);
+                                    break;
+                                }
+                                total_read += pos - this->cur;
+                                memcpy(dest, this->cur, pos - this->cur);
+                                dest += pos - this->cur;
+                                this->cur = pos + 1;
+                                if (pos != this->eof) {
+                                    break;
+                                }
+                                
+                                if (remaining_data_length == 0) {
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+
+                                ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
+                                memcpy(this->buf, remaining_data_buf, ret);
+
+                                this->remaining_data_buf    += ret;
+                                this->remaining_data_length -= ret;
+                                this->eof = this->buf + ret;
+                                this->cur = this->buf;
                             }
 
                             // v2
