@@ -589,20 +589,19 @@ static inline int check_encrypted_or_checksumed(
     * Load file hash *
     *****************/
     MetaLine2 hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
-    std::string const full_hash_path = hash_path + input_filename;
 
     {
         struct HashLoad
         {
             MetaLine2 & hash_line;
-            bool & hash_ok;
+            bool hash_ok;
 
             HashLoad(const std::string & full_hash_path, const std::string & input_filename,
                      unsigned int infile_version, bool infile_is_checksumed,
-                     MetaLine2 & hash_line, bool & hash_ok,
+                     MetaLine2 & hash_line,
                     CryptoContext * cctx, bool infile_is_encrypted, int verbose)
                 : hash_line(hash_line)
-                , hash_ok(hash_ok)
+                , hash_ok(false)
             {
                 transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
                 in_hash_fb.open(full_hash_path.c_str());
@@ -853,13 +852,14 @@ static inline int check_encrypted_or_checksumed(
             }
         };
 
-        bool hash_ok = false;
-
         std::string const full_hash_path = hash_path + input_filename;
-        std::cout << "hash file path: \"" << full_hash_path << "\"." << std::endl;
 
         try {
-            HashLoad meta(full_hash_path, input_filename, infile_version, infile_is_checksumed, hash_line, hash_ok, cctx, infile_is_encrypted, verbose);
+            HashLoad meta(full_hash_path, input_filename, infile_version, infile_is_checksumed, hash_line, cctx, infile_is_encrypted, verbose);
+        if (!meta.hash_ok) {
+            return 1;
+        }
+
         }
         catch (Error const & e) {
             std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
@@ -868,9 +868,6 @@ static inline int check_encrypted_or_checksumed(
             std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"" << std::endl << std::endl;
         }
 
-        if (hash_ok == false) {
-            return 1;
-        }
     }
 
     /******************
