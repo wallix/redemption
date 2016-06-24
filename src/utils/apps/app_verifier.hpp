@@ -721,7 +721,39 @@ static inline int check_encrypted_or_checksumed(
                                 (1 + MD_HASH_LENGTH*2) * 2 +
                                 2
                             ];
-                            ssize_t len = this->read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
+
+                            char * dest = line;
+                            ssize_t total_read2 = 0;
+                            while (1) {
+                                char * pos = std::find(this->cur, this->eof, '\n');
+                                if (sizeof(line) - 1 < size_t(pos - this->cur)) {
+                                    total_read2 += sizeof(line) - 1;
+                                    memcpy(dest, this->cur, sizeof(line) - 1);
+                                    this->cur += sizeof(line) - 1;
+                                    break;
+                                }
+                                total_read2 += pos - this->cur;
+                                memcpy(dest, this->cur, pos - this->cur);
+                                dest += pos - this->cur;
+                                this->cur = pos + 1;
+                                if (pos != this->eof) {
+                                    break;
+                                }
+                                
+                                ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
+                                if (ret == 0) {
+                                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                                }
+
+                                memcpy(this->buf, remaining_data_buf, ret);
+
+                                this->remaining_data_buf    += ret;
+                                this->remaining_data_length -= ret;
+                                this->eof = this->buf + ret;
+                                this->cur = this->buf;
+                            }
+                            
+                            ssize_t len = total_read2; 
                             if (len > 0) {
                                 line[len] = 0;
 
