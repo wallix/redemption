@@ -677,9 +677,13 @@ static inline int check_encrypted_or_checksumed(
                             // v2
                             REDASSERT(linem[0] == 'v');
 
-                            if (this->next_line()
-                             || this->next_line()
-                            ) {
+                            if (this->next_line())
+                            {
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
+
+                            if (this->next_line())
+                            {
                                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                             }
 
