@@ -761,32 +761,62 @@ static inline int check_encrypted_or_checksumed(
                             auto pline = line + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), line) - line);
 
                             int err = 0;
-                            auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.uid        = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.gid        = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.dev        = strtoull(pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
+                            auto pend = pline;
+                            
+                            meta_line.size = strtoll (pline, &pend, 10);
+                            err |= (*pend != ' ');
+                            pline = pend;
+                            
+                            meta_line.mode = strtoull(pline, &pend, 10);
+                            err |= (*pend != ' ');
+                            pline = pend;
+                            
+                            meta_line.uid = strtoll (pline, &pend, 10);
+                            err |= (*pend != ' ');
+                            pline = pend;
+                            
+                            meta_line.gid = strtoll (pline, &pend, 10);
+                            err |= (*pend != ' ');
+                            pline = pend;
+                            
+                            meta_line.dev = strtoull(pline, &pend, 10);
+                            err |= (*pend != ' ');
+                            pline = pend;
+                            
+                            meta_line.ino = strtoll (pline, &pend, 10);
+                            err |= (*pend != ' ');
+                            pline = pend;
+                            
+                            meta_line.mtime = strtoll(pline, &pend, 10);
+                            err |= (*pend != ' ');
+                            pline = pend;
+                            
+                            meta_line.ctime = strtoll (pline, &pend, 10);
                             if (read_start_stop_time) {
-                            err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
+                                err |= (*pend != ' ');
+                                pline = pend;
+                                meta_line.start_time = strtoll (pline, &pend, 10);
+                                err |= (*pend != ' ');
+                                pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
                             }
 
                             if (has_checksum
                              && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
                             ) {
-                                auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
-                                    auto phash = begin(hash);
-                                    for (auto e = ++pend + sizeof(hash) * 2u; pend != e; ++pend, ++phash) {
-                                        *phash = (chex_to_int(*pend, err) << 4);
-                                        *phash |= chex_to_int(*++pend, err);
-                                    }
-                                };
-                                read(meta_line.hash1);
                                 err |= (*pend != ' ');
-                                read(meta_line.hash2);
+                                ++pend;
+                                for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
+                                    meta_line.hash1[i] = (chex_to_int(pend[i*2u], err)*16)
+                                                       + chex_to_int(pend[i*2u+1], err);
+                                }
+                                pend += 2*MD_HASH_LENGTH;
+                                err |= (*pend != ' ');
+                                ++pend;
+                                for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
+                                    meta_line.hash2[i] = (chex_to_int(pend[i*2u], err)<<4)
+                                                       + chex_to_int(pend[i*2u+1], err);
+                                }
+                                pend += 2*MD_HASH_LENGTH;
                             }
 
                             err |= bool(*pend);
