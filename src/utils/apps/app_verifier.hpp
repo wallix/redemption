@@ -706,9 +706,18 @@ static inline int check_encrypted_or_checksumed(
                                 if (pos != this->eof) {
                                     break;
                                 }
-                                if (int e = this->read(err)) {
-                                    return e;
+                                
+                                ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
+                                if (ret == 0) {
+                                    return -err;
                                 }
+
+                                memcpy(this->buf, remaining_data_buf, ret);
+
+                                this->remaining_data_buf    += ret;
+                                this->remaining_data_length -= ret;
+                                this->eof = this->buf + ret;
+                                this->cur = this->buf;
                             }
                             return total_read;
                         }
