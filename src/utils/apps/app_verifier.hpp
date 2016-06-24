@@ -685,39 +685,39 @@ static inline int check_encrypted_or_checksumed(
                             }
                                 
                             // Line format "fffff
-                            // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
-                            // sssss eeeee hhhhh HHHHH"
-                            //            ^  ^  ^  ^
-                            //            |  |  |  |
-                            //            |hash1|  |
-                            //            |     |  |
-                            //        space3    |hash2
+                            // st_size st_mode st_uid st_gid st_dev st_ino st_mtime
+                            // st_ctime hhhhh HHHHH"
+                            //         ^  ^  ^  ^
+                            //         |  |  |  |
+                            //         |hash1|  |
+                            //         |     |  |
+                            //       space   |hash2
                             //                  |
-                            //                space4
+                            //                space
                             //
-                            // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
-                            //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-                            //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+                            // filename(1 or >) + space(1) 
+                            // + stat_info(ll|ull * 8) + space(1)
+                            // + hash1(64) + space(1) + hash2(64) >= 135
 
-                            // replace final \n by 0 
-                            // (to be able to use strtoxxx functions)
-                            line[len] = 0;
-
-                            using std::begin;
-                            using std::end;
-
-                            printf("========='%s'============================\n", cur);
                             // filename(1 or >) followed by space
                             {
                                 char * pos = std::find(cur, eof, ' ');
                                 if (pos == eof){
                                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                                 }
+                                if (0 != strncmp(cur, input_filename.c_str(), pos-cur)) 
+                                {
+                                    std::cerr << "File name mismatch: \"" 
+                                              << input_filename 
+                                              << "\"" << std::endl 
+                                              << std::endl;
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
                                 memcpy(hash_line.filename, cur, pos - cur);
+                                hash_line.filename[pos-cur]=0;
                                 cur = pos + 1;
                             }
-                            printf("========='%s'============================\n", cur);
-                            // stat_info(ll|ull * 8) + space(1)
+                            // st_size + space
                             {
                                 char * pos = std::find(cur, eof, ' ');
                                 if (pos == eof || (pos - cur < 2)){
@@ -731,8 +731,7 @@ static inline int check_encrypted_or_checksumed(
                                 cur = pos + 1;
                             }
 
-                            printf("========='%s'============================\n", cur);
-                            // stat_info(ll|ull * 8) + space(1)
+                            // st_mode + space
                             {
                                 char * pos = std::find(cur, eof, ' ');
                                 if (pos == eof || (pos - cur < 2)){
@@ -746,67 +745,127 @@ static inline int check_encrypted_or_checksumed(
                                 cur = pos + 1;
                             }
 
-                            auto pline = cur;
-                            int err = 0;
-                            auto pend = pline + 1;
-                            
-                            hash_line.uid = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' ');
-                            pline = pend;
-                            
-                            hash_line.gid = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' ');
-                            pline = pend;
-                            
-                            hash_line.dev = strtoull(pline, &pend, 10);
-                            err |= (*pend != ' ');
-                            pline = pend;
-                            
-                            hash_line.ino = strtoll (pline, &pend, 10);
-                            err |= (*pend != ' ');
-                            pline = pend;
-                            
-                            hash_line.mtime = strtoll(pline, &pend, 10);
-                            err |= (*pend != ' ');
-                            pline = pend;
-                            
-                            hash_line.ctime = strtoll (pline, &pend, 10);
-
-                            if (infile_is_checksumed
-                             && !(err |= (len - (pend - line) != (sizeof(hash_line.hash1) + sizeof(hash_line.hash2)) * 2 + 2))
-                            ) {
-                                err |= (*pend != ' ');
-                                ++pend;
-                                for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                    hash_line.hash1[i] = (chex_to_int(pend[i*2u], err)*16)
-                                                       + chex_to_int(pend[i*2u+1], err);
-                                }
-                                pend += 2*MD_HASH_LENGTH;
-                                err |= (*pend != ' ');
-                                ++pend;
-                                for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                    hash_line.hash2[i] = (chex_to_int(pend[i*2u], err)<<4)
-                                                       + chex_to_int(pend[i*2u+1], err);
-                                }
-                                pend += 2*MD_HASH_LENGTH;
-                            }
-                            err |= bool(*pend);
-
-                            if (err) {
-                                throw Error(ERR_TRANSPORT_READ_FAILED);
-                            }
-
-                            ssize_t filename_len = input_filename.length();
-                            if (0 == memcmp(hash_line.filename, input_filename.c_str(), filename_len)) 
+                            // st_uid + space
                             {
-                                hash_ok = true;
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.uid = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
                             }
-                            else {
-                                std::cerr << "File name mismatch: \"" 
-                                          << full_hash_path 
-                                          << "\"" << std::endl 
-                                          << std::endl;
+
+                            // st_gid + space
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.gid = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
                             }
+
+                            // st_dev + space
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.dev = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
+                            }
+
+                            // st_ino + space
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.ino = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
+                            }
+
+                            // st_mtime + space
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.mtime = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
+                            }
+
+                            // st_ctime + space
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.ctime = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
+                            }
+
+                            if (infile_is_checksumed){
+                                // HASH1 + space
+                                {
+                                    int err = 0;
+                                    char * pos = std::find(cur, eof, ' ');
+                                    if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
+                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                    }
+                                    for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
+                                        hash_line.hash1[i] = (chex_to_int(cur[i*2u], err)*16)
+                                                           + chex_to_int(cur[i*2u+1], err);
+                                    }
+                                    if (err){
+                                        printf("throw 2\n");
+                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                    }
+                                    cur = pos + 1;
+                                }
+
+                                // HASH1 + CR
+                                {
+                                    int err = 0;
+                                    char * pos = std::find(cur, eof, '\n');
+                                    if (pos == eof || (pos - cur != 2*MD_HASH_LENGTH)){
+                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                    }
+                                    for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
+                                        hash_line.hash2[i] = (chex_to_int(cur[i*2u], err)*16)
+                                                           + chex_to_int(cur[i*2u+1], err);
+                                    }
+                                    if (err){
+                                        throw Error(ERR_TRANSPORT_READ_FAILED);
+                                    }
+                                    cur = pos + 1;
+                                }
+                            }
+                            hash_ok = true;
                         }
                     } reader(full_hash_path, input_filename, temp_buffer, number_of_bytes_read, infile_is_checksumed, hash_line, this->hash_ok);
                 }
@@ -818,6 +877,7 @@ static inline int check_encrypted_or_checksumed(
         try {
             HashLoad meta(full_hash_path, input_filename, infile_version, infile_is_checksumed, hash_line, cctx, infile_is_encrypted, verbose);
         if (!meta.hash_ok) {
+            printf("not hash_ok\n");
             return 1;
         }
 
