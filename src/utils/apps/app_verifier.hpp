@@ -670,8 +670,7 @@ static inline int check_encrypted_or_checksumed(
                         {
                             this->read_meta();
                             
-                            if (this->read_meta_file_v2_impl2(infile_is_checksumed,
-                                                              hash_line, false) 
+                            if (this->read_meta_file_v2_impl2(infile_is_checksumed, hash_line) 
                                 != ERR_TRANSPORT_NO_MORE_DATA)
                             {
                                 ssize_t filename_len = input_filename.length();
@@ -742,8 +741,7 @@ static inline int check_encrypted_or_checksumed(
                             return 0;
                         }
 
-                        int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line, 
-                                                    bool read_start_stop_time) 
+                        int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line) 
                         {
                             char line[
                                 PATH_MAX + 1 + 1 +
@@ -810,13 +808,6 @@ static inline int check_encrypted_or_checksumed(
                             pline = pend;
                             
                             meta_line.ctime = strtoll (pline, &pend, 10);
-                            if (read_start_stop_time) {
-                                err |= (*pend != ' ');
-                                pline = pend;
-                                meta_line.start_time = strtoll (pline, &pend, 10);
-                                err |= (*pend != ' ');
-                                pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
-                            }
 
                             if (has_checksum
                              && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
