@@ -482,51 +482,17 @@ static inline int check_encrypted_or_checksumed(
                 }
             }
 
-            ssize_t read_line(char * dest, size_t len, int err)
-            {
-                ssize_t total_read = 0;
-                while (1) {
-                    char * pos = std::find(this->cur, this->eof, '\n');
-                    if (len < size_t(pos - this->cur)) {
-                        total_read += len;
-                        memcpy(dest, this->cur, len);
-                        this->cur += len;
-                        break;
-                    }
-                    total_read += pos - this->cur;
-                    memcpy(dest, this->cur, pos - this->cur);
-                    dest += pos - this->cur;
-                    this->cur = pos + 1;
-                    if (pos != this->eof) {
-                        break;
-                    }
-
-                    ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf));
-
-                    if (ret < 0 && errno != EINTR) {
-                        return -ERR_TRANSPORT_READ_FAILED;
-                    }
-                    if (ret == 0) {
-                        return -err;
-                    }
-                    this->eof = this->buf + ret;
-                    this->cur = this->buf;
-                }
-                return total_read;
-            }
-
             int next_line()
             {
                 char * pos;
                 while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-
                     ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf));
 
                     if (ret < 0 && errno != EINTR) {
-                        return -ERR_TRANSPORT_READ_FAILED;
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     if (ret == 0) {
-                        return -ERR_TRANSPORT_READ_FAILED;
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     this->eof = this->buf + ret;
                     this->cur = this->buf;
@@ -536,35 +502,17 @@ static inline int check_encrypted_or_checksumed(
             }
             
             void read_meta(){
-                char line[32];
-                auto sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-                if (sz < 0) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
+                this->next_line();
                 // v2
-                if (line[0] == 'v') {
-                    if (this->next_line()) 
-                    {
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    if ((sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0)
-                    {
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
+                if (cur[0] == 'v') {
+                    this->next_line();
+                    this->next_line();
                     this->meta_header.version = 2;
-                    this->meta_header.has_checksum = (line[0] == 'c');
+                    this->meta_header.has_checksum = (cur[0] == 'c');
                 }
                 // else v1
-                if (this->next_line()) 
-                {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-
-                if (this->next_line()) 
-                {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
+                this->next_line();
+                this->next_line();
             }
 
         } reader(cctx, infile_is_encrypted, full_mwrm_filename);
