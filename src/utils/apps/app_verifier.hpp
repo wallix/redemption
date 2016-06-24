@@ -668,7 +668,20 @@ static inline int check_encrypted_or_checksumed(
                         , remaining_data_buf(remaining_data_buf)
                         , remaining_data_length(remaining_data_length)
                         {
-                            this->read_meta();
+                            char linem[32];
+                            auto sz = this->read_line(linem, sizeof(linem), ERR_TRANSPORT_READ_FAILED);
+                            if (sz < 0) {
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
+
+                            // v2
+                            REDASSERT(linem[0] == 'v');
+
+                            if (this->next_line()
+                             || this->next_line()
+                            ) {
+                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            }
 
                             char line[
                                 PATH_MAX + 1 + 1 +
@@ -826,28 +839,8 @@ static inline int check_encrypted_or_checksumed(
                             return 0;
                         }
 
-                        int read_meta_file_v2_impl2(bool infile_is_checksumed, MetaLine2 & hash_line) 
-                        {
-
-                            return 0;
-                        }
-
                         void read_meta()
                         {
-                            char line[32];
-                            auto sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-                            if (sz < 0) {
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
-
-                            // v2
-                            REDASSERT(line[0] == 'v');
-
-                            if (this->next_line()
-                             || this->next_line()
-                            ) {
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                            }
                         }
 
                     } reader(full_hash_path, input_filename, temp_buffer, number_of_bytes_read, infile_is_checksumed, hash_line, this->hash_ok);
