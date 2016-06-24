@@ -687,7 +687,6 @@ static inline int check_encrypted_or_checksumed(
                         {
                         }
 
-
                         ssize_t read_line(char * dest, size_t len, int err)
                         {
                             ssize_t total_read = 0;
@@ -726,9 +725,17 @@ static inline int check_encrypted_or_checksumed(
                         {
                             char * pos;
                             while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-                                if (int e = this->read(ERR_TRANSPORT_READ_FAILED)) {
-                                    return e;
+                                ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
+                                if (ret == 0) {
+                                    return -ERR_TRANSPORT_READ_FAILED;
                                 }
+
+                                memcpy(this->buf, remaining_data_buf, ret);
+
+                                this->remaining_data_buf    += ret;
+                                this->remaining_data_length -= ret;
+                                this->eof = this->buf + ret;
+                                this->cur = this->buf;
                             }
                             this->cur = pos+1;
                             return 0;
