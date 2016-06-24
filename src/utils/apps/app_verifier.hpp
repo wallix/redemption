@@ -662,12 +662,30 @@ static inline int check_encrypted_or_checksumed(
                         ssize_t   remaining_data_length;
 
                     public:
-                        ReaderLine2ReaderBuf2(char * remaining_data_buf, ssize_t remaining_data_length)
+                        ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * remaining_data_buf, ssize_t remaining_data_length, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
                         : eof(buf)
                         , cur(buf)
                         , remaining_data_buf(remaining_data_buf)
                         , remaining_data_length(remaining_data_length)
                         {
+                            this->read_meta();
+                            
+                            if (this->read_meta_file_v2_impl2(infile_is_checksumed,
+                                                              hash_line, false) 
+                                != ERR_TRANSPORT_NO_MORE_DATA)
+                            {
+                                ssize_t filename_len = input_filename.length();
+                                if (0 == memcmp(hash_line.filename, input_filename.c_str(), filename_len)) 
+                                {
+                                    hash_ok = true;
+                                }
+                                else {
+                                    std::cerr << "File name mismatch: \"" 
+                                              << full_hash_path 
+                                              << "\"" << std::endl 
+                                              << std::endl;
+                                }
+                            }
                         }
 
                         ssize_t read_line(char * dest, size_t len, int err)
@@ -818,7 +836,6 @@ static inline int check_encrypted_or_checksumed(
                                 }
                                 pend += 2*MD_HASH_LENGTH;
                             }
-
                             err |= bool(*pend);
 
                             if (err) {
@@ -846,25 +863,7 @@ static inline int check_encrypted_or_checksumed(
                             }
                         }
 
-                    } reader(temp_buffer, number_of_bytes_read);
-                    
-                    reader.read_meta();
-                    
-                    if (reader.read_meta_file_v2_impl2(infile_is_checksumed, this->hash_line, false) 
-                        != ERR_TRANSPORT_NO_MORE_DATA)
-                    {
-                        ssize_t filename_len = input_filename.length();
-                        if (0 == memcmp(this->hash_line.filename, input_filename.c_str(), filename_len)) 
-                        {
-                            this->hash_ok = true;
-                        }
-                        else {
-                            std::cerr << "File name mismatch: \"" 
-                                      << full_hash_path 
-                                      << "\"" << std::endl 
-                                      << std::endl;
-                        }
-                    }
+                    } reader(full_hash_path, input_filename, temp_buffer, number_of_bytes_read, infile_is_checksumed, hash_line, this->hash_ok);
                 }
             }
         };
