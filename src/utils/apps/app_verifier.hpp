@@ -656,13 +656,9 @@ static inline int check_encrypted_or_checksumed(
                     class ReaderLine2ReaderBuf2
                     {
                         char buf[1024];
-                        char    * remaining_data_buf;
-                        ssize_t   remaining_data_length;
 
                     public:
                         ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * remaining_data_buf, ssize_t remaining_data_length, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
-                        : remaining_data_buf(remaining_data_buf)
-                        , remaining_data_length(remaining_data_length)
                         {
                             char * eof = buf;
                             char * cur = buf;
@@ -693,8 +689,8 @@ static inline int check_encrypted_or_checksumed(
                                 ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
                                 memcpy(this->buf, remaining_data_buf, ret);
 
-                                this->remaining_data_buf    += ret;
-                                this->remaining_data_length -= ret;
+                                remaining_data_buf    += ret;
+                                remaining_data_length -= ret;
                                 eof = this->buf + ret;
                                 cur = this->buf;
                             }
@@ -711,8 +707,8 @@ static inline int check_encrypted_or_checksumed(
 
                                     memcpy(this->buf, remaining_data_buf, ret);
 
-                                    this->remaining_data_buf    += ret;
-                                    this->remaining_data_length -= ret;
+                                    remaining_data_buf    += ret;
+                                    remaining_data_length -= ret;
                                     eof = this->buf + ret;
                                     cur = this->buf;
                                 }
@@ -729,8 +725,8 @@ static inline int check_encrypted_or_checksumed(
 
                                     memcpy(this->buf, remaining_data_buf, ret);
 
-                                    this->remaining_data_buf    += ret;
-                                    this->remaining_data_length -= ret;
+                                    remaining_data_buf    += ret;
+                                    remaining_data_length -= ret;
                                     eof = this->buf + ret;
                                     cur = this->buf;
                                 }
@@ -770,8 +766,8 @@ static inline int check_encrypted_or_checksumed(
 
                                 memcpy(this->buf, remaining_data_buf, ret);
 
-                                this->remaining_data_buf    += ret;
-                                this->remaining_data_length -= ret;
+                                remaining_data_buf    += ret;
+                                remaining_data_length -= ret;
                                 eof = this->buf + ret;
                                 cur = this->buf;
                             }
