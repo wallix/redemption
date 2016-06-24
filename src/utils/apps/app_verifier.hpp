@@ -741,7 +741,7 @@ static inline int check_encrypted_or_checksumed(
                             return 0;
                         }
 
-                        int read_meta_file_v2_impl2(bool infile_is_checksumed, MetaLine2 & meta_line) 
+                        int read_meta_file_v2_impl2(bool infile_is_checksumed, MetaLine2 & hash_line) 
                         {
                             char line[
                                 PATH_MAX + 1 + 1 +
@@ -774,55 +774,55 @@ static inline int check_encrypted_or_checksumed(
                             using std::begin;
                             using std::end;
 
-                            auto pline = line + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), line) - line);
+                            auto pline = line + (sread_filename2(begin(hash_line.filename), end(hash_line.filename), line) - line);
 
                             int err = 0;
                             auto pend = pline;
                             
-                            meta_line.size = strtoll (pline, &pend, 10);
+                            hash_line.size = strtoll (pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
-                            meta_line.mode = strtoull(pline, &pend, 10);
+                            hash_line.mode = strtoull(pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
-                            meta_line.uid = strtoll (pline, &pend, 10);
+                            hash_line.uid = strtoll (pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
-                            meta_line.gid = strtoll (pline, &pend, 10);
+                            hash_line.gid = strtoll (pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
-                            meta_line.dev = strtoull(pline, &pend, 10);
+                            hash_line.dev = strtoull(pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
-                            meta_line.ino = strtoll (pline, &pend, 10);
+                            hash_line.ino = strtoll (pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
-                            meta_line.mtime = strtoll(pline, &pend, 10);
+                            hash_line.mtime = strtoll(pline, &pend, 10);
                             err |= (*pend != ' ');
                             pline = pend;
                             
-                            meta_line.ctime = strtoll (pline, &pend, 10);
+                            hash_line.ctime = strtoll (pline, &pend, 10);
 
                             if (infile_is_checksumed
-                             && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
+                             && !(err |= (len - (pend - line) != (sizeof(hash_line.hash1) + sizeof(hash_line.hash2)) * 2 + 2))
                             ) {
                                 err |= (*pend != ' ');
                                 ++pend;
                                 for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                    meta_line.hash1[i] = (chex_to_int(pend[i*2u], err)*16)
+                                    hash_line.hash1[i] = (chex_to_int(pend[i*2u], err)*16)
                                                        + chex_to_int(pend[i*2u+1], err);
                                 }
                                 pend += 2*MD_HASH_LENGTH;
                                 err |= (*pend != ' ');
                                 ++pend;
                                 for (int i = 0 ; i < MD_HASH_LENGTH ; i++){
-                                    meta_line.hash2[i] = (chex_to_int(pend[i*2u], err)<<4)
+                                    hash_line.hash2[i] = (chex_to_int(pend[i*2u], err)<<4)
                                                        + chex_to_int(pend[i*2u+1], err);
                                 }
                                 pend += 2*MD_HASH_LENGTH;
