@@ -948,8 +948,7 @@ static inline int check_encrypted_or_checksumed(
                 MetaHeader2 header{1, false};
 
                 char line[32];
-                auto sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-                if (sz < 0) {
+                if (this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED) < 0) {
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
 
@@ -958,7 +957,7 @@ static inline int check_encrypted_or_checksumed(
                     if (this->next_line()){
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
-                    if ((sz = this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0)
+                    if (this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED) < 0)
                     {
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
