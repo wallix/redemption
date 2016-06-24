@@ -661,23 +661,6 @@ static inline int check_encrypted_or_checksumed(
                         char    * remaining_data_buf;
                         ssize_t   remaining_data_length;
 
-                        int read(int err)
-                        {
-
-                            ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
-                            if (ret == 0) {
-                                return -err;
-                            }
-
-                            memcpy(this->buf, remaining_data_buf, ret);
-
-                            this->remaining_data_buf    += ret;
-                            this->remaining_data_length -= ret;
-                            this->eof = this->buf + ret;
-                            this->cur = this->buf;
-                            return 0;
-                        }
-
                     public:
                         ReaderLine2ReaderBuf2(char * remaining_data_buf, ssize_t remaining_data_length)
                         : eof(buf)
