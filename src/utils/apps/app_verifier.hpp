@@ -656,35 +656,33 @@ static inline int check_encrypted_or_checksumed(
                     class ReaderLine2ReaderBuf2
                     {
                         char buf[1024];
-                        char * eof;
-                        char * cur;
                         char    * remaining_data_buf;
                         ssize_t   remaining_data_length;
 
                     public:
                         ReaderLine2ReaderBuf2(const std::string & full_hash_path, const std::string & input_filename, char * remaining_data_buf, ssize_t remaining_data_length, bool infile_is_checksumed, MetaLine2 & hash_line, bool & hash_ok)
-                        : eof(buf)
-                        , cur(buf)
-                        , remaining_data_buf(remaining_data_buf)
+                        : remaining_data_buf(remaining_data_buf)
                         , remaining_data_length(remaining_data_length)
                         {
+                            char * eof = buf;
+                            char * cur = buf;
                             char linem[32];
                             char * dest1 = linem;
 
                             ssize_t total_read = 0;
                             while (1) {
-                                char * pos = std::find(this->cur, this->eof, '\n');
-                                if (sizeof(linem) < size_t(pos - this->cur)) {
+                                char * pos = std::find(cur, eof, '\n');
+                                if (sizeof(linem) < size_t(pos - cur)) {
                                     total_read += sizeof(linem);
-                                    memcpy(dest1, this->cur, sizeof(linem));
-                                    this->cur += sizeof(linem);
+                                    memcpy(dest1, cur, sizeof(linem));
+                                    cur += sizeof(linem);
                                     break;
                                 }
-                                total_read += pos - this->cur;
-                                memcpy(dest1, this->cur, pos - this->cur);
-                                dest1 += pos - this->cur;
-                                this->cur = pos + 1;
-                                if (pos != this->eof) {
+                                total_read += pos - cur;
+                                memcpy(dest1, cur, pos - cur);
+                                dest1 += pos - cur;
+                                cur = pos + 1;
+                                if (pos != eof) {
                                     break;
                                 }
                                 
@@ -697,21 +695,46 @@ static inline int check_encrypted_or_checksumed(
 
                                 this->remaining_data_buf    += ret;
                                 this->remaining_data_length -= ret;
-                                this->eof = this->buf + ret;
-                                this->cur = this->buf;
+                                eof = this->buf + ret;
+                                cur = this->buf;
                             }
 
                             // v2
                             REDASSERT(linem[0] == 'v');
-
-                            if (this->next_line())
                             {
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                char * pos;
+                                while ((pos = std::find(cur, eof, '\n')) == eof) {
+                                    ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
+                                    if (ret == 0) {
+                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                    }
+
+                                    memcpy(this->buf, remaining_data_buf, ret);
+
+                                    this->remaining_data_buf    += ret;
+                                    this->remaining_data_length -= ret;
+                                    eof = this->buf + ret;
+                                    cur = this->buf;
+                                }
+                                cur = pos+1;
                             }
 
-                            if (this->next_line())
                             {
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                char * pos;
+                                while ((pos = std::find(cur, eof, '\n')) == eof) {
+                                    ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
+                                    if (ret == 0) {
+                                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                    }
+
+                                    memcpy(this->buf, remaining_data_buf, ret);
+
+                                    this->remaining_data_buf    += ret;
+                                    this->remaining_data_length -= ret;
+                                    eof = this->buf + ret;
+                                    cur = this->buf;
+                                }
+                                cur = pos+1;
                             }
 
                             char line[
@@ -725,18 +748,18 @@ static inline int check_encrypted_or_checksumed(
                             char * dest = line;
                             ssize_t total_read2 = 0;
                             while (1) {
-                                char * pos = std::find(this->cur, this->eof, '\n');
-                                if (sizeof(line) - 1 < size_t(pos - this->cur)) {
+                                char * pos = std::find(cur, eof, '\n');
+                                if (sizeof(line) - 1 < size_t(pos - cur)) {
                                     total_read2 += sizeof(line) - 1;
-                                    memcpy(dest, this->cur, sizeof(line) - 1);
-                                    this->cur += sizeof(line) - 1;
+                                    memcpy(dest, cur, sizeof(line) - 1);
+                                    cur += sizeof(line) - 1;
                                     break;
                                 }
-                                total_read2 += pos - this->cur;
-                                memcpy(dest, this->cur, pos - this->cur);
-                                dest += pos - this->cur;
-                                this->cur = pos + 1;
-                                if (pos != this->eof) {
+                                total_read2 += pos - cur;
+                                memcpy(dest, cur, pos - cur);
+                                dest += pos - cur;
+                                cur = pos + 1;
+                                if (pos != eof) {
                                     break;
                                 }
                                 
@@ -749,8 +772,8 @@ static inline int check_encrypted_or_checksumed(
 
                                 this->remaining_data_buf    += ret;
                                 this->remaining_data_length -= ret;
-                                this->eof = this->buf + ret;
-                                this->cur = this->buf;
+                                eof = this->buf + ret;
+                                cur = this->buf;
                             }
                             
                             ssize_t len = total_read2; 
@@ -847,27 +870,6 @@ static inline int check_encrypted_or_checksumed(
                                 }
                             }
                         }
-
-                        int next_line()
-                        {
-                            char * pos;
-                            while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-                                ssize_t ret = std::min<ssize_t>(remaining_data_length, sizeof(this->buf));
-                                if (ret == 0) {
-                                    return -ERR_TRANSPORT_READ_FAILED;
-                                }
-
-                                memcpy(this->buf, remaining_data_buf, ret);
-
-                                this->remaining_data_buf    += ret;
-                                this->remaining_data_length -= ret;
-                                this->eof = this->buf + ret;
-                                this->cur = this->buf;
-                            }
-                            this->cur = pos+1;
-                            return 0;
-                        }
-
                     } reader(full_hash_path, input_filename, temp_buffer, number_of_bytes_read, infile_is_checksumed, hash_line, this->hash_ok);
                 }
             }
