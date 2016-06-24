@@ -706,24 +706,49 @@ static inline int check_encrypted_or_checksumed(
                             using std::begin;
                             using std::end;
 
+                            printf("========='%s'============================\n", cur);
                             // filename(1 or >) followed by space
-                            char * pos = std::find(cur, eof, ' ');
-                            if (pos == eof){
-                                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                memcpy(hash_line.filename, cur, pos - cur);
+                                cur = pos + 1;
                             }
-                            memcpy(hash_line.filename, cur, pos - cur);
-                            auto pline = pos + 1;
+                            printf("========='%s'============================\n", cur);
+                            // stat_info(ll|ull * 8) + space(1)
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.size = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
+                            }
 
+                            printf("========='%s'============================\n", cur);
+                            // stat_info(ll|ull * 8) + space(1)
+                            {
+                                char * pos = std::find(cur, eof, ' ');
+                                if (pos == eof || (pos - cur < 2)){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                char * pend = nullptr;
+                                hash_line.mode = strtoll(cur, &pend, 10);
+                                if (pend != pos){
+                                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                                }
+                                cur = pos + 1;
+                            }
+
+                            auto pline = cur;
                             int err = 0;
-                            auto pend = pline;
-                            
-                            hash_line.size = strtoll(pline, &pend, 10);
-                            err |= (*pend != ' ');
-                            pline = pend;
-                            
-                            hash_line.mode = strtoull(pline, &pend, 10);
-                            err |= (*pend != ' ');
-                            pline = pend;
+                            auto pend = pline + 1;
                             
                             hash_line.uid = strtoll (pline, &pend, 10);
                             err |= (*pend != ' ');
