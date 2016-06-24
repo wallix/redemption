@@ -637,10 +637,10 @@ static inline int check_encrypted_or_checksumed(
                         }
 
                         memcpy(this->hash_line.hash1, 
-                               temp_buffer + filename_len + 1, 
+                               &temp_buffer[filename_len + 1], 
                                sizeof(this->hash_line.hash1));
                         memcpy(this->hash_line.hash2, 
-                               temp_buffer + filename_len + 1 + sizeof(this->hash_line.hash1),
+                               &temp_buffer[filename_len + 1 + sizeof(this->hash_line.hash1)],
                                sizeof(this->hash_line.hash2));
                         this->hash_ok = true;
                     }
