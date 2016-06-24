@@ -594,7 +594,6 @@ static inline int check_encrypted_or_checksumed(
         struct HashLoad
         {
             MetaLine2 & hash_line;
-            bool hash_ok;
 
             long long int get_ll(char * & cur, char * eof, char sep, int err)
             {
@@ -625,18 +624,17 @@ static inline int check_encrypted_or_checksumed(
                      MetaLine2 & hash_line,
                     CryptoContext * cctx, bool infile_is_encrypted, int verbose)
                 : hash_line(hash_line)
-                , hash_ok(false)
             {
                 transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
                 in_hash_fb.open(full_hash_path.c_str());
 
-                char temp_buffer[8192];
-                memset(temp_buffer, 0, sizeof(temp_buffer));
+                char buffer[8192];
+                memset(buffer, 0, sizeof(buffer));
 
-                ssize_t number_of_bytes_read = in_hash_fb.read(temp_buffer, sizeof(temp_buffer));
+                ssize_t len = in_hash_fb.read(buffer, sizeof(buffer));
 
-                char * eof =  &temp_buffer[number_of_bytes_read];
-                char * cur = &temp_buffer[0];
+                char * eof =  &buffer[len];
+                char * cur = &buffer[0];
 
                 if (infile_version == 1) {
                     if (verbose) {
@@ -661,10 +659,11 @@ static inline int check_encrypted_or_checksumed(
                         throw Error(ERR_TRANSPORT_READ_FAILED);
                     }
                     cur++;
-                    this->in_copy_bytes(this->hash_line.hash1, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
-                    this->in_copy_bytes(this->hash_line.hash2, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
+                    this->in_copy_bytes(this->hash_line.hash1, MD_HASH_LENGTH, cur, eof,
+                                        ERR_TRANSPORT_READ_FAILED);
+                    this->in_copy_bytes(this->hash_line.hash2, MD_HASH_LENGTH, cur, eof,
+                                        ERR_TRANSPORT_READ_FAILED);
 
-                    this->hash_ok = true;
                 }
                 else {
                     if (verbose) {
@@ -772,28 +771,28 @@ static inline int check_encrypted_or_checksumed(
                             cur = pos + 1;
                         }
                     }
-                    this->hash_ok = true;
                 }
             }
         };
 
         std::string const full_hash_path = hash_path + input_filename;
 
+        // if reading hash fails
         try {
             HashLoad meta(full_hash_path, input_filename, infile_version, infile_is_checksumed, hash_line, cctx, infile_is_encrypted, verbose);
-        if (!meta.hash_ok) {
-            printf("not hash_ok\n");
-            return 1;
-        }
-
         }
         catch (Error const & e) {
             std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
+            if (infile_is_checksumed){
+                return 1;
+            }
         }
         catch (...) {
             std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"" << std::endl << std::endl;
+            if (infile_is_checksumed){
+                return 1;
+            }
         }
-
     }
 
     /******************
