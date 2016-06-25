@@ -767,30 +767,16 @@ static inline int check_encrypted_or_checksumed(
             return 1;;
         }
 
-        struct ReaderBuf3
-        {
-            private:
-            transbuf::ifile_buf & buf;
-
-            public:
-
-            ReaderBuf3(transbuf::ifile_buf & buf) : buf(buf) {}
-
-            ssize_t reader_read(char * buf, size_t len) const {
-                return this->buf.read(buf, len);
-            }
-        } rb(ifile);
-
         class ReaderLine2ReaderBuf3
         {
             char buf[1024];
             char * eof;
             char * cur;
-            ReaderBuf3 reader;
+            transbuf::ifile_buf & reader_buf;
 
             int read(int err)
             {
-                ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
+                ssize_t ret = this->reader_buf.read(this->buf, sizeof(this->buf));
 
                 if (ret < 0 && errno != EINTR) {
                     return -ERR_TRANSPORT_READ_FAILED;
@@ -804,10 +790,10 @@ static inline int check_encrypted_or_checksumed(
             }
 
         public:
-            ReaderLine2ReaderBuf3(ReaderBuf3 reader) noexcept
+            ReaderLine2ReaderBuf3(transbuf::ifile_buf & reader_buf) noexcept
             : eof(buf)
             , cur(buf)
-            , reader(reader)
+            , reader_buf(reader_buf)
             {
             }
 
@@ -1034,7 +1020,7 @@ static inline int check_encrypted_or_checksumed(
                 this->cur = pos+1;
                 return 0;
             }
-        } reader(rb);
+        } reader(ifile);
 
         auto meta_header = reader.read_meta_headers();
 
