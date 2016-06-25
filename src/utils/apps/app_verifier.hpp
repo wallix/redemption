@@ -460,7 +460,7 @@ static inline int check_encrypted_or_checksumed(
     }
 
     {
-        class ReaderLine2ReaderBuf1
+        class MwrmHeadersReader
         {
             char buf[1024];
             char * eof;
@@ -469,7 +469,7 @@ static inline int check_encrypted_or_checksumed(
         public:
             MetaHeader2 meta_header;
 
-            explicit ReaderLine2ReaderBuf1(CryptoContext * cctx, int encryption, 
+            explicit MwrmHeadersReader(CryptoContext * cctx, int encryption, 
                 const std::string & full_mwrm_filename)
             : eof(buf)
             , cur(buf)
@@ -511,6 +511,7 @@ static inline int check_encrypted_or_checksumed(
                     this->meta_header.has_checksum = (cur[0] == 'c');
                 }
                 // else v1
+                // common lines to all versions
                 this->next_line();
                 this->next_line();
             }
