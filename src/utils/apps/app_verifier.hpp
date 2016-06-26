@@ -893,7 +893,7 @@ static inline int check_encrypted_or_checksumed(
                 return 0;
             }
 
-            int read_meta_file_v2_impl2(bool has_checksum, MetaLine2 & meta_line, bool read_start_stop_time) {
+            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
                 char line[
                     PATH_MAX + 1 + 1 +
                     (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -936,12 +936,10 @@ static inline int check_encrypted_or_checksumed(
                 err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
                 err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
                 err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
-                if (read_start_stop_time) {
                 err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
                 err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
-                }
 
-                if (has_checksum
+                if (meta_header.has_checksum
                  && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
                 ) {
                     auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
@@ -963,10 +961,6 @@ static inline int check_encrypted_or_checksumed(
                 }
 
                 return 0;
-            }
-
-            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
-                return this->read_meta_file_v2_impl2(meta_header.has_checksum, meta_line, true);
             }
 
             ssize_t read_line(char * dest, size_t len, int err)
