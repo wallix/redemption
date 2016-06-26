@@ -774,21 +774,6 @@ static inline int check_encrypted_or_checksumed(
             char * cur;
             transbuf::ifile_buf & reader_buf;
 
-            int read(int err)
-            {
-                ssize_t ret = this->reader_buf.read(this->buf, sizeof(this->buf));
-
-                if (ret < 0 && errno != EINTR) {
-                    return -ERR_TRANSPORT_READ_FAILED;
-                }
-                if (ret == 0) {
-                    return -err;
-                }
-                this->eof = this->buf + ret;
-                this->cur = this->buf;
-                return 0;
-            }
-
         public:
             ReaderLine2ReaderBuf3(transbuf::ifile_buf & reader_buf) noexcept
             : eof(buf)
@@ -1002,9 +987,16 @@ static inline int check_encrypted_or_checksumed(
                     if (pos != this->eof) {
                         break;
                     }
-                    if (int e = this->read(err)) {
-                        return e;
+                    ssize_t ret = this->reader_buf.read(this->buf, sizeof(this->buf));
+
+                    if (ret < 0 && errno != EINTR) {
+                        return -ERR_TRANSPORT_READ_FAILED;
                     }
+                    if (ret == 0) {
+                        return -err;
+                    }
+                    this->eof = this->buf + ret;
+                    this->cur = this->buf;
                 }
                 return total_read;
             }
@@ -1013,9 +1005,16 @@ static inline int check_encrypted_or_checksumed(
             {
                 char * pos;
                 while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-                    if (int e = this->read(ERR_TRANSPORT_READ_FAILED)) {
-                        return e;
+                    ssize_t ret = this->reader_buf.read(this->buf, sizeof(this->buf));
+
+                    if (ret < 0 && errno != EINTR) {
+                        return -ERR_TRANSPORT_READ_FAILED;
                     }
+                    if (ret == 0) {
+                        return -ERR_TRANSPORT_READ_FAILED;
+                    }
+                    this->eof = this->buf + ret;
+                    this->cur = this->buf;
                 }
                 this->cur = pos+1;
                 return 0;
