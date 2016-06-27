@@ -253,7 +253,6 @@ Drawable.prototype.RDPPatBlt_0x5A = function(dx, dy, w, h, r_back, g_back, b_bac
 Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
     this._ctxS();
     var imgData = this.cctx.createImageData(w, h+1);
-
     var dw = w*4;
     var i = 0;
     var j = 0;
@@ -275,7 +274,10 @@ Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
 Drawable.prototype.rDPMemBlt = function(x, y, w, h, data, shift, sx, sy) {
     this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
-    var dw = (sx+w)*4;
+
+    imgData.data = data;
+
+    /*var dw = (sx+w)*4;
     var dh = h+1;
     var i = 0;
     var j = 0;
@@ -288,7 +290,7 @@ Drawable.prototype.rDPMemBlt = function(x, y, w, h, data, shift, sx, sy) {
             imgData.data[i+2]= data[j+0];
             imgData.data[i+3]= 255;
         }
-    }
+    }*/
     this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
     this._ctxR();
 }
