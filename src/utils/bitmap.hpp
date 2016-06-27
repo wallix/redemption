@@ -2058,7 +2058,7 @@ private:
 
         for (size_t y = 0; y < bmp.cy() ; y++) {
             for (size_t x = 0; x < bmp.cx() ; x++) {
-                uint32_t pixel = buf_to_color(src);
+                BGRColor pixel = buf_to_color(src);
 
                 pixel = dec(pixel);
                 if (Enc::bpp != 24){
