@@ -19,8 +19,7 @@
 
 */
 
-#ifndef REDEMPTION_QT5_FRONT_QT5_HPP
-#define REDEMPTION_QT5_FRONT_QT5_HPP
+#pragma once
 
 #include <stdio.h>
 #include <openssl/ssl.h>
@@ -439,6 +438,3 @@ public:
 };
 
 
-
-
-#endif

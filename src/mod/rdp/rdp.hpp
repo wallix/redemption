@@ -1979,7 +1979,6 @@ public:
               (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
                 char * hostname = this->hostname;
-
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     if (this->verbose & 1){
@@ -1993,7 +1992,6 @@ public:
                                 this->server_notifier,
                                 this->certif_path.get()
                             );
-
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         // Basic Settings Exchange
@@ -3826,7 +3824,6 @@ public:
         if (this->session_probe_virtual_channel_p) {
             this->session_probe_virtual_channel_p->process_event();
         }
-
     }   // draw_event
 
     wait_obj * get_secondary_event() override {

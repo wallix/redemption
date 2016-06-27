@@ -332,6 +332,7 @@ void Front_Qt::mouseReleaseEvent(QMouseEvent *e) {
     if (this->_callback != nullptr) {
         int flag(0);
         switch (e->button()) {
+
             case 1: flag = MOUSE_FLAG_BUTTON1; break;
             case 2: flag = MOUSE_FLAG_BUTTON2; break;
             case 4: flag = MOUSE_FLAG_BUTTON4; break;
@@ -346,7 +347,7 @@ void Front_Qt::keyPressEvent(QKeyEvent *e) {
     this->_qtRDPKeymap.keyEvent(0     , e);
     if (this->_qtRDPKeymap.scanCode != 0) {
         this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
-        //this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, 0);
+
     }
 }
 
@@ -435,10 +436,6 @@ void Front_Qt::send_rdp_scanCode(int keyCode, int flag) {
     if (this->_callback != nullptr) {
         this->_callback->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->_keymap));
     }
-/*
-    if (this->_callback != nullptr) {
-        this->_callback->rdp_input_unicode(keyCode, flag);
-    }*/
 }
 
 
