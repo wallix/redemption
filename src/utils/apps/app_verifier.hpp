@@ -909,9 +909,9 @@ static inline int check_encrypted_or_checksumed(
                 //            |  |  |  |
                 //            |hash1|  |
                 //            |     |  |
-                //        space3    |hash2
+                //        space11   |hash2
                 //                  |
-                //                space4
+                //                space12
                 //
                 // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
                 //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
