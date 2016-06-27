@@ -1147,7 +1147,6 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
         LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
     }
 
-    bool infile_is_encrypted = false;
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
     return check_encrypted_or_checksumed(
