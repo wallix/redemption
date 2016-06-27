@@ -2011,36 +2011,67 @@ public:
         if (out_bpp != bmp.bpp()) {
             this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
 
-            uint8_t * dest = this->data_bitmap->get();
-            const uint8_t * src = bmp.data_bitmap->get();
-            const uint8_t src_nbbytes = nbbytes(bmp.bpp());
-            const uint8_t Bpp = nbbytes(out_bpp);
+            auto buf2col_1B = [](uint8_t const * p) -> BGRColor { return p[0]; };
+            auto buf2col_2B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8); };
+            auto buf2col_3B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8) | (p[2] << 16); };
 
-            for (size_t y = 0; y < bmp.cy() ; y++) {
-                for (size_t x = 0; x < bmp.cx() ; x++) {
-                    uint32_t pixel = in_uint32_from_nb_bytes_le(src_nbbytes, src);
+            auto col2buf_1B = [](BGRColor c, uint8_t * p) { p[0] = c; };
+            auto col2buf_2B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; };
+            auto col2buf_3B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; p[2] = c >> 16; };
 
-                    pixel = color_decode(pixel, bmp.bpp(), bmp.palette());
-                    if (out_bpp != 24){
-                        pixel = RGBtoBGR(pixel);
-                    }
-                    pixel = color_encode(pixel, out_bpp);
+            using namespace shortcut_encode;
+            using namespace shortcut_decode_with_palette;
 
-                    out_bytes_le(dest, Bpp, pixel);
-                    src += src_nbbytes;
-                    dest += Bpp;
-                }
-                src += bmp.line_size() - bmp.cx() * src_nbbytes;
-                dest += this->line_size() - bmp.cx() * Bpp;
-            }
-
-            if (out_bpp == 8){
-                this->data_bitmap->palette() = BGRPalette::classic_332();
+            switch (bmp.bpp() * 3 + out_bpp){
+                case 8*3+15: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
+                case 8*3+16: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
+                case 8*3+24: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
+                case 15*3+8: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_1B, enc8());
+                    this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
+                case 15*3+16: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_2B, enc16()); break;
+                case 15*3+24: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_3B, enc24()); break;
+                case 16*3+8: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_1B, enc8());
+                    this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
+                case 16*3+15: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_2B, enc15()); break;
+                case 16*3+24: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_3B, enc24()); break;
+                case 24*3+8: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_1B, enc8());
+                    this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
+                case 24*3+15: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc15()); break;
+                case 24*3+16: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc16()); break;
+                default: assert(!"unknown bpp");
             }
         }
         else {
             this->data_bitmap = bmp.data_bitmap;
             this->data_bitmap->inc();
+        }
+    }
+
+private:
+    template<class BufToColor, class Dec, class ColorToBuf, class Enc>
+    void bpp2bpp(const Bitmap& bmp, BufToColor buf_to_color, Dec dec, ColorToBuf color_to_buf, Enc enc)
+    {
+        uint8_t * dest = this->data_bitmap->get();
+        const uint8_t * src = bmp.data_bitmap->get();
+        const uint8_t src_nbbytes = nbbytes(Dec::bpp);
+        const uint8_t Bpp = nbbytes(Enc::bpp);
+
+        for (size_t y = 0; y < bmp.cy() ; y++) {
+            for (size_t x = 0; x < bmp.cx() ; x++) {
+                uint32_t pixel = buf_to_color(src);
+
+                pixel = dec(pixel);
+                if (Enc::bpp != 24){
+                    pixel = RGBtoBGR(pixel);
+                }
+                pixel = enc(pixel);
+
+                color_to_buf(pixel, dest);
+                dest += Bpp;
+                src += src_nbbytes;
+            }
+            src += bmp.line_size() - bmp.cx() * src_nbbytes;
+            dest += this->line_size() - bmp.cx() * Bpp;
         }
     }
 };
