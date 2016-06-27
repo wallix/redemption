@@ -774,6 +774,48 @@ static inline int check_encrypted_or_checksumed(
             char * cur;
             transbuf::ifile_buf & reader_buf;
 
+
+            long long int get_ll(char * & cur, char * eof, char sep, int err)
+            {
+                char * pos = std::find(cur, eof, sep);
+                if (pos == eof || (pos - cur < 2)){
+                    throw Error(err);
+                }
+                char * pend = nullptr;
+                long long int res = strtoll(cur, &pend, 10);
+                if (pend != pos){
+                    throw Error(err);
+                }
+                cur = pos + 1;
+                return res;
+            }
+
+            void in_copy_bytes(uint8_t * hash, int len, char * & cur, char * eof, int err)
+            {
+                if (eof - cur < len){
+                    throw Error(err);
+                }
+                memcpy(hash, cur, len);
+                cur += len;
+            }
+
+            void in_hex256(uint8_t * hash, int len, char * & cur, char * eof, char sep, int exc)
+            {
+                int err = 0;
+                char * pos = std::find(cur, eof, sep);
+                if (pos == eof || (pos - cur != 2*len)){
+                    throw Error(exc);
+                }
+                for (int i = 0 ; i < len ; i++){
+                    hash[i] = (chex_to_int(cur[i*2u], err)*16)
+                             + chex_to_int(cur[i*2u+1], err);
+                }
+                if (err){
+                    throw Error(err);
+                }
+                cur = pos + 1;
+            }
+
         public:
             ReaderLine2ReaderBuf3(transbuf::ifile_buf & reader_buf) noexcept
             : eof(buf)
@@ -784,7 +826,8 @@ static inline int check_encrypted_or_checksumed(
 
             int read_meta_file2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
                 if (meta_header.version == 1) {
-                    return this->read_meta_file_v1(meta_line);
+                    this->read_meta_file_v1(meta_line);
+                    return 0;
                 }
                 else {
                     return this->read_meta_file_v2(meta_header, meta_line);
@@ -810,7 +853,7 @@ static inline int check_encrypted_or_checksumed(
                 return header;
             }
 
-            int read_meta_file_v1(MetaLine2 & meta_line)
+            void read_meta_file_v1(MetaLine2 & meta_line)
             {
                 this->next_line();
                 this->eof[0] = 0;
@@ -828,54 +871,28 @@ static inline int check_encrypted_or_checksumed(
                 // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
                 //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
                 typedef std::reverse_iterator<char*> reverse_iterator;
+                reverse_iterator first(cur);
+                reverse_iterator last(cur + len);
+                reverse_iterator space4 = std::find(last, first, ' ');
+                space4++;
+                reverse_iterator space3 = std::find(space4, first, ' ');
+                space3++;
+                reverse_iterator space2 = std::find(space3, first, ' ');
+                space2++;
+                reverse_iterator space1 = std::find(space2, first, ' ');
+                space1++;
+                int path_len = first-space1;
+                this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, cur, eof, ERR_TRANSPORT_READ_FAILED);
+                this->cur += path_len + 1;
 
-                using std::begin;
-
-                reverse_iterator last(cur);
-                reverse_iterator first(cur + len);
-                reverse_iterator e1 = std::find(first, last, ' ');
-                if (e1 - first == 64) {
-                    int err = 0;
-                    auto phash = begin(meta_line.hash2);
-                    for (char * b = e1.base(), * e = b + 64; e != b; ++b, ++phash) {
-                        *phash = (chex_to_int(*b, err) << 4);
-                        *phash |= chex_to_int(*++b, err);
-                    }
-                    REDASSERT(!err);
-                }
-
-                reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
-                if (e2 - (e1 + 1) == 64) {
-                    int err = 0;
-                    auto phash = begin(meta_line.hash1);
-                    for (char * b = e2.base(), * e = b + 64; e != b; ++b, ++phash) {
-                        *phash = (chex_to_int(*b, err) << 4);
-                        *phash |= chex_to_int(*++b, err);
-                    }
-                    REDASSERT(!err);
-                }
-
-                if (e1 - first == 64 && e2 != last) {
-                    first = e2 + 1;
-                    e1 = std::find(first, last, ' ');
-                    e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
-                }
-
-                meta_line.stop_time = meta_parse_sec(e1.base(), first.base());
-                if (e1 != last) {
-                    ++e1;
-                }
-                meta_line.start_time = meta_parse_sec(e2.base(), e1.base());
-
-                if (e2 != last) {
-                    *e2 = 0;
-                }
-
-                auto path_len = std::min(int(e2.base() - cur), PATH_MAX);
-                memcpy(meta_line.filename, cur, path_len);
-                meta_line.filename[path_len] = 0;
-
-                return 0;
+                // start_time + ' '
+                meta_line.start_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // stop_time + ' '
+                meta_line.stop_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // HASH1 + ' '
+                this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // HASH1 + CR
+                this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
             }
 
             int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) 
