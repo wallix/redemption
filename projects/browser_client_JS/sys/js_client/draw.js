@@ -267,6 +267,8 @@ Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
         }
     }
 
+    //imgData.data = data;
+
     this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
     this._ctxR();
 }
@@ -275,9 +277,7 @@ Drawable.prototype.rDPMemBlt = function(x, y, w, h, data, shift, sx, sy) {
     this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
 
-    imgData.data = data;
-
-    /*var dw = (sx+w)*4;
+    var dw = (sx+w)*4;
     var dh = h+1;
     var i = 0;
     var j = 0;
@@ -290,7 +290,7 @@ Drawable.prototype.rDPMemBlt = function(x, y, w, h, data, shift, sx, sy) {
             imgData.data[i+2]= data[j+0];
             imgData.data[i+3]= 255;
         }
-    }*/
+    }
     this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
     this._ctxR();
 }
@@ -428,13 +428,12 @@ function connecting() {
         /* Test */
 
         startTimer();
-        console.log('2');
         //current = 0;
         getDataOctet();
-        console.log('3');
         endTimer();
+
         /* Test */
-        console.log('4');
+
     } else {
 
         var errorDiv = document.getElementById("errorMsgDiv");
