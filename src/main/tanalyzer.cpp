@@ -132,6 +132,10 @@ public:
     void begin_update() override { REDASSERT(false); }
     void end_update() override { REDASSERT(false); }
 
+    bool can_be_start_capture(auth_api* auth) override { REDASSERT(false); return false; }
+    bool can_be_pause_capture() override { REDASSERT(false); return false; }
+    bool can_be_resume_capture() override { REDASSERT(false); return false; }
+    bool must_be_stop_capture() override { REDASSERT(false); return false; }
 
     // FrontAPI
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {

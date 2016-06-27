@@ -667,7 +667,7 @@ public:
                 this->front.end_update();
 
                 this->state = UP_AND_RUNNING;
-
+                this->front.can_be_start_capture(this->acl);
                 this->update_screen(Rect(0, 0, this->width, this->height));
 
                 this->lib_open_clip_channel();
@@ -775,10 +775,12 @@ public:
                 catch (const Error & e) {
                     LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
                     this->event.signal = BACK_EVENT_NEXT;
+                    this->front.must_be_stop_capture();
                 }
                 catch (...) {
                     LOG(LOG_INFO, "unexpected exception raised in VNC");
                     this->event.signal = BACK_EVENT_NEXT;
+                    this->front.must_be_stop_capture();
                 }
                 if (this->event.signal != BACK_EVENT_NEXT) {
                     this->event.set(1000);

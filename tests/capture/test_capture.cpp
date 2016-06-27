@@ -37,8 +37,6 @@
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
-    try  {
-
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
@@ -192,21 +190,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL(meta_len_writer.len, ::filesize(filename));
         ::unlink(filename);
     }
-
-    if (ini.get<cfg::globals::trace_type>() == TraceType::cryptofile) {
-        FilenameGenerator mwrm_seq(
-//            FilenameGenerator::PATH_FILE_PID_EXTENSION
-            FilenameGenerator::PATH_FILE_EXTENSION
-          , "/tmp/", "capture", ".mwrm"
-        );
-        const char * filename = mwrm_seq.get(0);
-        BOOST_CHECK_EQUAL(32, ::filesize(filename));
-        ::unlink(filename);
-    }
-
-    } catch (const Error & e) {
-        BOOST_CHECK_EQUAL(e.id,  1);
-    };
 }
 
 BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)

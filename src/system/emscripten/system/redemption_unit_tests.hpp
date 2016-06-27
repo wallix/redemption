@@ -18,10 +18,12 @@
    Author(s): Christophe Grosjean
 */
 
-#include <stdio.h>
+#pragma once
+
+#include <cstdio>
 #include <iostream>
 #include <vector>
-#include <string>
+#include <cstring>
 
 #define BOOST_AUTO_TEST_CASE(name) void name(); \
 struct TEST_ ## name {\
@@ -33,7 +35,7 @@ struct TEST_ ## name {\
 void name()
 
 template<class T, class U>
-bool cmp(T x, U y) {
+bool cmp(T const & x, U const & y) {
 	return x != y;
 }
 
@@ -66,17 +68,15 @@ struct TESTS {
         void (*fn)();
     };
     std::vector<item> tests;
-    int success;
-    int failure;
-
-    TESTS() : tests{}, success(0), failure(0) {}
+    int success = 0;
+    int failure = 0;
 
     void add(item item){
         this->tests.push_back(item);
     }
 } TESTS;
 
-#define STRINGIFY(x) #x 
+#define STRINGIFY(x) #x
 #define MODULE_NAME(x) printf("Running test suite " STRINGIFY(x) "\n");
 
 int main(){
@@ -85,12 +85,11 @@ int main(){
         printf("Running test %s\n", item.name);
         item.fn();
     }
-    printf("%d tests succeeded, %d tests failed\n", 
+    printf("%d tests succeeded, %d tests failed\n",
         TESTS.success, TESTS.failure);
     if (TESTS.failure > 0) {
         return -1;
     }
     return 0;
-}    
+}
 #endif
-

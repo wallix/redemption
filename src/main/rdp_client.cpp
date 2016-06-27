@@ -43,9 +43,9 @@
 namespace po = program_options;
 //using namespace std;
 
-class ClientFront : public FrontAPI {
-
-    public:
+class ClientFront : public FrontAPI
+{
+public:
     uint32_t verbose;
     ClientInfo &info;
     uint8_t                     mod_bpp;
@@ -53,6 +53,10 @@ class ClientFront : public FrontAPI {
     RDPDrawable gd;
     CHANNELS::ChannelDefArray   cl;
 
+    bool can_be_start_capture(auth_api* auth) override { return false; }
+    bool can_be_pause_capture() override { return false; }
+    bool can_be_resume_capture() override { return false; }
+    bool must_be_stop_capture() override { return false; }
 
     void flush() {
         if (this->verbose > 10) {

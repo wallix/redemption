@@ -28,8 +28,8 @@
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 
-// #define LOGPRINT
-#define LOGNULL
+#define LOGPRINT
+//#define LOGNULL
 
 #include <fcntl.h>
 
@@ -48,6 +48,7 @@
 #include <new>
 
 #include "utils/fdbuf.hpp"
+#include "utils/sugar/local_fd.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/cryptofile.hpp"
@@ -60,6 +61,47 @@
 #undef HASH_LEN
 #endif  // #ifdef HASH_LEN
 #define HASH_LEN 64
+
+BOOST_AUTO_TEST_CASE(TestReverseIterators)
+{
+
+    // Show how to extract filename even if it cvontains spaces
+    // the idea is that the final fields are fixed, henceforth
+    // we can skip these fields by looking for spaces from end of line
+    // once filename is found we can manage other fields as usual.
+    // no need to search backward.
+
+    char line[256] = {};
+    const char * str = "ff fff sssss eeeee hhhhh HHHHH\n";
+    int len = strlen(str);
+    memcpy(line, str, len+1);
+    typedef std::reverse_iterator<char*> reverse_iterator;
+
+    reverse_iterator first(line);
+    reverse_iterator last(line + len);
+
+    reverse_iterator space4 = std::find(last, first, ' ');
+    printf("space1=%s\n", &space4[0]);
+    space4++;
+    reverse_iterator space3 = std::find(space4, first, ' ');
+    printf("space3=%s\n", &space3[0]);
+    space3++;
+    reverse_iterator space2 = std::find(space3, first, ' ');
+    printf("space2=%s\n", &space2[0]);
+    space2++;
+    reverse_iterator space1 = std::find(space2, first, ' ');
+    printf("space1=%s\n", &space1[0]);
+    space1++;
+    int filename_len = first-space1;
+    printf("filename_len = %d\n", filename_len);
+
+    char filename[128];
+    memcpy(filename, line, filename_len);
+    
+    BOOST_CHECK(0 == memcmp("ff fff", filename, filename_len));
+    printf("filename=%s\n", filename);
+
+}
 
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
@@ -134,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
       : file(fd)
       {}
     } * cf_struct = new (std::nothrow) crypto_file(system_fd);
-    
+
     if (cf_struct) {
         if (-1 == cf_struct->encrypt.open(cf_struct->file, trace_key, &cctx, iv)) {
             delete cf_struct;
@@ -162,10 +204,19 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     BOOST_CHECK_EQUAL(0, res);
 
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, test_mwrm_path, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-                                                   hash, HASH_LEN / 2, 4096));
-    BOOST_CHECK_EQUAL(true, check_file_hash_sha256(test_file_name, test_mwrm_path, cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-                                                   hash + (HASH_LEN / 2), HASH_LEN / 2, 0));
+    std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
+    {
+        FileChecker check(test_full_mwrm_filename);
+        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()), hash, HASH_LEN / 2, true);
+        BOOST_CHECK_EQUAL(false, check.failed);
+    }
+
+    {
+        FileChecker check(test_full_mwrm_filename);
+        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+                                hash + (HASH_LEN / 2), HASH_LEN / 2, false);
+        BOOST_CHECK_EQUAL(false, check.failed);
+    }
 
     unlink(full_test_file_name.c_str());
 }   /* BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash) */
