@@ -214,6 +214,14 @@ public:
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
 
+    virtual bool can_be_start_capture(auth_api * auth) { return true; }
+
+    virtual bool can_be_pause_capture() { return true; }
+
+    virtual bool can_be_resume_capture() { return true; }
+
+    virtual bool must_be_stop_capture() { return true; }
+
     virtual void begin_update() override {}
 
     virtual void end_update() override {}
@@ -269,13 +277,9 @@ public:
             reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
         }
 
-        EM_ASM_({console.log('before running');}, 0);
-        while (!this->_mod->is_up_and_running()) {
-            EM_ASM_({console.log('while running before draw');}, 0);
+        //while (!this->_mod->is_up_and_running()) {;
             this->_mod->draw_event(time(nullptr), *(this));
-            EM_ASM_({console.log('while running after draw');}, 0);
-        }
-        EM_ASM_({console.log('after running');}, 0);
+        //}
     }
 
     void disconnect() {
