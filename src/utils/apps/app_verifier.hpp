@@ -443,21 +443,64 @@ struct FileChecker
     }
 };
 
+static inline void load_ssl_digests(bool encryption)
+{
+    if (encryption){
+        OpenSSL_add_all_digests();
+    }
+}
+
 static inline int check_encrypted_or_checksumed(
                                        std::string const & input_filename,
                                        std::string const & mwrm_path,
                                        std::string const & hash_path,
                                        bool quick_check,
                                        uint32_t verbose,
-                                       CryptoContext * cctx,
-                                       bool infile_is_encrypted) {
-    unsigned infile_version = 1;
-    bool infile_is_checksumed = false;
+                                       CryptoContext * cctx) {
+                                       
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
-    if (infile_is_encrypted){
-        OpenSSL_add_all_digests();
+    bool infile_is_encrypted = false;
+
+    uint8_t tmp_buf[4] ={};
+    int fd = open(full_mwrm_filename.c_str(), O_RDONLY);
+    if (fd == -1){
+        std::cerr << "Input file missing.\n";
+        return 1;
     }
+    struct fdbuf
+    {
+        int fd;
+        explicit fdbuf(int fd) noexcept : fd(fd){}
+        ~fdbuf() {::close(this->fd);}
+    } file(fd);
+
+    const size_t len = sizeof(tmp_buf);
+    size_t remaining_len = len;
+    while (remaining_len) {
+        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
+        if (ret < 0){
+            if (errno == EINTR){
+                continue;
+            }
+            // Error should still be there next time we try to read
+            std::cerr << "Input file error\n";
+            return 1;
+        }
+        // We must exit loop or we will enter infinite loop
+        remaining_len -= ret;
+    }
+
+    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+    if (magic == WABCRYPTOFILE_MAGIC) {
+        std::cout << "Input file is encrypted.\n";
+        infile_is_encrypted = true;
+    }
+                                       
+    unsigned infile_version = 1;
+    bool infile_is_checksumed = false;
+
+    load_ssl_digests(infile_is_encrypted);
 
     {
         class MwrmHeadersReader
@@ -1022,47 +1065,6 @@ static inline int check_encrypted_or_checksumed(
     return 0;
 }
 
-
-static inline int is_file_encrypted(const std::string & full_filename)
-{
-    uint8_t tmp_buf[4] ={};
-    int fd = open(full_filename.c_str(), O_RDONLY);
-    if (fd == -1){
-        std::cerr << "Input file missing.\n";
-        return -1;
-    }
-    struct fdbuf
-    {
-        int fd;
-        explicit fdbuf(int fd) noexcept : fd(fd){}
-        ~fdbuf() {::close(this->fd);}
-    } file(fd);
-
-    const size_t len = sizeof(tmp_buf);
-    size_t remaining_len = len;
-    while (remaining_len) {
-        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
-        if (ret < 0){
-            if (errno == EINTR){
-                continue;
-            }
-            // Error should still be there next time we try to read
-            std::cerr << "Input file error\n";
-            return -1;
-        }
-        // We must exit loop or we will enter infinite loop
-        remaining_len -= ret;
-    }
-
-    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-    if (magic == WABCRYPTOFILE_MAGIC) {
-        std::cout << "Input file is encrypted.\n";
-        return 1;
-    }
-    return 0;
-}
-
-
 static inline int app_verifier(Inifile & ini, int argc, char const * const * argv, const char * copyright_notice, CryptoContext & cctx)
 {
     openlog("verifier", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -1148,17 +1150,7 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
     bool infile_is_encrypted = false;
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
-    switch (is_file_encrypted(full_mwrm_filename)){
-    case -1: // error
-        return 1;
-    case 1:
-        infile_is_encrypted = true;
-        break;
-    case 0:
-        break;
-    }
-
     return check_encrypted_or_checksumed(
                 input_filename, mwrm_path, hash_path,
-                quick_check, verbose, &cctx, infile_is_encrypted);
+                quick_check, verbose, &cctx);
 }
