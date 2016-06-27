@@ -795,22 +795,18 @@ static inline int check_encrypted_or_checksumed(
             {
                 MetaHeader2 header{1, false};
 
-                char line[32];
-                if (this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED) < 0) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
+                this->next_line();
 
                 // v2
-                if (line[0] == 'v') {
+                if (this->cur[0] == 'v') {
                     if (this->next_line()){
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
-                    if (this->read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED) < 0)
-                    {
+                    if (this->next_line()){
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
                     header.version = 2;
-                    header.has_checksum = (line[0] == 'c');
+                    header.has_checksum = (this->cur[0] == 'c');
                 }
                 // else v1
                     if (this->next_line()){
@@ -824,12 +820,9 @@ static inline int check_encrypted_or_checksumed(
 
             int read_meta_file_v1(MetaLine2 & meta_line)
             {
-                char line[1024 + (std::numeric_limits<unsigned>::digits10 + 1) * 2 + 4 + 64 * 2 + 2];
-                ssize_t len = this->read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
-                if (len < 0) {
-                    return -len;
-                }
-                line[len] = 0;
+                this->next_line();
+                this->eof[0] = 0;
+                size_t len = this->eof - this->cur;
 
                 // Line format "fffff sssss eeeee hhhhh HHHHH"
                 //                               ^  ^  ^  ^
@@ -846,8 +839,8 @@ static inline int check_encrypted_or_checksumed(
 
                 using std::begin;
 
-                reverse_iterator last(line);
-                reverse_iterator first(line + len);
+                reverse_iterator last(cur);
+                reverse_iterator first(cur + len);
                 reverse_iterator e1 = std::find(first, last, ' ');
                 if (e1 - first == 64) {
                     int err = 0;
@@ -886,26 +879,19 @@ static inline int check_encrypted_or_checksumed(
                     *e2 = 0;
                 }
 
-                auto path_len = std::min(int(e2.base() - line), PATH_MAX);
-                memcpy(meta_line.filename, line, path_len);
+                auto path_len = std::min(int(e2.base() - cur), PATH_MAX);
+                memcpy(meta_line.filename, cur, path_len);
                 meta_line.filename[path_len] = 0;
 
                 return 0;
             }
 
-            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
-                char line[
-                    PATH_MAX + 1 + 1 +
-                    (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
-                    (std::numeric_limits<unsigned long long>::digits10 + 1 + 1) * 2 +
-                    (1 + MD_HASH_LENGTH*2) * 2 +
-                    2
-                ];
-                ssize_t len = this->read_line(line, sizeof(line) - 1, ERR_TRANSPORT_NO_MORE_DATA);
-                if (len < 0) {
-                    return -len;
-                }
-                line[len] = 0;
+            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) 
+            {
+                this->next_line();
+                this->eof[0] = 0;
+                size_t len = this->eof - this->cur;
+                this->eof[len] = 0;
 
                 // Line format "fffff
                 // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
@@ -925,7 +911,7 @@ static inline int check_encrypted_or_checksumed(
                 using std::begin;
                 using std::end;
 
-                auto pline = line + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), line) - line);
+                auto pline = cur + (sread_filename2(begin(meta_line.filename), end(meta_line.filename), cur) - cur);
 
                 int err = 0;
                 auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
@@ -940,7 +926,7 @@ static inline int check_encrypted_or_checksumed(
                 err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
 
                 if (meta_header.has_checksum
-                 && !(err |= (len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
+                 && !(err |= (len - (pend - cur) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2))
                 ) {
                     auto read = [&](unsigned char (&hash)[MD_HASH_LENGTH]) {
                         auto phash = begin(hash);

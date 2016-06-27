@@ -62,6 +62,47 @@
 #endif  // #ifdef HASH_LEN
 #define HASH_LEN 64
 
+BOOST_AUTO_TEST_CASE(TestReverseIterators)
+{
+
+    // Show how to extract filename even if it cvontains spaces
+    // the idea is that the final fields are fixed, henceforth
+    // we can skip these fields by looking for spaces from end of line
+    // once filename is found we can manage other fields as usual.
+    // no need to search backward.
+
+    char line[256] = {};
+    const char * str = "ff fff sssss eeeee hhhhh HHHHH\n";
+    int len = strlen(str);
+    memcpy(line, str, len+1);
+    typedef std::reverse_iterator<char*> reverse_iterator;
+
+    reverse_iterator first(line);
+    reverse_iterator last(line + len);
+
+    reverse_iterator space4 = std::find(last, first, ' ');
+    printf("space1=%s\n", &space4[0]);
+    space4++;
+    reverse_iterator space3 = std::find(space4, first, ' ');
+    printf("space3=%s\n", &space3[0]);
+    space3++;
+    reverse_iterator space2 = std::find(space3, first, ' ');
+    printf("space2=%s\n", &space2[0]);
+    space2++;
+    reverse_iterator space1 = std::find(space2, first, ' ');
+    printf("space1=%s\n", &space1[0]);
+    space1++;
+    int filename_len = first-space1;
+    printf("filename_len = %d\n", filename_len);
+
+    char filename[128];
+    memcpy(filename, line, filename_len);
+    
+    BOOST_CHECK(0 == memcmp("ff fff", filename, filename_len));
+    printf("filename=%s\n", filename);
+
+}
+
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
     const std::string test_mwrm_path = "./";
