@@ -19,8 +19,7 @@
 
 */
 
-#ifndef REDEMPTION_QT4_FRONT_QT4_HPP
-#define REDEMPTION_QT4_FRONT_QT4_HPP
+#pragma once
 
 #ifndef Q_MOC_RUN
 #include <stdio.h>
@@ -404,6 +403,3 @@ public:
 };
 
 
-
-
-#endif

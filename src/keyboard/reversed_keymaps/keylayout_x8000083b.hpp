@@ -1,5 +1,4 @@
-#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X8000083b_HPP_
-#define _REDEMPTION_KEYBOARD_KEYLAYOUT_R_X8000083b_HPP_
+#pragma once
 
 #include "keylayout_r.hpp"
 
@@ -577,4 +576,4 @@ static const Keylayout_r keylayout_x8000083b( x8000083b::LCID
 
 );
 
-#endif
+

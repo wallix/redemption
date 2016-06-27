@@ -17,13 +17,13 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Clement Moroldo
 */
+
+#pragma once
+
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
-
-
-#ifndef FRONT_JS_NATIF_HPP
-#define FRONT_JS_NATIF_HPP
 
 
 #include <stdio.h>
@@ -269,9 +269,13 @@ public:
             reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
         }
 
+        EM_ASM_({console.log('before running');}, 0);
         while (!this->_mod->is_up_and_running()) {
+            EM_ASM_({console.log('while running before draw');}, 0);
             this->_mod->draw_event(time(nullptr), *(this));
+            EM_ASM_({console.log('while running after draw');}, 0);
         }
+        EM_ASM_({console.log('after running');}, 0);
     }
 
     void disconnect() {
@@ -708,21 +712,19 @@ public:
     void charPressed(uint8_t code) {
         if (this->_mod !=  nullptr) {
             uint8_t flag = 0;
-
-            /*if (code < 0) {
-                code += 256;
-            }*/
+/*
+            EM_ASM_({ console.log("code="+$0); }, int(code));
 
             uint8_t * seqUniCode = nullptr;
             UTF8toUTF16(&code, seqUniCode, 2);
             uint16_t uniCode = seqUniCode[0] + (seqUniCode[1] << 8);
-
+*/
             switch (code) {
 
                 case 47  : /* / */ flag = FASTPATH_INPUT_KBDFLAGS_EXTENDED;
 
-                default  : this->_mod->rdp_input_unicode(uniCode, flag);
-                           this->_mod->rdp_input_unicode(uniCode, flag | FASTPATH_INPUT_KBDFLAGS_RELEASE);
+                default  : this->_mod->rdp_input_unicode(code, flag);
+                           this->_mod->rdp_input_unicode(code, flag | FASTPATH_INPUT_KBDFLAGS_RELEASE);
 
                     break;
             }
@@ -785,8 +787,8 @@ extern "C" void backspacePressed() {
 }
 
 extern "C" void CtrlAltDelPressed() {
-    EM_ASM_({ getDataOctet(); }, 0);
-    /*if (front._mod !=  nullptr) {
+    //EM_ASM_({ getDataOctet(); }, 0);
+    if (front._mod !=  nullptr) {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
@@ -794,7 +796,7 @@ extern "C" void CtrlAltDelPressed() {
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
         front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-    }*/
+    }
 }
 
 
@@ -934,5 +936,3 @@ int main(int argc, char** argv){
     return 0;
 }*/
 
-
-#endif
