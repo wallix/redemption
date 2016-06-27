@@ -29,9 +29,8 @@
 #include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
-class ReplayMod : public InternalMod {
-    char movie[1024];
-
+class ReplayMod : public InternalMod
+{
     std::string & auth_error_message;
 
     struct Reader
@@ -85,9 +84,10 @@ public:
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
     {
-        strncpy(this->movie, replay_path, sizeof(this->movie)-1);
-        strncat(this->movie, movie, sizeof(this->movie)-1);
-        LOG(LOG_INFO, "Playing %s", this->movie);
+        char path_movie[1024];
+        snprintf(path_movie,  sizeof(path_movie)-1, "%s%s", replay_path, movie);
+        path_movie[sizeof(path_movie)-1] = 0;
+        LOG(LOG_INFO, "Playing %s", path_movie);
 
         char path[1024];
         char basename[1024];
@@ -96,7 +96,7 @@ public:
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
-        const bool res = canonical_path( this->movie
+        const bool res = canonical_path( path_movie
                                        , path, sizeof(path)
                                        , basename, sizeof(basename)
                                        , extension, sizeof(extension)
