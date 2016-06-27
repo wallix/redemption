@@ -334,5 +334,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
             printf("verify failed: with id=%d\n", e.id);
         }
         BOOST_CHECK_EQUAL(0, res);
+        
+        BOOST_CHECK(false);
 }
 

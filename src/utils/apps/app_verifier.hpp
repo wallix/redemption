@@ -450,6 +450,72 @@ static inline void load_ssl_digests(bool encryption)
     }
 }
 
+
+class MwrmHeadersReader
+{
+    char buf[1024];
+    char * eof;
+    char * cur;
+    transbuf::ifile_buf ibuf;
+public:
+    MetaHeader2 meta_header;
+
+    explicit MwrmHeadersReader(CryptoContext * cctx, int encryption, 
+        const std::string & full_mwrm_filename)
+    : eof(buf)
+    , cur(buf)
+    , ibuf(cctx, encryption)
+    , meta_header{1, false}
+    {
+        int res = ibuf.open(full_mwrm_filename.c_str());
+        if (res < 0){
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+    }
+
+    int next_line()
+    {
+//                this->eof[0] = 0;
+        printf("before next===============\n'%s'\n===========\n", this->cur);
+        char * pos;
+        while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
+            ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf));
+            if (ret < 0 && errno != EINTR) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            if (ret == 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            this->eof = this->buf + ret;
+            this->cur = this->buf;
+        }
+        this->cur = pos+1;
+//                this->eof[0] = 0;
+        printf("after next===============\n'%s'\n===========\n", this->cur);
+        return 0;
+    }
+    
+    void read_meta(){
+        this->next_line();
+        // v2
+        if (cur[0] == 'v') {
+            std::cerr << "Version 2\n";
+
+            this->next_line();
+            this->next_line();
+            this->meta_header.version = 2;
+            this->meta_header.has_checksum = (cur[0] == 'c');
+        }
+        else {
+            std::cerr << "Version 1\n";
+        }
+        // else v1
+        // common lines to all versions
+        this->next_line();
+        this->next_line();
+    }
+};
+
 static inline int check_encrypted_or_checksumed(
                                        std::string const & input_filename,
                                        std::string const & mwrm_path,
@@ -457,6 +523,8 @@ static inline int check_encrypted_or_checksumed(
                                        bool quick_check,
                                        uint32_t verbose,
                                        CryptoContext * cctx) {
+
+    std::cerr << "=============> check_encrypted_or_checksumed.\n";
                                        
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
@@ -496,76 +564,20 @@ static inline int check_encrypted_or_checksumed(
         std::cout << "Input file is encrypted.\n";
         infile_is_encrypted = true;
     }
-                                       
+
     unsigned infile_version = 1;
     bool infile_is_checksumed = false;
 
     load_ssl_digests(infile_is_encrypted);
 
-    {
-        class MwrmHeadersReader
-        {
-            char buf[1024];
-            char * eof;
-            char * cur;
-            transbuf::ifile_buf ibuf;
-        public:
-            MetaHeader2 meta_header;
+    std::cerr << "==============> reading Mwrm Headers 1\n";
 
-            explicit MwrmHeadersReader(CryptoContext * cctx, int encryption, 
-                const std::string & full_mwrm_filename)
-            : eof(buf)
-            , cur(buf)
-            , ibuf(cctx, encryption)
-            , meta_header{1, false}
-            {
-                int res = ibuf.open(full_mwrm_filename.c_str());
-                if (res < 0){
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-            }
+    MwrmHeadersReader reader(cctx, infile_is_encrypted, full_mwrm_filename);
+    
+    reader.read_meta();
 
-            int next_line()
-            {
-                char * pos;
-                while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-                    ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf));
-
-                    if (ret < 0 && errno != EINTR) {
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    if (ret == 0) {
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                    this->eof = this->buf + ret;
-                    this->cur = this->buf;
-                }
-                this->cur = pos+1;
-                return 0;
-            }
-            
-            void read_meta(){
-                this->next_line();
-                // v2
-                if (cur[0] == 'v') {
-                    this->next_line();
-                    this->next_line();
-                    this->meta_header.version = 2;
-                    this->meta_header.has_checksum = (cur[0] == 'c');
-                }
-                // else v1
-                // common lines to all versions
-                this->next_line();
-                this->next_line();
-            }
-
-        } reader(cctx, infile_is_encrypted, full_mwrm_filename);
-        
-        reader.read_meta();
-
-        infile_version       = reader.meta_header.version;
-        infile_is_checksumed = reader.meta_header.has_checksum;
-    }
+    infile_version       = reader.meta_header.version;
+    infile_is_checksumed = reader.meta_header.has_checksum;
 
     if (verbose) {
         LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
@@ -762,6 +774,8 @@ static inline int check_encrypted_or_checksumed(
             }
         };
 
+        printf("LOading Hash File!\n");
+
         std::string const full_hash_path = hash_path + input_filename;
 
         // if reading hash fails
@@ -781,6 +795,8 @@ static inline int check_encrypted_or_checksumed(
             }
         }
     }
+
+    printf("Check MWRM File!\n");
 
     /******************
     * Check mwrm file *
@@ -810,7 +826,7 @@ static inline int check_encrypted_or_checksumed(
             return 1;;
         }
 
-        class ReaderLine2ReaderBuf3
+        class MwrmReader
         {
             char buf[1024];
             char * eof;
@@ -860,25 +876,34 @@ static inline int check_encrypted_or_checksumed(
             }
 
         public:
-            ReaderLine2ReaderBuf3(transbuf::ifile_buf & reader_buf) noexcept
+            MwrmReader(transbuf::ifile_buf & reader_buf) noexcept
             : eof(buf)
             , cur(buf)
             , reader_buf(reader_buf)
             {
+                printf("MwrmReader\n");
             }
 
             int read_meta_file2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
-                if (meta_header.version == 1) {
-                    this->read_meta_file_v1(meta_line);
-                    return 0;
+                printf("read_meta_file2\n");
+                try {
+                    if (meta_header.version == 1) {
+                        this->read_meta_file_v1(meta_line);
+                        return 0;
+                    }
+                    else {
+                        this->read_meta_file_v2(meta_header, meta_line);
+                        return 0;
+                    }
                 }
-                else {
-                    return this->read_meta_file_v2(meta_header, meta_line);
-                }
+                catch(...){
+                    return 1;
+                };
             }
 
             MetaHeader2 read_meta_headers()
             {
+                printf("read_meta_headers\n");
                 MetaHeader2 header{1, false};
 
                 this->next_line();
@@ -898,6 +923,7 @@ static inline int check_encrypted_or_checksumed(
 
             void read_meta_file_v1(MetaLine2 & meta_line)
             {
+                printf("read_meta_file_v1\n");
                 this->next_line();
                 this->eof[0] = 0;
                 size_t len = this->eof - this->cur;
@@ -940,10 +966,13 @@ static inline int check_encrypted_or_checksumed(
 
             int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) 
             {
+                printf("read_meta_file_v2\n");
                 this->next_line();
                 this->eof[0] = 0;
                 size_t len = this->eof - this->cur;
                 this->eof[len] = 0;
+
+                printf("cur=%s\n", cur);
 
                 // Line format "fffff
                 // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
@@ -963,8 +992,9 @@ static inline int check_encrypted_or_checksumed(
                 typedef std::reverse_iterator<char*> reverse_iterator;
                 reverse_iterator first(cur);
                 reverse_iterator last(cur + len);
-                reverse_iterator space12 = std::find(last, first, ' ');
-
+                
+                reverse_iterator space = last;
+                reverse_iterator space12 = std::find(space, first, ' ');
                 space12++;
                 reverse_iterator space11 = std::find(space12, first, ' ');
                 space11++;
@@ -992,31 +1022,34 @@ static inline int check_encrypted_or_checksumed(
                 this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, cur, eof, ERR_TRANSPORT_READ_FAILED);
                 this->cur += path_len + 1;
 
-                    // st_size + space
-                    meta_line.size = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_mode + space
-                    meta_line.mode = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_uid + space
-                    meta_line.uid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_gid + space
-                    meta_line.gid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_dev + space
-                    meta_line.dev = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_ino + space
-                    meta_line.ino = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_mtime + space
-                    meta_line.mtime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_ctime + space
-                    meta_line.ctime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_start_time + space
-                    meta_line.start_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // st_stop_time + space
-                    meta_line.stop_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                printf("cur=%s filename=%s\n", cur, meta_line.filename);
 
-                    // HASH1 + space
-                    this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                    // HASH1 + CR
-                    this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
+
+                // st_size + space
+                meta_line.size = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_mode + space
+                meta_line.mode = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_uid + space
+                meta_line.uid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_gid + space
+                meta_line.gid = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_dev + space
+                meta_line.dev = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_ino + space
+                meta_line.ino = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_mtime + space
+                meta_line.mtime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_ctime + space
+                meta_line.ctime = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_start_time + space
+                meta_line.start_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // st_stop_time + space
+                meta_line.stop_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+
+                // HASH1 + space
+                this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+                // HASH1 + CR
+                this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
 
                 return 0;
             }
@@ -1024,6 +1057,7 @@ static inline int check_encrypted_or_checksumed(
 
             void next_line()
             {
+                printf("next_line\n");
                 char * pos;
                 while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
                     ssize_t ret = this->reader_buf.read(this->buf, sizeof(this->buf));
@@ -1042,9 +1076,10 @@ static inline int check_encrypted_or_checksumed(
 
         MetaLine2 meta_line_wrm;
 
+        printf("Checking meta lines\n");
+
         result = true;
-        while (reader.read_meta_file2(meta_header, meta_line_wrm) !=
-               ERR_TRANSPORT_NO_MORE_DATA) {
+        while (reader.read_meta_file2(meta_header, meta_line_wrm) == 0) {
 
             size_t tmp_wrm_filename_len = 0;
             const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
