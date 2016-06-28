@@ -849,7 +849,7 @@ static inline int check_encrypted_or_checksumed(
             char buf[1024];
             char * eof;
             char * cur;
-            transbuf::ifile_buf & reader_buf;
+            transbuf::ifile_buf & ibuf;
 
 
             long long int get_ll(char * & cur, char * eof, char sep, int err)
@@ -895,10 +895,12 @@ static inline int check_encrypted_or_checksumed(
 
         public:
             MwrmReader(transbuf::ifile_buf & reader_buf) noexcept
-            : eof(buf)
+            : buf{}
+            , eof(buf)
             , cur(buf)
-            , reader_buf(reader_buf)
+            , ibuf(reader_buf)
             {
+                memset(this->buf, 0, sizeof(this->buf));
                 printf("MwrmReader\n");
             }
 
@@ -1042,7 +1044,6 @@ static inline int check_encrypted_or_checksumed(
 
                 printf("cur=%s filename=%s\n", cur, meta_line.filename);
 
-
                 // st_size + space
                 meta_line.size = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
                 // st_mode + space
@@ -1075,18 +1076,39 @@ static inline int check_encrypted_or_checksumed(
 
             void next_line()
             {
-                printf("next_line\n");
-                char * pos;
-                while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-                    ssize_t ret = this->reader_buf.read(this->buf, sizeof(this->buf));
-
-                    if (ret == 0) {
+                while (this->cur == this->eof) // empty buffer
+                {
+                    ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf)-1);
+                    if (ret < 0) {
                         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                     }
-                    this->eof = this->buf + ret;
+                    if (ret == 0) {
+                        throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+                    }
                     this->cur = this->buf;
+                    this->eof = this->buf + ret;
+                    this->eof[0] = 0;
                 }
-                this->cur = pos+1;
+                char * pos = std::find(this->cur, this->eof, '\n');
+                while (pos == this->eof){ // read and append to buffer
+                    size_t len = -(this->eof-this->cur);
+                    if (len >= sizeof(buf)-1){
+                        // if the buffer can't hold at least one line, 
+                        // there is some problem behind
+                        // if a line were available we should have found \n
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    ssize_t ret = this->ibuf.read(this->eof, sizeof(this->buf)-1-len);
+                    if (ret < 0) {
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                    if (ret == 0) {
+                        throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+                    }
+                    this->eof += ret;
+                    this->eof[0] = 0;
+                    pos = std::find(this->cur, this->eof, '\n');
+                }
             }
         } reader(ifile);
 
@@ -1094,12 +1116,13 @@ static inline int check_encrypted_or_checksumed(
 
         MetaLine2 meta_line_wrm;
 
-        printf("Checking meta lines\n");
+        printf("++++++++++++++++++++++++++Checking meta lines\n");
 
         result = true;
         while (reader.read_meta_file2(meta_header, meta_line_wrm) == 0) {
 
             size_t tmp_wrm_filename_len = 0;
+            
             const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
             std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
             std::string const full_meta_mwrm_filename = mwrm_path + meta_line_wrm_filename;
