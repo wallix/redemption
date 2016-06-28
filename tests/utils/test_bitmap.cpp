@@ -32,6 +32,8 @@
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_with_png.hpp"
 #include "utils/drawable.hpp"
+#include "check_sig.hpp"
+#include <cstdio>
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {
@@ -4469,15 +4471,12 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
 // eog `ls -1tr /tmp/test_* | tail -n 1`
 // (or any other variation you like)
 
-void dump_png(const char * prefix, const Bitmap & bmp)
+void dump_png(const char * filename, const Bitmap & bmp)
 {
-    char tmpname[128];
-    sprintf(tmpname, "%sXXXXXX.png", prefix);
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-//    ::dump_png24(f, bmp.data_bitmap, bmp.bmp_size / (bmp.cy*nbbytes(bmp.original_bpp)), bmp.cy, bmp.bmp_size / bmp.cy);
-    ::dump_png24(f, bmp.data(), 4, 3, 12, true);
-
+    Drawable drawable(bmp.cx(), bmp.cy());
+    drawable.draw_bitmap({0, 0, bmp.cx(), bmp.cy()}, bmp);
+    FILE * f = fopen(filename, "wb");
+    ::dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
     ::fclose(f);
 }
 
@@ -4569,4 +4568,81 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(outbuf[34], outbuf[34]);
     BOOST_CHECK_EQUAL(outbuf[35], outbuf[35]);
 
+}
+
+
+BOOST_AUTO_TEST_CASE(TestConvertBitmap2)
+{
+    const char * filename = FIXTURES_PATH "/win2008capture10.png";
+
+    Bitmap bmp24 = bitmap_from_file(filename);
+    BOOST_CHECK_EQUAL(bmp24.bpp(), 24);
+
+    Bitmap bmp_24_to_24(24, bmp24);
+    Bitmap bmp_24_to_16(16, bmp24);
+    Bitmap bmp_24_to_15(15, bmp24);
+    Bitmap bmp_24_to_8(8, bmp24);
+
+    Bitmap bmp_16_to_24(24, bmp_24_to_16);
+    Bitmap bmp_16_to_16(16, bmp_24_to_16);
+    Bitmap bmp_16_to_15(15, bmp_24_to_16);
+    Bitmap bmp_16_to_8(8, bmp_24_to_16);
+
+    Bitmap bmp_15_to_24(24, bmp_24_to_15);
+    Bitmap bmp_15_to_16(16, bmp_24_to_15);
+    Bitmap bmp_15_to_15(15, bmp_24_to_15);
+    Bitmap bmp_15_to_8(8, bmp_24_to_15);
+
+    Bitmap bmp_8_to_24(24, bmp_24_to_8);
+    Bitmap bmp_8_to_16(16, bmp_24_to_8);
+    Bitmap bmp_8_to_15(15, bmp_24_to_8);
+    Bitmap bmp_8_to_8(8, bmp_24_to_8);
+
+#define CHECK_SIG(bmp, sig)                      \
+    {                                            \
+        char message[1024];                      \
+        if (!check_sig(bmp, message, sig)) {     \
+            BOOST_CHECK_MESSAGE(false, message); \
+        }                                        \
+    }
+
+    CHECK_SIG(bmp_24_to_24, "\x22\x17\x48\xc7\xcd\xc4\xad\xf8\x61\x6f\x32\xd6\x13\x61\xee\xb2\x7b\x81\x0f\x66");
+    CHECK_SIG(bmp_24_to_16, "\x6c\x3f\xab\xd2\xac\xfc\xa6\xf0\x1e\xf9\xd9\x7a\xd9\xe1\xe9\x76\xa2\xe2\x69\x0b");
+    CHECK_SIG(bmp_24_to_15, "\x91\x2f\xd6\x96\xc3\xb3\x41\x4e\x29\xae\x17\x3b\x92\x2a\x2b\xb2\x03\x81\x52\x51");
+    CHECK_SIG(bmp_24_to_8,  "\xbc\x0f\x26\xd2\xe9\x23\x1f\x11\xcf\x5a\x89\x3f\xf8\xfa\x3e\x0c\xb2\xe0\xd8\x0d");
+
+    CHECK_SIG(bmp_16_to_24, "\xac\x09\x25\x0d\xc8\xf0\xc9\xfe\xe3\xfd\x78\x0b\xd9\x17\x40\x9e\xc0\x61\xe5\x21");
+    CHECK_SIG(bmp_16_to_16, "\x6c\x3f\xab\xd2\xac\xfc\xa6\xf0\x1e\xf9\xd9\x7a\xd9\xe1\xe9\x76\xa2\xe2\x69\x0b");
+    CHECK_SIG(bmp_16_to_15, "\x91\x2f\xd6\x96\xc3\xb3\x41\x4e\x29\xae\x17\x3b\x92\x2a\x2b\xb2\x03\x81\x52\x51");
+    CHECK_SIG(bmp_16_to_8,  "\xbc\x0f\x26\xd2\xe9\x23\x1f\x11\xcf\x5a\x89\x3f\xf8\xfa\x3e\x0c\xb2\xe0\xd8\x0d");
+
+    CHECK_SIG(bmp_15_to_24, "\xff\x18\x21\x80\xf8\x40\x1c\x94\x2a\x82\x32\xe1\xbf\x17\xe7\x19\x24\xe2\x11\x86");
+    CHECK_SIG(bmp_15_to_16, "\xbc\xa8\x63\xe4\x30\xb1\x86\x6b\x52\x8e\x79\x5e\xd1\x62\xae\x74\xeb\x00\x98\x2b");
+    CHECK_SIG(bmp_15_to_15, "\x91\x2f\xd6\x96\xc3\xb3\x41\x4e\x29\xae\x17\x3b\x92\x2a\x2b\xb2\x03\x81\x52\x51");
+    CHECK_SIG(bmp_15_to_8,  "\xbc\x0f\x26\xd2\xe9\x23\x1f\x11\xcf\x5a\x89\x3f\xf8\xfa\x3e\x0c\xb2\xe0\xd8\x0d");
+
+    CHECK_SIG(bmp_8_to_24,  "\x12\xe7\xc9\xb4\x78\xe3\x90\xba\x49\xee\x99\xcd\xc9\xd0\x39\x1a\x85\xe1\x8e\xaf");
+    CHECK_SIG(bmp_8_to_16,  "\xe8\xfd\x09\x6c\x62\xf7\x63\xdf\x43\xe6\x52\x51\x35\x5f\xc1\x90\x16\x16\x23\x84");
+    CHECK_SIG(bmp_8_to_15,  "\xa9\x44\x7e\x17\x86\x0e\xef\x85\xb6\x02\x3a\x49\xe5\xd3\xfe\x68\xa9\x25\x23\xdf");
+    CHECK_SIG(bmp_8_to_8,   "\xbc\x0f\x26\xd2\xe9\x23\x1f\x11\xcf\x5a\x89\x3f\xf8\xfa\x3e\x0c\xb2\xe0\xd8\x0d");
+
+//     dump_png("/tmp/rawdisk/24_24.png", bmp_24_to_24);
+//     dump_png("/tmp/rawdisk/24_16.png", bmp_24_to_16);
+//     dump_png("/tmp/rawdisk/24_15.png", bmp_24_to_15);
+//     dump_png("/tmp/rawdisk/24_8.png", bmp_24_to_8);
+//
+//     dump_png("/tmp/rawdisk/16_24.png", bmp_16_to_24);
+//     dump_png("/tmp/rawdisk/16_16.png", bmp_16_to_16);
+//     dump_png("/tmp/rawdisk/16_15.png", bmp_16_to_15);
+//     dump_png("/tmp/rawdisk/16_8.png", bmp_16_to_8);
+//
+//     dump_png("/tmp/rawdisk/15_24.png", bmp_15_to_24);
+//     dump_png("/tmp/rawdisk/15_16.png", bmp_15_to_16);
+//     dump_png("/tmp/rawdisk/15_15.png", bmp_15_to_15);
+//     dump_png("/tmp/rawdisk/15_8.png", bmp_15_to_8);
+//
+//     dump_png("/tmp/rawdisk/8_24.png", bmp_8_to_24);
+//     dump_png("/tmp/rawdisk/8_16.png", bmp_8_to_16);
+//     dump_png("/tmp/rawdisk/8_15.png", bmp_8_to_15);
+//     dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
 }

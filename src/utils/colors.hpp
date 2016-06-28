@@ -339,6 +339,19 @@ inline RGBColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, 
     return 0;
 }
 
+template<class Converter>
+struct with_color8_palette
+{
+    static constexpr const uint8_t bpp = Converter::bpp;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        return Converter()(c, this->palette);
+    }
+    BGRPalette const & palette;
+};
+using decode_color8_with_palette = with_color8_palette<decode_color8>;
+using decode_color8_opaquerect_with_palette = with_color8_palette<decode_color8_opaquerect>;
+
 
 struct encode_color8 {
     static constexpr const uint8_t bpp = 8;
@@ -410,17 +423,6 @@ inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
     return 0;
 }
 
-template<class Converter>
-struct with_color8_palette
-{
-    static constexpr const uint8_t bpp = Converter::bpp;
-
-    RGBColor operator()(BGRColor c) const noexcept {
-        return Converter()(c, this->palette);
-    }
-    BGRPalette const & palette;
-};
-
 
 template<class Dec, class Enc>
 struct color_converter : Dec, Enc
@@ -437,3 +439,26 @@ struct color_converter : Dec, Enc
     }
 };
 
+namespace shortcut_encode
+{
+    using enc8 = encode_color8;
+    using enc15 = encode_color15;
+    using enc16 = encode_color16;
+    using enc24 = encode_color24;
+}
+
+namespace shortcut_decode
+{
+    using dec8 = decode_color8;
+    using dec15 = decode_color15;
+    using dec16 = decode_color16;
+    using dec24 = decode_color24;
+}
+
+namespace shortcut_decode_with_palette
+{
+    using dec8 = decode_color8_with_palette;
+    using dec15 = decode_color15;
+    using dec16 = decode_color16;
+    using dec24 = decode_color24;
+}
