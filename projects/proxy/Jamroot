@@ -780,6 +780,8 @@ test-canonical utils/sugar/underlying_cast.hpp ;
 test-canonical utils/sugar/update_lock.hpp ;
 ## @}
 
+test-canonical utils/crypto/ssl_sha1_direct.hpp ;
+
 test-canonical utils/stream.hpp ;
 test-canonical utils/utf.hpp ;
 test-canonical utils/rect.hpp ;
