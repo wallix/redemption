@@ -473,26 +473,44 @@ public:
         }
     }
 
-    int next_line()
+    void next_line()
     {
 //                this->eof[0] = 0;
         printf("before next===============\n'%s'\n===========\n", this->cur);
-        char * pos;
-        while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
+        while (this->cur == this->eof) // empty buffer
+        {
             ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf));
-            if (ret < 0 && errno != EINTR) {
+            if (ret < 0) {
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
             if (ret == 0) {
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+            }
+            this->cur = this->buf;
+            this->eof = this->buf + ret;
+        }
+        char * pos = std::find(this->cur, this->eof, '\n');
+        while (pos == this->eof){ // read and append to buffer
+            size_t len = -(this->eof-this->cur);
+            if (len >= sizeof(buf)){
+                // if the buffer can't hold at least one line, 
+                // there is some problem behind
+                // if a line were available we should have found \n
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
-            this->eof = this->buf + ret;
-            this->cur = this->buf;
+            ssize_t ret = this->ibuf.read(this->eof, sizeof(this->buf)-len);
+            if (ret < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            if (ret == 0) {
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+            }
+            this->eof += ret;
+            pos = std::find(this->cur, this->eof, '\n');
         }
-        this->cur = pos+1;
+//        this->cur = pos+1;
 //                this->eof[0] = 0;
         printf("after next===============\n'%s'\n===========\n", this->cur);
-        return 0;
     }
     
     void read_meta(){

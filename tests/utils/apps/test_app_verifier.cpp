@@ -81,25 +81,19 @@ BOOST_AUTO_TEST_CASE(TestReverseIterators)
     reverse_iterator last(line + len);
 
     reverse_iterator space4 = std::find(last, first, ' ');
-    printf("space1=%s\n", &space4[0]);
     space4++;
     reverse_iterator space3 = std::find(space4, first, ' ');
-    printf("space3=%s\n", &space3[0]);
     space3++;
     reverse_iterator space2 = std::find(space3, first, ' ');
-    printf("space2=%s\n", &space2[0]);
     space2++;
     reverse_iterator space1 = std::find(space2, first, ' ');
-    printf("space1=%s\n", &space1[0]);
     space1++;
     int filename_len = first-space1;
-    printf("filename_len = %d\n", filename_len);
 
     char filename[128];
     memcpy(filename, line, filename_len);
     
     BOOST_CHECK(0 == memcmp("ff fff", filename, filename_len));
-    printf("filename=%s\n", filename);
 
 }
 
