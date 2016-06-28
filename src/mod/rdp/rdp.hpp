@@ -5926,14 +5926,16 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
         }
 
-        this->send_pdu_type2(
-            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
-            [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
-                RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
+        if ((UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_pdu_type2(
+                PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+                [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
+                    RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
 
-                sopdud.emit(stream);
-            }
-        );
+                    sopdud.emit(stream);
+                }
+            );
+        }
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates done");
@@ -5945,14 +5947,16 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates");
         }
 
-        this->send_pdu_type2(
-            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
-            [](StreamSize<32>, OutStream & stream) {
-                RDP::SuppressOutputPDUData sopdud;
+        if ((UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_pdu_type2(
+                PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+                [](StreamSize<32>, OutStream & stream) {
+                    RDP::SuppressOutputPDUData sopdud;
 
-                sopdud.emit(stream);
-            }
-        );
+                    sopdud.emit(stream);
+                }
+            );
+        }
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
