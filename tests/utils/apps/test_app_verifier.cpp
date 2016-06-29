@@ -391,7 +391,7 @@ class MwrmReaderXXX
     long long int get_ll(char * & cur, char * eol, char sep, int err)
     {
         char * pos = std::find(cur, eol, sep);
-        if (pos == eol || (pos - cur < 2)){
+        if (pos == eol || (pos - cur < 1)){
             throw Error(err);
         }
         char * pend = nullptr;
@@ -443,7 +443,6 @@ public:
 
     int read_meta_file2(MetaLine2 & meta_line) 
     {
-        printf("read_meta_file2\n");
         try {
             if (this->header.version == 1) {
                 this->read_meta_file_v1(meta_line);
@@ -463,7 +462,7 @@ public:
     {
         this->next_line(); // v2
         this->header.version = (this->cur[0] == 'v')?2:1;
-        if (this->cur[0] == 'v') {
+        if (this->header.version == 2) {
             this->next_line(); // 800 600
             this->next_line(); // checksum or nochecksum
         }
@@ -477,12 +476,7 @@ public:
     void read_meta_file_v1(MetaLine2 & meta_line)
     {
         this->next_line();
-
-        printf("next_line() -> %s\n", this->cur);
-
         size_t len = this->eol - this->cur;
-
-        printf("len = %d eol=%p eof=%p cur=%p\n", len, eol, eof, cur);
 
         // Line format "fffff sssss eeeee hhhhh HHHHH"
         //                               ^  ^  ^  ^
@@ -507,17 +501,12 @@ public:
         this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
         this->cur++;
         meta_line.filename[path_len] = 0;
-        printf("filename is '%s'\n", meta_line.filename);
-        printf("after filename '%s'\n", this->cur);
 
         // st_start_time + space
         meta_line.start_time = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after start_time '%s'\n", this->cur);
         // st_stop_time + space
         meta_line.stop_time = this->get_ll(cur, eol, this->header.has_checksum?' ':'\n',
                                            ERR_TRANSPORT_READ_FAILED);
-        printf("after stop_time '%s'\n", this->cur);
-
         if (this->header.has_checksum){
             // HASH1 + space
             this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -527,18 +516,16 @@ public:
 
         // TODO: check the whole line has been consumed (or it's an error)
         this->cur = this->eol;
-        printf("end: eol=%p eof=%p cur=%p\n", eol, eof, cur);
     }
 
     void read_meta_file_v2(MetaLine2 & meta_line) 
     {
+        BOOST_CHECK(true);
         this->next_line();
-
-        printf("next_line() -> %s\n", this->cur);
 
         size_t len = this->eol - this->cur;
 
-        printf("len = %d eol=%p eof=%p cur=%p\n", len, eol, eof, cur);
+        BOOST_CHECK(true);
 
         // Line format "fffff
         // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
@@ -566,42 +553,29 @@ public:
         this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
         this->cur++;
         meta_line.filename[path_len] = 0;
-        printf("filename is '%s'\n", meta_line.filename);
-        printf("after filename '%s'\n", this->cur);
 
         // st_size + space
         meta_line.size = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after size '%s'\n", this->cur);
         // st_mode + space
         meta_line.mode = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after mode '%s'\n", this->cur);
         // st_uid + space
         meta_line.uid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after uid '%s'\n", this->cur);
         // st_gid + space
         meta_line.gid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after gid '%s'\n", this->cur);
         // st_dev + space
         meta_line.dev = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after dev '%s'\n", this->cur);
         // st_ino + space
         meta_line.ino = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after ino '%s'\n", this->cur);
         // st_mtime + space
         meta_line.mtime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after mtime '%s'\n", this->cur);
         // st_ctime + space
         meta_line.ctime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after ctime '%s'\n", this->cur);
 
         // st_start_time + space
         meta_line.start_time = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        printf("after start_time '%s'\n", this->cur);
         // st_stop_time + space
         meta_line.stop_time = this->get_ll(cur, eol, this->header.has_checksum?' ':'\n',
                                            ERR_TRANSPORT_READ_FAILED);
-        printf("after stop_time '%s'\n", this->cur);
-
         if (this->header.has_checksum){
             // HASH1 + space
             this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -611,12 +585,10 @@ public:
 
         // TODO: check the whole line has been consumed (or it's an error)
         this->cur = this->eol;
-        printf("end: eol=%p eof=%p cur=%p\n", eol, eof, cur);
     }
 
     void next_line()
     {
-        printf("nextline %p %p %p\n", cur, eol, eof);
         this->cur = this->eol;
         while (this->cur == this->eof) // empty buffer
         {
@@ -633,7 +605,6 @@ public:
         }
         char * pos = std::find(this->cur, this->eof, '\n');
         while (pos == this->eof){ // read and append to buffer
-            printf("end of line not found\n");
             size_t len = -(this->eof-this->cur);
             if (len >= sizeof(buf)-1){
                 // if the buffer can't hold at least one line, 
@@ -646,7 +617,6 @@ public:
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
             if (ret == 0) {
-                printf("exit no more data\n");
                 break;
             }
             this->eof += ret;
@@ -654,7 +624,6 @@ public:
             pos = std::find(this->cur, this->eof, '\n');
         }
         this->eol = (pos == this->eof)?this->eof:pos+1; // set eol after \n (start of next line)
-        printf("nextline out: %p %p %p\n", cur, eol, eof);
     }
 };
 
@@ -713,3 +682,38 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
 //    BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
 //    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
 }
+
+BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
+{
+    ifile_read fd;
+    fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
+    MwrmReaderXXX reader(fd);
+    
+    reader.read_meta_headers();
+    BOOST_CHECK(reader.header.version == 2);
+    BOOST_CHECK(reader.header.has_checksum);
+    
+    MetaLine2 meta_line;
+    reader.read_meta_file_v2(meta_line);
+    BOOST_CHECK(true);
+    BOOST_CHECK(0 == strcmp(meta_line.filename, "./tests/fixtures/sample0.wrm"));
+    BOOST_CHECK_EQUAL(meta_line.size, 1); 
+    BOOST_CHECK_EQUAL(meta_line.mode, 2);
+    BOOST_CHECK_EQUAL(meta_line.uid, 3);
+    BOOST_CHECK_EQUAL(meta_line.gid, 4);
+    BOOST_CHECK_EQUAL(meta_line.dev, 5);
+    BOOST_CHECK_EQUAL(meta_line.ino, 6);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+    BOOST_CHECK(0 == memcmp(meta_line.hash1, 
+                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
+                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA", 
+                        32));
+    BOOST_CHECK(0 == memcmp(meta_line.hash2, 
+                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
+                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB", 
+                        32));
+}
+
