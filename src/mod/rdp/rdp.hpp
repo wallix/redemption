@@ -5926,7 +5926,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
         }
 
-        if ((UP_AND_RUNNING == this->connection_finalization_state) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_pdu_type2(
                 PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
                 [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
@@ -5947,7 +5947,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates");
         }
 
-        if ((UP_AND_RUNNING == this->connection_finalization_state) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_pdu_type2(
                 PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
                 [](StreamSize<32>, OutStream & stream) {
