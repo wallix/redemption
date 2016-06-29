@@ -253,7 +253,6 @@ Drawable.prototype.RDPPatBlt_0x5A = function(dx, dy, w, h, r_back, g_back, b_bac
 Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
     this._ctxS();
     var imgData = this.cctx.createImageData(w, h+1);
-
     var dw = w*4;
     var i = 0;
     var j = 0;
@@ -268,6 +267,8 @@ Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
         }
     }
 
+    //imgData.data = data;
+
     this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
     this._ctxR();
 }
@@ -275,6 +276,7 @@ Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
 Drawable.prototype.rDPMemBlt = function(x, y, w, h, data, shift, sx, sy) {
     this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
+
     var dw = (sx+w)*4;
     var dh = h+1;
     var i = 0;
@@ -283,9 +285,9 @@ Drawable.prototype.rDPMemBlt = function(x, y, w, h, data, shift, sx, sy) {
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
             j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= data[j+2];
+            imgData.data[i+0]= data[j+0];
             imgData.data[i+1]= data[j+1];
-            imgData.data[i+2]= data[j+0];
+            imgData.data[i+2]= data[j+2];
             imgData.data[i+3]= 255;
         }
     }
@@ -304,9 +306,9 @@ Drawable.prototype.rDPMemBlt_0x22 = function(x, y, w, h, data, shift, sx, sy) {
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
             j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= imgData.data[i+0] & ~(data[j+2]);
+            imgData.data[i+0]= imgData.data[i+0] & ~(data[j+0]);
             imgData.data[i+1]= imgData.data[i+1] & ~(data[j+1]);
-            imgData.data[i+2]= imgData.data[i+2] & ~(data[j+0]);
+            imgData.data[i+2]= imgData.data[i+2] & ~(data[j+2]);
             imgData.data[i+3]= 255;
         }
     }
@@ -325,9 +327,9 @@ Drawable.prototype.rDPMemBlt_0x55 = function(x, y, w, h, data, shift, sx, sy) {
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
             j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= 0xff ^ data[j+2];
+            imgData.data[i+0]= 0xff ^ data[j+0];
             imgData.data[i+1]= 0xff ^ data[j+1];
-            imgData.data[i+2]= 0xff ^ data[j+0];
+            imgData.data[i+2]= 0xff ^ data[j+2];
             imgData.data[i+3]= 255;
         }
     }
@@ -346,9 +348,9 @@ Drawable.prototype.rDPMemBlt_0x66 = function(x, y, w, h, data, shift, sx, sy) {
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
             j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= imgData.data[i+0] ^ data[j+2];
+            imgData.data[i+0]= imgData.data[i+0] ^ data[j+0];
             imgData.data[i+1]= imgData.data[i+1] ^ data[j+1];
-            imgData.data[i+2]= imgData.data[i+2] ^ data[j+0];
+            imgData.data[i+2]= imgData.data[i+2] ^ data[j+2];
             imgData.data[i+3]= 255;
         }
     }
@@ -367,9 +369,9 @@ Drawable.prototype.rDPMem3Blt_0xB8 = function(x, y, w, h, data, shift, back_colo
             i = dy*dw + dx;
             j = (h-dy)*dw + dx;
 
-            var r = data[j+2];
+            var r = data[j+0];
             var g = data[j+1];
-            var b = data[j+0];
+            var b = data[j+2];
 
             if ( (r + (g << 8) + (b << 16)) != back_color) {
                 imgData.data[i+0]= r;
@@ -426,13 +428,12 @@ function connecting() {
         /* Test */
 
         startTimer();
-        console.log('2');
         //current = 0;
         getDataOctet();
-        console.log('3');
         endTimer();
+
         /* Test */
-        console.log('4');
+
     } else {
 
         var errorDiv = document.getElementById("errorMsgDiv");

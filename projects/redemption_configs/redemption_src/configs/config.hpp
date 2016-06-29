@@ -339,7 +339,7 @@ public:
             std::set<unsigned>::const_iterator it;
             Inifile * ini;
 
-            friend class FieldsChanged;
+            friend struct FieldsChanged;
 
             iterator(std::set<unsigned>::const_iterator it, Inifile & ini)
             : it(it)
