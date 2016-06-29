@@ -35,6 +35,7 @@
 #include "system/ssl_lib.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
+#include "core/error.hpp"
 
 #include <cinttypes>
 

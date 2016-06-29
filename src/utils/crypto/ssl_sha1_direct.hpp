@@ -28,7 +28,8 @@
 
 #include <cstdint>
 #include <cstring>
-#include <cassert>
+
+#include "utils/crypto/basic_hmap_direct.hpp"
 
 
 class SslSha1_direct
@@ -246,65 +247,4 @@ private:
 };
 
 
-class SslHMAC_Sha1_direct
-{
-    uint8_t k_ipad[64];
-    uint8_t k_opad[64];
-    SslSha1_direct context;
-
-public:
-    SslHMAC_Sha1_direct(const uint8_t * const key, size_t key_len) noexcept
-        : k_ipad{
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
-         },
-         k_opad{
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-            0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-         }
-    {
-         const uint8_t * k = key;
-         if (key_len > 64) {
-             unsigned char digest[SslSha1_direct::DIGEST_LENGTH];
-             SslSha1_direct sha1;
-             sha1.update(digest, SslSha1_direct::DIGEST_LENGTH);
-             sha1.final(digest, SslSha1_direct::DIGEST_LENGTH);
-             key_len = SslSha1_direct::DIGEST_LENGTH;
-             k = key;
-         }
-         size_t i;
-         for (i = 0; i < key_len; i++){
-            k_ipad[i] ^= k[i];
-            k_opad[i] ^= k[i];
-         }
-         context.update(k_ipad, 64);
-    }
-
-    void update(const uint8_t * const data, size_t data_size) noexcept
-    {
-        context.update(data, data_size);
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size) noexcept
-    {
-        assert(SslSha1_direct::DIGEST_LENGTH == out_data_size);
-        context.final(out_data, SslSha1_direct::DIGEST_LENGTH);
-
-        SslSha1_direct sha1;
-        sha1.update(this->k_opad, 64);
-        sha1.update(out_data, SslSha1_direct::DIGEST_LENGTH);
-        sha1.final(out_data, SslSha1_direct::DIGEST_LENGTH);
-    }
-};
+using SslHMAC_Sha1_direct = detail_::basic_HMAC_direct<SslSha1_direct, 64>;

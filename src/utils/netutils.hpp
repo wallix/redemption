@@ -65,7 +65,7 @@ static inline bool try_again(int errnum){
     return res;
 }
 
-namespace { namespace detail_ { namespace netutils {
+namespace detail_ { namespace netutils {
 
 bool set_snd_buffer(int sck, int buffer_size = 32768) {
     /* set snd buffer to at least 32 Kbytes */
@@ -169,7 +169,7 @@ int connect_sck(
     return sck;
 }
 
-} } }
+} }
 
 static inline int ip_connect(const char* ip, int port,
              int nbretry = 3, int retry_delai_ms = 1000,

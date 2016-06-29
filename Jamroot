@@ -777,8 +777,17 @@ unit-test test_redirection_info : tests/utils/test_redirection_info.cpp : $(TEST
 
 ## utils/crypto
 ## @{
-unit-test test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_sha256_direct : tests/utils/crypto/test_ssl_sha256_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_sha512_direct : tests/utils/crypto/test_ssl_sha512_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_lib : tests/utils/crypto/test_ssl_lib.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_sign : tests/utils/crypto/test_ssl_sign.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
 ## @}
+
+unit-test test_ssl_calls : tests/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 
 
 ## core/RDP
@@ -895,7 +904,6 @@ unit-test test_log : tests/utils/test_log.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_netutils : tests/utils/test_netutils.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_png : tests/utils/test_png.cpp : $(TEST_DEPENDENCIES) <library>png ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_ssl_calls : tests/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_strings : tests/test_strings.cpp : $(TEST_DEPENDENCIES) ;
 
 

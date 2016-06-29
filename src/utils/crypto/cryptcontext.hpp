@@ -21,9 +21,10 @@
 
 #pragma once
 
-#include "system/ssl_calls.hpp"
 #include "system/ssl_lib.hpp"
 #include "system/ssl_sign.hpp"
+#include "system/ssl_md5.hpp"
+#include "system/ssl_rc4.hpp"
 
 
 enum {
@@ -37,10 +38,10 @@ enum {
 
 struct CryptContext
 {
-    int use_count;
-    uint8_t sign_key[MD5_DIGEST_LENGTH];
-    uint8_t key[MD5_DIGEST_LENGTH];
-    uint8_t update_key[MD5_DIGEST_LENGTH];
+    int use_count = 0;
+    uint8_t sign_key[SslMd5::DIGEST_LENGTH] {};
+    uint8_t key[SslMd5::DIGEST_LENGTH] {};
+    uint8_t update_key[SslMd5::DIGEST_LENGTH] {};
     SslRC4 rc4;
 
     // encryptionMethod (4 bytes): A 32-bit, unsigned integer. The selected
@@ -70,16 +71,9 @@ struct CryptContext
     // |                                     | generation routines will            |
     // |                                     | be FIPS 140-1 compliant.            |
     // +-------------------------------------+-------------------------------------+
-    uint32_t encryptionMethod;
+    uint32_t encryptionMethod = 0;
 
-    CryptContext()
-        : use_count(0)
-        , encryptionMethod(0)
-    {
-        memset(this->sign_key, 0, MD5_DIGEST_LENGTH);
-        memset(this->key, 0, MD5_DIGEST_LENGTH);
-        memset(this->update_key, 0, MD5_DIGEST_LENGTH);
-    }
+    CryptContext() = default;
 
     void generate_key(uint8_t * keyblob, uint32_t encryptionMethod)
     {
@@ -174,7 +168,3 @@ struct CryptContext
         sign.final(signature, 8);
     }
 };
-
-
-/*****************************************************************************/
-
