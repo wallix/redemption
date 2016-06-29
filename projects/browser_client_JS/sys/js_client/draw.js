@@ -252,7 +252,8 @@ Drawable.prototype.RDPPatBlt_0x5A = function(dx, dy, w, h, r_back, g_back, b_bac
 
 Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
     this._ctxS();
-    var imgData=this.cctx.createImageData(w, h+1);
+    var imgData = this.cctx.createImageData(w, h+1);
+
     var dw = w*4;
     var i = 0;
     var j = 0;
@@ -260,12 +261,13 @@ Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
         for (var dx=0; dx<dw; dx+=4) {
             i = dy*dw + dx;
             j = (h-dy)*dw + dx;
-            imgData.data[i+0]= data[j+2];
+            imgData.data[i+0]= data[j+0];
             imgData.data[i+1]= data[j+1];
-            imgData.data[i+2]= data[j+0];
+            imgData.data[i+2]= data[j+2];
             imgData.data[i+3]= 255;
         }
     }
+
     this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
     this._ctxR();
 }
@@ -418,17 +420,19 @@ function connecting() {
         document.getElementById("form").style = "display:none";
         document.getElementById("emscripten_canvas").style = "display:block";
 
+        console.log('1');
         _connexion(pip, puser, ppassword, port);
 
         /* Test */
+
         startTimer();
-
-        current = 0;
-        //getDataOctet();
-
+        console.log('2');
+        //current = 0;
+        getDataOctet();
+        console.log('3');
         endTimer();
         /* Test */
-
+        console.log('4');
     } else {
 
         var errorDiv = document.getElementById("errorMsgDiv");
@@ -462,14 +466,20 @@ function send_to_serveur(data, size) { // data = [uint8_t];  size = size_t
 
 function getDataOctet() {
     /* Test */
-    var i = 0;
+
+    /*var i = 0;
     for (i = current; i < (current + 2000); i++) {
         if (i < len) {
             _recv_value(inData[i]);
         }
     }
 
-    current = i;
+    current = i;*/
+
+    for (var i = 0; i < len; i++) {
+        _recv_value(inData[i]);
+    }
+
     /* Test */
 }
 

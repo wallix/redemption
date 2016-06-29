@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__TEST_CHECK_SIG_HPP__)
-#define __TEST_CHECK_SIG_HPP__
+#pragma once
 
 #include "utils/drawable.hpp"
 
@@ -50,12 +49,17 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
    return true;
 }
 
-inline bool check_sig(Drawable & data, char * message, const void * shasig)
+inline bool check_sig(Drawable const & data, char * message, const void * shasig)
 {
    return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
 }
 
-inline bool check_sig(OutStream & stream, char * message, const void * shasig)
+inline bool check_sig(Bitmap const & data, char * message, const void * shasig)
+{
+   return check_sig(data.data(), data.cy(), data.line_size(), message, shasig);
+}
+
+inline bool check_sig(OutStream const & stream, char * message, const void * shasig)
 {
    return check_sig(stream.get_data(), 1, stream.get_offset(), message, shasig);
 }
@@ -73,11 +77,9 @@ inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig, size_t s
    sha1.final(sig, sig_length);
 }
 
-inline void get_sig(OutStream & stream, uint8_t * sig, size_t sig_length)
+inline void get_sig(OutStream const & stream, uint8_t * sig, size_t sig_length)
 {
    SslSha1 sha1;
    sha1.update(stream.get_data(), stream.get_offset());
    sha1.final(sig, sig_length);
 }
-
-#endif

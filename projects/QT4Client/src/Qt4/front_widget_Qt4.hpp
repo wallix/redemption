@@ -19,8 +19,7 @@
 
 */
 
-#ifndef REDEMPTION_QT4_FORM_QT_HPP
-#define REDEMPTION_QT4_FORM_QT_HPP
+#pragma once
 
 //#define LOGPRINT
 
@@ -993,5 +992,3 @@ public Q_SLOTS:
 
 };
 
-
-#endif
