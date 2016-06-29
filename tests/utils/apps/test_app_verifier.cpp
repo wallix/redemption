@@ -339,21 +339,39 @@ struct MetaHeaderXXX {
     bool has_checksum;
 };
 
-
-struct ifile_read
+struct ifile_read_API
 {
     // ifile is a thin API layer over system open/read/close
     // it means open/read/close mimicks system open/read/close
     // (except fd is wrapped in an object)
 
+    int fd;
+    ifile_read() : fd(-1) {}
+    // We choose to define an open function to mimick system behavior
+    // instead of opening through constructor. This allows to manage
+    // explicit error management depending on return code.
+    virtual int open(const char * s);
     // read can either return the number of bytes asked or less.
     // That the exact number of bytes is returned is never 
     // guaranteed and checking that is at caller's responsibility
     // if some error occurs the return is -1 and the error code
     // is in errno, like for system calls.
     // returning 0 means EOF
-    int fd;
-    ifile_read() : fd(-1) {}
+    virtual int read(char * buf, size_t len);
+    // close beside calling the system call must also ensure it sets fd to 1
+    // this is to avoid performing close twice when called explicitely
+    // as it is also performed by destructor (in most cases there will be
+    // no reason for calling close explicitly).
+    virtual void close();
+    ~ifile_read(){
+        if (this->fd != -1){
+            this->close();
+        }
+    }
+};
+
+struct ifile_read : public ifile_read_API
+{
     int open(const char * s)
     {
         this->fd = ::open(s, O_RDONLY);
@@ -365,13 +383,8 @@ struct ifile_read
     }
     void close()
     {
-        if (this->fd!=-1){
-            ::close(fd);
-            this->fd = -1;
-        }
-    }
-    ~ifile_read(){
-        this->close();
+        ::close(fd);
+        this->fd = -1;
     }
 };
 
@@ -385,7 +398,7 @@ class MwrmReaderXXX
     char * eof;
     char * eol;
     char * cur;
-    ifile_read & ibuf;
+    ifile_read_API & ibuf;
 
 
     long long int get_ll(char * & cur, char * eol, char sep, int err)
@@ -430,7 +443,7 @@ class MwrmReaderXXX
     }
 
 public:
-    MwrmReaderXXX(ifile_read & reader_buf) noexcept
+    MwrmReaderXXX(ifile_read_API & reader_buf) noexcept
     : buf{}
     , eof(buf)
     , eol(buf)
