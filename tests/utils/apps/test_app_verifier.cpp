@@ -346,24 +346,29 @@ struct ifile_read_API
     // (except fd is wrapped in an object)
 
     int fd;
-    ifile_read() : fd(-1) {}
+    ifile_read_API() : fd(-1) {}
     // We choose to define an open function to mimick system behavior
     // instead of opening through constructor. This allows to manage
     // explicit error management depending on return code.
-    virtual int open(const char * s);
+    virtual int open(const char * s) = 0;
     // read can either return the number of bytes asked or less.
     // That the exact number of bytes is returned is never 
     // guaranteed and checking that is at caller's responsibility
     // if some error occurs the return is -1 and the error code
     // is in errno, like for system calls.
     // returning 0 means EOF
-    virtual int read(char * buf, size_t len);
+    virtual int read(char * buf, size_t len) = 0;
     // close beside calling the system call must also ensure it sets fd to 1
     // this is to avoid performing close twice when called explicitely
     // as it is also performed by destructor (in most cases there will be
     // no reason for calling close explicitly).
-    virtual void close();
-    ~ifile_read(){
+    virtual void close()
+    {
+        ::close(fd);
+        this->fd = -1;
+    }
+
+    virtual ~ifile_read_API(){
         if (this->fd != -1){
             this->close();
         }
@@ -381,11 +386,7 @@ struct ifile_read : public ifile_read_API
     {
         return ::read(this->fd, buf, len);
     }
-    void close()
-    {
-        ::close(fd);
-        this->fd = -1;
-    }
+    virtual ~ifile_read(){}
 };
 
 class MwrmReaderXXX

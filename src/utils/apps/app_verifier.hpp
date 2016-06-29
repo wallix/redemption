@@ -47,17 +47,6 @@ struct HashHeader {
     unsigned version;
 };
 
-static inline char const * sread_filename2(char * p, char const * e, char const * pline)
-{
-    e -= 1;
-    for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
-        *p = *pline;
-    }
-    *p = 0;
-    return pline;
-}
-
-
 namespace transbuf {
 
     class ifile_buf
@@ -87,7 +76,9 @@ namespace transbuf {
                 // Check how much we have decoded
                 if (!this->cfb_decrypt_raw_size) {
                     uint8_t tmp_buf[4] = {};
-                    ssize_t err = this->cfb_file_read(tmp_buf, 4);
+                    uint8_t * data = tmp_buf;
+                    size_t len = 4;
+                    ssize_t err = this->cfb_file_read(data, len);
                     if (err != 4) {
                         return err < 0 ? err : -1;
                     }
@@ -112,14 +103,15 @@ namespace transbuf {
                     //char compressed_buf[compressed_buf_size];
                     unsigned char compressed_buf[65536];
 
-
-                    err = this->cfb_file_read(ciphered_buf, ciphered_buf_size);
-
-                    // len ?
-                    if (err != ssize_t(ciphered_buf_size)){
-                        return err < 0 ? err : -1;
+                    {
+                        uint8_t * data = ciphered_buf;
+                        size_t len = ciphered_buf_size;
+                        err = this->cfb_file_read(data, len);
+                        // len ?
+                        if (err != ssize_t(ciphered_buf_size)){
+                            return err < 0 ? err : -1;
+                        }
                     }
-
                     if (this->cfb_decrypt_xaes_decrypt(ciphered_buf,
                                     ciphered_buf_size,
                                     compressed_buf,
@@ -276,9 +268,13 @@ namespace transbuf {
                 this->cfb_decrypt_MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
                 unsigned char tmp_buf[40];
-                const ssize_t err = this->cfb_file_read(tmp_buf, 40);
-                if (err != 40) {
-                    return err < 0 ? err : -1;
+                {
+                    uint8_t * data = tmp_buf;
+                    size_t len = 40;
+                    const ssize_t err = this->cfb_file_read(data, len);
+                    if (err != 40) {
+                        return err < 0 ? err : -1;
+                    }
                 }
 
                 // Check magic
