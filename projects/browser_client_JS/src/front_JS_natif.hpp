@@ -214,13 +214,13 @@ public:
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {}
 
-    virtual bool can_be_start_capture(auth_api * auth) { return true; }
+    virtual bool can_be_start_capture(auth_api * auth) override { return true; }
 
-    virtual bool can_be_pause_capture() { return true; }
+    virtual bool can_be_pause_capture() override { return true; }
 
-    virtual bool can_be_resume_capture() { return true; }
+    virtual bool can_be_resume_capture() override { return true; }
 
-    virtual bool must_be_stop_capture() { return true; }
+    virtual bool must_be_stop_capture() override { return true; }
 
     virtual void begin_update() override {}
 
