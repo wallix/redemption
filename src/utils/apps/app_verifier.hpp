@@ -53,7 +53,7 @@ namespace transbuf {
     {
     public:
         CryptoContext * cctx;
-        int cfb_file_fd;
+        int fd;
         char decrypt_buf[CRYPTO_BUFFER_SIZE]; //
         EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
         uint32_t decrypt_pos;                 // current position in buf
@@ -66,29 +66,27 @@ namespace transbuf {
     public:
         explicit ifile_buf(CryptoContext * cctx, int encryption)
         : cctx(cctx)
-        , cfb_file_fd(-1)
+        , fd(-1)
         , encryption(encryption)
         {
         }
 
         ~ifile_buf()
         {
-            if (-1 != this->cfb_file_fd) {
-                ::close(this->cfb_file_fd);
-                this->cfb_file_fd = -1;
+            if (-1 != this->fd) {
+                ::close(this->fd);
+                this->fd = -1;
             }
         }
 
         int open(const char * filename, mode_t mode = 0600)
         {
+            this->fd = ::open(filename, O_RDONLY);
+            if (this->fd < 0) {
+                return this->fd;
+            }
+
             if (this->encryption){
-
-                this->cfb_file_fd = ::open(filename, O_RDONLY);
-
-                if (this->cfb_file_fd < 0) {
-                    return this->cfb_file_fd;
-                }
-
                 size_t base_len = 0;
                 const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
@@ -97,7 +95,6 @@ namespace transbuf {
 
                 ::memset(this->decrypt_buf, 0, sizeof(this->decrypt_buf));
                 ::memset(&this->ectx, 0, sizeof(this->ectx));
-
                 this->decrypt_pos = 0;
                 this->raw_size = 0;
                 this->state = 0;
@@ -105,12 +102,9 @@ namespace transbuf {
                 this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
                 uint8_t data[40];
-                size_t len = 40;
-                TODO("this is blocking read, add support for timeout reading");
-                TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-                size_t remaining_len = len;
+                size_t remaining_len = 40;
                 while (remaining_len) {
-                    ssize_t ret = ::read(this->cfb_file_fd, data + (len - remaining_len), remaining_len);
+                    ssize_t ret = ::read(this->fd, &data[40 - remaining_len], remaining_len);
                     if (ret < 0){
                         if (errno == EINTR){
                             continue;
@@ -164,19 +158,11 @@ namespace transbuf {
                 return 0;
             }
             else {
-                    if (-1 != this->cfb_file_fd) {
-                        ::close(this->cfb_file_fd);
-                        this->cfb_file_fd = -1;
-                    }
-                    this->cfb_file_fd = ::open(filename, O_RDONLY);
-                    if (this->cfb_file_fd < 0){
-                        return -1;
-                    }
-                    return 0;
+                return this->fd;
             }
         }
 
-        ssize_t read(void * data, size_t len)
+        ssize_t read(char * data, size_t len)
         {
             if (this->encryption){
                 if (this->state & CF_EOF) {
@@ -189,7 +175,6 @@ namespace transbuf {
                     // Check how much we have decoded
                     if (!this->raw_size) {
                         uint8_t tmp_buf[4] = {};
-                        uint8_t * data = tmp_buf;
                         size_t len = 4;
 
                         TODO("this is blocking read, add support for timeout reading");
@@ -197,7 +182,7 @@ namespace transbuf {
 
                         size_t remaining_len = len;
                         while (remaining_len) {
-                            ssize_t ret = ::read(this->cfb_file_fd, data + (len - remaining_len), remaining_len);
+                            ssize_t ret = ::read(this->fd, tmp_buf + (len - remaining_len), remaining_len);
                             if (ret < 0){
                                 if (errno == EINTR){
                                     continue;
@@ -241,7 +226,7 @@ namespace transbuf {
                             TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                             size_t remaining_len = len;
                             while (remaining_len) {
-                                ssize_t ret = ::read(this->cfb_file_fd, &ciphered_buf[len - remaining_len], remaining_len);
+                                ssize_t ret = ::read(this->fd, &ciphered_buf[len - remaining_len], remaining_len);
                                 if (ret < 0){
                                     if (errno == EINTR){
                                         continue;
@@ -327,7 +312,7 @@ namespace transbuf {
                 TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
                 size_t remaining_len = len;
                 while (remaining_len) {
-                    ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                    ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
                     if (ret < 0){
                         if (errno == EINTR){
                             continue;

@@ -389,6 +389,23 @@ struct ifile_read : public ifile_read_API
     virtual ~ifile_read(){}
 };
 
+
+struct ifile_read_encrypted : public ifile_read_API
+{
+    int open(const char * s)
+    {
+        this->fd = ::open(s, O_RDONLY);
+        return this->fd;
+    }
+    int read(char * buf, size_t len)
+    {
+        return ::read(this->fd, buf, len);
+    }
+    virtual ~ifile_read_encrypted(){}
+};
+
+
+
 class MwrmReaderXXX
 {
     public:
