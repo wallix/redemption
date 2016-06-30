@@ -63,130 +63,7 @@ namespace transbuf {
 
         int encryption;
 
-
-        ssize_t cfb_decrypt_decrypt_read(void * data, size_t len)
-        {
-            if (this->cfb_decrypt_state & CF_EOF) {
-                return 0;
-            }
-
-            unsigned int requested_size = len;
-
-            while (requested_size > 0) {
-                // Check how much we have decoded
-                if (!this->cfb_decrypt_raw_size) {
-                    uint8_t tmp_buf[4] = {};
-                    uint8_t * data = tmp_buf;
-                    size_t len = 4;
-                    ssize_t err = this->cfb_file_read(data, len);
-                    if (err != 4) {
-                        return err < 0 ? err : -1;
-                    }
-
-                    uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                        this->cfb_decrypt_state |= CF_EOF;
-                        this->cfb_decrypt_pos = 0;
-                        this->cfb_decrypt_raw_size = 0;
-                        break;
-                    }
-
-                    if (ciphered_buf_size > this->cfb_decrypt_MAX_CIPHERED_SIZE) {
-                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
-                        return -1;
-                    }
-
-                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-
-                    //char ciphered_buf[ciphered_buf_size];
-                    unsigned char ciphered_buf[65536];
-                    //char compressed_buf[compressed_buf_size];
-                    unsigned char compressed_buf[65536];
-
-                    {
-                        uint8_t * data = ciphered_buf;
-                        size_t len = ciphered_buf_size;
-                        err = this->cfb_file_read(data, len);
-                        // len ?
-                        if (err != ssize_t(ciphered_buf_size)){
-                            return err < 0 ? err : -1;
-                        }
-                    }
-                    if (this->cfb_decrypt_xaes_decrypt(ciphered_buf,
-                                    ciphered_buf_size,
-                                    compressed_buf,
-                                    &compressed_buf_size)) {
-                        return -1;
-                    }
-
-                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                    const snappy_status status = snappy_uncompress(
-                            reinterpret_cast<char *>(compressed_buf),
-                            compressed_buf_size, this->cfb_decrypt_buf, &chunk_size);
-
-                    switch (status)
-                    {
-                        case SNAPPY_OK:
-                            break;
-                        case SNAPPY_INVALID_INPUT:
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
-                            return -1;
-                        case SNAPPY_BUFFER_TOO_SMALL:
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                            return -1;
-                        default:
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
-                            return -1;
-                    }
-
-                    this->cfb_decrypt_pos = 0;
-                    // When reading, raw_size represent the current chunk size
-                    this->cfb_decrypt_raw_size = chunk_size;
-
-                    // TODO: check that
-                    if (!this->cfb_decrypt_raw_size) { // end of file reached
-                        break;
-                    }
-                }
-                // remaining_size is the amount of data available in decoded buffer
-                unsigned int remaining_size = this->cfb_decrypt_raw_size - this->cfb_decrypt_pos;
-                // Check how much we can copy
-                unsigned int copiable_size = MIN(remaining_size, requested_size);
-                // Copy buffer to caller
-                ::memcpy(static_cast<char*>(data) + (len - requested_size), this->cfb_decrypt_buf + this->cfb_decrypt_pos, copiable_size);
-                this->cfb_decrypt_pos      += copiable_size;
-                requested_size -= copiable_size;
-                // Check if we reach the end
-                if (this->cfb_decrypt_raw_size == this->cfb_decrypt_pos) {
-                    this->cfb_decrypt_raw_size = 0;
-                }
-            }
-            return len - requested_size;
-        }
-
     private:
-
-        int cfb_decrypt_xaes_decrypt(const unsigned char *src_buf, uint32_t src_sz, unsigned char *dst_buf, uint32_t *dst_sz)
-        {
-            int safe_size = *dst_sz;
-            int remaining_size = 0;
-
-            /* allows reusing of ectx for multiple encryption cycles */
-            if (EVP_DecryptInit_ex(&this->cfb_decrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                return -1;
-            }
-            if (EVP_DecryptUpdate(&this->cfb_decrypt_ectx, dst_buf, &safe_size, src_buf, src_sz) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                return -1;
-            }
-            if (EVP_DecryptFinal_ex(&this->cfb_decrypt_ectx, dst_buf + safe_size, &remaining_size) != 1){
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                return -1;
-            }
-            *dst_sz = safe_size + remaining_size;
-            return 0;
-        }
 
         int cfb_file_close()
         {
@@ -326,7 +203,114 @@ namespace transbuf {
         ssize_t read(void * data, size_t len)
         {
             if (this->encryption){
-                return this->cfb_decrypt_decrypt_read(data, len);
+                if (this->cfb_decrypt_state & CF_EOF) {
+                    return 0;
+                }
+
+                unsigned int requested_size = len;
+
+                while (requested_size > 0) {
+                    // Check how much we have decoded
+                    if (!this->cfb_decrypt_raw_size) {
+                        uint8_t tmp_buf[4] = {};
+                        uint8_t * data = tmp_buf;
+                        size_t len = 4;
+                        ssize_t err = this->cfb_file_read(data, len);
+                        if (err != 4) {
+                            return err < 0 ? err : -1;
+                        }
+
+                        uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+                        if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                            this->cfb_decrypt_state |= CF_EOF;
+                            this->cfb_decrypt_pos = 0;
+                            this->cfb_decrypt_raw_size = 0;
+                            break;
+                        }
+
+                        if (ciphered_buf_size > this->cfb_decrypt_MAX_CIPHERED_SIZE) {
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                            return -1;
+                        }
+
+                        uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+
+                        //char ciphered_buf[ciphered_buf_size];
+                        unsigned char ciphered_buf[65536];
+                        //char compressed_buf[compressed_buf_size];
+                        unsigned char compressed_buf[65536];
+
+                        {
+                            uint8_t * data = ciphered_buf;
+                            size_t len = ciphered_buf_size;
+                            err = this->cfb_file_read(data, len);
+                            // len ?
+                            if (err != ssize_t(ciphered_buf_size)){
+                                return err < 0 ? err : -1;
+                            }
+                        }
+
+                        int safe_size = compressed_buf_size;
+                        int remaining_size = 0;
+
+                        /* allows reusing of ectx for multiple encryption cycles */
+                        if (EVP_DecryptInit_ex(&this->cfb_decrypt_ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+                            return -1;
+                        }
+                        if (EVP_DecryptUpdate(&this->cfb_decrypt_ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+                            return -1;
+                        }
+                        if (EVP_DecryptFinal_ex(&this->cfb_decrypt_ectx, compressed_buf + safe_size, &remaining_size) != 1){
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+                            return -1;
+                        }
+                        compressed_buf_size = safe_size + remaining_size;
+
+                        size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                        const snappy_status status = snappy_uncompress(
+                                reinterpret_cast<char *>(compressed_buf),
+                                compressed_buf_size, this->cfb_decrypt_buf, &chunk_size);
+
+                        switch (status)
+                        {
+                            case SNAPPY_OK:
+                                break;
+                            case SNAPPY_INVALID_INPUT:
+                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
+                                return -1;
+                            case SNAPPY_BUFFER_TOO_SMALL:
+                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                                return -1;
+                            default:
+                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
+                                return -1;
+                        }
+
+                        this->cfb_decrypt_pos = 0;
+                        // When reading, raw_size represent the current chunk size
+                        this->cfb_decrypt_raw_size = chunk_size;
+
+                        // TODO: check that
+                        if (!this->cfb_decrypt_raw_size) { // end of file reached
+                            break;
+                        }
+                    }
+                    // remaining_size is the amount of data available in decoded buffer
+                    unsigned int remaining_size = this->cfb_decrypt_raw_size - this->cfb_decrypt_pos;
+                    // Check how much we can copy
+                    unsigned int copiable_size = MIN(remaining_size, requested_size);
+                    // Copy buffer to caller
+                    ::memcpy(static_cast<char*>(data) + (len - requested_size), this->cfb_decrypt_buf + this->cfb_decrypt_pos, copiable_size);
+                    this->cfb_decrypt_pos      += copiable_size;
+                    requested_size -= copiable_size;
+                    // Check if we reach the end
+                    if (this->cfb_decrypt_raw_size == this->cfb_decrypt_pos) {
+                        this->cfb_decrypt_raw_size = 0;
+                    }
+                }
+                return len - requested_size;
             }
             else {
                 return this->cfb_file_read(data, len);
