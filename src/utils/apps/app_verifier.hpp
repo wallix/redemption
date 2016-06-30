@@ -63,35 +63,6 @@ namespace transbuf {
 
         int encryption;
 
-    private:
-
-        ssize_t cfb_file_read(void * data, size_t len)
-        {
-            TODO("this is blocking read, add support for timeout reading");
-            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-            size_t remaining_len = len;
-            while (remaining_len) {
-                ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                if (ret < 0){
-                    if (errno == EINTR){
-                        continue;
-                    }
-                    // Error should still be there next time we try to read
-                    if (remaining_len != len){
-                        return len - remaining_len;
-                    }
-                    return ret;
-                }
-                // We must exit loop or we will enter infinite loop
-                if (ret == 0){
-                    break;
-                }
-                remaining_len -= ret;
-            }
-            return len - remaining_len;
-        }
-
-
     public:
         explicit ifile_buf(CryptoContext * cctx, int encryption)
         : cctx(cctx)
@@ -141,9 +112,26 @@ namespace transbuf {
                 {
                     uint8_t * data = tmp_buf;
                     size_t len = 40;
-                    const ssize_t err = this->cfb_file_read(data, len);
-                    if (err != 40) {
-                        return err < 0 ? err : -1;
+                    TODO("this is blocking read, add support for timeout reading");
+                    TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+                    size_t remaining_len = len;
+                    while (remaining_len) {
+                        ssize_t ret = ::read(this->cfb_file_fd, data + (len - remaining_len), remaining_len);
+                        if (ret < 0){
+                            if (errno == EINTR){
+                                continue;
+                            }
+                            // Error should still be there next time we try to read
+                            return - 1;
+                        }
+                        // We must exit loop or we will enter infinite loop
+                        if (ret == 0){
+                            break;
+                        }
+                        remaining_len -= ret;
+                    }
+                    if (remaining_len){
+                        return -1;
                     }
                 }
 
@@ -211,9 +199,28 @@ namespace transbuf {
                         uint8_t tmp_buf[4] = {};
                         uint8_t * data = tmp_buf;
                         size_t len = 4;
-                        ssize_t err = this->cfb_file_read(data, len);
-                        if (err != 4) {
-                            return err < 0 ? err : -1;
+
+                        TODO("this is blocking read, add support for timeout reading");
+                        TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+
+                        size_t remaining_len = len;
+                        while (remaining_len) {
+                            ssize_t ret = ::read(this->cfb_file_fd, data + (len - remaining_len), remaining_len);
+                            if (ret < 0){
+                                if (errno == EINTR){
+                                    continue;
+                                }
+                                // Error should still be there next time we try to read
+                                return - 1;
+                            }
+                            // We must exit loop or we will enter infinite loop
+                            if (ret == 0){
+                                break;
+                            }
+                            remaining_len -= ret;
+                        }
+                        if (remaining_len){
+                            return -1;
                         }
 
                         uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
@@ -239,10 +246,26 @@ namespace transbuf {
                         {
                             uint8_t * data = ciphered_buf;
                             size_t len = ciphered_buf_size;
-                            err = this->cfb_file_read(data, len);
-                            // len ?
-                            if (err != ssize_t(ciphered_buf_size)){
-                                return err < 0 ? err : -1;
+                            TODO("this is blocking read, add support for timeout reading");
+                            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+                            size_t remaining_len = len;
+                            while (remaining_len) {
+                                ssize_t ret = ::read(this->cfb_file_fd, data + (len - remaining_len), remaining_len);
+                                if (ret < 0){
+                                    if (errno == EINTR){
+                                        continue;
+                                    }
+                                    // Error should still be there next time we try to read
+                                    return - 1;
+                                }
+                                // We must exit loop or we will enter infinite loop
+                                if (ret == 0){
+                                    break;
+                                }
+                                remaining_len -= ret;
+                            }
+                            if (remaining_len){
+                                return -1;
                             }
                         }
 
