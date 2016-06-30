@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "system/ssl_lib.hpp"
-#include "system/ssl_sign.hpp"
+#include "utils/crypto/ssl_lib.hpp"
+#include "utils/crypto/ssl_sign.hpp"
 #include "system/ssl_md5.hpp"
 #include "system/ssl_rc4.hpp"
 

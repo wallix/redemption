@@ -4598,14 +4598,6 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap2)
     Bitmap bmp_8_to_15(15, bmp_24_to_8);
     Bitmap bmp_8_to_8(8, bmp_24_to_8);
 
-#define CHECK_SIG(bmp, sig)                      \
-    {                                            \
-        char message[1024];                      \
-        if (!check_sig(bmp, message, sig)) {     \
-            BOOST_CHECK_MESSAGE(false, message); \
-        }                                        \
-    }
-
     CHECK_SIG(bmp_24_to_24, "\x22\x17\x48\xc7\xcd\xc4\xad\xf8\x61\x6f\x32\xd6\x13\x61\xee\xb2\x7b\x81\x0f\x66");
     CHECK_SIG(bmp_24_to_16, "\x6c\x3f\xab\xd2\xac\xfc\xa6\xf0\x1e\xf9\xd9\x7a\xd9\xe1\xe9\x76\xa2\xe2\x69\x0b");
     CHECK_SIG(bmp_24_to_15, "\x91\x2f\xd6\x96\xc3\xb3\x41\x4e\x29\xae\x17\x3b\x92\x2a\x2b\xb2\x03\x81\x52\x51");

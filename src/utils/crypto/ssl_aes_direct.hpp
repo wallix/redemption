@@ -46,7 +46,6 @@ enum class AES_direction : bool {
 #define     MODE_CBC        2    /*  Are we ciphering in CBC mode?   */
 #define     MODE_CFB1       3    /*  Are we ciphering in 1-bit CFB mode? */
 #define     TRUE            1
-#define     FALSE           0
 #define    BITSPERBLOCK        128        /* Default number of bits in a cipher block */
 
 /*  Error Codes - CHANGE POSSIBLE: inclusion of additional error codes  */
@@ -59,7 +58,6 @@ enum class AES_direction : bool {
                     cipherInit invalid */
 #define     BAD_CIPHER_STATE   -5  /*  Cipher in wrong state (e.g., not
                     initialized) */
-#define     BAD_CIPHER_INSTANCE   -7
 
 /*  CHANGE POSSIBLE:  inclusion of algorithm specific defines  */
 #define     MAX_KEY_SIZE    64  /* # of ASCII char's needed to
@@ -72,9 +70,6 @@ enum class AES_direction : bool {
 parameters at the bottom of the structs as appropriate.
 */
 
-
-#define MAXBC                (256/32)
-#define MAXKC                (256/32)
 #define MAXROUNDS            14
 
 
@@ -84,28 +79,25 @@ class SslAes_CBC_direct
     enum { KC = KeyLength/8/4, BC = 4 };
 
     /*  The structure for key information */
-    typedef struct {
+    struct keyInstance {
         AES_direction direction;    /*  Key used for encrypting or decrypting? */
-        int   keyLen;       /*  Length of the key  */
-        char  keyMaterial[MAX_KEY_SIZE+1];  /*  Raw key data in ASCII, e.g., user input or KAT values */
+        unsigned   keyLen;       /*  Length of the key  */
         uint8_t binKey[MAX_KEY_SIZE/2+1]; /* raw key data as uint8_ts */
         /*  The following parameters are algorithm dependent, replace or add as necessary  */
-        int   blockLen;   /* block length */
+        unsigned   blockLen;   /* block length */
         uint8_t keySched[MAXROUNDS+1][4][BC]; /* key schedule        */
-    } keyInstance;
+    };
 
     /*  The structure for cipher information */
-    typedef struct {
+    struct cipherInstance {
         uint8_t  mode;            /* MODE_ECB, MODE_CBC, or MODE_CFB1 */
         uint8_t  IV[MAX_IV_SIZE]; /* A possible Initialization Vector for ciphering */
-                                /*  Add any algorithm specific parameters needed here  */
-        int   blockLen;        /* Sample: Handles non-128 bit block sizes (if available) */
-    } cipherInstance;
+                                  /*  Add any algorithm specific parameters needed here  */
+        unsigned blockLen;        /* Sample: Handles non-128 bit block sizes (if available) */
+    };
     AES_direction direction;
     keyInstance keyInst;
     cipherInstance cipherInst;
-    uint8_t keyMaterial[320];
-    unsigned ROUNDS;
 
     uint8_t binKey[KeyLength/8];
 
@@ -116,7 +108,6 @@ public:
 
     SslAes_CBC_direct(const uint8_t key[KeyLength/8], const uint8_t (& iv)[16], AES_direction direction)
         : direction(direction)
-        , ROUNDS(10) // 12, 14
     {
         memcpy(this->tiv.iv, iv, sizeof(this->tiv.iv));
         keyInst.blockLen = 128;
@@ -253,8 +244,11 @@ private:
          */
         int i, j;
 
-        for(i = 0; i < 4; i++)
-            for(j = 0; j < BC; j++) a[i][j] = box[a[i][j]] ;
+        for(i = 0; i < 4; i++) {
+            for(j = 0; j < BC; j++) {
+                a[i][j] = box[a[i][j]];
+            }
+        }
     }
 
     void MixColumn(uint8_t a[4][BC]) {
@@ -271,8 +265,11 @@ private:
                     ^ a[(i + 3) % 4][j];
             }
         }
-        for(i = 0; i < 4; i++)
-            for(j = 0; j < BC; j++) a[i][j] = b[i][j];
+        for(i = 0; i < 4; i++) {
+            for(j = 0; j < BC; j++) {
+                a[i][j] = b[i][j];
+            }
+        }
     }
 
     void InvMixColumn(uint8_t a[4][BC]) {
@@ -420,30 +417,27 @@ private:
     int blockDecrypt(cipherInstance *cipher,
         keyInstance *key, const uint8_t *input, int inputLen, uint8_t *outBuffer)
     {
-        int i, j, t, numBlocks;
-        uint8_t block[4][BC];
-
-        if (cipher == NULL ||
-            key == NULL ||
+        if (cipher == nullptr ||
+            key == nullptr ||
             key->direction == AES_direction::SSL_AES_ENCRYPT ||
             cipher->blockLen != key->blockLen) {
             return BAD_CIPHER_STATE;
         }
 
-            /* check parameter consistency: */
-            if (key == NULL ||
-                    key->direction != AES_direction::SSL_AES_DECRYPT ||
-                    (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
-                    return BAD_KEY_MAT;
-            }
-            if (cipher == NULL ||
-                    (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
-                    (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
-                    return BAD_CIPHER_STATE;
-            }
+        /* check parameter consistency: */
+        if (key == nullptr ||
+            key->direction != AES_direction::SSL_AES_DECRYPT ||
+            (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
+                return BAD_KEY_MAT;
+        }
+        if (cipher == nullptr ||
+            (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
+            (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
+                return BAD_CIPHER_STATE;
+        }
 
-
-        numBlocks = inputLen/cipher->blockLen;
+        unsigned i, j, t, numBlocks = inputLen/cipher->blockLen;
+        uint8_t block[4][BC];
 
         switch (cipher->mode) {
         case MODE_ECB:
@@ -510,24 +504,20 @@ private:
 
     int blockEncrypt(cipherInstance *cipher, keyInstance *key, const uint8_t *input, int inputLen, uint8_t *outBuffer)
     {
-        int i, j, t, numBlocks;
+        /* check parameter consistency: */
+        if (key == nullptr ||
+            key->direction != AES_direction::SSL_AES_ENCRYPT ||
+            (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
+                return BAD_KEY_MAT;
+        }
+        if (cipher == nullptr ||
+            (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
+            (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
+                return BAD_CIPHER_STATE;
+        }
+
+        unsigned i, j, t, numBlocks = inputLen/cipher->blockLen;
         uint8_t block[4][BC];
-
-
-            /* check parameter consistency: */
-            if (key == NULL ||
-                    key->direction != AES_direction::SSL_AES_ENCRYPT ||
-                    (key->keyLen != 128 && key->keyLen != 192 && key->keyLen != 256)) {
-                    return BAD_KEY_MAT;
-            }
-            if (cipher == NULL ||
-                    (cipher->mode != MODE_ECB && cipher->mode != MODE_CBC && cipher->mode != MODE_CFB1) ||
-                    (cipher->blockLen != 128 && cipher->blockLen != 192 && cipher->blockLen != 256)) {
-                    return BAD_CIPHER_STATE;
-            }
-
-
-        numBlocks = inputLen/cipher->blockLen;
 
         switch (cipher->mode) {
         case MODE_ECB:
@@ -582,8 +572,6 @@ private:
 
     int cipherInit(cipherInstance *cipher, uint8_t mode, const uint8_t (& iv)[16])
     {
-        int i;
-
         if ((mode == MODE_ECB) || (mode == MODE_CBC) || (mode == MODE_CFB1)) {
             cipher->mode = mode;
         }
@@ -591,7 +579,7 @@ private:
             return BAD_CIPHER_MODE;
         }
 
-         for(i = 0; i < cipher->blockLen/8; i++) {
+         for(unsigned i = 0; i < cipher->blockLen/8; i++) {
             cipher->IV[i] = iv[i];
         }
 
@@ -601,17 +589,12 @@ private:
     int makeKey(keyInstance *key, AES_direction direction, int keyLen, const uint8_t * binKey)
     {
         uint8_t k[4][KC];
-        int i;
 
-        if (key == NULL) {
+        if (key == nullptr) {
             return BAD_KEY_INSTANCE;
         }
 
-        if ((direction == AES_direction::SSL_AES_ENCRYPT) || (direction == AES_direction::SSL_AES_DECRYPT)) {
-            key->direction = direction;
-        } else {
-            return BAD_KEY_DIR;
-        }
+        key->direction = direction;
 
         if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) {
             key->keyLen = keyLen;
@@ -624,7 +607,7 @@ private:
         }
 
         /* initialize key schedule: */
-         for(i = 0; i < key->keyLen/8; i++) {
+         for(unsigned i = 0; i < key->keyLen/8; i++) {
             k[i % 4][i / 4] = key->binKey[i];
         }
 
@@ -694,9 +677,26 @@ private:
             }
             tk[0][0] ^= rcon[rconpointer++];
 
-            for(j = 1; j < KC; j++){
+            if (KeyLength == 256) {
+                for(j = 1; j < KC/2; j++){
+                    for(i = 0; i < 4; i++){
+                        tk[i][j] ^= tk[i][j-1];
+                    }
+                }
                 for(i = 0; i < 4; i++){
-                    tk[i][j] ^= tk[i][j-1];
+                    tk[i][KC/2] ^= S[tk[i][KC/2 - 1]];
+                }
+                for(j = KC/2 + 1; j < KC; j++){
+                    for(i = 0; i < 4; i++){
+                        tk[i][j] ^= tk[i][j-1];
+                    }
+                }
+            }
+            else {
+                for(j = 1; j < KC; j++){
+                    for(i = 0; i < 4; i++){
+                        tk[i][j] ^= tk[i][j-1];
+                    }
                 }
             }
             /* copy values into round key array */
@@ -711,24 +711,21 @@ private:
     }
 };
 
-using SslAes128_CBC_direct = SslAes_CBC_direct<128>;
-using SslAes192_CBC_direct = SslAes_CBC_direct<192>;
-using SslAes256_CBC_direct = SslAes_CBC_direct<256>;
-
 #undef MODE_ECB
 #undef MODE_CBC
 #undef MODE_CFB1
 #undef TRUE
-#undef FALSE
 #undef BITSPERBLOCK
 #undef BAD_KEY_DIR
 #undef BAD_KEY_MAT
 #undef BAD_KEY_INSTANCE
 #undef BAD_CIPHER_MODE
 #undef BAD_CIPHER_STATE
-#undef BAD_CIPHER_INSTANCE
 #undef MAX_KEY_SIZE
 #undef MAX_IV_SIZE
-#undef MAXBC
-#undef MAXKC
 #undef MAXROUNDS
+
+
+using SslAes128_CBC_direct = SslAes_CBC_direct<128>;
+using SslAes192_CBC_direct = SslAes_CBC_direct<192>;
+using SslAes256_CBC_direct = SslAes_CBC_direct<256>;

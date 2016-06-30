@@ -22,6 +22,7 @@
 #define BOOST_TEST_DYN_LINK
 
 #include "system/redemption_unit_tests.hpp"
+#include "check_mem.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestSslSha256)
@@ -147,10 +148,10 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
 
     BOOST_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 
-    BOOST_CHECK_EQUAL(memcmp(sig,
-                             "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
-                             "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8",
-                             SslSha256::DIGEST_LENGTH),
-                      0);
+    CHECK_MEM(
+        sig, SslSha256::DIGEST_LENGTH,
+        "\xf7\xbc\x83\xf4\x30\x53\x84\x24\xb1\x32\x98\xe6\xaa\x6f\xb1\x43"
+        "\xef\x4d\x59\xa1\x49\x46\x17\x59\x97\x47\x9d\xbc\x2d\x1a\x3c\xd8"
+    );
     //hexdump96_c(sig, sizeof(sig));
 }

@@ -22,6 +22,7 @@
 #define BOOST_TEST_DYN_LINK
 
 #include "system/redemption_unit_tests.hpp"
+#include "check_mem.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestSslSha1)
@@ -143,10 +144,32 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA1)
 
     BOOST_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
 
-    BOOST_CHECK_EQUAL(memcmp(sig,
-                             "\xde\x7c\x9b\x85\xb8\xb7\x8a\xa6\xbc\x8a\x7a\x36\xf7\x0a\x90\x70\x1c\x9d\xb4\xd9",
-                             SslSha1::DIGEST_LENGTH),
-                      0);
+    CHECK_MEM(
+        sig, SslSha1::DIGEST_LENGTH,
+        "\xde\x7c\x9b\x85\xb8\xb7\x8a\xa6\xbc\x8a\x7a\x36\xf7\x0a\x90\x70\x1c\x9d\xb4\xd9"
+    );
+    //hexdump96_c(sig, sizeof(sig));
+}
+
+BOOST_AUTO_TEST_CASE(TestSslHmacSHA1_bigkey)
+{
+    const uint8_t key[] = "keykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeyke";
+    // const uint8_t key[] = "";
+    SslHMAC_Sha1 hmac(key, sizeof(key)-1);
+
+    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
+    // const uint8_t msg[] = "";
+    hmac.update(msg, sizeof(msg)-1);
+
+    uint8_t sig[SslSha1::DIGEST_LENGTH];
+    hmac.final(sig, SslSha1::DIGEST_LENGTH);
+
+    BOOST_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
+
+    CHECK_MEM(
+        sig, SslSha1::DIGEST_LENGTH,
+        "\xf0\xc5\xa7\xca\x22\x47\x50\x06\x79\x7b\xa2\x38\x5d\x16\xdb\x56\x85\xde\xf5\xe0"
+    );
     //hexdump96_c(sig, sizeof(sig));
 }
 

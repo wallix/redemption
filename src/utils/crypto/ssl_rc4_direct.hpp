@@ -27,10 +27,12 @@
 
 class SslRC4_direct
 {
+    using size_t = std::size_t;
+
 public:
     SslRC4_direct() = default;
 
-    void set_key(const uint8_t * const key,  size_t key_size)
+    void set_key(const uint8_t * const key, size_t key_size)
     {
         this->RC4_set_key(key_size, key);
     }
