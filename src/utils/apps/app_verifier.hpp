@@ -73,7 +73,7 @@ namespace transbuf {
 
         ~ifile_buf()
         {
-            if (this->is_open()) {
+            if (-1 != this->cfb_file_fd) {
                 ::close(this->cfb_file_fd);
                 this->cfb_file_fd = -1;
             }
@@ -83,7 +83,7 @@ namespace transbuf {
         {
             if (this->encryption){
 
-                if (this->is_open()) {
+                if (-1 != this->cfb_file_fd) {
                     ::close(this->cfb_file_fd);
                     this->cfb_file_fd = -1;
                 }
@@ -172,7 +172,7 @@ namespace transbuf {
                 return 0;
             }
             else {
-                    if (this->is_open()) {
+                    if (-1 != this->cfb_file_fd) {
                         ::close(this->cfb_file_fd);
                         this->cfb_file_fd = -1;
                     }
@@ -355,11 +355,6 @@ namespace transbuf {
                 }
                 return len - remaining_len;
             }
-        }
-
-        bool is_open() const noexcept
-        {
-            return -1 != this->cfb_file_fd;
         }
     };
 }
