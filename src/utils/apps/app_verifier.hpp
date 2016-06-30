@@ -309,7 +309,28 @@ namespace transbuf {
                 return len - requested_size;
             }
             else {
-                return this->cfb_file_read(data, len);
+                TODO("this is blocking read, add support for timeout reading");
+                TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+                size_t remaining_len = len;
+                while (remaining_len) {
+                    ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
+                    if (ret < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Error should still be there next time we try to read
+                        if (remaining_len != len){
+                            return len - remaining_len;
+                        }
+                        return ret;
+                    }
+                    // We must exit loop or we will enter infinite loop
+                    if (ret == 0){
+                        break;
+                    }
+                    remaining_len -= ret;
+                }
+                return len - remaining_len;
             }
         }
 
