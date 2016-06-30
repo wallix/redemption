@@ -2011,34 +2011,63 @@ public:
         if (out_bpp != bmp.bpp()) {
             this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
 
+            uint8_t * dest = this->data_bitmap->get();
+            const uint8_t * src = bmp.data_bitmap->get();
+            const uint8_t src_nbbytes = nbbytes(bmp.bpp());
+            const uint8_t Bpp = nbbytes(out_bpp);
+
+            for (size_t y = 0; y < bmp.cy() ; y++) {
+                for (size_t x = 0; x < bmp.cx() ; x++) {
+                    uint32_t pixel = in_uint32_from_nb_bytes_le(src_nbbytes, src);
+
+                    pixel = color_decode(pixel, bmp.bpp(), bmp.palette());
+                    if (out_bpp != 24){
+                        pixel = RGBtoBGR(pixel);
+                    }
+                    pixel = color_encode(pixel, out_bpp);
+
+                    out_bytes_le(dest, Bpp, pixel);
+                    src += src_nbbytes;
+                    dest += Bpp;
+                }
+                src += bmp.line_size() - bmp.cx() * src_nbbytes;
+                dest += this->line_size() - bmp.cx() * Bpp;
+            }
+
+            if (out_bpp == 8){
+                this->data_bitmap->palette() = BGRPalette::classic_332();
+/*
             auto buf2col_1B = [](uint8_t const * p) -> BGRColor { return p[0]; };
             auto buf2col_2B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8); };
             auto buf2col_3B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8) | (p[2] << 16); };
+            auto buf2col_4B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24); };
 
             auto col2buf_1B = [](BGRColor c, uint8_t * p) { p[0] = c; };
             auto col2buf_2B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; };
             auto col2buf_3B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; p[2] = c >> 16; };
+            auto col2buf_4B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; p[2] = c >> 16; p[3] = c >> 24; };
 
             using namespace shortcut_encode;
             using namespace shortcut_decode_with_palette;
 
-            switch (bmp.bpp() * 3 + out_bpp){
-                case 8*3+15: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
-                case 8*3+16: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
-                case 8*3+24: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
-                case 15*3+8: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_1B, enc8());
+            switch (bmp.bpp() * 5 + out_bpp){
+                case 8*5+15: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
+                case 8*5+16: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
+                case 8*5+24: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
+                case 15*5+8: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_1B, enc8());
                     this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
-                case 15*3+16: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_2B, enc16()); break;
-                case 15*3+24: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_3B, enc24()); break;
-                case 16*3+8: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_1B, enc8());
+                case 15*5+16: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_2B, enc16()); break;
+                case 15*5+24: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_3B, enc24()); break;
+                case 16*5+8: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_1B, enc8());
                     this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
-                case 16*3+15: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_2B, enc15()); break;
-                case 16*3+24: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_3B, enc24()); break;
-                case 24*3+8: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_1B, enc8());
+                case 16*5+15: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_2B, enc15()); break;
+                case 16*5+24: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_3B, enc24()); break;
+                case 16*5+32: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_4B, enc24()); break;
+                case 24*5+8: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_1B, enc8());
                     this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
-                case 24*3+15: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc15()); break;
-                case 24*3+16: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc16()); break;
-                default: assert(!"unknown bpp");
+                case 24*5+15: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc15()); break;
+                case 24*5+16: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc16()); break;
+                default: assert(!"unknown bpp");*/
             }
         }
         else {
