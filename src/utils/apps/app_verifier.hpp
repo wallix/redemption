@@ -122,7 +122,15 @@ namespace transbuf {
                     return -1;
                 }
 
-                // Check magic
+                // Encrypted/Compressed file header (40 bytes)
+                // -------------------------------------------
+                // MAGIC: 4 bytes
+                // 0x57 0x43 0x46 0x4D (WCFM)
+                // VERSION: 4 bytes
+                // 0x01 0x00 0x00 0x00
+                // IV: 32 bytes
+                // (random)
+                
                 const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
                 if (magic != WABCRYPTOFILE_MAGIC) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
