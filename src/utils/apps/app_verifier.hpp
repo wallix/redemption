@@ -65,19 +65,6 @@ namespace transbuf {
 
     private:
 
-        int cfb_file_close()
-        {
-            if (this->is_open()) {
-                const int ret = ::close(this->cfb_file_fd);
-                this->cfb_file_fd = -1;
-                return ret;
-            }
-            return 0;
-        }
-
-        bool cfb_file_is_open() const noexcept
-        { return -1 != this->cfb_file_fd; }
-
         ssize_t cfb_file_read(void * data, size_t len)
         {
             TODO("this is blocking read, add support for timeout reading");
@@ -115,14 +102,20 @@ namespace transbuf {
 
         ~ifile_buf()
         {
-            this->cfb_file_close();
+            if (this->is_open()) {
+                ::close(this->cfb_file_fd);
+                this->cfb_file_fd = -1;
+            }
         }
 
         int open(const char * filename, mode_t mode = 0600)
         {
             if (this->encryption){
 
-                this->cfb_file_close();
+                if (this->is_open()) {
+                    ::close(this->cfb_file_fd);
+                    this->cfb_file_fd = -1;
+                }
                 this->cfb_file_fd = ::open(filename, O_RDONLY);
 
                 if (this->cfb_file_fd < 0) {
@@ -191,7 +184,10 @@ namespace transbuf {
                 return 0;
             }
             else {
-                    this->cfb_file_close();
+                    if (this->is_open()) {
+                        ::close(this->cfb_file_fd);
+                        this->cfb_file_fd = -1;
+                    }
                     this->cfb_file_fd = ::open(filename, O_RDONLY);
                     if (this->cfb_file_fd < 0){
                         return -1;
@@ -319,7 +315,7 @@ namespace transbuf {
 
         bool is_open() const noexcept
         {
-            return this->cfb_file_is_open();
+            return -1 != this->cfb_file_fd;
         }
     };
 }
