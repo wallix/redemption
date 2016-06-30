@@ -58,7 +58,7 @@ namespace transbuf {
         EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
         uint32_t decrypt_pos;                 // current position in buf
         uint32_t raw_size;                    // the unciphered/uncompressed file size
-        uint32_t state;     // enum crypto_file_state
+        uint32_t state;                       // enum crypto_file_state
         unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
         int encryption;
@@ -102,24 +102,23 @@ namespace transbuf {
                 this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
                 uint8_t data[40];
-                size_t remaining_len = 40;
-                while (remaining_len) {
-                    ssize_t ret = ::read(this->fd, &data[40 - remaining_len], remaining_len);
-                    if (ret < 0){
-                        if (errno == EINTR){
-                            continue;
+                size_t avail = 0;
+                while (avail != 40) {
+                    ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
+                    if (ret < 0 && errno == EINTR){
+                        continue;
+                    }
+                    if (ret <= 0){
+                        // Either read error or EOF: in both cases we are in trouble
+                        if (ret == 0) {
+                            // see error management, we would need object internal errors
+                            // basically this case means: failed to read compression header
+                            // error.
+                            errno = EINVAL;
                         }
-                        // Error should still be there next time we try to read
                         return - 1;
                     }
-                    // We must exit loop or we will enter infinite loop
-                    if (ret == 0){
-                        break;
-                    }
-                    remaining_len -= ret;
-                }
-                if (remaining_len){
-                    return -1;
+                    avail += ret;
                 }
 
                 // Encrypted/Compressed file header (40 bytes)
@@ -162,7 +161,6 @@ namespace transbuf {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
                     return -1;
                 }
-
                 return 0;
             }
             else {
