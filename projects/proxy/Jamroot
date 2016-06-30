@@ -922,7 +922,6 @@ test-canonical utils/crypto/ssl_lib.hpp : <library>openssl <library>crypto <libr
 test-canonical utils/crypto/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 
 test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/modular_exponentiation.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/openssl.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_bignum.hpp : <library>openssl <library>crypto <library>dl <library>z ;
