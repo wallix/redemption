@@ -910,17 +910,27 @@ test-canonical utils/log.hpp ;
 test-canonical utils/netutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
 test-canonical utils/rdtsc.hpp ;
+
+test-canonical utils/crypto/ssl_sha1_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_sha256_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_sha512_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_aes_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_md4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_md5_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_rc4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+
 test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
-test-canonical system/linux/system/ssl_md5.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/openssl.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_bignum.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_md4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_md5.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_rc4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha1.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha256.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha512.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-run test_modular_exponentiation : system/linux/system/test_modular_exponentiation.cpp ; # : <library>pthread ;
 
 test-run test_strings : test_strings.cpp : : <covflag>nocover ;

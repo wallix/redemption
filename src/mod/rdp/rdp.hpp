@@ -1979,7 +1979,6 @@ public:
               (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
                 char * hostname = this->hostname;
-
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     if (this->verbose & 1){
@@ -1993,7 +1992,6 @@ public:
                                 this->server_notifier,
                                 this->certif_path.get()
                             );
-
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         // Basic Settings Exchange
@@ -3762,29 +3760,16 @@ public:
 
                 if (UP_AND_RUNNING != this->connection_finalization_state &&
                     !this->already_upped_and_running) {
-                    char statestr[256];
+                    char const * statestr = "UNKNOWN";
                     switch (this->state) {
-                    case MOD_RDP_NEGO:
-                        snprintf(statestr, sizeof(statestr), "RDP_NEGO");
-                        break;
-                    case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-                        snprintf(statestr, sizeof(statestr), "RDP_BASIC_SETTINGS_EXCHANGE");
-                        break;
-                    case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-                        snprintf(statestr, sizeof(statestr),
-                                "RDP_CHANNEL_CONNECTION_ATTACH_USER");
-                        break;
-                    case MOD_RDP_GET_LICENSE:
-                        snprintf(statestr, sizeof(statestr), "RDP_GET_LICENSE");
-                        break;
-                    case MOD_RDP_CONNECTED:
-                        snprintf(statestr, sizeof(statestr), "RDP_CONNECTED");
-                        break;
-                    default:
-                        snprintf(statestr, sizeof(statestr), "UNKNOWN");
-                        break;
+                        #define CASE(e) case MOD_##e: statestr = #e; break
+                        CASE(RDP_NEGO);
+                        CASE(RDP_BASIC_SETTINGS_EXCHANGE);
+                        CASE(RDP_CHANNEL_CONNECTION_ATTACH_USER);
+                        CASE(RDP_GET_LICENSE);
+                        CASE(RDP_CONNECTED);
+                        #undef CASE
                     }
-                    statestr[255] = 0;
                     LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state", statestr);
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
@@ -3826,7 +3811,6 @@ public:
         if (this->session_probe_virtual_channel_p) {
             this->session_probe_virtual_channel_p->process_event();
         }
-
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
@@ -5942,14 +5926,16 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
         }
 
-        this->send_pdu_type2(
-            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
-            [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
-                RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_pdu_type2(
+                PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+                [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
+                    RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
 
-                sopdud.emit(stream);
-            }
-        );
+                    sopdud.emit(stream);
+                }
+            );
+        }
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates done");
@@ -5961,14 +5947,16 @@ public:
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates");
         }
 
-        this->send_pdu_type2(
-            PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
-            [](StreamSize<32>, OutStream & stream) {
-                RDP::SuppressOutputPDUData sopdud;
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_pdu_type2(
+                PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+                [](StreamSize<32>, OutStream & stream) {
+                    RDP::SuppressOutputPDUData sopdud;
 
-                sopdud.emit(stream);
-            }
-        );
+                    sopdud.emit(stream);
+                }
+            );
+        }
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");

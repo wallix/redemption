@@ -301,19 +301,20 @@ constant LIB_SAN_DEPENDENCY :
     <variant>sanitize:<define>CXX_ENABLE_ASAN
 ;
 
+constant SYSTEM_TYPE : linux ;
+
 project redemption
     : requirements
 
     <include>src
     # TODO move to system
-    <include>src/system/linux
+    <include>src/system/$(SYSTEM_TYPE)
     <include>src/capture
     # TODO move to system
     <include>src/headers
     <include>include
 
     <include>modules/includes
-    <include>src/system/linux/system
 
     ## configs @{
     <include>projects/redemption_configs/redemption_src
@@ -742,7 +743,7 @@ unit-test test_wrm_label : tests/capture/test_wrm_label.cpp : $(TEST_DEPENDENCIE
 ## @}
 
 
-## Test facility functions or classes
+## Test facility functions or classes (utils/sugar)
 ## @{
 unit-test test_strutils : tests/utils/sugar/test_strutils.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_finally : tests/utils/sugar/test_finally.cpp : $(TEST_DEPENDENCIES) ;
@@ -755,6 +756,9 @@ unit-test test_array_view : tests/utils/sugar/test_array_view.cpp : $(TEST_DEPEN
 unit-test test_local_fd : tests/utils/sugar/test_local_fd.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
+
+## utils
+## @{
 unit-test test_stream : tests/utils/test_stream.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_utf : tests/utils/test_utf.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rect : tests/utils/test_rect.cpp : $(TEST_DEPENDENCIES) ;
@@ -766,6 +770,45 @@ unit-test test_parse : tests/utils/test_parse.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_parser : tests/utils/test_parser.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_fileutils : tests/utils/test_fileutils.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_parse_ip_conntrack : tests/utils/test_parse_ip_conntrack.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_theme : tests/utils/test_theme.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_redirection_info : tests/utils/test_redirection_info.cpp : $(TEST_DEPENDENCIES) ;
+## @}
+
+
+## utils/crypto
+## @{
+unit-test test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_sha256_direct : tests/utils/crypto/test_ssl_sha256_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_sha512_direct : tests/utils/crypto/test_ssl_sha512_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_rc4_direct : tests/utils/crypto/test_ssl_rc4_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+
+unit-test test_ssl_lib : tests/utils/crypto/test_ssl_lib.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+unit-test test_ssl_sign : tests/utils/crypto/test_ssl_sign.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
+## @}
+
+
+## system/linux
+## @{
+unit-test test_ssl_calls : tests/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_modular_exponentiation : tests/system/linux/system/test_modular_exponentiation.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_openssl : tests/system/linux/system/test_openssl.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_aes : tests/system/linux/system/test_ssl_aes.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_bignum : tests/system/linux/system/test_ssl_bignum.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_md4 : tests/system/linux/system/test_ssl_md4.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_md5 : tests/system/linux/system/test_ssl_md5.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_rc4 : tests/system/linux/system/test_ssl_rc4.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_sha1 : tests/system/linux/system/test_ssl_sha1.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_sha256 : tests/system/linux/system/test_ssl_sha256.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_sha512 : tests/system/linux/system/test_ssl_sha512.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+## @}
+
+
+## core/RDP
+## @{
 unit-test test_x224 : tests/core/RDP/test_x224.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_out_per_bstream : tests/core/RDP/test_out_per_bstream.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp : $(TEST_DEPENDENCIES) ;
@@ -787,25 +830,43 @@ unit-test test_clipboard : tests/core/RDP/test_clipboard.cpp : $(TEST_DEPENDENCI
 unit-test test_FileInformation : tests/core/FSCC/test_FileInformation.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_rdpdr : tests/core/RDP/channels/test_rdpdr.cpp : $(TEST_DEPENDENCIES) ;
 
-
-
-unit-test test_callback : tests/core/test_callback.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_channel_list : tests/core/test_channel_list.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_check_files : tests/core/test_check_files.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_client_info : tests/core/test_client_info.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_theme : tests/utils/test_theme.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_error : tests/core/test_error.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_font : tests/core/test_font.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_listen : tests/core/test_listen.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_mainloop : tests/core/test_mainloop.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
+
+unit-test test_ServerRedirection : tests/core/RDP/test_ServerRedirection.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
+unit-test test_logon : tests/core/RDP/test_logon.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_nego : tests/core/RDP/test_nego.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
+
+unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
+
+unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_remote_programs : tests/core/RDP/test_remote_programs.cpp : $(TEST_DEPENDENCIES) ;
+## @}
+
+
+## core/RDP/caches
+## @{
 unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto <library>png ;
 unit-test test_bmpcachepersister : tests/core/RDP/caches/test_bmpcachepersister.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto ;
 unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_glyphcache : tests/core/RDP/caches/test_glyphcache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_redirection_info : tests/utils/test_redirection_info.cpp : $(TEST_DEPENDENCIES) ;
+## @}
+
+
+## core/
+## @{
+unit-test test_callback : tests/core/test_callback.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_channel_list : tests/core/test_channel_list.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_check_files : tests/core/test_check_files.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_client_info : tests/core/test_client_info.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_error : tests/core/test_error.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_font : tests/core/test_font.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_listen : tests/core/test_listen.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_mainloop : tests/core/test_mainloop.cpp : $(TEST_DEPENDENCIES) ;
+## @}
+
 
 ## Capabilities tests
 ## @{
@@ -842,31 +903,12 @@ unit-test test_common : tests/core/RDP/capabilities/test_common.cpp : $(TEST_DEP
 unit-test test_virchan : tests/core/RDP/capabilities/test_virchan.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
-unit-test test_ServerRedirection : tests/core/RDP/test_ServerRedirection.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
-unit-test test_logon : tests/core/RDP/test_logon.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_nego : tests/core/RDP/test_nego.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
-unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp : $(TEST_DEPENDENCIES) <library>crypto <library>png ;
 unit-test test_protect_graphics : tests/utils/test_protect_graphics.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
-unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_remote_programs : tests/core/RDP/test_remote_programs.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_server : tests/core/test_server.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_session : tests/core/test_session.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_session_server : tests/core/test_session_server.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_front : tests/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
-unit-test test_mod_api : tests/mod/test_mod_api.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_null : tests/mod/null/test_null.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
-unit-test test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
-unit-test test_vnc : tests/mod/vnc/test_vnc.cpp : $(TEST_DEPENDENCIES) <library>png ;
-unit-test test_xup : tests/mod/xup/test_xup.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_bitmap : tests/utils/test_bitmap.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
 unit-test test_bitmap_with_png : tests/utils/test_bitmap_with_png.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
@@ -879,7 +921,6 @@ unit-test test_log : tests/utils/test_log.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_netutils : tests/utils/test_netutils.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_png : tests/utils/test_png.cpp : $(TEST_DEPENDENCIES) <library>png ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_ssl_calls : tests/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_strings : tests/test_strings.cpp : $(TEST_DEPENDENCIES) ;
 
 
@@ -938,6 +979,9 @@ unit-test test_RDPOrdersSecondaryBmpCache : tests/core/RDP/orders/test_RDPOrders
 unit-test test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
 unit-test test_libpng : tests/test_libpng.cpp : $(TEST_DEPENDENCIES) <library>png <library>z ;
@@ -990,6 +1034,18 @@ unit-test test_flat_interactive_target : tests/mod/internal/widget2/test_flat_in
 
 
 ## Mod tests
+## @{
+unit-test test_mod_api : tests/mod/test_mod_api.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_null : tests/mod/null/test_null.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_rdpdr_channel : tests/mod/rdp/channels/test_rdpdr_channel.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp : $(TEST_DEPENDENCIES) <library>png ;
+unit-test test_xup : tests/mod/xup/test_xup.cpp : $(TEST_DEPENDENCIES) ;
+## @}
+
+## Mod internal tests
 ## @{
 unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
 unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;

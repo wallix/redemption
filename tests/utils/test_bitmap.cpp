@@ -32,6 +32,10 @@
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_with_png.hpp"
 #include "utils/drawable.hpp"
+#include "check_sig.hpp"
+#include <cstdio>
+#include <iostream>
+
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {
@@ -4469,15 +4473,12 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
 // eog `ls -1tr /tmp/test_* | tail -n 1`
 // (or any other variation you like)
 
-void dump_png(const char * prefix, const Bitmap & bmp)
+void dump_png(const char * filename, const Bitmap & bmp)
 {
-    char tmpname[128];
-    sprintf(tmpname, "%sXXXXXX.png", prefix);
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-//    ::dump_png24(f, bmp.data_bitmap, bmp.bmp_size / (bmp.cy*nbbytes(bmp.original_bpp)), bmp.cy, bmp.bmp_size / bmp.cy);
-    ::dump_png24(f, bmp.data(), 4, 3, 12, true);
-
+    Drawable drawable(bmp.cx(), bmp.cy());
+    drawable.draw_bitmap({0, 0, bmp.cx(), bmp.cy()}, bmp);
+    FILE * f = fopen(filename, "wb");
+    ::dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
     ::fclose(f);
 }
 
@@ -4569,4 +4570,87 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(outbuf[34], outbuf[34]);
     BOOST_CHECK_EQUAL(outbuf[35], outbuf[35]);
 
+}
+
+
+BOOST_AUTO_TEST_CASE(TestConvertBitmap2)
+{
+    //const char * filename = FIXTURES_PATH "/win2008capture10.png";
+
+    //Bitmap bmp24 = bitmap_from_file(filename);
+
+    BGRPalette palette332(BGRPalette::classic_332());
+
+    uint8_t raw24[60] = {
+        0x22, 0x17, 0x48,   0xc7, 0xcd, 0xc4,   0xad, 0xf8, 0x61,   0x6f, 0x32, 0xd6,   0x13, 0x61, 0xee,
+        0xb2, 0x7b, 0x81,   0x0f, 0x66, 0x22,   0x17, 0x48, 0xc7,   0xcd, 0xc4, 0xad,   0xf8, 0x61, 0x6f,
+        0x32, 0xd6, 0x13,   0x61, 0xee, 0xb2,   0x7b, 0x81, 0x0f,   0x66, 0x22, 0x17,   0x48, 0xc7, 0xcd,
+        0xc4, 0xad, 0xf8,   0x61, 0x6f, 0x32,   0xd6, 0x13, 0x61,   0xee, 0xb2, 0x7b,   0x81, 0x0f, 0x66
+    };
+
+    Bitmap bmp24(24, 24, &palette332, 4, 5, raw24, sizeof(raw24));
+
+
+
+    BOOST_CHECK_EQUAL(bmp24.bpp(), 24);
+
+    Bitmap bmp_24_to_24(24, bmp24);
+    Bitmap bmp_24_to_16(16, bmp24);
+    Bitmap bmp_24_to_15(15, bmp24);
+    Bitmap bmp_24_to_8(8, bmp24);
+
+    Bitmap bmp_16_to_24(24, bmp_24_to_16);
+    Bitmap bmp_16_to_16(16, bmp_24_to_16);
+    Bitmap bmp_16_to_15(15, bmp_24_to_16);
+    Bitmap bmp_16_to_8(8, bmp_24_to_16);
+
+    Bitmap bmp_15_to_24(24, bmp_24_to_15);
+    Bitmap bmp_15_to_16(16, bmp_24_to_15);
+    Bitmap bmp_15_to_15(15, bmp_24_to_15);
+    Bitmap bmp_15_to_8(8, bmp_24_to_15);
+
+    Bitmap bmp_8_to_24(24, bmp_24_to_8);
+    Bitmap bmp_8_to_16(16, bmp_24_to_8);
+    Bitmap bmp_8_to_15(15, bmp_24_to_8);
+    Bitmap bmp_8_to_8(8, bmp_24_to_8);
+
+    CHECK_SIG(bmp_24_to_24, "\xaa\x33\x05\x87\x63\x66\xc0\x9d\x89\x78\x00\xe7\x9b\x8f\x09\x2e\xbf\x06\x64\x74");
+    CHECK_SIG(bmp_24_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");
+    CHECK_SIG(bmp_24_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
+    CHECK_SIG(bmp_24_to_8,  "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+    CHECK_SIG(bmp_16_to_24, "\xfc\x0b\xbd\xe2\x01\x89\x05\x96\x88\xc2\x13\xd1\xb6\x14\xe9\x85\xf6\xa3\x5a\xd4");
+    CHECK_SIG(bmp_16_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");
+    CHECK_SIG(bmp_16_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
+    CHECK_SIG(bmp_16_to_8,  "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+    CHECK_SIG(bmp_15_to_24, "\xe9\x84\xe3\x49\x01\x2c\x2e\xff\xf0\x60\x6b\x18\x14\xce\x54\x8f\x2a\xae\x9a\x22");
+    CHECK_SIG(bmp_15_to_16, "\x69\xb9\x98\x9d\x6e\xd6\x7d\xc1\xd0\x0e\x8b\x58\xaa\x6a\x6e\x8c\xa6\xc4\xe4\x2b");
+    CHECK_SIG(bmp_15_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
+    CHECK_SIG(bmp_15_to_8,  "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+    CHECK_SIG(bmp_8_to_24,  "\x3d\x92\x0a\x5f\x62\x97\xd2\xa9\xe4\x16\x1b\xa7\xcb\xb9\x77\xb4\x4f\xaf\x5d\xe3");
+    CHECK_SIG(bmp_8_to_16,  "\xbe\x5d\x4c\x63\x36\x2e\x01\x82\x0a\x65\xf1\xd5\x33\x3c\xb0\x04\x67\x7e\x24\x35");
+    CHECK_SIG(bmp_8_to_15,  "\x19\x66\xa2\xcd\xfd\x77\x1b\xe4\xab\xf8\x6e\x03\x77\xf5\xa9\xa6\xe4\x85\x2b\x39");
+    CHECK_SIG(bmp_8_to_8,   "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+//     dump_png("/tmp/rawdisk/24_24.png", bmp_24_to_24);
+//     dump_png("/tmp/rawdisk/24_16.png", bmp_24_to_16);
+//     dump_png("/tmp/rawdisk/24_15.png", bmp_24_to_15);
+//     dump_png("/tmp/rawdisk/24_8.png", bmp_24_to_8);
+//
+//     dump_png("/tmp/rawdisk/16_24.png", bmp_16_to_24);
+//     dump_png("/tmp/rawdisk/16_16.png", bmp_16_to_16);
+//     dump_png("/tmp/rawdisk/16_15.png", bmp_16_to_15);
+//     dump_png("/tmp/rawdisk/16_8.png", bmp_16_to_8);
+//
+//     dump_png("/tmp/rawdisk/15_24.png", bmp_15_to_24);
+//     dump_png("/tmp/rawdisk/15_16.png", bmp_15_to_16);
+//     dump_png("/tmp/rawdisk/15_15.png", bmp_15_to_15);
+//     dump_png("/tmp/rawdisk/15_8.png", bmp_15_to_8);
+//
+//     dump_png("/tmp/rawdisk/8_24.png", bmp_8_to_24);
+//     dump_png("/tmp/rawdisk/8_16.png", bmp_8_to_16);
+//     dump_png("/tmp/rawdisk/8_15.png", bmp_8_to_15);
+//     dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
 }
