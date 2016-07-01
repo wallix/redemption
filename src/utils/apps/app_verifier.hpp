@@ -25,6 +25,76 @@
 
 #define QUICK_CHECK_LENGTH 4096
 
+
+struct ifile_read_API
+{
+    // ifile is a thin API layer over system open/read/close
+    // it means open/read/close mimicks system open/read/close
+    // (except fd is wrapped in an object)
+
+    int fd;
+    ifile_read_API() : fd(-1) {}
+    // We choose to define an open function to mimick system behavior
+    // instead of opening through constructor. This allows to manage
+    // explicit error management depending on return code.
+    // if open worked open returns 0 and this->fd contains file descriptor
+    // negative code are errors, return EINVAL if lib software related
+    virtual int open(const char * s) = 0;
+    // read can either return the number of bytes asked or less.
+    // That the exact number of bytes is returned is never 
+    // guaranteed and checking that is at caller's responsibility
+    // if some error occurs the return is -1 and the error code
+    // is in errno, like for system calls.
+    // returning 0 means EOF
+    virtual int read(char * buf, size_t len) = 0;
+    // close beside calling the system call must also ensure it sets fd to 1
+    // this is to avoid performing close twice when called explicitely
+    // as it is also performed by destructor (in most cases there will be
+    // no reason for calling close explicitly).
+    virtual void close()
+    {
+        ::close(fd);
+        this->fd = -1;
+    }
+
+    virtual ~ifile_read_API(){
+        if (this->fd != -1){
+            this->close();
+        }
+    }
+};
+
+struct ifile_read : public ifile_read_API
+{
+    int open(const char * s)
+    {
+        this->fd = ::open(s, O_RDONLY);
+        return this->fd;
+    }
+    int read(char * buf, size_t len)
+    {
+        return ::read(this->fd, buf, len);
+    }
+    virtual ~ifile_read(){}
+};
+
+
+struct ifile_read_encrypted : public ifile_read_API
+{
+    int open(const char * s)
+    {
+        this->fd = ::open(s, O_RDONLY);
+        return this->fd;
+    }
+    int read(char * buf, size_t len)
+    {
+        return ::read(this->fd, buf, len);
+    }
+    virtual ~ifile_read_encrypted(){}
+};
+
+
+
 struct MetaLine2
 {
     char    filename[PATH_MAX + 1];
@@ -49,7 +119,7 @@ struct HashHeader {
 
 namespace transbuf {
 
-    class ifile_buf
+    class ifile_buf : public ifile_read_API
     {
     public:
         CryptoContext * cctx;
@@ -57,18 +127,22 @@ namespace transbuf {
         char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
                                               // or already decrypted/decompressed data
         uint32_t clear_pos;                   // current position in clear_data buf
+        uint32_t raw_size;                    // the unciphered/uncompressed file size
 
         EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
-        uint32_t raw_size;                    // the unciphered/uncompressed file size
         uint32_t state;                       // enum crypto_file_state
         unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-
         int encryption;
 
     public:
         explicit ifile_buf(CryptoContext * cctx, int encryption)
         : cctx(cctx)
         , fd(-1)
+        , clear_data{}
+        , clear_pos(0)
+        , raw_size(0)
+        , state(0)
+        , MAX_CIPHERED_SIZE(0)
         , encryption(encryption)
         {
         }
@@ -81,7 +155,7 @@ namespace transbuf {
             }
         }
 
-        int open(const char * filename, mode_t mode = 0600)
+        int open(const char * filename)
         {
             this->fd = ::open(filename, O_RDONLY);
             if (this->fd < 0) {
@@ -179,7 +253,7 @@ namespace transbuf {
             return 0;
         }
 
-        ssize_t read(char * data, size_t len)
+        int read(char * data, size_t len)
         {
             if (this->encryption){
                 if (this->state & CF_EOF) {
@@ -189,37 +263,34 @@ namespace transbuf {
                 unsigned int requested_size = len;
 
                 while (requested_size > 0) {
-                    // Check how much we have decoded
+                    // Check how much we have already decoded
                     if (!this->raw_size) {
-                        uint8_t tmp_buf[4] = {};
-                        size_t len = 4;
-
-                        TODO("this is blocking read, add support for timeout reading");
-                        TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-
-                        size_t remaining_len = len;
-                        while (remaining_len) {
-                            ssize_t ret = ::read(this->fd, tmp_buf + (len - remaining_len), remaining_len);
-                            if (ret < 0){
-                                if (errno == EINTR){
-                                    continue;
+                        uint8_t hlen[4] = {};
+                        {
+                            size_t rlen = 4;
+                            while (rlen) {
+                                ssize_t ret = ::read(this->fd, &hlen[4 - rlen], rlen);
+                                if (ret < 0){
+                                    if (errno == EINTR){
+                                        continue;
+                                    }
+                                    // Error should still be there next time we try to read: fatal
+                                    this->close();
+                                    return - 1;
                                 }
-                                // Error should still be there next time we try to read
-                                return - 1;
+                                // Unexpected EOF, we are in trouble for decompression: fatal
+                                if (ret == 0){
+                                    this->close();
+                                    return -1;
+                                }
+                                rlen -= ret;
                             }
-                            // We must exit loop or we will enter infinite loop
-                            if (ret == 0){
-                                break;
-                            }
-                            remaining_len -= ret;
-                        }
-                        if (remaining_len){
-                            return -1;
                         }
 
-                        uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
+                        Parse p(hlen);
+                        uint32_t ciphered_buf_size = p.in_uint32_le();
                         if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                            this->state |= CF_EOF;
+                            this->state = CF_EOF;
                             this->clear_pos = 0;
                             this->raw_size = 0;
                             break;
@@ -325,28 +396,8 @@ namespace transbuf {
                 return len - requested_size;
             }
             else {
-                TODO("this is blocking read, add support for timeout reading");
-                TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-                size_t remaining_len = len;
-                while (remaining_len) {
-                    ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
-                    if (ret < 0){
-                        if (errno == EINTR){
-                            continue;
-                        }
-                        // Error should still be there next time we try to read
-                        if (remaining_len != len){
-                            return len - remaining_len;
-                        }
-                        return ret;
-                    }
-                    // We must exit loop or we will enter infinite loop
-                    if (ret == 0){
-                        break;
-                    }
-                    remaining_len -= ret;
-                }
-                return len - remaining_len;
+                // for non encrypted file, returning partial read is OK
+                return::read(this->fd, data, len);
             }
         }
     };
