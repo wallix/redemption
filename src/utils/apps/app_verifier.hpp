@@ -127,7 +127,7 @@ namespace transbuf {
         char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
                                               // or already decrypted/decompressed data
         uint32_t clear_pos;                   // current position in clear_data buf
-        uint32_t raw_size;                    // the unciphered/uncompressed file size
+        uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
 
         EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
         uint32_t state;                       // enum crypto_file_state
@@ -293,11 +293,13 @@ namespace transbuf {
                             this->state = CF_EOF;
                             this->clear_pos = 0;
                             this->raw_size = 0;
+                            this->close();
                             break;
                         }
 
                         if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
                             LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                            this->close();
                             return -1;
                         }
 
@@ -309,27 +311,27 @@ namespace transbuf {
                         unsigned char compressed_buf[65536];
 
                         {
-                            size_t len = ciphered_buf_size;
-                            TODO("this is blocking read, add support for timeout reading");
-                            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-                            size_t remaining_len = len;
-                            while (remaining_len) {
-                                ssize_t ret = ::read(this->fd, &ciphered_buf[len - remaining_len], remaining_len);
+                            size_t rlen = ciphered_buf_size;
+                            while (rlen) {
+                                ssize_t ret = ::read(this->fd, &ciphered_buf[ciphered_buf_size - rlen], rlen);
                                 if (ret < 0){
                                     if (errno == EINTR){
                                         continue;
                                     }
                                     // Error should still be there next time we try to read
+                                    // TODO: see if we have already decrypted data
+                                    // error reported too early
+                                    this->close();
                                     return - 1;
                                 }
                                 // We must exit loop or we will enter infinite loop
                                 if (ret == 0){
-                                    break;
+                                    // TODO: see if we have already decrypted data
+                                    // error reported too early
+                                    this->close();
+                                    return -1;
                                 }
-                                remaining_len -= ret;
-                            }
-                            if (remaining_len){
-                                return -1;
+                                rlen -= ret;
                             }
                         }
 
