@@ -25,8 +25,6 @@
 
 #include "core/error.hpp"
 
-#define LOGNULL
-
 BOOST_AUTO_TEST_CASE(TestError)
 {
     Error e(ERR_SSL_CALL_FAILED);

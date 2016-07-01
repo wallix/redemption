@@ -193,9 +193,9 @@ public:
             base64tbl[_base64chars[i]] = i;
         }
 
-        base64tbl['.'] = 62;
-        base64tbl['-'] = 62;
-        base64tbl['_'] = 63;
+        base64tbl[int('.')] = 62;
+        base64tbl[int('-')] = 62;
+        base64tbl[int('_')] = 63;
 
         while (*txt) {
             if ((v = base64tbl[static_cast<unsigned char>(*txt)]) >= 0) {

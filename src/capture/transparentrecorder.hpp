@@ -23,6 +23,8 @@
 
 #include "transport/transport.hpp"
 #include "transparentchunk.hpp"
+#include "utils/stream.hpp"
+#include "utils/difftimeval.hpp"
 
 class TransparentRecorder {
 private:

@@ -23,9 +23,6 @@
 #define BOOST_TEST_MODULE TestWidgetGroupBox
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 //#define LOGPRINT
 
@@ -35,9 +32,6 @@
 #include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
 
 BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
 {

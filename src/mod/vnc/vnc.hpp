@@ -339,7 +339,7 @@ TODO("-Wold-style-cast is ignored")
 
                 LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
             }
-            catch (Error const & e) {
+            catch (Error const &) {
             }
         } else {
             if (this->verbose) {
@@ -740,7 +740,7 @@ public:
             {
                 this->t.connect();
             }
-            catch (Error const & e)
+            catch (Error const &)
             {
                 throw Error(ERR_VNC_CONNECTION_ERROR);
             }

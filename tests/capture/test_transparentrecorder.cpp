@@ -25,13 +25,11 @@
 #define BOOST_TEST_MODULE Testtransparentrecorder
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINT
 
-//#include "capture/transparentrecorder.hpp"
+#include "capture/transparentrecorder.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_transparentrecorder)
 {

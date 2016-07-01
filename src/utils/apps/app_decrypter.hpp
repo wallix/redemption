@@ -23,7 +23,7 @@
 #include "program_options/program_options.hpp"
 
 
-int app_decrypter(int argc, char const * const * argv, const char * copyright_notice, CryptoContext & cctx)
+inline int app_decrypter(int argc, char const * const * argv, const char * copyright_notice, CryptoContext & cctx)
 {
     openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
 

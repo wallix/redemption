@@ -26,8 +26,6 @@
 #define BOOST_TEST_MODULE TestRDPQt
 #include "system/redemption_unit_tests.hpp"
 #include <unistd.h>
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINTlibboost_unit_test

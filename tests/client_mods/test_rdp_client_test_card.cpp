@@ -27,8 +27,6 @@
 #define BOOST_TEST_MODULE TestRdpClientTestCard
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINT

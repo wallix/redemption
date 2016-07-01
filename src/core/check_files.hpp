@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include "utils/log.hpp"
 #include "core/font.hpp" //DEFAULT_FONT_NAME
+#include "defines.hpp"
 
 TODO("merge that with find and unlink")
 

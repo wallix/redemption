@@ -26,7 +26,7 @@
 
 #include "core/RDP/mppc.hpp"
 #include "system/ssl_calls.hpp"
-#include "system/ssl_cryptcontext.hpp"
+#include "utils/crypto/cryptcontext.hpp"
 
 
 namespace FastPath {

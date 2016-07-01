@@ -27,7 +27,10 @@ TODO("-Wold-style-cast is ignored")
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
-static void rdp_request(SocketTransport & sockettransport)
+namespace
+{
+
+void rdp_request(SocketTransport & sockettransport)
 {
     const char *request = "REDEMPTION\r\n\r\n";
 
@@ -83,7 +86,7 @@ static void rdp_request(SocketTransport & sockettransport)
     sockettransport.recv(&pbuf, 18);
 }
 
-static X509 *load_cert(const char *file)
+X509 *load_cert(const char *file)
 {
     X509 *x = nullptr;
     BIO *cert;
@@ -100,7 +103,7 @@ end:
     return(x);
 }
 
-static int check(X509_STORE *ctx, const char *file)
+int check(X509_STORE *ctx, const char *file)
 {
     X509 *x=nullptr;
     int i=0,ret=0;
@@ -126,38 +129,6 @@ end:
         X509_free(x);
 
     return(ret);
-}
-
-
-int verify(const char* certfile, const char* CAfile)
-{
-    int ret=0;
-    X509_STORE *cert_ctx=nullptr;
-    X509_LOOKUP *lookup=nullptr;
-
-    cert_ctx=X509_STORE_new();
-    if (cert_ctx == nullptr) goto end;
-
-    OpenSSL_add_all_algorithms();
-
-    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
-    if (lookup == nullptr)
-        goto end;
-
-    if(!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM))
-        goto end;
-
-    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_hash_dir());
-    if (lookup == nullptr)
-        goto end;
-
-    X509_LOOKUP_add_dir(lookup,nullptr,X509_FILETYPE_DEFAULT);
-
-    ret = check(cert_ctx, certfile);
-end:
-    if (cert_ctx != nullptr) X509_STORE_free(cert_ctx);
-
-    return ret;
 }
 
 int tcp_connect(const char *host, int port)
@@ -208,6 +179,7 @@ int tcp_connect(const char *host, int port)
     return sock;
 }
 
+}
 
 int main(int argc, char ** argv)
 {

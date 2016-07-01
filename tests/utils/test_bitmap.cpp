@@ -33,6 +33,7 @@
 #include "utils/bitmap_with_png.hpp"
 #include "utils/drawable.hpp"
 #include "check_sig.hpp"
+#include "dump_png.hpp"
 #include <cstdio>
 #include <iostream>
 
@@ -4473,15 +4474,6 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
 // eog `ls -1tr /tmp/test_* | tail -n 1`
 // (or any other variation you like)
 
-void dump_png(const char * filename, const Bitmap & bmp)
-{
-    Drawable drawable(bmp.cx(), bmp.cy());
-    drawable.draw_bitmap({0, 0, bmp.cx(), bmp.cy()}, bmp);
-    FILE * f = fopen(filename, "wb");
-    ::dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
-    ::fclose(f);
-}
-
 
 BOOST_AUTO_TEST_CASE(TestConvertBitmap)
 {
@@ -4613,14 +4605,6 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap2)
     Bitmap bmp_8_to_16(16, bmp_24_to_8);
     Bitmap bmp_8_to_15(15, bmp_24_to_8);
     Bitmap bmp_8_to_8(8, bmp_24_to_8);
-
-#define CHECK_SIG(bmp, sig)                      \
-    {                                            \
-        char message[1024];                      \
-        if (!check_sig(bmp, message, sig)) {     \
-            BOOST_CHECK_MESSAGE(false, message); \
-        }                                        \
-    }
 
     CHECK_SIG(bmp_24_to_24, "\xaa\x33\x05\x87\x63\x66\xc0\x9d\x89\x78\x00\xe7\x9b\x8f\x09\x2e\xbf\x06\x64\x74");
     CHECK_SIG(bmp_24_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");

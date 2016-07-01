@@ -67,10 +67,7 @@ public:
         this->rect.cy = 0;
         this->set_text(text);
     }
-
-    ~WidgetMultiLine() override {
-    }
-
+    
     void set_text(const char * text)
     {
         if (this->auto_resize) {

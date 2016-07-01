@@ -52,7 +52,7 @@
 #include "utils/protect_graphics.hpp"
 #include "mm_api.hpp"
 
-Rect get_widget_rect(uint16_t width, uint16_t height,
+inline Rect get_widget_rect(uint16_t width, uint16_t height,
         GCC::UserData::CSMonitor const & monitors) {
     Rect widget_rect(0, 0, width - 1, height - 1);
     if (monitors.monitorCount) {
@@ -116,7 +116,7 @@ enum {
     MODULE_CLI
 };
 
-const char * get_module_name(int module_id) {
+inline const char * get_module_name(int module_id) {
     switch (module_id) {
         case MODULE_EXIT:                               return "MODULE_EXIT";
         case MODULE_WAITING:                            return "MODULE_WAITING";

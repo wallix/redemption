@@ -24,6 +24,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 
+inline
 void check_datas(size_t lg_data, uint8_t * data,
                  size_t lg_result, uint8_t * expected_result,
                  const char * message)
@@ -54,11 +55,11 @@ void check_datas(size_t lg_data, uint8_t * data,
                         "Got %u\n"
                         "Data differs at index %u\n"
                         "Expected %02x\n"
-                        "Got %02x\n", message, 
+                        "Got %02x\n", message,
                         static_cast<unsigned>(lg_result),
-                        static_cast<unsigned>(lg_data), 
-                        static_cast<unsigned>(i), 
-                        static_cast<unsigned>(expected_result[i]),  
+                        static_cast<unsigned>(lg_data),
+                        static_cast<unsigned>(i),
+                        static_cast<unsigned>(expected_result[i]),
                         static_cast<unsigned>(data[i]));
 
         BOOST_CHECK_MESSAGE(lg_result == lg_data, buffer);
@@ -85,9 +86,9 @@ void check_datas(size_t lg_data, uint8_t * data,
                         " got %d"
                         " at index %u"
                         "\n",
-                        message, 
-                        static_cast<int>(expected_result[i]),  
-                        static_cast<int>(data[i]),  
+                        message,
+                        static_cast<int>(expected_result[i]),
+                        static_cast<int>(data[i]),
                         static_cast<unsigned>(i));
 
         BOOST_CHECK_MESSAGE(expected_result[i] == data[i], buffer);

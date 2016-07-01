@@ -251,6 +251,7 @@ private:
 };
 
 
+inline
 void copy_paste_process_event(CopyPaste & copy_paste, WidgetEdit & widget_edit, NotifyApi::notify_event_t event) {
     switch(event) {
         case NOTIFY_PASTE:

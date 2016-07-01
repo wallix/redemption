@@ -25,9 +25,6 @@
 #define BOOST_TEST_MODULE TestBytesT
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
-
 #include "utils/sugar/bytes_t.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBytesT)

@@ -24,9 +24,6 @@
 #define BOOST_TEST_MODULE TestLocalFd
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
-
 #include "utils/sugar/local_fd.hpp"
 
 #include <string>

@@ -27,8 +27,6 @@
 #define BOOST_TEST_MODULE TestNdfaRegex
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "regex/regex_parser.hpp"
 #include "regex/regex_st_automate.hpp"
 

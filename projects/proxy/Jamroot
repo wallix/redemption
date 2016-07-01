@@ -66,7 +66,6 @@ constant PNG_DEBUG : <variant>debug:<library>png ;
 rule defines ( properties * )
 {
     local defs ;
-    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
@@ -416,8 +415,16 @@ obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
 
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
-constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
-constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
+constant COMMON_OBJ_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
+constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
+constant TEST_DEPENDENCIES :
+    <include>$(TESTDIR)
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    $(LIB_SAN_DEPENDENCY)
+    $(LIB_TEST_DEPENDENCY)
+    $(GCOV)
+;
 
 
 #
@@ -464,8 +471,7 @@ lib libredrec
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 lib libreddec
@@ -480,8 +486,7 @@ lib libreddec
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 lib libredver
@@ -496,8 +501,7 @@ lib libredver
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 exe rdptproxy
@@ -872,8 +876,8 @@ test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
 test-canonical core/RDP/RDPSerializer.hpp ;
 test-canonical core/RDP/remote_programs.hpp ;
 test-canonical core/server.hpp ;
-test-canonical core/session.hpp ;
-test-canonical core/session_server.hpp ;
+test-canonical core/session.hpp : <library>png ;
+test-canonical core/session_server.hpp : <library>png ;
 test-canonical core/wait_obj.hpp ;
 
 test-run test_front : front/test_front.cpp : front/front.hpp
@@ -910,17 +914,27 @@ test-canonical utils/log.hpp ;
 test-canonical utils/netutils.hpp ;
 test-canonical utils/png.hpp : <library>png ;
 test-canonical utils/rdtsc.hpp ;
+
+test-canonical utils/crypto/ssl_sha1_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_sha256_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_sha512_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_aes_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_md4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_md5_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_rc4_direct.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical utils/crypto/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+
 test-canonical system/linux/system/ssl_calls.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_lib.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_sign.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_bignum.hpp : <library>crypto ;
-test-canonical system/linux/system/ssl_md5.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/openssl.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_bignum.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_md4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
+test-canonical system/linux/system/ssl_md5.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_rc4.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha1.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha256.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-canonical system/linux/system/ssl_sha512.hpp : <library>openssl <library>crypto <library>dl <library>z ;
-test-canonical system/linux/system/ssl_aes.hpp : <library>openssl <library>crypto <library>dl <library>z ;
 test-run test_modular_exponentiation : system/linux/system/test_modular_exponentiation.cpp ; # : <library>pthread ;
 
 test-run test_strings : test_strings.cpp : : <covflag>nocover ;
@@ -1157,8 +1171,8 @@ test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap <library>pn
 test-canonical mod/internal/widget_test_mod.hpp : <library>png ;
 test-canonical mod/internal/interactive_target_mod.hpp : <library>png <library>crypto ;
 test-canonical mod/internal/bouncer2_mod.hpp : <library>png ;
-test-canonical mod/internal/test_card_mod.hpp ;
-test-canonical mod/internal/replay_mod.hpp ;
+test-canonical mod/internal/test_card_mod.hpp : <library>png ;
+test-canonical mod/internal/replay_mod.hpp : <library>png ;
 test-canonical mod/internal/internal_mod.hpp ;
 test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto ;
 ## @}
@@ -1338,7 +1352,6 @@ test-canonical regex/regex_automate.hpp ;
 test-canonical regex/regex_consumer.hpp ;
 test-canonical regex/regex_states_value.hpp ;
 test-canonical regex/regex_utils.hpp ;
-test-canonical system/linux/system/openssl.hpp ;
 test-canonical transport/buffer/file_buf.hpp ;
 test-canonical transport/buffer/null_buf.hpp ;
 test-canonical transport/detail/meta_hash.hpp ;

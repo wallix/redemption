@@ -24,9 +24,6 @@
 #define BOOST_TEST_MODULE TestWidgetEditValid
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 //#define LOGPRINT
 
@@ -34,9 +31,6 @@
 #include "mod/internal/widget2/edit_valid.hpp"
 #include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
 
 #include "fake_draw.hpp"
 

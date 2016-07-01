@@ -28,8 +28,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #include "transport/test_transport.hpp"
 #include "core/client_info.hpp"

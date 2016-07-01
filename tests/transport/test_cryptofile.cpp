@@ -25,8 +25,6 @@
 #define BOOST_TEST_MODULE TestVerifier
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 
@@ -675,6 +673,7 @@ struct Crypto_file_encrypt : public Crypto_file
     {}
 };
 
+inline
 Crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoContext * cctx)
 {
     (void)cctx;
@@ -692,6 +691,7 @@ Crypto_file * crypto_open_read(int systemfd, unsigned char * trace_key,  CryptoC
     return reinterpret_cast<Crypto_file*>(cf_struct);
 }
 
+inline
 Crypto_file_encrypt * crypto_open_write(int systemfd, unsigned char * trace_key, CryptoContext * cctx, const unsigned char * iv)
 {
     Crypto_file_encrypt * cf_struct = new (std::nothrow) Crypto_file_encrypt(systemfd);
@@ -711,6 +711,7 @@ Crypto_file_encrypt * crypto_open_write(int systemfd, unsigned char * trace_key,
 /* Flush procedure (compression, encryption, effective file writing)
  * Return 0 on success, -1 on error
  */
+inline
 int crypto_flush(Crypto_file * cf)
 {
     if (cf->is_decrypt()) {
@@ -723,6 +724,7 @@ int crypto_flush(Crypto_file * cf)
 /* The actual read method. Read chunks until we reach requested size.
  * Return the actual size read into buf, -1 on error
  */
+inline
 int crypto_read(Crypto_file * cf, char * buf, unsigned int buf_size)
 {
     if (cf->is_decrypt()) {
@@ -735,6 +737,7 @@ int crypto_read(Crypto_file * cf, char * buf, unsigned int buf_size)
 /* Actually appends data to Crypto_file buffer, flush if buffer gets full
  * Return the written size, -1 on error
  */
+inline
 int crypto_write(Crypto_file *cf, const char * buf, unsigned int size)
 {
     if (cf->is_decrypt()) {
@@ -744,6 +747,7 @@ int crypto_write(Crypto_file *cf, const char * buf, unsigned int size)
     return cf_struct->encrypt.write(cf_struct->file, buf, size);
 }
 
+inline
 int crypto_close(Crypto_file *cf, unsigned char hash[MD_HASH_LENGTH << 1], unsigned char * hmac_key)
 {
     int nResult = 0;

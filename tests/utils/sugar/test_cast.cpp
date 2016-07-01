@@ -25,14 +25,11 @@
 #define BOOST_TEST_MODULE TestCast
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
-
 #include "utils/sugar/cast.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCast)
 {
     BOOST_CHECK(true);
 
-    
+
 }

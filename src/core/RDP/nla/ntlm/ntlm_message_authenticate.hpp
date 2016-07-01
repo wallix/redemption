@@ -349,6 +349,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         currentOffset += this->UserName.emit(stream, currentOffset);
         currentOffset += this->Workstation.emit(stream, currentOffset);
         currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
+        (void)currentOffset;
         this->negoFlags.emit(stream);
         this->version.emit(stream);
 

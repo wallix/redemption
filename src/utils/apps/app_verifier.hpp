@@ -79,22 +79,6 @@ struct ifile_read : public ifile_read_API
 };
 
 
-struct ifile_read_encrypted : public ifile_read_API
-{
-    int open(const char * s)
-    {
-        this->fd = ::open(s, O_RDONLY);
-        return this->fd;
-    }
-    int read(char * buf, size_t len)
-    {
-        return ::read(this->fd, buf, len);
-    }
-    virtual ~ifile_read_encrypted(){}
-};
-
-
-
 struct MetaLine2
 {
     char    filename[PATH_MAX + 1];
@@ -117,293 +101,290 @@ struct HashHeader {
     unsigned version;
 };
 
-namespace transbuf {
+class ifile_read_encrypted : public ifile_read_API
+{
+public:
+    CryptoContext * cctx;
+    int fd;
+    char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
+                                          // or already decrypted/decompressed data
+    uint32_t clear_pos;                   // current position in clear_data buf
+    uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
 
-    class ifile_buf : public ifile_read_API
+    EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
+    uint32_t state;                       // enum crypto_file_state
+    unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+    int encryption;
+
+public:
+    explicit ifile_read_encrypted(CryptoContext * cctx, int encryption)
+    : cctx(cctx)
+    , fd(-1)
+    , clear_data{}
+    , clear_pos(0)
+    , raw_size(0)
+    , state(0)
+    , MAX_CIPHERED_SIZE(0)
+    , encryption(encryption)
     {
-    public:
-        CryptoContext * cctx;
-        int fd;
-        char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
-                                              // or already decrypted/decompressed data
-        uint32_t clear_pos;                   // current position in clear_data buf
-        uint32_t raw_size;                    // the unciphered/uncompressed data available in buffer
+    }
 
-        EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
-        uint32_t state;                       // enum crypto_file_state
-        unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-        int encryption;
+    ~ifile_read_encrypted()
+    {
+        if (-1 != this->fd) {
+            ::close(this->fd);
+            this->fd = -1;
+        }
+    }
 
-    public:
-        explicit ifile_buf(CryptoContext * cctx, int encryption)
-        : cctx(cctx)
-        , fd(-1)
-        , clear_data{}
-        , clear_pos(0)
-        , raw_size(0)
-        , state(0)
-        , MAX_CIPHERED_SIZE(0)
-        , encryption(encryption)
-        {
+    int open(const char * filename)
+    {
+        this->fd = ::open(filename, O_RDONLY);
+        if (this->fd < 0) {
+            return this->fd;
         }
 
-        ~ifile_buf()
-        {
-            if (-1 != this->fd) {
-                ::close(this->fd);
-                this->fd = -1;
-            }
-        }
+        if (this->encryption){
+            size_t base_len = 0;
+            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-        int open(const char * filename)
-        {
-            this->fd = ::open(filename, O_RDONLY);
-            if (this->fd < 0) {
-                return this->fd;
-            }
+            ::memset(this->clear_data, 0, sizeof(this->clear_data));
+            ::memset(&this->ectx, 0, sizeof(this->ectx));
+            this->clear_pos = 0;
+            this->raw_size = 0;
+            this->state = 0;
+            const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
+            this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
-            if (this->encryption){
-                size_t base_len = 0;
-                const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
-
-                ::memset(this->clear_data, 0, sizeof(this->clear_data));
-                ::memset(&this->ectx, 0, sizeof(this->ectx));
-                this->clear_pos = 0;
-                this->raw_size = 0;
-                this->state = 0;
-                const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
-                this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-
-                uint8_t data[40];
-                size_t avail = 0;
-                while (avail != 40) {
-                    ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
-                    if (ret < 0 && errno == EINTR){
-                        continue;
+            uint8_t data[40];
+            size_t avail = 0;
+            while (avail != 40) {
+                ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
+                if (ret < 0 && errno == EINTR){
+                    continue;
+                }
+                if (ret <= 0){
+                    // Either read error or EOF: in both cases we are in trouble
+                    if (ret == 0) {
+                        // see error management, we would need object internal errors
+                        // basically this case means: failed to read compression header
+                        // error.
+                        errno = EINVAL;
                     }
-                    if (ret <= 0){
-                        // Either read error or EOF: in both cases we are in trouble
-                        if (ret == 0) {
-                            // see error management, we would need object internal errors
-                            // basically this case means: failed to read compression header
-                            // error.
-                            errno = EINVAL;
-                        }
-                        this->close();
-                        return - 1;
-                    }
-                    avail += ret;
-                }
-
-                // Encrypted/Compressed file header (40 bytes)
-                // -------------------------------------------
-                // MAGIC: 4 bytes
-                // 0x57 0x43 0x46 0x4D (WCFM)
-                // VERSION: 4 bytes
-                // 0x01 0x00 0x00 0x00
-                // IV: 32 bytes
-                // (random)
-                
-                
-                Parse p(data);
-                const uint32_t magic = p.in_uint32_le();
-                if (magic != WABCRYPTOFILE_MAGIC) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
-                        ::getpid(), magic, WABCRYPTOFILE_MAGIC);
-                    errno = EINVAL;
                     this->close();
-                    return -1;
+                    return - 1;
                 }
-
-                const int version = p.in_uint32_le();
-                if (version > WABCRYPTOFILE_VERSION) {
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
-                        ::getpid(), version, WABCRYPTOFILE_VERSION);
-                    errno = EINVAL;
-                    this->close();
-                    return -1;
-                }
-
-                // replace p.p with some arrayview of 32 bytes
-                const uint8_t * const iv = p.p;
-                const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-                const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
-                const int          nrounds = 5;
-                unsigned char      key[32];
-                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-                cctx->get_derived_key(trace_key, base, base_len);
-                if (32 != ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
-                                   trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr)){
-                    // TODO: add error management
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                    errno = EINVAL;
-                    this->close();
-                    return -1;
-                }
-
-                ::EVP_CIPHER_CTX_init(&this->ectx);
-                if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-                    // TODO: add error management
-                    errno = EINVAL;
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
-                    this->close();
-                    return -1;
-                }
+                avail += ret;
             }
-            return 0;
+
+            // Encrypted/Compressed file header (40 bytes)
+            // -------------------------------------------
+            // MAGIC: 4 bytes
+            // 0x57 0x43 0x46 0x4D (WCFM)
+            // VERSION: 4 bytes
+            // 0x01 0x00 0x00 0x00
+            // IV: 32 bytes
+            // (random)
+            
+            
+            Parse p(data);
+            const uint32_t magic = p.in_uint32_le();
+            if (magic != WABCRYPTOFILE_MAGIC) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
+                    ::getpid(), magic, WABCRYPTOFILE_MAGIC);
+                errno = EINVAL;
+                this->close();
+                return -1;
+            }
+
+            const int version = p.in_uint32_le();
+            if (version > WABCRYPTOFILE_VERSION) {
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
+                    ::getpid(), version, WABCRYPTOFILE_VERSION);
+                errno = EINVAL;
+                this->close();
+                return -1;
+            }
+
+            // replace p.p with some arrayview of 32 bytes
+            const uint8_t * const iv = p.p;
+            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+            const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
+            const int          nrounds = 5;
+            unsigned char      key[32];
+            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+            cctx->get_derived_key(trace_key, base, base_len);
+            if (32 != ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
+                               trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr)){
+                // TODO: add error management
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                errno = EINVAL;
+                this->close();
+                return -1;
+            }
+
+            ::EVP_CIPHER_CTX_init(&this->ectx);
+            if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                // TODO: add error management
+                errno = EINVAL;
+                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+                this->close();
+                return -1;
+            }
         }
+        return 0;
+    }
 
-        int read(char * data, size_t len)
-        {
-            if (this->encryption){
-                if (this->state & CF_EOF) {
-                    return 0;
-                }
+    int read(char * data, size_t len)
+    {
+        if (this->encryption){
+            if (this->state & CF_EOF) {
+                return 0;
+            }
 
-                unsigned int requested_size = len;
+            unsigned int requested_size = len;
 
-                while (requested_size > 0) {
-                    // Check how much we have already decoded
-                    if (!this->raw_size) {
-                        uint8_t hlen[4] = {};
-                        {
-                            size_t rlen = 4;
-                            while (rlen) {
-                                ssize_t ret = ::read(this->fd, &hlen[4 - rlen], rlen);
-                                if (ret < 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    // Error should still be there next time we try to read: fatal
-                                    this->close();
-                                    return - 1;
+            while (requested_size > 0) {
+                // Check how much we have already decoded
+                if (!this->raw_size) {
+                    uint8_t hlen[4] = {};
+                    {
+                        size_t rlen = 4;
+                        while (rlen) {
+                            ssize_t ret = ::read(this->fd, &hlen[4 - rlen], rlen);
+                            if (ret < 0){
+                                if (errno == EINTR){
+                                    continue;
                                 }
-                                // Unexpected EOF, we are in trouble for decompression: fatal
-                                if (ret == 0){
-                                    this->close();
-                                    return -1;
-                                }
-                                rlen -= ret;
+                                // Error should still be there next time we try to read: fatal
+                                this->close();
+                                return - 1;
                             }
-                        }
-
-                        Parse p(hlen);
-                        uint32_t ciphered_buf_size = p.in_uint32_le();
-                        if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
-                            this->state = CF_EOF;
-                            this->clear_pos = 0;
-                            this->raw_size = 0;
-                            this->close();
-                            break;
-                        }
-
-                        if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
-                            this->close();
-                            return -1;
-                        }
-
-                        uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
-
-                        //char ciphered_buf[ciphered_buf_size];
-                        unsigned char ciphered_buf[65536];
-                        //char compressed_buf[compressed_buf_size];
-                        unsigned char compressed_buf[65536];
-
-                        {
-                            size_t rlen = ciphered_buf_size;
-                            while (rlen) {
-                                ssize_t ret = ::read(this->fd, &ciphered_buf[ciphered_buf_size - rlen], rlen);
-                                if (ret < 0){
-                                    if (errno == EINTR){
-                                        continue;
-                                    }
-                                    // Error should still be there next time we try to read
-                                    // TODO: see if we have already decrypted data
-                                    // error reported too early
-                                    this->close();
-                                    return - 1;
-                                }
-                                // We must exit loop or we will enter infinite loop
-                                if (ret == 0){
-                                    // TODO: see if we have already decrypted data
-                                    // error reported too early
-                                    this->close();
-                                    return -1;
-                                }
-                                rlen -= ret;
+                            // Unexpected EOF, we are in trouble for decompression: fatal
+                            if (ret == 0){
+                                this->close();
+                                return -1;
                             }
+                            rlen -= ret;
                         }
+                    }
 
-                        int safe_size = compressed_buf_size;
-                        int remaining_size = 0;
-
-                        /* allows reusing of ectx for multiple encryption cycles */
-                        if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
-                            return -1;
-                        }
-                        if (EVP_DecryptUpdate(&this->ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
-                            return -1;
-                        }
-                        if (EVP_DecryptFinal_ex(&this->ectx, compressed_buf + safe_size, &remaining_size) != 1){
-                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
-                            return -1;
-                        }
-                        compressed_buf_size = safe_size + remaining_size;
-
-                        size_t chunk_size = CRYPTO_BUFFER_SIZE;
-                        const snappy_status status = snappy_uncompress(
-                                reinterpret_cast<char *>(compressed_buf),
-                                compressed_buf_size, this->clear_data, &chunk_size);
-
-                        switch (status)
-                        {
-                            case SNAPPY_OK:
-                                break;
-                            case SNAPPY_INVALID_INPUT:
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
-                                return -1;
-                            case SNAPPY_BUFFER_TOO_SMALL:
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
-                                return -1;
-                            default:
-                                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
-                                return -1;
-                        }
-
+                    Parse p(hlen);
+                    uint32_t ciphered_buf_size = p.in_uint32_le();
+                    if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
+                        this->state = CF_EOF;
                         this->clear_pos = 0;
-                        // When reading, raw_size represent the current chunk size
-                        this->raw_size = chunk_size;
+                        this->raw_size = 0;
+                        this->close();
+                        break;
+                    }
 
-                        // TODO: check that
-                        if (!this->raw_size) { // end of file reached
-                            break;
+                    if (ciphered_buf_size > this->MAX_CIPHERED_SIZE) {
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Integrity error, erroneous chunk size!\n", ::getpid());
+                        this->close();
+                        return -1;
+                    }
+
+                    uint32_t compressed_buf_size = ciphered_buf_size + AES_BLOCK_SIZE;
+
+                    //char ciphered_buf[ciphered_buf_size];
+                    unsigned char ciphered_buf[65536];
+                    //char compressed_buf[compressed_buf_size];
+                    unsigned char compressed_buf[65536];
+
+                    {
+                        size_t rlen = ciphered_buf_size;
+                        while (rlen) {
+                            ssize_t ret = ::read(this->fd, &ciphered_buf[ciphered_buf_size - rlen], rlen);
+                            if (ret < 0){
+                                if (errno == EINTR){
+                                    continue;
+                                }
+                                // Error should still be there next time we try to read
+                                // TODO: see if we have already decrypted data
+                                // error reported too early
+                                this->close();
+                                return - 1;
+                            }
+                            // We must exit loop or we will enter infinite loop
+                            if (ret == 0){
+                                // TODO: see if we have already decrypted data
+                                // error reported too early
+                                this->close();
+                                return -1;
+                            }
+                            rlen -= ret;
                         }
                     }
-                    // remaining_size is the amount of data available in decoded buffer
-                    unsigned int remaining_size = this->raw_size - this->clear_pos;
-                    // Check how much we can copy
-                    unsigned int copiable_size = std::min(remaining_size, requested_size);
-                    // Copy buffer to caller
-                    ::memcpy(static_cast<char*>(data) + (len - requested_size), this->clear_data + this->clear_pos, copiable_size);
-                    this->clear_pos      += copiable_size;
-                    requested_size -= copiable_size;
-                    // Check if we reach the end
-                    if (this->raw_size == this->clear_pos) {
-                        this->raw_size = 0;
+
+                    int safe_size = compressed_buf_size;
+                    int remaining_size = 0;
+
+                    /* allows reusing of ectx for multiple encryption cycles */
+                    if (EVP_DecryptInit_ex(&this->ectx, nullptr, nullptr, nullptr, nullptr) != 1){
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not prepare decryption context!\n", getpid());
+                        return -1;
+                    }
+                    if (EVP_DecryptUpdate(&this->ectx, compressed_buf, &safe_size, ciphered_buf, ciphered_buf_size) != 1){
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not decrypt data!\n", getpid());
+                        return -1;
+                    }
+                    if (EVP_DecryptFinal_ex(&this->ectx, compressed_buf + safe_size, &remaining_size) != 1){
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not finish decryption!\n", getpid());
+                        return -1;
+                    }
+                    compressed_buf_size = safe_size + remaining_size;
+
+                    size_t chunk_size = CRYPTO_BUFFER_SIZE;
+                    const snappy_status status = snappy_uncompress(
+                            reinterpret_cast<char *>(compressed_buf),
+                            compressed_buf_size, this->clear_data, &chunk_size);
+
+                    switch (status)
+                    {
+                        case SNAPPY_OK:
+                            break;
+                        case SNAPPY_INVALID_INPUT:
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code INVALID_INPUT!\n", getpid());
+                            return -1;
+                        case SNAPPY_BUFFER_TOO_SMALL:
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with status code BUFFER_TOO_SMALL!\n", getpid());
+                            return -1;
+                        default:
+                            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy decompression failed with unknown status code (%d)!\n", getpid(), status);
+                            return -1;
+                    }
+
+                    this->clear_pos = 0;
+                    // When reading, raw_size represent the current chunk size
+                    this->raw_size = chunk_size;
+
+                    // TODO: check that
+                    if (!this->raw_size) { // end of file reached
+                        break;
                     }
                 }
-                return len - requested_size;
+                // remaining_size is the amount of data available in decoded buffer
+                unsigned int remaining_size = this->raw_size - this->clear_pos;
+                // Check how much we can copy
+                unsigned int copiable_size = std::min(remaining_size, requested_size);
+                // Copy buffer to caller
+                ::memcpy(&data[len - requested_size], this->clear_data + this->clear_pos, copiable_size);
+                this->clear_pos      += copiable_size;
+                requested_size -= copiable_size;
+                // Check if we reach the end
+                if (this->raw_size == this->clear_pos) {
+                    this->raw_size = 0;
+                }
             }
-            else {
-                // for non encrypted file, returning partial read is OK
-                return::read(this->fd, data, len);
-            }
+            return len - requested_size;
         }
-    };
-}
+        else {
+            // for non encrypted file, returning partial read is OK
+            return::read(this->fd, data, len);
+        }
+    }
+};
 
 struct MetaHeader2 {
     unsigned version;
@@ -417,9 +398,9 @@ struct FileChecker
 {
     const std::string & full_filename;
     bool failed;
-    explicit FileChecker(const std::string & full_filename) noexcept 
+    explicit FileChecker(const std::string & full_filename) noexcept
         : full_filename(full_filename)
-        , failed(false) 
+        , failed(false)
     {
     }
     void check_hash_sha256(uint8_t const * crypto_key,
@@ -472,7 +453,7 @@ struct FileChecker
             this->failed = 0 != memcmp(hash, hash_buf, hash_len);
         }
     }
-    
+
     void check_short_stat(const MetaLine2 & meta_line)
     {
         // we just check the size match
@@ -491,13 +472,13 @@ struct FileChecker
             struct stat64 sb;
             memset(&sb, 0, sizeof(sb));
             lstat64(full_filename.c_str(), &sb);
-            this->failed = ((meta_line.dev   != sb.st_dev  ) 
-                        ||  (meta_line.ino   != sb.st_ino  ) 
-                        ||  (meta_line.mode  != sb.st_mode ) 
-                        ||  (meta_line.uid   != sb.st_uid  ) 
-                        ||  (meta_line.gid   != sb.st_gid  ) 
-                        ||  (meta_line.size  != sb.st_size ) 
-                        ||  (meta_line.mtime != sb.st_mtime) 
+            this->failed = ((meta_line.dev   != sb.st_dev  )
+                        ||  (meta_line.ino   != sb.st_ino  )
+                        ||  (meta_line.mode  != sb.st_mode )
+                        ||  (meta_line.uid   != sb.st_uid  )
+                        ||  (meta_line.gid   != sb.st_gid  )
+                        ||  (meta_line.size  != sb.st_size )
+                        ||  (meta_line.mtime != sb.st_mtime)
                         ||  (meta_line.ctime != sb.st_ctime)
                         );
         }
@@ -517,15 +498,14 @@ class MwrmHeadersReader
     char buf[1024];
     char * eof;
     char * cur;
-    transbuf::ifile_buf ibuf;
+    ifile_read_encrypted & ibuf;
 public:
     MetaHeader2 meta_header;
 
-    explicit MwrmHeadersReader(CryptoContext * cctx, int encryption, 
-        const std::string & full_mwrm_filename)
+    explicit MwrmHeadersReader(ifile_read_encrypted & ibuf, const std::string & full_mwrm_filename)
     : eof(buf)
     , cur(buf)
-    , ibuf(cctx, encryption)
+    , ibuf(ibuf)
     , meta_header{1, false}
     {
         int res = ibuf.open(full_mwrm_filename.c_str());
@@ -537,7 +517,6 @@ public:
     void next_line()
     {
 //                this->eof[0] = 0;
-        printf("before next===============\n'%s'\n===========\n", this->cur);
         while (this->cur == this->eof) // empty buffer
         {
             ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf));
@@ -571,22 +550,16 @@ public:
         }
 //        this->cur = pos+1;
 //                this->eof[0] = 0;
-        printf("after next===============\n'%s'\n===========\n", this->cur);
     }
     
     void read_meta(){
         this->next_line();
         // v2
         if (cur[0] == 'v') {
-            std::cerr << "Version 2\n";
-
             this->next_line();
             this->next_line();
             this->meta_header.version = 2;
             this->meta_header.has_checksum = (cur[0] == 'c');
-        }
-        else {
-            std::cerr << "Version 1\n";
         }
         // else v1
         // common lines to all versions
@@ -603,8 +576,6 @@ static inline int check_encrypted_or_checksumed(
                                        uint32_t verbose,
                                        CryptoContext * cctx) {
 
-    std::cerr << "=============> check_encrypted_or_checksumed.\n";
-                                       
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
     bool infile_is_encrypted = false;
@@ -649,19 +620,12 @@ static inline int check_encrypted_or_checksumed(
 
     load_ssl_digests(infile_is_encrypted);
 
-    std::cerr << "==============> reading Mwrm Headers 1\n";
-
-    MwrmHeadersReader reader(cctx, infile_is_encrypted, full_mwrm_filename);
-    
+    ifile_read_encrypted ibuf(cctx, infile_is_encrypted);
+    MwrmHeadersReader reader(ibuf, full_mwrm_filename);
     reader.read_meta();
 
     infile_version       = reader.meta_header.version;
     infile_is_checksumed = reader.meta_header.has_checksum;
-
-    if (verbose) {
-        LOG(LOG_INFO, "file_version=%d is_checksumed=%s", infile_version,
-            (infile_is_checksumed ? "yes" : "no"));
-    }
 
     // TODO: check compatibility of version and encryption
     if (infile_version < 2) {
@@ -732,7 +696,7 @@ static inline int check_encrypted_or_checksumed(
                     CryptoContext * cctx, bool infile_is_encrypted, int verbose)
                 : hash_line(hash_line)
             {
-                transbuf::ifile_buf in_hash_fb(cctx, infile_is_encrypted);
+                ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
                 in_hash_fb.open(full_hash_path.c_str());
 
                 char buffer[8192];
@@ -776,7 +740,7 @@ static inline int check_encrypted_or_checksumed(
                     if (verbose) {
                         LOG(LOG_INFO, "Hash data v2 or higher");
                     }
-                    
+
                     // v2
                     if (cur == eof || cur[0] != 'v'){
                         Error(ERR_TRANSPORT_READ_FAILED, errno);
@@ -803,7 +767,7 @@ static inline int check_encrypted_or_checksumed(
                     //                  |
                     //                space
                     //
-                    // filename(1 or >) + space(1) 
+                    // filename(1 or >) + space(1)
                     // + stat_info(ll|ull * 8) + space(1)
                     // + hash1(64) + space(1) + hash2(64) >= 135
 
@@ -814,11 +778,11 @@ static inline int check_encrypted_or_checksumed(
                             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                         }
                         if (size_t(pos-cur) != input_filename.length()
-                        || (0 != strncmp(cur, input_filename.c_str(), pos-cur))) 
+                        || (0 != strncmp(cur, input_filename.c_str(), pos-cur)))
                         {
-                            std::cerr << "File name mismatch: \"" 
-                                      << input_filename 
-                                      << "\"" << std::endl 
+                            std::cerr << "File name mismatch: \""
+                                      << input_filename
+                                      << "\"" << std::endl
                                       << std::endl;
                             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                         }
@@ -853,8 +817,6 @@ static inline int check_encrypted_or_checksumed(
             }
         };
 
-        printf("LOading Hash File!\n");
-
         std::string const full_hash_path = hash_path + input_filename;
 
         // if reading hash fails
@@ -880,7 +842,6 @@ static inline int check_encrypted_or_checksumed(
     /******************
     * Check mwrm file *
     ******************/
-    const bool is_status_enabled = (infile_version > 1);
     bool result = false;
 
     FileChecker check(full_mwrm_filename);
@@ -894,13 +855,13 @@ static inline int check_encrypted_or_checksumed(
     else {
         check.check_full_stat(hash_line);
     }
-    
+
     if (!check.failed)
     {
-        transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
+        ifile_read_encrypted ifile(cctx, infile_is_encrypted);
         if (ifile.open(full_mwrm_filename.c_str()) < 0) {
             LOG(LOG_ERR, "failed opening=%s", full_mwrm_filename.c_str());
-            std::cerr << "Failed opening file " << full_mwrm_filename << std::endl; 
+            std::cerr << "Failed opening file " << full_mwrm_filename << std::endl;
             std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
             return 1;;
         }
@@ -910,8 +871,7 @@ static inline int check_encrypted_or_checksumed(
             char buf[1024];
             char * eof;
             char * cur;
-            transbuf::ifile_buf & ibuf;
-
+            ifile_read_encrypted & ibuf;
 
             long long int get_ll(char * & cur, char * eof, char sep, int err)
             {
@@ -955,14 +915,13 @@ static inline int check_encrypted_or_checksumed(
             }
 
         public:
-            MwrmReader(transbuf::ifile_buf & reader_buf) noexcept
+            MwrmReader(ifile_read_encrypted & reader_buf) noexcept
             : buf{}
             , eof(buf)
             , cur(buf)
             , ibuf(reader_buf)
             {
                 memset(this->buf, 0, sizeof(this->buf));
-                printf("MwrmReader\n");
             }
 
             int read_meta_file2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) {
@@ -1045,7 +1004,7 @@ static inline int check_encrypted_or_checksumed(
                 this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
             }
 
-            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) 
+            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line)
             {
                 printf("read_meta_file_v2\n");
                 this->next_line();
@@ -1177,8 +1136,6 @@ static inline int check_encrypted_or_checksumed(
 
         MetaLine2 meta_line_wrm;
 
-        printf("++++++++++++++++++++++++++Checking meta lines\n");
-
         result = true;
         while (reader.read_meta_file2(meta_header, meta_line_wrm) == 0) {
 
@@ -1195,7 +1152,7 @@ static inline int check_encrypted_or_checksumed(
                             (quick_check ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
                             quick_check);
                 if (check.failed){
-                     std::cerr << "Bad checksum for part file \"" 
+                     std::cerr << "Bad checksum for part file \""
                                << full_meta_mwrm_filename << "\""
                                << std::endl << std::endl;
                 }
@@ -1204,7 +1161,7 @@ static inline int check_encrypted_or_checksumed(
             else {
                 check.check_full_stat(meta_line_wrm);
             }
-            
+
             if (check.failed)
             {
                 result = false;

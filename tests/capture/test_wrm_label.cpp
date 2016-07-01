@@ -25,12 +25,6 @@
 #define BOOST_TEST_MODULE Testwrm_label
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
-#define LOGNULL
-//#define LOGPRINT
-
 #include "capture/wrm_label.hpp"
 
 BOOST_AUTO_TEST_CASE(Testwrm_label)

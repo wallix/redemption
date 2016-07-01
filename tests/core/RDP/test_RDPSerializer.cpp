@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "core/RDP/RDPSerializer.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

@@ -24,8 +24,7 @@
 #define BOOST_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
+#include "utils/d3des.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

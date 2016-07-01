@@ -26,8 +26,6 @@
 #define BOOST_TEST_MODULE TestBitFu
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "utils/bitfu.hpp"
 
 //#include "utils/rdtsc.hpp"
