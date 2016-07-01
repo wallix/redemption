@@ -876,7 +876,7 @@ test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
 test-canonical core/RDP/RDPSerializer.hpp ;
 test-canonical core/RDP/remote_programs.hpp ;
 test-canonical core/server.hpp ;
-test-canonical core/session.hpp ;
+test-canonical core/session.hpp : <library>png ;
 test-canonical core/session_server.hpp : <library>png ;
 test-canonical core/wait_obj.hpp ;
 
