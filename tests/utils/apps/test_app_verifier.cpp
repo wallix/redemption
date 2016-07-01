@@ -350,6 +350,8 @@ struct ifile_read_API
     // We choose to define an open function to mimick system behavior
     // instead of opening through constructor. This allows to manage
     // explicit error management depending on return code.
+    // if open worked open returns 0 and this->fd contains file descriptor
+    // negative code are errors, return EINVAL if lib software related
     virtual int open(const char * s) = 0;
     // read can either return the number of bytes asked or less.
     // That the exact number of bytes is returned is never 

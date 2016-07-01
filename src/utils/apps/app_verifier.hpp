@@ -54,9 +54,11 @@ namespace transbuf {
     public:
         CryptoContext * cctx;
         int fd;
-        char decrypt_buf[CRYPTO_BUFFER_SIZE]; //
+        char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
+                                              // or already decrypted/decompressed data
+        uint32_t clear_pos;                   // current position in clear_data buf
+
         EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
-        uint32_t decrypt_pos;                 // current position in buf
         uint32_t raw_size;                    // the unciphered/uncompressed file size
         uint32_t state;                       // enum crypto_file_state
         unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
@@ -90,12 +92,9 @@ namespace transbuf {
                 size_t base_len = 0;
                 const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-                cctx->get_derived_key(trace_key, base, base_len);
-
-                ::memset(this->decrypt_buf, 0, sizeof(this->decrypt_buf));
+                ::memset(this->clear_data, 0, sizeof(this->clear_data));
                 ::memset(&this->ectx, 0, sizeof(this->ectx));
-                this->decrypt_pos = 0;
+                this->clear_pos = 0;
                 this->raw_size = 0;
                 this->state = 0;
                 const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
@@ -116,6 +115,7 @@ namespace transbuf {
                             // error.
                             errno = EINVAL;
                         }
+                        this->close();
                         return - 1;
                     }
                     avail += ret;
@@ -130,42 +130,53 @@ namespace transbuf {
                 // IV: 32 bytes
                 // (random)
                 
-                const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+                
+                Parse p(data);
+                const uint32_t magic = p.in_uint32_le();
                 if (magic != WABCRYPTOFILE_MAGIC) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
                         ::getpid(), magic, WABCRYPTOFILE_MAGIC);
+                    errno = EINVAL;
+                    this->close();
                     return -1;
                 }
 
-                const int version = data[4] + (data[5] << 8) + (data[6] << 16) + (data[7] << 24);
+                const int version = p.in_uint32_le();
                 if (version > WABCRYPTOFILE_VERSION) {
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
                         ::getpid(), version, WABCRYPTOFILE_VERSION);
+                    errno = EINVAL;
+                    this->close();
                     return -1;
                 }
 
-                const uint8_t * const iv = &data[8];
+                // replace p.p with some arrayview of 32 bytes
+                const uint8_t * const iv = p.p;
                 const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
                 const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
                 const int          nrounds = 5;
                 unsigned char      key[32];
-                const int i = ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
-                                               trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr);
-                if (i != 32) {
+                unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+                cctx->get_derived_key(trace_key, base, base_len);
+                if (32 != ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
+                                   trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr)){
+                    // TODO: add error management
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+                    errno = EINVAL;
+                    this->close();
                     return -1;
                 }
 
                 ::EVP_CIPHER_CTX_init(&this->ectx);
                 if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+                    // TODO: add error management
+                    errno = EINVAL;
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+                    this->close();
                     return -1;
                 }
-                return 0;
             }
-            else {
-                return this->fd;
-            }
+            return 0;
         }
 
         ssize_t read(char * data, size_t len)
@@ -209,7 +220,7 @@ namespace transbuf {
                         uint32_t ciphered_buf_size = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
                         if (ciphered_buf_size == WABCRYPTOFILE_EOF_MAGIC) { // end of file
                             this->state |= CF_EOF;
-                            this->decrypt_pos = 0;
+                            this->clear_pos = 0;
                             this->raw_size = 0;
                             break;
                         }
@@ -272,7 +283,7 @@ namespace transbuf {
                         size_t chunk_size = CRYPTO_BUFFER_SIZE;
                         const snappy_status status = snappy_uncompress(
                                 reinterpret_cast<char *>(compressed_buf),
-                                compressed_buf_size, this->decrypt_buf, &chunk_size);
+                                compressed_buf_size, this->clear_data, &chunk_size);
 
                         switch (status)
                         {
@@ -289,7 +300,7 @@ namespace transbuf {
                                 return -1;
                         }
 
-                        this->decrypt_pos = 0;
+                        this->clear_pos = 0;
                         // When reading, raw_size represent the current chunk size
                         this->raw_size = chunk_size;
 
@@ -299,15 +310,15 @@ namespace transbuf {
                         }
                     }
                     // remaining_size is the amount of data available in decoded buffer
-                    unsigned int remaining_size = this->raw_size - this->decrypt_pos;
+                    unsigned int remaining_size = this->raw_size - this->clear_pos;
                     // Check how much we can copy
-                    unsigned int copiable_size = MIN(remaining_size, requested_size);
+                    unsigned int copiable_size = std::min(remaining_size, requested_size);
                     // Copy buffer to caller
-                    ::memcpy(static_cast<char*>(data) + (len - requested_size), this->decrypt_buf + this->decrypt_pos, copiable_size);
-                    this->decrypt_pos      += copiable_size;
+                    ::memcpy(static_cast<char*>(data) + (len - requested_size), this->clear_data + this->clear_pos, copiable_size);
+                    this->clear_pos      += copiable_size;
                     requested_size -= copiable_size;
                     // Check if we reach the end
-                    if (this->raw_size == this->decrypt_pos) {
+                    if (this->raw_size == this->clear_pos) {
                         this->raw_size = 0;
                     }
                 }
