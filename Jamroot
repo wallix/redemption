@@ -515,19 +515,9 @@ obj program_options : modules/program_options/src/program_options.cpp ;
 
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
-constant COMMON_OBJ_DEPENDENCIES :
-    $(LIB_SAN_DEPENDENCY)
-    <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"'
-;
-constant LIB_DEPENDENCIES :
-    $(COMMON_FINAL_DEPENDENCIES)
-    <cxxflags>-fPIC
-    <cxxflags>-fvisibility=hidden
-;
-constant EXE_DEPENDENCIES :
-    $(COMMON_FINAL_DEPENDENCIES)
-    $(GCOV)
-;
+constant COMMON_OBJ_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+constant LIB_DEPENDENCIES : $(COMMON_FINAL_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
+constant EXE_DEPENDENCIES : $(COMMON_FINAL_DEPENDENCIES) $(GCOV) ;
 constant TEST_DEPENDENCIES :
     $(LIB_SAN_DEPENDENCY)
     $(LIB_TEST_DEPENDENCY)

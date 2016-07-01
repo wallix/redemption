@@ -66,7 +66,6 @@ constant PNG_DEBUG : <variant>debug:<library>png ;
 rule defines ( properties * )
 {
     local defs ;
-    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
@@ -416,8 +415,16 @@ obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
 
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
-constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
-constant TEST_DEPENDENCIES : <include>$(TESTDIR) $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) ;
+constant COMMON_OBJ_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
+constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
+constant TEST_DEPENDENCIES :
+    <include>$(TESTDIR)
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    $(LIB_SAN_DEPENDENCY)
+    $(LIB_TEST_DEPENDENCY)
+    $(GCOV)
+;
 
 
 #
@@ -464,8 +471,7 @@ lib libredrec
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 lib libreddec
@@ -480,8 +486,7 @@ lib libreddec
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 lib libredver
@@ -496,8 +501,7 @@ lib libredver
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 exe rdptproxy
