@@ -21,6 +21,9 @@
 
 #pragma once
 
+#include "RDPOrdersCommon.hpp"
+#include "utils/rect.hpp"
+
 namespace RDP {
 
 // [MS-RDPEGDI] - 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
@@ -135,9 +138,6 @@ namespace RDP {
 //  Delta-Encoded Rectangles structure is specified by the nDeltaEntries
 //  field.
 
-#include "RDPOrdersCommon.hpp"
-#include "utils/rect.hpp"
-
 class RDPMultiPatBlt {
 public:
     Rect       rect;
@@ -180,6 +180,8 @@ public:
     , nDeltaEntries(0) {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
     }
+
+    RDPMultiPatBlt(RDPMultiPatBlt const &) = default;
 
     RDPMultiPatBlt( const Rect & _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
                   , uint8_t nDeltaEntries, InStream & deltaEncodedRectangles)

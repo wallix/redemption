@@ -23,9 +23,6 @@
 #define BOOST_TEST_MODULE TestSplitter
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
-
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
 #include <string>

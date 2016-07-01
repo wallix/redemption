@@ -29,7 +29,6 @@ public:
 
     virtual void notify(Widget2 * sender, notify_event_t event) = 0;
 
-    virtual ~NotifyApi()
-    {}
+    virtual ~NotifyApi() = default;
 };
 

@@ -33,6 +33,7 @@
 #include "utils/bitmap_with_png.hpp"
 #include "utils/drawable.hpp"
 #include "check_sig.hpp"
+#include "dump_png.hpp"
 #include <cstdio>
 #include <iostream>
 
@@ -4472,15 +4473,6 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
 // and do something like:
 // eog `ls -1tr /tmp/test_* | tail -n 1`
 // (or any other variation you like)
-
-void dump_png(const char * filename, const Bitmap & bmp)
-{
-    Drawable drawable(bmp.cx(), bmp.cy());
-    drawable.draw_bitmap({0, 0, bmp.cx(), bmp.cy()}, bmp);
-    FILE * f = fopen(filename, "wb");
-    ::dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
-    ::fclose(f);
-}
 
 
 BOOST_AUTO_TEST_CASE(TestConvertBitmap)

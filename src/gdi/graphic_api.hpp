@@ -92,9 +92,10 @@ struct GraphicDepth
     }
 
     constexpr GraphicDepth(GraphicDepth const &) = default;
+    GraphicDepth & operator=(GraphicDepth const &) = default;
 
 private:
-    struct bpp_table { int table[5] = {0, 8, 15, 16, 24}; };
+    struct bpp_table { uint8_t table[5] = {0, 8, 15, 16, 24}; };
 public:
     constexpr uint8_t to_bpp() const {
         return bpp_table{}.table[unsigned(this->depth_)];

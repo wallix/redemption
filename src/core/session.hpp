@@ -52,7 +52,6 @@
 
 #include "acl/authentifier.hpp"
 
-using namespace std;
 
 enum {
     // before anything else : exchange of credentials

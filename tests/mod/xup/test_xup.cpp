@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "mod/xup/xup.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

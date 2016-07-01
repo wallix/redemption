@@ -32,8 +32,6 @@
 // Uncomment the code block below to generate testing data.
 //#define LOGPRINT
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"

@@ -26,6 +26,8 @@
 
 #define LOGNULL
 
+#include "core/client_info.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

@@ -26,8 +26,6 @@
 #define BOOST_TEST_MODULE TestParse
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGPRINT
-
 #include "utils/parse.hpp"
 
 BOOST_AUTO_TEST_CASE(TestParse)

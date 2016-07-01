@@ -67,7 +67,7 @@ static inline bool try_again(int errnum){
 
 namespace detail_ { namespace netutils {
 
-bool set_snd_buffer(int sck, int buffer_size = 32768) {
+inline bool set_snd_buffer(int sck, int buffer_size = 32768) {
     /* set snd buffer to at least 32 Kbytes */
     int snd_buffer_size = buffer_size;
     socklen_t option_len = static_cast<socklen_t>(sizeof(snd_buffer_size));
@@ -91,7 +91,7 @@ bool set_snd_buffer(int sck, int buffer_size = 32768) {
     return true;
 }
 
-int connect_sck(
+inline int connect_sck(
     int sck, int nbretry, int retry_delai_ms,
     sockaddr & addr, socklen_t addr_len,
     const char * ip, int port,

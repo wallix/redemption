@@ -39,7 +39,7 @@ using GraphicsColor = gdi::BlackoutGraphic;
 
 using Color4 = std::array<uint32_t, 4>;
 
-Color4 get_colors(
+inline Color4 get_colors(
     gdi::GraphicDepth order_depth, uint32_t color,
     GraphicsColor const & gd1, GraphicsColor const & gd2, GraphicsColor const & gd3
 ) {

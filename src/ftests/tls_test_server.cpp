@@ -154,11 +154,11 @@ int main(int argc, char **argv)
     }
     listen(sock,5);
 
-    while(1){
+    for (;;) {
         int s = accept(sock,nullptr,nullptr);
         if(s < 0){
             fprintf(stderr,"Problem accepting\n");
-            exit(0);
+            break;
         }
 
         pid_t pid = fork();
@@ -168,11 +168,12 @@ int main(int argc, char **argv)
         }
         else {
             rdp_serve(ctx, s, bio_err);
-            exit(0);
+            break;
         }
     }
     SSL_CTX_free(ctx);
-    exit(0);
+
+    return 0;
 }
 
 #pragma GCC diagnostic pop

@@ -27,8 +27,6 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/sequence_generator.hpp"
@@ -642,11 +640,11 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
             mwrm_trans.next();
             BOOST_CHECK(false);
         }
-        catch (const Error & e){
+        catch (const Error & e) {
             BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
         };
 
-    } catch(const Error & e) {
+    } catch (const Error &) {
         BOOST_CHECK(false);
     };
 }
@@ -688,7 +686,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
             mwrm_trans.next();
             BOOST_CHECK(false);
         }
-        catch (const Error & e){
+        catch (const Error & e) {
             BOOST_CHECK_EQUAL(ERR_TRANSPORT_NO_MORE_DATA, e.id);
         };
     }
@@ -775,7 +773,7 @@ BOOST_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         try {
             crypto_trans.recv(pbuffer, 15);
-        } catch (Error & e){
+        } catch (Error const &){
             BOOST_CHECK(false);
         };
 
@@ -827,7 +825,7 @@ BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
     try {
         InMetaSequenceTransport(&cctx, "TESTOFSXXX", ".mwrm", 1, 0);
         BOOST_CHECK(false); // check open fails if file does not exist
-    } catch (Error & e) {
+    } catch (Error const & e) {
         if (e.id != ERR_TRANSPORT_OPEN_FAILED) {
             BOOST_CHECK(false); // check open fails if file does not exist
         }

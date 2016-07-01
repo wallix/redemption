@@ -224,7 +224,6 @@ struct NTLMContext {
 
     /**
      * Generate timestamp for AUTHENTICATE_MESSAGE.
-     * @param NTLM context
      */
 
     void ntlm_generate_timestamp()
@@ -250,7 +249,6 @@ struct NTLMContext {
 
     /**
      * Generate client challenge (8-byte nonce).
-     * @param NTLM context
      */
     // client method
     void ntlm_generate_client_challenge()
@@ -264,7 +262,6 @@ struct NTLMContext {
     }
     /**
      * Generate server challenge (8-byte nonce).
-     * @param NTLM context
      */
     // server method
     void ntlm_generate_server_challenge()
@@ -281,7 +278,6 @@ struct NTLMContext {
 
     /**
      * Generate RandomSessionKey (16-byte nonce).
-     * @param NTLM context
      */
     // client method
     //void ntlm_generate_random_session_key()
@@ -529,7 +525,6 @@ struct NTLMContext {
     /**
      * Generate signing key.\n
      * @msdn{cc236711}
-     * @param exported_session_key ExportedSessionKey
      * @param sign_magic Sign magic string
      * @param signing_key Destination signing key
      */
@@ -546,7 +541,6 @@ struct NTLMContext {
     /**
      * Generate client signing key (ClientSigningKey).\n
      * @msdn{cc236711}
-     * @param NTLM context
      */
 
     void ntlm_generate_client_signing_key()
@@ -558,7 +552,6 @@ struct NTLMContext {
     /**
      * Generate server signing key (ServerSigningKey).\n
      * @msdn{cc236711}
-     * @param NTLM context
      */
 
     void ntlm_generate_server_signing_key()
@@ -571,7 +564,6 @@ struct NTLMContext {
     /**
      * Generate sealing key.\n
      * @msdn{cc236712}
-     * @param exported_session_key ExportedSessionKey
      * @param seal_magic Seal magic string
      * @param sealing_key Destination sealing key
      */
@@ -587,7 +579,6 @@ struct NTLMContext {
     /**
      * Generate client sealing key (ClientSealingKey).\n
      * @msdn{cc236712}
-     * @param NTLM context
      */
 
     void ntlm_generate_client_sealing_key()
@@ -599,7 +590,6 @@ struct NTLMContext {
     /**
      * Generate server sealing key (ServerSealingKey).\n
      * @msdn{cc236712}
-     * @param NTLM context
      */
 
     void ntlm_generate_server_sealing_key()
@@ -651,7 +641,6 @@ struct NTLMContext {
 
     /**
      * Initialize RC4 stream cipher states for sealing.
-     * @param NTLM context
      */
 
     void ntlm_init_rc4_seal_states()

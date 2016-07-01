@@ -31,36 +31,10 @@
 //#define LOGPRINT
 
 #include "check_sig.hpp"
+#include "dump_png.hpp"
 //#include "utils/png.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
-{
-    return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
-}
-
-// to see last result file, remove unlink
-// and do something like:
-// eog `ls -1tr /tmp/test_* | tail -n 1`
-// (or any other variation you like)
-
-void dump_png(const char * prefix, const Drawable & data)
-{
-    char tmpname[128];
-    sprintf(tmpname, "%sXXXXXX.png", prefix);
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, data.data(), data.width(), data.height(), data.rowsize(), true);
-    ::fclose(f);
-}
-
-void save_to_png(const char * filename, const Drawable & data)
-{
-    FILE * file = fopen(filename, "w+");
-    dump_png24(file, data.data(), data.width(),
-               data.height(), data.rowsize(), true);
-    fclose(file);
-}
 
 BOOST_AUTO_TEST_CASE(TestLineTo)
 {
@@ -658,7 +632,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
 }
 
 TODO("We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.")
-void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
+inline void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
@@ -681,7 +655,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     //dump_png(tmpname, gd.impl());
 }
 
-bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig, char * message){
+inline bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig, char * message){
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;

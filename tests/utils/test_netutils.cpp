@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "utils/netutils.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "core/check_files.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

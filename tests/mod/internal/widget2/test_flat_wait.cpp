@@ -24,18 +24,12 @@
 #define BOOST_TEST_MODULE TestFlatWait
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 
 #include "core/font.hpp"
 #include "mod/internal/widget2/flat_wait.hpp"
 #include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
 
 #include "fake_draw.hpp"
 

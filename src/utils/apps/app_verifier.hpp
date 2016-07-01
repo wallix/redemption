@@ -356,9 +356,9 @@ struct FileChecker
 {
     const std::string & full_filename;
     bool failed;
-    explicit FileChecker(const std::string & full_filename) noexcept 
+    explicit FileChecker(const std::string & full_filename) noexcept
         : full_filename(full_filename)
-        , failed(false) 
+        , failed(false)
     {
     }
     void check_hash_sha256(uint8_t const * crypto_key,
@@ -411,7 +411,7 @@ struct FileChecker
             this->failed = 0 != memcmp(hash, hash_buf, hash_len);
         }
     }
-    
+
     void check_short_stat(const MetaLine2 & meta_line)
     {
         // we just check the size match
@@ -430,13 +430,13 @@ struct FileChecker
             struct stat64 sb;
             memset(&sb, 0, sizeof(sb));
             lstat64(full_filename.c_str(), &sb);
-            this->failed = ((meta_line.dev   != sb.st_dev  ) 
-                        ||  (meta_line.ino   != sb.st_ino  ) 
-                        ||  (meta_line.mode  != sb.st_mode ) 
-                        ||  (meta_line.uid   != sb.st_uid  ) 
-                        ||  (meta_line.gid   != sb.st_gid  ) 
-                        ||  (meta_line.size  != sb.st_size ) 
-                        ||  (meta_line.mtime != sb.st_mtime) 
+            this->failed = ((meta_line.dev   != sb.st_dev  )
+                        ||  (meta_line.ino   != sb.st_ino  )
+                        ||  (meta_line.mode  != sb.st_mode )
+                        ||  (meta_line.uid   != sb.st_uid  )
+                        ||  (meta_line.gid   != sb.st_gid  )
+                        ||  (meta_line.size  != sb.st_size )
+                        ||  (meta_line.mtime != sb.st_mtime)
                         ||  (meta_line.ctime != sb.st_ctime)
                         );
         }
@@ -469,7 +469,7 @@ static inline int check_encrypted_or_checksumed(
         public:
             MetaHeader2 meta_header;
 
-            explicit MwrmHeadersReader(CryptoContext * cctx, int encryption, 
+            explicit MwrmHeadersReader(CryptoContext * cctx, int encryption,
                 const std::string & full_mwrm_filename)
             : eof(buf)
             , cur(buf)
@@ -500,7 +500,7 @@ static inline int check_encrypted_or_checksumed(
                 this->cur = pos+1;
                 return 0;
             }
-            
+
             void read_meta(){
                 this->next_line();
                 // v2
@@ -517,7 +517,7 @@ static inline int check_encrypted_or_checksumed(
             }
 
         } reader(cctx, infile_is_encrypted, full_mwrm_filename);
-        
+
         reader.read_meta();
 
         infile_version       = reader.meta_header.version;
@@ -642,7 +642,7 @@ static inline int check_encrypted_or_checksumed(
                     if (verbose) {
                         LOG(LOG_INFO, "Hash data v2 or higher");
                     }
-                    
+
                     // v2
                     if (cur == eof || cur[0] != 'v'){
                         Error(ERR_TRANSPORT_READ_FAILED, errno);
@@ -669,7 +669,7 @@ static inline int check_encrypted_or_checksumed(
                     //                  |
                     //                space
                     //
-                    // filename(1 or >) + space(1) 
+                    // filename(1 or >) + space(1)
                     // + stat_info(ll|ull * 8) + space(1)
                     // + hash1(64) + space(1) + hash2(64) >= 135
 
@@ -680,11 +680,11 @@ static inline int check_encrypted_or_checksumed(
                             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                         }
                         if (size_t(pos-cur) != input_filename.length()
-                        || (0 != strncmp(cur, input_filename.c_str(), pos-cur))) 
+                        || (0 != strncmp(cur, input_filename.c_str(), pos-cur)))
                         {
-                            std::cerr << "File name mismatch: \"" 
-                                      << input_filename 
-                                      << "\"" << std::endl 
+                            std::cerr << "File name mismatch: \""
+                                      << input_filename
+                                      << "\"" << std::endl
                                       << std::endl;
                             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                         }
@@ -742,7 +742,6 @@ static inline int check_encrypted_or_checksumed(
     /******************
     * Check mwrm file *
     ******************/
-    const bool is_status_enabled = (infile_version > 1);
     bool result = false;
 
     FileChecker check(full_mwrm_filename);
@@ -756,13 +755,13 @@ static inline int check_encrypted_or_checksumed(
     else {
         check.check_full_stat(hash_line);
     }
-    
+
     if (!check.failed)
     {
         transbuf::ifile_buf ifile(cctx, infile_is_encrypted);
         if (ifile.open(full_mwrm_filename.c_str()) < 0) {
             LOG(LOG_ERR, "failed opening=%s", full_mwrm_filename.c_str());
-            std::cerr << "Failed opening file " << full_mwrm_filename << std::endl; 
+            std::cerr << "Failed opening file " << full_mwrm_filename << std::endl;
             std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
             return 1;;
         }
@@ -895,7 +894,7 @@ static inline int check_encrypted_or_checksumed(
                 this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
             }
 
-            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line) 
+            int read_meta_file_v2(MetaHeader2 const & meta_header, MetaLine2 & meta_line)
             {
                 this->next_line();
                 this->eof[0] = 0;
@@ -995,7 +994,7 @@ static inline int check_encrypted_or_checksumed(
                             (quick_check ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
                             quick_check);
                 if (check.failed){
-                     std::cerr << "Bad checksum for part file \"" 
+                     std::cerr << "Bad checksum for part file \""
                                << full_meta_mwrm_filename << "\""
                                << std::endl << std::endl;
                 }
@@ -1004,7 +1003,7 @@ static inline int check_encrypted_or_checksumed(
             else {
                 check.check_full_stat(meta_line_wrm);
             }
-            
+
             if (check.failed)
             {
                 result = false;

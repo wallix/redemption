@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     try {
         InStream in_stream(buf);
         GCC::Create_Request_Recv header(in_stream);
-    } catch(Error & e) {
+    } catch (Error const &) {
         BOOST_CHECK(false);
     };
 
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
 
         sc_net2.log("Server Received");
     }
-    catch (const Error & e){
+    catch (const Error &){
         BOOST_CHECK(false);
     };
 

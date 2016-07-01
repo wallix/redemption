@@ -37,6 +37,7 @@
 
 #include "configs/config.hpp"
 
+namespace {
 /*****************************************************************************/
 #ifndef IN_IDE_PARSER
 [[noreturn]]
@@ -124,6 +125,8 @@ TODO("-Wold-style-cast is ignored")
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR2, &sa, nullptr);
 #pragma GCC diagnostic pop
+}
+
 }
 
 //void reset_signals(void)

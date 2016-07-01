@@ -26,7 +26,8 @@
 #include "utils/parser.hpp"
 
 
-struct Theme : public ConfigurationHolder {
+struct Theme final : public ConfigurationHolder
+{
     struct {
         int bgcolor;
         int fgcolor;
@@ -72,6 +73,30 @@ struct Theme : public ConfigurationHolder {
 
     Theme() {
         this->init();
+    }
+
+    Theme(Theme const & other)
+    : global(other.global)
+    , edit(other.edit)
+    , tooltip(other.tooltip)
+    , selector_line1(other.selector_line1)
+    , selector_line2(other.selector_line2)
+    , selector_selected(other.selector_selected)
+    , selector_focus(other.selector_focus)
+    , selector_label(other.selector_label)
+    {}
+
+    Theme & operator = (Theme const & other)
+    {
+        this->global = other.global;
+        this->edit = other.edit;
+        this->tooltip = other.tooltip;
+        this->selector_line1 = other.selector_line1;
+        this->selector_line2 = other.selector_line2;
+        this->selector_selected = other.selector_selected;
+        this->selector_focus = other.selector_focus;
+        this->selector_label = other.selector_label;
+        return *this;
     }
 
     void init() {

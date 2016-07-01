@@ -14,30 +14,29 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2014
-*   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
+*   Copyright (C) Wallix 2010-2016
+*   Author(s): Jonathan Poelen
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
+#pragma once
 
-#define BOOST_TEST_MODULE TestLocalFd
-#include "system/redemption_unit_tests.hpp"
+#include <cstdio>
+#include <cstdlib>
 
-#include "utils/sugar/local_fd.hpp"
+#include "utils/drawable.hpp"
+#include "utils/png.hpp"
 
-#include <string>
 
-BOOST_AUTO_TEST_CASE(TestLocalFd)
+inline void dump_png(const char * filename, const Drawable & drawable)
 {
-    std::string const unknown_file = "/tmp/local_fd_unknown_file";
-    BOOST_CHECK(!local_fd(unknown_file, O_RDONLY).is_open());
-    BOOST_CHECK(!bool(local_fd(unknown_file, O_RDONLY)));
-    BOOST_CHECK(!local_fd(unknown_file, O_RDONLY));
+    if (FILE * f = fopen(filename, "wb")) {
+        ::dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
+        ::fclose(f);
+    }
+}
 
-    local_fd fd(unknown_file, O_RDONLY | O_CREAT, 0666);
-    BOOST_CHECK(fd.is_open());
-    BOOST_CHECK_GE(fd.get(), 0);
-
-    unlink(unknown_file.c_str());
+inline void dump_png(const char * filename, const Bitmap & bmp)
+{
+    Drawable drawable(bmp.cx(), bmp.cy());
+    dump_png(filename, drawable);
 }

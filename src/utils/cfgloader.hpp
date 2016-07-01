@@ -25,10 +25,13 @@
 #include <fstream>
 
 #include "utils/log.hpp"
+#include "sugar/noncopyable.hpp"
 
-struct ConfigurationHolder {
-    virtual ~ConfigurationHolder() {}
+struct ConfigurationHolder : private noncopyable
+{
     virtual void set_value(const char * section, const char * key, const char * value) = 0;
+
+    virtual ~ConfigurationHolder() = default;
 };
 
 

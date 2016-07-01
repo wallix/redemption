@@ -144,7 +144,7 @@ namespace detail
 
     constexpr std::size_t hash_string_len = (1 + MD_HASH_LENGTH * 2) * 2;
 
-    char * swrite_hash(char * p, hash_type const & hash)
+    inline char * swrite_hash(char * p, hash_type const & hash)
     {
         auto write = [&p](unsigned char const * hash) {
             *p++ = ' ';                // 1 octet

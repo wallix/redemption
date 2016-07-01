@@ -25,8 +25,6 @@
 #define BOOST_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 #undef RECORD_PATH
 #define RECORD_PATH "/tmp/recorded"
 #undef WRM_PATH

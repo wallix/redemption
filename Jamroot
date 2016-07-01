@@ -56,7 +56,6 @@ constant PNG_DEBUG : <variant>debug:<library>png ;
 rule defines ( properties * )
 {
     local defs ;
-    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
@@ -137,13 +136,39 @@ constant CXXFLAGS-COMMON :
 
 
 constant CXXFLAGS-CLANG :
-#    <cxxflags>-Weverything
-#    <cxxflags>-Wno-c++98-compat
+    <cxxflags>-Weverything
+    <cxxflags>-Wno-documentation-unknown-command
+    <cxxflags>-Wno-range-loop-analysis
+    <cxxflags>-Wno-disabled-macro-expansion
+    <cxxflags>-Wno-c++98-compat
+    <cxxflags>-Wno-c++98-compat-pedantic
     <cxxflags>-Wno-mismatched-tags
-#   <cxxflags>-Wno-overloaded-virtual
-    <cxxflags>-Wno-char-subscripts
+    <cxxflags>-Wno-padded
+    <cxxflags>-Wno-shadow
+    <cxxflags>-Wno-global-constructors
+    <cxxflags>-Wno-weak-vtables
+
+    <cxxflags>-Wno-sign-conversion
+    <cxxflags>-Wno-shorten-64-to-32
+    <cxxflags>-Wno-conversion
+    <cxxflags>-Wno-extra-semi
+    <cxxflags>-Wno-exit-time-destructors
+    <cxxflags>-Wno-missing-noreturn
+    <cxxflags>-Wno-double-promotion
+    <cxxflags>-Wno-reserved-id-macro
+    <cxxflags>-Wno-switch-enum
+#     <cxxflags>-Wno-unused-macros
+#     <cxxflags>-Wno-unused-exception-parameter
+    <cxxflags>-Wno-implicit-fallthrough
+    <cxxflags>-Wno-shift-sign-overflow
+#     <cxxflags>-Wno-array-bounds-pointer-arithmetic
+#     <cxxflags>-Wno-missing-prototypes
+    <cxxflags>-Wno-covered-switch-default
+#     <cxxflags>-Wno-header-hygiene
+#     <cxxflags>-Wno-mismatched-tags
+#     <cxxflags>-Wno-char-subscripts
 #     <cxxflags>-Wno-unused-variable
-#    <cxxflags>-Wno-unused-private-field
+
     <cxxflags>-Qunused-arguments
 ;
 
@@ -490,8 +515,26 @@ obj program_options : modules/program_options/src/program_options.cpp ;
 
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
-constant EXE_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(GCOV) ;
-constant TEST_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) $(LIB_TEST_DEPENDENCY) $(GCOV) <include>tests ;
+constant COMMON_OBJ_DEPENDENCIES :
+    $(LIB_SAN_DEPENDENCY)
+    <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"'
+;
+constant LIB_DEPENDENCIES :
+    $(COMMON_FINAL_DEPENDENCIES)
+    <cxxflags>-fPIC
+    <cxxflags>-fvisibility=hidden
+;
+constant EXE_DEPENDENCIES :
+    $(COMMON_FINAL_DEPENDENCIES)
+    $(GCOV)
+;
+constant TEST_DEPENDENCIES :
+    $(LIB_SAN_DEPENDENCY)
+    $(LIB_TEST_DEPENDENCY)
+    $(GCOV)
+    <include>tests
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+;
 
 
 #
@@ -538,8 +581,7 @@ lib libredrec
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 lib libreddec
@@ -554,8 +596,7 @@ lib libreddec
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 lib libredver
@@ -570,8 +611,7 @@ lib libredver
 
         snappy
     :
-        <cxxflags>-fPIC
-        <cxxflags>-fvisibility=hidden
+        $(LIB_DEPENDENCIES)
     ;
 
 exe rdptproxy

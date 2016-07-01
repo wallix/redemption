@@ -26,6 +26,8 @@
 
 #define LOGNULL
 
+#include "utils/log.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

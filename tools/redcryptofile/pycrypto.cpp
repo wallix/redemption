@@ -446,12 +446,12 @@ enum crypto_type {
 
 extern "C" {
 
-int gl_read_nb_files = 0;
-struct InFilenameTransport * gl_file_store_read[1024];
-int gl_write_nb_files = 0;
-struct crypto_file_write * gl_file_store_write[1024];
+static int gl_read_nb_files = 0;
+static struct InFilenameTransport * gl_file_store_read[1024];
+static int gl_write_nb_files = 0;
+static struct crypto_file_write * gl_file_store_write[1024];
 
-unsigned char iv[32] = {0}; //  not used for reading
+static unsigned char iv[32] = {0}; //  not used for reading
 }
 
 
@@ -499,8 +499,8 @@ struct crypto_file
 };
 
 extern "C" {
-int gl_nb_files = 0;
-struct crypto_file gl_file_store[1024];
+static int gl_nb_files = 0;
+static struct crypto_file gl_file_store[1024];
 }
 
 
@@ -531,7 +531,7 @@ UdevRandom * get_rnd(){
     return rnd;
 }
 
-Inifile * get_ini(){
+inline Inifile * get_ini(){
     static Inifile * ini = nullptr;
     if (ini == nullptr){
         ini = new Inifile;
@@ -571,7 +571,7 @@ typedef union {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wmissing-braces" // CLang
-t_PyTyOb redcryptofile_NoddyType = {
+static t_PyTyOb redcryptofile_NoddyType = {
     PyObject_HEAD_INIT(nullptr)
     0,                         /*ob_size*/
     "redcryptofile.Noddy",     /*tp_name*/
@@ -674,7 +674,7 @@ static PyMethodDef Random_methods[] = {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #pragma GCC diagnostic ignored "-Wmissing-braces" // CLang
-t_PyTyOb PyTyRandom = {
+static t_PyTyOb PyTyRandom = {
     PyObject_HEAD_INIT(nullptr)
     0,                         /*ob_size*/
     "redcryptofile.Random",    /*tp_name*/
@@ -798,11 +798,9 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
         gl_nb_files += 1;
         gl_file_store[fd] = result;
         return Py_BuildValue("i", fd);
-    } else {
-        return py_return_none();
     }
 
-    return Py_BuildValue("i", -1);
+    return py_return_none();
 }
 
 static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
@@ -948,6 +946,9 @@ static PyMethodDef redcryptoFileMethods[] = {
     {"read", python_redcryptofile_read, METH_VARARGS, ""},
     {nullptr, nullptr, 0, nullptr}
 };
+
+PyMODINIT_FUNC
+initredcryptofile(void);
 
 PyMODINIT_FUNC
 initredcryptofile(void)

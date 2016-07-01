@@ -75,6 +75,7 @@ private:
 struct bytes_array : array_view<uint8_t>
 {
     bytes_array() = default;
+    bytes_array(bytes_array const &) = default;
 
     template<class T>
     bytes_array(T & v) noexcept
@@ -97,7 +98,7 @@ struct bytes_array : array_view<uint8_t>
     : array_view<uint8_t>(p.to_u8p(), pright.to_u8p())
     {}
 
-    bytes_array & operator=(bytes_array &) = default;
+    bytes_array & operator=(bytes_array const &) = default;
 
     template<class T, class = decltype(to_array(*static_cast<T*>(nullptr)))>
     bytes_array & operator=(T & other) {
@@ -143,6 +144,7 @@ private:
 struct const_bytes_array : array_view<const uint8_t>
 {
     const_bytes_array() = default;
+    const_bytes_array(const_bytes_array const &) = default;
 
     template<class T>
     const_bytes_array(T & v) noexcept

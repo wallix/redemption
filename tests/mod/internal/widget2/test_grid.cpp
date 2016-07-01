@@ -34,9 +34,6 @@
 #include "mod/internal/widget2/flat_button.hpp"
 #include "check_sig.hpp"
 
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
-
 #include "fake_draw.hpp"
 
 BOOST_AUTO_TEST_CASE(TraceWidgetGrid)

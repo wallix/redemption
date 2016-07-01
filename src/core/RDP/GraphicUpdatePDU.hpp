@@ -87,6 +87,7 @@ void send_data_indication_ex( Transport & trans
     );
 }
 
+inline
 void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_support
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator
@@ -148,6 +149,7 @@ enum ServerUpdateType {
     SERVER_UPDATE_POINTER_POSITION
 };
 
+inline
 void send_server_update( Transport & trans, bool fastpath_support, bool compression_support
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type

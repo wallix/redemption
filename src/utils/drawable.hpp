@@ -961,7 +961,7 @@ struct DrawablePointer {
 
         bool               non_transparent_pixel;
         uint8_t          * current_data               = this->data;
-        ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels - 1;
+        ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels;
 
         for (unsigned int line = 0; line < 32; line++) {
             bool in_contiguous_mouse_pixels = false;
@@ -978,12 +978,12 @@ struct DrawablePointer {
 
                 if (non_transparent_pixel && !in_contiguous_mouse_pixels) {
                     this->number_of_contiguous_pixels++;
-                    current_contiguous_pixels++;
 
                     current_contiguous_pixels->x         = column;
                     current_contiguous_pixels->y         = line;
                     current_contiguous_pixels->data_size = 0;
                     current_contiguous_pixels->data      = current_data;
+                    current_contiguous_pixels++;
 
                     in_contiguous_mouse_pixels = true;
                 }
@@ -994,7 +994,7 @@ struct DrawablePointer {
                 if (in_contiguous_mouse_pixels) {
                     ::memcpy(current_data, pixel, 3);
 
-                    current_contiguous_pixels->data_size += 3;
+                    (current_contiguous_pixels-1)->data_size += 3;
                     current_data        += 3;
                 }
             }

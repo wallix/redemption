@@ -23,11 +23,6 @@
 #define BOOST_TEST_MODULE TestWidgetTestMod
 #include "system/redemption_unit_tests.hpp"
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
-
 #define LOGNULL
 
 #include "mod/internal/widget_test_mod.hpp"

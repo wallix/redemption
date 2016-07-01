@@ -24,9 +24,6 @@
 #define BOOST_TEST_MODULE TestWidgetTooltip
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 
 #include "core/font.hpp"
@@ -34,9 +31,6 @@
 #include "mod/internal/widget2/screen.hpp"
 #include "mod/internal/widget2/label.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
 
 #include "fake_draw.hpp"
 
@@ -72,6 +66,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     }
 }
 
+inline
 void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget2 * w, const char * text)
 {
     parent->rdp_input_mouse(device_flags, x, y, keymap);

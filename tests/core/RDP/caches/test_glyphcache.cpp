@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "core/RDP/caches/glyphcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

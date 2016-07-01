@@ -54,7 +54,7 @@ inline void get_non_null_terminated_utf16_from_utf8(
     out.resize(original_sz + length_of_utf8_string);
 }
 
-/// \ret size of unicode data
+/// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
     OutStream & out, uint8_t const * utf8_string,
     const size_t maximum_length_in_bytes,
@@ -70,7 +70,7 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
     return size_of_unicode_data;
 }
 
-/// \ret size of unicode data
+/// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
     OutStream & out, uint8_t const * utf8_string,
     const size_t maximum_length_in_bytes
@@ -81,7 +81,7 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
         out, utf8_string, maximum_length_in_bytes, offset_of_data_length);
 }
 
-/// \ret size of unicode data
+/// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
     OutStream & out, char const * utf8_string,
     const size_t maximum_length_in_bytes,
@@ -91,7 +91,7 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
         out, byte_ptr_cast(utf8_string), maximum_length_in_bytes, offset_of_data_length);
 }
 
-/// \ret size of unicode data
+/// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
     OutStream & out, char const * utf8_string,
     const size_t maximum_length_in_bytes
