@@ -516,8 +516,8 @@ obj program_options : modules/program_options/src/program_options.cpp ;
 constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
 
 constant COMMON_OBJ_DEPENDENCIES : $(LIB_SAN_DEPENDENCY) <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
-constant LIB_DEPENDENCIES : $(COMMON_FINAL_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
-constant EXE_DEPENDENCIES : $(COMMON_FINAL_DEPENDENCIES) $(GCOV) ;
+constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
+constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
 constant TEST_DEPENDENCIES :
     $(LIB_SAN_DEPENDENCY)
     $(LIB_TEST_DEPENDENCY)
@@ -936,7 +936,7 @@ unit-test test_virchan : tests/core/RDP/capabilities/test_virchan.cpp : $(TEST_D
 unit-test test_protect_graphics : tests/utils/test_protect_graphics.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png ;
 unit-test test_server : tests/core/test_server.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_session : tests/core/test_session.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_session_server : tests/core/test_session_server.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_session_server : tests/core/test_session_server.cpp : $(TEST_DEPENDENCIES) : <library>png ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_front : tests/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
 
@@ -1084,9 +1084,9 @@ unit-test test_widget_test_mod : tests/mod/internal/test_widget_test_mod.cpp : $
 unit-test test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;
 
 unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp : $(TEST_DEPENDENCIES) <library>png ;
-unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp : $(TEST_DEPENDENCIES) <library>png ;
 
-unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp : $(TEST_DEPENDENCIES) <library>png ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp : $(TEST_DEPENDENCIES) ;
 
 unit-test test_copy_paste : tests/mod/internal/test_copy_paste.cpp : $(TEST_DEPENDENCIES) <library>png <library>crypto ;

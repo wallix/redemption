@@ -877,7 +877,7 @@ test-canonical core/RDP/RDPSerializer.hpp ;
 test-canonical core/RDP/remote_programs.hpp ;
 test-canonical core/server.hpp ;
 test-canonical core/session.hpp ;
-test-canonical core/session_server.hpp ;
+test-canonical core/session_server.hpp : <library>png ;
 test-canonical core/wait_obj.hpp ;
 
 test-run test_front : front/test_front.cpp : front/front.hpp
@@ -1171,8 +1171,8 @@ test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap <library>pn
 test-canonical mod/internal/widget_test_mod.hpp : <library>png ;
 test-canonical mod/internal/interactive_target_mod.hpp : <library>png <library>crypto ;
 test-canonical mod/internal/bouncer2_mod.hpp : <library>png ;
-test-canonical mod/internal/test_card_mod.hpp ;
-test-canonical mod/internal/replay_mod.hpp ;
+test-canonical mod/internal/test_card_mod.hpp : <library>png ;
+test-canonical mod/internal/replay_mod.hpp : <library>png ;
 test-canonical mod/internal/internal_mod.hpp ;
 test-canonical mod/internal/copy_paste.hpp : <library>png <library>crypto ;
 ## @}
