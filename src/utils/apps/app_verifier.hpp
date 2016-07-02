@@ -739,78 +739,6 @@ static inline void load_ssl_digests(bool encryption)
     }
 }
 
-
-class MwrmHeadersReader
-{
-    char buf[1024];
-    char * eof;
-    char * cur;
-    ifile_read_encrypted & ibuf;
-public:
-    MetaHeaderXXX meta_header;
-
-    explicit MwrmHeadersReader(ifile_read_encrypted & ibuf)
-    : eof(buf)
-    , cur(buf)
-    , ibuf(ibuf)
-    , meta_header{1, false}
-    {
-    }
-
-    void next_line()
-    {
-//                this->eof[0] = 0;
-        while (this->cur == this->eof) // empty buffer
-        {
-            ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf));
-            if (ret < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            if (ret == 0) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-            }
-            this->cur = this->buf;
-            this->eof = this->buf + ret;
-        }
-        char * pos = std::find(this->cur, this->eof, '\n');
-        while (pos == this->eof){ // read and append to buffer
-            size_t len = -(this->eof-this->cur);
-            if (len >= sizeof(buf)){
-                // if the buffer can't hold at least one line, 
-                // there is some problem behind
-                // if a line were available we should have found \n
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            ssize_t ret = this->ibuf.read(this->eof, sizeof(this->buf)-len);
-            if (ret < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            if (ret == 0) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-            }
-            this->eof += ret;
-            pos = std::find(this->cur, this->eof, '\n');
-        }
-//        this->cur = pos+1;
-//                this->eof[0] = 0;
-    }
-    
-    void read_meta(){
-        this->next_line();
-        // v2
-        if (cur[0] == 'v') {
-            this->next_line();
-            this->next_line();
-            this->meta_header.version = 2;
-            this->meta_header.has_checksum = (cur[0] == 'c');
-        }
-        // else v1
-        // common lines to all versions
-        this->next_line();
-        this->next_line();
-    }
-};
-
 static inline int check_encrypted_or_checksumed(
                                        std::string const & input_filename,
                                        std::string const & mwrm_path,
@@ -868,11 +796,11 @@ static inline int check_encrypted_or_checksumed(
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
 
-    MwrmHeadersReader reader(ibuf);
-    reader.read_meta();
+    MwrmReaderXXX reader(ibuf);
+    reader.read_meta_headers();
 
-    infile_version       = reader.meta_header.version;
-    infile_is_checksumed = reader.meta_header.has_checksum;
+    infile_version       = reader.header.version;
+    infile_is_checksumed = reader.header.has_checksum;
 
     // TODO: check compatibility of version and encryption
     if (infile_version < 2) {
