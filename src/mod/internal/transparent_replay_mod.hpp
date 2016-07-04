@@ -22,7 +22,7 @@
 #pragma once
 
 #include "transport/in_file_transport.hpp"
-#include "transparentplayer.hpp"
+#include "capture/transparentplayer.hpp"
 #include "internal_mod.hpp"
 
 class TransparentReplayMod : public InternalMod {

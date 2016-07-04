@@ -317,7 +317,6 @@ project redemption
     <include>src
     # TODO move to system
     <include>src/system/$(SYSTEM_TYPE)
-    <include>src/capture
     # TODO move to system
     <include>src/headers
     <include>include
@@ -329,8 +328,6 @@ project redemption
     <include>projects/redemption_configs/include/autogen
     <include>projects/redemption_configs/include/variant
     ## @}
-
-    <include>tests
 
     <conditional>@defines
 

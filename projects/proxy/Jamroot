@@ -256,7 +256,6 @@ project redemption
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
     <include>$(SYSTEMDIR)
-    <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/headers
     <include>$(MODULEDIR)/includes
 

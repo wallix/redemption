@@ -24,7 +24,7 @@
 
 //#define LOGPRINT
 #include "main/version.hpp"
-#include "capture.hpp"
+#include "capture/capture.hpp"
 
 #include "utils/apps/app_recorder.hpp"
 #include "program_options/program_options.hpp"
