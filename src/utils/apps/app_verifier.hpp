@@ -656,21 +656,6 @@ int file_start_hmac_sha256(const char * filename,
 
 class MwrmReader : public MwrmReaderXXX
 {
-    long long int get_ll(char * & cur, char * eof, char sep, int err)
-    {
-        char * pos = std::find(cur, eof, sep);
-        if (pos == eof || (pos - cur < 2)){
-            throw Error(err);
-        }
-        char * pend = nullptr;
-        long long int res = strtoll(cur, &pend, 10);
-        if (pend != pos){
-            throw Error(err);
-        }
-        cur = pos + 1;
-        return res;
-    }
-
     void in_copy_bytes(uint8_t * hash, int len, char * & cur, char * eof, int err)
     {
         if (eof - cur < len){
