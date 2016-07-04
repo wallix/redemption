@@ -644,6 +644,51 @@ int file_hmac_sha256(const char * filename,
     return 0;
 }
 
+// Compute HmacSha256 
+// up to check_size orf end of file whicherver happens first
+// if check_size == 0, checks to eof
+// return 0 on success and puts signature in provided buffer
+// return -1 if some system error occurs, errno contains actual error
+int file_start_hmac_sha256(const char * filename, 
+                     uint8_t const * crypto_key,
+                     size_t          key_len,
+                     size_t          check_size,
+                     uint8_t (& hash)[SHA256_DIGEST_LENGTH])
+{
+    struct fdwrap
+    {
+        int fd;
+        fdwrap(int fd) : fd(fd) {}
+        ~fdwrap(){ if (fd >=0) {::close(fd);} }
+    } file(::open(filename, O_RDONLY));
+    if (file.fd < 0) { return file.fd; }
+
+    SslHMAC_Sha256 hmac(crypto_key, key_len);
+
+    uint8_t buf[4096] = {};
+    ssize_t ret = ::read(file.fd, buf, sizeof(buf));
+    for (size_t  number_of_bytes_read = 0 ; ret ; number_of_bytes_read += ret){
+        // number_of_bytes_read < check_size
+        if (ret < 0){
+            // interruption signal, not really an error
+            if (errno == EINTR){
+                continue;
+            }
+            return -1;
+        }
+        if (check_size && number_of_bytes_read + ret > check_size){
+            hmac.update(buf, check_size - number_of_bytes_read);
+            break;
+        }
+        if (ret == 0){ break; }
+        hmac.update(buf, ret);
+        ret = ::read(file.fd, buf, sizeof(buf));
+    }
+    hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
+    return 0;
+}
+
+
 struct QuickFileChecker
 {
     const std::string & full_filename;
