@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
     BOOST_CHECK(!reader.header.has_checksum);
     
     MetaLine2 meta_line;
-    reader.read_meta_file_v2(meta_line);
+    reader.read_meta_file(meta_line);
     BOOST_CHECK(0 == strcmp(meta_line.filename,
                         "/var/wab/recorded/rdp/"
                         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
@@ -368,21 +368,31 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
     BOOST_CHECK(!reader.header.has_checksum);
     
     MetaLine2 meta_line;
-    reader.read_meta_file_v1(meta_line);
-//    BOOST_CHECK(0 == strcmp(meta_line.filename,
-//                        "/var/wab/recorded/rdp/"
-//                        "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
-//                        "wab-5-0-0.yourdomain,7681-000000.wrm"));
-//    BOOST_CHECK_EQUAL(meta_line.size, 181826); 
-//    BOOST_CHECK_EQUAL(meta_line.mode, 33056);
-//    BOOST_CHECK_EQUAL(meta_line.uid, 1001);
-//    BOOST_CHECK_EQUAL(meta_line.gid, 1001);
-//    BOOST_CHECK_EQUAL(meta_line.dev, 65030);
-//    BOOST_CHECK_EQUAL(meta_line.ino, 81);
-//    BOOST_CHECK_EQUAL(meta_line.mtime, 1455816421);
-//    BOOST_CHECK_EQUAL(meta_line.ctime, 1455816421);
-//    BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
-//    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+    reader.read_meta_file(meta_line);
+    BOOST_CHECK(0 == strcmp(meta_line.filename,
+                        "/var/wab/recorded/rdp/"
+                        "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
+                        "wab-5-0-0.yourdomain,7681-000000.wrm"));
+    BOOST_CHECK_EQUAL(meta_line.size, 0); 
+    BOOST_CHECK_EQUAL(meta_line.mode, 0);
+    BOOST_CHECK_EQUAL(meta_line.uid, 0);
+    BOOST_CHECK_EQUAL(meta_line.gid, 0);
+    BOOST_CHECK_EQUAL(meta_line.dev, 0);
+    BOOST_CHECK_EQUAL(meta_line.ino, 0);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 0);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 0);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+
+    BOOST_CHECK(0 == memcmp(meta_line.hash1, 
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 
+                        32));
+    BOOST_CHECK(0 == memcmp(meta_line.hash2, 
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 
+                        32));
+
 }
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
@@ -396,7 +406,7 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     BOOST_CHECK(reader.header.has_checksum);
     
     MetaLine2 meta_line;
-    reader.read_meta_file_v2(meta_line);
+    reader.read_meta_file(meta_line);
     BOOST_CHECK(true);
     BOOST_CHECK(0 == strcmp(meta_line.filename, "./tests/fixtures/sample0.wrm"));
     BOOST_CHECK_EQUAL(meta_line.size, 1); 

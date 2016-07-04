@@ -462,14 +462,8 @@ public:
     int read_meta_file2(MetaLine2 & meta_line) 
     {
         try {
-            if (this->header.version == 1) {
-                this->read_meta_file_v1(meta_line);
-                return 0;
-            }
-            else {
-                this->read_meta_file_v2(meta_line);
-                return 0;
-            }
+            this->read_meta_file(meta_line);
+            return 0;
         }
         catch(...){
             return 1;
@@ -491,99 +485,58 @@ public:
         this->next_line(); // blank
     }
 
-    void read_meta_file_v1(MetaLine2 & meta_line)
+    void read_meta_file(MetaLine2 & meta_line) 
     {
         this->next_line();
         size_t len = this->eol - this->cur;
 
-        // Line format "fffff sssss eeeee hhhhh HHHHH"
-        //                               ^  ^  ^  ^
-        //                               |  |  |  |
-        //                               |hash1|  |
-        //                               |     |  |
-        //                           space3    |hash2
-        //                                     |
-        //                                   space4
-        //
-        // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-
-        typedef std::reverse_iterator<char*> reverse_iterator;
-        reverse_iterator first(this->cur);
-        reverse_iterator space(this->cur+len);                
-        for(int i = 0; i < 2 + 2*this->header.has_checksum; i++){
-            space = std::find(space, first, ' ');                
-            space++;
-        }
-        int path_len = first-space;
-        this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
-        this->cur++;
-        meta_line.filename[path_len] = 0;
-
-        // st_start_time + space
-        meta_line.start_time = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_stop_time + space
-        meta_line.stop_time = this->get_ll(cur, eol, this->header.has_checksum?' ':'\n',
-                                           ERR_TRANSPORT_READ_FAILED);
-        if (this->header.has_checksum){
-            // HASH1 + space
-            this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-            // HASH1 + CR
-            this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eol, '\n', ERR_TRANSPORT_READ_FAILED);
-        }
-
-        // TODO: check the whole line has been consumed (or it's an error)
-        this->cur = this->eol;
-    }
-
-    void read_meta_file_v2(MetaLine2 & meta_line) 
-    {
-        this->next_line();
-
-        size_t len = this->eol - this->cur;
-        // Line format "fffff
-        // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
+        // Line format "fffff 
+        // [st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime]
         // sssss eeeee hhhhh HHHHH"
         //            ^  ^  ^  ^
         //            |  |  |  |
         //            |hash1|  |
         //            |     |  |
-        //        space11   |hash2
+        //        space3    |hash2
         //                  |
-        //                space12
-        //
-        // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
-        //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+        //                space4
+        // filename(1 or >) + space(1) + [stat_info(ll|ull * 8) + space(1)] 
+        // + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
 
         typedef std::reverse_iterator<char*> reverse_iterator;
         reverse_iterator first(this->cur);
         reverse_iterator space(this->cur+len);                
-        for(int i = 0; i < 10 + 2*this->header.has_checksum; i++){
+        for(int i = 0; i < ((this->header.version==1)?2:10) + 2*this->header.has_checksum; i++){
             space = std::find(space, first, ' ');                
             space++;
         }
         int path_len = first-space;
-        this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
+        this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), 
+                            path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
         this->cur++;
         meta_line.filename[path_len] = 0;
 
-        // st_size + space
-        meta_line.size = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_mode + space
-        meta_line.mode = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_uid + space
-        meta_line.uid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_gid + space
-        meta_line.gid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_dev + space
-        meta_line.dev = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_ino + space
-        meta_line.ino = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_mtime + space
-        meta_line.mtime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-        // st_ctime + space
-        meta_line.ctime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+        if (this->header.version == 1){
+            meta_line.size = 0;
+            meta_line.mode = 0;
+            meta_line.uid = 0;
+            meta_line.gid = 0;
+            meta_line.dev = 0;
+            meta_line.ino = 0;
+            meta_line.mtime = 0;
+            meta_line.ctime = 0;
+        }
+        else{ // v2
+            meta_line.size = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            meta_line.mode = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            meta_line.uid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            meta_line.gid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            meta_line.dev = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            meta_line.ino = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            meta_line.mtime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+            meta_line.ctime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
+        }
 
         // st_start_time + space
         meta_line.start_time = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
@@ -595,6 +548,10 @@ public:
             this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
             // HASH1 + CR
             this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eol, '\n', ERR_TRANSPORT_READ_FAILED);
+        }
+        else {
+            memset(meta_line.hash1, 0, sizeof(meta_line.hash1));
+            memset(meta_line.hash2, 0, sizeof(meta_line.hash2));
         }
 
         // TODO: check the whole line has been consumed (or it's an error)
