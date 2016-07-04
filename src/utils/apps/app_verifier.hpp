@@ -680,26 +680,6 @@ public:
         };
     }
 
-    MetaHeaderXXX read_meta_headers()
-    {
-        printf("read_meta_headers\n");
-        MetaHeaderXXX header{1, false};
-
-        this->next_line();
-
-        // v2
-        if (this->cur[0] == 'v') {
-            this->next_line();
-            this->next_line();
-            header.version = 2;
-            header.has_checksum = (this->cur[0] == 'c');
-        }
-        // else v1
-        this->next_line();
-        this->next_line();
-        return header;
-    }
-
     void read_meta_file_v1(MetaLine2 & meta_line)
     {
         printf("read_meta_file_v1\n");
