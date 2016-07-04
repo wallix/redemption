@@ -334,11 +334,10 @@ private:
         ModuleManager & mm;
 
         std::string osd_message;
-        Rect rect;
         Rect clip;
         uint32_t color;
         uint32_t background_color;
-        bool external_deleting;
+        bool is_disable_by_input = false;
         bool bogus_refresh_rect_ex;
 
     public:
@@ -347,28 +346,33 @@ private:
         , mm(mm)
         {}
 
+        bool is_input_owner() const { return this->is_disable_by_input; }
+
         void disable_osd()
         {
+            this->is_disable_by_input = false;
+            this->mm.mod = this->mm.internal_mod;
+            auto const protected_rect = this->get_protected_rect();
+            this->set_protected_rect(Rect{});
+
             if (this->bogus_refresh_rect_ex) {
                 this->mm.internal_mod->rdp_suppress_display_updates();
                 this->mm.internal_mod->rdp_allow_display_updates(0, 0,
                     this->mm.front.client_info.width, this->mm.front.client_info.height);
             }
 
-            this->mm.mod = this->mm.internal_mod;
-            this->mm.internal_mod->rdp_input_invalidate(this->get_protected_rect());
-            this->set_protected_rect(Rect{});
+            this->mm.internal_mod->rdp_input_invalidate(protected_rect);
         }
 
-        void set_message(std::string message, bool external_deleting)
+        void set_message(std::string message, bool is_disable_by_input)
         {
             this->osd_message = std::move(message);
-            this->external_deleting = external_deleting;
+            this->is_disable_by_input = is_disable_by_input;
             this->bogus_refresh_rect_ex = (this->mm.ini.get<cfg::globals::bogus_refresh_rect>()
              && this->mm.ini.get<cfg::globals::allow_using_multiple_monitors>()
              && (this->mm.front.client_info.cs_monitor.monitorCount > 1));
 
-            if (external_deleting) {
+            if (is_disable_by_input) {
                 this->osd_message += "  ";
                 this->osd_message += TR("disable_osd", language(this->mm.ini));
             }
@@ -382,8 +386,7 @@ private:
                 this->color = color_encode(color, this->mm.front.client_info.bpp);
                 this->background_color = color_encode(background_color, this->mm.front.client_info.bpp);
             }
-            this->rect = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
-            this->clip = this->rect;
+            this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
             this->set_protected_rect(this->clip);
         }
 
@@ -397,6 +400,63 @@ private:
             this->mm.front.end_update();
         }
 
+        bool try_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
+        {
+            if (this->is_disable_by_input
+             && keymap->nb_kevent_available() > 0
+             && !(param3 & SlowPath::KBDFLAGS_DOWN)
+             && keymap->top_kevent() == Keymap2::KEVENT_INSERT
+            ) {
+                keymap->get_kevent();
+                this->disable_osd();
+                return true;
+            }
+            return false;
+        }
+
+        bool try_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+        {
+            if (this->is_disable_by_input
+             && this->get_protected_rect().contains_pt(x, y)
+             && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                this->disable_osd();
+                return true;
+            }
+            return false;
+        }
+
+        bool try_input_invalidate(const Rect & r)
+        {
+            if (!this->get_protected_rect().isempty() && r.has_intersection(this->get_protected_rect())) {
+                auto rects = subrect4(r, this->get_protected_rect());
+                auto p = std::begin(rects);
+                auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
+                    return rect.isempty();
+                });
+                if (p != e) {
+                    this->mm.internal_mod->rdp_input_invalidate2({p, e});
+                    this->clip = r.intersect(this->get_protected_rect());
+                }
+                return true;
+            }
+            return false;
+        }
+
+        bool try_input_invalidate2(array_view<Rect const> vr)
+        {
+            // TODO perf
+            bool ret = false;
+            for (Rect const & r : vr) {
+                if (!this->try_input_invalidate(r)) {
+                    this->mm.internal_mod->rdp_input_invalidate(r);
+                }
+                else {
+                    ret = true;
+                }
+            }
+            return ret;
+        }
+
     private:
         void draw_event(time_t now, gdi::GraphicApi & drawable) override
         {
@@ -408,6 +468,10 @@ private:
 
         void draw_osd_message_impl(gdi::GraphicApi & drawable)
         {
+            if (this->clip.isempty()) {
+                return ;
+            }
+
             drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip);
 
             StaticOutStream<256> deltaPoints;
@@ -428,12 +492,12 @@ private:
 
             gdi::server_draw_text(
                 drawable, this->mm.ini.get<cfg::font>(),
-                this->rect.x + padw, padh,
+                this->get_protected_rect().x + padw, padh,
                 this->osd_message.c_str(),
                 this->color, this->background_color, this->clip
             );
 
-            this->clip = this->rect;
+            this->clip = Rect();
         }
 
         void refresh_rects(array_view<Rect const> av) override
@@ -443,55 +507,29 @@ private:
 
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
-            if (keymap->nb_kevent_available() > 0
-             && !(param3 & SlowPath::KBDFLAGS_DOWN)
-             && keymap->top_kevent() == Keymap2::KEVENT_INSERT
-            ) {
-                keymap->get_kevent();
-                this->disable_osd();
-
-                return;
+            if (!this->try_input_scancode(param1, param2, param3, param4, keymap)) {
+                this->mm.internal_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
             }
-            this->mm.internal_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
 
         void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
         {
-            if (!this->external_deleting && this->get_protected_rect().contains_pt(x, y)) {
-                if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-                    this->disable_osd();
-                }
-            }
-            else {
+            if (!this->try_input_mouse(device_flags, x, y, keymap)) {
                 this->mm.internal_mod->rdp_input_mouse(device_flags, x, y, keymap);
             }
         }
 
         void rdp_input_invalidate(const Rect & r) override
         {
-            if (!this->external_deleting && r.has_intersection(this->get_protected_rect())) {
-                auto rects = subrect4(r, this->get_protected_rect());
-                auto p = std::begin(rects);
-                auto e = std::remove_if(p, std::end(rects), [](Rect const & rect) {
-                    return rect.isempty();
-                });
-                if (p != e) {
-                    this->mm.internal_mod->rdp_input_invalidate2({p, e});
-                    this->mm.mod = &this->mm.mod_osd;
-                    this->clip = r.intersect(this->get_protected_rect());
-                }
-            }
-            else {
+            if (!this->try_input_invalidate(r)) {
                 this->mm.internal_mod->rdp_input_invalidate(r);
             }
-            this->mm.internal_mod->rdp_input_invalidate(r);
         }
 
         void rdp_input_invalidate2(array_view<Rect const> vr) override
         {
-            // TODO perf
-            for (Rect const & r : vr) {
-                this->rdp_input_invalidate(r);
+            if (!this->try_input_invalidate2(vr)) {
+                this->mm.internal_mod->rdp_input_invalidate2(vr);
             }
         }
 
@@ -584,28 +622,61 @@ private:
             mm.mod_transport = this;
         }
 
+        void display_osd_message(std::string const & message) override {
+            this->mm.osd_message(message, true);
+        }
+
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
             //LOG(LOG_INFO, "mod_osd::rdp_input_scancode: keyCode=0x%X keyboardFlags=0x%04X this=<%p>", param1, param3, this);
+            if (this->mm.mod_osd.try_input_scancode(param1, param2, param3, param4, keymap)) {
+                this->target_info_is_shown = false;
+                return ;
+            }
+
             Mod::rdp_input_scancode(param1, param2, param3, param4, keymap);
 
             if (this->mm.ini.template get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
                 bool const f12_released = (param3 & SlowPath::KBDFLAGS_RELEASE);
                 if (this->target_info_is_shown && f12_released) {
-                    //LOG(LOG_INFO, "Hide info");
+                    // LOG(LOG_INFO, "Hide info");
                     this->mm.clear_osd_message();
                     this->target_info_is_shown = false;
                 }
                 else if (!this->target_info_is_shown && !f12_released) {
-                    //LOG(LOG_INFO, "Show info");
-                    this->mm.osd_message(this->mm.ini.template get<cfg::globals::target_device>(), true);
+                    // LOG(LOG_INFO, "Show info");
+                    this->mm.osd_message(this->mm.ini.template get<cfg::globals::target_device>(), false);
                     this->target_info_is_shown = true;
                 }
             }
         }
 
-        void display_osd_message(std::string const & message) override {
-            this->mm.osd_message(message, false);
+        void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
+        {
+            if (this->mm.mod_osd.try_input_mouse(device_flags, x, y, keymap)) {
+                this->target_info_is_shown = false;
+                return ;
+            }
+
+            Mod::rdp_input_mouse(device_flags, x, y, keymap);
+        }
+
+        void rdp_input_invalidate(const Rect & r) override
+        {
+            if (this->mm.mod_osd.try_input_invalidate(r)) {
+                return ;
+            }
+
+            Mod::rdp_input_invalidate(r);
+        }
+
+        void rdp_input_invalidate2(array_view<Rect const> vr) override
+        {
+            if (this->mm.mod_osd.try_input_invalidate2(vr)) {
+                return ;
+            }
+
+            Mod::rdp_input_invalidate2(vr);
         }
     };
 
@@ -618,10 +689,10 @@ public:
         this->mod = this->internal_mod;
     }
 
-    void osd_message(std::string message, bool external_deleting)
+    void osd_message(std::string message, bool is_disable_by_input)
     {
         this->clear_osd_message();
-        this->mod_osd.set_message(message, external_deleting);
+        this->mod_osd.set_message(std::move(message), is_disable_by_input);
         this->mod_osd.draw_osd_message();
     }
 
