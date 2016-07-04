@@ -654,7 +654,7 @@ int file_start_hmac_sha256(const char * filename,
     return 0;
 }
 
-class MwrmReader
+class MwrmReader : public MwrmReaderXXX
 {
     char buf[1024];
     char * eof;
@@ -704,7 +704,8 @@ class MwrmReader
 
 public:
     MwrmReader(ifile_read_API & reader_buf) noexcept
-    : buf{}
+    : MwrmReaderXXX(reader_buf)
+    , buf{}
     , eof(buf)
     , cur(buf)
     , ibuf(reader_buf)
