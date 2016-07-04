@@ -654,35 +654,6 @@ int file_start_hmac_sha256(const char * filename,
     return 0;
 }
 
-struct FullStatFileChecker
-{
-    const std::string & full_filename;
-    bool failed;
-    explicit FullStatFileChecker(const std::string & full_filename) noexcept
-        : full_filename(full_filename)
-        , failed(false)
-    {
-    }
-
-    void check_full_stat(const MetaLine2 & meta_line)
-    {
-        if (!this->failed){
-            struct stat64 sb;
-            memset(&sb, 0, sizeof(sb));
-            lstat64(full_filename.c_str(), &sb);
-            this->failed = ((meta_line.dev   != sb.st_dev  )
-                        ||  (meta_line.ino   != sb.st_ino  )
-                        ||  (meta_line.mode  != sb.st_mode )
-                        ||  (meta_line.uid   != sb.st_uid  )
-                        ||  (meta_line.gid   != sb.st_gid  )
-                        ||  (meta_line.size  != sb.st_size )
-                        ||  (meta_line.mtime != sb.st_mtime)
-                        ||  (meta_line.ctime != sb.st_ctime)
-                        );
-        }
-    }
-};
-
 class MwrmReader
 {
     char buf[1024];
