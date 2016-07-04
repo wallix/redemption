@@ -1161,7 +1161,7 @@ static inline int check_encrypted_or_checksumed(
 
             MwrmReader reader(ifile);
 
-            auto meta_header = reader.read_meta_headers();
+            reader.read_meta_headers();
 
             MetaLine2 meta_line_wrm;
 
@@ -1233,7 +1233,7 @@ static inline int check_encrypted_or_checksumed(
 
             MwrmReader reader(ifile);
 
-            auto meta_header = reader.read_meta_headers();
+            reader.read_meta_headers();
 
             MetaLine2 meta_line_wrm;
 
@@ -1306,7 +1306,7 @@ static inline int check_encrypted_or_checksumed(
 
         MwrmReader reader(ifile);
 
-        auto meta_header = reader.read_meta_headers();
+        reader.read_meta_headers();
 
         MetaLine2 meta_line_wrm;
 
