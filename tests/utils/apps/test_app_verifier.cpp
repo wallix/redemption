@@ -208,9 +208,9 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     {
         uint8_t tmp_hash[SHA256_DIGEST_LENGTH]={};
-        int res = file_hmac_sha256(test_full_mwrm_filename.c_str(),
+        int res = file_start_hmac_sha256(test_full_mwrm_filename.c_str(),
                          cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-                         tmp_hash);
+                         0, tmp_hash);
         BOOST_CHECK_EQUAL(res, 0);
         BOOST_CHECK(0 == memcmp(hash + (HASH_LEN / 2), tmp_hash, SHA256_DIGEST_LENGTH));
     }

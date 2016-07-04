@@ -610,40 +610,6 @@ ssize_t file_size(const char * filename)
     return sb.st_size;
 }
 
-// Compute HmacSha256 for a file
-// return 0 on success and puts signature in provided buffer
-// return -1 if some system error occurs, errno contains actual error
-int file_hmac_sha256(const char * filename, 
-                     uint8_t const * crypto_key,
-                     size_t          key_len,
-                     uint8_t (& hash)[SHA256_DIGEST_LENGTH])
-{
-    struct fdwrap
-    {
-        int fd;
-        fdwrap(int fd) : fd(fd) {}
-        ~fdwrap(){ if (fd >=0) {::close(fd);} }
-    } file(::open(filename, O_RDONLY));
-    if (file.fd < 0) { return file.fd; }
-
-    SslHMAC_Sha256 hmac(crypto_key, key_len);
-
-    uint8_t buf[4096] = {};
-    ssize_t ret = ::read(file.fd, buf, sizeof(buf));
-    for (size_t  number_of_bytes_read = 0 ; ret ; number_of_bytes_read += ret){
-        // interruption signal, not really an error
-        if ((ret < 0) && (errno == EINTR)){
-            continue;
-        }
-        if (ret < 0){ return -1;}
-        hmac.update(buf, ret);
-        if (ret == 0){ break; }
-        ret = ::read(file.fd, buf, sizeof(buf));
-    }
-    hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
-    return 0;
-}
-
 // Compute HmacSha256 
 // up to check_size orf end of file whicherver happens first
 // if check_size == 0, checks to eof
@@ -1413,9 +1379,9 @@ static inline int check_encrypted_or_checksumed(
         }
         else {
             uint8_t hash[SHA256_DIGEST_LENGTH]={};
-            if (file_hmac_sha256(full_mwrm_filename.c_str(), 
+            if (file_start_hmac_sha256(full_mwrm_filename.c_str(), 
                                  cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
-                                 hash) < 0){
+                                 0, hash) < 0){
                 std::cerr << "Error reading file \"" 
                           << full_mwrm_filename 
                           << "\"" 
@@ -1464,9 +1430,9 @@ static inline int check_encrypted_or_checksumed(
                 }
 
                 uint8_t hash[SHA256_DIGEST_LENGTH]={};
-                if (file_hmac_sha256(full_part_filename.c_str(), 
+                if (file_start_hmac_sha256(full_part_filename.c_str(), 
                                      cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
-                                     hash) < 0){
+                                     0, hash) < 0){
                     std::cerr << "Error reading part file \"" 
                               << full_part_filename 
                               << "\"" 
