@@ -198,15 +198,15 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
     {
-        FileChecker check(test_full_mwrm_filename);
+        QuickFileChecker check(test_full_mwrm_filename);
         check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()), hash, HASH_LEN / 2, true);
         BOOST_CHECK_EQUAL(false, check.failed);
     }
 
     {
-        FileChecker check(test_full_mwrm_filename);
+        FullFileChecker check(test_full_mwrm_filename);
         check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-                                hash + (HASH_LEN / 2), HASH_LEN / 2, false);
+                                hash + (HASH_LEN / 2), HASH_LEN / 2);
         BOOST_CHECK_EQUAL(false, check.failed);
     }
 
