@@ -2070,6 +2070,8 @@ public:
                 case 24*5+15: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc15()); break;
                 case 24*5+16: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc16()); break;
                 default: assert(!"unknown bpp");*/
+
+
             }
         }
         else {
