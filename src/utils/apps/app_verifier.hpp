@@ -399,7 +399,7 @@ class MwrmReaderXXX
     public:
     MetaHeaderXXX header;
     
-    private:
+//    private:
     char buf[1024];
     char * eof;
     char * eol;
@@ -659,7 +659,6 @@ class MwrmReader : public MwrmReaderXXX
     char buf[1024];
     char * eof;
     char * cur;
-    ifile_read_API & ibuf;
 
     long long int get_ll(char * & cur, char * eof, char sep, int err)
     {
@@ -708,7 +707,6 @@ public:
     , buf{}
     , eof(buf)
     , cur(buf)
-    , ibuf(reader_buf)
     {
         memset(this->buf, 0, sizeof(this->buf));
     }
