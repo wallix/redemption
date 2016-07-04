@@ -1311,16 +1311,20 @@ static inline int check_encrypted_or_checksumed(
 
     if (infile_is_checksumed){
         if (quick_check){
-            QuickFileChecker check(full_mwrm_filename);
-            check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
-                        (quick_check ? hash_line.hash1 : hash_line.hash2),
-                        (quick_check ? sizeof(hash_line.hash1) : sizeof(hash_line.hash2)),
-                        quick_check);
-            if (check.failed)
-            {
-                std::cerr << "File \"" 
+            uint8_t hash[SHA256_DIGEST_LENGTH]={};
+            if (file_start_hmac_sha256(full_mwrm_filename.c_str(), 
+                                 cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
+                                 QUICK_CHECK_LENGTH, hash) < 0){
+                std::cerr << "Error reading file \"" 
                           << full_mwrm_filename 
-                          << "\" is invalid! (invalid metafile)" 
+                          << "\"" 
+                          << std::endl << std::endl;
+                return 1;
+            }
+            if (0 != memcmp(hash, hash_line.hash2, SHA256_DIGEST_LENGTH)){
+                std::cerr << "Error checking file \"" 
+                          << full_mwrm_filename 
+                          << "\" (invalid checksum)" 
                           << std::endl << std::endl;
                 return 1;
             }

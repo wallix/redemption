@@ -201,9 +201,12 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     BOOST_CHECK_EQUAL(file_size(test_full_mwrm_filename.c_str()), 1736);
     
     {
-        QuickFileChecker check(test_full_mwrm_filename);
-        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()), hash, HASH_LEN / 2, true);
-        BOOST_CHECK_EQUAL(false, check.failed);
+        uint8_t tmp_hash[SHA256_DIGEST_LENGTH]={};
+        int res = file_start_hmac_sha256(test_full_mwrm_filename.c_str(),
+                         cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+                         QUICK_CHECK_LENGTH, tmp_hash);
+        BOOST_CHECK_EQUAL(res, 0);
+        BOOST_CHECK(0 == memcmp(hash, tmp_hash, SHA256_DIGEST_LENGTH));
     }
 
     {
