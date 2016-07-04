@@ -656,10 +656,6 @@ int file_start_hmac_sha256(const char * filename,
 
 class MwrmReader : public MwrmReaderXXX
 {
-    char buf[1024];
-    char * eof;
-    char * cur;
-
     long long int get_ll(char * & cur, char * eof, char sep, int err)
     {
         char * pos = std::find(cur, eof, sep);
@@ -704,9 +700,6 @@ class MwrmReader : public MwrmReaderXXX
 public:
     MwrmReader(ifile_read_API & reader_buf) noexcept
     : MwrmReaderXXX(reader_buf)
-    , buf{}
-    , eof(buf)
-    , cur(buf)
     {
         memset(this->buf, 0, sizeof(this->buf));
     }
@@ -878,44 +871,6 @@ public:
         this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
 
         return 0;
-    }
-
-
-    void next_line()
-    {
-        while (this->cur == this->eof) // empty buffer
-        {
-            ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf)-1);
-            if (ret < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            if (ret == 0) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-            }
-            this->cur = this->buf;
-            this->eof = this->buf + ret;
-            this->eof[0] = 0;
-        }
-        char * pos = std::find(this->cur, this->eof, '\n');
-        while (pos == this->eof){ // read and append to buffer
-            size_t len = -(this->eof-this->cur);
-            if (len >= sizeof(buf)-1){
-                // if the buffer can't hold at least one line, 
-                // there is some problem behind
-                // if a line were available we should have found \n
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            ssize_t ret = this->ibuf.read(this->eof, sizeof(this->buf)-1-len);
-            if (ret < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            if (ret == 0) {
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-            }
-            this->eof += ret;
-            this->eof[0] = 0;
-            pos = std::find(this->cur, this->eof, '\n');
-        }
     }
 };
 
