@@ -665,23 +665,6 @@ class MwrmReader : public MwrmReaderXXX
         cur += len;
     }
 
-    void in_hex256(uint8_t * hash, int len, char * & cur, char * eof, char sep, int exc)
-    {
-        int err = 0;
-        char * pos = std::find(cur, eof, sep);
-        if (pos == eof || (pos - cur != 2*len)){
-            throw Error(exc);
-        }
-        for (int i = 0 ; i < len ; i++){
-            hash[i] = (chex_to_int(cur[i*2u], err)*16)
-                     + chex_to_int(cur[i*2u+1], err);
-        }
-        if (err){
-            throw Error(err);
-        }
-        cur = pos + 1;
-    }
-
 public:
     MwrmReader(ifile_read_API & reader_buf) noexcept
     : MwrmReaderXXX(reader_buf)
