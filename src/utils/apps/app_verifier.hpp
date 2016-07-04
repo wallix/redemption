@@ -659,7 +659,7 @@ class MwrmReader
     char buf[1024];
     char * eof;
     char * cur;
-    ifile_read_encrypted & ibuf;
+    ifile_read_API & ibuf;
 
     long long int get_ll(char * & cur, char * eof, char sep, int err)
     {
@@ -703,7 +703,7 @@ class MwrmReader
     }
 
 public:
-    MwrmReader(ifile_read_encrypted & reader_buf) noexcept
+    MwrmReader(ifile_read_API & reader_buf) noexcept
     : buf{}
     , eof(buf)
     , cur(buf)
