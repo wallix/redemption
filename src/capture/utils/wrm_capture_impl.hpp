@@ -70,7 +70,8 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
                     this->trans = new (&this->variant.out_with_sum)
                     OutMetaSequenceTransportWithSum(std::forward<Ts>(args)...);
                     break;
-                default :
+                default:
+                case TraceType::localfile:
                     this->trans = new (&this->variant.out)
                     OutMetaSequenceTransport(std::forward<Ts>(args)...);
                     break;

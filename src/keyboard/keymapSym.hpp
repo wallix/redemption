@@ -1229,6 +1229,7 @@ struct KeymapSym {
                             /* kEYPAD DELETE */
                             case 0x53:
                                 this->push_sym(0xFFFF);
+                                break;
                             default:
                                 break;
                         }

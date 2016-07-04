@@ -134,13 +134,12 @@ private:
     Color u32rgb_to_color(BGRColor color) const {
         using Depths = gdi::GraphicDepth;
 
-        if (!this->order_depth().is_depth24()) {
-            switch (this->order_depth()){
-                case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
-                case Depths::depth15(): color = decode_color15_opaquerect()(color); break;
-                case Depths::depth16(): color = decode_color16_opaquerect()(color); break;
-                default: REDASSERT(false);
-            }
+        switch (this->order_depth()){
+            case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depths::depth15(): color = decode_color15_opaquerect()(color); break;
+            case Depths::depth16(): color = decode_color16_opaquerect()(color); break;
+            case Depths::depth24(): break;
+            case Depths::unspecified(): default: REDASSERT(false);
         }
 
         return this->u32_to_color(color);
@@ -149,22 +148,21 @@ private:
     std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const {
         using Depths = gdi::GraphicDepth;
 
-        if (!this->order_depth().is_depth24()) {
-            switch (this->order_depth()) {
-                case Depths::depth8():
-                    color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
-                    color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
-                    break;
-                case Depths::depth15():
-                    color1 = decode_color15_opaquerect()(color1);
-                    color2 = decode_color15_opaquerect()(color2);
-                    break;
-                case Depths::depth16():
-                    color1 = decode_color16_opaquerect()(color1);
-                    color2 = decode_color16_opaquerect()(color2);
-                    break;
-                default: REDASSERT(false);
-            }
+        switch (this->order_depth()) {
+            case Depths::depth8():
+                color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
+                color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
+                break;
+            case Depths::depth15():
+                color1 = decode_color15_opaquerect()(color1);
+                color2 = decode_color15_opaquerect()(color2);
+                break;
+            case Depths::depth16():
+                color1 = decode_color16_opaquerect()(color1);
+                color2 = decode_color16_opaquerect()(color2);
+                break;
+            case Depths::depth24(): break;
+            case Depths::unspecified(): default: REDASSERT(false);
         }
 
         return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};

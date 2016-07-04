@@ -1099,8 +1099,7 @@ namespace X224
                     break;
                 }
             }
-        };
-
+        }
     }; // END CLASS CC_TPDU_Recv
 
     struct CC_TPDU_Send

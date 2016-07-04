@@ -1013,7 +1013,8 @@ struct NTLMContext {
                                 this->identity.Password.size(),
                                 hash);
         }
-    };
+    }
+
     // SERVER PROCEED RESPONSE CHECKING
     SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t * hash) {
         if (!this->server) {

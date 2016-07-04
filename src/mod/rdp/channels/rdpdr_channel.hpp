@@ -1893,6 +1893,13 @@ public:
                 send_message_to_server = false;
             break;
 
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY:
+            case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
+            case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
+            case rdpdr::PacketId::PAKID_PRN_CACHE_DATA:
+            case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
+            case rdpdr::PacketId::PAKID_PRN_USING_XPS:
             default:
                 if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
                     (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
@@ -2500,6 +2507,12 @@ public:
                 }
             break;
 
+            case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
+            case rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
+            case rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY:
+            case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
+            case rdpdr::PacketId::PAKID_PRN_CACHE_DATA:
             default:
                 if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
                     (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {

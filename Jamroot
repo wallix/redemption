@@ -147,27 +147,10 @@ constant CXXFLAGS-CLANG :
     <cxxflags>-Wno-shadow
     <cxxflags>-Wno-global-constructors
     <cxxflags>-Wno-weak-vtables
-
-    <cxxflags>-Wno-sign-conversion
-    <cxxflags>-Wno-shorten-64-to-32
-    <cxxflags>-Wno-conversion
-    <cxxflags>-Wno-extra-semi
     <cxxflags>-Wno-exit-time-destructors
-    <cxxflags>-Wno-missing-noreturn
-    <cxxflags>-Wno-double-promotion
-    <cxxflags>-Wno-reserved-id-macro
-    <cxxflags>-Wno-switch-enum
-#     <cxxflags>-Wno-unused-macros
-#     <cxxflags>-Wno-unused-exception-parameter
-    <cxxflags>-Wno-implicit-fallthrough
-    <cxxflags>-Wno-shift-sign-overflow
-#     <cxxflags>-Wno-array-bounds-pointer-arithmetic
-#     <cxxflags>-Wno-missing-prototypes
+
     <cxxflags>-Wno-covered-switch-default
-#     <cxxflags>-Wno-header-hygiene
-#     <cxxflags>-Wno-mismatched-tags
-#     <cxxflags>-Wno-char-subscripts
-#     <cxxflags>-Wno-unused-variable
+    <cxxflags>-Wno-conversion
 
     <cxxflags>-Qunused-arguments
 ;

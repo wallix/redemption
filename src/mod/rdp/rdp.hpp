@@ -90,6 +90,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
+#include "utils/sugar/compiler_attributes.hpp"
 #include "utils/timeout.hpp"
 
 #include <cstdlib>
@@ -1985,6 +1986,10 @@ public:
                         LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
                     }
                     switch (this->nego.state){
+                    case RdpNego::NEGO_STATE_INITIAL:
+                    case RdpNego::NEGO_STATE_NLA:
+                    case RdpNego::NEGO_STATE_TLS:
+                    case RdpNego::NEGO_STATE_RDP:
                     default:
                         this->nego.server_event(
                                 this->server_cert_store,
@@ -4192,6 +4197,7 @@ public:
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer system");
             }
+            CPP_FALLTHROUGH;
         case RDP_POINTER_MOVE:
             {
                 if (this->verbose & 4) {

@@ -59,7 +59,7 @@ struct RdpNego
         NEGO_STATE_NLA,  // Network Level Authentication (TLS implicit)
         NEGO_STATE_TLS,  // TLS Encryption without NLA
         NEGO_STATE_RDP,  // Standard Legacy RDP Encryption
-        NEGO_STATE_FAIL, // Negotiation failure */
+        //NEGO_STATE_FAIL, // Negotiation failure */
         NEGO_STATE_FINAL
     } state;
 
@@ -169,6 +169,7 @@ struct RdpNego
             }
         break;
         default:
+        case NEGO_STATE_FINAL:
         case NEGO_STATE_NLA:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
             this->recv_connection_confirm(

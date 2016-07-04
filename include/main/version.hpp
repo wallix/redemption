@@ -23,9 +23,6 @@
 
 */
 
-#ifndef __MAIN_VERSION_HPP__
-#define __MAIN_VERSION_HPP__
+#pragma once
 
 #define VERSION "0.9.723"
-
-#endif

@@ -1208,6 +1208,7 @@ public:
             this->event.set(500000);
             break;
         default:
+        case Timeout::TIMEOUT_INACTIVE:
             this->event.reset();
             this->event.object_and_time = false;
             break;

@@ -300,24 +300,14 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 {
                     pduType2 = PDUTYPE2_POINTER;
 
-                    uint16_t updateType = 0;
-                    switch (type) {
-                        case SERVER_UPDATE_POINTER_COLOR:
-                            updateType = RDP_POINTER_COLOR;
-                            break;
-
-                        case SERVER_UPDATE_POINTER_CACHED:
-                            updateType = RDP_POINTER_CACHED;
-                            break;
-
-                        case SERVER_UPDATE_POINTER_POSITION:
-                            updateType = RDP_POINTER_MOVE;
-                            break;
-
-                        default:
-                            REDASSERT(false);
-                            break;
-                    }
+                    static constexpr uint16_t update_type_table[] {
+                        RDP_POINTER_COLOR,
+                        RDP_POINTER_CACHED,
+                        RDP_POINTER_MOVE
+                    };
+                    static_assert(SERVER_UPDATE_POINTER_COLOR + 1 == SERVER_UPDATE_POINTER_CACHED, "");
+                    static_assert(SERVER_UPDATE_POINTER_CACHED + 1 == SERVER_UPDATE_POINTER_POSITION, "");
+                    uint16_t const updateType = update_type_table[type - SERVER_UPDATE_POINTER_COLOR];
 
                     StaticOutStream<64> data;
 

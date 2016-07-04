@@ -145,7 +145,7 @@ public:
             }
             this->event.set(200000);
             break;
-        default:
+        case Timeout::TIMEOUT_INACTIVE:
             this->event.reset();
             break;
         }

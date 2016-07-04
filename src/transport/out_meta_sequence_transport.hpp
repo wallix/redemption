@@ -219,9 +219,6 @@ namespace transfil {
                 case SNAPPY_BUFFER_TOO_SMALL:
                     LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with status code BUFFER_TOO_SMALL!\n", getpid());
                     return -1;
-                default:
-                    LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Snappy compression failed with unknown status code (%d)!\n", getpid(), status);
-                    return -1;
             }
 
             // Encrypt

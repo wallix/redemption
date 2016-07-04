@@ -119,7 +119,7 @@ public:
     constexpr unsigned id() const { return this->depth_; }
 
 private:
-    enum class PrivateDepth { d0, d1, d2, d3, d4 };
+    enum class PrivateDepth { unspecified_, depth8_, depth15_, depth16_, depth24_, };
 public:
     // for switch/case, == and !=
     constexpr operator PrivateDepth () const { return static_cast<PrivateDepth>(this->depth_); }
@@ -557,6 +557,7 @@ static inline void server_draw_text(
                 Font const & font, int16_t x, int16_t y, const char * text,
                 uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
 {
+    // TODO non-const static is a bad idea
     static GlyphCache mod_glyph_cache;
 
     UTF8toUnicodeIterator unicode_iter(text);

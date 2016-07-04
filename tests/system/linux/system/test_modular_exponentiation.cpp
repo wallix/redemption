@@ -1,4 +1,4 @@
-/* 
+/*
  * C++ Program to Implement Modular Exponentiation Algorithm
  */
 
@@ -20,14 +20,14 @@ BOOST_AUTO_TEST_CASE(TestModEx)
   int res = 70506;
   BigInteger calc;
 
-  calc = BigInteger(x.powAssignUnderMod(y, mod));
+  calc = x.powAssignUnderMod(y, mod);
   BOOST_CHECK(BigInteger(res).getNumber() == calc.getNumber());
 
   x.setNumber("876823746827");
   y.setNumber("18446744073709");
   mod.setNumber("234892734");
   res = 132113723;
-  calc = BigInteger(x.powAssignUnderMod(y, mod));
+  calc = x.powAssignUnderMod(y, mod);
   BOOST_CHECK(BigInteger(res).getNumber() == calc.getNumber());
 
 }

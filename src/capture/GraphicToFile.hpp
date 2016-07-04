@@ -164,7 +164,7 @@ public:
         this->dump_png24_api.dump_png24(trans, bgr);
     }
 
-    REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event");
+    /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
     virtual void timestamp(const timeval& now)
     {
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;

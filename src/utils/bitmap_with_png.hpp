@@ -33,6 +33,7 @@
 #include "utils/png.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/compiler_attributes.hpp"
 #include "log.hpp"
 
 #include <png.h>
@@ -283,6 +284,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
                 break;
             case 8:
                 file_Qpp = 2;
+                CPP_FALLTHROUGH;
             case 4:
                 REDASSERT(header.clr_used * 4 <= 8192);
                 if (not read_all(fd, stream_data, header.clr_used * 4)){

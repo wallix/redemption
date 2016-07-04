@@ -150,7 +150,7 @@ public:
     int server_resize(int width, int height, int bpp) override {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
         return 1;
-    };
+    }
 
     void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
         LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%zu", channelId, data_size);
@@ -271,6 +271,9 @@ public:
                 break;
                 case FastPath::UpdateType::SYNCHRONIZE:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_SYNCHRONIZE(0x%X)", fp_upd_r.updateCode);
+                break;
+                case FastPath::UpdateType::SURFCMDS:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_SURFCMDS(0x%X)", fp_upd_r.updateCode);
                 break;
                 case FastPath::UpdateType::PTR_NULL:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_NULL(0x%X)", fp_upd_r.updateCode);

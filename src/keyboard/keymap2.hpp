@@ -446,6 +446,7 @@ public:
                                 case 0x53:
                                     decoded_key.set_uhar(0x007F);
                                     this->push_kevent(KEVENT_DELETE);
+                                    break;
                                 default:
                                     break;
                             }
