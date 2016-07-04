@@ -667,7 +667,7 @@ public:
         printf("read_meta_file2\n");
         try {
             if (this->header.version == 1) {
-                this->read_meta_file_v1(meta_line);
+                this->read_meta_file(meta_line);
                 return 0;
             }
             else {
@@ -678,49 +678,6 @@ public:
         catch(...){
             return 1;
         };
-    }
-
-    void read_meta_file_v1(MetaLine2 & meta_line)
-    {
-        printf("read_meta_file_v1\n");
-        this->next_line();
-        this->eof[0] = 0;
-        size_t len = this->eof - this->cur;
-
-        // Line format "fffff sssss eeeee hhhhh HHHHH"
-        //                               ^  ^  ^  ^
-        //                               |  |  |  |
-        //                               |hash1|  |
-        //                               |     |  |
-        //                           space3    |hash2
-        //                                     |
-        //                                   space4
-        //
-        // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-        typedef std::reverse_iterator<char*> reverse_iterator;
-        reverse_iterator first(cur);
-        reverse_iterator last(cur + len);
-        reverse_iterator space4 = std::find(last, first, ' ');
-        space4++;
-        reverse_iterator space3 = std::find(space4, first, ' ');
-        space3++;
-        reverse_iterator space2 = std::find(space3, first, ' ');
-        space2++;
-        reverse_iterator space1 = std::find(space2, first, ' ');
-        space1++;
-        int path_len = first-space1;
-        this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, cur, eof, ERR_TRANSPORT_READ_FAILED);
-        this->cur += path_len + 1;
-
-        // start_time + ' '
-        meta_line.start_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-        // stop_time + ' '
-        meta_line.stop_time = this->get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-        // HASH1 + ' '
-        this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-        // HASH1 + CR
-        this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
     }
 
     int read_meta_file_v2(MetaHeaderXXX const & meta_header, MetaLine2 & meta_line)
