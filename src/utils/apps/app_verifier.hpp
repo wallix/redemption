@@ -515,6 +515,7 @@ public:
         this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), 
                             path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
         this->cur++;
+//        this->cur += path_len + 1;
         meta_line.filename[path_len] = 0;
 
         if (this->header.version == 1){
@@ -706,37 +707,19 @@ public:
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
 
         typedef std::reverse_iterator<char*> reverse_iterator;
-        reverse_iterator first(cur);
-        reverse_iterator last(cur + len);
-        
-        reverse_iterator space = last;
-        reverse_iterator space12 = std::find(space, first, ' ');
-        space12++;
-        reverse_iterator space11 = std::find(space12, first, ' ');
-        space11++;
-        reverse_iterator space10 = std::find(space11, first, ' ');
-        space10++;
-        reverse_iterator space9 = std::find(space10, first, ' ');
-        space9++;
-        reverse_iterator space8 = std::find(space9, first, ' ');
-        space8++;
-        reverse_iterator space7 = std::find(space8, first, ' ');
-        space7++;
-        reverse_iterator space6 = std::find(space7, first, ' ');
-        space6++;
-        reverse_iterator space5 = std::find(space6, first, ' ');
-        space5++;
-        reverse_iterator space4 = std::find(space5, first, ' ');
-        space4++;
-        reverse_iterator space3 = std::find(space4, first, ' ');
-        space3++;
-        reverse_iterator space2 = std::find(space3, first, ' ');
-        space2++;
-        reverse_iterator space1 = std::find(space2, first, ' ');
-        space1++;
-        int path_len = first-space1;
-        this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), path_len, cur, eof, ERR_TRANSPORT_READ_FAILED);
+        reverse_iterator first(this->cur);
+        reverse_iterator space(this->cur+len);                
+        for(int i = 0; i < ((this->header.version==1)?2:10) + 2*this->header.has_checksum; i++){
+            space = std::find(space, first, ' ');                
+            space++;
+        }
+        int path_len = first-space;
+        this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), 
+                            path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
+//        this->cur++;
         this->cur += path_len + 1;
+        meta_line.filename[path_len] = 0;
+
 
         printf("cur=%s filename=%s\n", cur, meta_line.filename);
 
