@@ -1435,17 +1435,26 @@ static inline int check_encrypted_or_checksumed(
             std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
             std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-            FullStatFileChecker check(full_part_filename);
-            check.check_full_stat(meta_line_wrm);
-
-            if (check.failed)
+            struct stat64 sb;
+            memset(&sb, 0, sizeof(sb));
+            lstat64(full_part_filename.c_str(), &sb);
+            if ((meta_line_wrm.dev   != sb.st_dev  )
+            ||  (meta_line_wrm.ino   != sb.st_ino  )
+            ||  (meta_line_wrm.mode  != sb.st_mode )
+            ||  (meta_line_wrm.uid   != sb.st_uid  )
+            ||  (meta_line_wrm.gid   != sb.st_gid  )
+            ||  (meta_line_wrm.size  != sb.st_size )
+            ||  (meta_line_wrm.mtime != sb.st_mtime)
+            ||  (meta_line_wrm.ctime != sb.st_ctime))
             {
-                result = false;
-                break;
+                std::cerr << "Error checking part file \"" 
+                          << full_part_filename 
+                          << "\" (metadata changed)" 
+                          << std::endl << std::endl;
+                return 1;
             }
         }
     }
-
 
     if (!result){
         std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
