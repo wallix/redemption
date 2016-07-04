@@ -610,65 +610,39 @@ ssize_t file_size(const char * filename)
     return sb.st_size;
 }
 
-struct FullFileChecker
+// Compute HmacSha256 for a file
+// return 0 on success and puts signature in provided buffer
+// return -1 if some system error occurs, errno contains actual error
+int file_hmac_sha256(const char * filename, 
+                     uint8_t const * crypto_key,
+                     size_t          key_len,
+                     uint8_t (& hash)[SHA256_DIGEST_LENGTH])
 {
-    const std::string & full_filename;
-    bool failed;
-    explicit FullFileChecker(const std::string & full_filename) noexcept
-        : full_filename(full_filename)
-        , failed(false)
+    struct fdwrap
     {
-    }
-    void check_hash_sha256(uint8_t const * crypto_key,
-                           size_t          key_len,
-                           uint8_t const * hash_buf,
-                           size_t          hash_len)
-    {
+        int fd;
+        fdwrap(int fd) : fd(fd) {}
+        ~fdwrap(){ if (fd >=0) {::close(fd);} }
+    } file(::open(filename, O_RDONLY));
+    if (file.fd < 0) { return file.fd; }
 
-        if (!this->failed){
-            struct fdwrap
-            {
-                int fd;
-                fdwrap(int fd) : fd(fd) {}
-                ~fdwrap(){ if (fd >=0) {::close(fd);} }
-            } file(::open(this->full_filename.c_str(), O_RDONLY));
+    SslHMAC_Sha256 hmac(crypto_key, key_len);
 
-            if (file.fd < 0) {
-                LOG(LOG_ERR, "failed opening=%s", this->full_filename.c_str());
-                std::cerr << "Error opening file \"" << this->full_filename << std::endl << std::endl;
-                this->failed = true;
-                return;
-            }
-
-            REDASSERT(SHA256_DIGEST_LENGTH == hash_len);
-            SslHMAC_Sha256 hmac(crypto_key, key_len);
-
-            uint8_t buf[4096] = {};
-            size_t  number_of_bytes_read = 0;
-            for (; true ; ){
-                ssize_t ret = ::read(file.fd, buf, sizeof(buf));
-                // interruption signal, not really an error
-                if ((ret < 0) && (errno == EINTR)){
-                    continue;
-                }
-                // error
-                if (ret < 0){
-                    LOG(LOG_ERR, "failed reading %s", this->full_filename.c_str());
-                    this->failed = true;
-                    return;
-                }
-                // end_of_file, exit loop
-                if (ret == 0){ break; }
-                hmac.update(buf, ret);
-                number_of_bytes_read += ret;
-            }
-
-            uint8_t         hash[SHA256_DIGEST_LENGTH];
-            hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
-            this->failed = 0 != memcmp(hash, hash_buf, hash_len);
+    uint8_t buf[4096] = {};
+    ssize_t ret = ::read(file.fd, buf, sizeof(buf));
+    for (size_t  number_of_bytes_read = 0 ; ret ; number_of_bytes_read += ret){
+        // interruption signal, not really an error
+        if ((ret < 0) && (errno == EINTR)){
+            continue;
         }
+        if (ret < 0){ return -1;}
+        hmac.update(buf, ret);
+        if (ret == 0){ break; }
+        ret = ::read(file.fd, buf, sizeof(buf));
     }
-};
+    hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
+    return 0;
+}
 
 struct QuickFileChecker
 {
@@ -1393,14 +1367,20 @@ static inline int check_encrypted_or_checksumed(
             }
         }
         else {
-            FullFileChecker check(full_mwrm_filename);
-            check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
-                        hash_line.hash2, sizeof(hash_line.hash2));
-            if (check.failed)
-            {
-                std::cerr << "File \"" 
+            uint8_t hash[SHA256_DIGEST_LENGTH]={};
+            if (file_hmac_sha256(full_mwrm_filename.c_str(), 
+                                 cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
+                                 hash) < 0){
+                std::cerr << "Error reading file \"" 
                           << full_mwrm_filename 
-                          << "\" is invalid! (invalid metafile)" 
+                          << "\"" 
+                          << std::endl << std::endl;
+                return 1;
+            }
+            if (0 != memcmp(hash, hash_line.hash2, SHA256_DIGEST_LENGTH)){
+                std::cerr << "Error checking file \"" 
+                          << full_mwrm_filename 
+                          << "\" (invalid checksum)" 
                           << std::endl << std::endl;
                 return 1;
             }
@@ -1423,7 +1403,6 @@ static inline int check_encrypted_or_checksumed(
             while (reader.read_meta_file2(meta_header, meta_line_wrm) == 0) {
 
                 size_t tmp_wrm_filename_len = 0;
-                
                 const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
                 std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
                 std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
@@ -1439,21 +1418,24 @@ static inline int check_encrypted_or_checksumed(
                     return 1;
                 }
 
-                FullFileChecker check(full_part_filename);
-                check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()), meta_line_wrm.hash2, sizeof(meta_line_wrm.hash2));
-                if (check.failed){
-                     std::cerr << "Bad checksum for part file \""
-                               << full_part_filename << "\""
-                               << std::endl << std::endl;
+                uint8_t hash[SHA256_DIGEST_LENGTH]={};
+                if (file_hmac_sha256(full_part_filename.c_str(), 
+                                     cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
+                                     hash) < 0){
+                    std::cerr << "Error reading part file \"" 
+                              << full_part_filename 
+                              << "\"" 
+                              << std::endl << std::endl;
+                    return 1;
                 }
-
-                if (check.failed)
-                {
-                    result = false;
-                    break;
+                if (0 != memcmp(hash, meta_line_wrm.hash2, SHA256_DIGEST_LENGTH)){
+                    std::cerr << "Error checking part file \"" 
+                              << full_part_filename 
+                              << "\" (invalid checksum)" 
+                              << std::endl << std::endl;
+                    return 1;
                 }
             }
-
         }
     }
     else {
