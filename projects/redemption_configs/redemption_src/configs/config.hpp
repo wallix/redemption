@@ -371,7 +371,7 @@ private:
     configs::VariablesConfiguration variables;
     configs::PointerPackArray<FieldBase, Field, configs::VariablesAclPack> fields;
     Buffers buffers;
-    ConfigurationHolder conf_holder = variables;
+    ConfigurationHolder conf_holder {variables};
     bool new_from_acl = false;
 
     template<class T>

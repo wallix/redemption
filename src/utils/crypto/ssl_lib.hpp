@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <cstring>
+
 #include "utils/bitfu.hpp"
 #include "system/ssl_modexp.hpp"
 
@@ -39,7 +41,7 @@ class ssllib
     public:
     static void rsa_encrypt(uint8_t * out, uint32_t in_len, uint8_t * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
     {
-        TODO("check out buffer size");
+        // TODO check out buffer size
         size_t out_len = 64;
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
 
@@ -51,7 +53,7 @@ class ssllib
         }
 
         size_t outlen = mod_exp(out, out_len, inr, in_len, modulus, modulus_size, exponent, exponent_size);
-       
+
         reverseit(out, outlen);
 
         if (outlen < modulus_size){
@@ -59,9 +61,9 @@ class ssllib
         }
     }
 
-    static void ssl_xxxxxx(uint8_t * client_random, 
-                           uint32_t in_len, const uint8_t * in, 
-                           uint32_t mod_len, const uint8_t * mod, 
+    static void ssl_xxxxxx(uint8_t * client_random,
+                           uint32_t in_len, const uint8_t * in,
+                           uint32_t mod_len, const uint8_t * mod,
                            uint32_t exp_len, const uint8_t * exp)
     {
         uint8_t l_out[64] = {};

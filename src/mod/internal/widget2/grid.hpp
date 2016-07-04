@@ -393,6 +393,7 @@ struct ColumnWidthStrategy {
     uint16_t max;
 };
 
+inline
 void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strategies, uint16_t * row_height, uint16_t * column_width) {
     uint16_t column_width_optimal[GRID_NB_COLUMNS_MAX] = { 0 };
 
@@ -474,6 +475,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     }
 }
 
+inline
 void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_width) {
     uint16_t height = 0;
     for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {

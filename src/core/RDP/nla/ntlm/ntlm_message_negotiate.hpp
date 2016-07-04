@@ -175,6 +175,7 @@ struct NTLMNegotiateMessage : public NTLMMessage {
         this->negoFlags.emit(stream);
         currentOffset += this->DomainName.emit(stream, currentOffset);
         currentOffset += this->Workstation.emit(stream, currentOffset);
+        (void)currentOffset;
         this->version.emit(stream);
 
         // PAYLOAD

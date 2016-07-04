@@ -25,12 +25,6 @@
 #define BOOST_TEST_MODULE TestUnderLyingCast
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
-#define LOGNULL
-//#define LOGPRINT
-
 #include "utils/sugar/underlying_cast.hpp"
 
 BOOST_AUTO_TEST_CASE(TestUnderlyingCast)

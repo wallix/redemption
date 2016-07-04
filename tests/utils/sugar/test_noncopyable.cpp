@@ -23,9 +23,6 @@
 #define BOOST_TEST_MODULE TestNonCopyable
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
-
 #include "utils/sugar/noncopyable.hpp"
 #include <type_traits>
 

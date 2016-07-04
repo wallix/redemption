@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "core/RDP/caches/brushcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

@@ -338,6 +338,8 @@ public:
         memset(this->data + gi.data_len, 0, sizeof(this->data) - gi.data_len);
     }
 
+    RDPGlyphIndex & operator = (const RDPGlyphIndex &) = default;
+
     bool operator==(const RDPGlyphIndex & other) const {
         return  (this->cache_id       == other.cache_id)
              && (this->fl_accel       == other.fl_accel)

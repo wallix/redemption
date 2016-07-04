@@ -184,6 +184,7 @@ struct TSRequest {
                                                        this->negoTokens.size());
 
             assert(length == 0);
+            (void)length;
         }
 
         /* [2] authInfo (OCTET STRING) */
@@ -194,6 +195,7 @@ struct TSRequest {
                                                        this->authInfo.get_data(),
                                                        this->authInfo.size());
             assert(length == 0);
+            (void)length;
         }
 
         /* [3] pubKeyAuth (OCTET STRING) */
@@ -204,6 +206,7 @@ struct TSRequest {
                                                        this->pubKeyAuth.get_data(),
                                                        this->pubKeyAuth.size());
             assert(length == 0);
+            (void)length;
         }
     }
 
@@ -314,8 +317,6 @@ struct TSPasswordCreds {
     // TSPasswordCreds(InStream & stream) {
     //     this->recv(stream);
     // }
-
-    virtual ~TSPasswordCreds() {}
 
 
     int ber_sizeof() {

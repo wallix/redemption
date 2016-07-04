@@ -84,7 +84,7 @@ int main(int argc, char * argv[]) {
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
         std::cout << "Usage: rdptproxy [options]\n\n";
-        std::cout << desc << endl;
+        std::cout << desc << std::endl;
         return 0;
     }
 
@@ -125,7 +125,7 @@ int main(int argc, char * argv[]) {
 
     if (!target_device.empty()) {
         size_t pos = target_device.find(':');
-        if (pos != string::npos) {
+        if (pos != std::string::npos) {
             target_port = atoi(target_device.substr(pos + 1).c_str());
             target_device.resize(pos);
         }

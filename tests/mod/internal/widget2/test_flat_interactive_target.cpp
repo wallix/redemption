@@ -25,9 +25,6 @@
 #define BOOST_TEST_MODULE TestFlatInteractiveTarget
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 
 #include "core/font.hpp"
@@ -38,9 +35,6 @@
 #include "system/ssl_calls.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
 
 #include "fake_draw.hpp"
 

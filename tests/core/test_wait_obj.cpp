@@ -24,8 +24,6 @@
 #define BOOST_TEST_MODULE TestWaitObj
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "core/wait_obj.hpp"
 
 BOOST_AUTO_TEST_CASE(Testwait_obj)

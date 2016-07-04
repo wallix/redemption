@@ -127,7 +127,7 @@ protected:
         void copy_sha1(uint8_t (&sig)[20]) const {
             if (!this->sha1_is_init_) {
                 this->sha1_is_init_ = true;
-                SslSha1_direct sha1;
+                SslSha1 sha1;
                 if (this->bpp_ == 8) {
                     sha1.update(this->data_palette(), sizeof(BGRPalette));
                 }

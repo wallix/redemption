@@ -309,7 +309,7 @@ inline void hexdump(const char * data, size_t size)
         }
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')  || (tmp == '\\')){
                 tmp = '.';
             }
@@ -348,7 +348,7 @@ inline void hexdump_d(const char * data, size_t size, unsigned line_length = 16)
 
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }
@@ -386,7 +386,7 @@ inline void hexdump_c(const char * data, size_t size)
         line += sprintf(line, " //");
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }
@@ -425,7 +425,7 @@ inline void hexdump96_c(const char * data, size_t size)
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')){
                 tmp = '.';
             }
@@ -464,7 +464,7 @@ inline void hexdump8_c(const char * data, size_t size)
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')){
                 tmp = '.';
             }

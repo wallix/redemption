@@ -23,9 +23,7 @@
 #define BOOST_TEST_MODULE TestSumBuf
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-#define LOGPRINT
+// #define LOGPRINT
 #define LOGNULL
 
 #include "transport/buffer/checksum_buf.hpp"

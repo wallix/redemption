@@ -62,6 +62,9 @@
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 
+#include "utils/log.hpp"
+
+
 // ex: sftp -vvvvv cgrosjean@dummy:SSH:toto@10.10.43.12:/etc
 //-> above broken
 // ex: ssh cgrosjean@rj32:toto@10.10.43.12 find /
@@ -70,7 +73,7 @@
 // -> above working
 // ex: ssh -L 8888:10.10.43.14:8080 cgrosjean@dummy:SSH:cgrosjean@10.10.43.12
 // ex: scp /home/cgrosjean/Documents/Far.avi cgrosjean@10.10.43.12:cgrosjean@dummy:SSH:/tmp
-// ex: ssh -A cgrosjean@rj32:cgrosjean@10.10.43.12 
+// ex: ssh -A cgrosjean@rj32:cgrosjean@10.10.43.12
 // ex: ssh -o ForwardX11=No -A cgrosjean@10.10.43.12
 // ex: scp README.rst jenkins@rj64+SSH+cgrosjean@10.10.43.12:
 
@@ -103,7 +106,7 @@
 
 // google-chrome --proxy-server="socks://localhost:8888"
 
-// Et naviguer, les ressources associées aux channels augmentent 
+// Et naviguer, les ressources associées aux channels augmentent
 // (fd locaux du client ssh)
 
 // A la fermeture des channels elles devraient toutes se libérer
@@ -185,7 +188,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             if (v[0] == '\0') {
                 ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                 return -1;
-            } 
+            }
             else {
                 q = strdup(static_cast<const char*>(value));
                 // TODO: check memory allocation
@@ -205,7 +208,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                     free(q);
                     q = nullptr;
                     // TODO: check memory allocation
-                } 
+                }
                 else {
                     opts.host = q;
                 }
@@ -287,10 +290,10 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
                 q = ssh_get_local_username();
                 // TODO: check memory allocation
                 opts.username = q;
-            } 
+            }
             else if (v[0] == 0) {
                 return -1;
-            } 
+            }
             else { /* username provided */
                 opts.username = strdup(static_cast<const char*>(value));
                // TODO: check memory allocation
@@ -352,7 +355,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             if (v[0] == '\0') {
                 ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                 return -1;
-            } 
+            }
             else {
                 const char * supported_ssh_crypt_c_s = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
@@ -375,7 +378,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             if (v[0] == '\0') {
                 ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                 return -1;
-            } 
+            }
             else {
                 const char * supported_ssh_crypt_s_c = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
@@ -441,7 +444,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             if (v[0] == '\0') {
                 ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                 return -1;
-            } 
+            }
             else {
                 if (strcasecmp(static_cast<const char*>(value),"yes")==0){
                     const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
@@ -487,7 +490,7 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
             if (v[0] == '\0') {
                 ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
                 return -1;
-            } 
+            }
             else {
                 if (strcasecmp(static_cast<const char*>(value),"yes")==0){
                     const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
@@ -602,7 +605,7 @@ int options_set_host(options_struct & opts, const char *value, error_struct & er
     if (value[0] == '\0') {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
-    } 
+    }
     else {
         char *q = strdup(value);
         // TODO: check memory allocation
@@ -621,7 +624,7 @@ int options_set_host(options_struct & opts, const char *value, error_struct & er
             free(q);
             q = nullptr;
             // TODO: check memory allocation
-        } 
+        }
         else {
             opts.host = q;
         }
@@ -703,10 +706,10 @@ int options_set_user(options_struct & opts, const void *value, error_struct & er
     if (v == nullptr) {
         // TODO: check memory allocation
         opts.username = ssh_get_local_username();
-    } 
+    }
     else if (v[0] == 0) {
         return -1;
-    } 
+    }
     else { /* username provided */
         opts.username = strdup(static_cast<const char*>(value));
        // TODO: check memory allocation
@@ -768,7 +771,7 @@ int options_set_cipher_c_s(options_struct & opts, const void *value, error_struc
     if (v[0] == '\0') {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
-    } 
+    }
     else {
         const char * supported_ssh_crypt_c_s = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
@@ -793,7 +796,7 @@ int options_set_cipher_s_c(options_struct & opts, const void *value, error_struc
     if (v[0] == '\0') {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
-    } 
+    }
     else {
         const char * supported_ssh_crypt_s_c = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
 
@@ -868,7 +871,7 @@ int options_set_compression_c_s(options_struct & opts, const void *value, error_
     if (v[0] == '\0') {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
-    } 
+    }
     else {
         if (strcasecmp(static_cast<const char*>(value),"yes")==0){
             const char * supported_ssh_comp_c_s = "none,zlib,zlib@openssh.com";
@@ -918,7 +921,7 @@ int options_set_compression_s_c(options_struct & opts, const void *value, error_
     if (v[0] == '\0') {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
         return -1;
-    } 
+    }
     else {
         if (strcasecmp(static_cast<const char*>(value),"yes")==0){
             const char * supported_ssh_comp_s_c = "none,zlib,zlib@openssh.com";
@@ -1072,28 +1075,28 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents);
 //            syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
 //            return SSH_ERROR;
 //        }
-//        syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d", 
+//        syslog(LOG_WARNING, "Waiting for growing window Call to handle_packets session_state=%d channel_state=%d",
 //            this->session_state, channel->state);
 //        if (this->socket == nullptr){
 //            return SSH_ERROR;
 //        }
-//        
+//
 //        // Waiting for input
 //        dopoll(this->ctx, (this->flags & SSH_SESSION_FLAG_BLOCKING)?SSH_TIMEOUT_INFINITE:SSH_TIMEOUT_NONBLOCKING);
-//        
-//        if (this->session_state == SSH_SESSION_STATE_ERROR 
+//
+//        if (this->session_state == SSH_SESSION_STATE_ERROR
 //        || this->session_state == SSH_SESSION_STATE_ERROR){
 //            syslog(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
 //            return SSH_ERROR;
 //        }
 //    }
-//    
+//
 //    uint32_t effectivelen = len > channel->remote_window ? channel->remote_window : len;
 //    if (effectivelen > maxpacketlen) {
 //        effectivelen = maxpacketlen;
 //    }
 
-//    // TODO: datas are buffered in channel buffer but sent only if remote window 
+//    // TODO: datas are buffered in channel buffer but sent only if remote window
 //    // has enough free space. Channels can say if they have enough room to store data.
 //    // construction of message and sending will be done later (in polling).
 
@@ -1113,14 +1116,14 @@ void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents);
 //}
 
 
-int dopoll(ssh_poll_ctx_struct * ctx, int timeout) 
+int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     ssh_pollfd_t pollfds[2];
     bool polling_target = false;
-    
-    uint8_t n = 0;    
+
+    uint8_t n = 0;
     ssh_pollfd_t * front_pollfd = nullptr;
 
     syslog(LOG_INFO, "%s --- POLLING FRONT to_send=%d received=%d", __FUNCTION__,
@@ -1130,7 +1133,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
     front_pollfd->fd = ctx->front_session->poll->socket->fd_in;
     front_pollfd->events = POLLIN;
 
-    /* If no data is pending at session level 
+    /* If no data is pending at session level
        check if channel data is pending
        TODO: we should probably perform some rotation
        on channels or we may privilege some channels
@@ -1141,7 +1144,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
     if(ctx->front_session->socket->out_buffer->in_remain() == 0){
         ctx->front_session->do_delayed_sending();
     }
-    
+
     if(ctx->front_session->socket->out_buffer->in_remain() > 0){
         front_pollfd->events |= POLLOUT;
     }
@@ -1152,7 +1155,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
     if (ctx->front_session->poll->lock){
         front_pollfd->events &= ~POLLIN;
     }
-    
+
     front_pollfd->revents = 0;
     n++;
 
@@ -1186,7 +1189,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
         pollfds[n].revents = 0;
         n++;
     }
-    
+
     int rc = poll(&pollfds[0], n, timeout);
     switch (rc) {
     case -1: // poll error (check errno, what about EINTR or other signals)
@@ -1196,17 +1199,17 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
         syslog(LOG_INFO, "%s --- POLL AGAIN", __FUNCTION__);
         return SSH_AGAIN;
     default:;
-  
+
   }
 
-    syslog(LOG_INFO, "%s FRONT state rc=%d %p revent=%d lock=%d", 
+    syslog(LOG_INFO, "%s FRONT state rc=%d %p revent=%d lock=%d",
         __FUNCTION__, rc, static_cast<void*>(front_pollfd), pollfds[0].revents,
         ctx->front_session->poll->lock);
 
     /* Do not do anything if this socket was already closed */
     if(front_pollfd->fd != INVALID_SOCKET && front_pollfd->revents){
         ctx->front_session->do_front_event(front_pollfd->revents);
-        
+
         if (ctx->front_session->waiting_list.size() > 0){
             Event * event = ctx->front_session->waiting_list.back();
             if (event->trigger()){
@@ -1617,17 +1620,17 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
 
 
 
-  
+
 
 
 void ssh_poll_cleanup(void) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     return;
 }
 
 
 void ssh_kbdint_free(ssh_kbdint kbd) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     if (kbd != nullptr) {
         delete kbd->name;
@@ -1635,7 +1638,7 @@ void ssh_kbdint_free(ssh_kbdint kbd) {
         delete kbd->echo;
 
         int n = kbd->nprompts;
-        
+
         if (kbd->prompts) {
             int i = 0;
             for (i = 0; i < n; i++) {
@@ -1658,7 +1661,7 @@ void ssh_kbdint_free(ssh_kbdint kbd) {
 }
 
 void ssh_kbdint_clean(ssh_kbdint kbd) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     int i, n;
 
     if (kbd == nullptr) {
@@ -1701,21 +1704,21 @@ void ssh_kbdint_clean(ssh_kbdint kbd) {
 
 ssh_poll_ctx_struct * ssh_new_poll_ctx()
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     return new ssh_poll_ctx_struct;
 }
- 
+
 
 // TODO: this should be client session constructor
-ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ctx_struct * ctx, char * host, char * port, char * user, char * hostkeys, char * verbosity, error_struct * error) 
-{ 
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ctx_struct * ctx, char * host, char * port, char * user, char * hostkeys, char * verbosity, error_struct * error)
+{
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (!ctx) {
-        syslog(LOG_WARNING, "Client must provide context =========================================== done 1.1");    
+        syslog(LOG_WARNING, "Client must provide context =========================================== done 1.1");
         return nullptr;
     }
 
-    syslog(LOG_INFO, "%s --- [A]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [A]", __FUNCTION__);
 
     SshClientSession * session = new SshClientSession(ctx, cb, new ssh_socket_struct());
 
@@ -1723,26 +1726,26 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
     session->opts.username = strdup(user);
     session->opts.wanted_methods[SSH_HOSTKEYS] = strdup(hostkeys);
 
-    syslog(LOG_INFO, "%s --- [B]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [B]", __FUNCTION__);
 
     // TODO: already done in server, extract init to only do once
 //    OpenSSL_add_all_algorithms();
 
     if (!host) {
         ssh_set_error(*error, SSH_FATAL, "Hostname required");
-        syslog(LOG_INFO, "%s --- done 3 ERROR", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- done 3 ERROR", __FUNCTION__);
         return nullptr;
     }
 
-    syslog(LOG_INFO, "%s --- [C]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [C]", __FUNCTION__);
 
     if (session->opts.username == nullptr) {
         ssh_set_error(*error, SSH_FATAL, "Username required");
-        syslog(LOG_INFO, "%s --- done 4 ERROR", __FUNCTION__);    
+        syslog(LOG_INFO, "%s --- done 4 ERROR", __FUNCTION__);
         return nullptr;
     }
 
-    syslog(LOG_INFO, "%s --- [D]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [D]", __FUNCTION__);
 
     session->session_state = SSH_SESSION_STATE_CONNECTING;
     if(session->socket->state != SSH_SOCKET_NONE) {
@@ -1751,9 +1754,9 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
         session->pending_call_state = SSH_PENDING_CALL_NONE;
         return nullptr;
     }
-                               
-    syslog(LOG_INFO, "%s --- [E]", __FUNCTION__);    
-                                              
+
+    syslog(LOG_INFO, "%s --- [E]", __FUNCTION__);
+
     socket_t fd = INVALID_SOCKET;
     struct addrinfo *ai;
     struct addrinfo *itr;
@@ -1776,11 +1779,11 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
         hints.ai_flags |= AI_NUMERICHOST;
     }
 
-    syslog(LOG_INFO, "%s --- [F]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [F]", __FUNCTION__);
 
     // TODO : make that RAII
     int rc = getaddrinfo(host, port, &hints, &ai);
-    
+
     if (rc != 0) {
         ssh_set_error(*error, SSH_FATAL,
             "Failed to resolve hostname %s (%s)", host, gai_strerror(rc));
@@ -1789,7 +1792,7 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
         return nullptr;
     }
 
-    syslog(LOG_INFO, "%s --- [G]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [G]", __FUNCTION__);
 
     for (itr = ai; itr != nullptr; itr = itr->ai_next){
         /* create socket */
@@ -1812,7 +1815,7 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
     }
     freeaddrinfo(ai);
 
-    syslog(LOG_INFO, "%s --- [H]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [H]", __FUNCTION__);
 
     syslog(LOG_INFO,"Nonblocking connection socket: %d",fd);
     if(fd == INVALID_SOCKET){
@@ -1832,11 +1835,11 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
     session->ctx->fd_poll = nullptr;
     session->ctx->target_session = session;
 
-    syslog(LOG_INFO, "%s --- [I]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [I]", __FUNCTION__);
 
     session->client_callbacks->connect_status_function(session->client_callbacks->userdata, 0.2f);
 
-    syslog(LOG_INFO, "%s --- [J]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [J]", __FUNCTION__);
 
   // CGR: See that, code is irregular here, see why
     session->pending_call_state = SSH_PENDING_CALL_CONNECT;
@@ -1845,9 +1848,9 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
     gettimeofday(&start, nullptr);
     int timeout = TIMEOUT_DEFAULT_MS;
 
-    syslog(LOG_INFO, "%s --- [K]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [K]", __FUNCTION__);
 
-    while(!(session->session_state == SSH_SESSION_STATE_ERROR 
+    while(!(session->session_state == SSH_SESSION_STATE_ERROR
       || SSH_SESSION_STATE_AUTHENTICATING == session->session_state
       || SSH_SESSION_STATE_DISCONNECTED == session->session_state)) {
 
@@ -1862,7 +1865,7 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
         struct timeval now;
         gettimeofday(&now, nullptr);
         long ms =   (now.tv_sec - start.tv_sec) * 1000
-                + (now.tv_usec < start.tv_usec) * 1000 
+                + (now.tv_usec < start.tv_usec) * 1000
                 + (now.tv_usec - start.tv_usec) / 1000;
 
         if (ms >= timeout)
@@ -1872,7 +1875,7 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
         timeout -= ms;
     }
 
-    syslog(LOG_INFO, "%s --- [L]", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- [L]", __FUNCTION__);
 
     if (SSH_SESSION_STATE_AUTHENTICATING != session->session_state
       && SSH_SESSION_STATE_DISCONNECTED != session->session_state) {
@@ -1883,11 +1886,11 @@ ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ct
 
     session->pending_call_state = SSH_PENDING_CALL_NONE;
     if (session->session_state == SSH_SESSION_STATE_DISCONNECTED){
-        syslog(LOG_INFO, "%s --- done SSH_ERROR", __FUNCTION__);    
-        syslog(LOG_INFO, "%s --- done 7", __FUNCTION__);            
+        syslog(LOG_INFO, "%s --- done SSH_ERROR", __FUNCTION__);
+        syslog(LOG_INFO, "%s --- done 7", __FUNCTION__);
         return nullptr;
     }
-    syslog(LOG_INFO, "%s --- done SSH_OK", __FUNCTION__);    
+    syslog(LOG_INFO, "%s --- done SSH_OK", __FUNCTION__);
     //    session->flags &= ~SSH_SESSION_FLAG_BLOCKING;
     return session;
 }
@@ -1901,15 +1904,15 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
                                           ssh_poll_ctx_struct * ctx,
                                           socket_t fd, const char * filename, int authmethods)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
-    syslog(LOG_INFO, "%s --- key filename = %s", __FUNCTION__, filename);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
+    syslog(LOG_INFO, "%s --- key filename = %s", __FUNCTION__, filename);
 
     ctx->front_session = new SshServerSession(ctx, cb_server, new ssh_socket_struct);
     if (!ctx->front_session) {
         syslog(LOG_INFO, "session allocation failed");
         return nullptr;
     }
-    
+
     ctx->front_session->socket->fd_in = ctx->front_session->socket->fd_out = fd;
     ctx->front_session->socket->state = SSH_SOCKET_CONNECTING;
 
@@ -1978,8 +1981,8 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     //    CRYPTO_cleanup_all_ex_data();
 
     std::initializer_list<std::pair<const char *, enum ssh_keytypes_e>> l = {
-         {DSA_HEADER_BEGIN, SSH_KEYTYPE_DSS}, 
-         {RSA_HEADER_BEGIN, SSH_KEYTYPE_RSA}, 
+         {DSA_HEADER_BEGIN, SSH_KEYTYPE_DSS},
+         {RSA_HEADER_BEGIN, SSH_KEYTYPE_RSA},
          {ECDSA_HEADER_BEGIN, SSH_KEYTYPE_ECDSA}
         };
 
@@ -1990,7 +1993,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
             break;
         }
     }
-    
+
     if (type == SSH_KEYTYPE_UNKNOWN) {
         LOG(LOG_INFO, "Unknown or invalid private key.");
         syslog(LOG_INFO, "Failed to import private host key");
@@ -2014,7 +2017,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
             return nullptr;
         }
         BIO_free(mem);
-        ctx->front_session->server_dsa_key = privkey; 
+        ctx->front_session->server_dsa_key = privkey;
         snprintf(hostkeys, sizeof(hostkeys), "ssh-dss");
     }
     break;
@@ -2032,7 +2035,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
             return nullptr;
         }
         BIO_free(mem);
-        ctx->front_session->server_rsa_key = privkey; 
+        ctx->front_session->server_rsa_key = privkey;
         snprintf(hostkeys, sizeof(hostkeys), "ssh-rsa");
     }
     break;
@@ -2050,7 +2053,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
         }
         privkey->ecdsa_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(privkey->ecdsa));
         BIO_free(mem);
-        ctx->front_session->server_ecdsa_key = privkey; 
+        ctx->front_session->server_ecdsa_key = privkey;
         snprintf(hostkeys, sizeof(hostkeys), "ssh-ecdsa");
     }
     break;
@@ -2062,7 +2065,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     }
 
     delete [] b64_key;
-   
+
     /* force PRNG to change state in case we fork after ssh_bind_accept */
     struct timeval tv;
     gettimeofday(&tv, nullptr);
@@ -2086,7 +2089,7 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
         if (!ptr) {
             ssh_set_error(ctx->front_session->error, SSH_REQUEST_DENIED,
                 "Setting method: no algorithm for method \"%s\" (%s)\n",
-                "server host key algo", 
+                "server host key algo",
                 hostkeys);
             return nullptr;
         }
@@ -2099,10 +2102,10 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     }
 
     ctx->front_session->next_crypto->server_kex.methods[SSH_KEX] = "curve25519-sha256@libssh.org,ecdh-sha2-nistp256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1";
-    
+
 //        ctx->front_session->next_crypto->server_kex.methods[SSH_HOSTKEYS] = "ecdsa-sha2-nistp256,ssh-rsa,ssh-dss";
     ctx->front_session->next_crypto->server_kex.methods[SSH_HOSTKEYS] = strdup(hostkeys);
-    
+
     ctx->front_session->next_crypto->server_kex.methods[SSH_CRYPT_C_S] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
     ctx->front_session->next_crypto->server_kex.methods[SSH_CRYPT_S_C] = "aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc,des-cbc-ssh1";
     ctx->front_session->next_crypto->server_kex.methods[SSH_MAC_C_S] = "hmac-sha1";
@@ -2121,13 +2124,13 @@ ssh_session_struct *  ssh_start_new_server_session(ssh_server_callbacks cb_serve
     snprintf(buffer, 128, "%s\n", ctx->front_session->serverbanner);
     ctx->front_session->socket->out_buffer->out_blob(buffer, strlen(buffer));
 
-    syslog(LOG_INFO, "%s --- done ok", __FUNCTION__);        
+    syslog(LOG_INFO, "%s --- done ok", __FUNCTION__);
     return ctx->front_session; // SSH_OK;
 }
 
-int packet_decrypt(ssh_crypto_struct & crypto, void *data, uint32_t len, error_struct & error) 
+int packet_decrypt(ssh_crypto_struct & crypto, void *data, uint32_t len, error_struct & error)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
   assert(len);
 
   if(len % crypto.in_cipher->blocksize != 0){
@@ -2151,13 +2154,13 @@ int packet_decrypt(ssh_crypto_struct & crypto, void *data, uint32_t len, error_s
   memset(out, 0, len);
 
   free(out);
-  out = nullptr; 
+  out = nullptr;
   return 0;
 }
 
-int ssh_channel_struct::channel_request(ssh_session_struct * session) 
+int ssh_channel_struct::channel_request(ssh_session_struct * session)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (session->session_state == SSH_SESSION_STATE_ERROR){
         return SSH_ERROR;
     }

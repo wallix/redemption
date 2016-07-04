@@ -25,8 +25,6 @@
 #define BOOST_TEST_MODULE TestAppVerifier
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGPRINT
 //#define LOGNULL
@@ -97,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestReverseIterators)
 
     char filename[128];
     memcpy(filename, line, filename_len);
-    
+
     BOOST_CHECK(0 == memcmp("ff fff", filename, filename_len));
     printf("filename=%s\n", filename);
 
@@ -224,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 // python tools/verifier.py -i toto@10.10.43.13\,Administrateur@QA@cible\,20160218-183009\,wab-5-0-0.yourdomain\,7335.mwrm --hash-path tests/fixtures/verifier/hash/ --mwrm-path tests/fixtures/verifier/recorded/ --verbose 10
 
 extern "C" {
-    int hmac_fn(char * buffer)
+    inline int hmac_fn(char * buffer)
     {
         uint8_t hmac_key[32] = {
             0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
@@ -235,7 +233,7 @@ extern "C" {
         return 0;
     }
 
-    int trace_fn(char * base, int len, char * buffer)
+    inline int trace_fn(char * base, int len, char * buffer)
     {
         // in real uses actual trace_key is derived from base and some master key
         uint8_t trace_key[32] = {

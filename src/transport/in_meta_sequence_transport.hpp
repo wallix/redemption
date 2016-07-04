@@ -35,7 +35,7 @@
 #include "transport/cryptofile.hpp"
 #include "utils/urandom_read.hpp"
 
-char chex_to_int(char c, int & err) {
+inline char chex_to_int(char c, int & err) {
     return
         '0' <= c && c <= '9' ? c-'0'
       : 'a' <= c && c <= 'f' ? c-'a' + 10

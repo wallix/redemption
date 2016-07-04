@@ -29,8 +29,6 @@
 #define BOOST_TEST_MODULE TestRegion
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
 //#include <boost/foreach.hpp>

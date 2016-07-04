@@ -24,7 +24,6 @@
 #define BOOST_TEST_MODULE TestDiffTimeval
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "utils/difftimeval.hpp"
 
 BOOST_AUTO_TEST_CASE(TestUstime)

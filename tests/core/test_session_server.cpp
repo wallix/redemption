@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "core/session_server.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

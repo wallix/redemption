@@ -9,13 +9,12 @@
 
 #define LOGPRINT
 #include "utils/log.hpp"
- 
-#define MAX 10000 // for strings
 
-using namespace std;
+#define MAX 10000 // for std::strings
+
 class BigInteger {
 private:
-    string number;
+    std::string number;
     bool sign;
 public:
     BigInteger() { // empty constructor initializes zero
@@ -23,8 +22,11 @@ public:
         sign = false;
     }
 
+    BigInteger(BigInteger const &) = default;
+    BigInteger(BigInteger &&) = default;
 
-    BigInteger(string s) { // "string" constructor
+
+    BigInteger(std::string s) { // "std::string" constructor
         if( isdigit(s[0]) ) { // if not signed
             setNumber(s);
             sign = false; // +ve
@@ -35,16 +37,15 @@ public:
     }
 
 
-    BigInteger(string s, bool sin) { // "string" constructor
+    BigInteger(std::string s, bool sin) { // "std::string" constructor
         setNumber( s );
         setSign( sin );
     }
 
 
-
     BigInteger(int n) { // "int" constructor
-        stringstream ss;
-        string s;
+        std::stringstream ss;
+        std::string s;
         ss << n;
         ss >> s;
 
@@ -58,52 +59,53 @@ public:
         }
     }
 
-    void setNumber(string s) {
+
+    BigInteger & operator = (BigInteger &&) = default;
+    BigInteger & operator = (BigInteger const &) = default;
+
+
+
+    void setNumber(std::string s) {
         number = s;
     }
 
-    const string& getNumber() { // retrieves the number
+    const std::string& getNumber() const { // retrieves the number
         return number;
     }
     void setSign(bool s) {
         sign = s;
     }
 
-    const bool& getSign() {
+    const bool& getSign() const {
         return sign;
     }
 
-    BigInteger absolute() {
+    BigInteger absolute() const {
         return BigInteger( getNumber() ); // +ve by default
     }
 
-    void operator = (BigInteger b) {
-        setNumber( b.getNumber() );
-        setSign( b.getSign() );
-    }
-
-    bool operator == (BigInteger b) {
+    bool operator == (BigInteger const & b) const {
         return equals((*this) , b);
     }
 
-    bool operator != (BigInteger b) {
+    bool operator != (BigInteger const & b) const {
         return ! equals((*this) , b);
     }
 
-    bool operator > (BigInteger b) {
+    bool operator > (BigInteger const & b) const {
         return greater((*this) , b);
     }
 
-    bool operator < (BigInteger b) {
+    bool operator < (BigInteger const & b) const {
         return less((*this) , b);
     }
 
-    bool operator >= (BigInteger b) {
+    bool operator >= (BigInteger const & b) const {
         return equals((*this) , b)
             || greater((*this), b);
     }
 
-    bool operator <= (BigInteger b) {
+    bool operator <= (BigInteger const & b) const {
         return equals((*this) , b)
             || less((*this) , b);
     }
@@ -212,7 +214,7 @@ public:
         return (*this);
     }
 
-    
+
     BigInteger& operator -= (BigInteger b){
         (*this) = (*this) - b;
         return (*this);
@@ -242,8 +244,8 @@ public:
         return (*this) * -1;
     }
 
-    operator string() { // for conversion from BigInteger to string
-        string signedString = ( getSign() ) ? "-" : ""; // if +ve, don't print + sign
+    operator std::string() { // for conversion from BigInteger to std::string
+        std::string signedString = ( getSign() ) ? "-" : ""; // if +ve, don't print + sign
         signedString += number;
         return signedString;
     }
@@ -251,12 +253,12 @@ public:
 
 private:
 
-    bool equals(BigInteger n1, BigInteger n2) {
+    bool equals(BigInteger const & n1, BigInteger const & n2) const {
         return n1.getNumber() == n2.getNumber()
                && n1.getSign() == n2.getSign();
     }
 
-    bool less(BigInteger n1, BigInteger n2) {
+    bool less(BigInteger const & n1, BigInteger const & n2) const & {
         bool sign1 = n1.getSign();
         bool sign2 = n2.getSign();
 
@@ -281,12 +283,12 @@ private:
         }
     }
 
-    bool greater(BigInteger n1, BigInteger n2){
+    bool greater(BigInteger const & n1, BigInteger const & n2) const{
         return ! equals(n1, n2) && ! less(n1, n2);
     }
 
-    string add(string number1, string number2){
-        string add = (number1.length() > number2.length()) ?  number1 : number2;
+    std::string add(std::string number1, std::string number2){
+        std::string add = (number1.length() > number2.length()) ?  number1 : number2;
         char carry = '0';
         int differenceInLength = abs( static_cast<int> (number1.size() - number2.size()) );
 
@@ -315,8 +317,8 @@ private:
     }
 
 
-    string subtract(string number1, string number2) {
-        string sub = (number1.length()>number2.length())? number1 : number2;
+    std::string subtract(std::string number1, std::string number2) {
+        std::string sub = (number1.length()>number2.length())? number1 : number2;
         int differenceInLength = abs( static_cast<int>(number1.size() - number2.size()) );
 
         if(number1.size() > number2.size())
@@ -340,13 +342,13 @@ private:
     }
 
 
-    string multiply(string n1, string n2){
+    std::string multiply(std::string n1, std::string n2){
         if(n1.length() > n2.length())
             n1.swap(n2);
 
-        string res = "0";
+        std::string res = "0";
         for(int i=n1.length()-1; i>=0; --i) {
-            string temp = n2;
+            std::string temp = n2;
             int currentDigit = n1[i]-'0';
             int carry = 0;
 
@@ -359,7 +361,7 @@ private:
                 } else
                     carry = 0;
 
-                temp[j] += '0'; // back to string mood
+                temp[j] += '0'; // back to std::string mood
             }
 
             if(carry > 0)
@@ -377,9 +379,9 @@ private:
     }
 
 
-    pair<string, long long> divide(string n, long long den) {
+    std::pair<std::string, long long> divide(std::string n, long long den) {
         long long rem = 0;
-        string result;
+        std::string result;
         result.resize(MAX);
 
         for(int indx=0, len = n.length(); indx<len; ++indx) {
@@ -395,12 +397,12 @@ private:
         if(result.length() == 0)
             result = "0";
 
-        return make_pair(result, rem);
+        return std::make_pair(result, rem);
     }
 
-    string toString(long long n) {
-        stringstream ss;
-        string temp;
+    std::string toString(long long n) {
+        std::stringstream ss;
+        std::string temp;
 
         ss << n;
         ss >> temp;
@@ -409,7 +411,7 @@ private:
     }
 
 
-    long long toInt(string s) {
+    long long toInt(std::string s) {
        long long sum = 0;
 
         for(unsigned int i=0; i<s.length(); i++)
@@ -473,5 +475,3 @@ public:
 
 
 };
-
-

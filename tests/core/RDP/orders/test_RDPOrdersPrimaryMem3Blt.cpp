@@ -25,6 +25,8 @@
 
 #define LOGNULL
 
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+
 BOOST_AUTO_TEST_CASE(TestXXX)
 {
 }

@@ -20,7 +20,7 @@
  *
  */
 
-#pragma once 
+#pragma once
 
 #include "composite.hpp"
 #include "multiline.hpp"
@@ -283,6 +283,8 @@ public:
             this->filter_protocol.set_edit_cx(this->protocol_label.cx());
             this->filter_protocol.set_edit_y(filters_y);
             offset += this->protocol_label.rect.cx;
+
+            (void)offset;
         }
         {
             // selector list position

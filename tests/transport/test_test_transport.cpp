@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     try{
         gt.send("in", 2);
-    } catch (const Error & e){
+    } catch (const Error &){
         BOOST_CHECK(false);
     }
     BOOST_CHECK_EQUAL(gt.get_status(), true);

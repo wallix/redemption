@@ -26,9 +26,6 @@
 
 #include <string>
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 
 #include "widget2/fake_draw.hpp"

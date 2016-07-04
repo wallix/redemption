@@ -39,7 +39,7 @@ public:
         : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)
         , w_border(10)
         , h_border(10)
-        , desc(WidgetMultiLine(drawable, w_border, h_border, *this, this, text, true, 0, fgcolor, bgcolor, font, 0, 0))
+        , desc(drawable, w_border, h_border, *this, this, text, true, 0, fgcolor, bgcolor, font, 0, 0)
         , border_color(border_color)
     {
         this->tab_flag = IGNORE_TAB;

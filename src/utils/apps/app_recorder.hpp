@@ -169,16 +169,16 @@ static void show_metadata(FileToGraphic const & player) {
 }
 
 TODO("Signals related code should not be here, all globals if any should be in main")
-bool program_requested_to_shutdown = false;
+static bool program_requested_to_shutdown = false;
 
-void shutdown(int sig)
+inline void shutdown(int sig)
 {
     LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());
 
     program_requested_to_shutdown = true;
 }
 
-void init_signals(void)
+inline void init_signals(void)
 {
     struct sigaction sa;
 

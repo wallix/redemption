@@ -26,8 +26,6 @@
 #define BOOST_TEST_MODULE TestRdpClientWab
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 // Comment the code block below to generate testing data.
 #define LOGNULL

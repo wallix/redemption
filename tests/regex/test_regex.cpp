@@ -27,9 +27,6 @@
 #define BOOST_TEST_MODULE TestDfaRegex
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-//#define LOGPRINT
-
 #include "regex/regex.hpp"
 
 #include <vector>
@@ -37,6 +34,7 @@
 
 using namespace re;
 
+inline
 void regex_test(Regex & p_regex,
                 const char * p_str,
                 bool p_exact_result_search,
@@ -73,7 +71,7 @@ void regex_test(Regex & p_regex,
 TEST_REGEX_TRACE_LINE; \
 regex_test(p_regex, p_str, p_exact_result_search, p_result_search, p_exact_result_match, p_exact_match_result, p_result_match, p_match_result)
 
-void test_re(re::Regex::flag_t flags)
+inline void test_re(re::Regex::flag_t flags)
 {
     typedef re::StateMachine2::range_t range_t;
 

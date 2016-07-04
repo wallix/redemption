@@ -26,8 +26,6 @@
 #include "system/redemption_unit_tests.hpp"
 //#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 // #define LOGPRINT
@@ -104,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         consumer.sync();
         consumer.send_image_chunk();
     }
-    catch (Error const & e){
+    catch (Error const &){
         BOOST_CHECK(false);
     };
 }
@@ -187,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     try {
         consumer.dump_png24(png_trans, true);
 //        DumpPng24FromRDPDrawableAdapter(consumer).dump_png24(png_trans, true);
-    } catch (Error const & e) {
+    } catch (Error const &) {
         BOOST_CHECK(false);
     };
 }

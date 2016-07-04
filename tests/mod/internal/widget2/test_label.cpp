@@ -24,18 +24,12 @@
 #define BOOST_TEST_MODULE TestWidgetLabel
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 
 #include "core/font.hpp"
 #include "mod/internal/widget2/label.hpp"
 #include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
 
 #include <iostream>
 #include "fake_draw.hpp"
@@ -69,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "label0.png");
+    //drawable.save_to_png("/tmp/label0.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -103,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label2.png");
+    //drawable.save_to_png("/tmp/label2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -137,7 +131,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "label3.png");
+    //drawable.save_to_png("/tmp/label3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -171,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label4.png");
+    //drawable.save_to_png("/tmp/label4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -205,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label5.png");
+    //drawable.save_to_png("/tmp/label5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -239,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label6.png");
+    //drawable.save_to_png("/tmp/label6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -273,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label7.png");
+    //drawable.save_to_png("/tmp/label7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -307,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
                                      30,
                                      10));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label8.png");
+    //drawable.save_to_png("/tmp/label8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -401,7 +395,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 //    wcomposite.rdp_input_invalidate(Rect(0, 0, 800, 600));
 
-   drawable.save_to_png(OUTPUT_FILE_PATH "label9.png");
+   //drawable.save_to_png("/tmp/label9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
@@ -413,7 +407,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     //ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "label10.png");
+    // drawable.save_to_png("/tmp/label10.png");
 
     if (!check_sig(drawable.gd.impl(), message,
         "\x04\x53\x86\xe9\xcd\xab\x74\xa4\x8f\x7c\x35\x56\xd8\xb4\xb2\x85\x48\x6f\x20\x92"
@@ -458,7 +452,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "label2.png");
+    //drawable.save_to_png("/tmp/label2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,

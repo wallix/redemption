@@ -26,8 +26,6 @@
 #define BOOST_TEST_MODULE TestColors
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "utils/colors.hpp"
 
 BOOST_AUTO_TEST_CASE(TestColors)

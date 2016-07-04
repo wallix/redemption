@@ -25,8 +25,6 @@
 #define BOOST_TEST_MODULE TestAclSerializer
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 // #define LOGPRINT
@@ -46,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     ini.set<cfg::context::forcemodule>(true);
     try {
         acl.send_acl_data();
-    } catch (const Error & e){
+    } catch (const Error &){
         BOOST_CHECK(false);
     }
 
@@ -80,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     try {
         acl.incoming();
-    } catch (const Error & e){
+    } catch (const Error &){
         BOOST_CHECK(false);
     }
     BOOST_CHECK(ini.is_asked<cfg::globals::auth_user>());

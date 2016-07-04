@@ -24,9 +24,6 @@
 #define BOOST_TEST_MODULE TestFinally
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-// #define LOGPRINT
-
 #include "utils/sugar/finally.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFinally)
@@ -59,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestFinally)
 
     try {
         rethrow_try_except(
-            [&]{ throw 0; return 0; /*note: result isn't void*/},
+            [&]() -> int { throw 0; },
             [&]{ throw ""; }
         );
     } catch (char const *)

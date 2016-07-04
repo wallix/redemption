@@ -1274,7 +1274,7 @@ namespace re {
 
             unsigned new_trace;
             unsigned count_consume;
-            bool count_consume_is_one;
+            bool count_consume_is_one = false;
             for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
                 ++this->step_count;
                 if (active_capture) {

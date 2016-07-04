@@ -26,6 +26,7 @@
 
 #define LOGNULL
 
+#include "core/RDP/GraphicUpdatePDU.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {

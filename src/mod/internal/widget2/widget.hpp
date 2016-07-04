@@ -87,8 +87,6 @@ public:
     , has_focus(false)
     , notify_value(0) {}
 
-    ~Widget2() override {}
-
     virtual bool next_focus()
     {
         return false;

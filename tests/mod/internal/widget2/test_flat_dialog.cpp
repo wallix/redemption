@@ -24,9 +24,6 @@
 #define BOOST_TEST_MODULE TestFlatDialog
 #include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 #include "utils/log.hpp"
 
@@ -35,9 +32,6 @@
 #include "mod/internal/widget2/screen.hpp"
 #include "mod/internal/widget2/flat_button.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
 
 #include "fake_draw.hpp"
 

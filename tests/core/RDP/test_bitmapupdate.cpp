@@ -29,36 +29,9 @@
 
 #include "core/RDP/bitmapupdate.hpp"
 #include "check_sig.hpp"
-#include "utils/png.hpp"
+#include "dump_png.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-inline bool check_sig(RDPDrawable & data, char * message, const char * shasig)
-{
-    return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
-}
-
-// to see last result file, remove unlink
-// and do something like:
-// eog `ls -1tr /tmp/test_* | tail -n 1`
-// (or any other variation you like)
-
-void dump_png(const char * prefix, const Drawable & data)
-{
-    char tmpname[128];
-    sprintf(tmpname, "%sXXXXXX.png", prefix);
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, data.data(), data.width(), data.height(), data.rowsize(), true);
-    ::fclose(f);
-}
-
-void save_to_png(const char * filename, const Drawable & data)
-{
-    FILE * file = fopen(filename, "w+");
-    dump_png24(file, data.data(), data.width(),
-               data.height(), data.rowsize(), true);
-    fclose(file);
-}
 
 BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 {
@@ -221,5 +194,5 @@ BOOST_AUTO_TEST_CASE(TestDrawBitmapUpdate)
     }
 
     // uncomment to see result in png file
-    //dump_png("./test_bitmapupdate_", gd.impl());
+    //dump_png("./test_bitmapupdate.png", gd.impl());
 }
