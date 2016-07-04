@@ -598,6 +598,18 @@ public:
     }
 };
 
+ssize_t file_size(const char * filename)
+{
+    // we just check the size match
+    // used when checksum is active
+    struct stat64 sb;
+    memset(&sb, 0, sizeof(sb));
+    if (lstat64(filename, &sb) < 0){
+        return -1;
+    }
+    return sb.st_size;
+}
+
 struct FullFileChecker
 {
     const std::string & full_filename;
@@ -654,18 +666,6 @@ struct FullFileChecker
             uint8_t         hash[SHA256_DIGEST_LENGTH];
             hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
             this->failed = 0 != memcmp(hash, hash_buf, hash_len);
-        }
-    }
-
-    void check_short_stat(const MetaLine2 & meta_line)
-    {
-        // we just check the size match
-        // used when checksum is active
-        if (!this->failed){
-            struct stat64 sb;
-            memset(&sb, 0, sizeof(sb));
-            lstat64(full_filename.c_str(), &sb);
-            this->failed = (meta_line.size != sb.st_size);
         }
     }
 };
@@ -727,18 +727,6 @@ struct QuickFileChecker
             uint8_t         hash[SHA256_DIGEST_LENGTH];
             hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
             this->failed = 0 != memcmp(hash, hash_buf, hash_len);
-        }
-    }
-
-    void check_short_stat(const MetaLine2 & meta_line)
-    {
-        // we just check the size match
-        // used when checksum is active
-        if (!this->failed){
-            struct stat64 sb;
-            memset(&sb, 0, sizeof(sb));
-            lstat64(full_filename.c_str(), &sb);
-            this->failed = (meta_line.size != sb.st_size);
         }
     }
 };
@@ -1327,6 +1315,15 @@ static inline int check_encrypted_or_checksumed(
     ******************/
     bool result = false;
 
+    if (file_size(full_mwrm_filename.c_str()) != hash_line.size)
+    {
+        std::cerr << "File \"" 
+                  << full_mwrm_filename 
+                  << "\" is invalid! (size mismatch)" 
+                  << std::endl << std::endl;
+        return 1;
+    }
+
     if (infile_is_checksumed){
         if (quick_check){
             QuickFileChecker check(full_mwrm_filename);
@@ -1334,7 +1331,6 @@ static inline int check_encrypted_or_checksumed(
                         (quick_check ? hash_line.hash1 : hash_line.hash2),
                         (quick_check ? sizeof(hash_line.hash1) : sizeof(hash_line.hash2)),
                         quick_check);
-            check.check_short_stat(hash_line);
             if (check.failed)
             {
                 std::cerr << "File \"" 
@@ -1365,19 +1361,29 @@ static inline int check_encrypted_or_checksumed(
                 
                 const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
                 std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
-                std::string const full_meta_mwrm_filename = mwrm_path + meta_line_wrm_filename;
+                std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-                QuickFileChecker check(full_meta_mwrm_filename);
+                if (file_size(full_part_filename.c_str()) != meta_line_wrm.size)
+                {
+                    std::cerr << "File \"" 
+                              << full_mwrm_filename 
+                              << "\" is invalid! (part size mismatch for:" 
+                              << full_part_filename
+                              << ")" 
+                              << std::endl << std::endl;
+                    return 1;
+                }
+
+                QuickFileChecker check(full_part_filename);
                 check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
                             (quick_check ? meta_line_wrm.hash1 : meta_line_wrm.hash2),
                             (quick_check ? sizeof(meta_line_wrm.hash1) : sizeof(meta_line_wrm.hash2)),
                             quick_check);
                 if (check.failed){
                      std::cerr << "Bad checksum for part file \""
-                               << full_meta_mwrm_filename << "\""
+                               << full_part_filename << "\""
                                << std::endl << std::endl;
                 }
-                check.check_short_stat(meta_line_wrm);
 
                 if (check.failed)
                 {
@@ -1390,7 +1396,6 @@ static inline int check_encrypted_or_checksumed(
             FullFileChecker check(full_mwrm_filename);
             check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
                         hash_line.hash2, sizeof(hash_line.hash2));
-            check.check_short_stat(hash_line);
             if (check.failed)
             {
                 std::cerr << "File \"" 
@@ -1421,16 +1426,26 @@ static inline int check_encrypted_or_checksumed(
                 
                 const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
                 std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
-                std::string const full_meta_mwrm_filename = mwrm_path + meta_line_wrm_filename;
+                std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-                FullFileChecker check(full_meta_mwrm_filename);
+                if (file_size(full_part_filename.c_str()) !=  meta_line_wrm.size)
+                {
+                    std::cerr << "File \"" 
+                              << full_mwrm_filename 
+                              << "\" is invalid! (part size mismatch for:" 
+                              << full_part_filename
+                              << ")" 
+                              << std::endl << std::endl;
+                    return 1;
+                }
+
+                FullFileChecker check(full_part_filename);
                 check.check_hash_sha256(cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()), meta_line_wrm.hash2, sizeof(meta_line_wrm.hash2));
                 if (check.failed){
                      std::cerr << "Bad checksum for part file \""
-                               << full_meta_mwrm_filename << "\""
+                               << full_part_filename << "\""
                                << std::endl << std::endl;
                 }
-                check.check_short_stat(meta_line_wrm);
 
                 if (check.failed)
                 {
@@ -1474,9 +1489,9 @@ static inline int check_encrypted_or_checksumed(
             
             const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
             std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
-            std::string const full_meta_mwrm_filename = mwrm_path + meta_line_wrm_filename;
+            std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-            FullStatFileChecker check(full_meta_mwrm_filename);
+            FullStatFileChecker check(full_part_filename);
             check.check_full_stat(meta_line_wrm);
 
             if (check.failed)
