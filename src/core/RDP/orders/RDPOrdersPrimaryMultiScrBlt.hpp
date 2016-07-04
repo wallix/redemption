@@ -116,43 +116,24 @@ namespace RDP {
 
 class RDPMultiScrBlt {
 public:
-    Rect       rect;
-    int16_t  & nLeftRect;
-    int16_t  & nTopRect;
-    uint16_t & nWidth;
-    uint16_t & nHeight;
-    uint8_t    bRop;
-    int16_t    nXSrc;
-    int16_t    nYSrc;
-    uint8_t    nDeltaEntries;
+    Rect       rect {}; //nLeftRect, nTopRect, nWidth, nHeight
+    uint8_t    bRop {};
+    int16_t    nXSrc {};
+    int16_t    nYSrc {};
+    uint8_t    nDeltaEntries {};
 
-    struct DeltaEncodedRectangle deltaEncodedRectangles[45];
+    DeltaEncodedRectangle deltaEncodedRectangles[45] {};
 
     static uint8_t id(void)
     {
         return RDP::MULTISCRBLT;
     }
 
-    RDPMultiScrBlt()
-    : rect(0, 0, 0, 0)
-    , nLeftRect(rect.x)
-    , nTopRect(rect.y)
-    , nWidth(rect.cx)
-    , nHeight(rect.cy)
-    , bRop(0)
-    , nXSrc(0)
-    , nYSrc(0)
-    , nDeltaEntries(0) {
-        ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
-    }
+    RDPMultiScrBlt() = default;
 
     RDPMultiScrBlt( const Rect & _rect, uint8_t bRop, int16_t nXSrc, int16_t nYSrc, uint8_t nDeltaEntries
                   , InStream & deltaEncodedRectangles)
     : rect(_rect)
-    , nLeftRect(rect.x)
-    , nTopRect(rect.y)
-    , nWidth(rect.cx)
-    , nHeight(rect.cy)
     , bRop(bRop)
     , nXSrc(nXSrc)
     , nYSrc(nYSrc)
@@ -166,16 +147,7 @@ public:
         }
     }
 
-    RDPMultiScrBlt & operator=(const RDPMultiScrBlt & other) {
-        this->rect          = other.rect;
-        this->bRop          = other.bRop;
-        this->nXSrc         = other.nXSrc;
-        this->nYSrc         = other.nYSrc;
-        this->nDeltaEntries = other.nDeltaEntries;
-        ::memcpy(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries);
-
-        return *this;
-    }
+    RDPMultiScrBlt & operator=(const RDPMultiScrBlt & other) = default;
 
     void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon
              , const RDPMultiScrBlt & oldcmd) const {
@@ -349,7 +321,7 @@ public:
                         "nXSrc=%d nXSrc=%d "
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
-                      , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight
+                      , this->rect.x, this->rect.y, this->rect.cx, this->rect.cy
                       , unsigned(this->bRop), this->nXSrc, this->nYSrc, this->nDeltaEntries);
         for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
             if (i) {

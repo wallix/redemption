@@ -209,12 +209,27 @@ public:
     }
 
 private:
+    // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
+    //@{
+    static Rect to_rect(RDPMultiDstBlt const & cmd)
+    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
+    static Rect to_rect(RDPMultiOpaqueRect const & cmd)
+    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
+    static Rect const & to_rect(RDP::RDPMultiPatBlt const & cmd)
+    { return cmd.rect; }
+
+    static Rect const & to_rect(RDP::RDPMultiScrBlt const & cmd)
+    { return cmd.rect; }
+    //@}
+
     template<class RDPMulti, class FRect>
     void draw_multi(const RDPMulti & cmd, const Rect & clip, FRect f)
     {
         const Rect clip_drawable_cmd_intersect
           = clip.intersect(this->drawable.width(), this->drawable.height())
-          .intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+          .intersect(to_rect(cmd));
 
         Rect cmd_rect;
 
@@ -247,8 +262,8 @@ public:
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
             uint8_t brush_data[8];
-            memcpy(brush_data, cmd.BrushExtra, 7);
-            brush_data[7] = cmd.BrushHatch;
+            memcpy(brush_data, cmd.brush.extra, 7);
+            brush_data[7] = cmd.brush.hatch;
             this->draw_multi(cmd, clip, [&](const Rect & trect) {
                 this->drawable.patblt_ex(
                     trect, cmd.bRop,
