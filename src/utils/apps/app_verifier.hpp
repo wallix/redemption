@@ -656,15 +656,6 @@ int file_start_hmac_sha256(const char * filename,
 
 class MwrmReader : public MwrmReaderXXX
 {
-    void in_copy_bytes(uint8_t * hash, int len, char * & cur, char * eof, int err)
-    {
-        if (eof - cur < len){
-            throw Error(err);
-        }
-        memcpy(hash, cur, len);
-        cur += len;
-    }
-
 public:
     MwrmReader(ifile_read_API & reader_buf) noexcept
     : MwrmReaderXXX(reader_buf)
@@ -672,15 +663,15 @@ public:
         memset(this->buf, 0, sizeof(this->buf));
     }
 
-    int read_meta_file2(MetaHeaderXXX const & meta_header, MetaLine2 & meta_line) {
+    int read_meta_file2(MetaLine2 & meta_line) {
         printf("read_meta_file2\n");
         try {
-            if (meta_header.version == 1) {
+            if (this->header.version == 1) {
                 this->read_meta_file_v1(meta_line);
                 return 0;
             }
             else {
-                this->read_meta_file_v2(meta_header, meta_line);
+                this->read_meta_file_v2(this->header, meta_line);
                 return 0;
             }
         }
@@ -1175,7 +1166,7 @@ static inline int check_encrypted_or_checksumed(
             MetaLine2 meta_line_wrm;
 
             result = true;
-            while (reader.read_meta_file2(meta_header, meta_line_wrm) == 0) {
+            while (reader.read_meta_file2(meta_line_wrm) == 0) {
 
                 size_t tmp_wrm_filename_len = 0;
                 
@@ -1247,7 +1238,7 @@ static inline int check_encrypted_or_checksumed(
             MetaLine2 meta_line_wrm;
 
             result = true;
-            while (reader.read_meta_file2(meta_header, meta_line_wrm) == 0) {
+            while (reader.read_meta_file2(meta_line_wrm) == 0) {
 
                 size_t tmp_wrm_filename_len = 0;
                 const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
@@ -1320,7 +1311,7 @@ static inline int check_encrypted_or_checksumed(
         MetaLine2 meta_line_wrm;
 
         result = true;
-        while (reader.read_meta_file2(meta_header, meta_line_wrm) == 0) {
+        while (reader.read_meta_file2(meta_line_wrm) == 0) {
 
             size_t tmp_wrm_filename_len = 0;
             
