@@ -404,6 +404,7 @@ var len = 250568;
 var current = 0;
 /* test */
 
+/*
 function connecting() {
     var ip = document.getElementById("ip").value;
     var user = document.getElementById("user").value;
@@ -422,17 +423,13 @@ function connecting() {
         document.getElementById("form").style = "display:none";
         document.getElementById("emscripten_canvas").style = "display:block";
 
-        console.log('1');
         _connexion(pip, puser, ppassword, port);
 
-        /* Test */
 
         startTimer();
         //current = 0;
         getDataOctet();
         endTimer();
-
-        /* Test */
 
     } else {
 
@@ -440,7 +437,8 @@ function connecting() {
         errorDiv.textContent = "Connection failed";
         errorDiv.style = "display:block";
     }
-}
+}*/
+
 
 function disconnecting() {
     document.getElementById("form").style = "display:block";
@@ -452,35 +450,35 @@ function disconnecting() {
 
     _disconnexion();
 }
-
+/*
 function init_socket(ip, user, password, port) { // ip = string; port = int
     console.log('init_socket');
 
     return true;
-}
-
+}*/
+/*
 function send_to_serveur(data, size) { // data = [uint8_t];  size = size_t
     console.log('data_sent_to_serveur');
-}
+}*/
 
 
-
+/*
 function getDataOctet() {
-    /* Test */
 
-    /*var i = 0;
+
+    var i = 0;
     for (i = current; i < (current + 2000); i++) {
         if (i < len) {
             _recv_value(inData[i]);
         }
     }
 
-    current = i;*/
+    current = i;
 
     for (var i = 0; i < len; i++) {
         _recv_value(inData[i]);
     }
 
-    /* Test */
-}
+
+}*/
 
