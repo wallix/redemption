@@ -225,8 +225,8 @@ public:
 
         struct ref_string {
             std::string & s;
-            std::string & get() { return this->s; };
-            operator std::string & () { return this->s; };
+            std::string & get() { return this->s; }
+            operator std::string & () { return this->s; }
         };
 
         std::array<ref_string, 2> ret{{{allow}, {deny}}};

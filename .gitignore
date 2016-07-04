@@ -22,3 +22,4 @@ password.py
 /debian
 /tools/valgrind-filter/valgrind-filter
 *~
+/projects/proxy/tools/redcryptofile/redcryptofile.so

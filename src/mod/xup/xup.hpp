@@ -21,8 +21,7 @@
    xup module main header file
 */
 
-#if !defined(__XUP_HPP__)
-#define __XUP_HPP__
+#pragma once
 
 #include "mod/mod_api.hpp"
 
@@ -330,5 +329,3 @@ enum {
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
     }
 };
-
-#endif

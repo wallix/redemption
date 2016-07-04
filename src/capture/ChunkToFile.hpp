@@ -27,6 +27,7 @@
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
 
+#include "utils/sugar/compiler_attributes.hpp"
 #include "capture/utils/save_state_chunk.hpp"
 
 struct ChunkToFile : public RDPChunkedDevice {
@@ -225,6 +226,7 @@ public:
                 stream.in_timeval_from_uint64le_usec(record_now);
                 this->trans_target.timestamp(record_now);
             }
+            CPP_FALLTHROUGH;
         default:
             {
                 send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);

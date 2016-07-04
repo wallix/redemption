@@ -7,13 +7,8 @@
 #include <sstream>
 #include <cmath>
 
-#define LOGPRINT
-#include "utils/log.hpp"
-
-#define MAX 10000 // for std::strings
-
 class BigInteger {
-private:
+    enum { MAX = 10000 }; // for std::strings
     std::string number;
     bool sign;
 public:

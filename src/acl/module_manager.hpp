@@ -171,7 +171,7 @@ public:
         default:
             break;
         };
-    };
+    }
 
     void invoke_close_box(const char * auth_error_message,
                           BackEvent_t & signal, time_t now) override {

@@ -132,7 +132,7 @@ public:
         case Timeout::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
-        default:
+        case Timeout::TIMEOUT_INACTIVE:
             if (!this->copy_paste && event.waked_up_by_time) {
                 this->copy_paste.ready(this->front);
             }

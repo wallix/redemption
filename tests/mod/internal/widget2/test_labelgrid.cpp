@@ -33,9 +33,6 @@
 #include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
-
 #include "fake_draw.hpp"
 
 BOOST_AUTO_TEST_CASE(TraceLabelGrid)
@@ -88,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid.png");
+    // drawable.save_to_png("/tmp/labelgrid.png");
     // char message[1024];
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x47\x86\xd6\xd2\x1d\x47\xa2\x4e\xcf\x7b"
@@ -103,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid2.png");
+    // drawable.save_to_png("/tmp/labelgrid2.png");
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x0f\xf6\x9f\xa5\xfb\x38\x4c\xb4\x8e\x66"
     //                "\x8e\x6d\x99\x64\x4e\x3c\x9c\x7b\xb6\xca")){
