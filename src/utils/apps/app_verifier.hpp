@@ -671,7 +671,7 @@ public:
                 return 0;
             }
             else {
-                this->read_meta_file_v2(this->header, meta_line);
+                this->read_meta_file_v2(meta_line);
                 return 0;
             }
         }
@@ -680,7 +680,7 @@ public:
         };
     }
 
-    int read_meta_file_v2(MetaHeaderXXX const & meta_header, MetaLine2 & meta_line)
+    int read_meta_file_v2(MetaLine2 & meta_line)
     {
         printf("read_meta_file_v2\n");
         this->next_line();
