@@ -946,9 +946,6 @@ static inline int check_encrypted_or_checksumed(
         infile_is_encrypted = true;
     }
 
-    unsigned infile_version = 1;
-    bool infile_is_checksumed = false;
-
     load_ssl_digests(infile_is_encrypted);
 
     ifile_read_encrypted ibuf(cctx, infile_is_encrypted);
@@ -959,16 +956,13 @@ static inline int check_encrypted_or_checksumed(
     MwrmReader reader(ibuf);
     reader.read_meta_headers();
 
-    infile_version       = reader.header.version;
-    infile_is_checksumed = reader.header.has_checksum;
-
     // TODO: check compatibility of version and encryption
-    if (infile_version < 2) {
+    if (reader.header.version < 2) {
         std::cout << "Input file is unencrypted.\n";
         return 0;
     }
 
-    if (infile_is_checksumed == 0) {
+    if (reader.header.has_checksum == 0) {
         std::cout << "Input file don't include checksum\n";
         return 0;
     }
@@ -983,17 +977,17 @@ static inline int check_encrypted_or_checksumed(
 
         // if reading hash fails
         try {
-            HashLoad meta(full_hash_path, input_filename, infile_version, infile_is_checksumed, hash_line, cctx, infile_is_encrypted, verbose);
+            HashLoad meta(full_hash_path, input_filename, reader.header.version, reader.header.has_checksum, hash_line, cctx, infile_is_encrypted, verbose);
         }
         catch (Error const & e) {
             std::cerr << "Exception code (hash): " << e.id << std::endl << std::endl;
-            if (infile_is_checksumed){
+            if (reader.header.has_checksum){
                 return 1;
             }
         }
         catch (...) {
             std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"" << std::endl << std::endl;
-            if (infile_is_checksumed){
+            if (reader.header.has_checksum){
                 return 1;
             }
         }
@@ -1003,12 +997,11 @@ static inline int check_encrypted_or_checksumed(
     * Check mwrm file *
     ******************/
     
-    if (!check_file(full_mwrm_filename, hash_line, quick_check, infile_is_checksumed, cctx->get_hmac_key(), 32)){
+    if (!check_file(full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum, cctx->get_hmac_key(), 32)){
         return 1;
     }
 
     MetaLine2 meta_line_wrm;
-
     while (reader.read_meta_file2(meta_line_wrm) == 0) {
 
         size_t tmp_wrm_filename_len = 0;
@@ -1016,55 +1009,10 @@ static inline int check_encrypted_or_checksumed(
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-        if (file_size(full_part_filename.c_str()) != meta_line_wrm.size)
-        {
-            std::cerr << "File \"" 
-                      << full_mwrm_filename 
-                      << "\" is invalid! (part size mismatch for:" 
-                      << full_part_filename
-                      << ")" 
-                      << std::endl << std::endl;
+        if (!check_file(full_part_filename, meta_line_wrm, 
+                        quick_check, reader.header.has_checksum,
+                        cctx->get_hmac_key(), 32)){
             return 1;
-        }
-
-        if (infile_is_checksumed){
-            uint8_t hash[SHA256_DIGEST_LENGTH]={};
-            if (file_start_hmac_sha256(full_part_filename.c_str(), 
-                                 cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
-                                 quick_check?QUICK_CHECK_LENGTH:0, hash) < 0){
-                std::cerr << "Error reading part file \"" 
-                          << full_part_filename 
-                          << "\"" 
-                          << std::endl << std::endl;
-                return 1;
-            }
-            if (0 != memcmp(hash, quick_check?meta_line_wrm.hash1:meta_line_wrm.hash2, SHA256_DIGEST_LENGTH)){
-                std::cerr << "Error checking part file \"" 
-                          << full_part_filename 
-                          << "\" (invalid checksum)" 
-                          << std::endl << std::endl;
-                return 1;
-            }
-        }
-        else {
-            struct stat64 sb;
-            memset(&sb, 0, sizeof(sb));
-            lstat64(full_part_filename.c_str(), &sb);
-            if ((meta_line_wrm.dev   != sb.st_dev  )
-            ||  (meta_line_wrm.ino   != sb.st_ino  )
-            ||  (meta_line_wrm.mode  != sb.st_mode )
-            ||  (meta_line_wrm.uid   != sb.st_uid  )
-            ||  (meta_line_wrm.gid   != sb.st_gid  )
-            ||  (meta_line_wrm.size  != sb.st_size )
-            ||  (meta_line_wrm.mtime != sb.st_mtime)
-            ||  (meta_line_wrm.ctime != sb.st_ctime))
-            {
-                std::cerr << "Error checking part file \"" 
-                          << full_part_filename 
-                          << "\" (metadata changed)" 
-                          << std::endl << std::endl;
-                return 1;
-            }
         }
     }
     
