@@ -41,6 +41,10 @@
 #include <sys/inotify.h>
 #include <sys/statvfs.h>
 
+#include <vector>
+#include <string>
+#include <algorithm>
+
 #define EPOCH_DIFF 11644473600LL
 
 #define FILE_TIME_SYSTEM_TO_RDP(_t) \
@@ -1573,24 +1577,24 @@ class FileSystemDriveManager {
 
     const uint32_t INVALID_MANAGED_DRIVE_ID = 0xFFFFFFFF;
 
-#ifdef __clang__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wunused-private-field"
-# endif
     uint32_t next_managed_drive_id = FIRST_MANAGED_DRIVE_ID;
-#ifdef __clang__
-    #pragma GCC diagnostic pop
-# endif
 
-    typedef std::tuple<uint32_t, std::string, std::string, int>
-        managed_drive_type; // DeviceId, name, path, access mode.
-    typedef std::vector<managed_drive_type> managed_drive_collection_type;
+    struct managed_drive_type
+    {
+        uint32_t device_id;
+        std::string name;
+        std::string path;
+        int access_mode;
+    };
+    using managed_drive_collection_type = std::vector<managed_drive_type>;
     managed_drive_collection_type managed_drives;
 
-    typedef std::tuple<uint32_t, std::unique_ptr<ManagedFileSystemObject>>
-        managed_file_system_object_type;    // FileId, object.
-    typedef std::vector<managed_file_system_object_type>
-        managed_file_system_object_collection_type;
+    struct managed_file_system_object_type
+    {
+        uint32_t file_id;
+        std::unique_ptr<ManagedFileSystemObject> object;
+    };
+    using managed_file_system_object_collection_type = std::vector<managed_file_system_object_type>;
     managed_file_system_object_collection_type managed_file_system_objects;
 
     uint32_t session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
@@ -1604,9 +1608,7 @@ public:
         uint8_t   virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
         OutStream virtual_channel_stream(virtual_channel_data);
 
-        for (managed_drive_collection_type::iterator iter =
-                 this->managed_drives.begin();
-             iter != this->managed_drives.end(); ++iter) {
+        for (managed_drive_type const & managed_drive : this->managed_drives) {
 
             rdpdr::SharedHeader client_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -1620,11 +1622,10 @@ public:
 
             rdpdr::DeviceAnnounceHeader device_announce_header(
                     rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
-                    std::get<0>(*iter),             // DeviceId
-                    std::get<1>(*iter).c_str(),     // PreferredDosName
-                    reinterpret_cast<uint8_t const *>(
-                        std::get<1>(*iter).c_str()),
-                    std::get<1>(*iter).length() + 1
+                    managed_drive.device_id,
+                    managed_drive.name.c_str(),     // PreferredDosName
+                    reinterpret_cast<uint8_t const *>(managed_drive.name.c_str()),
+                    managed_drive.name.length() + 1
                 );
 
             if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
@@ -1666,13 +1667,12 @@ private:
 
             drive_id = this->next_managed_drive_id++;
 
-            this->managed_drives.push_back(
-                    std::make_tuple(drive_id,
-                                    drive_name,
-                                    absolute_directory_path.c_str(),
-                                    (read_only ? O_RDONLY : O_RDWR)
-                                   )
-                );
+            this->managed_drives.push_back({
+                drive_id,
+                drive_name,
+                absolute_directory_path.c_str(),
+                (read_only ? O_RDONLY : O_RDWR)
+            });
         }
         else {
             LOG(LOG_WARNING,
@@ -1750,23 +1750,28 @@ public:
         return (this->managed_drives.size() > 0);
     }
 
-    bool IsManagedDrive(uint32_t DeviceId) const {
-        if (DeviceId >= FIRST_MANAGED_DRIVE_ID) {
-            for (managed_drive_collection_type::const_iterator iter = this->managed_drives.begin();
-                 iter != this->managed_drives.end(); ++iter) {
-                if (DeviceId == std::get<0>(*iter)) {
-                    return true;
-                }
+private:
+    managed_drive_collection_type::const_iterator
+    find_drive_by_id(uint32_t DeviceId) const {
+        return std::find_if(
+            this->managed_drives.cbegin(),
+            this->managed_drives.cend(),
+            [DeviceId](managed_drive_type const & managed_drive) {
+                return DeviceId == managed_drive.device_id;
             }
-        }
+        );
+    }
 
-        return false;
+public:
+    bool IsManagedDrive(uint32_t DeviceId) const {
+        return DeviceId >= FIRST_MANAGED_DRIVE_ID
+            && this->find_drive_by_id(DeviceId) != this->managed_drives.cend();
     }
 
 private:
     void ProcessServerCreateDriveRequest(
             rdpdr::DeviceIORequest const & device_io_request,
-            const char * path, int drive_access_mode, InStream & in_stream,
+            std::string const & path, int drive_access_mode, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             uint32_t verbose) {
@@ -1820,13 +1825,13 @@ private:
         bool drive_created = false;
         managed_file_system_object->ProcessServerCreateDriveRequest(
                 device_io_request, device_create_request, drive_access_mode,
-                path, in_stream, drive_created, to_server_sender,
+                path.c_str(), in_stream, drive_created, to_server_sender,
                 out_asynchronous_task, is_session_probe_image, verbose);
         if (drive_created) {
-            this->managed_file_system_objects.push_back(std::make_tuple(
-                    static_cast<uint32_t>(managed_file_system_object->FileDescriptor()),
-                    std::move(managed_file_system_object)
-                ));
+            this->managed_file_system_objects.push_back({
+                static_cast<uint32_t>(managed_file_system_object->FileDescriptor()),
+                std::move(managed_file_system_object)
+            });
         }
     }
 
@@ -1842,11 +1847,7 @@ public:
         if (DeviceId < FIRST_MANAGED_DRIVE_ID) {
             return;
         }
-        managed_drive_collection_type::iterator drive_iter;
-        for (drive_iter = this->managed_drives.begin();
-             (drive_iter != this->managed_drives.end()) &&
-                 (DeviceId != std::get<0>(*drive_iter));
-             ++drive_iter);
+        auto drive_iter = this->find_drive_by_id(DeviceId);
         if (drive_iter == this->managed_drives.end()) {
             LOG(LOG_WARNING,
                 "FileSystemDriveManager::ProcessDeviceIORequest: "
@@ -1855,15 +1856,18 @@ public:
             return;
         }
 
-        const std::string path              = std::get<2>(*drive_iter);
-        const int         drive_access_mode = std::get<3>(*drive_iter);
+        std::string const & path              = drive_iter->path;
+        int const           drive_access_mode = drive_iter->access_mode;
 
-        managed_file_system_object_collection_type::iterator file_iter;
+        managed_file_system_object_collection_type::const_iterator file_iter;
         if (device_io_request.MajorFunction() != rdpdr::IRP_MJ_CREATE) {
-            for (file_iter = this->managed_file_system_objects.begin();
-                 (file_iter != this->managed_file_system_objects.end()) &&
-                     (device_io_request.FileId() != std::get<0>(*file_iter));
-                 ++file_iter);
+            auto file_iter = std::find_if(
+                this->managed_file_system_objects.begin(),
+                this->managed_file_system_objects.end(),
+                [&device_io_request](managed_file_system_object_type const & file) {
+                    return device_io_request.FileId() == file.file_id;
+                }
+            );
             if (file_iter == this->managed_file_system_objects.end()) {
                 LOG(LOG_WARNING,
                     "FileSystemDriveManager::ProcessDeviceIORequest: "
@@ -1890,7 +1894,7 @@ public:
                 }
 
                 this->ProcessServerCreateDriveRequest(device_io_request,
-                    path.c_str(), drive_access_mode, in_stream,
+                    path, drive_access_mode, in_stream,
                     to_server_sender, out_asynchronous_task, verbose);
             break;
 
@@ -1901,10 +1905,15 @@ public:
                             "Server Close Drive Request");
                 }
 
-                std::get<1>(*file_iter)->ProcessServerCloseDriveRequest(
+                file_iter->object->ProcessServerCloseDriveRequest(
                     device_io_request, path.c_str(), in_stream,
                     to_server_sender, out_asynchronous_task, verbose);
-                this->managed_file_system_objects.erase(file_iter);
+                if(file_iter + 1 != this->managed_file_system_objects.end()) {
+                    this->managed_file_system_objects[
+                        file_iter - this->managed_file_system_objects.begin()
+                    ] = std::move(this->managed_file_system_objects.back());
+                }
+                this->managed_file_system_objects.pop_back();
             break;
 
             case rdpdr::IRP_MJ_READ:
@@ -1922,7 +1931,7 @@ public:
                         device_read_request.log(LOG_INFO);
                     }
                     if (this->session_probe_image_read_notifier) {
-                        if (std::get<1>(*file_iter)->IsSessionProbeImage()) {
+                        if (file_iter->object->IsSessionProbeImage()) {
                             if (!this->session_probe_image_read_notifier->on_image_read(
                                     device_read_request.Offset(),
                                     device_read_request.Length())) {
@@ -1931,7 +1940,7 @@ public:
                         }
                     }
 
-                    std::get<1>(*file_iter)->ProcessServerDriveReadRequest(
+                    file_iter->object->ProcessServerDriveReadRequest(
                         device_io_request, device_read_request, path.c_str(),
                         in_stream, to_server_sender, out_asynchronous_task,
                         verbose);
@@ -1945,7 +1954,7 @@ public:
                             "Server Drive Write Request");
                 }
 
-                std::get<1>(*file_iter)->ProcessServerDriveWriteRequest(
+                file_iter->object->ProcessServerDriveWriteRequest(
                     device_io_request, path.c_str(), drive_access_mode,
                     first_chunk, in_stream, to_server_sender,
                     out_asynchronous_task, verbose);
@@ -1966,7 +1975,7 @@ public:
                         device_control_request.log(LOG_INFO);
                     }
 
-                    std::get<1>(*file_iter)->ProcessServerDriveControlRequest(
+                    file_iter->object->ProcessServerDriveControlRequest(
                         device_io_request, device_control_request,
                         path.c_str(), in_stream, to_server_sender,
                         out_asynchronous_task, verbose);
@@ -1991,7 +2000,7 @@ public:
                             LOG_INFO);
                     }
 
-                    std::get<1>(*file_iter)->ProcessServerDriveQueryVolumeInformationRequest(
+                    file_iter->object->ProcessServerDriveQueryVolumeInformationRequest(
                         device_io_request,
                         server_drive_query_volume_information_request,
                         path.c_str(), in_stream, to_server_sender,
@@ -2015,7 +2024,7 @@ public:
                         server_drive_query_information_request.log(LOG_INFO);
                     }
 
-                    std::get<1>(*file_iter)->ProcessServerDriveQueryInformationRequest(
+                    file_iter->object->ProcessServerDriveQueryInformationRequest(
                         device_io_request,
                         server_drive_query_information_request, path.c_str(),
                         in_stream, to_server_sender, out_asynchronous_task,
@@ -2039,7 +2048,7 @@ public:
                         server_drive_set_information_request.log(LOG_INFO);
                     }
 
-                    std::get<1>(*file_iter)->ProcessServerDriveSetInformationRequest(
+                    file_iter->object->ProcessServerDriveSetInformationRequest(
                         device_io_request,
                         server_drive_set_information_request, path.c_str(),
                         drive_access_mode, in_stream, to_server_sender,
@@ -2077,7 +2086,7 @@ public:
                                     LOG_INFO);
                             }
 
-                            std::get<1>(*file_iter)->ProcessServerDriveQueryDirectoryRequest(
+                            file_iter->object->ProcessServerDriveQueryDirectoryRequest(
                                 device_io_request,
                                 server_drive_query_directory_request,
                                 path.c_str(), in_stream, to_server_sender,
@@ -2153,18 +2162,17 @@ public:
 
         this->session_probe_drive_id = INVALID_MANAGED_DRIVE_ID;
 
-        managed_drive_collection_type::iterator iter;
-        for (iter = this->managed_drives.begin();
-            iter != this->managed_drives.end(); ++iter) {
-            if (old_session_probe_drive_id == std::get<0>(*iter)) {
-                this->managed_drives.erase(iter);
-
-                if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
-                    LOG(LOG_INFO,
-                        "FileSystemDriveManager::RemoveSessionProbeDrive: Drive removed.");
-                }
-
-                break;
+        auto iter = this->find_drive_by_id(old_session_probe_drive_id);
+        if (iter != this->managed_drives.end()) {
+            if(iter + 1 != this->managed_drives.end()) {
+                this->managed_drives[
+                    iter - this->managed_drives.begin()
+                ] = std::move(this->managed_drives.back());
+            }
+            this->managed_drives.pop_back();
+            if (verbose & MODRDP_LOGLEVEL_FSDRVMGR) {
+                LOG(LOG_INFO,
+                    "FileSystemDriveManager::RemoveSessionProbeDrive: Drive removed.");
             }
         }
     }

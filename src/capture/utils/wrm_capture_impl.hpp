@@ -26,7 +26,7 @@
 #include "core/RDP/caches/pointercache.hpp"
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
-#include "nativecapture.hpp"
+#include "capture/nativecapture.hpp"
 #include "apis_register.hpp"
 
 

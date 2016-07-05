@@ -52,7 +52,7 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/protocol.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
-#include "transparentplayer.hpp"
+#include "capture/transparentplayer.hpp"
 #include "main/version.hpp"
 #include "program_options/program_options.hpp"
 
