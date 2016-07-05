@@ -489,6 +489,12 @@ public:
     {
         this->next_line();
         size_t len = this->eol - this->cur;
+        
+        printf("cur=%p eol=%p eof=%p\n", cur, eol, eof);
+        if (cur >= eof){
+            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+        }
+        
         this->eof[0] = 0;
 
         // Line format "fffff 
@@ -598,140 +604,12 @@ public:
             pos = std::find(this->cur, this->eof, '\n');
         }
         this->eol = (pos == this->eof)?this->eof:pos+1; // set eol after \n (start of next line)
+        if (this->cur >= this->eof){
+            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+        }
+
     }
 };
-
-
-class MwrmReader : public MwrmReaderXXX
-{
-public:
-    MwrmReader(ifile_read_API & reader_buf) noexcept
-    : MwrmReaderXXX(reader_buf)
-    {
-        memset(this->buf, 0, sizeof(this->buf));
-    }
-
-    int read_meta_file2(MetaLine2 & meta_line) {
-        printf("read_meta_file2\n");
-        try {
-            if (this->header.version == 1) {
-                this->read_meta_file(meta_line);
-                return 0;
-            }
-            else {
-                this->read_meta_file_v2(meta_line);
-                return 0;
-            }
-        }
-        catch(...){
-            return 1;
-        };
-    }
-
-    int read_meta_file_v2(MetaLine2 & meta_line)
-    {
-        printf("read_meta_file_v2: %.*s\n", (int)(eof-cur), cur);
-        this->next_line();
-        this->eof[0] = 0;
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // Line format "fffff
-        // st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime
-        // sssss eeeee hhhhh HHHHH"
-        //            ^  ^  ^  ^
-        //            |  |  |  |
-        //            |hash1|  |
-        //            |     |  |
-        //        space11   |hash2
-        //                  |
-        //                space12
-        //
-        // filename(1 or >) + space(1) + stat_info(ll|ull * 8) +
-        //     space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
-
-        typedef std::reverse_iterator<char*> reverse_iterator;
-        reverse_iterator first(this->cur);
-        reverse_iterator space(this->cur+(int)(eol-cur));                
-        for(int i = 0; i < ((this->header.version==1)?2:10) + 2*this->header.has_checksum; i++){
-            space = std::find(space, first, ' ');                
-            space++;
-        }
-        int path_len = first-space;
-        this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), 
-                            path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
-//        this->cur++;
-        this->cur += path_len + 1;
-        meta_line.filename[path_len] = 0;
-
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_size + space
-        meta_line.size = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_mode + space
-        meta_line.mode = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_uid + space
-        meta_line.uid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_gid + space
-        meta_line.gid = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_dev + space
-        meta_line.dev = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_ino + space
-        meta_line.ino = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_mtime + space
-        meta_line.mtime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_ctime + space
-        meta_line.ctime = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_start_time + space
-        meta_line.start_time = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // st_stop_time + space
-        meta_line.stop_time = this->get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // HASH1 + space
-        this->in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur=%.*s\n", (int)(eol-cur), cur);
-
-        // HASH1 + CR
-        this->in_hex256(meta_line.hash2, MD_HASH_LENGTH, cur, eol, '\n', ERR_TRANSPORT_READ_FAILED);
-
-        printf("cur='%.*s'\n", (int)(eol-cur), cur);
-
-        return 0;
-    }
-};
-
 
 ssize_t file_size(const char * filename)
 {
@@ -1115,7 +993,7 @@ static inline int check_encrypted_or_checksumed(
                 return 1;;
             }
 
-            MwrmReader reader(ifile);
+            MwrmReaderXXX reader(ifile);
 
             reader.read_meta_headers();
 
@@ -1187,7 +1065,7 @@ static inline int check_encrypted_or_checksumed(
                 return 1;;
             }
 
-            MwrmReader reader(ifile);
+            MwrmReaderXXX reader(ifile);
 
             reader.read_meta_headers();
 
@@ -1260,7 +1138,7 @@ static inline int check_encrypted_or_checksumed(
             return 1;;
         }
 
-        MwrmReader reader(ifile);
+        MwrmReaderXXX reader(ifile);
 
         reader.read_meta_headers();
 

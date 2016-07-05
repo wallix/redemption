@@ -24,6 +24,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestAppVerifier
 #include "system/redemption_unit_tests.hpp"
+#include "check_mem.hpp"
 
 
 #define LOGPRINT
@@ -436,4 +437,61 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
                         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB", 
                         32));
 }
+
+#include "utils/log.hpp"
+
+BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
+{
+
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
+
+    ifile_read_encrypted fd(&cctx, 1);
+    fd.open(FIXTURES_PATH 
+        "/verifier/recorded/"
+        "toto@10.10.43.13,Administrateur@QA@cible,"
+        "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm");
+
+    MwrmReaderXXX reader(fd);
+    
+    reader.read_meta_headers();
+    BOOST_CHECK(reader.header.version == 2);
+    BOOST_CHECK(reader.header.has_checksum);
+
+    MetaLine2 meta_line;
+    BOOST_CHECK_EQUAL(0, reader.read_meta_file2(meta_line));
+    
+    printf("%s\n", meta_line.filename);
+
+    {
+        std::string got(meta_line.filename);
+        std::string expected("/var/wab/recorded/rdp"
+                             "/toto@10.10.43.13,Administrateur@QA@cible,"
+                             "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm");
+        BOOST_CHECK_EQUAL(got, expected);
+    }
+    BOOST_CHECK_EQUAL(meta_line.size, 163032); 
+    BOOST_CHECK_EQUAL(meta_line.mode, 33056);
+    BOOST_CHECK_EQUAL(meta_line.uid, 1001);
+    BOOST_CHECK_EQUAL(meta_line.gid, 1001);
+    BOOST_CHECK_EQUAL(meta_line.dev, 65030);
+    BOOST_CHECK_EQUAL(meta_line.ino, 89);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 1455816632);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 1455816632);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1455816611);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816633);
+    CHECK_MEM(meta_line.hash1, 32, 
+      "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
+      "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77");
+    CHECK_MEM(meta_line.hash2, 32,
+      "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
+      "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
+
+    BOOST_CHECK_EQUAL(1, reader.read_meta_file2(meta_line));
+}
+
 
