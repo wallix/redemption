@@ -150,6 +150,8 @@ constant CXXFLAGS-COMMON :
     <toolset>clang:<cxxflags>-Wno-char-subscripts
     <toolset>clang:<cxxflags>-Wno-unused-variable
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
+
+    <cxxflags>-fno-rtti
 ;
 
 
