@@ -132,6 +132,8 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Warray-bounds
     <cxxflags>-Wold-style-cast
     <cxxflags>-Wno-overlength-strings
+
+    <cxxflags>-fno-rtti
 ;
 
 
