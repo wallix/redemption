@@ -394,7 +394,7 @@ struct MetaHeaderXXX {
 };
 
 
-class MwrmReaderXXX
+class MwrmReader
 {
     public:
     MetaHeaderXXX header;
@@ -449,7 +449,7 @@ class MwrmReaderXXX
     }
 
 public:
-    MwrmReaderXXX(ifile_read_API & reader_buf) noexcept
+    MwrmReader(ifile_read_API & reader_buf) noexcept
     : buf{}
     , eof(buf)
     , eol(buf)
@@ -845,6 +845,60 @@ static inline void load_ssl_digests(bool encryption)
     }
 }
 
+static int check_file(const std::string & filename, const MetaLine2 & metadata, bool quick, bool has_checksum, uint8_t * hmac_key, size_t hmac_key_len)
+{
+    
+    if (file_size(filename.c_str()) != metadata.size)
+    {
+        std::cerr << "File \"" 
+                  << filename 
+                  << "\" is invalid! (size mismatch)" 
+                  << std::endl << std::endl;
+        return false;
+    }
+
+    if (has_checksum){
+        uint8_t hash[SHA256_DIGEST_LENGTH]={};
+        if (file_start_hmac_sha256(filename.c_str(), 
+                             hmac_key, hmac_key_len,
+                             quick?QUICK_CHECK_LENGTH:0, hash) < 0){
+            std::cerr << "Error reading file \"" 
+                      << filename 
+                      << "\"" 
+                      << std::endl << std::endl;
+            return false;
+        }
+        if (0 != memcmp(hash, quick?metadata.hash1:metadata.hash2, SHA256_DIGEST_LENGTH)){
+            std::cerr << "Error checking file \"" 
+                      << filename 
+                      << "\" (invalid checksum)" 
+                      << std::endl << std::endl;
+            return false;
+        }
+    }
+    else {
+        struct stat64 sb;
+        memset(&sb, 0, sizeof(sb));
+        lstat64(filename.c_str(), &sb);
+        if ((metadata.dev   != sb.st_dev  )
+        ||  (metadata.ino   != sb.st_ino  )
+        ||  (metadata.mode  != sb.st_mode )
+        ||  (metadata.uid   != sb.st_uid  )
+        ||  (metadata.gid   != sb.st_gid  )
+        ||  (metadata.size  != sb.st_size )
+        ||  (metadata.mtime != sb.st_mtime)
+        ||  (metadata.ctime != sb.st_ctime))
+        {
+            std::cerr << "File \"" 
+                      << filename 
+                      << "\" is invalid! (metafile changed)" 
+                      << std::endl << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
 static inline int check_encrypted_or_checksumed(
                                        std::string const & input_filename,
                                        std::string const & mwrm_path,
@@ -902,7 +956,7 @@ static inline int check_encrypted_or_checksumed(
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
 
-    MwrmReaderXXX reader(ibuf);
+    MwrmReader reader(ibuf);
     reader.read_meta_headers();
 
     infile_version       = reader.header.version;
@@ -948,58 +1002,32 @@ static inline int check_encrypted_or_checksumed(
     /******************
     * Check mwrm file *
     ******************/
-    bool result = false;
-
-    if (file_size(full_mwrm_filename.c_str()) != hash_line.size)
-    {
-        std::cerr << "File \"" 
-                  << full_mwrm_filename 
-                  << "\" is invalid! (size mismatch)" 
-                  << std::endl << std::endl;
+    
+    if (!check_file(full_mwrm_filename, hash_line, quick_check, infile_is_checksumed, cctx->get_hmac_key(), 32)){
         return 1;
     }
 
-    if (infile_is_checksumed){
-        uint8_t hash[SHA256_DIGEST_LENGTH]={};
-        if (file_start_hmac_sha256(full_mwrm_filename.c_str(), 
-                             cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
-                             quick_check?QUICK_CHECK_LENGTH:0, hash) < 0){
-            std::cerr << "Error reading file \"" 
+    MetaLine2 meta_line_wrm;
+
+    while (reader.read_meta_file2(meta_line_wrm) == 0) {
+
+        size_t tmp_wrm_filename_len = 0;
+        const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
+        std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
+        std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
+
+        if (file_size(full_part_filename.c_str()) != meta_line_wrm.size)
+        {
+            std::cerr << "File \"" 
                       << full_mwrm_filename 
-                      << "\"" 
+                      << "\" is invalid! (part size mismatch for:" 
+                      << full_part_filename
+                      << ")" 
                       << std::endl << std::endl;
             return 1;
         }
-        if (0 != memcmp(hash, quick_check?hash_line.hash1:hash_line.hash2, SHA256_DIGEST_LENGTH)){
-            std::cerr << "Error checking file \"" 
-                      << full_mwrm_filename 
-                      << "\" (invalid checksum)" 
-                      << std::endl << std::endl;
-            return 1;
-        }
 
-        MetaLine2 meta_line_wrm;
-
-        result = true;
-        while (reader.read_meta_file2(meta_line_wrm) == 0) {
-
-            size_t tmp_wrm_filename_len = 0;
-            
-            const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
-            std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
-            std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
-
-            if (file_size(full_part_filename.c_str()) != meta_line_wrm.size)
-            {
-                std::cerr << "File \"" 
-                          << full_mwrm_filename 
-                          << "\" is invalid! (part size mismatch for:" 
-                          << full_part_filename
-                          << ")" 
-                          << std::endl << std::endl;
-                return 1;
-            }
-
+        if (infile_is_checksumed){
             uint8_t hash[SHA256_DIGEST_LENGTH]={};
             if (file_start_hmac_sha256(full_part_filename.c_str(), 
                                  cctx->get_hmac_key(), sizeof(cctx->get_hmac_key()),
@@ -1018,38 +1046,7 @@ static inline int check_encrypted_or_checksumed(
                 return 1;
             }
         }
-    }
-    else {
-        struct stat64 sb;
-        memset(&sb, 0, sizeof(sb));
-        lstat64(full_mwrm_filename.c_str(), &sb);
-        if ((hash_line.dev   != sb.st_dev  )
-        ||  (hash_line.ino   != sb.st_ino  )
-        ||  (hash_line.mode  != sb.st_mode )
-        ||  (hash_line.uid   != sb.st_uid  )
-        ||  (hash_line.gid   != sb.st_gid  )
-        ||  (hash_line.size  != sb.st_size )
-        ||  (hash_line.mtime != sb.st_mtime)
-        ||  (hash_line.ctime != sb.st_ctime))
-        {
-            std::cerr << "File \"" 
-                      << full_mwrm_filename 
-                      << "\" is invalid! (metafile changed)" 
-                      << std::endl << std::endl;
-            return 1;
-        }
-        
-        MetaLine2 meta_line_wrm;
-
-        result = true;
-        while (reader.read_meta_file2(meta_line_wrm) == 0) {
-
-            size_t tmp_wrm_filename_len = 0;
-            
-            const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
-            std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
-            std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
-
+        else {
             struct stat64 sb;
             memset(&sb, 0, sizeof(sb));
             lstat64(full_part_filename.c_str(), &sb);
@@ -1070,12 +1067,7 @@ static inline int check_encrypted_or_checksumed(
             }
         }
     }
-
-    if (!result){
-        std::cerr << "File \"" << full_mwrm_filename << "\" is invalid!" << std::endl << std::endl;
-        return 1;
-    }
-
+    
     std::cout << "No error detected during the data verification." << std::endl << std::endl;
     return 0;
 }

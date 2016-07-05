@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
 {
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
-    MwrmReaderXXX reader(fd);
+    MwrmReader reader(fd);
     
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 2);
@@ -370,7 +370,7 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
 {
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
-    MwrmReaderXXX reader(fd);
+    MwrmReader reader(fd);
     
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 1);
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
 {
     ifile_read fd;
     fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
-    MwrmReaderXXX reader(fd);
+    MwrmReader reader(fd);
     
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 2);
@@ -456,7 +456,7 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
         "toto@10.10.43.13,Administrateur@QA@cible,"
         "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm");
 
-    MwrmReaderXXX reader(fd);
+    MwrmReader reader(fd);
     
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 2);
