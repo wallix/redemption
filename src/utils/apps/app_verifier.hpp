@@ -202,8 +202,8 @@ public:
                         this->close();
                         return -1;
                     }
-                    else if (this->encryption == 0){
-                        // no encryption header but no encryption expected
+                    else {
+                        // no encryption header but no encryption needed
                         // we just put aside some data ready to read
                         // in clear_data buffer and exit of open without error
                         this->raw_size = avail + ret;
@@ -429,10 +429,12 @@ public:
                 return ::read(this->fd, &data[len - requested_size], len);
             }
         }
+        // TODO: should never be reached
+        return -1;
     }
 };
 
-struct MetaHeaderXXX {
+struct MetaHeader {
     unsigned version;
     //unsigned witdh;
     //unsigned height;
@@ -443,7 +445,7 @@ struct MetaHeaderXXX {
 class MwrmReader
 {
     public:
-    MetaHeaderXXX header;
+    MetaHeader header;
     
 //    private:
     char buf[1024];
@@ -948,50 +950,16 @@ static inline int check_encrypted_or_checksumed(
 
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
-
-
-    bool infile_is_encrypted = false;
-
-    uint8_t tmp_buf[4] ={};
-    int fd = open(full_mwrm_filename.c_str(), O_RDONLY);
-    if (fd == -1){
-        std::cerr << "Input file missing.\n";
-        return 1;
-    }
-    struct fdbuf
-    {
-        int fd;
-        explicit fdbuf(int fd) noexcept : fd(fd){}
-        ~fdbuf() {::close(this->fd);}
-    } file(fd);
-
-    const size_t len = sizeof(tmp_buf);
-    size_t remaining_len = len;
-    while (remaining_len) {
-        ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
-        if (ret < 0){
-            if (errno == EINTR){
-                continue;
-            }
-            // Error should still be there next time we try to read
-            std::cerr << "Input file error\n";
-            return 1;
-        }
-        // We must exit loop or we will enter infinite loop
-        remaining_len -= ret;
-    }
-
-    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-    if (magic == WABCRYPTOFILE_MAGIC) {
-        std::cout << "Input file is encrypted.\n";
-        infile_is_encrypted = true;
-    }
-
-    ifile_read_encrypted ibuf(cctx, infile_is_encrypted);
+    // Let(s ifile_read autodetect encryption at opening for first file
+    int encryption = 2;
+    ifile_read_encrypted ibuf(cctx, encryption);
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
 
+    // nom force encryption for sub files
+    bool infile_is_encrypted = ibuf.encrypted;
+    
     MwrmReader reader(ibuf);
     reader.read_meta_headers();
 
