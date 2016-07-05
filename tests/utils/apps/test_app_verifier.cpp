@@ -199,8 +199,6 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 
     std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
     
-    BOOST_CHECK_EQUAL(file_size(test_full_mwrm_filename.c_str()), 1736);
-    
     {
         uint8_t tmp_hash[SHA256_DIGEST_LENGTH]={};
         int res = file_start_hmac_sha256(test_full_mwrm_filename.c_str(),
@@ -249,6 +247,50 @@ extern "C" {
         return 0;
     }
 }
+
+BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char const * argv[] = {
+            "verifier.py",
+            "-i",
+                "toto@10.10.43.13,Administrateur@QA@cible,"
+                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
+            "--hash-path",
+                FIXTURES_PATH "/verifier/hash",
+            "--mwrm-path",
+                FIXTURES_PATH "/verifier/recorded/bad",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
+
+        int res = -1;
+        try {
+            res = app_verifier(ini,
+                argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+            if (res == 0){
+                printf("verify ok\n");
+            }
+            else {
+                printf("verify failed\n");
+            }
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(1, res);
+}
+
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
@@ -313,9 +355,11 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
                 FIXTURES_PATH "/verifier/recorded/",
             "--verbose",
                 "10",
+            "--ignore-stat-info"
         };
         int argc = sizeof(argv)/sizeof(char*);
 
+        BOOST_CHECK_EQUAL(true, true);
 
         int res = -1;
         try {
@@ -337,6 +381,50 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
         BOOST_CHECK_EQUAL(0, res);
 }
 
+BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char const * argv[] {
+            "verifier.py",
+            "-i",
+                "toto@10.10.43.13,Administrateur@QA@cible"
+                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+            "--hash-path",
+                FIXTURES_PATH "/verifier/hash/",
+            "--mwrm-path",
+                FIXTURES_PATH "/verifier/recorded/",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
+
+        BOOST_CHECK_EQUAL(true, true);
+
+        int res = -1;
+        try {
+            res = app_verifier(ini,
+                argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+            if (res == 0){
+                printf("verify ok\n");
+            }
+            else {
+                printf("verify failed\n");
+            }
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(1, res);
+}
 
 BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
 {

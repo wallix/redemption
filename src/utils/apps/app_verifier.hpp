@@ -482,8 +482,6 @@ static inline void in_hex256(uint8_t * hash, int len, char * & cur, char * eol, 
     cur = pos + 1;
 }
 
-
-
 class MwrmReader
 {
     public:
@@ -656,18 +654,6 @@ public:
     }
 };
 
-ssize_t file_size(const char * filename)
-{
-    // we just check the size match
-    // used when checksum is active
-    struct stat64 sb;
-    memset(&sb, 0, sizeof(sb));
-    if (lstat64(filename, &sb) < 0){
-        return -1;
-    }
-    return sb.st_size;
-}
-
 // Compute HmacSha256 
 // up to check_size orf end of file whicherver happens first
 // if check_size == 0, checks to eof
@@ -816,21 +802,13 @@ struct HashLoad
                 hash_line.filename[pos-cur]=0;
                 cur = pos + 1;
             }
-            // st_size + space
             hash_line.size = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            // st_mode + space
             hash_line.mode = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            // st_uid + space
             hash_line.uid = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            // st_gid + space
             hash_line.gid = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            // st_dev + space
             hash_line.dev = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            // st_ino + space
             hash_line.ino = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            // st_mtime + space
             hash_line.mtime = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            // st_ctime + space
             hash_line.ctime = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
 
             if (infile_is_checksumed){
@@ -851,20 +829,13 @@ static int check_file(const std::string & filename, const MetaLine2 & metadata,
     struct stat64 sb;
     memset(&sb, 0, sizeof(sb));
     if (lstat64(filename.c_str(), &sb) < 0){
-        std::cerr << "File \"" 
-                  << filename 
-                  << "\" is invalid! (can't stat file)" 
-                  << std::endl << std::endl;
+        std::cerr << "File \"" << filename << "\" is invalid! (can't stat file)" << std::endl << std::endl;
         return false;
     }
 
     if (has_checksum){
-        if (sb.st_size != metadata.size)
-        {
-            std::cerr << "File \"" 
-                      << filename 
-                      << "\" is invalid! (size mismatch)" 
-                      << std::endl << std::endl;
+        if (sb.st_size != metadata.size){
+            std::cerr << "File \"" << filename << "\" is invalid! (size mismatch)" << std::endl << std::endl;
             return false;
         }
 
@@ -872,34 +843,21 @@ static int check_file(const std::string & filename, const MetaLine2 & metadata,
         if (file_start_hmac_sha256(filename.c_str(), 
                              hmac_key, hmac_key_len,
                              quick?QUICK_CHECK_LENGTH:0, hash) < 0){
-            std::cerr << "Error reading file \"" 
-                      << filename 
-                      << "\"" 
-                      << std::endl << std::endl;
+            std::cerr << "Error reading file \"" << filename << "\"" << std::endl << std::endl;
             return false;
         }
         if (0 != memcmp(hash, quick?metadata.hash1:metadata.hash2, SHA256_DIGEST_LENGTH)){
-            std::cerr << "Error checking file \"" 
-                      << filename 
-                      << "\" (invalid checksum)" 
-                      << std::endl << std::endl;
+            std::cerr << "Error checking file \"" << filename << "\" (invalid checksum)" << std::endl << std::endl;
             return false;
         }
     }
     else {
         if (!ignore_stat_info){
-            if ((metadata.dev   != sb.st_dev  )
-            ||  (metadata.ino   != sb.st_ino  )
-            ||  (metadata.mode  != sb.st_mode )
-            ||  (metadata.uid   != sb.st_uid  )
-            ||  (metadata.gid   != sb.st_gid  )
-            ||  (metadata.mtime != sb.st_mtime)
-            ||  (metadata.ctime != sb.st_ctime))
-            {
-                std::cerr << "File \"" 
-                          << filename 
-                          << "\" is invalid! (metafile changed)" 
-                          << std::endl << std::endl;
+            if ((metadata.dev != sb.st_dev)||(metadata.ino != sb.st_ino)
+            ||  (metadata.mode != sb.st_mode)||(metadata.uid != sb.st_uid)
+            ||  (metadata.gid != sb.st_gid)||(metadata.mtime != sb.st_mtime)
+            ||  (metadata.ctime != sb.st_ctime)||(metadata.size != sb.st_size)){
+                std::cerr << "File \"" << filename << "\" is invalid! (metafile changed)" << std::endl << std::endl;
                 return false;
             }
         }
@@ -931,17 +889,18 @@ static inline int check_encrypted_or_checksumed(
     MwrmReader reader(ibuf);
     reader.read_meta_headers();
 
-    // TODO: check compatibility of version and encryption
-    if (reader.header.version < 2) {
-        std::cout << "Input file is unencrypted.\n";
-        return 0;
-    }
+//    // TODO: check compatibility of version and encryption
+//    if (reader.header.version < 2) {
+//        std::cout << "Input file is unencrypted.\n";
+//        return 0;
+//    }
+    // if we have version 1 header, ignore stat info
+    ignore_stat_info |= (reader.header.version == 1);
 
     /*****************
     * Load file hash *
     *****************/
     MetaLine2 hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
-
     {
         std::string const full_hash_path = hash_path + input_filename;
 
@@ -963,7 +922,6 @@ static inline int check_encrypted_or_checksumed(
     /******************
     * Check mwrm file *
     ******************/
-    
     if (!check_file(full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum, ignore_stat_info, cctx->get_hmac_key(), 32)){
         return 1;
     }
@@ -995,6 +953,7 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
     std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
     std::string input_filename                                ;
     bool        quick_check    = false                        ;
+    bool      ignore_stat_info = false;
     uint32_t    verbose        = 0                            ;
 
     program_options::options_description desc({
@@ -1004,6 +963,7 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
         {'s', "hash-path",  &hash_path,         "hash file path"       },
         {'m', "mwrm-path",  &mwrm_path,         "mwrm file path"       },
         {'i', "input-file", &input_filename,    "input mwrm file name" },
+        {'S', "ignore-stat-info", "ignore stat info data mismatch" },
         {"verbose",         &verbose,           "more logs"            },
     })
     ;
@@ -1024,6 +984,10 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
 
     if (options.count("quick") > 0) {
         quick_check = true;
+    }
+
+    if (options.count("ignore-stat-info") > 0) {
+        ignore_stat_info = true;
     }
 
     if (hash_path.c_str()[0] == 0) {
@@ -1073,5 +1037,5 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
     
     return check_encrypted_or_checksumed(
                 input_filename, mwrm_path, hash_path,
-                quick_check, true, verbose, &cctx);
+                quick_check, ignore_stat_info, verbose, &cctx);
 }
