@@ -505,6 +505,7 @@ constant TEST_DEPENDENCIES :
     $(LIB_TEST_DEPENDENCY)
     $(GCOV)
     <include>tests
+    <cxxflags>-frtti
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
 ;
 

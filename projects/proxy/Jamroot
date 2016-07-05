@@ -152,6 +152,7 @@ constant CXXFLAGS-COMMON :
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
 
     <cxxflags>-fno-rtti
+    <cxxflags>-frtti
 ;
 
 
@@ -421,6 +422,7 @@ constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags
 constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
 constant TEST_DEPENDENCIES :
     <include>$(TESTDIR)
+    <cxxflags>-frtti
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     $(LIB_SAN_DEPENDENCY)
     $(LIB_TEST_DEPENDENCY)
