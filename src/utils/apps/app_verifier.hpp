@@ -114,10 +114,12 @@ public:
     EVP_CIPHER_CTX ectx;                  // [en|de]cryption context
     uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
-    int encryption;
+    int encryption; // encryption: 0: auto, 1: encrypted, 2: not encrypted
+    bool encrypted;                       
 
 public:
     explicit ifile_read_encrypted(CryptoContext * cctx, int encryption)
+    
     : cctx(cctx)
     , fd(-1)
     , clear_data{}
@@ -126,6 +128,7 @@ public:
     , state(0)
     , MAX_CIPHERED_SIZE(0)
     , encryption(encryption)
+    , encrypted(false)
     {
     }
 
@@ -144,100 +147,126 @@ public:
             return this->fd;
         }
 
-        if (this->encryption){
-            size_t base_len = 0;
-            const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
+        size_t base_len = 0;
+        const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(filename, base_len));
 
-            ::memset(this->clear_data, 0, sizeof(this->clear_data));
-            ::memset(&this->ectx, 0, sizeof(this->ectx));
-            this->clear_pos = 0;
-            this->raw_size = 0;
-            this->state = 0;
-            const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
-            this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
+        ::memset(this->clear_data, 0, sizeof(this->clear_data));
+        ::memset(&this->ectx, 0, sizeof(this->ectx));
+        this->clear_pos = 0;
+        this->raw_size = 0;
+        this->state = 0;
+        const size_t MAX_COMPRESSED_SIZE = ::snappy_max_compressed_length(CRYPTO_BUFFER_SIZE);
+        this->MAX_CIPHERED_SIZE = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
 
-            uint8_t data[40];
-            size_t avail = 0;
-            while (avail != 40) {
-                ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
-                if (ret < 0 && errno == EINTR){
-                    continue;
-                }
-                if (ret <= 0){
-                    // Either read error or EOF: in both cases we are in trouble
-                    if (ret == 0) {
-                        // see error management, we would need object internal errors
-                        // basically this case means: failed to read compression header
-                        // error.
-                        errno = EINVAL;
+        // todo: we could read in clear_data, that would avoid some copying
+        uint8_t data[40];
+        size_t avail = 0;
+        while (avail != 40) {
+            ssize_t ret = ::read(this->fd, &data[avail], 40-avail);
+            if (ret < 0 && errno == EINTR){
+                continue;
+            }
+            if (ret <= 0){
+                // Either read error or EOF: in both cases we are in trouble
+                if (ret == 0) {
+                    // see error management, we would need object internal errors
+                    // basically this case means: failed to read compression header
+                    // error.
+                    if (avail > 4){
+                        // check_encryption header:
                     }
-                    this->close();
-                    return - 1;
+                    errno = EINVAL;
                 }
-                avail += ret;
-            }
-
-            // Encrypted/Compressed file header (40 bytes)
-            // -------------------------------------------
-            // MAGIC: 4 bytes
-            // 0x57 0x43 0x46 0x4D (WCFM)
-            // VERSION: 4 bytes
-            // 0x01 0x00 0x00 0x00
-            // IV: 32 bytes
-            // (random)
-            
-            
-            Parse p(data);
-            const uint32_t magic = p.in_uint32_le();
-            if (magic != WABCRYPTOFILE_MAGIC) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type %04x != %04x\n",
-                    ::getpid(), magic, WABCRYPTOFILE_MAGIC);
-                errno = EINVAL;
                 this->close();
-                return -1;
+                return - 1;
             }
+            if (avail < 4 and avail+ret >= 4){
+                const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+                this->encrypted = (magic == WABCRYPTOFILE_MAGIC);
+                if (this->encrypted) {
+                    if (this->encryption == 0){
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type:"
+                                     " expecting clear text, got encryption header\n",
+                            ::getpid());
+                        errno = EINVAL;
+                        this->close();
+                        return -1;
+                    }
+                }
+                else {
+                    if (this->encryption == 1){
+                        LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Wrong file type:"
+                                     " expecting encrypted file, didn't got encryption header\n",
+                            ::getpid());
+                        errno = EINVAL;
+                        this->close();
+                        return -1;
+                    }
+                    else if (this->encryption == 0){
+                        // no encryption header but no encryption expected
+                        // we just put aside some data ready to read
+                        // in clear_data buffer and exit of open without error
+                        this->raw_size = avail + ret;
+                        this->clear_pos = 0;
+                        ::memcpy(this->clear_data, data, this->raw_size);
+                        return 0;
+                    }
+                }
+            }
+            avail += ret;
+        }
 
-            const int version = p.in_uint32_le();
-            if (version > WABCRYPTOFILE_VERSION) {
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
-                    ::getpid(), version, WABCRYPTOFILE_VERSION);
-                errno = EINVAL;
-                this->close();
-                return -1;
-            }
+        // Encrypted/Compressed file header (40 bytes)
+        // -------------------------------------------
+        // MAGIC: 4 bytes
+        // 0x57 0x43 0x46 0x4D (WCFM)
+        // VERSION: 4 bytes
+        // 0x01 0x00 0x00 0x00
+        // IV: 32 bytes
+        // (random)
+        
+        
+        Parse p(data+4);
+        const int version = p.in_uint32_le();
+        if (version > WABCRYPTOFILE_VERSION) {
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Unsupported version %04x > %04x\n",
+                ::getpid(), version, WABCRYPTOFILE_VERSION);
+            errno = EINVAL;
+            this->close();
+            return -1;
+        }
 
-            // replace p.p with some arrayview of 32 bytes
-            const uint8_t * const iv = p.p;
-            const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
-            const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
-            const int          nrounds = 5;
-            unsigned char      key[32];
-            unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
-            cctx->get_derived_key(trace_key, base, base_len);
-            if (32 != ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
-                               trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr)){
-                // TODO: add error management
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
-                errno = EINVAL;
-                this->close();
-                return -1;
-            }
+        // TODO: replace p.p with some array view of 32 bytes ?
+        const uint8_t * const iv = p.p;
+        const EVP_CIPHER * cipher  = ::EVP_aes_256_cbc();
+        const uint8_t salt[]  = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
+        const int          nrounds = 5;
+        unsigned char      key[32];
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        cctx->get_derived_key(trace_key, base, base_len);
+        if (32 != ::EVP_BytesToKey(cipher, ::EVP_sha1(), salt,
+                           trace_key, CRYPTO_KEY_LENGTH, nrounds, key, nullptr)){
+            // TODO: add true error management
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: EVP_BytesToKey size is wrong\n", ::getpid());
+            errno = EINVAL;
+            this->close();
+            return -1;
+        }
 
-            ::EVP_CIPHER_CTX_init(&this->ectx);
-            if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
-                // TODO: add error management
-                errno = EINVAL;
-                LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
-                this->close();
-                return -1;
-            }
+        ::EVP_CIPHER_CTX_init(&this->ectx);
+        if(::EVP_DecryptInit_ex(&this->ectx, cipher, nullptr, key, iv) != 1) {
+            // TODO: add error management
+            errno = EINVAL;
+            LOG(LOG_ERR, "[CRYPTO_ERROR][%d]: Could not initialize decrypt context\n", ::getpid());
+            this->close();
+            return -1;
         }
         return 0;
     }
 
     int read(char * data, size_t len)
     {
-        if (this->encryption){
+        if (this->encrypted){
             if (this->state & CF_EOF) {
                 return 0;
             }
@@ -359,7 +388,6 @@ public:
                     // When reading, raw_size represent the current chunk size
                     this->raw_size = chunk_size;
 
-                    // TODO: check that
                     if (!this->raw_size) { // end of file reached
                         break;
                     }
@@ -380,8 +408,26 @@ public:
             return len - requested_size;
         }
         else {
-            // for non encrypted file, returning partial read is OK
-            return::read(this->fd, data, len);
+            unsigned int requested_size = len;
+            while (requested_size > 0) {
+                if (this->raw_size){
+                    unsigned int remaining_size = this->raw_size - this->clear_pos;
+                    // Check how much we can copy
+                    unsigned int copiable_size = std::min(remaining_size, requested_size);
+                    // Copy buffer to caller
+                    ::memcpy(&data[len - requested_size], this->clear_data + this->clear_pos, copiable_size);
+                    this->clear_pos      += copiable_size;
+                    requested_size -= copiable_size;
+                    if (this->raw_size == this->clear_pos) {
+                        this->raw_size = 0;
+                        this->clear_pos = 0;
+                    }
+                    // if we have data in buffer, returning it is OK
+                    return len - requested_size;
+                }
+                // for non encrypted file, returning partial read is OK
+                return ::read(this->fd, &data[len - requested_size], len);
+            }
         }
     }
 };
@@ -840,9 +886,7 @@ struct HashLoad
 
 static inline void load_ssl_digests(bool encryption)
 {
-    if (encryption){
-        OpenSSL_add_all_digests();
-    }
+    OpenSSL_add_all_digests();
 }
 
 static int check_file(const std::string & filename, const MetaLine2 & metadata, bool quick, bool has_checksum, uint8_t * hmac_key, size_t hmac_key_len)
@@ -909,6 +953,8 @@ static inline int check_encrypted_or_checksumed(
 
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
+
+
     bool infile_is_encrypted = false;
 
     uint8_t tmp_buf[4] ={};
@@ -945,8 +991,6 @@ static inline int check_encrypted_or_checksumed(
         std::cout << "Input file is encrypted.\n";
         infile_is_encrypted = true;
     }
-
-    load_ssl_digests(infile_is_encrypted);
 
     ifile_read_encrypted ibuf(cctx, infile_is_encrypted);
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
@@ -1102,6 +1146,8 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
         LOG(LOG_INFO, "file_name=\"%s\"", input_filename.c_str());
     }
 
+    OpenSSL_add_all_digests();
+    
     return check_encrypted_or_checksumed(
                 input_filename, mwrm_path, hash_path,
                 quick_check, verbose, &cctx);
