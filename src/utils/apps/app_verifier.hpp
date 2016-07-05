@@ -488,9 +488,7 @@ public:
     void read_meta_file(MetaLine2 & meta_line) 
     {
         this->next_line();
-        size_t len = this->eol - this->cur;
         
-        printf("cur=%p eol=%p eof=%p\n", cur, eol, eof);
         if (cur >= eof){
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
@@ -513,7 +511,7 @@ public:
 
         typedef std::reverse_iterator<char*> reverse_iterator;
         reverse_iterator first(this->cur);
-        reverse_iterator space(this->cur+len);                
+        reverse_iterator space(this->eol);                
         for(int i = 0; i < ((this->header.version==1)?2:10) + 2*this->header.has_checksum; i++){
             space = std::find(space, first, ' ');                
             space++;
@@ -522,7 +520,6 @@ public:
         this->in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), 
                             path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
         this->cur++;
-//        this->cur += path_len + 1;
         meta_line.filename[path_len] = 0;
 
         if (this->header.version == 1){
@@ -947,8 +944,6 @@ static inline int check_encrypted_or_checksumed(
             }
         }
     }
-
-    printf("Check MWRM File!\n");
 
     /******************
     * Check mwrm file *
