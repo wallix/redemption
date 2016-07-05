@@ -884,11 +884,6 @@ struct HashLoad
 };
 
 
-static inline void load_ssl_digests(bool encryption)
-{
-    OpenSSL_add_all_digests();
-}
-
 static int check_file(const std::string & filename, const MetaLine2 & metadata, bool quick, bool has_checksum, uint8_t * hmac_key, size_t hmac_key_len)
 {
     
