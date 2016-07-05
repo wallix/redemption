@@ -999,7 +999,7 @@ public:
 //     void emit(OutStream & stream) const {
 //         stream.out_clear_bytes(32); // Padding(32)
 //     }
-// 
+//
 //     void receive(InStream & stream) {
 //         {
 //             const unsigned expected = 32;  // Padding(32)
@@ -1375,6 +1375,7 @@ public:
 class DeviceIOResponse {
     uint32_t DeviceId_     = 0;
     uint32_t CompletionId_ = 0;
+    // TODO enum NTSTATUS
     uint32_t IoStatus_     = 0;
 
 public:
@@ -1714,6 +1715,7 @@ public:
 
 class ServerDeviceAnnounceResponse {
     uint32_t DeviceId_   = 0;
+    // TODO enum NTSTATUS
     uint32_t ResultCode_ = 0;
 
 public:
