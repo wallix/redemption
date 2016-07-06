@@ -488,7 +488,8 @@ class MwrmReader
     MetaHeader header;
     
 //    private:
-    char buf[1024];
+//    char buf[322]; // FIXME: test_app_verifier fails on long lines
+    char buf[32768]; // This is to avoid for the bug to be too visible
     char * eof;
     char * eol;
     char * cur;
