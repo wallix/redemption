@@ -553,7 +553,7 @@ public:
         //        space3    |hash2
         //                  |
         //                space4
-        // filename(1 or >) + space(1) + [stat_info(ll|ull * 8) + space(1)] 
+        // filename(1 or >) + space(1) + [stat_info(ll|ull * 8) + space(1)*8] 
         // + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
 
@@ -609,7 +609,8 @@ public:
         this->cur = this->eol;
     }
 
-
+    // buffer must be able to contain line
+    // if no line at end of buffer apply some memmove
     void next_line()
     {
         this->cur = this->eol;
@@ -626,15 +627,21 @@ public:
             this->eof = this->buf + ret;
             this->eof[0] = 0;
         }
+        
         char * pos = std::find(this->cur, this->eof, '\n');
         while (pos == this->eof){ // read and append to buffer
-            size_t len = -(this->eof-this->cur);
-            if (len >= sizeof(buf)-1){
+            // move remaining data to beginning of buffer
+            size_t len = this->eof - this->cur;
+            if (len >= sizeof(this->buf)-1){
                 // if the buffer can't hold at least one line, 
                 // there is some problem behind
                 // if a line were available we should have found \n
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
+            ::memmove(this->buf, this->cur, len);
+            this->cur = this->buf;
+            this->eof = this->cur + len;
+            this->eof[0] = 0;
             ssize_t ret = this->ibuf.read(this->eof, sizeof(this->buf)-1-len);
             if (ret < 0) {
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
@@ -650,7 +657,6 @@ public:
         if (this->cur >= this->eof){
             throw Error(ERR_TRANSPORT_READ_FAILED, 0);
         }
-
     }
 };
 
@@ -659,12 +665,13 @@ public:
 // if check_size == 0, checks to eof
 // return 0 on success and puts signature in provided buffer
 // return -1 if some system error occurs, errno contains actual error
-int file_start_hmac_sha256(const char * filename, 
+static inline int file_start_hmac_sha256(const char * filename, 
                      uint8_t const * crypto_key,
                      size_t          key_len,
                      size_t          check_size,
                      uint8_t (& hash)[SHA256_DIGEST_LENGTH])
 {
+    // TODO: use ifile_read
     struct fdwrap
     {
         int fd;
@@ -822,7 +829,7 @@ struct HashLoad
 };
 
 
-static int check_file(const std::string & filename, const MetaLine2 & metadata, 
+static inline int check_file(const std::string & filename, const MetaLine2 & metadata, 
                       bool quick, bool has_checksum, bool ignore_stat_info,
                       uint8_t * hmac_key, size_t hmac_key_len)
 {
@@ -883,17 +890,12 @@ static inline int check_encrypted_or_checksumed(
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
 
-    // nom force encryption for sub files
+    // now force encryption for sub files
     bool infile_is_encrypted = ibuf.encrypted;
     
     MwrmReader reader(ibuf);
     reader.read_meta_headers();
 
-//    // TODO: check compatibility of version and encryption
-//    if (reader.header.version < 2) {
-//        std::cout << "Input file is unencrypted.\n";
-//        return 0;
-//    }
     // if we have version 1 header, ignore stat info
     ignore_stat_info |= (reader.header.version == 1);
 
