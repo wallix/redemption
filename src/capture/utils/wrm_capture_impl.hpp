@@ -26,7 +26,7 @@
 #include "core/RDP/caches/pointercache.hpp"
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
-#include "nativecapture.hpp"
+#include "capture/nativecapture.hpp"
 #include "apis_register.hpp"
 
 
@@ -70,7 +70,8 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
                     this->trans = new (&this->variant.out_with_sum)
                     OutMetaSequenceTransportWithSum(std::forward<Ts>(args)...);
                     break;
-                default :
+                default:
+                case TraceType::localfile:
                     this->trans = new (&this->variant.out)
                     OutMetaSequenceTransport(std::forward<Ts>(args)...);
                     break;

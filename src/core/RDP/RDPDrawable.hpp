@@ -134,13 +134,12 @@ private:
     Color u32rgb_to_color(BGRColor color) const {
         using Depths = gdi::GraphicDepth;
 
-        if (!this->order_depth().is_depth24()) {
-            switch (this->order_depth()){
-                case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
-                case Depths::depth15(): color = decode_color15_opaquerect()(color); break;
-                case Depths::depth16(): color = decode_color16_opaquerect()(color); break;
-                default: REDASSERT(false);
-            }
+        switch (this->order_depth()){
+            case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depths::depth15(): color = decode_color15_opaquerect()(color); break;
+            case Depths::depth16(): color = decode_color16_opaquerect()(color); break;
+            case Depths::depth24(): break;
+            case Depths::unspecified(): default: REDASSERT(false);
         }
 
         return this->u32_to_color(color);
@@ -149,22 +148,21 @@ private:
     std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const {
         using Depths = gdi::GraphicDepth;
 
-        if (!this->order_depth().is_depth24()) {
-            switch (this->order_depth()) {
-                case Depths::depth8():
-                    color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
-                    color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
-                    break;
-                case Depths::depth15():
-                    color1 = decode_color15_opaquerect()(color1);
-                    color2 = decode_color15_opaquerect()(color2);
-                    break;
-                case Depths::depth16():
-                    color1 = decode_color16_opaquerect()(color1);
-                    color2 = decode_color16_opaquerect()(color2);
-                    break;
-                default: REDASSERT(false);
-            }
+        switch (this->order_depth()) {
+            case Depths::depth8():
+                color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
+                color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
+                break;
+            case Depths::depth15():
+                color1 = decode_color15_opaquerect()(color1);
+                color2 = decode_color15_opaquerect()(color2);
+                break;
+            case Depths::depth16():
+                color1 = decode_color16_opaquerect()(color1);
+                color2 = decode_color16_opaquerect()(color2);
+                break;
+            case Depths::depth24(): break;
+            case Depths::unspecified(): default: REDASSERT(false);
         }
 
         return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
@@ -211,12 +209,27 @@ public:
     }
 
 private:
+    // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
+    //@{
+    static Rect to_rect(RDPMultiDstBlt const & cmd)
+    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
+    static Rect to_rect(RDPMultiOpaqueRect const & cmd)
+    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
+    static Rect const & to_rect(RDP::RDPMultiPatBlt const & cmd)
+    { return cmd.rect; }
+
+    static Rect const & to_rect(RDP::RDPMultiScrBlt const & cmd)
+    { return cmd.rect; }
+    //@}
+
     template<class RDPMulti, class FRect>
     void draw_multi(const RDPMulti & cmd, const Rect & clip, FRect f)
     {
         const Rect clip_drawable_cmd_intersect
           = clip.intersect(this->drawable.width(), this->drawable.height())
-          .intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+          .intersect(to_rect(cmd));
 
         Rect cmd_rect;
 
@@ -249,8 +262,8 @@ public:
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
             uint8_t brush_data[8];
-            memcpy(brush_data, cmd.BrushExtra, 7);
-            brush_data[7] = cmd.BrushHatch;
+            memcpy(brush_data, cmd.brush.extra, 7);
+            brush_data[7] = cmd.brush.hatch;
             this->draw_multi(cmd, clip, [&](const Rect & trect) {
                 this->drawable.patblt_ex(
                     trect, cmd.bRop,

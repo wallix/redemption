@@ -43,6 +43,18 @@
         console.log("url = " + url);
         socket = io.connect(url);
 
+	document.getElementById("errorMsgDiv").style = "display:none";
+        //drawable.opaqueRect(0, 0, drawable.canvas.width, drawable.canvas.height, 0x00);
+
+        var pip = allocate(intArrayFromString(ip), 'i8', ALLOC_NORMAL);
+        var puser = allocate(intArrayFromString(user), 'i8', ALLOC_NORMAL);
+        var ppassword = allocate(intArrayFromString(password), 'i8', ALLOC_NORMAL);
+
+        document.getElementById("form").style = "display:none";
+        document.getElementById("emscripten_canvas").style = "display:block";
+
+        _connexion(pip, puser, ppassword, port);
+
         console.log("Socket id = " + socket.id);
     
 

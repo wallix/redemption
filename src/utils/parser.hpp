@@ -24,6 +24,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+// TODO: there are equivalent functions in parse.hpp, use those from parse
+
 // 10 = 10, 0x10 = 16
 static inline unsigned ulong_from_cstr(const char * str) noexcept
 {

@@ -66,8 +66,11 @@ public:
         }
 
         char source_ip[256];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
         const int source_port = ntohs(u.s4.sin_port);
+#pragma GCC diagnostic pop
         /* start new process */
         const pid_t pid = fork();
         switch (pid) {

@@ -47,7 +47,7 @@
 #include "utils/bitfu.hpp"
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
-#include "capture.hpp"
+#include "capture/capture.hpp"
 #include "core/font.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
@@ -1208,6 +1208,7 @@ public:
             this->event.set(500000);
             break;
         default:
+        case Timeout::TIMEOUT_INACTIVE:
             this->event.reset();
             this->event.object_and_time = false;
             break;

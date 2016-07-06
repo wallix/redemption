@@ -45,7 +45,7 @@ public:
     virtual void invoke_close_box(const char * auth_error_message,
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
-    };
+    }
     virtual bool is_connected() {
         return this->connected;
     }

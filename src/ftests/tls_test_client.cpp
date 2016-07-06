@@ -86,51 +86,6 @@ void rdp_request(SocketTransport & sockettransport)
     sockettransport.recv(&pbuf, 18);
 }
 
-X509 *load_cert(const char *file)
-{
-    X509 *x = nullptr;
-    BIO *cert;
-
-    if ((cert=BIO_new(BIO_s_file())) == nullptr)
-        goto end;
-
-    if (BIO_read_filename(cert, const_cast<void *>(static_cast<void const *>(file))) <= 0)
-        goto end;
-
-    x = PEM_read_bio_X509_AUX(cert, nullptr, nullptr, nullptr);
-end:
-    if (cert != nullptr) BIO_free(cert);
-    return(x);
-}
-
-int check(X509_STORE *ctx, const char *file)
-{
-    X509 *x=nullptr;
-    int i=0,ret=0;
-    X509_STORE_CTX *csc;
-
-    x = load_cert(file);
-    if (x == nullptr)
-        goto end;
-
-    csc = X509_STORE_CTX_new();
-    if (csc == nullptr)
-        goto end;
-    X509_STORE_set_flags(ctx, 0);
-    if(!X509_STORE_CTX_init(csc,ctx,x,nullptr))
-        goto end;
-    i=X509_verify_cert(csc);
-    X509_STORE_CTX_free(csc);
-
-    ret=0;
-end:
-    ret = (i > 0);
-    if (x != nullptr)
-        X509_free(x);
-
-    return(ret);
-}
-
 int tcp_connect(const char *host, int port)
 {
     union

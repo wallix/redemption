@@ -10,11 +10,21 @@
 
 #include <memory>
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 // this is to silent warning as Python.h will redefine this constant
 #undef _XOPEN_SOURCE
 // this is to silent warning as Python.h will redefine this constant
 #undef _POSIX_C_SOURCE
-#include "Python.h"
+#include <Python.h>
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
+
 #include <structmember.h>
 typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 #include <algorithm>

@@ -88,7 +88,7 @@ private:
             this->external_capture_api.objs,
             this->update_config_capture_api.objs,
         };
-    };
+    }
 
 public:
     Capture(

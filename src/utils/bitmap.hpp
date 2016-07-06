@@ -41,6 +41,7 @@
 #include "utils/stream.hpp"
 #include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
+#include "utils/sugar/compiler_attributes.hpp"
 
 #include "utils/sugar/array_view.hpp"
 #include "system/ssl_sha1.hpp"
@@ -694,6 +695,7 @@ protected:
                         mask = 1;
                         fom_mask = input[0]; input++;
                     }
+                    CPP_FALLTHROUGH;
                 case SPECIAL_FGBG_1:
                 case SPECIAL_FGBG_2:
                     if (mask & fom_mask){
@@ -1044,7 +1046,7 @@ protected:
 
         for (uint16_t y = 0; y < cy; y++) {
             for (uint16_t x = 0; x < cx; x++) {
-                uint32_t color = (0xFF << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
+                uint32_t color = (0xFFu << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
 
                 ::out_bytes_le(pixel, bpp, color);
                 pixel += bpp;
@@ -2068,6 +2070,8 @@ public:
                 case 24*5+15: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc15()); break;
                 case 24*5+16: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc16()); break;
                 default: assert(!"unknown bpp");*/
+
+
             }
         }
         else {

@@ -111,6 +111,33 @@ private:
     static void io_copy_bytes(OutStream & stream, uint8_t * buf, unsigned n) { stream.out_copy_bytes(buf, n); }
 
     template<class Stream>
+    static void io_delta_encoded_rects(Stream & stream, array_view<RDP::DeltaEncodedRectangle> delta_rectangles) {
+        for (RDP::DeltaEncodedRectangle & delta_rectangle : delta_rectangles) {
+            io_sint16_le(stream, delta_rectangle.leftDelta);
+            io_sint16_le(stream, delta_rectangle.topDelta);
+            io_sint16_le(stream, delta_rectangle.width);
+            io_sint16_le(stream, delta_rectangle.height);
+        }
+    }
+
+    template<class Stream>
+    static void io_brush(Stream & stream, RDPBrush & brush) {
+        io_sint8(stream, brush.org_x);
+        io_sint8(stream, brush.org_y);
+        io_uint8(stream, brush.style);
+        io_uint8(stream, brush.hatch);
+        io_copy_bytes(stream, brush.extra, 7);
+    }
+
+    template<class Stream>
+    static void io_rect(Stream & stream, Rect & rect) {
+        io_sint16_le(stream, rect.x);
+        io_sint16_le(stream, rect.y);
+        io_uint16_le(stream, rect.cx);
+        io_uint16_le(stream, rect.cy);
+    }
+
+    template<class Stream>
     void send_recv(Stream & stream, uint8_t info_version) {
         const bool mem3blt_support         = (info_version > 1);
         const bool polyline_support        = (info_version > 2);
@@ -121,54 +148,32 @@ private:
 
         // RDPOrderCommon common;
         io_uint8(stream, this->common.order);
-        io_sint16_le(stream, this->common.clip.x);
-        io_sint16_le(stream, this->common.clip.y);
-        io_uint16_le(stream, this->common.clip.cx);
-        io_uint16_le(stream, this->common.clip.cy);
+        io_rect(stream, this->common.clip);
 
         // RDPDestBlt destblt;
-        io_sint16_le(stream, this->destblt.rect.x);
-        io_sint16_le(stream, this->destblt.rect.y);
-        io_uint16_le(stream, this->destblt.rect.cx);
-        io_uint16_le(stream, this->destblt.rect.cy);
+        io_rect(stream, this->destblt.rect);
         io_uint8(stream, this->destblt.rop);
 
         // RDPPatBlt patblt;
-        io_sint16_le(stream, this->patblt.rect.x);
-        io_sint16_le(stream, this->patblt.rect.y);
-        io_uint16_le(stream, this->patblt.rect.cx);
-        io_uint16_le(stream, this->patblt.rect.cy);
+        io_rect(stream, this->patblt.rect);
         io_uint8(stream, this->patblt.rop);
         io_uint32_le(stream, this->patblt.back_color);
         io_uint32_le(stream, this->patblt.fore_color);
-        io_sint8(stream, this->patblt.brush.org_x);
-        io_sint8(stream, this->patblt.brush.org_y);
-        io_uint8(stream, this->patblt.brush.style);
-        io_uint8(stream, this->patblt.brush.hatch);
-        io_copy_bytes(stream, this->patblt.brush.extra, 7);
+        io_brush(stream, this->patblt.brush);
 
         // RDPScrBlt scrblt;
-        io_sint16_le(stream, this->scrblt.rect.x);
-        io_sint16_le(stream, this->scrblt.rect.y);
-        io_uint16_le(stream, this->scrblt.rect.cx);
-        io_uint16_le(stream, this->scrblt.rect.cy);
+        io_rect(stream, this->scrblt.rect);
         io_uint8(stream, this->scrblt.rop);
         io_uint16_le(stream, this->scrblt.srcx);
         io_uint16_le(stream, this->scrblt.srcy);
 
         // RDPOpaqueRect opaquerect;
-        io_sint16_le(stream, this->opaquerect.rect.x);
-        io_sint16_le(stream, this->opaquerect.rect.y);
-        io_uint16_le(stream, this->opaquerect.rect.cx);
-        io_uint16_le(stream, this->opaquerect.rect.cy);
+        io_rect(stream, this->opaquerect.rect);
         io_color(stream, this->opaquerect.color);
 
         // RDPMemBlt memblt;
         io_uint16_le(stream, this->memblt.cache_id);
-        io_sint16_le(stream, this->memblt.rect.x);
-        io_sint16_le(stream, this->memblt.rect.y);
-        io_uint16_le(stream, this->memblt.rect.cx);
-        io_uint16_le(stream, this->memblt.rect.cy);
+        io_rect(stream, this->memblt.rect);
         io_uint8(stream, this->memblt.rop);
         TODO("bad length")
         io_uint8_unsafe(stream, this->memblt.srcx);
@@ -178,20 +183,13 @@ private:
         // RDPMem3Blt memblt;
         if (mem3blt_support) {
             io_uint16_le(stream, this->mem3blt.cache_id);
-            io_sint16_le(stream, this->mem3blt.rect.x);
-            io_sint16_le(stream, this->mem3blt.rect.y);
-            io_uint16_le(stream, this->mem3blt.rect.cx);
-            io_uint16_le(stream, this->mem3blt.rect.cy);
+            io_rect(stream, this->mem3blt.rect);
             io_uint8(stream, this->mem3blt.rop);
             io_uint8_unsafe(stream, this->mem3blt.srcx);
             io_uint8_unsafe(stream, this->mem3blt.srcy);
             io_uint32_le(stream, this->mem3blt.back_color);
             io_uint32_le(stream, this->mem3blt.fore_color);
-            io_sint8(stream, this->mem3blt.brush.org_x);
-            io_sint8(stream, this->mem3blt.brush.org_y);
-            io_uint8(stream, this->mem3blt.brush.style);
-            io_uint8(stream, this->mem3blt.brush.hatch);
-            io_copy_bytes(stream, this->mem3blt.brush.extra, 7);
+            io_brush(stream, this->mem3blt.brush);
             io_uint16_le(stream, this->mem3blt.cache_idx);
         }
 
@@ -214,19 +212,9 @@ private:
         io_sint16_le(stream, this->glyphindex.f_op_redundant);
         io_uint32_le(stream, this->glyphindex.back_color);
         io_uint32_le(stream, this->glyphindex.fore_color);
-        io_sint16_le(stream, this->glyphindex.bk.x);
-        io_sint16_le(stream, this->glyphindex.bk.y);
-        io_uint16_le(stream, this->glyphindex.bk.cx);
-        io_uint16_le(stream, this->glyphindex.bk.cy);
-        io_sint16_le(stream, this->glyphindex.op.x);
-        io_sint16_le(stream, this->glyphindex.op.y);
-        io_uint16_le(stream, this->glyphindex.op.cx);
-        io_uint16_le(stream, this->glyphindex.op.cy);
-        io_sint8(stream, this->glyphindex.brush.org_x);
-        io_sint8(stream, this->glyphindex.brush.org_y);
-        io_uint8(stream, this->glyphindex.brush.style);
-        io_uint8(stream, this->glyphindex.brush.hatch);
-        io_copy_bytes(stream, this->glyphindex.brush.extra, 7);
+        io_rect(stream, this->glyphindex.bk);
+        io_rect(stream, this->glyphindex.op);
+        io_brush(stream, this->glyphindex.brush);
         io_sint16_le(stream, this->glyphindex.glyph_x);
         io_sint16_le(stream, this->glyphindex.glyph_y);
         io_uint8(stream, this->glyphindex.data_len);
@@ -254,12 +242,10 @@ private:
             io_sint16_le(stream, this->multidstblt.nHeight);
             io_uint8(stream, this->multidstblt.bRop);
             io_uint8(stream, this->multidstblt.nDeltaEntries);
-            for (uint8_t i = 0; i < this->multidstblt.nDeltaEntries; i++) {
-                io_sint16_le(stream, this->multidstblt.deltaEncodedRectangles[i].leftDelta);
-                io_sint16_le(stream, this->multidstblt.deltaEncodedRectangles[i].topDelta);
-                io_sint16_le(stream, this->multidstblt.deltaEncodedRectangles[i].width);
-                io_sint16_le(stream, this->multidstblt.deltaEncodedRectangles[i].height);
-            }
+            io_delta_encoded_rects(stream, {
+                this->multidstblt.deltaEncodedRectangles,
+                this->multidstblt.nDeltaEntries
+            });
         }
 
         // RDPMultiOpaqueRect multiopaquerect;
@@ -270,53 +256,37 @@ private:
             io_sint16_le(stream, this->multiopaquerect.nHeight);
             io_color(stream, this->multiopaquerect._Color);
             io_uint8(stream, this->multiopaquerect.nDeltaEntries);
-            for (uint8_t i = 0; i < this->multiopaquerect.nDeltaEntries; i++) {
-                io_sint16_le(stream, this->multiopaquerect.deltaEncodedRectangles[i].leftDelta);
-                io_sint16_le(stream, this->multiopaquerect.deltaEncodedRectangles[i].topDelta);
-                io_sint16_le(stream, this->multiopaquerect.deltaEncodedRectangles[i].width);
-                io_sint16_le(stream, this->multiopaquerect.deltaEncodedRectangles[i].height);
-            }
+            io_delta_encoded_rects(stream, {
+                this->multiopaquerect.deltaEncodedRectangles,
+                this->multiopaquerect.nDeltaEntries
+            });
         }
 
         // RDPMultiPatBlt multipatblt;
         if (multipatblt_support) {
-            io_sint16_le(stream, this->multipatblt.nLeftRect);
-            io_sint16_le(stream, this->multipatblt.nTopRect);
-            io_uint16_le(stream, this->multipatblt.nWidth);
-            io_uint16_le(stream, this->multipatblt.nHeight);
+            io_rect(stream, this->multipatblt.rect);
             io_uint8(stream, this->multipatblt.bRop);
             io_uint32_le(stream, this->multipatblt.BackColor);
             io_uint32_le(stream, this->multipatblt.ForeColor);
-            io_sint8(stream, this->multipatblt.BrushOrgX);
-            io_sint8(stream, this->multipatblt.BrushOrgY);
-            io_uint8(stream, this->multipatblt.BrushStyle);
-            io_uint8(stream, this->multipatblt.BrushHatch);
-            io_copy_bytes(stream, this->multipatblt.BrushExtra, 7);
+            io_brush(stream, this->multipatblt.brush);
             io_uint8(stream, this->multipatblt.nDeltaEntries);
-            for (uint8_t i = 0; i < this->multipatblt.nDeltaEntries; i++) {
-                io_sint16_le(stream, this->multipatblt.deltaEncodedRectangles[i].leftDelta);
-                io_sint16_le(stream, this->multipatblt.deltaEncodedRectangles[i].topDelta);
-                io_sint16_le(stream, this->multipatblt.deltaEncodedRectangles[i].width);
-                io_sint16_le(stream, this->multipatblt.deltaEncodedRectangles[i].height);
-            }
+            io_delta_encoded_rects(stream, {
+                this->multipatblt.deltaEncodedRectangles,
+                this->multipatblt.nDeltaEntries
+            });
         }
 
         // RDPMultiScrBlt multiscrblt;
         if (multiscrblt_support) {
-            io_sint16_le(stream, this->multiscrblt.nLeftRect);
-            io_sint16_le(stream, this->multiscrblt.nTopRect);
-            io_uint16_le(stream, this->multiscrblt.nWidth);
-            io_uint16_le(stream, this->multiscrblt.nHeight);
+            io_rect(stream, this->multiscrblt.rect);
             io_uint8(stream, this->multiscrblt.bRop);
             io_sint16_le(stream, this->multiscrblt.nXSrc);
             io_sint16_le(stream, this->multiscrblt.nYSrc);
             io_uint8(stream, this->multiscrblt.nDeltaEntries);
-            for (uint8_t i = 0; i < this->multiscrblt.nDeltaEntries; i++) {
-                io_sint16_le(stream, this->multiscrblt.deltaEncodedRectangles[i].leftDelta);
-                io_sint16_le(stream, this->multiscrblt.deltaEncodedRectangles[i].topDelta);
-                io_sint16_le(stream, this->multiscrblt.deltaEncodedRectangles[i].width);
-                io_sint16_le(stream, this->multiscrblt.deltaEncodedRectangles[i].height);
-            }
+            io_delta_encoded_rects(stream, {
+                this->multiscrblt.deltaEncodedRectangles,
+                this->multiscrblt.nDeltaEntries
+            });
         }
     }
 

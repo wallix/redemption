@@ -150,6 +150,9 @@ constant CXXFLAGS-COMMON :
     <toolset>clang:<cxxflags>-Wno-char-subscripts
     <toolset>clang:<cxxflags>-Wno-unused-variable
 #     <toolset>clang:<cxxflags>-Wno-unused-private-field
+
+    <cxxflags>-fno-rtti
+    <cxxflags>-frtti
 ;
 
 
@@ -256,7 +259,6 @@ project redemption
     <include>$(SRCDIR)
     <include>$(INCLUDEDIR)
     <include>$(SYSTEMDIR)
-    <include>$(SRCDIR)/capture
     <include>$(SRCDIR)/headers
     <include>$(MODULEDIR)/includes
 
@@ -420,6 +422,7 @@ constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags
 constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
 constant TEST_DEPENDENCIES :
     <include>$(TESTDIR)
+    <cxxflags>-frtti
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     $(LIB_SAN_DEPENDENCY)
     $(LIB_TEST_DEPENDENCY)

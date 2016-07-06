@@ -33,10 +33,10 @@
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
-#include "nativecapture.hpp"
-#include "FileToGraphic.hpp"
-#include "GraphicToFile.hpp"
-#include "drawable_to_file.hpp"
+#include "capture/nativecapture.hpp"
+#include "capture/FileToGraphic.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "capture/drawable_to_file.hpp"
 
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 

@@ -27,8 +27,8 @@
 #include <vector>
 #include <string>
 
-#include "FileToChunk.hpp"
-#include "ChunkToFile.hpp"
+#include "capture/FileToChunk.hpp"
+#include "capture/ChunkToFile.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "recording_progress.hpp"

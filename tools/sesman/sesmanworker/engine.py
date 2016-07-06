@@ -572,15 +572,23 @@ class Engine(object):
         self.checktarget_status_cache = None
         self.checktarget_infos_cache = None
 
+    def get_user_rights(self, protocols, target_device, **kwargs):
+        rights_getter = self.wabengine.get_proxy_rights
+        if self.alt_proxy:
+            rights_getter = self.wabengine.get_proxy_user_rights
+        urights = rights_getter(protocols,
+                                target_device,
+                                **kwargs)
+        if self.alt_proxy and urights and (type(urights[0]) == str):
+            import json
+            urights = map(json.loads, urights)
+        return urights
+
     def valid_device_name(self, protocols, target_device):
         try:
             # Logger().info("** CALL VALIDATOR DEVICE NAME Get_proxy_right **")
-            get_proxy_rights = self.wabengine.get_proxy_rights
-            if self.alt_proxy:
-                get_proxy_rights = self.wabengine.get_proxy_user_rights
-            prights = get_proxy_rights(protocols,
-                                       target_device,
-                                       check_timeframes=False)
+            prights = self.get_user_rights(
+                protocols, target_device, check_timeframes=False)
         except Exception, e:
             # import traceback
             # Logger().info("valid_device_name failed: (((%s)))" % (traceback.format_exc(e)))
@@ -773,23 +781,23 @@ class Engine(object):
         if self.proxy_rights is None:
             try:
                 Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s, checktimeframe=%s" % (protocols, target_device, check_timeframes))
-                get_proxy_rights = self.wabengine.get_proxy_rights
-                if self.alt_proxy:
-                    get_proxy_rights = self.wabengine.get_proxy_user_rights
-                self.proxy_rights = get_proxy_rights(
-                    protocols,
-                    target_device,
-                    check_timeframes=check_timeframes)
+                self.proxy_rights = self.get_user_rights(
+                    protocols, target_device, check_timeframes=check_timeframes)
                 Logger().debug("** END Get_proxy_right **")
             except Exception, e:
+                # import traceback
+                # Logger().info("traceback = %s" % traceback.format_exc(e))
                 self.proxy_rights = None
                 return
         if self.rights is not None:
             return
+        # start = time.time()
+        # Logger().debug("** BEGIN Filter_rights **")
         if self.alt_proxy:
             self._filter_rights_alt(target_context)
         else:
             self._filter_rights(target_context)
+        # Logger().debug("** END Filter_rights in %s sec **" % (time.time() - start))
 
     def _find_target_right(self, target_login, target_device, target_service,
                           target_group):
@@ -880,8 +888,7 @@ class Engine(object):
             application = selected_target.resource.application
         try:
             if application:
-                effective_target = self.wabengine.get_effective_target(selected_target,
-                                                                       alt_proxy=self.alt_proxy)
+                effective_target = self.wabengine.get_effective_target(selected_target)
                 Logger().info("Engine get_effective_target done (application)")
                 return effective_target
             else:
@@ -910,8 +917,7 @@ class Engine(object):
     def get_app_params(self, selected_target, effective_target):
 #         Logger().info("Engine get_app_params: service_login=%s effective_target=%s" % (service_login, effective_target))
         try:
-            app_params = self.wabengine.get_app_params(selected_target, effective_target,
-                                                       alt_proxy=self.alt_proxy)
+            app_params = self.wabengine.get_app_params(selected_target, effective_target)
             Logger().info("Engine get_app_params done")
             return app_params
         except Exception, e:
@@ -922,8 +928,7 @@ class Engine(object):
     def get_primary_password(self, target_device):
         Logger().info("Engine get_primary_password ...")
         try:
-            password = self.wabengine.get_primary_password(target_device,
-                                                           alt_proxy=self.alt_proxy)
+            password = self.wabengine.get_primary_password(target_device)
             Logger().info("Engine get_primary_password done")
             return password
         except Exception, e:
@@ -943,8 +948,7 @@ class Engine(object):
         if self.target_credentials.get(target_uid) is None:
             try:
                 Logger().debug("** CALL checkout_target")
-                creds = self.wabengine.checkout_target(target,
-                                                       alt_proxy=self.alt_proxy)
+                creds = self.wabengine.checkout_target(target)
                 self.target_credentials[target_uid] = creds
             except AccountLocked as m:
                 Logger().info("Engine checkout_target failed: account locked")
@@ -1043,8 +1047,7 @@ class Engine(object):
         Logger().debug("**** CALL wabengine START SESSION ")
         try:
             self.session_id = self.wabengine.start_session(
-                auth, self.get_pidhandler(pid), effective_login=effective_login,
-                alt_proxy=self.alt_proxy, **kwargs)
+                auth, self.get_pidhandler(pid), effective_login=effective_login, **kwargs)
         except LicenseException:
             Logger().info("Engine start_session failed: License Exception")
             self.session_id = None
@@ -1211,8 +1214,7 @@ class Engine(object):
         else:
             return None, None
         try:
-            restrictions = self.wabengine.get_proxy_restrictions(auth,
-                                                                 alt_proxy=self.alt_proxy)
+            restrictions = self.wabengine.get_proxy_restrictions(auth)
             kill_patterns = []
             notify_patterns = []
             for restriction in restrictions:
@@ -1347,7 +1349,7 @@ class Engine(object):
         Logger().debug("** CALL Check_target ** pid=%s, ticket=%s" %
                       (self.get_pidhandler(pid), request_ticket))
         status, infos = self.wabengine.check_target(target, self.get_pidhandler(pid),
-                                                    request_ticket, alt_proxy=self.alt_proxy)
+                                                    request_ticket)
         Logger().debug("** END Check_target ** returns => status=%s, info=%s" % (status, infos))
         self.checktarget_status_cache = status
         self.checktarget_infos_cache = infos
@@ -1367,10 +1369,7 @@ class Engine(object):
         if not target:
             return None
         if self.alt_proxy:
-            if target['application_cn']:
-                return self.wabengine.get_application(target['application_cn'])
-            else:
-                return None
+            return target['application_cn']
         else:
             return target.resource.application
 
@@ -1416,10 +1415,9 @@ class Engine(object):
         if not target:
             return {}
 
-        server_pubkey_options = {}
-        conn_policy_blob = target.resource.service.connectionpolicy.data
-        if conn_policy_blob:
-            server_pubkey_options = conn_policy_blob.get('server_pubkey')
+        conn_policy_data = self.get_target_conn_options(target)
+        if conn_policy_data:
+            server_pubkey_options = conn_policy_data.get('server_pubkey')
             if not server_pubkey_options:
                 server_pubkey_options = {}
         return server_pubkey_options
@@ -1428,7 +1426,6 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return []
-        authmethods = []
         try:
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
@@ -1445,7 +1442,6 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return {}
-        conn_opts = {}
         try:
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
@@ -1455,6 +1451,7 @@ class Engine(object):
                 conn_opts = target.resource.service.connectionpolicy.data
         except:
             Logger().error("Error: Connection policy has no data field")
+            conn_opts = {}
         return conn_opts
 
     def get_physical_target_info(self, physical_target):
