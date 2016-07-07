@@ -32,9 +32,9 @@
 
 #include "transport/test_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
-#include "FileToGraphic.hpp"
-#include "GraphicToFile.hpp"
-#include "drawable_to_file.hpp"
+#include "capture/FileToGraphic.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "capture/drawable_to_file.hpp"
 
 #include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 

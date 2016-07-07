@@ -29,7 +29,7 @@
 #define LOGNULL
 // #define LOGPRINT
 
-#include "capture.hpp"
+#include "capture/capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
 

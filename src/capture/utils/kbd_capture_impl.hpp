@@ -23,7 +23,7 @@
 
 #include "configs/config.hpp"
 #include "apis_register.hpp"
-#include "new_kbdcapture.hpp"
+#include "capture/new_kbdcapture.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"

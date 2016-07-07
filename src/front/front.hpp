@@ -47,7 +47,7 @@
 #include "utils/bitfu.hpp"
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
-#include "capture.hpp"
+#include "capture/capture.hpp"
 #include "core/font.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/caches/bmpcache.hpp"

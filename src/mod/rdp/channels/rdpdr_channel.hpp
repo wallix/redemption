@@ -40,16 +40,28 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     FileSystemDriveManager& file_system_drive_manager;
 
-    // DeviceId, FileId, CompletionId, MajorFunction, (extra data), Path.
-    typedef std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t,
-                                   uint32_t, std::string>>
-        device_io_request_info_inventory_type;
+    struct device_io_request_info_type
+    {
+        uint32_t device_id;
+        uint32_t file_id;
+        uint32_t completion_id;
+        // TODO IRP_MAJOR
+        uint32_t major_function;
+        uint32_t extra_data;
+        std::string path;
+    };
+    using device_io_request_info_inventory_type = std::vector<device_io_request_info_type>;
     device_io_request_info_inventory_type device_io_request_info_inventory;
 
-    // DeviceId, FileId, file_path, for_reading, for_writing.
-    typedef std::vector<std::tuple<uint32_t, uint32_t,
-                                   std::string, bool, bool>>
-        device_io_target_info_inventory_type;
+    struct device_io_target_info_type
+    {
+        uint32_t device_id;
+        uint32_t file_id;
+        std::string file_path;
+        bool for_reading;
+        bool for_writing;
+    };
+    using device_io_target_info_inventory_type = std::vector<device_io_target_info_type>;
     device_io_target_info_inventory_type device_io_target_info_inventory;
 
     bool device_capability_version_02_supported = false;
@@ -66,16 +78,22 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     bool user_logged_on = false;
 
-    class DeviceRedirectionManager {
-        // (Virtual Channel) data_length, (Virtual Channel) data.
-        typedef std::deque<std::tuple<uint32_t, std::unique_ptr<uint8_t[]>>>
-            device_announce_collection_type;
+    class DeviceRedirectionManager
+    {
+        struct virtual_channel_data_type
+        {
+            std::size_t length;
+            std::unique_ptr<uint8_t[]> data;
+        };
+        using device_announce_collection_type = std::deque<virtual_channel_data_type>;
         device_announce_collection_type device_announces;
 
-        // DeviceId, PreferredDosName.
-        typedef std::vector<std::tuple<uint32_t,
-                            std::string>>
-            device_info_inventory_type;
+        struct device_info_type
+        {
+            uint32_t device_id;
+            std::string preferred_dos_name;
+        };
+        using device_info_inventory_type = std::vector<device_info_type>;
         device_info_inventory_type device_info_inventory;
 
         FileSystemDriveManager& file_system_drive_manager;
@@ -117,10 +135,10 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                     chunk_data_length);
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    this->device_announces.push_back(
-                        std::make_tuple(
-                            this->device_announce_stream.get_offset(),
-                            std::move(this->device_announce_data)));
+                    this->device_announces.push_back({
+                        this->device_announce_stream.get_offset(),
+                        std::move(this->device_announce_data)
+                    });
 
                     this->device_announce_stream = OutStream();
                 }
@@ -185,31 +203,27 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
     private:
-        bool add_known_device(uint32_t DeviceId,
-                              const char* PreferredDosName) {
-            for (device_info_inventory_type::const_iterator iter =
-                     this->device_info_inventory.cbegin();
-                 iter != this->device_info_inventory.cend(); ++iter) {
-                if (std::get<0>(*iter) == DeviceId) {
+        bool add_known_device(uint32_t DeviceId, const char* PreferredDosName) {
+            for (device_info_type const & info : this->device_info_inventory) {
+                if (info.device_id == DeviceId) {
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                                "\"%s\"(DeviceId=%u) is already in the dervice list. "
+                                "\"%s\"(DeviceId=%u) is already in the device list. "
                                 "Old=\"%s\"",
                             PreferredDosName, DeviceId,
-                            std::get<1>(*iter).c_str());
+                            info.preferred_dos_name.c_str());
                     }
 
                     return false;
                 }
             }
 
-            this->device_info_inventory.push_back(
-                std::make_tuple(DeviceId, PreferredDosName));
+            this->device_info_inventory.push_back({DeviceId, PreferredDosName});
             if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                        "Add \"%s\"(DeviceId=%u) to known dervice list.",
+                        "Add \"%s\"(DeviceId=%u) to known device list.",
                     PreferredDosName, DeviceId);
             }
 
@@ -242,12 +256,10 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
             }
         }
 
-        const char* get_device_name(uint32_t DeviceId) {
-            for (device_info_inventory_type::const_iterator iter =
-                     this->device_info_inventory.cbegin();
-                 iter != this->device_info_inventory.cend(); ++iter) {
-                if (std::get<0>(*iter) == DeviceId) {
-                    return std::get<1>(*iter).c_str();
+        std::string const * get_device_name(uint32_t DeviceId) {
+            for (device_info_type const & info : this->device_info_inventory) {
+                if (info.device_id == DeviceId) {
+                    return &info.preferred_dos_name;
                 }
             }
 
@@ -255,10 +267,8 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         }
 
         bool is_known_device(uint32_t DeviceId) {
-            for (device_info_inventory_type::const_iterator iter =
-                     this->device_info_inventory.cbegin();
-                 iter != this->device_info_inventory.cend(); ++iter) {
-                if (std::get<0>(*iter) == DeviceId) {
+            for (device_info_type const & info : this->device_info_inventory) {
+                if (info.device_id == DeviceId) {
                     return true;
                 }
             }
@@ -268,19 +278,18 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     private:
         void remove_known_device(uint32_t DeviceId) {
-            for (device_info_inventory_type::const_iterator iter =
-                     this->device_info_inventory.cbegin();
-                 iter != this->device_info_inventory.cend(); ++iter) {
-                if (std::get<0>(*iter) == DeviceId) {
+            for (auto iter = this->device_info_inventory.begin();
+                 iter != this->device_info_inventory.end(); ++iter) {
+                if (iter->device_id == DeviceId) {
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device: "
-                                "Remove \"%s\"(DeviceId=%u) from known dervice list.",
-                            std::get<1>(*iter).c_str(),
+                                "Remove \"%s\"(DeviceId=%u) from known device list.",
+                            iter->preferred_dos_name.c_str(),
                             DeviceId);
                     }
 
-                    this->device_info_inventory.erase(iter);
+                    unordered_erase(this->device_info_inventory, iter);
 
                     break;
                 }
@@ -292,13 +301,10 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                    this->device_announces.size()) {
                 REDASSERT(this->to_server_sender);
 
-                const uint32_t total_length =
-                    std::get<0>(this->device_announces.front());
+                const uint32_t total_length = this->device_announces.front().length;
+                uint8_t const * chunk_data = this->device_announces.front().data.get();
 
                 uint32_t remaining_data_length = total_length;
-
-                uint8_t const * chunk_data =
-                    std::get<1>(this->device_announces.front()).get();
 
                 {
                     InStream chunk(chunk_data, total_length);
@@ -637,10 +643,10 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
                         this->current_device_announce_stream = OutStream();
 
-                        this->device_announces.push_back(
-                            std::make_tuple(
-                                data_length,
-                                std::move(this->current_device_announce_data)));
+                        this->device_announces.push_back({
+                            data_length,
+                            std::move(this->current_device_announce_data)
+                        });
                     }
                 }
                 else if (this->length_of_remaining_device_data_to_be_skipped) {
@@ -695,13 +701,10 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         const uint32_t DeviceId) -> bool {
                 bool device_removed = false;
 
-                for (device_announce_collection_type::const_iterator iter =
-                         device_announces.cbegin();
-                     iter != device_announces.cend(); ++iter) {
-                    uint8_t const * data =
-                        std::get<1>(*iter).get();
+                for (auto iter = device_announces.begin();
+                     iter != device_announces.end(); ++iter) {
 
-                    InStream header_stream(data,
+                    InStream header_stream(iter->data.get(),
                             rdpdr::SharedHeader::size() +
                             12  // DeviceCount(4) + DeviceType(4) + DeviceId(4)
                         );
@@ -715,7 +718,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                         header_stream.in_uint32_le();
 
                     if (DeviceId == current_device_id) {
-                        device_announces.erase(iter);
+                        unordered_erase(device_announces, iter);
                         device_removed = true;
                         break;
                     }
@@ -827,6 +830,15 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
     SessionProbeLauncher* drive_redirection_initialize_notifier = nullptr;
 
+    template<class Cont, class ItFw>
+    static void unordered_erase(Cont & cont, ItFw && pos)
+    {
+        if(pos + 1 != cont.end()) {
+            *pos = std::move(cont.back());
+        }
+        cont.pop_back();
+    }
+
 public:
     struct Params : public BaseVirtualChannel::Params
     {
@@ -883,47 +895,39 @@ public:
 
     ~FileSystemVirtualChannel() override
     {
-        if (!this->device_io_request_info_inventory.empty())
+        for (device_io_request_info_type & request_info : this->device_io_request_info_inventory)
         {
-            for (device_io_request_info_inventory_type::iterator iter =
-                     this->device_io_request_info_inventory.begin();
-                 iter != this->device_io_request_info_inventory.end();
-                 ++iter)
-            {
-                REDASSERT(std::get<3>(*iter) !=
-                    rdpdr::IRP_MJ_DIRECTORY_CONTROL);
+            REDASSERT(request_info.major_function != rdpdr::IRP_MJ_DIRECTORY_CONTROL);
 
-                LOG(LOG_WARNING,
-                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
-                        "There is Device I/O request information "
-                        "remaining in inventory. "
-                        "DeviceId=%u FileId=%u CompletionId=%u "
-                        "MajorFunction=%u extra_data=%u file_path=\"%s\"",
-                    std::get<0>(*iter), std::get<1>(*iter),
-                    std::get<2>(*iter), std::get<3>(*iter),
-                    std::get<4>(*iter),
-                    std::get<5>(*iter).c_str());
-            }
+            LOG(LOG_WARNING,
+                "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                    "There is Device I/O request information "
+                    "remaining in inventory. "
+                    "DeviceId=%u FileId=%u CompletionId=%u "
+                    "MajorFunction=%u extra_data=%u file_path=\"%s\"",
+                request_info.device_id,
+                request_info.file_id,
+                request_info.completion_id,
+                request_info.major_function,
+                request_info.extra_data,
+                request_info.path.c_str()
+            );
         }
 
-        if (!this->device_io_target_info_inventory.empty())
+        for (device_io_target_info_type & target_info : this->device_io_target_info_inventory)
         {
-            for (device_io_target_info_inventory_type::iterator iter =
-                     this->device_io_target_info_inventory.begin();
-                 iter != this->device_io_target_info_inventory.end();
-                 ++iter)
-            {
-                LOG(LOG_WARNING,
-                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
-                        "There is Device I/O target information "
-                        "remaining in inventory. "
-                        "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
-                        "for_writing=%s",
-                    std::get<0>(*iter), std::get<1>(*iter),
-                    std::get<2>(*iter).c_str(),
-                    (std::get<3>(*iter) ? "yes" : "no"),
-                    (std::get<4>(*iter) ? "yes" : "no"));
-            }
+            LOG(LOG_WARNING,
+                "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                    "There is Device I/O target information "
+                    "remaining in inventory. "
+                    "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
+                    "for_writing=%s",
+                target_info.device_id,
+                target_info.file_id,
+                target_info.file_path.c_str(),
+                target_info.for_reading ? "yes" : "no",
+                target_info.for_writing ? "yes" : "no"
+            );
         }
     }
 
@@ -935,6 +939,33 @@ protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const override
     {
         return "RDPDR_LIMIT";
+    }
+
+private:
+    device_io_request_info_inventory_type::iterator
+    find_request_response(rdpdr::DeviceIOResponse const & device_io_response)
+    {
+        return std::find_if(
+            this->device_io_request_info_inventory.begin(),
+            this->device_io_request_info_inventory.end(),
+            [&device_io_response](device_io_request_info_type const & request_info) {
+                return request_info.device_id == device_io_response.DeviceId()
+                    && request_info.completion_id == device_io_response.CompletionId();
+            }
+        );
+    }
+
+    device_io_target_info_inventory_type::iterator
+    find_target_response(rdpdr::DeviceIOResponse const & device_io_response, uint32_t file_id)
+    {
+        return std::find_if(
+            this->device_io_target_info_inventory.begin(),
+            this->device_io_target_info_inventory.end(),
+            [&device_io_response, file_id](device_io_target_info_type const & target_info){
+                return target_info.device_id == device_io_response.DeviceId()
+                    && target_info.file_id == file_id;
+            }
+        );
     }
 
 public:
@@ -1406,12 +1437,7 @@ public:
             device_io_response.log(LOG_INFO);
         }
 
-        device_io_request_info_inventory_type::iterator iter;
-        for (iter = this->device_io_request_info_inventory.begin();
-             (iter != this->device_io_request_info_inventory.end()) &&
-             ((std::get<0>(*iter) != device_io_response.DeviceId()) ||
-              (std::get<2>(*iter) != device_io_response.CompletionId()));
-             ++iter);
+        auto iter = this->find_request_response(device_io_response);
 
         if (iter == this->device_io_request_info_inventory.end()) {
             LOG(LOG_WARNING,
@@ -1425,10 +1451,10 @@ public:
             return true;
         }
 
-        const uint32_t FileId        = std::get<1>(*iter);
-        const uint32_t MajorFunction = std::get<3>(*iter);
-        const uint32_t extra_data    = std::get<4>(*iter);
-        const char*    file_path     = std::get<5>(*iter).c_str();
+        const uint32_t FileId         = iter->file_id;
+        const uint32_t MajorFunction  = iter->major_function;
+        const uint32_t extra_data     = iter->extra_data;
+        const std::string & file_path = iter->path.c_str();
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             LOG(LOG_INFO,
@@ -1437,7 +1463,7 @@ public:
                     "file_path=\"%s\"",
                 FileId,
                 rdpdr::DeviceIORequest::get_MajorFunction_name(MajorFunction),
-                MajorFunction, extra_data, file_path);
+                MajorFunction, extra_data, file_path.c_str());
         }
 
         switch (MajorFunction)
@@ -1458,17 +1484,13 @@ public:
                     device_create_response.log(LOG_INFO);
                 }
 
-                if (device_io_response.IoStatus() ==
-                    0x00000000  // STATUS_SUCCESS
-                   ) {
-                    const char* device_name =
+                if (device_io_response.IoStatus() == 0x00000000 /* STATUS_SUCCESS */) {
+                    std::string const * device_name =
                         this->device_redirection_manager.get_device_name(
                             device_io_response.DeviceId());
 
                     if (device_name) {
-                        std::string target_file_name(device_name);
-
-                        target_file_name += file_path;
+                        std::string target_file_name = *device_name + file_path;
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                             LOG(LOG_INFO,
@@ -1480,14 +1502,13 @@ public:
                                 device_create_response.FileId());
                         }
 
-                        this->device_io_target_info_inventory.push_back(
-                            std::make_tuple(
-                                device_io_response.DeviceId(),
-                                device_create_response.FileId(),
-                                std::move(target_file_name),    // file_path
-                                false,                          // for_reading
-                                false                           // for_writing
-                            ));
+                        this->device_io_target_info_inventory.push_back({
+                            device_io_response.DeviceId(),
+                            device_create_response.FileId(),
+                            std::move(target_file_name),    // file_path
+                            false,                          // for_reading
+                            false                           // for_writing
+                        });
                     }
                     else {
                         LOG(LOG_WARNING,
@@ -1509,31 +1530,19 @@ public:
                             "Close request.");
                 }
 
-                for (device_io_target_info_inventory_type::const_iterator
-                         target_iter =
-                             this->device_io_target_info_inventory.cbegin();
-                     target_iter !=
-                         this->device_io_target_info_inventory.cend();
-                     ++target_iter) {
-                    if ((std::get<0>(*target_iter) ==
-                         device_io_response.DeviceId()) &&
-                        (std::get<1>(*target_iter) == FileId)) {
+                auto target_iter = this->find_target_response(device_io_response, FileId);
 
-                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                            LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                    "Remove \"%s\" from known file list. "
-                                    "DeviceId=%u FileId=%u",
-                                std::get<2>(*target_iter).c_str(),
-                                device_io_response.DeviceId(),
-                                FileId);
-                        }
-
-                        this->device_io_target_info_inventory.erase(
-                            target_iter);
-
-                        break;
+                if (target_iter != this->device_io_target_info_inventory.end()) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        LOG(LOG_INFO,
+                            "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                "Remove \"%s\" from known file list. "
+                                "DeviceId=%u FileId=%u",
+                            target_iter->file_path.c_str(),
+                            device_io_response.DeviceId(),
+                            FileId);
                     }
+                    unordered_erase(this->device_io_target_info_inventory, target_iter);
                 }
             }
             break;
@@ -1560,81 +1569,64 @@ public:
                         Length);
                 }
 
-                if (device_io_response.IoStatus() ==
-                    0x00000000  // STATUS_SUCCESS
-                   ) {
+                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
                     this->update_exchanged_data(Length);
 
-                    for (device_io_request_info_inventory_type::const_iterator
-                             request_iter =
-                                 this->device_io_request_info_inventory.cbegin();
-                         request_iter !=
-                             this->device_io_request_info_inventory.cend();
-                         ++request_iter) {
-                        //LOG(LOG_INFO, "DeviceId=%u:%u CompletionId=%u:%u",
-                        //    device_io_response.DeviceId(), std::get<0>(*request_iter),
-                        //    device_io_response.CompletionId(), std::get<2>(*request_iter)
-                        //    );
-                        if ((std::get<0>(*request_iter) ==
-                             device_io_response.DeviceId()) &&
-                            (std::get<2>(*request_iter) ==
-                             device_io_response.CompletionId())) {
-                            const uint32_t FileId = std::get<1>(*request_iter);
+                    auto request_iter = this->find_request_response(device_io_response);
+                    //for (auto & request_info
+                    //    : iter(this->device_io_request_info_inventory.begin(), request_iter)
+                    //) {
+                    //    LOG(LOG_INFO, "DeviceId=%u:%u CompletionId=%u:%u",
+                    //       device_io_response.DeviceId(), request_info.device_id,
+                    //       device_io_response.CompletionId(), request_info.completion_id
+                    //    );
+                    //}
 
-                            for (device_io_target_info_inventory_type::iterator
-                                     target_iter =
-                                         this->device_io_target_info_inventory.begin();
-                                 target_iter != this->device_io_target_info_inventory.end();
-                                 ++target_iter) {
-                                //LOG(LOG_INFO, "--> DeviceId=%u:%u FileId=%u:%u",
-                                //    device_io_response.DeviceId(), std::get<0>(*target_iter),
-                                //    FileId, std::get<1>(*target_iter)
-                                //    );
+                    if (request_iter != this->device_io_request_info_inventory.end()) {
+                        auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
+                        //for (auto & target_info
+                        //    : iter(this->device_io_request_info_inventory.begin(), request_iter)
+                        //) {
+                        //    LOG(LOG_INFO, "--> DeviceId=%u:%u FileId=%u:%u",
+                        //       device_io_response.DeviceId(), target_info.device_id,
+                        //       request_iter->file_id, target_info.file_id
+                        //       );
+                        //}
 
-                                if ((device_io_response.DeviceId() ==
-                                     std::get<0>(*target_iter)) &&
-                                    (FileId == std::get<1>(*target_iter))) {
-                                    if (!std::get<3>(*target_iter)) {
-                                        if (!::ends_case_with(
-                                                std::get<2>(*target_iter).data(),
-                                                std::get<2>(*target_iter).size(),
-                                                "/desktop.ini",
-                                                sizeof("/desktop.ini")-1)) {
-                                            if (this->param_acl) {
-                                                std::string info("file_name='");
-                                                info += std::get<2>(*target_iter).c_str();
-                                                info += "'";
+                        if (target_iter != this->device_io_target_info_inventory.end()) {
+                            device_io_target_info_type & target_info = *target_iter;
+                            if (!target_info.for_reading) {
+                                if (!::ends_case_with(
+                                    target_info.file_path.data(),
+                                    target_info.file_path.size(),
+                                    "/desktop.ini",
+                                    sizeof("/desktop.ini")-1
+                                )) {
+                                    if (this->param_acl) {
+                                        std::string info("file_name='");
+                                        info += target_info.file_path;
+                                        info += "'";
 
-                                                this->param_acl->log4(
-                                                    !this->param_dont_log_data_into_syslog,
-                                                    "DRIVE_REDIRECTION_READ",
-                                                    info.c_str());
-                                            }
-
-                                            if (!this->param_dont_log_data_into_wrm) {
-                                                std::string message(
-                                                    "ReadRedirectedFileSystem=");
-                                                message +=
-                                                    std::get<2>(*target_iter).c_str();
-
-                                                this->front.session_update(message);
-                                            }
-                                        }
-
-                                        std::get<3>(*target_iter) = true;
-
-                                        if (std::get<3>(*target_iter) ==
-                                            std::get<4>(*target_iter)) {
-                                            this->device_io_target_info_inventory.erase(
-                                                target_iter);
-                                        }
+                                        this->param_acl->log4(
+                                            !this->param_dont_log_data_into_syslog,
+                                            "DRIVE_REDIRECTION_READ",
+                                            info.c_str());
                                     }
 
-                                    break;
+                                    if (!this->param_dont_log_data_into_wrm) {
+                                        std::string message("ReadRedirectedFileSystem=");
+                                        message += target_info.file_path;
+
+                                        this->front.session_update(message);
+                                    }
+                                }
+
+                                target_info.for_reading = true;
+
+                                if (target_info.for_reading == target_info.for_writing) {
+                                    unordered_erase(this->device_io_target_info_inventory, target_iter);
                                 }
                             }
-
-                            break;
                         }
                     }
                 }
@@ -1648,64 +1640,38 @@ public:
                             "Write request.");
                 }
 
-                if (device_io_response.IoStatus() ==
-                    0x00000000  // STATUS_SUCCESS
-                   ) {
-                    for (device_io_request_info_inventory_type::const_iterator
-                             request_iter =
-                                 this->device_io_request_info_inventory.cbegin();
-                         request_iter !=
-                             this->device_io_request_info_inventory.cend();
-                         ++request_iter) {
-                        if ((std::get<0>(*request_iter) ==
-                             device_io_response.DeviceId()) &&
-                            (std::get<2>(*request_iter) ==
-                             device_io_response.CompletionId())) {
-                            const uint32_t FileId = std::get<1>(*request_iter);
+                if (device_io_response.IoStatus() == 0x00000000  /*STATUS_SUCCESS*/) {
+                    auto request_iter = this->find_request_response(device_io_response);
+                    if (request_iter != this->device_io_request_info_inventory.end()) {
+                        auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
+                        if (target_iter != this->device_io_target_info_inventory.end()) {
+                            device_io_target_info_type & target_info = *target_iter;
+                            if (!target_info.for_writing) {
+                                if (this->param_acl) {
+                                    std::string info("file_name='");
+                                    info += target_info.file_path;
+                                    info += "'";
 
-                            for (device_io_target_info_inventory_type::iterator
-                                     target_iter =
-                                         this->device_io_target_info_inventory.begin();
-                                 target_iter != this->device_io_target_info_inventory.end();
-                                 ++target_iter) {
-                                if ((device_io_response.DeviceId() ==
-                                    std::get<0>(*target_iter)) &&
-                                    (FileId == std::get<1>(*target_iter))) {
-                                    if (!std::get<4>(*target_iter)) {
-                                        if (this->param_acl) {
-                                            std::string info("file_name='");
-                                            info += std::get<2>(*target_iter).c_str();
-                                            info += "'";
+                                    this->param_acl->log4(
+                                        !this->param_dont_log_data_into_syslog,
+                                        "DRIVE_REDIRECTION_WRITE",
+                                        info.c_str());
+                                }
 
-                                            this->param_acl->log4(
-                                                !this->param_dont_log_data_into_syslog,
-                                                "DRIVE_REDIRECTION_WRITE",
-                                                info.c_str());
-                                        }
+                                if (!this->param_dont_log_data_into_wrm) {
+                                    std::string message("WriteRedirectedFileSystem=");
+                                    message += target_info.file_path;
 
-                                        if (!this->param_dont_log_data_into_wrm) {
-                                            std::string message(
-                                                "WriteRedirectedFileSystem=");
-                                            message +=
-                                                std::get<2>(*target_iter).c_str();
+                                    this->front.session_update(message);
+                                }
 
-                                            this->front.session_update(message);
-                                        }
+                                target_info.for_writing = true;
 
-                                        std::get<4>(*target_iter) = true;
-
-                                        if (std::get<3>(*target_iter) ==
-                                            std::get<4>(*target_iter)) {
-                                            this->device_io_target_info_inventory.erase(
-                                                target_iter);
-                                        }
-                                    }
-
-                                    break;
+                                if (target_info.for_reading == target_info.for_writing) {
+                                    unordered_erase(this->device_io_target_info_inventory, target_iter);
                                 }
                             }
 
-                            break;
                         }
                     }
                 }
@@ -1742,7 +1708,7 @@ public:
             break;
         }   // switch (MajorFunction)
 
-        this->device_io_request_info_inventory.erase(iter);
+        unordered_erase(this->device_io_request_info_inventory, iter);
 
         return true;
     }   // process_client_drive_io_response
@@ -2366,14 +2332,14 @@ public:
         }   // switch (this->server_device_io_request.MajorFunction())
 
         if (send_message_to_client && !do_not_add_to_inventory) {
-            this->device_io_request_info_inventory.push_back(
-                std::make_tuple(
-                    this->server_device_io_request.DeviceId(),
-                    this->server_device_io_request.FileId(),
-                    this->server_device_io_request.CompletionId(),
-                    this->server_device_io_request.MajorFunction(),
-                    extra_data,
-                    std::move(file_path)));
+            this->device_io_request_info_inventory.push_back({
+                this->server_device_io_request.DeviceId(),
+                this->server_device_io_request.FileId(),
+                this->server_device_io_request.CompletionId(),
+                this->server_device_io_request.MajorFunction(),
+                extra_data,
+                std::move(file_path)
+            });
         }
 
         return send_message_to_client;
