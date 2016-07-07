@@ -55,13 +55,21 @@
 
 #define KEY_SETTING_PATH "keySetting.config"
 
-#define METAFILE_CLIP_PIC_HEADERS_SIZE 130
-#define META_DIBSTRETCHBLT_HEADER_SIZE 66
-#define METAFILE_HEADER_SIZE           118
+namespace QT_RDP_CLIPBOARD {
 
-#define PASTE_TEXT_FIRST_PART_SIZE   1592 // = 1600 - 8
-#define PASTE_PIC_FIRST_PART_SIZE    1462 // = 1600 - METAFILEPICT_HEADER_SIZE - 8
-#define PDU_MAX_SIZE                 1600
+    enum : int {
+        METAFILE_CLIP_PIC_HEADERS_SIZE = 130
+    , META_DIBSTRETCHBLT_HEADER_SIZE = 66
+    , METAFILE_HEADER_SIZE           = 118
+    };
+
+    enum : int {
+        PASTE_TEXT_FIRST_PART_SIZE = 1592  // = 1600 - 8
+    , PASTE_PIC_FIRST_PART_SIZE  = 1462  // = 1600 - METAFILEPICT_HEADER_SIZE - 8
+    , PDU_MAX_SIZE               = 1600
+    };
+
+}
 
 
 
