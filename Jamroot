@@ -807,10 +807,9 @@ unit-test test_ssl_sign : tests/utils/crypto/test_ssl_sign.cpp : $(TEST_DEPENDEN
 ## system/linux
 ## @{
 unit-test test_ssl_calls : tests/system/linux/system/test_ssl_calls.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
-unit-test test_modular_exponentiation : tests/system/linux/system/test_modular_exponentiation.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
+unit-test test_ssl_mod_exp : tests/system/linux/system/test_ssl_mod_exp.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_openssl : tests/system/linux/system/test_openssl.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_ssl_aes : tests/system/linux/system/test_ssl_aes.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
-unit-test test_ssl_bignum : tests/system/linux/system/test_ssl_bignum.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_ssl_md4 : tests/system/linux/system/test_ssl_md4.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_ssl_md5 : tests/system/linux/system/test_ssl_md5.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 unit-test test_ssl_rc4 : tests/system/linux/system/test_ssl_rc4.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
