@@ -799,6 +799,8 @@ unit-test test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct.cpp : $(T
 unit-test test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
 unit-test test_ssl_rc4_direct : tests/utils/crypto/test_ssl_rc4_direct.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>dl <library>z ;
 
+# unit-test test_ssl_mod_exp_direct : tests/utils/crypto/test_ssl_mod_exp_direct.cpp : $(TEST_DEPENDENCIES) ;
+
 unit-test test_ssl_lib : tests/utils/crypto/test_ssl_lib.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
 unit-test test_ssl_sign : tests/utils/crypto/test_ssl_sign.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto ;
 ## @}
