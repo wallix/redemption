@@ -239,6 +239,11 @@ void Front_Qt::writeClientInfo() {
 }
 
 
+/*void set_pointer(Pointer const & cursor) {
+    std::cout <<  "cursor=" << int(cursor.pointer_type) <<  std::endl;
+}*/
+
+
 Front_Qt::~Front_Qt() {
     this->empty_buffer();
 }
@@ -365,7 +370,7 @@ void Front_Qt::wheelEvent(QWheelEvent *e) {
         flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
     }
     if (this->_callback != nullptr) {
-        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
+        //this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
     }
 }
 
@@ -478,46 +483,6 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
     this->_screen->paintCache().drawImage(trect, qbitmap);
 
     //this->_screen->_scene.addPixmap(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
-}
-
-
-void Front_Qt::draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert) {
-    const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-    const int16_t mincy = 1;
-
-    if (mincx <= 0) {
-        return;
-    }
-
-    int rowYCoord(drect.y + drect.cy-1);
-    int rowsize(bitmap.line_size()); //Bpp
-
-    const unsigned char * row = bitmap.data();
-
-    QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
-
-    for (size_t k = 0 ; k < drect.cy; k++) {
-
-        QImage qbitmap(row, mincx, mincy, format);
-
-        if (bitmap.bpp() > this->_info.bpp) {
-            qbitmap = qbitmap.convertToFormat(this->_imageFormatRGB);
-        }
-
-        if (invert) {
-            qbitmap.invertPixels();
-        }
-
-        if (bitmap.bpp() == 24) {
-            qbitmap = qbitmap.rgbSwapped();
-        }
-
-        QRect trect(drect.x, rowYCoord, mincx, mincy);
-        this->_screen->paintCache().drawImage(trect, qbitmap);
-
-        row += rowsize;
-        rowYCoord--;
-    }
 }
 
 
@@ -640,6 +605,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
                 // |      | RPN: DPon                     |
                 // +------+-------------------------------+
 
+
                 // +------+-------------------------------+
                 // | 0x0F | ROP: 0x000F0001               |
                 // |      | RPN: Pn                       |
@@ -753,9 +719,37 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
                             (bitmap_data.dest_right - bitmap_data.dest_left + 1),
                             (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
     const Rect clipRect(0, 0, this->_info.width, this->_info.height);
-    const Rect rect = rectBmp.intersect(clipRect);
+    const Rect drect = rectBmp.intersect(clipRect);
 
-    this->draw_bmp(rect, bmp, false);
+    const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+    const int16_t mincy = std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));;
+
+    if (mincx <= 0 || mincy <= 0) {
+        return;
+    }
+
+    int rowYCoord(drect.y + drect.cy-1);
+
+    QImage::Format format(this->bpp_to_QFormat(bmp.bpp(), false)); //bpp
+    QImage qbitmap(bmp.data(), mincx, mincy, bmp.line_size(), format);
+
+    if (bmp.bpp() == 24) {
+        qbitmap = qbitmap.rgbSwapped();
+    }
+
+    if (bmp.bpp() != this->_info.bpp) {
+        qbitmap = qbitmap.convertToFormat(this->_imageFormatRGB);
+    }
+
+    for (size_t k = 0 ; k < drect.cy; k++) {
+
+        QImage image(qbitmap.constScanLine(k), mincx, 1, qbitmap.format());
+
+        QRect trect(drect.x, rowYCoord, mincx, 1);
+        this->_screen->paintCache().drawImage(trect, image);
+
+        rowYCoord--;
+    }
 }
 
 
@@ -893,8 +887,8 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         LOG(LOG_INFO, "========================================\n");
     }
     //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
-    Rect rectBmp(cmd.rect);
-    const Rect& drect = clip.intersect(rectBmp);
+    //Rect rectBmp();
+    const Rect& drect = clip.intersect(cmd.rect);
     if (drect.isempty()){
         return ;
     }
@@ -904,73 +898,131 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0x00: this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
         break;
 
-        case 0x22:  // TODO
+        case 0x22:
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
-            //std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
-            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
-            //dest.invertPixels();
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
 
-            uchar *       destData = dest.bits();
-            const uchar * srcData  = reinterpret_cast<const uchar *>(bitmap.data());
-
-            int len(drect.cx * drect.cy);
-            for (int i = 0; i < len; i++) {
-                destData[i] = srcData[i] & ~(destData[i]);
+            if (mincx <= 0 || mincy <= 0) {
+                return;
             }
 
-            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
-            image.invertPixels();
-            QRect tect(drect.x, drect.y, drect.cx, drect.cy);
-            this->_screen->paintCache().drawImage(tect, image);
+            int rowYCoord(drect.y + drect.cy-1);
 
-            //this->_screen->repaint();
-            //this->_screen->_timer.stop();
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+
+            if (bitmap.bpp() == 24) {
+                srcBitmap = srcBitmap.rgbSwapped();
+            }
+
+            if (bitmap.bpp() != this->_info.bpp) {
+                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
+            }
+            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[bitmap.line_size()];
+                const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                    data[i] = ~(srcData[i]) & dstData[i];
+                }
+
+                QImage image(data, mincx, 1, srcBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
         }
         break;
 
         case 0x55:
         {
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
 
-            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
-
-            uchar *       destData = dest.bits();;
-
-            int len(drect.cx * drect.cy);
-            for (int i = 0; i < len; i++) {
-                destData[i] = 0xff ^ destData[i];
+            if (mincx <= 0 || mincy <= 0) {
+                return;
             }
 
-            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
+            int rowYCoord(drect.y + drect.cy-1);
 
-            QRect tect(drect.x, drect.y, drect.cx, drect.cy);
-            this->_screen->paintCache().drawImage(tect, image);
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
 
-            //this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[bitmap.line_size()];
+                //const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                for (int i = 0; i < bitmap.line_size(); i++) {
+                    data[i] = ~(dstData[i]);
+                }
+
+                QImage image(data, mincx, 1, dstBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
         }
         break;
 
-        case 0x66:  // TODO
+        case 0x66:
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
-            // std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
-            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
 
-            uchar *       destData = dest.bits();
-            const uchar * srcData  = reinterpret_cast<const uchar *>(bitmap.data());
-
-            int len(drect.cx * drect.cy);
-            for (int i = 0; i < len; i++) {
-                destData[i] = srcData[i] ^ destData[i];
+            if (mincx <= 0 || mincy <= 0) {
+                return;
             }
 
-            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
+            int rowYCoord(drect.y + drect.cy-1);
 
-            QRect tect(drect.x, drect.y, drect.cx, drect.cy);
-            this->_screen->paintCache().drawImage(tect, image);
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
 
-            //this->_screen->repaint();
-            //this->_screen->_timer.stop();
+            if (bitmap.bpp() == 24) {
+                srcBitmap = srcBitmap.rgbSwapped();
+            }
+
+            if (bitmap.bpp() != this->_info.bpp) {
+                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
+            }
+            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[srcBitmap.bytesPerLine()];
+                const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                    data[i] = srcData[i] ^ dstData[i];
+                }
+
+                QImage image(data, mincx, 1, dstBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
         }
         break;
 
@@ -980,7 +1032,50 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0xCC: this->draw_MemBlt(drect, bitmap, false, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
         break;
 
-        case 0xEE: this->draw_MemBlt(drect, bitmap, false, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
+        case 0xEE:
+        {
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
+
+            if (mincx <= 0 || mincy <= 0) {
+                return;
+            }
+
+            int rowYCoord(drect.y + drect.cy-1);
+
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+
+            if (bitmap.bpp() == 24) {
+                srcBitmap = srcBitmap.rgbSwapped();
+            }
+
+            if (bitmap.bpp() != this->_info.bpp) {
+                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
+            }
+            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[srcBitmap.bytesPerLine()];
+                const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                    data[i] = srcData[i] | dstData[i];
+                }
+
+                QImage image(data, mincx, 1, srcBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
+        }
         break;
 
         case 0xFF: this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
@@ -1004,6 +1099,7 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
     if (drect.isempty()){
         return ;
     }
+
     switch (cmd.rop) {
         case 0xB8:
             {
@@ -2055,6 +2151,10 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
     switch (this->_requestedFormatId) {
 
+        case 0 : std::cout << "rcv file data" << std::endl;
+
+        break;
+
         case RDPECLIP::CF_UNICODETEXT:  if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                                             this->_bufferRDPClipboardChannel = new uint8_t[this->_bufferRDPClipboardChannelSizeTotal];
                                         }
@@ -2237,9 +2337,7 @@ void Front_Qt::empty_buffer() {
 std::string Front_Qt::HTMLtoText(const std::string & html) {
     std::string openDelimiter(">");
     std::string endDelimiter("<");
-
     std::string tmp(html + "<");
-
     std::string str;
 
     int pos0(0);
