@@ -173,7 +173,10 @@ public:
     virtual void writeClientInfo() = 0;
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
     virtual void empty_buffer() = 0;
-
+    virtual bool can_be_start_capture(auth_api * auth) override { return true; }
+    virtual bool can_be_pause_capture() override { return true; }
+    virtual bool can_be_resume_capture() override { return true; }
+    virtual bool must_be_stop_capture() override { return true; }
 };
 
 

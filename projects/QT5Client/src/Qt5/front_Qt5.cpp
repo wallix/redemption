@@ -906,14 +906,14 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             //std::cout << "RDPMemBlt TODO (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
             //std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
             QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
-            dest.invertPixels();
+            //dest.invertPixels();
 
             uchar *       destData = dest.bits();
             const uchar * srcData  = reinterpret_cast<const uchar *>(bitmap.data());
 
             int len(drect.cx * drect.cy);
             for (int i = 0; i < len; i++) {
-                destData[i] = srcData[i] & destData[i];
+                destData[i] = srcData[i] & ~(destData[i]);
             }
 
             QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
@@ -1509,7 +1509,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                     int firstPartSize;
                     uint32_t total_length(this->_connector->_length + 8);
-                    StaticOutStream<PDU_MAX_SIZE> out_streamfirst;
+                    StaticOutStream<QT_RDP_CLIPBOARD::PDU_MAX_SIZE> out_streamfirst;
 
 
                     // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (cliboard.hpp)
@@ -1523,10 +1523,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         case RDPECLIP::CF_METAFILEPICT:
                         {
                             this->_connector->_chunk = reinterpret_cast<uint8_t *>(this->_connector->_bufferImage->bits());
-                            firstPartSize = PASTE_PIC_FIRST_PART_SIZE;
-                            total_length += METAFILE_CLIP_PIC_HEADERS_SIZE;
-                            const int largeRecordWordsSize((this->_connector->_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-                            out_streamfirst.out_uint32_le(this->_connector->_length + METAFILE_CLIP_PIC_HEADERS_SIZE);
+                            firstPartSize = QT_RDP_CLIPBOARD::PASTE_PIC_FIRST_PART_SIZE;
+                            total_length += QT_RDP_CLIPBOARD::METAFILE_CLIP_PIC_HEADERS_SIZE;
+                            const int largeRecordWordsSize((this->_connector->_length + QT_RDP_CLIPBOARD::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+                            out_streamfirst.out_uint32_le(this->_connector->_length + QT_RDP_CLIPBOARD::METAFILE_CLIP_PIC_HEADERS_SIZE);
 
 
                             // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
@@ -1579,7 +1579,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             out_streamfirst.out_uint16_le(RDPECLIP::MEMORYMETAFILE);
                             out_streamfirst.out_uint16_le(9);
                             out_streamfirst.out_uint16_le(RDPECLIP::METAVERSION300);
-                            out_streamfirst.out_uint32_le((this->_connector->_length + METAFILE_HEADER_SIZE)/2);
+                            out_streamfirst.out_uint32_le((this->_connector->_length + QT_RDP_CLIPBOARD::METAFILE_HEADER_SIZE)/2);
                             out_streamfirst.out_uint16_le(0);
                             out_streamfirst.out_uint32_le(largeRecordWordsSize);
                             out_streamfirst.out_uint16_le(0);
@@ -1849,7 +1849,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         case RDPECLIP::CF_UNICODETEXT:
 
-                            firstPartSize = PASTE_TEXT_FIRST_PART_SIZE;
+                            firstPartSize = QT_RDP_CLIPBOARD::PASTE_TEXT_FIRST_PART_SIZE;
                             out_streamfirst.out_uint32_le(this->_connector->_length);
 
                         break;
@@ -1904,10 +1904,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     // copied into the reassembly buffer in the order in which they are received. Upon receiving the
                     // last chunk of virtual channel data, the reassembled data is processed by the virtual channel endpoint.
 
-                    if (total_length > PDU_MAX_SIZE) {
+                    if (total_length > QT_RDP_CLIPBOARD::PDU_MAX_SIZE) {
 
-                        const int cmpt_PDU_part(total_length / PDU_MAX_SIZE);
-                        const int remains_PDU  (total_length % PDU_MAX_SIZE);
+                        const int cmpt_PDU_part(total_length / QT_RDP_CLIPBOARD::PDU_MAX_SIZE);
+                        const int remains_PDU  (total_length % QT_RDP_CLIPBOARD::PDU_MAX_SIZE);
                         int data_sent(0);
 
                         out_streamfirst.out_copy_bytes(this->_connector->_chunk, firstPartSize);
@@ -1922,10 +1922,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
 
                         for (int i = 0; i < cmpt_PDU_part - 1; i++) {
-                            StaticOutStream<PDU_MAX_SIZE> out_stream;
+                            StaticOutStream<QT_RDP_CLIPBOARD::PDU_MAX_SIZE> out_stream;
 
-                            out_stream.out_copy_bytes(this->_connector->_chunk + data_sent, PDU_MAX_SIZE);
-                            data_sent += PDU_MAX_SIZE;
+                            out_stream.out_copy_bytes(this->_connector->_chunk + data_sent, QT_RDP_CLIPBOARD::PDU_MAX_SIZE);
+                            data_sent += QT_RDP_CLIPBOARD::PDU_MAX_SIZE;
 
                             InStream chunk(out_stream.get_data(), out_stream.get_offset());
                             static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
@@ -1936,7 +1936,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
                         }
 
-                        StaticOutStream<PDU_MAX_SIZE> out_streamLast;
+                        StaticOutStream<QT_RDP_CLIPBOARD::PDU_MAX_SIZE> out_streamLast;
 
                         out_streamLast.out_copy_bytes(this->_connector->_chunk + data_sent, remains_PDU);
                         if (this->_connector->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {

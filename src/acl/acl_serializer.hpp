@@ -51,8 +51,9 @@ public:
         : ini(ini)
         , auth_trans(auth_trans)
         , verbose(verbose)
+        , session_id{}
     {
-        sprintf(this->session_id, "%d", getpid());
+        snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::AclSerializer");
         }
@@ -65,8 +66,8 @@ public:
             LOG(LOG_INFO, "auth::~AclSerializer");
         }
         char session_file[256];
-        sprintf(session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                this->session_id);
+        snprintf(session_file, sizeof(session_file),
+                 "%s/redemption/session_%s.pid", PID_PATH, this->session_id);
         unlink(session_file);
     }
 
@@ -278,13 +279,14 @@ public:
         this->in_items();
         if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
             char old_session_file[256];
-            sprintf(old_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                    this->session_id);
+            snprintf(old_session_file, sizeof(old_session_file),
+                     "%s/redemption/session_%s.pid", PID_PATH, this->session_id);
             char new_session_file[256];
-            sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
+            snprintf(new_session_file, sizeof(new_session_file),
+                     "%s/redemption/session_%s.pid", PID_PATH,
                     this->ini.get<cfg::context::session_id>().c_str());
             rename(old_session_file, new_session_file);
-            sprintf(this->session_id, "%s",
+            snprintf(this->session_id, sizeof(this->session_id), "%s",
                     this->ini.get<cfg::context::session_id>().c_str());
         }
         if (this->verbose & 0x40){

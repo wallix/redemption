@@ -24,6 +24,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestAppVerifier
 #include "system/redemption_unit_tests.hpp"
+#include "check_mem.hpp"
 
 
 #define LOGPRINT
@@ -79,25 +80,19 @@ BOOST_AUTO_TEST_CASE(TestReverseIterators)
     reverse_iterator last(line + len);
 
     reverse_iterator space4 = std::find(last, first, ' ');
-    printf("space1=%s\n", &space4[0]);
     space4++;
     reverse_iterator space3 = std::find(space4, first, ' ');
-    printf("space3=%s\n", &space3[0]);
     space3++;
     reverse_iterator space2 = std::find(space3, first, ' ');
-    printf("space2=%s\n", &space2[0]);
     space2++;
     reverse_iterator space1 = std::find(space2, first, ' ');
-    printf("space1=%s\n", &space1[0]);
     space1++;
     int filename_len = first-space1;
-    printf("filename_len = %d\n", filename_len);
 
     char filename[128];
     memcpy(filename, line, filename_len);
 
     BOOST_CHECK(0 == memcmp("ff fff", filename, filename_len));
-    printf("filename=%s\n", filename);
 
 }
 
@@ -203,17 +198,23 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     BOOST_CHECK_EQUAL(0, res);
 
     std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
+    
     {
-        FileChecker check(test_full_mwrm_filename);
-        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()), hash, HASH_LEN / 2, true);
-        BOOST_CHECK_EQUAL(false, check.failed);
+        uint8_t tmp_hash[SHA256_DIGEST_LENGTH]={};
+        int res = file_start_hmac_sha256(test_full_mwrm_filename.c_str(),
+                         cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+                         QUICK_CHECK_LENGTH, tmp_hash);
+        BOOST_CHECK_EQUAL(res, 0);
+        BOOST_CHECK(0 == memcmp(hash, tmp_hash, SHA256_DIGEST_LENGTH));
     }
 
     {
-        FileChecker check(test_full_mwrm_filename);
-        check.check_hash_sha256(cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
-                                hash + (HASH_LEN / 2), HASH_LEN / 2, false);
-        BOOST_CHECK_EQUAL(false, check.failed);
+        uint8_t tmp_hash[SHA256_DIGEST_LENGTH]={};
+        int res = file_start_hmac_sha256(test_full_mwrm_filename.c_str(),
+                         cctx.get_hmac_key(), sizeof(cctx.get_hmac_key()),
+                         0, tmp_hash);
+        BOOST_CHECK_EQUAL(res, 0);
+        BOOST_CHECK(0 == memcmp(hash + (HASH_LEN / 2), tmp_hash, SHA256_DIGEST_LENGTH));
     }
 
     unlink(full_test_file_name.c_str());
@@ -246,6 +247,50 @@ extern "C" {
         return 0;
     }
 }
+
+BOOST_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char const * argv[] = {
+            "verifier.py",
+            "-i",
+                "toto@10.10.43.13,Administrateur@QA@cible,"
+                "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
+            "--hash-path",
+                FIXTURES_PATH "/verifier/hash",
+            "--mwrm-path",
+                FIXTURES_PATH "/verifier/recorded/bad",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
+
+        int res = -1;
+        try {
+            res = app_verifier(ini,
+                argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+            if (res == 0){
+                printf("verify ok\n");
+            }
+            else {
+                printf("verify failed\n");
+            }
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(1, res);
+}
+
 
 BOOST_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
@@ -310,9 +355,11 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
                 FIXTURES_PATH "/verifier/recorded/",
             "--verbose",
                 "10",
+            "--ignore-stat-info"
         };
         int argc = sizeof(argv)/sizeof(char*);
 
+        BOOST_CHECK_EQUAL(true, true);
 
         int res = -1;
         try {
@@ -333,4 +380,206 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
         }
         BOOST_CHECK_EQUAL(0, res);
 }
+
+BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
+{
+        Inifile ini;
+        ini.set<cfg::debug::config>(false);
+        UdevRandom rnd;
+        CryptoContext cctx(rnd, ini);
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+
+        char const * argv[] {
+            "verifier.py",
+            "-i",
+                "toto@10.10.43.13,Administrateur@QA@cible"
+                ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+            "--hash-path",
+                FIXTURES_PATH "/verifier/hash/",
+            "--mwrm-path",
+                FIXTURES_PATH "/verifier/recorded/",
+            "--verbose",
+                "10",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
+
+        BOOST_CHECK_EQUAL(true, true);
+
+        int res = -1;
+        try {
+            res = app_verifier(ini,
+                argc, argv
+              , "ReDemPtion VERifier " VERSION ".\n"
+                "Copyright (C) Wallix 2010-2016.\n"
+                "Christophe Grosjean, Raphael Zhou."
+              , cctx);
+            if (res == 0){
+                printf("verify ok\n");
+            }
+            else {
+                printf("verify failed\n");
+            }
+        } catch (const Error & e) {
+            printf("verify failed: with id=%d\n", e.id);
+        }
+        BOOST_CHECK_EQUAL(1, res);
+}
+
+BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
+{
+    ifile_read fd;
+    fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
+    MwrmReader reader(fd);
+    
+    reader.read_meta_headers();
+    BOOST_CHECK(reader.header.version == 2);
+    BOOST_CHECK(!reader.header.has_checksum);
+    
+    MetaLine2 meta_line;
+    reader.read_meta_file(meta_line);
+    BOOST_CHECK(0 == strcmp(meta_line.filename,
+                        "/var/wab/recorded/rdp/"
+                        "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
+                        "wab-5-0-0.yourdomain,7681-000000.wrm"));
+    BOOST_CHECK_EQUAL(meta_line.size, 181826); 
+    BOOST_CHECK_EQUAL(meta_line.mode, 33056);
+    BOOST_CHECK_EQUAL(meta_line.uid, 1001);
+    BOOST_CHECK_EQUAL(meta_line.gid, 1001);
+    BOOST_CHECK_EQUAL(meta_line.dev, 65030);
+    BOOST_CHECK_EQUAL(meta_line.ino, 81);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 1455816421);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 1455816421);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+}
+
+BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
+{
+    ifile_read fd;
+    fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
+    MwrmReader reader(fd);
+    
+    reader.read_meta_headers();
+    BOOST_CHECK(reader.header.version == 1);
+    BOOST_CHECK(!reader.header.has_checksum);
+    
+    MetaLine2 meta_line;
+    reader.read_meta_file(meta_line);
+    BOOST_CHECK(0 == strcmp(meta_line.filename,
+                        "/var/wab/recorded/rdp/"
+                        "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
+                        "wab-5-0-0.yourdomain,7681-000000.wrm"));
+    BOOST_CHECK_EQUAL(meta_line.size, 0); 
+    BOOST_CHECK_EQUAL(meta_line.mode, 0);
+    BOOST_CHECK_EQUAL(meta_line.uid, 0);
+    BOOST_CHECK_EQUAL(meta_line.gid, 0);
+    BOOST_CHECK_EQUAL(meta_line.dev, 0);
+    BOOST_CHECK_EQUAL(meta_line.ino, 0);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 0);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 0);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+
+    BOOST_CHECK(0 == memcmp(meta_line.hash1, 
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 
+                        32));
+    BOOST_CHECK(0 == memcmp(meta_line.hash2, 
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 
+                        32));
+
+}
+
+BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
+{
+    ifile_read fd;
+    fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
+    MwrmReader reader(fd);
+    
+    reader.read_meta_headers();
+    BOOST_CHECK(reader.header.version == 2);
+    BOOST_CHECK(reader.header.has_checksum);
+    
+    MetaLine2 meta_line;
+    reader.read_meta_file(meta_line);
+    BOOST_CHECK(true);
+    BOOST_CHECK(0 == strcmp(meta_line.filename, "./tests/fixtures/sample0.wrm"));
+    BOOST_CHECK_EQUAL(meta_line.size, 1); 
+    BOOST_CHECK_EQUAL(meta_line.mode, 2);
+    BOOST_CHECK_EQUAL(meta_line.uid, 3);
+    BOOST_CHECK_EQUAL(meta_line.gid, 4);
+    BOOST_CHECK_EQUAL(meta_line.dev, 5);
+    BOOST_CHECK_EQUAL(meta_line.ino, 6);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+    BOOST_CHECK(0 == memcmp(meta_line.hash1, 
+                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
+                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA", 
+                        32));
+    BOOST_CHECK(0 == memcmp(meta_line.hash2, 
+                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
+                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB", 
+                        32));
+}
+
+#include "utils/log.hpp"
+
+BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
+{
+
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
+
+    ifile_read_encrypted fd(&cctx, 1);
+    fd.open(FIXTURES_PATH 
+        "/verifier/recorded/"
+        "toto@10.10.43.13,Administrateur@QA@cible,"
+        "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm");
+
+    MwrmReader reader(fd);
+    
+    reader.read_meta_headers();
+    BOOST_CHECK(reader.header.version == 2);
+    BOOST_CHECK(reader.header.has_checksum);
+
+    MetaLine2 meta_line;
+    BOOST_CHECK_EQUAL(0, reader.read_meta_file2(meta_line));
+    
+    printf("%s\n", meta_line.filename);
+
+    {
+        std::string got(meta_line.filename);
+        std::string expected("/var/wab/recorded/rdp"
+                             "/toto@10.10.43.13,Administrateur@QA@cible,"
+                             "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm");
+        BOOST_CHECK_EQUAL(got, expected);
+    }
+    BOOST_CHECK_EQUAL(meta_line.size, 163032); 
+    BOOST_CHECK_EQUAL(meta_line.mode, 33056);
+    BOOST_CHECK_EQUAL(meta_line.uid, 1001);
+    BOOST_CHECK_EQUAL(meta_line.gid, 1001);
+    BOOST_CHECK_EQUAL(meta_line.dev, 65030);
+    BOOST_CHECK_EQUAL(meta_line.ino, 89);
+    BOOST_CHECK_EQUAL(meta_line.mtime, 1455816632);
+    BOOST_CHECK_EQUAL(meta_line.ctime, 1455816632);
+    BOOST_CHECK_EQUAL(meta_line.start_time, 1455816611);
+    BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816633);
+    CHECK_MEM(meta_line.hash1, 32, 
+      "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
+      "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77");
+    CHECK_MEM(meta_line.hash2, 32,
+      "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
+      "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
+
+    BOOST_CHECK_EQUAL(1, reader.read_meta_file2(meta_line));
+}
+
 

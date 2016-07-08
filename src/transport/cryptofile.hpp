@@ -44,7 +44,9 @@
 #include "configs/config.hpp"
 
 enum crypto_file_state {
-    CF_EOF = 1
+    CF_READY = 0, // Crypto File Reading
+    CF_EOF = 1,   // Crypto File reached EOF
+    CF_INIT = 2,  // Crypto File nor yet initialised
 };
 
 #define MIN(x, y)               (((x) > (y) ? (y) : (x)))

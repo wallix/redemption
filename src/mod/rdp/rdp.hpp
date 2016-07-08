@@ -827,11 +827,14 @@ public:
         }
         if (mod_rdp_params.hide_client_name) {
             ::gethostname(this->hostname, sizeof(this->hostname));
+            this->hostname[sizeof(this->hostname) - 1] = 0;
+            char* separator = strchr(this->hostname, '.');
+            if (separator) *separator = 0;
         }
         else{
             ::strncpy(this->hostname, info.hostname, sizeof(this->hostname) - 1);
+            this->hostname[sizeof(this->hostname) - 1] = 0;
         }
-        this->hostname[sizeof(this->hostname) - 1] = 0;
 
 
         const char * domain_pos   = nullptr;
@@ -2051,7 +2054,7 @@ public:
                                 for (size_t i = 0; i < maxhostlen ; i++){
                                     cs_core.clientName[i] = hostname[i];
                                 }
-                                memset(&(cs_core.clientName[hostlen]), 0, 16-hostlen);
+                                memset(&(cs_core.clientName[maxhostlen]), 0, (16 - maxhostlen) * sizeof(uint16_t));
 
                                 if (this->nego.tls){
                                     cs_core.serverSelectedProtocol = this->nego.selected_protocol;
@@ -2913,7 +2916,7 @@ public:
                                             sign.update(lenhdr, sizeof(lenhdr));
                                             sign.update(hwid, sizeof(hwid));
 
-                                            assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                            assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
                                             sign.final(signature, sizeof(signature));
 
 
@@ -2977,7 +2980,7 @@ public:
                                     sign.update(lenhdr, sizeof(lenhdr));
                                     sign.update(sealed_buffer, sizeof(sealed_buffer));
 
-                                    assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                    assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
                                     sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */

@@ -81,7 +81,7 @@
 
 // source emsdk_portable/emsdk_env.sh
 
-// nodejs --stack-size=250568 test_websocket.js
+// nodejs --stack-size=250568 sandbox/test_websocket.js
 
 
 

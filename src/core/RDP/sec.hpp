@@ -907,95 +907,95 @@ enum {
             uint8_t master_secret[48];
             const int master_secret_size = sizeof(master_secret);
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t A[1] = {0x41U}; // "A"
                 sha1.update(A, sizeof(A));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret, MD5_DIGEST_LENGTH);
+                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
                 sha1.update(BB, sizeof(BB));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16, MD5_DIGEST_LENGTH);
+                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
                 sha1.update(CCC, sizeof(CCC));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32, MD5_DIGEST_LENGTH);
+                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
             }
 
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t A[1] = {0x41U}; // "A"
                 sha1.update(A, sizeof(A));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob0, MD5_DIGEST_LENGTH);
+                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
                 sha1.update(BB, sizeof(BB));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob1, MD5_DIGEST_LENGTH);
+                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
                 sha1.update(CCC, sizeof(CCC));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob2, MD5_DIGEST_LENGTH);
+                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
             }
 
             {
@@ -1003,7 +1003,7 @@ enum {
                 md5.update(this->blob1, sizeof(this->blob1));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->licensingEncryptionKey, MD5_DIGEST_LENGTH);
+                md5.final(this->licensingEncryptionKey, SslMd5::DIGEST_LENGTH);
             }
         }
 
@@ -1377,11 +1377,11 @@ enum {
 
     struct KeyBlock
     {
-        uint8_t blob0[MD5_DIGEST_LENGTH];
-        uint8_t blob1[MD5_DIGEST_LENGTH];
-        uint8_t blob2[MD5_DIGEST_LENGTH];
-        uint8_t key1[MD5_DIGEST_LENGTH];
-        uint8_t key2[MD5_DIGEST_LENGTH];
+        uint8_t blob0[SslMd5::DIGEST_LENGTH];
+        uint8_t blob1[SslMd5::DIGEST_LENGTH];
+        uint8_t blob2[SslMd5::DIGEST_LENGTH];
+        uint8_t key1[SslMd5::DIGEST_LENGTH];
+        uint8_t key2[SslMd5::DIGEST_LENGTH];
 
         KeyBlock(const uint8_t * client_random, const uint8_t * server_random)
         {
@@ -1395,99 +1395,99 @@ enum {
             memcpy(pre_master_secret, client_random, 24);
             memcpy(pre_master_secret + 24, server_random, 24);
 
-            uint8_t master_secret[MD5_DIGEST_LENGTH*3];
+            uint8_t master_secret[SslMd5::DIGEST_LENGTH*3];
             const int master_secret_size = sizeof(master_secret);
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t A[1] = {0x41U}; // "A"
                 sha1.update(A, sizeof(A));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret, MD5_DIGEST_LENGTH);
+                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
                 sha1.update(BB, sizeof(BB));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16, MD5_DIGEST_LENGTH);
+                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
                 sha1.update(CCC, sizeof(CCC));
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32, MD5_DIGEST_LENGTH);
+                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
             }
 
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t X[1] = {0x58U}; // "X"
                 sha1.update(X, sizeof(X));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob0, MD5_DIGEST_LENGTH);
+                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t YY[2] = {0x59U, 0x59U}; // "YY"
                 sha1.update(YY, sizeof(YY));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob1, MD5_DIGEST_LENGTH);
+                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
             }
             {
 
-                uint8_t shasig[SHA_DIGEST_LENGTH];
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t ZZZ[3] = {0x5AU, 0x5AU, 0x5AU}; // "ZZZ"
                 sha1.update(ZZZ, sizeof(ZZZ));
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SHA_DIGEST_LENGTH);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob2, MD5_DIGEST_LENGTH);
+                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
             }
 
             {
@@ -1495,14 +1495,14 @@ enum {
                 md5.update(this->blob1, sizeof(this->blob1));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->key1, MD5_DIGEST_LENGTH);
+                md5.final(this->key1, SslMd5::DIGEST_LENGTH);
             }
             {
                 SslMd5 md5;
                 md5.update(this->blob2, sizeof(this->blob2));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->key2, MD5_DIGEST_LENGTH);
+                md5.final(this->key2, SslMd5::DIGEST_LENGTH);
             }
         }
     };
