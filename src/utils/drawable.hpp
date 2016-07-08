@@ -797,7 +797,7 @@ private:
 public:
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
-    void line(int x, int y, int endx, int endy, const color_t color, Op op)
+    void diagonal_line(int x, int y, int endx, int endy, const color_t color, Op op)
     {
         // Prep
         const int dx = endx - x;
@@ -1015,11 +1015,11 @@ struct DrawablePointer {
 };  // struct DrawablePointer
 
 class Drawable
-: DrawableImpl<DepthColor::color24>
 {
     using DrawableImplPrivate = DrawableImpl<DepthColor::color24>;
-    DrawableImplPrivate & impl() noexcept { return *this; }
-    const DrawableImplPrivate & impl() const noexcept { return *this; }
+    DrawableImplPrivate impl_;
+    DrawableImplPrivate & impl() noexcept { return this->impl_; }
+    const DrawableImplPrivate & impl() const noexcept { return this->impl_; }
 
     enum {
         char_width  = 7,
@@ -1036,8 +1036,8 @@ class Drawable
         size_str_timestamp = ts_max_length + 1
     };
 
-    uint8_t timestamp_save[ts_width * ts_height * Bpp];
-    uint8_t timestamp_data[ts_width * ts_height * Bpp];
+    uint8_t timestamp_save[ts_width * ts_height * DrawableImplPrivate::Bpp];
+    uint8_t timestamp_data[ts_width * ts_height * DrawableImplPrivate::Bpp];
     char previous_timestamp[size_str_timestamp];
     uint8_t previous_timestamp_length;
 
@@ -1067,12 +1067,11 @@ public:
     DrawablePointer default_pointer;
 
     using Color = DrawableImplPrivate::color_t;
-
-    using DrawableImplPrivate::Bpp;
+    static const size_t Bpp = DrawableImplPrivate::Bpp;
 
 
     Drawable(int width, int height)
-    : DrawableImplPrivate(width, height)
+    : impl_(width, height)
     , previous_timestamp_length(0)
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
@@ -2253,23 +2252,27 @@ public:
     }
 
     // nor horizontal nor vertical, use Bresenham
-    void line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, Color color)
+    void diagonal_line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, Color color)
     {
+        assert(x <= endx);
+
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
         }
 
         if (rop == 0x06) {
-            this->impl().line(x, y, endx, endy, color, Ops::InvertTarget());
+            this->impl().diagonal_line(x, y, endx, endy, color, Ops::InvertTarget());
         }
         else {
-            this->impl().line(x, y, endx, endy, color, Ops::CopySrc());
+            this->impl().diagonal_line(x, y, endx, endy, color, Ops::CopySrc());
         }
     }
 
     void vertical_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endy, uint8_t rop, Color color)
     {
+        assert(y <= endy);
+
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(x+1, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
@@ -2285,6 +2288,8 @@ public:
 
     void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color)
     {
+        assert(x <= endx);
+
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, y+1);
         if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
@@ -2712,3 +2717,54 @@ private:
     }
 };
 
+
+inline void draw_line(
+    Drawable & drawable,
+    uint16_t BackMode, int16_t nXStart, int16_t nYStart,
+    int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
+    Drawable::Color color, const Rect & clip
+) {
+    LineEquation equa(nXStart, nYStart, nXEnd, nYEnd);
+
+    if (not equa.resolve(clip)) {
+        return;
+    }
+
+    int startx = equa.segin.a.x;
+    int starty = equa.segin.a.y;
+    int endx = equa.segin.b.x;
+    int endy = equa.segin.b.y;
+
+    if (startx == endx){
+        drawable.vertical_line(
+            BackMode,
+            startx, std::min(starty, endy),
+            std::max(starty, endy),
+            bRop2, color
+        );
+    }
+    else if (starty == endy){
+        drawable.horizontal_line(
+            BackMode,
+            std::min(startx, endx), starty,
+            std::max(startx, endx),
+            bRop2, color
+        );
+    }
+    else if (startx <= endx){
+        drawable.diagonal_line(
+            BackMode,
+            startx, starty,
+            endx, endy,
+            bRop2, color
+        );
+    }
+    else {
+        drawable.diagonal_line(
+            BackMode,
+            endx, endy,
+            startx, starty,
+            bRop2, color
+        );
+    }
+}

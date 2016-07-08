@@ -381,69 +381,13 @@ public:
      *  Anyway, we base the line drawing on bresenham's algorithm
      */
     void draw(const RDPLineTo & lineto, const Rect & clip) override {
-        this->draw_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
-                        this->u32rgb_to_color(lineto.pen.color), clip);
+        draw_line(
+            this->drawable, lineto.back_mode,
+            lineto.startx, lineto.starty,
+            lineto.endx, lineto.endy,
+            lineto.rop2, this->u32rgb_to_color(lineto.pen.color), clip
+        );
     }
-
-private:
-    void draw_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
-                   int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
-                   Color color, const Rect & clip) {
-        LineEquation equa(nXStart, nYStart, nXEnd, nYEnd);
-        int startx = 0;
-        int starty = 0;
-        int endx = 0;
-        int endy = 0;
-        if (equa.resolve(clip)) {
-            startx = equa.segin.a.x;
-            starty = equa.segin.a.y;
-            endx = equa.segin.b.x;
-            endy = equa.segin.b.y;
-        }
-        else {
-            return;
-        }
-
-        if (startx == endx){
-            this->drawable.vertical_line(BackMode,
-                                         startx,
-                                         std::min(starty, endy),
-                                         std::max(starty, endy),
-                                         bRop2,
-                                         color);
-        }
-        else if (starty == endy){
-            this->drawable.horizontal_line(BackMode,
-                                           std::min(startx, endx),
-                                           starty,
-                                           std::max(startx, endx),
-                                           bRop2,
-                                           color);
-
-        }
-        else if (startx <= endx){
-            this->drawable.line(BackMode,
-                                startx,
-                                starty,
-                                endx,
-                                endy,
-                                bRop2,
-                                color);
-        }
-        else {
-            this->drawable.line(BackMode,
-                                endx,
-                                endy,
-                                startx,
-                                starty,
-                                bRop2,
-                                color);
-        }
-    }
-
-
-
-
 
 // [MS-RDPEGDI] - 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 // =============================================================
@@ -860,7 +804,7 @@ public:
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
             endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
+            draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
 
             startx = endx;
             starty = endy;
@@ -882,7 +826,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+            draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
 
             startx = endx;
             starty = endy;
@@ -890,7 +834,7 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+        draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
     }
 
     TODO("this functions only draw polygon borders but do not fill "
@@ -908,7 +852,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+            draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
 
             startx = endx;
             starty = endy;
@@ -916,7 +860,7 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+        draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
