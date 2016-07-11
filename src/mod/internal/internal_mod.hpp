@@ -60,7 +60,7 @@ public:
     }
 
 
-    TODO("implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+    // TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
     virtual void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {
         static GlyphCache mod_glyph_cache;
@@ -95,7 +95,7 @@ public:
                     is_first_char = false;
                     offset_first_char = font_item.offset;
                 }
-                TODO(" avoid passing parameters by reference to get results")
+                // TODO avoid passing parameters by reference to get results
                 const GlyphCache::t_glyph_cache_result cache_result =
                     mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
                 (void)cache_result; // supress warning

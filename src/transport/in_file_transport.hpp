@@ -50,7 +50,7 @@ public:
 
 private:
     void do_recv(char ** pbuffer, size_t len) override {
-        TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
+        // TODO the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?
         ssize_t res = -1;
         size_t remaining_len = len;
         while (remaining_len) {

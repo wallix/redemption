@@ -91,7 +91,7 @@ public:
     }
 
 private:
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void accepted()
     {
         if (this->dialog_widget.challenge) {
@@ -107,7 +107,7 @@ private:
         this->event.set();
     }
 
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void refused()
     {
         if (!this->dialog_widget.challenge) {

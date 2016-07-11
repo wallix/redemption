@@ -58,9 +58,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     const uint16_t column_number = 4;
     const uint16_t grid_border   = 2;
 
-    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
-         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
-         "these possibilities (and others) are supported in RDPGlyphIndex")
+    /* TODO
+     * I believe users of this widget may wish to control text position and behavior inside rectangle
+     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
+     * these possibilities (and others) are supported in RDPGlyphIndex */
     WidgetGrid wgrid(drawable.gd, Rect(x, y, 640, 480), parent, notifier, line_number, column_number,
         PALE_BLUE, BLACK, LIGHT_BLUE, BLACK, WINBLUE, WHITE, MEDIUM_BLUE, WHITE,
         grid_border, id);
@@ -515,7 +516,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     }
     wcomposite.clear();
 }
-
-TODO("the entry point exists in module: it's rdp_input_invalidate"
-     "je just have to change received values to widget messages")
 */
+
+/* TODO
+ * the entry point exists in module: it's rdp_input_invalidate
+ * je just have to change received values to widget messages */

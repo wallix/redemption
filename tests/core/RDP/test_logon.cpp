@@ -33,8 +33,8 @@
 
 BOOST_AUTO_TEST_CASE(TestLogon)
 {
-    TODO("Really the test below is useless, we are testing assignment!"
-         "Infopacket should be replaced by some constructor with parameters and test fixed")
+    // TODO Really the test below is useless, we are testing assignment!
+    // TODO Infopacket should be replaced by some constructor with parameters and test fixed
     InfoPacket infoPacket;
 
     infoPacket.rdp5_support = 1;
@@ -42,19 +42,19 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     size_t lg = strlen("Domain_Test");
     memcpy(infoPacket.Domain, "Domain_Test", lg);
     infoPacket.cbDomain = lg;
-    
+
     lg = strlen("UserName_Test");
     memcpy(infoPacket.UserName, "UserName_Test", lg);
     infoPacket.cbUserName = lg;
-    
+
     lg = strlen("Password_Test");
     memcpy(infoPacket.Password, "Password_Test", lg);
     infoPacket.cbPassword = lg;
-    
+
     lg = strlen("Program_Test");
     memcpy(infoPacket.AlternateShell, "Program_Test", lg);
     infoPacket.cbAlternateShell = lg;
-    
+
     lg = strlen("Directory_Test");
     memcpy(infoPacket.WorkingDir, "Directory_Test", lg);
     infoPacket.cbWorkingDir = lg;

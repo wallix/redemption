@@ -32,7 +32,7 @@
 #include "utils/fileutils.hpp"
 #include <memory>
 
-TODO("-Wold-style-cast is ignored")
+// TODO -Wold-style-cast is ignored
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
@@ -94,8 +94,7 @@ struct TLSContext
         return buffer;
     }
 
-    TODO("we should be able to simplify that to just put expected value in a provided buffer")
-
+    // TODO we should be able to simplify that to just put expected value in a provided buffer
     static inline char* crypto_cert_fingerprint(X509* xcert)
     {
         uint32_t fp_len;
@@ -342,12 +341,12 @@ struct TLSContext
 
         // return value: nullptr: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
-        TODO("add error management");
+        // TODO add error management
         SSL * ssl = SSL_new(ctx);
         // TODO: this should be wrapped in some abstraction layer
         this->allocated_ssl = ssl;
 
-        TODO("I should probably not be doing that here ? Is it really necessary");
+        // TODO I should probably not be doing that here ? Is it really necessary
         // TODO: Socket should be passed by caller
         int flags = fcntl(sck, F_GETFL);
         fcntl(sck, F_SETFL, flags & ~(O_NONBLOCK));
@@ -372,7 +371,7 @@ struct TLSContext
         // 0 : The operation failed. Check the error stack to find out why.
         // 1 : The operation succeeded.
 
-        TODO("add error management");
+        // TODO add error management
         SSL_set_fd(ssl, sck);
 
         LOG(LOG_INFO, "SSL_connect()");
@@ -1087,12 +1086,12 @@ struct TLSContext
 
         // return value: nullptr: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
-        TODO("add error management");
+        // TODO add error management
         BIO * sbio = BIO_new_socket(sck, BIO_NOCLOSE);
         SSL * ssl = SSL_new(ctx);
         this->allocated_ssl = ssl;
 
-        TODO("I should probably not be doing that here ? Is it really necessary");
+        // TODO I should probably not be doing that here ? Is it really necessary
         int flags = fcntl(sck, F_GETFL);
         fcntl(sck, F_SETFL, flags & ~(O_NONBLOCK));
 
@@ -1161,10 +1160,9 @@ struct TLSContext
                         errcount++;
                         LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
                     }
-                    TODO("if recv fail with partial read we should return the amount of data received, "
-                         "close socket and store some delayed error value that will be sent back next call")
-                    TODO("replace this with actual error management, EOF is not even an option for sockets");
-                    TODO("Manage actual errors, check possible values");
+                    // TODO if recv fail with partial read we should return the amount of data received, close socket and store some delayed error value that will be sent back next call
+                    // TODO replace this with actual error management, EOF is not even an option for sockets
+                    // TODO Manage actual errors, check possible values
                     return -1;
                 }
                 break;

@@ -62,7 +62,7 @@ struct rdpCredssp
     Random & rand;
     const uint32_t verbose;
 
-    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
+    // TODO Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static
     bool hardcodedtests;
 
     rdpCredssp(Transport & transport,

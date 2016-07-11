@@ -30,7 +30,7 @@
 #include "test_orders.hpp"
 
 // Tests on opaque rect also cover RDPOrdersCommon
-TODO("we should have a way in coverage.reference file to say that coverage is performed for a module using some other coverage test")
+// TODO "we should have a way in coverage.reference file to say that coverage is performed for a module using some other coverage test"
 BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 {
     using namespace RDP;

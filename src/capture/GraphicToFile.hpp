@@ -76,13 +76,15 @@ private:
     }
 };
 
+/**
+ * To keep things easy all chunks have 8 bytes headers
+ * starting with chunk_type, chunk_size and order_count
+ *  (whatever it means, depending on chunks)
+ */
 class GraphicToFile
 : public RDPSerializer
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
-REDOC("To keep things easy all chunks have 8 bytes headers"
-      " starting with chunk_type, chunk_size"
-      " and order_count (whatever it means, depending on chunks")
 {
     enum {
         GTF_SIZE_KEYBUF_REC = 1024

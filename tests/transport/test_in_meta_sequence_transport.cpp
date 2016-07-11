@@ -233,7 +233,7 @@
 
         int cfb_file_open(const char * filename, mode_t /*mode*/)
         {
-            TODO("see why mode is ignored even if it's provided as a parameter?");
+            // TODO see why mode is ignored even if it's provided as a parameter?
             this->cfb_file_close();
             this->cfb_file_fd = ::open(filename, O_RDONLY);
             return this->cfb_file_fd;
@@ -254,8 +254,8 @@
 
         ssize_t cfb_file_read(void * data, size_t len)
         {
-            TODO("this is blocking read, add support for timeout reading");
-            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            // TODO this is blocking read, add support for timeout reading
+            // TODO add check for O_WOULDBLOCK, as this is is blockig it would be bad
             size_t remaining_len = len;
             while (remaining_len) {
                 ssize_t ret = ::read(this->cfb_file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);

@@ -373,7 +373,7 @@ public:
         }
     }
 
-    TODO("add palette support")
+    // TODO add palette support
     Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t /*vnc_cy*/, uint8_t vnc_bpp, const Rect & tile)
     : data_bitmap(DataBitmap::construct(vnc_bpp, tile.cx, tile.cy))
     {
@@ -445,7 +445,7 @@ public:
 
 
 protected:
-    //TODO("move that function to external definition")
+    //// TODO move that function to external definition
     //const char * get_opcode(uint8_t opcode){
     //    enum {
     //        FILL    = 0,
@@ -1210,7 +1210,7 @@ public:
         return 0;
     }
 
-    TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
+    // TODO simplify and enhance compression using 1 pixel orders BLACK or WHITE.
     void compress(uint8_t session_color_depth, OutStream & outbuffer) const
     {
         if (this->data_bitmap->compressed_size()) {

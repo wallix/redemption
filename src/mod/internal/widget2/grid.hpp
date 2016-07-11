@@ -416,7 +416,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     }
 
 
-    TODO("Optiomize this");
+    // TODO Optiomize this
     uint16_t unsatisfied_column_count = 0;
     // min
     uint16_t unused_width = static_cast<int16_t>(grid.rect.cx - grid.border * 2 * grid.nb_columns);

@@ -188,7 +188,7 @@ public:
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(cmd.color));
     }
 
-    TODO("This will draw a standard ellipse without brush style")
+    // TODO This will draw a standard ellipse without brush style
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
     }
@@ -257,7 +257,7 @@ public:
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+        // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
         if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
@@ -290,7 +290,7 @@ public:
 
     void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
-        TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+        // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
 
         if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
             enum { BackColor, ForeColor };
@@ -811,8 +811,7 @@ public:
         }
     }
 
-    TODO("this functions only draw polygon borders but do not fill "
-         "them with solid color.")
+    // TODO this functions only draw polygon borders but do not fill them with solid color.
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
@@ -837,8 +836,7 @@ public:
         this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
     }
 
-    TODO("this functions only draw polygon borders but do not fill "
-         "them with brush color.")
+    // TODO this functions only draw polygon borders but do not fill them with brush color.
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;

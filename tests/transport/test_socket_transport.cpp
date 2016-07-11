@@ -29,7 +29,7 @@
 #include "core/listen.hpp"
 #include "core/server.hpp"
 
-TODO("-Wold-style-cast is ignored")
+// TODO "-Wold-style-cast is ignored"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 

@@ -84,7 +84,7 @@ struct RdpNego
 
     uint8_t * current_password;
     Random & rand;
-    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
+    // TODO Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static
     bool test;
     const uint32_t verbose;
     char * lb_info;
@@ -451,7 +451,7 @@ struct RdpNego
                 this->trans.disconnect();
                 x224.throw_error();
             }
-            TODO("Check tpdu has no embedded negotiation code");
+            // TODO Check tpdu has no embedded negotiation code
             this->state = NEGO_STATE_FINAL;
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");

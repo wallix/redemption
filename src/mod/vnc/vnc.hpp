@@ -243,7 +243,7 @@ public:
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
         memset(&zstrm, 0, sizeof(zstrm));
-TODO("-Wold-style-cast is ignored")
+// TODO -Wold-style-cast is ignored
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
         if (inflateInit(&this->zstrm) != Z_OK)
@@ -268,7 +268,7 @@ TODO("-Wold-style-cast is ignored")
     ~mod_vnc() override {
         inflateEnd(&this->zstrm);
 
-        TODO("mod_vnc isn't owner of sck")
+        // TODO mod_vnc isn't owner of sck
         if (this->is_socket_transport) {
             auto & st = static_cast<SocketTransport&>(this->t);
             if (st.sck > 0){
@@ -349,7 +349,7 @@ TODO("-Wold-style-cast is ignored")
 
     }
 
-    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
+    // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
     void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap ) override {
         if (this->state == WAIT_PASSWORD) {
             this->screen.rdp_input_mouse(device_flags, x, y, keymap);
@@ -397,7 +397,7 @@ TODO("-Wold-style-cast is ignored")
             return;
         }
 
-        TODO("As down/up state is not stored in keymapSym, code below is quite dangerous");
+        // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
         this->keymapSym.event(device_flags, param1);
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
@@ -1015,7 +1015,7 @@ public:
 
                 // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
 
-                TODO("not yet supported");
+                // TODO not yet supported
                 // If the Tight Security Type is activated, the server init
                 // message is extended with an interaction capabilities section.
 
@@ -1859,7 +1859,7 @@ private:
             }
             break;
             case 0xffffff11: /* (-239) cursor */
-            TODO("see why we get these empty rects ?");
+            // TODO see why we get these empty rects ?
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
                 // ------------------------------
@@ -1910,7 +1910,7 @@ private:
                 cursor.height = 32;
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
                 if (cx == 1 && cy == 1) {
-                    TODO("Appearence of this 1x1 cursor looks broken, check what we actually get");
+                    // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
                     memset(cursor.data, 0, sizeof(cursor.data));
                     cursor.data[2883] = 0xFF;
                     cursor.data[2884] = 0xFF;
@@ -1927,7 +1927,7 @@ private:
                             cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                         }
                     }
-                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays");
+                    // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
                     // copy vnc pointer and mask to rdp pointer and mask
 
                     for (int yy = 0; yy < cy; yy++) {
@@ -1939,7 +1939,7 @@ private:
                                     for (int tt = 0 ; tt < Bpp; tt++){
                                         pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
                                     }
-                                    TODO("temporary: force black cursor");
+                                    // TODO temporary: force black cursor
                                     int red   = (pixel >> this->red_shift) & red_max;
                                     int green = (pixel >> this->green_shift) & green_max;
                                     int blue  = (pixel >> this->blue_shift) & blue_max;
@@ -1955,7 +1955,7 @@ private:
                     //if (x > 31) { x = 31; }
                     //if (y > 31) { y = 31; }
                 }
-                TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation");
+                // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
                 this->front.begin_update();
                 this->front.set_pointer(cursor);
                 this->front.end_update();
@@ -2192,7 +2192,7 @@ private:
                , length, chunk.get_capacity(), flags);
         }
 
-        TODO("Create a unit tested class for clipboard messages");
+        // TODO Create a unit tested class for clipboard messages
 
         /*
          * rdp message :

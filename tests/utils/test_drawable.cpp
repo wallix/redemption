@@ -503,7 +503,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     //dump_png("/tmp/test_timestamp_002_", gd.impl());
 }
 
-TODO("We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.")
+// TODO We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.
 inline void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
     // Create a simple capture image and dump it to file
     uint16_t width = 640;

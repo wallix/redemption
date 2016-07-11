@@ -86,8 +86,8 @@ class Session {
 
     class Client {
         SocketTransport auth_trans;
-        TODO("Looks like acl and mod can be unified into a common class, where events can happen")
-        TODO("move auth_event to acl")
+        // TODO Looks like acl and mod can be unified into a common class, where events can happen
+        // TODO move auth_event to acl
         wait_obj        auth_event;
 
     public:

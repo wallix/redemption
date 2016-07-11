@@ -486,7 +486,7 @@ namespace GCC
                     LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %zu)", stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
-                TODO("We should actually read and decode data here. Merely skipping the block is evil")
+                // TODO We should actually read and decode data here. Merely skipping the block is evil
                 stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
                 size_t length = stream.in_2BUE();
                 if (length != stream.in_remain()){
@@ -1156,7 +1156,7 @@ namespace GCC
                 this->pad1octet = stream.in_uint8();
                 if (this->length < 216) { return; }
                 this->serverSelectedProtocol = stream.in_uint32_le();
-                TODO("Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2");
+                // TODO Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2
 
             }
 

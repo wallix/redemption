@@ -79,7 +79,7 @@ inline Bitmap bitmap_from_file_impl(const char * filename)
     if (!fd_) {
         LOG(LOG_ERR, "Bitmap: error loading bitmap from file [%s] %s(%u)",
             filename, strerror(errno), errno);
-        TODO("see value returned, maybe we should return open error");
+        // TODO see value returned, maybe we should return open error
         return Bitmap{};
     }
 
@@ -187,7 +187,7 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
     png_set_bgr(png_ptr);
     png_read_update_info(png_ptr, info_ptr);
 
-    TODO("Looks like there's a shift when width is not divisible by 4");
+    // TODO Looks like there's a shift when width is not divisible by 4
     png_uint_32 rowbytes = png_get_rowbytes(png_ptr, info_ptr);
     if (static_cast<uint16_t>(width) * 3 != rowbytes) {
         LOG(LOG_ERR, "PNG Image has bad type");
@@ -232,17 +232,17 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
     std::unique_ptr<uint8_t[]> stream_dyndata;
     InStream stream(stream_data);
 
-    TODO(" reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?");
+    // TODO reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?
     {
         /* read file size */
-        TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.");
+        // TODO define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.
         if (not read_all(fd, stream_data, 4)) {
             LOG(LOG_ERR, "Widget_load: error read file size");
             return bitmap;
         }
         stream = InStream(stream_data, 4);
         {
-            TODO("Check what is this size ? header size ? used as fixed below ?");
+            // TODO Check what is this size ? header size ? used as fixed below ?
                 /* uint32_t size = */ stream.in_uint32_le();
         }
 
@@ -253,7 +253,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             return bitmap;
         }
         stream = InStream(stream_data, 40);
-        TODO(" we should read header size and use it to read header instead of using magic constant 40");
+        // TODO we should read header size and use it to read header instead of using magic constant 40
         header.size = stream.in_uint32_le();
         if (header.size != 40){
             LOG(LOG_INFO, "Wrong header size: expected 40, got %zu", header.size);
@@ -276,7 +276,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
 
         // compute pixel size (in Quartet) and read palette if needed
         unsigned file_Qpp = 1;
-        TODO(" add support for loading of 16 bits bmp from file");
+        // TODO add support for loading of 16 bits bmp from file
         switch (header.bit_count) {
                 // Qpp = groups of 4 bytes per pixel
             case 24:

@@ -94,9 +94,9 @@ struct Keymap2
     };
 
 private:
-    TODO("we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events."
-         " These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar"
-         " to the way X11 manage inputs (hence easier to unify with keymapSym)")
+    /* TODO we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events.
+     * These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar
+     * to the way X11 manage inputs (hence easier to unify with keymapSym) */
 
     // keyboard info
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
@@ -193,8 +193,7 @@ public:
     {
         this->key_flags = param1 & 0x07;
         // non sticky keys are forced to be UP
-        TODO("Non sticky keys are forced in up state. Is it what we should do ? We have up and down events for these key anyway"
-             "hence up is not likelier than down (really it should be 'unknown', but we do not have this state")
+        // TODO Non sticky keys are forced in up state. Is it what we should do ? We have up and down events for these key anyway hence up is not likelier than down (really it should be 'unknown', but we do not have this state")
         this->keys_down[LEFT_SHIFT] = 0;
         this->keys_down[RIGHT_SHIFT] = 0;
         this->keys_down[LEFT_CTRL] = 0;
@@ -889,7 +888,7 @@ public:
 
 
     bool is_ctrl_alt_pressed() const {
-        TODO("This is a hack to know if there is a Altgr map defined or not. It should be set through map generator... not reading map content like here")
+        // TODO This is a hack to know if there is a Altgr map defined or not. It should be set through map generator... not reading map content like here
         bool has_AltGr = (this->keylayout_WORK->altGr[0x12] | this->keylayout_WORK->altGr[2]) != 0;
         return ((this->is_ctrl_pressed() && this->is_alt_pressed())
             || (this->is_right_alt_pressed() && has_AltGr));

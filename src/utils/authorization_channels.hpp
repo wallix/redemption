@@ -193,7 +193,7 @@ public:
         return os;
     }
 
-    TODO("review")
+    // TODO review
     static void update_authorized_channels(std::string & allow,
                                     std::string & deny,
                                     const std::string & proxy_opt) {

@@ -103,7 +103,7 @@ enum {
 //    return i;
 //}
 
-REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
+// UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 static inline size_t UTF8Len(const uint8_t * source)
 {
     size_t len = 0;
@@ -174,8 +174,8 @@ static inline void UTF16Upper(uint8_t * source, size_t max_len)
 //     }
 // }
 
-REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
-      " It assumes input is valid utf8, zero terminated (that has been checked before).")
+// UTF8GetLen find the number of bytes of the len first characters of input.
+// It assumes input is valid utf8, zero terminated (that has been checked before).
 static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -190,7 +190,7 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
     return i;
 }
 
-// REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
+// // UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).
 // static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
 // {
 //     size_t    len = 0;
@@ -226,15 +226,14 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 //     return len;
 // }
 
-// REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
+// // UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.
 // static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
 // {
 //     source[UTF8GetPos(source, len)] = 0;
 // }
 
-REDOC(
-    "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
-    "UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+// UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
+// UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
 static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)
 {
     len += 1;
@@ -270,7 +269,7 @@ static inline size_t UTF8CharNbBytes(const uint8_t * source)
     return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
 }
 
-REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
+// UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 static inline size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len)
 {
     size_t adjust_len = 0;
@@ -287,7 +286,7 @@ static inline size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t ma
     return adjust_len;
 }
 
-REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before")
+// UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
 static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -306,9 +305,8 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
     return;
 }
 
-REDOC(
-    "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
-    "UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+// UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
+// UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
 static inline bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source)
 {
     uint8_t lo = to_insert_char & 0xFF;
@@ -367,7 +365,7 @@ static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_
                 i+=2;
             break;
             case 0xF:
-                TODO("This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long")
+                // TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
                 ucode = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;
@@ -418,7 +416,7 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
                 i+=2;
             break;
             case 0xF:
-                TODO("Value stored to 'c' is never read")
+                // TODO Value stored to 'c' is never read
                 ucode = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;

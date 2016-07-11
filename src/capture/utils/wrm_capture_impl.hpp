@@ -55,12 +55,8 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
         template<class... Ts>
         TransportVariant(TraceType trace_type, Ts && ... args)
         {
-            TODO("there should only be one outmeta, not two."
-                " Capture code should not really care if file is encrypted or not."
-                "Here is not the right level to manage anything related to encryption.")
-            TODO("Also we may wonder why we are encrypting wrm and not png"
-                "(This is related to the path split between png and wrm)."
-                "We should stop and consider what we should actually do")
+            // TODO there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not. Here is not the right level to manage anything related to encryption.
+            // TODO Also we may wonder why we are encrypting wrm and not png (This is related to the path split between png and wrm). We should stop and consider what we should actually do
             switch (trace_type) {
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)

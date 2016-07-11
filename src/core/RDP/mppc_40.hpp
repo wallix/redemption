@@ -442,7 +442,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
     typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
     typedef hash_table_manager::hash_type                hash_type;
 
-    TODO("making it static and large enough should be good for both RDP4 and RDP5")
+    // TODO making it static and large enough should be good for both RDP4 and RDP5
     uint8_t    historyBuffer[RDP_40_HIST_BUF_LEN];       /* contains uncompressed data */
     uint8_t  * outputBuffer;        /* contains compressed data */
     uint8_t    outputBufferPlus[RDP_40_HIST_BUF_LEN + 64 + 8];

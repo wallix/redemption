@@ -145,7 +145,7 @@ struct FontChar
 }; // END STRUCT - FontChar
 
 
-TODO(" NUM_GLYPHS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.")
+// TODO NUM_GLYPHS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.
 
 
 /*
@@ -200,7 +200,7 @@ struct Font
          // we start at space, no glyph for chars below 32
         int file_size;
 
-        TODO("Temporary disabling font to avoid useless messages in watchdog");
+        // TODO Temporary disabling font to avoid useless messages in watchdog
 //        LOG(LOG_INFO, "Reading font file %s", file_path);
         // RAZ of font chars table
 
@@ -261,7 +261,7 @@ struct Font
             stream.in_skip_bytes(4);                       // >>> 4 bytes for FNT1 (dropped)
             stream.in_copy_bytes(this->name, 32);          // >>> 32 bytes for Font Name
             this->size = stream.in_uint16_le();            // >>> 2 bytes for Font Size
-            TODO("temporary disabled to avoid warning in watchdog, see other TODO above to reenable later");
+            // TODO temporary disabled to avoid warning in watchdog, see other TODO above to reenable later
 //            LOG(LOG_INFO, "font name <%s> size <%u>", this->name, this->size);
             this->style = stream.in_uint16_le();           // >>> 2 bytes for Font Style
             stream.in_skip_bytes(8);                       // >>> 8 bytes for PAD (dropped)
@@ -271,7 +271,7 @@ struct Font
                 unsigned remaining = stream.in_remain();
                 if (remaining < 1024){
                     if (size_to_read > 0){
-                        TODO("Create a pack_left function in stream to do this");
+                        // TODO Create a pack_left function in stream to do this
                         //-----------------------------------------------------
                         memmove(stream_buf, stream.get_current(), remaining);
                         //-----------------------------------------------------
@@ -307,7 +307,7 @@ struct Font
                 int width = stream.in_sint16_le(); // >>> 2 bytes for glyph width
                 int height = stream.in_sint16_le(); // >>> 2 bytes for glyph height
 
-    TODO(" baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.");
+    // TODO baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.
 
                 int baseline = stream.in_sint16_le(); // >>> 2 bytes for glyph baseline
                 int offset = stream.in_sint16_le(); // >>> 2 bytes for glyph offset

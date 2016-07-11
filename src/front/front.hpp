@@ -818,7 +818,7 @@ public:
                 this->client_info.width = width;
                 this->client_info.height = height;
 
-                TODO("Why are we not calling this->flush() instead ? Looks dubious.")
+                // TODO Why are we not calling this->flush() instead ? Looks dubious.
                 // send buffered orders
                 this->orders.graphics_update_pdu().sync();
 
@@ -860,7 +860,7 @@ public:
     {
         LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
-        TODO("simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types")
+        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
 
         if (!ini.get<cfg::globals::is_rec>() &&
             bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
@@ -900,7 +900,7 @@ public:
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         bool full_video = false;
         this->capture = new Capture(
             now,
@@ -1358,7 +1358,7 @@ public:
             // GCC User Data
             // -------------
             GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
-            TODO("ensure gcc_data substream is fully consumed")
+            // TODO ensure gcc_data substream is fully consumed
 
             while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
@@ -2078,7 +2078,7 @@ public:
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "Front::ERROR_ALERT");
                     }
-                    TODO("We should check what is actually returned by this message, as it may be an error")
+                    // TODO We should check what is actually returned by this message, as it may be an error
                     LIC::ErrorAlert_Recv lic(sec.payload);
                     LOG(LOG_ERR, "Front::License Alert: error=%u transition=%u",
                         lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
@@ -2091,22 +2091,22 @@ public:
                         LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     }
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
-                    TODO("Instead of returning a license we return a message saying that no license is OK")
+                    // TODO Instead of returning a license we return a message saying that no license is OK
                     this->send_valid_client_license_data();
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
-                    TODO("As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE")
+                    // TODO As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     }
                     break;
                 case LIC::LICENSE_INFO:
-                    TODO("As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO")
+                    // TODO As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "Front::LICENSE_INFO");
                     }
-                    TODO("Instead of returning a license we return a message saying that no license is OK")
+                    // TODO Instead of returning a license we return a message saying that no license is OK
                     this->send_valid_client_license_data();
                     break;
                 default:
@@ -2183,25 +2183,25 @@ public:
                     // also processing this is a problem because input data packets are broken
 //                    this->process_data(sctrl.payload, cb);
 
-                    TODO("check all payload data is consumed")
+                    // TODO check all payload data is consumed
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
                     }
-                    TODO("check all payload data is consumed")
+                    // TODO check all payload data is consumed
                     break;
                 case PDUTYPE_SERVER_REDIR_PKT:
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
                     }
-                    TODO("check all payload data is consumed")
+                    // TODO check all payload data is consumed
                     break;
                 default:
                     LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pduType);
                     break;
                 }
-                TODO("Check why this is necessary when using loop connection ?")
+                // TODO Check why this is necessary when using loop connection ?
             }
             sec.payload.in_skip_bytes(sec.payload.in_remain());
         }
@@ -2354,9 +2354,9 @@ public:
             }
             else {
 //                X224::RecvFactory fx224(this->trans, stream);
-                TODO("We shall put a specific case when we get Disconnect Request")
+                // TODO We shall put a specific case when we get Disconnect Request
                 if (fx224.type == X224::DR_TPDU) {
-                    TODO("What is the clean way to actually disconnect ?")
+                    // TODO What is the clean way to actually disconnect ?
                     X224::DR_TPDU_Recv x224(stream);
                     LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
                     this->is_client_disconnected = true;
@@ -2518,7 +2518,7 @@ public:
                             break;
                         }
 
-                        TODO("check all sctrl.payload data is consumed")
+                        // TODO check all sctrl.payload data is consumed
                         sec.payload.in_skip_bytes(sctrl.payload.get_current() - sec.payload.get_current());
                     }
                 }
@@ -2952,8 +2952,8 @@ private:
         if (this->verbose & 1) {
             LOG(LOG_INFO, "process_confirm_active");
         }
-        TODO("We should separate the parts relevant to caps processing and the part relevant to actual confirm active")
-        TODO("Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)")
+        // TODO We should separate the parts relevant to caps processing and the part relevant to actual confirm active
+        // TODO Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)
 
         unsigned expected = 4; /* lengthSourceDescriptor(2) + lengthCombinedCapabilities(2) */
         if (!stream.in_check_rem(expected)) {
@@ -3170,7 +3170,7 @@ private:
                         this->client_bmpcache2_caps.log("Receiving from client");
                     }
 
-                    TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
+                    // TODO We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2
                     this->client_info.number_of_cache = this->client_bmpcache2_caps.numCellCaches;
                     int Bpp = nbbytes(this->client_info.bpp);
                     if (this->client_bmpcache2_caps.numCellCaches > 0) {
@@ -3573,7 +3573,7 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_UPDATE");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
@@ -3607,7 +3607,7 @@ private:
             if (this->verbose & 4) {
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
@@ -3621,8 +3621,8 @@ private:
                 for (int index = 0; index < cie.numEvents; index++) {
                     SlowPath::InputEvent_Recv ie(cie.payload);
 
-                    TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
-                    TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
+                    // TODO we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it
+                    // TODO with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.
                     switch (ie.messageType) {
                         case SlowPath::INPUT_EVENT_SYNC:
                         {
@@ -3770,7 +3770,7 @@ private:
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
                             left, top, right, bottom, rect.cx, rect.cy);
                     }
-                    // TODO("we should consider adding to API some function to refresh several rects at once")
+                    // // TODO we should consider adding to API some function to refresh several rects at once
                     // if (this->up_and_running) {
                     //     cb.rdp_input_invalidate(rect);
                     // }
@@ -3782,7 +3782,7 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
@@ -3842,14 +3842,14 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
@@ -3913,7 +3913,7 @@ private:
                 this->up_and_running = 1;
                 this->timeout.cancel_timeout();
                 cb.rdp_input_up_and_running();
-                TODO("we should use accessors to set that, also not sure it's the right place to set it")
+                // TODO we should use accessors to set that, also not sure it's the right place to set it
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
                 this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
                 this->ini.set_acl<cfg::context::opt_bpp>(this->client_info.bpp);
@@ -3953,14 +3953,14 @@ private:
             if (this->verbose & (8 | 1)) {
                 LOG(LOG_INFO, "PDUTYPE2_FONTMAP");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
             if (this->verbose & (4 | 8)) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
@@ -3977,7 +3977,7 @@ private:
                     pklpdud.log(LOG_INFO, "Receiving from client");
                 }
 
-                TODO("mutable and static is a bad idea")
+                // TODO mutable and static is a bad idea
                 static uint16_t cache_entry_index[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
                 RDP::BitmapCachePersistentListEntry * entries = pklpdud.entries;
@@ -4015,56 +4015,56 @@ private:
                 }
             }
 
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_IME_STATUS");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_ARC_STATUS_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
 

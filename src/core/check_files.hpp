@@ -31,7 +31,7 @@
 #include "core/font.hpp" //DEFAULT_FONT_NAME
 #include "defines.hpp"
 
-TODO("merge that with find and unlink")
+// TODO merge that with find and unlink
 
 struct CheckFileList
 {

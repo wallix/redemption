@@ -234,8 +234,8 @@ private:
                         //char compressed_buf[compressed_buf_size];
 //                        unsigned char compressed_buf[65536];
 
-                        TODO("this is blocking read, add support for timeout reading");
-                        TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+                        // TODO this is blocking read, add support for timeout reading
+                        // TODO add check for O_WOULDBLOCK, as this is is blockig it would be bad
                         this->raw.read_min(this->fd, ciphered_buf_size, ciphered_buf_size);
 //                        {
 //                        auto p = reinterpret_cast<uint8_t*>(&this->raw.b[0]);
@@ -336,10 +336,10 @@ private:
             //return requested_size - remaining_requested_size;
         } // else encryption
         else {
-            TODO("the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?");
-            TODO("this is blocking read, add support for timeout reading");
-            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
-            TODO("The best way would probably be to use the usual read API ?");
+            // TODO the do_recv API is annoying (need some intermediate pointer to get result), fix it => read all or raise exeception?
+            // TODO this is blocking read, add support for timeout reading
+            // TODO add check for O_WOULDBLOCK, as this is is blockig it would be bad
+            // TODO The best way would probably be to use the usual read API ?
 
             size_t end = 0;
             if (this->raw.end > 0 && this->raw.end > requested_size){

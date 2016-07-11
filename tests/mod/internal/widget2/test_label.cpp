@@ -52,9 +52,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     int xtext = 4;
     int ytext = 1;
 
-    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
-         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
-         "these possibilities (and others) are supported in RDPGlyphIndex")
+    /* TODO
+     * I believe users of this widget may wish to control text position and behavior inside rectangle
+     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
+     * these possibilities (and others) are supported in RDPGlyphIndex */
     WidgetLabel wlabel(drawable.gd, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, font, xtext, ytext);
 
     // ask to widget to redraw at it's current position
@@ -417,9 +418,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     wcomposite.clear();
 }
 
-TODO("the entry point exists in module: it's rdp_input_invalidate"
-     "je just have to change received values to widget messages")
-
+/* TODO
+ * the entry point exists in module: it's rdp_input_invalidate
+ * je just have to change received values to widget messages */
 BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
 {
     TestDraw drawable(800, 600);

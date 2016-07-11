@@ -267,9 +267,7 @@ public:
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
-                TODO("signal management (refresh/next) should go to ModuleManager, "
-                     "it's basically the same behavior. It could be implemented by "
-                     "closing module then opening another one of the same kind");
+                // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
                 mm.mod->refresh_context(this->ini);
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
@@ -370,7 +368,7 @@ public:
         // AuthCHANNEL CHECK
         // if an answer has been received, send it to
         // rdp serveur via mod (should be rdp module)
-        TODO("Check if this->mod is RDP MODULE");
+        // TODO Check if this->mod is RDP MODULE
         if (mm.connected && this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {

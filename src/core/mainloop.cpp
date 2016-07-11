@@ -92,7 +92,7 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGUSR1);
     sigaddset(&sa.sa_mask, SIGUSR2);
 
-TODO("-Wold-style-cast is ignored")
+// TODO -Wold-style-cast is ignored
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
     sa.sa_handler = SIG_IGN;

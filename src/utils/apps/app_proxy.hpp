@@ -246,7 +246,7 @@ int app_proxy(
     if (options.count("kill")) {
         int status = shutdown(PID_PATH "/redemption/" LOCKFILE);
         if (status){
-            TODO("check the real error that occured")
+            // TODO check the real error that occured
             std::clog << "problem opening " << PID_PATH "/redemption/" LOCKFILE  << "."
             " Maybe rdpproxy is not running\n";
         }
@@ -323,7 +323,7 @@ int app_proxy(
     // and try to continue normal start process afterward
 
     if (mkdir(PID_PATH "/redemption", 0700) < 0){
-        TODO("check only for relevant errors (exists with expected permissions is OK)");
+        // TODO check only for relevant errors (exists with expected permissions is OK)
     }
 
     if (chown(PID_PATH "/redemption", euid, egid) < 0){

@@ -155,7 +155,7 @@ struct ClientInfo {
         if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
             this->sound_code = 1;
         }
-        TODO("for now not allowing both autologon and mce");
+        // TODO for now not allowing both autologon and mce
         if ((infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){
             this->rdp_autologin = 1;
         }

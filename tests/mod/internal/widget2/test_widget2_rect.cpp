@@ -280,6 +280,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     }
 }
 
-TODO("As soon as composite widgets will be available, we will have to check these tests"
-     " are still working with two combination layers (conversion of coordinates "
-     "from parent coordinates to screen_coordinates can be tricky)")
+/* TODO
+ * As soon as composite widgets will be available, we will have to check these tests
+ * are still working with two combination layers (conversion of coordinates
+ * from parent coordinates to screen_coordinates can be tricky)")
+ */

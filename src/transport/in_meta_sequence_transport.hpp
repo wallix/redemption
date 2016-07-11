@@ -321,8 +321,8 @@ class InMetaSequenceTransport : public Transport
                 return len - requested_size;
             }
             else {
-                TODO("this is blocking read, add support for timeout reading");
-                TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+                // TODO this is blocking read, add support for timeout reading
+                // TODO add check for O_WOULDBLOCK, as this is is blockig it would be bad
                 size_t remaining_len = len;
                 while (remaining_len) {
                     ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
@@ -360,8 +360,8 @@ class InMetaSequenceTransport : public Transport
         ///\return 0 if success, otherwise a negatif number
         ssize_t raw_read(void * data, size_t len)
         {
-            TODO("this is blocking read, add support for timeout reading");
-            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            // TODO this is blocking read, add support for timeout reading
+            // TODO add check for O_WOULDBLOCK, as this is is blockig it would be bad
             size_t remaining_len = len;
             while (remaining_len) {
                 ssize_t ret = ::read(this->fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
@@ -415,8 +415,8 @@ class InMetaSequenceTransport : public Transport
 
         ssize_t file_read(void * data, size_t len)
         {
-            TODO("this is blocking read, add support for timeout reading");
-            TODO("add check for O_WOULDBLOCK, as this is is blockig it would be bad");
+            // TODO this is blocking read, add support for timeout reading
+            // TODO add check for O_WOULDBLOCK, as this is is blockig it would be bad
             size_t remaining_len = len;
             while (remaining_len) {
                 ssize_t ret = ::read(this->file_fd, static_cast<char*>(data) + (len - remaining_len), remaining_len);
@@ -693,7 +693,7 @@ public:
             }
 
             ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
-            TODO("test on EINTR suspicious here, check that");
+            // TODO test on EINTR suspicious here, check that
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
             }
@@ -711,7 +711,7 @@ public:
         char * pos;
         while ((pos = std::find(this->rl.cur, this->rl.eof, '\n')) == this->rl.eof) {
             ssize_t ret = this->buf_meta.read(this->rl.buf, sizeof(this->rl.buf));
-            TODO("test on EINTR suspicious here, check that");
+            // TODO test on EINTR suspicious here, check that
             if (ret < 0 && errno != EINTR) {
                 return -ERR_TRANSPORT_READ_FAILED;
             }
@@ -805,7 +805,7 @@ public:
         // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
 
-        TODO("Code below looks much too complicated for what it's doing");
+        // TODO Code below looks much too complicated for what it's doing
 
         typedef std::reverse_iterator<char*> reverse_iterator;
 
@@ -916,7 +916,7 @@ public:
             err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
         }
 
-        TODO("Why do this with lambda ? Is it so important to avoid typing 3 lines of code two times ?");
+        // TODO Why do this with lambda ? Is it so important to avoid typing 3 lines of code two times ?
         if (has_checksum){
             err |= len - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 2;
             if (!err)

@@ -159,15 +159,6 @@ namespace MCS
         return *stream.get_data() >> 2;
     }
 
-    //int peekBerEncodedMCSType(const InStream & stream) {
-    //    if (!stream.in_check_rem(2)){
-    //        throw Error(ERR_MCS);
-    //    }
-    //   TODO("getting to the type this way should works in our restricted use case,"
-    //        " but it would be nicer to perform actual BER TAG value decoding")
-    //    return (stream.get_data())[1];
-    //}
-
     struct InBerStream
     {
         InStream & stream;
@@ -727,7 +718,7 @@ namespace MCS
         CONNECT_INITIAL_PDU_Recv(InStream & stream, int encoding)
             : ber_stream(stream)
             , tag([this, encoding](){
-                TODO("simplify this there is no real use for ber_stream");
+                // TODO simplify this there is no real use for ber_stream
                 if (encoding != BER_ENCODING){
                     LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
                     throw Error(ERR_MCS);
@@ -1037,7 +1028,7 @@ namespace MCS
             , payload([&stream, this](){
 
                 // userData OCTET STRING
-                    TODO("Octets below are part of GCC Conference User Data");
+                    // TODO Octets below are part of GCC Conference User Data
                     bool in_result;
                     uint8_t tag = this->ber_stream.in_uint8_with_check(in_result);
                     if (!in_result){

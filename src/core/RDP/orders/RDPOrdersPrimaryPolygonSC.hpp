@@ -227,7 +227,7 @@ public:
               const RDPPolygonSC & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
-        TODO("check that");
+        // TODO check that
         int16_t pointx = this->xStart;
         int16_t pointy = this->yStart;
         if (!common.clip.contains_pt(pointx, pointy)) {

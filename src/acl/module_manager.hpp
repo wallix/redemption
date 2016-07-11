@@ -486,7 +486,7 @@ private:
 
             InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
 
-            TODO("Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)")
+            // TODO Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)
             RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, BLACK, 4, in_deltaPoints);
             drawable.draw(polyline_box, this->clip);
 
@@ -1002,8 +1002,7 @@ public:
                 accounts.username[0] = 0;
             }
             else {
-                TODO("check this! Assembling parts to get user login with target is not obvious"
-                     "method used below il likely to show @: if target fields are empty")
+                // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
                 char buffer[255];
                 snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
                         , this->ini.get<cfg::globals::target_user>().c_str()
@@ -1231,7 +1230,7 @@ public:
 
                 try {
                     const char * const name = "RDP Target";
-                    TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
+                    // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
                     this->set_mod(new ModWithSocket<mod_rdp>(
                         *this,
                         name,

@@ -605,7 +605,7 @@ public:
             , get_cache_usage(4), this->caches[4].size(), (this->caches[4].persistent() ? ", persistent" : ""));
     }
 
-    TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
+    // TODO palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap
     uint32_t cache_bitmap(const Bitmap & oldbmp) {
         REDASSERT(this->owner != Mod_rdp);
 

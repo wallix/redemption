@@ -734,8 +734,8 @@ enum {
         }())
         // Body of constructor
         {
-            TODO("We should not decrypt inplace, it's a bad idea for optimisations");
-            TODO("Signature should be checked");
+            // TODO We should not decrypt inplace, it's a bad idea for optimisations
+            // TODO Signature should be checked
             stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
@@ -772,7 +772,7 @@ enum {
                         throw Error(ERR_SEC);
                     }
 
-                    TODO("we should check signature");
+                    // TODO we should check signature
                     stream.in_skip_bytes(8); /* signature */
                     if (this->verbose >= 0x200){
                         LOG(LOG_INFO, "Receiving encrypted TPDU");
@@ -821,7 +821,7 @@ enum {
                             throw Error(ERR_SEC);
                         }
 
-                        TODO("shouldn't we check signature ?");
+                        // TODO shouldn't we check signature ?
                         stream.in_skip_bytes(8); /* signature */
                         if (this->verbose >= 0x200){
                             LOG(LOG_INFO, "Receiving encrypted TPDU");

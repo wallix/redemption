@@ -172,7 +172,7 @@ public:
                     pregex->regex.reset(filters[i]);
                 }
                 if (pregex->regex.message_error()) {
-                    TODO("notification that the regex is too complex for us");
+                    // TODO notification that the regex is too complex for us
                     LOG(LOG_ERR, "Regex: %s err %s at position %zu" , filters[i],
                         pregex->regex.message_error(), pregex->regex.position_error());
                 }

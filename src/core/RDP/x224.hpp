@@ -331,7 +331,7 @@ namespace X224
                 , fast_path(false) {
             size_t nbbytes = 0;
             Parse data(*end);
-            TODO("We should have less calls to read, one to get length, the other to get data, other short packets are error")
+            // TODO We should have less calls to read, one to get length, the other to get data, other short packets are error
             t.recv(end, 1);
 
             nbbytes++;
@@ -664,14 +664,14 @@ namespace X224
                 throw Error(ERR_X224);
             }
 
-            TODO("CGR: we should fix the code here to support routingtoken (or we may have some troubles with load balancing RDP hardware")
+            // TODO CGR: we should fix the code here to support routingtoken (or we may have some troubles with load balancing RDP hardware
 
             // extended negotiation header
             this->cookie_len = 0;
             this->cookie[0] = 0;
             this->rdp_neg_type = 0;
 
-            TODO("We should have some reading function in stream to read this")
+            // TODO We should have some reading function in stream to read this
             uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             for (uint8_t const * p = stream.get_current() + 1; p < end_of_header ; p++){
                 if (p[-1] == 0x0D && p[0] == 0x0A){
