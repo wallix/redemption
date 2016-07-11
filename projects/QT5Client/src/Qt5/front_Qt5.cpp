@@ -159,84 +159,90 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 }
 
 
-//bool Front_Qt::setClientInfo() {
-//    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
-//    if(ifichier) {
-//        // get config from conf file
-//        std::string ligne;
-//        std::string delimiter = " ";
+bool Front_Qt::setClientInfo() {
+    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
+    if(ifichier) {
+        // get config from conf file
+        std::string ligne;
+        std::string delimiter = " ";
 
-//        while(getline(ifichier, ligne)) {
+        while(getline(ifichier, ligne)) {
 
-//            int pos(ligne.find(delimiter));
-//            std::string tag  = ligne.substr(0, pos);
-//            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+            int pos(ligne.find(delimiter));
+            std::string tag  = ligne.substr(0, pos);
+            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-//            if (strcmp(tag.c_str(), "keylayout") == 0) {
-//                this->_info.keylayout = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "console_session") == 0) {
-//                this->_info.console_session = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
-//                this->_info.brush_cache_code = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "bpp") == 0) {
-//                this->_info.bpp = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "width") == 0) {
-//                this->_info.width = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "height") == 0) {
-//                this->_info.height = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
-//                this->_info.rdp5_performanceflags = std::stoi(info);
-//            }
-//            if (strcmp(tag.c_str(), "fps") == 0) {
-//                this->_fps = std::stoi(info);
-//            }
-//        }
-//        ifichier.close();
+            if (strcmp(tag.c_str(), "keylayout") == 0) {
+                this->_info.keylayout = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "console_session") == 0) {
+                this->_info.console_session = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
+                this->_info.brush_cache_code = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "bpp") == 0) {
+                this->_info.bpp = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "width") == 0) {
+                this->_info.width = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "height") == 0) {
+                this->_info.height = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
+                this->_info.rdp5_performanceflags = std::stoi(info);
+            }
+            if (strcmp(tag.c_str(), "fps") == 0) {
+                this->_fps = std::stoi(info);
+            }
+        }
+        ifichier.close();
 
-//        return false;
+        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+        if (this->_info.bpp ==  32) {
+            this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        }
 
-//    } else {
-//        // default config
-//        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-//        this->_info.console_session = 0;
-//        this->_info.brush_cache_code = 0;
-//        this->_info.bpp = 24;
-//        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
-//        this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
-//        this->_info.width = 800;
-//        this->_info.height = 600;
-//        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-//        this->_fps = 30;
+        return false;
 
-//        return true;
-//    }
-//}
+    } else {
+        // default config
+        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+        this->_info.console_session = 0;
+        this->_info.brush_cache_code = 0;
+        this->_info.bpp = 24;
+        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+        if (this->_info.bpp ==  32) {
+            this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        }
+        this->_info.width = 800;
+        this->_info.height = 600;
+        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        this->_fps = 30;
+
+        return true;
+    }
+}
 
 
-//void Front_Qt::writeClientInfo() {
-//    std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
-//    if(ofichier) {
+void Front_Qt::writeClientInfo() {
+    std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
+    if(ofichier) {
 
-//        ofichier << "User Info" << std::endl << std::endl;
+        ofichier << "User Info" << std::endl << std::endl;
 
-//        ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
-//        ofichier << "console_session "       << this->_info.console_session       << std::endl;
-//        ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
-//        ofichier << "bpp "                   << this->_info.bpp                   << std::endl;
-//        ofichier << "width "                 << this->_info.width                 << std::endl;
-//        ofichier << "height "                << this->_info.height                << std::endl;
-//        ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
-//        ofichier << "fps "                   << this->_fps                        << std::endl;
+        ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
+        ofichier << "console_session "       << this->_info.console_session       << std::endl;
+        ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
+        ofichier << "width "                 << this->_info.width                 << std::endl;
+        ofichier << "height "                << this->_info.height                << std::endl;
+        ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
+        ofichier << "fps "                   << this->_fps                        << std::endl;
 
-//        ofichier.close();
-//    }
-//}
+        ofichier.close();
+    }
+}
 
 
 Front_Qt::~Front_Qt() {
@@ -917,12 +923,20 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
 
             for (size_t k = 0 ; k < mincy; k++) {
 
-                uchar * data = new uchar[bitmap.line_size()];
+                uchar * data = new uchar[srcBitmap.bytesPerLine()];
                 const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = ~(srcData[i]) & dstData[i];
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = ~(srcData[i]) & dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = ~(srcData[i]) & dstData[i];
+                    }
                 }
 
                 QImage image(data, mincx, 1, srcBitmap.format());
@@ -956,11 +970,11 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
 
             for (size_t k = 0 ; k < mincy; k++) {
 
-                uchar * data = new uchar[bitmap.line_size()];
+                uchar * data = new uchar[dstBitmap.bytesPerLine()];
                 //const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < bitmap.line_size(); i++) {
+                for (int i = 0; i < dstBitmap.bytesPerLine(); i++) {
                     data[i] = ~(dstData[i]);
                 }
 
@@ -1006,8 +1020,16 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
                 const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = srcData[i] ^ dstData[i];
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = srcData[i] ^ dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = srcData[i] ^ dstData[i];
+                    }
                 }
 
                 QImage image(data, mincx, 1, dstBitmap.format());
@@ -1058,8 +1080,16 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
                 const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = srcData[i] | dstData[i];
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = srcData[i] | dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = srcData[i] | dstData[i];
+                    }
                 }
 
                 QImage image(data, mincx, 1, srcBitmap.format());

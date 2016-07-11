@@ -200,6 +200,11 @@ bool Front_Qt::setClientInfo() {
         }
         ifichier.close();
 
+        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+        if (this->_info.bpp ==  32) {
+            this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        }
+
         return false;
 
     } else {
@@ -209,7 +214,9 @@ bool Front_Qt::setClientInfo() {
         this->_info.brush_cache_code = 0;
         this->_info.bpp = 24;
         this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
-        this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        if (this->_info.bpp ==  32) {
+            this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        }
         this->_info.width = 800;
         this->_info.height = 600;
         this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
@@ -1158,9 +1165,9 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
 
                     QImage img(row, mincx, mincy, format);
 
-                    if (bitmap.bpp() > this->_info.bpp) {
+                    //if (bitmap.bpp() > this->_info.bpp) {
                         img = img.convertToFormat(this->_imageFormatARGB);
-                    }
+                    //}
 
                     for(int x= 0; x<img.width(); x++) {
                         for(int y = 0; y<img.height(); y++) {
