@@ -381,8 +381,8 @@ public:
      *  Anyway, we base the line drawing on bresenham's algorithm
      */
     void draw(const RDPLineTo & lineto, const Rect & clip) override {
-        draw_line(
-            this->drawable, lineto.back_mode,
+        this->drawable.draw_line(
+            lineto.back_mode,
             lineto.startx, lineto.starty,
             lineto.endx, lineto.endy,
             lineto.rop2, this->u32rgb_to_color(lineto.pen.color), clip
@@ -804,7 +804,7 @@ public:
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
             endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
-            draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
 
             startx = endx;
             starty = endy;
@@ -826,7 +826,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
 
             startx = endx;
             starty = endy;
@@ -834,7 +834,7 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+        this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
     }
 
     TODO("this functions only draw polygon borders but do not fill "
@@ -852,7 +852,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
 
             startx = endx;
             starty = endy;
@@ -860,7 +860,7 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        draw_line(this->drawable, 0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+        this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {

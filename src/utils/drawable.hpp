@@ -797,8 +797,10 @@ private:
 public:
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
-    void diagonal_line(int x, int y, int endx, int endy, const color_t color, Op op)
+    void diagonal_line(int x, int y, int endx, int endy, color_t color, Op op)
     {
+        assert(x <= endx);
+
         // Prep
         const int dx = endx - x;
         const int dy = (endy >= y) ? (endy - y) : (y - endy);
@@ -828,6 +830,8 @@ public:
     template<class Op>
     void vertical_line(uint16_t x, uint16_t y, uint16_t endy, color_t color, Op op)
     {
+        assert(y <= endy);
+
         P p = this->first_pixel(x, y);
         P pe = p + (endy - y + 1) * this->rowsize();
         for (; p != pe; p += this->rowsize()) {
@@ -836,9 +840,11 @@ public:
     }
 
     template<class Op>
-    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, color_t color, Op)
+    void horizontal_line(uint16_t x, uint16_t y, uint16_t endx, color_t color, Op)
     {
-        this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, AssignOp<Op>{color});
+        assert(x <= endx);
+
+        this->apply_for_line(this->first_pixel(x, y), endx - x + 1, AssignOp<Op>{color});
     }
 
     template <typename Op>
@@ -2251,10 +2257,56 @@ public:
         }
     }
 
+    void draw_line(
+        int mix_mode,
+        int16_t xStart, int16_t yStart,
+        int16_t xEnd, int16_t yEnd,
+        uint8_t rop, Color color, const Rect & clip
+    ) {
+        LineEquation equa(xStart, yStart, xEnd, yEnd);
+
+        if (not equa.resolve(clip)) {
+            return;
+        }
+
+        int startx = equa.segin.a.x;
+        int starty = equa.segin.a.y;
+        int endx = equa.segin.b.x;
+        int endy = equa.segin.b.y;
+
+        if (startx == endx){
+            this->vertical_line(
+                mix_mode,
+                startx, starty,
+                endy,
+                rop, color
+            );
+        }
+        else if (starty == endy){
+            this->horizontal_line(
+                mix_mode,
+                startx, starty,
+                endx,
+                rop, color
+            );
+        }
+        else {
+            this->diagonal_line(
+                mix_mode,
+                startx, starty,
+                endx, endy,
+                rop, color
+            );
+        }
+    }
+
     // nor horizontal nor vertical, use Bresenham
     void diagonal_line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, Color color)
     {
-        assert(x <= endx);
+        if (endx <= x) {
+            std::swap(x, endx);
+            std::swap(y, endy);
+        }
 
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
@@ -2271,7 +2323,9 @@ public:
 
     void vertical_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endy, uint8_t rop, Color color)
     {
-        assert(y <= endy);
+        if (endy < y) {
+            std::swap(y, endy);
+        }
 
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(x+1, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
@@ -2288,7 +2342,9 @@ public:
 
     void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color)
     {
-        assert(x <= endx);
+        if (endx < x) {
+            std::swap(x, endx);
+        }
 
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, y+1);
         if (this->tracked_area.has_intersection(line_rect)) {
@@ -2716,55 +2772,3 @@ private:
         this->default_pointer.initialize(0, 0, pointer_data, pointer_mask);
     }
 };
-
-
-inline void draw_line(
-    Drawable & drawable,
-    uint16_t BackMode, int16_t nXStart, int16_t nYStart,
-    int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
-    Drawable::Color color, const Rect & clip
-) {
-    LineEquation equa(nXStart, nYStart, nXEnd, nYEnd);
-
-    if (not equa.resolve(clip)) {
-        return;
-    }
-
-    int startx = equa.segin.a.x;
-    int starty = equa.segin.a.y;
-    int endx = equa.segin.b.x;
-    int endy = equa.segin.b.y;
-
-    if (startx == endx){
-        drawable.vertical_line(
-            BackMode,
-            startx, std::min(starty, endy),
-            std::max(starty, endy),
-            bRop2, color
-        );
-    }
-    else if (starty == endy){
-        drawable.horizontal_line(
-            BackMode,
-            std::min(startx, endx), starty,
-            std::max(startx, endx),
-            bRop2, color
-        );
-    }
-    else if (startx <= endx){
-        drawable.diagonal_line(
-            BackMode,
-            startx, starty,
-            endx, endy,
-            bRop2, color
-        );
-    }
-    else {
-        drawable.diagonal_line(
-            BackMode,
-            endx, endy,
-            startx, starty,
-            bRop2, color
-        );
-    }
-}

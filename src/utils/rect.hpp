@@ -322,9 +322,10 @@ struct LineEquation {
         int interX = 0;
         int interY = 0;
         bool found = false;
+
         if (region & Rect::LEFT) {
             int tmpy = this->compute_y(rect.x);
-            if (tmpy >= rect.y && tmpy < (rect.bottom())) {
+            if (tmpy >= rect.y && tmpy < rect.bottom()) {
                 found = true;
                 interX = rect.x;
                 interY = tmpy;
@@ -332,15 +333,16 @@ struct LineEquation {
         }
         else if (region & Rect::RIGHT) {
             int tmpy = this->compute_y(rect.right() - 1);
-            if (tmpy >= rect.y && tmpy < (rect.bottom())) {
+            if (tmpy >= rect.y && tmpy < rect.bottom()) {
                 found = true;
                 interX = rect.right() - 1;
                 interY = tmpy;
             }
         }
+
         if (region & Rect::UP) {
             int tmpx = this->compute_x(rect.y);
-            if (tmpx >= rect.x && tmpx < (rect.right())) {
+            if (tmpx >= rect.x && tmpx < rect.right()) {
                 found = true;
                 interX = tmpx;
                 interY = rect.y;
@@ -348,16 +350,18 @@ struct LineEquation {
         }
         else if (region & Rect::DOWN) {
             int tmpx = this->compute_x(rect.bottom() - 1);
-            if (tmpx >= rect.x && tmpx < (rect.right())) {
+            if (tmpx >= rect.x && tmpx < rect.right()) {
                 found = true;
                 interX = tmpx;
                 interY = rect.bottom() - 1;
             }
         }
+
         if (found) {
             x = interX;
             y = interY;
         }
+
         return found;
     }
 
