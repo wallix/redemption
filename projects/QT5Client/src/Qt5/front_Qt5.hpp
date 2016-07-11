@@ -278,8 +278,6 @@ public:
 
     QImage::Format bpp_to_QFormat(int bpp, bool alpha) override;
 
-    void draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert);
-
     void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy);
 
 

@@ -993,6 +993,13 @@ public Q_SLOTS:
 
                     this->send_FormatListPDU();
                 }
+            } else {
+                this->emptyBuffer();
+                this->_bufferTypeID = 0;                    // TODO
+                //QList<QUrl> list = mimeData->urls();
+
+                this->send_FormatListPDU();
+
             }
         }
     }

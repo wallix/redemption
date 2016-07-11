@@ -159,84 +159,90 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 }
 
 
-//bool Front_Qt::setClientInfo() {
-//    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
-//    if(ifichier) {
-//        // get config from conf file
-//        std::string ligne;
-//        std::string delimiter = " ";
+bool Front_Qt::setClientInfo() {
+    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
+    if(ifichier) {
+        // get config from conf file
+        std::string ligne;
+        std::string delimiter = " ";
 
-//        while(getline(ifichier, ligne)) {
+        while(getline(ifichier, ligne)) {
 
-//            int pos(ligne.find(delimiter));
-//            std::string tag  = ligne.substr(0, pos);
-//            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+            int pos(ligne.find(delimiter));
+            std::string tag  = ligne.substr(0, pos);
+            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-//            if (strcmp(tag.c_str(), "keylayout") == 0) {
-//                this->_info.keylayout = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "console_session") == 0) {
-//                this->_info.console_session = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
-//                this->_info.brush_cache_code = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "bpp") == 0) {
-//                this->_info.bpp = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "width") == 0) {
-//                this->_info.width = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "height") == 0) {
-//                this->_info.height = std::stoi(info);
-//            } else
-//            if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
-//                this->_info.rdp5_performanceflags = std::stoi(info);
-//            }
-//            if (strcmp(tag.c_str(), "fps") == 0) {
-//                this->_fps = std::stoi(info);
-//            }
-//        }
-//        ifichier.close();
+            if (strcmp(tag.c_str(), "keylayout") == 0) {
+                this->_info.keylayout = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "console_session") == 0) {
+                this->_info.console_session = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
+                this->_info.brush_cache_code = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "bpp") == 0) {
+                this->_info.bpp = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "width") == 0) {
+                this->_info.width = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "height") == 0) {
+                this->_info.height = std::stoi(info);
+            } else
+            if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
+                this->_info.rdp5_performanceflags = std::stoi(info);
+            }
+            if (strcmp(tag.c_str(), "fps") == 0) {
+                this->_fps = std::stoi(info);
+            }
+        }
+        ifichier.close();
 
-//        return false;
+        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+        if (this->_info.bpp ==  32) {
+            this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        }
 
-//    } else {
-//        // default config
-//        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-//        this->_info.console_session = 0;
-//        this->_info.brush_cache_code = 0;
-//        this->_info.bpp = 24;
-//        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
-//        this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
-//        this->_info.width = 800;
-//        this->_info.height = 600;
-//        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-//        this->_fps = 30;
+        return false;
 
-//        return true;
-//    }
-//}
+    } else {
+        // default config
+        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+        this->_info.console_session = 0;
+        this->_info.brush_cache_code = 0;
+        this->_info.bpp = 24;
+        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+        if (this->_info.bpp ==  32) {
+            this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+        }
+        this->_info.width = 800;
+        this->_info.height = 600;
+        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        this->_fps = 30;
+
+        return true;
+    }
+}
 
 
-//void Front_Qt::writeClientInfo() {
-//    std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
-//    if(ofichier) {
+void Front_Qt::writeClientInfo() {
+    std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
+    if(ofichier) {
 
-//        ofichier << "User Info" << std::endl << std::endl;
+        ofichier << "User Info" << std::endl << std::endl;
 
-//        ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
-//        ofichier << "console_session "       << this->_info.console_session       << std::endl;
-//        ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
-//        ofichier << "bpp "                   << this->_info.bpp                   << std::endl;
-//        ofichier << "width "                 << this->_info.width                 << std::endl;
-//        ofichier << "height "                << this->_info.height                << std::endl;
-//        ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
-//        ofichier << "fps "                   << this->_fps                        << std::endl;
+        ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
+        ofichier << "console_session "       << this->_info.console_session       << std::endl;
+        ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
+        ofichier << "width "                 << this->_info.width                 << std::endl;
+        ofichier << "height "                << this->_info.height                << std::endl;
+        ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
+        ofichier << "fps "                   << this->_fps                        << std::endl;
 
-//        ofichier.close();
-//    }
-//}
+        ofichier.close();
+    }
+}
 
 
 Front_Qt::~Front_Qt() {
@@ -478,46 +484,6 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
 }
 
 
-void Front_Qt::draw_bmp(const Rect & drect, const Bitmap & bitmap, bool invert) {
-    const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
-    const int16_t mincy = 1;
-
-    if (mincx <= 0) {
-        return;
-    }
-
-    int rowYCoord(drect.y + drect.cy-1);
-    int rowsize(bitmap.line_size()); //Bpp
-
-    const unsigned char * row = bitmap.data();
-
-    QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
-
-    for (size_t k = 0 ; k < drect.cy; k++) {
-
-        QImage qbitmap(row, mincx, mincy, format);
-
-        if (bitmap.bpp() > this->_info.bpp) {
-            qbitmap = qbitmap.convertToFormat(this->_imageFormatRGB);
-        }
-
-        if (invert) {
-            qbitmap.invertPixels();
-        }
-
-        if (bitmap.bpp() == 24) {
-            qbitmap = qbitmap.rgbSwapped();
-        }
-
-        QRect trect(drect.x, rowYCoord, mincx, mincy);
-        this->_screen->paintCache().drawImage(trect, qbitmap);
-
-        row += rowsize;
-        rowYCoord--;
-    }
-}
-
-
 void Front_Qt::draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert) {
     QImage qbitmap(this->_screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
     if (invert) {
@@ -750,9 +716,37 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
                             (bitmap_data.dest_right - bitmap_data.dest_left + 1),
                             (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
     const Rect clipRect(0, 0, this->_info.width, this->_info.height);
-    const Rect rect = rectBmp.intersect(clipRect);
+    const Rect drect = rectBmp.intersect(clipRect);
 
-    this->draw_bmp(rect, bmp, false);
+    const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+    const int16_t mincy = std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));;
+
+    if (mincx <= 0 || mincy <= 0) {
+        return;
+    }
+
+    int rowYCoord(drect.y + drect.cy-1);
+
+    QImage::Format format(this->bpp_to_QFormat(bmp.bpp(), false)); //bpp
+    QImage qbitmap(bmp.data(), mincx, mincy, bmp.line_size(), format);
+
+    if (bmp.bpp() == 24) {
+        qbitmap = qbitmap.rgbSwapped();
+    }
+
+    if (bmp.bpp() != this->_info.bpp) {
+        qbitmap = qbitmap.convertToFormat(this->_imageFormatRGB);
+    }
+
+    for (size_t k = 0 ; k < drect.cy; k++) {
+
+        QImage image(qbitmap.constScanLine(k), mincx, 1, qbitmap.format());
+
+        QRect trect(drect.x, rowYCoord, mincx, 1);
+        this->_screen->paintCache().drawImage(trect, image);
+
+        rowYCoord--;
+    }
 }
 
 
@@ -901,55 +895,150 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0x00: this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
         break;
 
-        case 0x22:  // TODO
+        case 0x22:
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
-            //std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
-            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
-            //dest.invertPixels();
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
 
-            uchar *       destData = dest.bits();
-            const uchar * srcData  = reinterpret_cast<const uchar *>(bitmap.data());
-
-            int len(drect.cx * drect.cy);
-            for (int i = 0; i < len; i++) {
-                destData[i] = srcData[i] & ~(destData[i]);
+            if (mincx <= 0 || mincy <= 0) {
+                return;
             }
 
-            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
-            image.invertPixels();
-            QRect tect(drect.x, drect.y, drect.cx, drect.cy);
-            this->_screen->paintCache().drawImage(tect, image);
+            int rowYCoord(drect.y + drect.cy-1);
 
-            //this->_screen->repaint();
-            //this->_screen->_timer.stop();
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+
+            if (bitmap.bpp() == 24) {
+                srcBitmap = srcBitmap.rgbSwapped();
+            }
+
+            if (bitmap.bpp() != this->_info.bpp) {
+                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
+            }
+            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[srcBitmap.bytesPerLine()];
+                const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = ~(srcData[i]) & dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = ~(srcData[i]) & dstData[i];
+                    }
+                }
+
+                QImage image(data, mincx, 1, srcBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
         }
         break;
 
-        case 0x55: this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
+        case 0x33: this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
         break;
 
-        case 0x66:  // TODO
+        case 0x55:
         {
-            //std::cout << "RDPMemBlt TODO (" << std::hex << static_cast<int>(cmd.rop) << ")" << std::endl;
-            // std::cout << std::dec << "x=" << drect.x << " y=" << drect.y << " cx=" << drect.cx << " cy=" << drect.cy << std::endl;
-            QImage dest(this->_screen->getCache()->toImage().copy(cmd.srcx, cmd.srcy, drect.cx, drect.cy));
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
 
-            uchar *       destData = dest.bits();
-            const uchar * srcData  = reinterpret_cast<const uchar *>(bitmap.data());
-
-            int len(drect.cx * drect.cy);
-            for (int i = 0; i < len; i++) {
-                destData[i] = srcData[i] ^ destData[i];
+            if (mincx <= 0 || mincy <= 0) {
+                return;
             }
 
-            QImage image(destData, drect.cx, drect.cy, this->bpp_to_QFormat(bitmap.bpp(), true));
+            int rowYCoord(drect.y + drect.cy-1);
 
-            QRect tect(drect.x, drect.y, drect.cx, drect.cy);
-            this->_screen->paintCache().drawImage(tect, image);
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
 
-            //this->_screen->repaint();
-            //this->_screen->_timer.stop();
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[dstBitmap.bytesPerLine()];
+                //const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                for (int i = 0; i < dstBitmap.bytesPerLine(); i++) {
+                    data[i] = ~(dstData[i]);
+                }
+
+                QImage image(data, mincx, 1, dstBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
+        }
+        break;
+
+        case 0x66:
+        {
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
+
+            if (mincx <= 0 || mincy <= 0) {
+                return;
+            }
+
+            int rowYCoord(drect.y + drect.cy-1);
+
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+
+            if (bitmap.bpp() == 24) {
+                srcBitmap = srcBitmap.rgbSwapped();
+            }
+
+            if (bitmap.bpp() != this->_info.bpp) {
+                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
+            }
+            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[srcBitmap.bytesPerLine()];
+                const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = srcData[i] ^ dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = srcData[i] ^ dstData[i];
+                    }
+                }
+
+                QImage image(data, mincx, 1, dstBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
         }
         break;
 
@@ -959,7 +1048,58 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
         case 0xCC: this->draw_MemBlt(drect, bitmap, false, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
         break;
 
-        case 0xEE: this->draw_MemBlt(drect, bitmap, false, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
+        case 0xEE:
+        {
+            const int16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
+            const int16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->_info.height - drect.y, drect.cy));
+
+            if (mincx <= 0 || mincy <= 0) {
+                return;
+            }
+
+            int rowYCoord(drect.y + drect.cy-1);
+
+            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+            QImage dstBitmap(this->_screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+
+            if (bitmap.bpp() == 24) {
+                srcBitmap = srcBitmap.rgbSwapped();
+            }
+
+            if (bitmap.bpp() != this->_info.bpp) {
+                srcBitmap = srcBitmap.convertToFormat(this->_imageFormatRGB);
+            }
+            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+
+            int indice(mincy-1);
+
+            for (size_t k = 0 ; k < mincy; k++) {
+
+                uchar * data = new uchar[srcBitmap.bytesPerLine()];
+                const uchar * srcData = srcBitmap.constScanLine(k);
+                const uchar * dstData = dstBitmap.constScanLine(indice - k);
+
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = srcData[i] | dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = srcData[i] | dstData[i];
+                    }
+                }
+
+                QImage image(data, mincx, 1, srcBitmap.format());
+
+                QRect trect(drect.x, rowYCoord, mincx, 1);
+                this->_screen->paintCache().drawImage(trect, image);
+
+                rowYCoord--;
+            }
+        }
         break;
 
         case 0xFF: this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);

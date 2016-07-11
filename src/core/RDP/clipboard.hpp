@@ -957,6 +957,17 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 };
 
 
+struct FileContentsRequest : CliprdrHeader {
+    explicit FileContentsRequest(bool response_ok = false)
+    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
+    {}
+
+    void emit(OutStream & stream) {
+        CliprdrHeader::emit(stream);
+    }
+};
+
+
 struct FileContentsResponse : CliprdrHeader {
     explicit FileContentsResponse(bool response_ok = false)
     : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
