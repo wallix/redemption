@@ -126,6 +126,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     if (this->mod_bpp == this->_info.bpp) {
         this->mod_palette = BGRPalette::classic_332();
     }
+
     this->_qtRDPKeymap.setKeyboardLayout(this->_info.keylayout);
     this->_keymap.init_layout(this->_info.keylayout);
 
@@ -467,9 +468,9 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
 
     qbitmap = qbitmap.copy(srcx, srcy, drect.cx, drect.cy);
 
-    if (bitmap.bpp() > this->_info.bpp) {
+    /*if (bitmap.bpp() > this->_info.bpp) {
         qbitmap = qbitmap.convertToFormat(this->_imageFormatRGB);
-    }
+    }*/
 
     if (invert) {
         qbitmap.invertPixels();
@@ -481,6 +482,10 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
 
     const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
     this->_screen->paintCache().drawImage(trect, qbitmap);
+
+    if (invert) {
+        this->_screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::red);
+    }
 
     //this->_screen->_scene.addPixmap(rect.x, rect.y, rect.cx, rect.cy, this->u32_to_qcolor(new_cmd24.color));
 }
@@ -926,12 +931,20 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
 
             for (size_t k = 0 ; k < mincy; k++) {
 
-                uchar * data = new uchar[bitmap.line_size()];
+                uchar * data = new uchar[srcBitmap.bytesPerLine()];
                 const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = ~(srcData[i]) & dstData[i];
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = ~(srcData[i]) & dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = ~(srcData[i]) & dstData[i];
+                    }
                 }
 
                 QImage image(data, mincx, 1, srcBitmap.format());
@@ -942,6 +955,9 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
                 rowYCoord--;
             }
         }
+        break;
+
+        case 0x33:this->draw_MemBlt(drect, bitmap, true, cmd.srcx + (drect.x - cmd.rect.x), cmd.srcy + (drect.y - cmd.rect.y));
         break;
 
         case 0x55:
@@ -962,11 +978,11 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
 
             for (size_t k = 0 ; k < mincy; k++) {
 
-                uchar * data = new uchar[bitmap.line_size()];
+                uchar * data = new uchar[dstBitmap.bytesPerLine()];
                 //const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < bitmap.line_size(); i++) {
+                for (int i = 0; i < dstBitmap.bytesPerLine(); i++) {
                     data[i] = ~(dstData[i]);
                 }
 
@@ -1012,8 +1028,16 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
                 const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = srcData[i] ^ dstData[i];
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = srcData[i] ^ dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = srcData[i] ^ dstData[i];
+                    }
                 }
 
                 QImage image(data, mincx, 1, dstBitmap.format());
@@ -1064,8 +1088,16 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
                 const uchar * srcData = srcBitmap.constScanLine(k);
                 const uchar * dstData = dstBitmap.constScanLine(indice - k);
 
-                for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
-                    data[i] = srcData[i] | dstData[i];
+                if (this->_info.bpp ==  32) {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        if ((i+1) % 4 !=  0) {
+                            data[i] = srcData[i] | dstData[i];
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < srcBitmap.bytesPerLine(); i++) {
+                        data[i] = srcData[i] | dstData[i];
+                    }
                 }
 
                 QImage image(data, mincx, 1, srcBitmap.format());
