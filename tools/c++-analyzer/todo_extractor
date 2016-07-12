@@ -1,0 +1,29 @@
+#!/bin/sh
+
+l1='BUG|ALERT|ATTENTION|DANGER|HACK|SECURITY'
+l2='FIXME|DEPRECATED|TASK|TODO|TBD|WARNING|CAUTION'
+l3='NOTE|NOTICE|TEST|TESTING|PERFORMANCE|PERF'
+
+TODO_pattern='('"$l1|$l2|$l3"')([^-_0-9a-zA-Z]|$)'
+
+awk '/\/\/(\s*'"$TODO_pattern"'|.*[^-_0-9a-zA-Z]'"$TODO_pattern"')/ {
+  print "TODO:" FILENAME ":" NR ":" $0
+}
+/\/\*/ {
+  blk=1
+  comment=""
+  line=NR
+  filename=FILENAME
+}
+{
+  if(blk) {
+    sub(/^\s+/, "")
+    comment=comment $0
+  }
+}
+/\*\// {
+  blk=0
+  if(comment ~ /([^-_0-9a-zA-Z]|^)'"$TODO_pattern"'/)
+    print "TODO:" filename ":" line ":" comment
+}
+ENDFILE { NR=0 }' "$@"
