@@ -692,7 +692,9 @@ public:
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
-                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)))
+                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
+                                                     (!mod_rdp_params.use_client_provided_alternate_shell ||
+                                                      !info.alternate_shell[0]))
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
