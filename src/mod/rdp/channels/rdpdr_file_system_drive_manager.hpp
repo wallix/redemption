@@ -1861,7 +1861,7 @@ public:
 
         managed_file_system_object_collection_type::const_iterator file_iter;
         if (device_io_request.MajorFunction() != rdpdr::IRP_MJ_CREATE) {
-            auto file_iter = std::find_if(
+            file_iter = std::find_if(
                 this->managed_file_system_objects.begin(),
                 this->managed_file_system_objects.end(),
                 [&device_io_request](managed_file_system_object_type const & file) {
