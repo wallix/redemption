@@ -3,4 +3,9 @@
 cd "$(dirname "$0")"/../..
 
 find src/capture src/core src/front src/main src/mod src/transport src/utils src/acl -name '*.?pp' \
- -exec cppcheck -v --enable=all --std=posix --std=c++11 "$@" '{}' +
+ -exec cppcheck -v --enable=all --std=posix --std=c++11 \
+   -I src \
+   -I projects/redemption_configs/include/autogen \
+   -I projects/redemption_configs/include/variant \
+   -I projects/redemption_configs/redemption_src \
+   -I src/system/linux "$@" '{}' +
