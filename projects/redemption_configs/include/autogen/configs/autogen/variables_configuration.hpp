@@ -726,6 +726,8 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{1};
         };
+        // [Not configured]: Compatible with more RDP clients (less secure)
+// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure)
         // type: std::string
         struct ssl_cipher_list {
             static constexpr bool is_readable() { return 0; }
