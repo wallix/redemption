@@ -2916,7 +2916,7 @@ public:
                                             sign.update(lenhdr, sizeof(lenhdr));
                                             sign.update(hwid, sizeof(hwid));
 
-                                            assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                            static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                             sign.final(signature, sizeof(signature));
 
 
@@ -2980,7 +2980,7 @@ public:
                                     sign.update(lenhdr, sizeof(lenhdr));
                                     sign.update(sealed_buffer, sizeof(sealed_buffer));
 
-                                    assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                    static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                     sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */

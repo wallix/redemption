@@ -263,8 +263,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
         W.member(H, type_<types::fixed_string<511>>(), "session_probe_alternate_shell", set("cmd /k"));
         W.sep();
-        /// ConnectionPolicy
-        //@{
+
         W.member(H, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true), r);
         W.member(H, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know), r);
 
@@ -278,7 +277,6 @@ void config_spec_definition(Writer && W)
         }) {
             W.member(H, type_<ServerNotification>(), p.name, desc{p.desc}, set(ServerNotification::syslog), r);
         }
-        //@}
         W.sep();
 
         W.member(V, type_<bool>(), "hide_client_name", desc{"Do not transmit client machine name or RDP server."}, set(false));
