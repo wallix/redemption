@@ -39,11 +39,15 @@ bool cmp(T const & x, U const & y) {
 	return x != y;
 }
 
-bool cmp(const char * s1, const char * s2) {
+inline bool cmp(char const * s1, char const * s2) {
 	return strcmp(s1, s2) != 0;
 }
 
-bool cmp(char * s1, const char * s2) {
+inline bool cmp(char * s1, char const * s2) {
+    return strcmp(s1, s2) != 0;
+}
+
+inline bool cmp(char const * s1, char * s2) {
 	return strcmp(s1, s2) != 0;
 }
 
@@ -60,6 +64,23 @@ TESTS.failure++;} else { TESTS.success++;}
 #define BOOST_REQUIRE_EQUAL(x, y) if ((x)!=(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 #define BOOST_REQUIRE_NE(x, y) if ((x)==(y)) { TESTS.failure++; printf("Test Failed at %d\n", __LINE__); } else { TESTS.success++;}
 #define BOOST_CHECK_MESSAGE(x,s) if(x) {TESTS.success++; printf("%s", s);} else {TESTS.failure++;};
+
+#define BOOST_CHECK_EXCEPTION(statement, exception, predicate)\
+    try {\
+        statement;\
+        TESTS.failure++;\
+        printf("Test Failed at %d: not exception is caught\n", __LINE__);\
+    }\
+    catch (exception & e__) {\
+        BOOST_CHECK(predicate(e__));\
+    }\
+    catch (...) {\
+        TESTS.failure++;\
+        printf("Test Failed at %d: incorrect exception " #exception " is caught\n", __LINE__);\
+    }
+
+#define BOOST_CHECK_THROW(statement, exception) \
+    BOOST_CHECK_EXCEPTION(statement, exception, [](exception const &){ return true; })
 
 #ifdef BOOST_AUTO_TEST_MAIN
 struct TESTS {
