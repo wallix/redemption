@@ -184,7 +184,7 @@ struct GraphicApi : private noncopyable
     virtual void draw(const RDP::RAIL::CachedIcon          &) {}
     virtual void draw(const RDP::RAIL::DeletedWindow       &) {}
 
-    // TODO("The 2 methods below should not exist and cache access be done before calling drawing orders")
+    // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
     virtual void draw(RDPColCache   const & cmd) {}
     virtual void draw(RDPBrushCache const & cmd) {}
 
@@ -551,7 +551,7 @@ struct TextMetrics
 };
 
 
-TODO("implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+// TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 static inline void server_draw_text(
                 GraphicApi & drawable,
                 Font const & font, int16_t x, int16_t y, const char * text,
@@ -585,7 +585,7 @@ static inline void server_draw_text(
             }
             FontChar const & font_item = font.font_items[exists ? charnum : static_cast<unsigned>('?')];
 
-            TODO(" avoid passing parameters by reference to get results")
+            // TODO avoid passing parameters by reference to get results
             const GlyphCache::t_glyph_cache_result cache_result =
                 mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
             (void)cache_result; // supress warning

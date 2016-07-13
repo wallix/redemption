@@ -51,9 +51,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     int xtext = 4;
     int ytext = 1;
 
-    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
-         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
-         "these possibilities (and others) are supported in RDPGlyphIndex")
+    /* TODO
+     * I believe users of this widget may wish to control text position and behavior inside rectangle
+     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
+     * these possibilities (and others) are supported in RDPGlyphIndex */
     WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"

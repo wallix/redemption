@@ -39,7 +39,7 @@
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     CryptContext decrypt;
 
-    TODO("We should fix that test (and a few other below) to make it independant from transport");
+    // TODO We should fix that test (and a few other below) to make it independant from transport
 
     const char *payload =
 /* 0000 */ "\x10\x0e\x01\x0f\x62\x01\x0f\x20\x00\x08\xca\x00\x41\x03"         // ....b.. ....A.   |

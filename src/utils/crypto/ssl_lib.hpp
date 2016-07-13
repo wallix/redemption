@@ -24,7 +24,7 @@
 #include <cstring>
 
 #include "utils/bitfu.hpp"
-#include "system/ssl_modexp.hpp"
+#include "system/ssl_mod_exp.hpp"
 
 
 enum {

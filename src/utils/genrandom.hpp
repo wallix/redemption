@@ -106,7 +106,7 @@ class UdevRandom : public Random
    public:
     UdevRandom()
     {
-        TODO("See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.")
+        // TODO See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.
     }
     ~UdevRandom() override {}
 
@@ -118,7 +118,7 @@ class UdevRandom : public Random
             fd = open("/dev/random", O_RDONLY);
             if (fd == -1){
                 LOG(LOG_ERR, "random source failed to provide random data : couldn't open device");
-                TODO("If random fails an exception should be raised, because security layers depends on random and should probably refuse working");
+                // TODO If random fails an exception should be raised, because security layers depends on random and should probably refuse working
                 memset(dest, 0x44, size);
                 return;
             }
@@ -135,7 +135,7 @@ class UdevRandom : public Random
             explicit fdbuf(int fd) : fd(fd){}
             ~fdbuf() { ::close(this->fd);}
 
-            TODO("This is basically a blocking read, we should provide timeout management and behaviour")
+            // TODO This is basically a blocking read, we should provide timeout management and behaviour
             ssize_t read(uint8_t * data, size_t len) const
             {
                 size_t remaining_len = len;

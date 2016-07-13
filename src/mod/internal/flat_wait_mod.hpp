@@ -107,7 +107,7 @@ private:
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void accepted()
     {
         this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
@@ -115,7 +115,7 @@ private:
         this->event.set();
     }
 
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void refused()
     {
         this->vars.set_acl<cfg::context::waitinforeturn>("exit");

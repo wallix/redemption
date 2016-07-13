@@ -64,7 +64,7 @@ private:
                 snprintf(text, sizeof(text), "%s", TR("selector", language(vars)));
             }
             else {
-                TODO("target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman")
+                // TODO target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman
                 if (!vars.get<cfg::globals::target_application>().empty()) {
                     snprintf(text, sizeof(text), "%s",
                              vars.get<cfg::globals::target_application>().c_str());

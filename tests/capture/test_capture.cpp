@@ -64,13 +64,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         CryptoContext cctx(rnd, ini);
 
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         bool full_video = false;
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         bool clear_png = false;
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         bool no_timestamp = false;
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
         Capture capture(
             now, scr.cx, scr.cy, 24, 24
@@ -221,13 +221,13 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         CryptoContext cctx(rnd, ini);
 
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         bool full_video = false;
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         bool clear_png = false;
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         bool no_timestamp = false;
-        TODO("remove this after unifying capture interface");
+        // TODO remove this after unifying capture interface
         auth_api * authentifier = nullptr;
 
         Capture capture(now, scr.cx, scr.cy, 16, 16

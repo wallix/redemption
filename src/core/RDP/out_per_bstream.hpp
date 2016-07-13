@@ -152,7 +152,7 @@ public:
             this->out_copy_bytes(oct_str, length);
         }
         else {
-            TODO("Check this length, looks dubious");
+            // TODO Check this length, looks dubious
             this->out_per_length(min);
             this->out_copy_bytes(oct_str, length);
             this->out_clear_bytes(min-length);

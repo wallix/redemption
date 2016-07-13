@@ -85,9 +85,9 @@ BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
 #include "core/RDP/gcc.hpp"
 
 
-TODO("For now we are testing out_per primitive through gcc object,"
-     " true unit test should do that at a lower level"
-     " for every out_per primitive defined")
+/* TODO For now we are testing out_per primitive through gcc object,
+ * true unit test should do that at a lower level
+ * for every out_per primitive defined */
 BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 {
     const char gcc_user_data[] =

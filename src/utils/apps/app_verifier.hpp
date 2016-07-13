@@ -19,21 +19,18 @@
 
 #include "program_options/program_options.hpp"
 
-#ifndef HASH_LEN
-#define HASH_LEN 64
-#endif
-
-#define QUICK_CHECK_LENGTH 4096
+enum { QUICK_CHECK_LENGTH = 4096 };
 
 
+// ifile is a thin API layer over system open/read/close
+// it means open/read/close mimicks system open/read/close
 struct ifile_read_API
 {
-    // ifile is a thin API layer over system open/read/close
-    // it means open/read/close mimicks system open/read/close
-    // (except fd is wrapped in an object)
+    ifile_read_API() = default;
 
-    int fd;
-    ifile_read_API() : fd(-1) {}
+    ifile_read_API(ifile_read_API const &) = delete;
+    ifile_read_API & operator = (ifile_read_API const &) = delete;
+
     // We choose to define an open function to mimick system behavior
     // instead of opening through constructor. This allows to manage
     // explicit error management depending on return code.
@@ -41,7 +38,7 @@ struct ifile_read_API
     // negative code are errors, return EINVAL if lib software related
     virtual int open(const char * s) = 0;
     // read can either return the number of bytes asked or less.
-    // That the exact number of bytes is returned is never 
+    // That the exact number of bytes is returned is never
     // guaranteed and checking that is at caller's responsibility
     // if some error occurs the return is -1 and the error code
     // is in errno, like for system calls.
@@ -51,31 +48,39 @@ struct ifile_read_API
     // this is to avoid performing close twice when called explicitely
     // as it is also performed by destructor (in most cases there will be
     // no reason for calling close explicitly).
-    virtual void close()
+    virtual void close() = 0;
+
+    virtual ~ifile_read_API() = default;
+};
+
+struct ifile_read : ifile_read_API
+{
+    int open(const char * s) override
+    {
+        this->fd = ::open(s, O_RDONLY);
+        return this->fd;
+    }
+
+    int read(char * buf, size_t len) override
+    {
+        return ::read(this->fd, buf, len);
+    }
+
+    void close() override
     {
         ::close(fd);
         this->fd = -1;
     }
 
-    virtual ~ifile_read_API(){
+    ~ifile_read() override
+    {
         if (this->fd != -1){
             this->close();
         }
     }
-};
 
-struct ifile_read : public ifile_read_API
-{
-    int open(const char * s)
-    {
-        this->fd = ::open(s, O_RDONLY);
-        return this->fd;
-    }
-    int read(char * buf, size_t len)
-    {
-        return ::read(this->fd, buf, len);
-    }
-    virtual ~ifile_read(){}
+protected:
+    int fd = -1;
 };
 
 
@@ -101,7 +106,7 @@ struct HashHeader {
     unsigned version;
 };
 
-class ifile_read_encrypted : public ifile_read_API
+class ifile_read_encrypted : public ifile_read
 {
 public:
     CryptoContext * cctx;
@@ -115,13 +120,12 @@ public:
     uint32_t state;                       // enum crypto_file_state
     unsigned int   MAX_CIPHERED_SIZE;     // = MAX_COMPRESSED_SIZE + AES_BLOCK_SIZE;
     int encryption; // encryption: 0: auto, 1: encrypted, 2: not encrypted
-    bool encrypted;                       
+    bool encrypted;
 
 public:
     explicit ifile_read_encrypted(CryptoContext * cctx, int encryption)
-    
+
     : cctx(cctx)
-    , fd(-1)
     , clear_data{}
     , clear_pos(0)
     , raw_size(0)
@@ -132,15 +136,7 @@ public:
     {
     }
 
-    ~ifile_read_encrypted()
-    {
-        if (-1 != this->fd) {
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-    int open(const char * filename)
+    int open(const char * filename) override
     {
         this->fd = ::open(filename, O_RDONLY);
         if (this->fd < 0) {
@@ -224,8 +220,8 @@ public:
         // 0x01 0x00 0x00 0x00
         // IV: 32 bytes
         // (random)
-        
-        
+
+
         Parse p(data+4);
         const int version = p.in_uint32_le();
         if (version > WABCRYPTOFILE_VERSION) {
@@ -264,7 +260,7 @@ public:
         return 0;
     }
 
-    int read(char * data, size_t len)
+    int read(char * data, size_t len) override
     {
         if (this->encrypted){
             if (this->state & CF_EOF) {
@@ -482,69 +478,129 @@ static inline void in_hex256(uint8_t * hash, int len, char * & cur, char * eol, 
     cur = pos + 1;
 }
 
-class MwrmReader
+
+class LineReader
 {
-    public:
-    MetaHeader header;
-    
-//    private:
-//    char buf[322]; // FIXME: test_app_verifier fails on long lines
-    char buf[32768]; // This is to avoid for the bug to be too visible
+public:
+    constexpr static std::size_t line_max = 1024 * 4 - 1;
+
+    char buf[line_max + 1]; // This is to avoid for the bug to be too visible
     char * eof;
     char * eol;
     char * cur;
     ifile_read_API & ibuf;
 
-
-
 public:
-    MwrmReader(ifile_read_API & reader_buf) noexcept
+    LineReader(ifile_read_API & reader_buf) noexcept
     : buf{}
     , eof(buf)
     , eol(buf)
     , cur(buf)
     , ibuf(reader_buf)
+    {}
+
+    // buffer must be able to contain line
+    // if no line at end of buffer apply some memmove
+    /// \return  true if ok, false if end of file
+    /// \exception Error : ERR_TRANSPORT_READ_FAILED
+    bool next_line()
     {
-        memset(this->buf, 0, sizeof(this->buf));
+        this->cur = this->eol;
+        if (this->cur == this->eof) // empty buffer
+        {
+            ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf)-1);
+            if (ret < 0) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            this->cur = this->buf;
+            this->eof = this->buf + ret;
+            this->eof[0] = 0;
+        }
+
+        char * pos = std::find(this->cur, this->eof, '\n');
+        if (pos == this->eof) {
+            // move remaining data to beginning of buffer
+            size_t len = this->eof - this->cur;
+            ::memmove(this->buf, this->cur, len);
+            this->cur = this->buf;
+            this->eof = this->cur + len;
+
+            do { // read and append to buffer
+                ssize_t ret = this->ibuf.read(this->eof, std::end(this->buf)-1-this->eof);
+                if (ret < 0) {
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+                if (ret == 0) {
+                    break;
+                }
+                pos = std::find(this->eof, this->eof + ret, '\n');
+                this->eof += ret;
+                this->eof[0] = 0;
+            } while (pos == this->eof);
+        }
+
+        this->eol = (pos == this->eof) ? pos : pos + 1;
+
+        // end of file
+        if (this->buf == this->eof) {
+            return false;
+        }
+
+        // line without \n is a error
+        if (pos == this->eof) {
+            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+        }
+
+        return true;
     }
 
-    int read_meta_file2(MetaLine2 & meta_line) 
-    {
-        try {
-            this->read_meta_file(meta_line);
-            return 0;
-        }
-        catch(...){
-            return 1;
-        };
-    }
+    array_view_char get_buf() const
+    { return {this->cur, this->eol}; }
+};
+
+
+struct MwrmReader
+{
+    LineReader line_reader;
+    MetaHeader header;
+
+public:
+    MwrmReader(ifile_read_API & ibuf) noexcept
+    : line_reader(ibuf)
+    {}
 
     void read_meta_headers()
     {
-        this->next_line(); // v2
-        this->header.version = (this->cur[0] == 'v')?2:1;
-        if (this->header.version == 2) {
-            this->next_line(); // 800 600
-            this->next_line(); // checksum or nochecksum
+        auto next_line = [this]{
+            if (!this->line_reader.next_line()) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+            }
+        };
+        next_line(); // v2
+        this->header.version = (this->line_reader.get_buf()[0] == 'v')?2:1;
+        if (header.version == 2) {
+            next_line(); // 800 600
+            next_line(); // checksum or nochecksum
         }
-        this->header.has_checksum = (header.version > 1) 
-                                 && (this->cur[0] == 'c');
+        this->header.has_checksum
+          = (this->header.version > 1)
+         && (this->line_reader.get_buf()[0] == 'c');
         // else v1
-        this->next_line(); // blank
-        this->next_line(); // blank
+        next_line(); // blank
+        next_line(); // blank
     }
 
-    void read_meta_file(MetaLine2 & meta_line) 
+    /// \return false if end of file
+    bool read_meta_file(MetaLine2 & meta_line)
     {
-        this->next_line();
-        
-        if (cur >= eof){
-            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+        if (!this->line_reader.next_line()) {
+            return false;
         }
-        
-        this->eof[0] = 0;
 
-        // Line format "fffff 
+        auto cur = this->line_reader.get_buf().begin();
+        auto eol = this->line_reader.get_buf().end();
+
+        // Line format "fffff
         // [st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime]
         // sssss eeeee hhhhh HHHHH"
         //            ^  ^  ^  ^
@@ -554,21 +610,23 @@ public:
         //        space3    |hash2
         //                  |
         //                space4
-        // filename(1 or >) + space(1) + [stat_info(ll|ull * 8) + space(1)*8] 
+        // filename(1 or >) + space(1) + [stat_info(ll|ull * 8) + space(1)*8]
         // + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
         //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
 
-        typedef std::reverse_iterator<char*> reverse_iterator;
-        reverse_iterator first(this->cur);
-        reverse_iterator space(this->eol);                
-        for(int i = 0; i < ((this->header.version==1)?2:10) + 2*this->header.has_checksum; i++){
-            space = std::find(space, first, ' ');                
-            space++;
+        using reverse_iterator = std::reverse_iterator<char*>;
+        reverse_iterator first(cur);
+        reverse_iterator space(eol);
+        for(int i = 0; i < ((header.version==1)?2:10) + 2*header.has_checksum; ++i){
+            space = std::find(space, first, ' ');
+            ++space;
         }
         int path_len = first-space;
-        in_copy_bytes(reinterpret_cast<uint8_t*>(meta_line.filename), 
-                            path_len, this->cur, this->eol, ERR_TRANSPORT_READ_FAILED);
-        this->cur++;
+        in_copy_bytes(
+            reinterpret_cast<uint8_t*>(meta_line.filename),
+            path_len, cur, eol, ERR_TRANSPORT_READ_FAILED
+        );
+        ++cur;
         meta_line.filename[path_len] = 0;
 
         if (this->header.version == 1){
@@ -594,8 +652,8 @@ public:
 
         meta_line.start_time = get_ll(cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
         meta_line.stop_time = get_ll(cur, eol, this->header.has_checksum?' ':'\n',
-                                           ERR_TRANSPORT_READ_FAILED);
-        if (this->header.has_checksum){
+                                            ERR_TRANSPORT_READ_FAILED);
+        if (header.has_checksum){
             // HASH1 + space
             in_hex256(meta_line.hash1, MD_HASH_LENGTH, cur, eol, ' ', ERR_TRANSPORT_READ_FAILED);
             // HASH1 + CR
@@ -607,66 +665,17 @@ public:
         }
 
         // TODO: check the whole line has been consumed (or it's an error)
-        this->cur = this->eol;
-    }
-
-    // buffer must be able to contain line
-    // if no line at end of buffer apply some memmove
-    void next_line()
-    {
-        this->cur = this->eol;
-        while (this->cur == this->eof) // empty buffer
-        {
-            ssize_t ret = this->ibuf.read(this->buf, sizeof(this->buf)-1);
-            if (ret < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            if (ret == 0) {
-                break;
-            }
-            this->cur = this->buf;
-            this->eof = this->buf + ret;
-            this->eof[0] = 0;
-        }
-        
-        char * pos = std::find(this->cur, this->eof, '\n');
-        while (pos == this->eof){ // read and append to buffer
-            // move remaining data to beginning of buffer
-            size_t len = this->eof - this->cur;
-            if (len >= sizeof(this->buf)-1){
-                // if the buffer can't hold at least one line, 
-                // there is some problem behind
-                // if a line were available we should have found \n
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            ::memmove(this->buf, this->cur, len);
-            this->cur = this->buf;
-            this->eof = this->cur + len;
-            this->eof[0] = 0;
-            ssize_t ret = this->ibuf.read(this->eof, sizeof(this->buf)-1-len);
-            if (ret < 0) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            if (ret == 0) {
-                break;
-            }
-            this->eof += ret;
-            this->eof[0] = 0;
-            pos = std::find(this->cur, this->eof, '\n');
-        }
-        this->eol = (pos == this->eof)?this->eof:pos+1; // set eol after \n (start of next line)
-        if (this->cur >= this->eof){
-            throw Error(ERR_TRANSPORT_READ_FAILED, 0);
-        }
+        return true;
     }
 };
 
-// Compute HmacSha256 
+
+// Compute HmacSha256
 // up to check_size orf end of file whicherver happens first
 // if check_size == 0, checks to eof
 // return 0 on success and puts signature in provided buffer
 // return -1 if some system error occurs, errno contains actual error
-static inline int file_start_hmac_sha256(const char * filename, 
+static inline int file_start_hmac_sha256(const char * filename,
                      uint8_t const * crypto_key,
                      size_t          key_len,
                      size_t          check_size,
@@ -830,7 +839,7 @@ struct HashLoad
 };
 
 
-static inline int check_file(const std::string & filename, const MetaLine2 & metadata, 
+static inline int check_file(const std::string & filename, const MetaLine2 & metadata,
                       bool quick, bool has_checksum, bool ignore_stat_info,
                       uint8_t * hmac_key, size_t hmac_key_len)
 {
@@ -848,7 +857,7 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
         }
 
         uint8_t hash[SHA256_DIGEST_LENGTH]={};
-        if (file_start_hmac_sha256(filename.c_str(), 
+        if (file_start_hmac_sha256(filename.c_str(),
                              hmac_key, hmac_key_len,
                              quick?QUICK_CHECK_LENGTH:0, hash) < 0){
             std::cerr << "Error reading file \"" << filename << "\"" << std::endl << std::endl;
@@ -893,7 +902,7 @@ static inline int check_encrypted_or_checksumed(
 
     // now force encryption for sub files
     bool infile_is_encrypted = ibuf.encrypted;
-    
+
     MwrmReader reader(ibuf);
     reader.read_meta_headers();
 
@@ -930,20 +939,19 @@ static inline int check_encrypted_or_checksumed(
     }
 
     MetaLine2 meta_line_wrm;
-    while (reader.read_meta_file2(meta_line_wrm) == 0) {
-
+    while (reader.read_meta_file(meta_line_wrm)) {
         size_t tmp_wrm_filename_len = 0;
         const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-        if (!check_file(full_part_filename, meta_line_wrm, 
+        if (!check_file(full_part_filename, meta_line_wrm,
                         quick_check, reader.header.has_checksum, ignore_stat_info,
                         cctx->get_hmac_key(), 32)){
             return 1;
         }
     }
-    
+
     std::cout << "No error detected during the data verification." << std::endl << std::endl;
     return 0;
 }
@@ -1037,7 +1045,7 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
     }
 
     OpenSSL_add_all_digests();
-    
+
     return check_encrypted_or_checksumed(
                 input_filename, mwrm_path, hash_path,
                 quick_check, ignore_stat_info, verbose, &cctx);

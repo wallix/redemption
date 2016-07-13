@@ -101,7 +101,7 @@ public:
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
     , capture_api(now, width / 2, height / 2)
     {
-        TODO("Remove that after change of capture interface")
+        // TODO Remove that after change of capture interface
         (void)full_video;
 
         bool const enable_kbd

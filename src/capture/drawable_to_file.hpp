@@ -32,15 +32,12 @@
 
 class DrawableToFile
 {
-// TODO
 protected:
     Transport & trans;
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
 
-// TODO
-protected:
     const Drawable & drawable;
 
 private:

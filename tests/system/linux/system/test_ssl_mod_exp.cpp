@@ -14,24 +14,13 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2016
+   Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
+   Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#pragma once
+#define BOOST_TEST_MODULE mod_exp
 
-#include "system/ssl_bignum.hpp"
-
-static inline size_t mod_exp(uint8_t * out, size_t out_len,
-               const uint8_t * inr, size_t in_len,
-               const uint8_t * modulus, size_t modulus_size,
-               const uint8_t * exponent, size_t exponent_size)
-{
-    Bignum mod(modulus, modulus_size);
-    Bignum exp(exponent, exponent_size);
-    Bignum x(inr, in_len);
-    Bignum y = x.mod_exp(exp, mod); 
-    return y.get_bin(out, out_len);
-}
-
+#include "system/ssl_mod_exp.hpp"
+#include "system/common/test_ssl_mod_exp.cpp"

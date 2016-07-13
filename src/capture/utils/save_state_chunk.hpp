@@ -82,7 +82,7 @@ private:
     static void io_sint8(InStream & stream, int8_t & value) { value = stream.in_sint8(); }
     static void io_sint8(OutStream & stream, int8_t value) { stream.out_sint8(value); }
 
-    // TODO("this is an error")
+    // TODO BUG this is an error
     static void io_uint8_unsafe(InStream & stream, uint16_t & value) { value = stream.in_uint8(); }
     static void io_uint8_unsafe(OutStream & stream, uint16_t value) { stream.out_uint8(value); }
 
@@ -175,7 +175,7 @@ private:
         io_uint16_le(stream, this->memblt.cache_id);
         io_rect(stream, this->memblt.rect);
         io_uint8(stream, this->memblt.rop);
-        TODO("bad length")
+        // TODO bad length
         io_uint8_unsafe(stream, this->memblt.srcx);
         io_uint8_unsafe(stream, this->memblt.srcy);
         io_uint16_le(stream, this->memblt.cache_idx);

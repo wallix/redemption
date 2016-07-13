@@ -797,8 +797,10 @@ private:
 public:
     // nor horizontal nor vertical, use Bresenham
     template<class Op>
-    void line(int x, int y, int endx, int endy, const color_t color, Op op)
+    void diagonal_line(int x, int y, int endx, int endy, color_t color, Op op)
     {
+        assert(x <= endx);
+
         // Prep
         const int dx = endx - x;
         const int dy = (endy >= y) ? (endy - y) : (y - endy);
@@ -828,6 +830,8 @@ public:
     template<class Op>
     void vertical_line(uint16_t x, uint16_t y, uint16_t endy, color_t color, Op op)
     {
+        assert(y <= endy);
+
         P p = this->first_pixel(x, y);
         P pe = p + (endy - y + 1) * this->rowsize();
         for (; p != pe; p += this->rowsize()) {
@@ -836,9 +840,11 @@ public:
     }
 
     template<class Op>
-    void horizontal_line(uint16_t startx, uint16_t y, uint16_t endx, color_t color, Op)
+    void horizontal_line(uint16_t x, uint16_t y, uint16_t endx, color_t color, Op)
     {
-        this->apply_for_line(this->first_pixel(startx, y), endx - startx + 1, AssignOp<Op>{color});
+        assert(x <= endx);
+
+        this->apply_for_line(this->first_pixel(x, y), endx - x + 1, AssignOp<Op>{color});
     }
 
     template <typename Op>
@@ -1015,11 +1021,11 @@ struct DrawablePointer {
 };  // struct DrawablePointer
 
 class Drawable
-: DrawableImpl<DepthColor::color24>
 {
     using DrawableImplPrivate = DrawableImpl<DepthColor::color24>;
-    DrawableImplPrivate & impl() noexcept { return *this; }
-    const DrawableImplPrivate & impl() const noexcept { return *this; }
+    DrawableImplPrivate impl_;
+    DrawableImplPrivate & impl() noexcept { return this->impl_; }
+    const DrawableImplPrivate & impl() const noexcept { return this->impl_; }
 
     enum {
         char_width  = 7,
@@ -1036,8 +1042,8 @@ class Drawable
         size_str_timestamp = ts_max_length + 1
     };
 
-    uint8_t timestamp_save[ts_width * ts_height * Bpp];
-    uint8_t timestamp_data[ts_width * ts_height * Bpp];
+    uint8_t timestamp_save[ts_width * ts_height * DrawableImplPrivate::Bpp];
+    uint8_t timestamp_data[ts_width * ts_height * DrawableImplPrivate::Bpp];
     char previous_timestamp[size_str_timestamp];
     uint8_t previous_timestamp_length;
 
@@ -1067,12 +1073,11 @@ public:
     DrawablePointer default_pointer;
 
     using Color = DrawableImplPrivate::color_t;
-
-    using DrawableImplPrivate::Bpp;
+    static const size_t Bpp = DrawableImplPrivate::Bpp;
 
 
     Drawable(int width, int height)
-    : DrawableImplPrivate(width, height)
+    : impl_(width, height)
     , previous_timestamp_length(0)
     , tracked_area(0, 0, 0, 0)
     , tracked_area_changed(false)
@@ -2252,24 +2257,76 @@ public:
         }
     }
 
+    void draw_line(
+        int mix_mode,
+        int16_t xStart, int16_t yStart,
+        int16_t xEnd, int16_t yEnd,
+        uint8_t rop, Color color, const Rect & clip
+    ) {
+        LineEquation equa(xStart, yStart, xEnd, yEnd);
+
+        if (not equa.resolve(clip)) {
+            return;
+        }
+
+        int startx = equa.segin.a.x;
+        int starty = equa.segin.a.y;
+        int endx = equa.segin.b.x;
+        int endy = equa.segin.b.y;
+
+        if (startx == endx){
+            this->vertical_line(
+                mix_mode,
+                startx, starty,
+                endy,
+                rop, color
+            );
+        }
+        else if (starty == endy){
+            this->horizontal_line(
+                mix_mode,
+                startx, starty,
+                endx,
+                rop, color
+            );
+        }
+        else {
+            this->diagonal_line(
+                mix_mode,
+                startx, starty,
+                endx, endy,
+                rop, color
+            );
+        }
+    }
+
     // nor horizontal nor vertical, use Bresenham
-    void line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, Color color)
+    void diagonal_line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, Color color)
     {
+        if (endx <= x) {
+            std::swap(x, endx);
+            std::swap(y, endy);
+        }
+
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
         }
 
         if (rop == 0x06) {
-            this->impl().line(x, y, endx, endy, color, Ops::InvertTarget());
+            this->impl().diagonal_line(x, y, endx, endy, color, Ops::InvertTarget());
         }
         else {
-            this->impl().line(x, y, endx, endy, color, Ops::CopySrc());
+            this->impl().diagonal_line(x, y, endx, endy, color, Ops::CopySrc());
         }
     }
 
     void vertical_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endy, uint8_t rop, Color color)
     {
+        if (endy < y) {
+            std::swap(y, endy);
+        }
+
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(x+1, endy);
         if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
@@ -2285,6 +2342,10 @@ public:
 
     void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color)
     {
+        if (endx < x) {
+            std::swap(x, endx);
+        }
+
         const Rect line_rect = Rect(x, y, 1, 1).enlarge_to(endx, y+1);
         if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
@@ -2711,4 +2772,3 @@ private:
         this->default_pointer.initialize(0, 0, pointer_data, pointer_mask);
     }
 };
-

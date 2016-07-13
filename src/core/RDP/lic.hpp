@@ -251,7 +251,7 @@ namespace LIC
                 LOG(LOG_ERR, "Not enough data to read licence data, need %" PRIu16 ", got %zu", this->wMsgSize, stream.get_capacity());
                 throw Error(ERR_LIC);
             }
-            TODO("Factory does not read anything, write it using a cleaner method");
+            // TODO Factory does not read anything, write it using a cleaner method
 //            stream.p -= 4;
             stream.rewind();
         }
@@ -743,10 +743,10 @@ namespace LIC
 
             stream.in_copy_bytes(this->server_random, SEC_RANDOM_SIZE);
 
-            TODO("Add missing productInfo field");
+            // TODO Add missing productInfo field
             stream.in_skip_bytes(stream.in_remain());
 
-            TODO("Never true");
+            // TODO Never true
             if (stream.in_remain()){
                 LOG(LOG_ERR, "License Request_Recv: unparsed data %zu", stream.in_remain());
                 throw Error(ERR_LIC);
@@ -1248,7 +1248,7 @@ namespace LIC
 
             stream.in_skip_bytes(lenLicensingBlob); /* blobData */
 
-            TODO("Add missing fields");
+            // TODO Add missing fields
             //stream.end = stream.p;
         }
     };
@@ -1891,7 +1891,7 @@ namespace LIC
 //            stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
 //            stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
 
-            TODO("Add missing fields");
+            // TODO Add missing fields
             //stream.end = stream.p;
         }
     };
@@ -3091,7 +3091,7 @@ namespace LIC
                 LOG(LOG_ERR, "Licence ErrorAlert_Recv : unparsed data %zu", stream.in_remain());
             }
 
-            REDOC("wBlobType in Licence ErrorAlert_Recv is not 4 on windows 2000 or Windows XP... (content looks like garbage)")
+            // wBlobType in Licence ErrorAlert_Recv is not 4 on windows 2000 or Windows XP... (content looks like garbage)
             if ((this->validClientMessage.dwStateTransition != 2)
 //            || (this->validClientMessage.wBlobType != 4)
             || (this->validClientMessage.wBlobLen != 0)

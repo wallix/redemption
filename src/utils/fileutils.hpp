@@ -270,7 +270,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
         }
 
-        TODO("size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?")
+        // TODO size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?
         const size_t len = offsetof(struct dirent, d_name) + file_len;
         struct E {
             dirent * entryp;

@@ -26,16 +26,7 @@
 
 #include <string.h>
 
-#define REDOC(x)
-
 // These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
-
-#ifndef VERBOSE
-#define TODO(x)
-#else
-#define DO_PRAGMA(x) _Pragma (#x)
-#define TODO(x) DO_PRAGMA(message ("TODO - " x))
-#endif
 
 // -Wnull-dereference and clang++
 namespace { namespace compiler_aux_ {

@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
 //    png_recorder.flush();
 
-//    TODO("check RGB/BGR: fixed test replacing 47483 with 47553")
+//    // TODO "check RGB/BGR: fixed test replacing 47483 with 47553"
 //    BOOST_CHECK_EQUAL((unsigned)47553, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
 //    sq_outfilename_unlink(&(out_png_trans.seq), 0);
 

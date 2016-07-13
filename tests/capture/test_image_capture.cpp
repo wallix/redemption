@@ -403,12 +403,12 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     {
         const char * filename = FIXTURES_PATH "/win2008capture10.png";
         FILE * fd = fopen(filename, "r");
-        TODO("Add ability to write image to file or read image from file in RDPDrawable")
+        // TODO "Add ability to write image to file or read image from file in RDPDrawable"
         read_png24(fd, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize());
         fclose(fd);
     }
     d.flush();
-    TODO("check this: BGR/RGB problem i changed 8176 to 8162 to fix test")
+    // TODO "check this: BGR/RGB problem i changed 8176 to 8162 to fix test"
     const char * filename = trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(8162, ::filesize(filename));
     ::unlink(filename);

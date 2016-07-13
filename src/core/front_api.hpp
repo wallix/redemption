@@ -72,7 +72,7 @@ protected:
 public:
     virtual wait_obj& get_event() { return this->event; }
 
-    // TODO("RZ : Move these methods in OrderCaps class, give more generic access to front order caps?")
+    // TODO RZ : Move these methods in OrderCaps class, give more generic access to front order caps?
     virtual uint8_t get_order_cap(int idx) const { return 0xFF; }
     virtual uint16_t get_order_caps_ex_flags() const { return 0xFFFF; }
 

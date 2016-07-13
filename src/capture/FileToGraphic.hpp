@@ -274,12 +274,13 @@ public:
         this->external_event_consumers.push_back(external_event_ptr);
     }
 
+    /* order count set this->stream.p to the beginning of the next order.
+     * Most of the times it means not changing it, except when it must read next chunk
+     * when remaining order count is 0.
+     * It update chunk headers (merely remaining orders count) and
+     * reads the next chunk if necessary.
+     */
     bool next_order()
-    REDOC("order count set this->stream.p to the beginning of the next order."
-          "Most of the times it means not changing it, except when it must read next chunk"
-          "when remaining order count is 0."
-          "It update chunk headers (merely remaining orders count) and"
-          " reads the next chunk if necessary.")
     {
         if (this->chunk_type != LAST_IMAGE_CHUNK
          && this->chunk_type != PARTIAL_IMAGE_CHUNK) {
@@ -617,7 +618,7 @@ public:
                     obj->external_time(this->record_now);
                 }
 
-                REDOC("If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)")
+                // If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)
                 if (this->stream.in_remain() > 0){
                     if (this->stream.in_remain() < 4){
                         LOG(LOG_WARNING, "Input data truncated");
@@ -699,7 +700,7 @@ public:
             }
             break;
             case META_FILE:
-            TODO("Cache meta_data (sizes, number of entries) should be put in META chunk");
+            // TODO Cache meta_data (sizes, number of entries) should be put in META chunk
             {
                 this->info_version                   = this->stream.in_uint16_le();
                 this->info_width                     = this->stream.in_uint16_le();
@@ -796,7 +797,7 @@ public:
 
                     size_t height = png_get_image_height(ppng, pinfo);
                     const size_t width = screen_rect.cx;
-                    TODO("check png row_size is identical to drawable rowsize");
+                    // TODO check png row_size is identical to drawable rowsize
 
                     uint32_t tmp[8192];
                     assert(sizeof(tmp) / sizeof(tmp[0]) >= width);
@@ -832,7 +833,7 @@ public:
                     png_destroy_read_struct(&ppng, &pinfo, nullptr);
                 }
                 else {
-                    REDOC("If no drawable is available ignore images chunks");
+                    // If no drawable is available ignore images chunks
                     this->stream.rewind();
                     std::size_t sz = this->chunk_size - HEADER_SIZE;
                     auto end = this->stream_buf;

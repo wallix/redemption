@@ -30,7 +30,7 @@
 #include "mod/internal/interactive_target_mod.hpp"
 #include "../../front/fake_front.hpp"
 
-TODO("Need more tests, with or without device/login/password asking, ")
+// TODO "Need more tests, with or without device/login/password asking, "
 
 BOOST_AUTO_TEST_CASE(TestDialogMod)
 {

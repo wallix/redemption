@@ -188,7 +188,7 @@ public:
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(cmd.color));
     }
 
-    TODO("This will draw a standard ellipse without brush style")
+    // TODO This will draw a standard ellipse without brush style
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
     }
@@ -257,7 +257,7 @@ public:
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+        // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
         if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
@@ -290,7 +290,7 @@ public:
 
     void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
-        TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+        // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
 
         if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
             enum { BackColor, ForeColor };
@@ -381,69 +381,13 @@ public:
      *  Anyway, we base the line drawing on bresenham's algorithm
      */
     void draw(const RDPLineTo & lineto, const Rect & clip) override {
-        this->draw_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
-                        this->u32rgb_to_color(lineto.pen.color), clip);
+        this->drawable.draw_line(
+            lineto.back_mode,
+            lineto.startx, lineto.starty,
+            lineto.endx, lineto.endy,
+            lineto.rop2, this->u32rgb_to_color(lineto.pen.color), clip
+        );
     }
-
-private:
-    void draw_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
-                   int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
-                   Color color, const Rect & clip) {
-        LineEquation equa(nXStart, nYStart, nXEnd, nYEnd);
-        int startx = 0;
-        int starty = 0;
-        int endx = 0;
-        int endy = 0;
-        if (equa.resolve(clip)) {
-            startx = equa.segin.a.x;
-            starty = equa.segin.a.y;
-            endx = equa.segin.b.x;
-            endy = equa.segin.b.y;
-        }
-        else {
-            return;
-        }
-
-        if (startx == endx){
-            this->drawable.vertical_line(BackMode,
-                                         startx,
-                                         std::min(starty, endy),
-                                         std::max(starty, endy),
-                                         bRop2,
-                                         color);
-        }
-        else if (starty == endy){
-            this->drawable.horizontal_line(BackMode,
-                                           std::min(startx, endx),
-                                           starty,
-                                           std::max(startx, endx),
-                                           bRop2,
-                                           color);
-
-        }
-        else if (startx <= endx){
-            this->drawable.line(BackMode,
-                                startx,
-                                starty,
-                                endx,
-                                endy,
-                                bRop2,
-                                color);
-        }
-        else {
-            this->drawable.line(BackMode,
-                                endx,
-                                endy,
-                                startx,
-                                starty,
-                                bRop2,
-                                color);
-        }
-    }
-
-
-
-
 
 // [MS-RDPEGDI] - 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 // =============================================================
@@ -860,15 +804,14 @@ public:
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
             endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
 
             startx = endx;
             starty = endy;
         }
     }
 
-    TODO("this functions only draw polygon borders but do not fill "
-         "them with solid color.")
+    // TODO this functions only draw polygon borders but do not fill them with solid color.
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
@@ -882,7 +825,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
 
             startx = endx;
             starty = endy;
@@ -890,11 +833,10 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+        this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
     }
 
-    TODO("this functions only draw polygon borders but do not fill "
-         "them with brush color.")
+    // TODO this functions only draw polygon borders but do not fill them with brush color.
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
@@ -908,7 +850,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
 
             startx = endx;
             starty = endy;
@@ -916,7 +858,7 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+        this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {

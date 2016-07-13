@@ -19,13 +19,13 @@
 
 #include "transport/socket_transport.hpp"
 
-TODO("-Wold-style-cast is ignored")
+// TODO -Wold-style-cast is ignored
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {
-    TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL");
+    // TODO test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL
 
     SocketTransport sockettransport("TestTLSServer", sock, "", 0, 0xFFFFFFF);
 

@@ -24,7 +24,7 @@
 #include "gdi/dump_png24.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-TODO("temporary")
+// TODO temporary
 struct DumpPng24FromRDPDrawableAdapter : gdi::DumpPng24Api  {
     RDPDrawable & drawable;
 

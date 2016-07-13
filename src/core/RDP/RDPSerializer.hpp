@@ -626,7 +626,7 @@ public:
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
         size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), this->max_bitmap_size + 300u);
-        TODO("QuickFix, should set a max packet size according to RDP compression version of client, proxy and server");
+        // TODO QuickFix, should set a max packet size according to RDP compression version of client, proxy and server
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO

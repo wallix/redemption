@@ -86,8 +86,8 @@ class Session {
 
     class Client {
         SocketTransport auth_trans;
-        TODO("Looks like acl and mod can be unified into a common class, where events can happen")
-        TODO("move auth_event to acl")
+        // TODO Looks like acl and mod can be unified into a common class, where events can happen
+        // TODO move auth_event to acl
         wait_obj        auth_event;
 
     public:
@@ -312,6 +312,36 @@ public:
                                     mm.mod->get_event().reset();
                                 }
                                 else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    mm.mod->get_event().reset();
+                                }
+                                else if (e.id == ERR_RDP_SERVER_REDIR) {
+                                    // SET new target in ini
+                                    const char * host = char_ptr_cast(
+                                        this->ini.get<cfg::mod_rdp::redir_info>().host);
+                                    const char * password = char_ptr_cast(
+                                        this->ini.get<cfg::mod_rdp::redir_info>().password);
+                                    const char * username = char_ptr_cast(
+                                        this->ini.get<cfg::mod_rdp::redir_info>().username);
+                                    const char * change_user = "";
+                                    if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
+                                        (username[0] != 0)) {
+                                        LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                                        this->ini.set_acl<cfg::globals::target_user>(username);
+                                        change_user = username;
+                                    }
+                                    if (password[0] != 0) {
+                                        LOG(LOG_INFO, "SrvRedir: Change target password");
+                                        this->ini.set_acl<cfg::context::target_password>(password);
+                                    }
+                                    LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+                                    this->ini.set_acl<cfg::context::target_host>(host);
+                                    char message[768] = {};
+                                    sprintf(message, "%s@%s", change_user, host);
+                                    if (this->client) {
+                                        this->client->acl.report("SERVER_REDIRECTION", message);
+                                    }
+
                                     signal = BACK_EVENT_RETRY_CURRENT;
                                     mm.mod->get_event().reset();
                                 }

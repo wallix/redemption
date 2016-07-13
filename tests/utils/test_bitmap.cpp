@@ -4491,7 +4491,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     Bitmap bmp16(16, source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false);
     BOOST_CHECK_EQUAL(24, bmp16.bmp_size());
 
-    TODO("Check that: cx is now forced to be a multiple of 4 when creating bitmap, previous behaviour was only forcing line size to be aligned as a multiple of 4 (RDP constraint). See it has not effect on provided data and not other unwanted effect");
+    // TODO Check that: cx is now forced to be a multiple of 4 when creating bitmap, previous behaviour was only forcing line size to be aligned as a multiple of 4 (RDP constraint). See it has not effect on provided data and not other unwanted effect
     BOOST_CHECK_EQUAL(8, bmp16.line_size());
     BOOST_CHECK_EQUAL(4, bmp16.cx());
     BOOST_CHECK_EQUAL(cy, bmp16.cy());
@@ -4515,7 +4515,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(0xFF, outbuf[4]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[5]);
 
-    TODO("We should force to black uninitialized parts of bitmap. For now it is random");
+    // TODO We should force to black uninitialized parts of bitmap. For now it is random
     BOOST_CHECK_EQUAL(outbuf[6], outbuf[6]);
     BOOST_CHECK_EQUAL(outbuf[7], outbuf[7]);
     BOOST_CHECK_EQUAL(outbuf[8], outbuf[8]);
@@ -4534,7 +4534,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(0xFF, outbuf[16]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[17]);
 
-    TODO("We should force to black uninitialized parts of bitmap. For now it is random");
+    // TODO We should force to black uninitialized parts of bitmap. For now it is random
     BOOST_CHECK_EQUAL(outbuf[18], outbuf[18]);
     BOOST_CHECK_EQUAL(outbuf[19], outbuf[19]);
     BOOST_CHECK_EQUAL(outbuf[20], outbuf[20]);
@@ -4553,7 +4553,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(0xFF, outbuf[28]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[29]);
 
-    TODO("We should force to black uninitialized parts of bitmap. For now it is random");
+    // TODO We should force to black uninitialized parts of bitmap. For now it is random
     BOOST_CHECK_EQUAL(outbuf[30], outbuf[30]);
     BOOST_CHECK_EQUAL(outbuf[31], outbuf[31]);
     BOOST_CHECK_EQUAL(outbuf[32], outbuf[32]);

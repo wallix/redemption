@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
 
     {
         StaticOutStream<1000> out_stream;
-        TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
+        // TODO " actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
 
         const uint8_t empty[1] = {0};
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         BOOST_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), newcommon.order);
         BOOST_CHECK_EQUAL(Rect(5, 0, 800, 600), newcommon.clip);
 
-        TODO(" DELTA is disabled because it does not works with rdesktop")
+        // TODO " DELTA is disabled because it does not works with rdesktop"
         uint8_t datas[] = {
             CHANGE | STANDARD | BOUNDS,
             GLYPHINDEX,
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                 == cmd.brush)){
             BOOST_CHECK_EQUAL(true, false);
         }
-     TODO(" actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
+     // TODO " actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
         check<RDPGlyphIndex>(common_cmd, cmd,
             RDPOrderCommon(GLYPHINDEX, Rect(5, 0, 800, 600)),
             RDPGlyphIndex(1, 0x20, 1, 4,
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
 
     {
         StaticOutStream<1000> out_stream;
-        TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
+        // TODO " actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
 
         RDPOrderCommon state_common(RDP::PATBLT, Rect(0, 0, 1024, 768));
         RDPGlyphIndex  statecmd(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
         BOOST_CHECK_EQUAL(static_cast<uint8_t>(GLYPHINDEX), newcommon.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), newcommon.clip);
 
-        TODO(" DELTA is disabled because it does not works with rdesktop")
+        // TODO " DELTA is disabled because it does not works with rdesktop"
         uint8_t datas[] = {
               CHANGE | STANDARD
             , GLYPHINDEX
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex2)
 
         BOOST_CHECK(RDPBrush(0, 0, 0x0, 0x0, nullbrush_extra) == cmd.brush);
 
-        TODO(" actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
+        // TODO " actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
         check<RDPGlyphIndex>( common_cmd, cmd
                             , RDPOrderCommon(GLYPHINDEX, Rect(0, 0, 1024, 768))
                             , RDPGlyphIndex( 7, 3, 0, 1

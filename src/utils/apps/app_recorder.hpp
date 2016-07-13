@@ -49,8 +49,8 @@ unsigned get_file_count( InWrmTrans & in_wrm_trans, uint32_t & begin_cap, uint32
                        , timeval & end_record) {
     in_wrm_trans.next();
     begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
-    TODO("a negative time should be a time relative to end of movie")
-    REDOC("less than 1 year means we are given a time relatve to beginning of movie")
+    // TODO a negative time should be a time relative to end of movie
+    // less than 1 year means we are given a time relatve to beginning of movie
     if (begin_cap && (begin_cap < 31536000)) {  // less than 1 year, it is relative not absolute timestamp
         // begin_capture.tv_usec is 0
         begin_cap += in_wrm_trans.begin_chunk_time();
@@ -168,7 +168,7 @@ static void show_metadata(FileToGraphic const & player) {
     std::cout.flush();
 }
 
-TODO("Signals related code should not be here, all globals if any should be in main")
+// TODO Signals related code should not be here, all globals if any should be in main
 static bool program_requested_to_shutdown = false;
 
 inline void shutdown(int sig)
@@ -520,7 +520,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     const int fd_test = open(input_filename, O_RDONLY);
     if (fd_test != -1) {
         uint32_t magic_test;
-        TODO("Not portable code endianess, use byte array instead")
+        // TODO Not portable code endianess, use byte array instead
         ssize_t res_test = read(fd_test, &magic_test, sizeof(magic_test));
         if ((res_test == sizeof(magic_test)) &&
             (magic_test == WABCRYPTOFILE_MAGIC)) {
@@ -872,10 +872,10 @@ int app_recorder( int argc, char const * const * argv, const char * copyright_no
         std::cout << "Output file is \"" << output_filename << "\".\n";
     }
 
-    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
+    // TODO before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases
 
-    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
-    TODO("if start and stop time are outside wrm, users should also be warned")
+    // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
+    // TODO if start and stop time are outside wrm, users should also be warned
 
     timeval  begin_record = { 0, 0 };
     timeval  end_record   = { 0, 0 };

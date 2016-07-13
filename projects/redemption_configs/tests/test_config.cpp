@@ -1511,7 +1511,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
 
 
-    TODO("video related values should go to [video] section")
+    // TODO video related values should go to [video] section
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::movie_path>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());

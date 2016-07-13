@@ -33,9 +33,7 @@
 #include "check_sig.hpp"
 #include "dump_png.hpp"
 //#include "utils/png.hpp"
-//#include "core/RDP/RDPDrawable.hpp"
 #include "utils/drawable.hpp"
-#include "utils/colors.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestLineTo)
@@ -45,24 +43,24 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0xff, 0xff, 0xff));
-    gd.opaquerect(screen_rect.shrink(5), Drawable::Color(0, 0, 0));
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(WHITE));
+    gd.opaquerect(screen_rect.shrink(5), gd.u32bgr_to_color(BLACK));
 
     uint16_t y = screen_rect.cy - 1;
     for (uint16_t x = 0 ; x < screen_rect.cx ; x += 40){
-        gd.line(0, 0, 0, x, y, 0xCC, Drawable::Color(0xff, 0, 0));
-        gd.line(0, x + 10, y, 0, 0, 0xCC, Drawable::Color(0xff, 0, 0));
-        gd.line(0, screen_rect.cx - 1, 0, screen_rect.cx - 1 - x, y, 0xCC, Drawable::Color(0xff, 0, 0));
-        gd.line(0, screen_rect.cx - 1 - x + 10, y, screen_rect.cx - 1, 0, 0xCC, Drawable::Color(0xff, 0, 0));
+        gd.draw_line(0, 0, 0, x, y, 0xCC, gd.u32bgr_to_color(GREEN), screen_rect);
+        gd.draw_line(0, x + 10, y , 0, 0, 0xCC, gd.u32bgr_to_color(RED), screen_rect);
+        gd.draw_line(0, screen_rect.cx - 1, 0, screen_rect.cx - 1 - x, y, 0xCC, gd.u32bgr_to_color(WHITE), screen_rect);
+        gd.draw_line(0, screen_rect.cx - 1 - x + 10, y, screen_rect.cx - 1, 0, 0xCC, gd.u32bgr_to_color(BLUE), screen_rect);
     }
-    gd.line(0, 0, 0, 640, 480, 0xCC, Drawable::Color(0xff, 0, 0));
+    gd.draw_line(0, 0, 0, 640, 480, 0xCC, gd.u32bgr_to_color(GREEN), screen_rect);
 
-    gd.line(0, 0, 0, 1024, 0, 0xCC, Drawable::Color(0xff, 0, 0));
-    gd.line(0, 0, 0, 0, 768, 0xCC, Drawable::Color(0xff, 0, 0));
-    gd.line(0, 639, 0, 639, 768, 0xCC, Drawable::Color(0xff, 0, 0));
-    gd.line(0, 0, 479, 1024, 479, 0xCC, Drawable::Color(0xff, 0, 0));
+    gd.draw_line(0, 0, 0, 1024, 0, 0xCC, gd.u32bgr_to_color(PINK), screen_rect);
+    gd.draw_line(0, 0, 0, 0, 768, 0xCC, gd.u32bgr_to_color(PINK), screen_rect);
+    gd.draw_line(0, 639, 0, 639, 768, 0xCC, gd.u32bgr_to_color(PINK), screen_rect);
+    gd.draw_line(0, 0, 479, 1024, 479, 0xCC, gd.u32bgr_to_color(PINK), screen_rect);
 
-    gd.line(10, 0, 10, 1024, 479, 0xCC, Drawable::Color(0xff, 0, 0));
+    gd.draw_line(10, 0, 10, 1024, 479, 0xCC, gd.u32bgr_to_color(PINK), screen_rect.shrink(5));
 
     char message[1024];
     if (!check_sig(gd, message,
@@ -76,134 +74,6 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     //save_to_png("/tmp/test_line_000.png", gd.impl());
     //dump_png("/tmp/test_line_005_", gd.impl());
 }
-/*
-BOOST_AUTO_TEST_CASE(TestPolyline)
-{
-    // Create a simple capture image and dump it to file
-    uint16_t width = 640;
-    uint16_t height = 480;
-    Rect screen_rect(0, 0, width, height);
-    Drawable gd(width, height);
-    gd.opaque_rect(screen_rect, Drawable::Color(0xff, 0xff, 0xff));
-    gd.opaque_rect(screen_rect.shrink(5), Drawable::Color(0, 0, 0));
-
-    constexpr std::size_t array_size = 1024;
-    uint8_t array[array_size];
-    OutStream deltaPoints(array, array_size);
-
-    deltaPoints.out_sint16_le(0);
-    deltaPoints.out_sint16_le(20);
-
-    deltaPoints.out_sint16_le(160);
-    deltaPoints.out_sint16_le(0);
-
-    deltaPoints.out_sint16_le(0);
-    deltaPoints.out_sint16_le(-30);
-
-    deltaPoints.out_sint16_le(50);
-    deltaPoints.out_sint16_le(50);
-
-    deltaPoints.out_sint16_le(-50);
-    deltaPoints.out_sint16_le(50);
-
-    deltaPoints.out_sint16_le(0);
-    deltaPoints.out_sint16_le(-30);
-
-    deltaPoints.out_sint16_le(-160);
-    deltaPoints.out_sint16_le(0);
-
-    InStream dp(array, deltaPoints.get_offset());
-
-    gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, dp), screen_rect);
-
-    char message[1024];
-    if (!check_sig(gd, message,
-    "\x32\x60\x8b\x02\xb9\xa2\x83\x27\x0f\xa9\x67\xef\x3c\x2e\xa0\x25\x69\x16\x02\x2b"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_polyline_000_", gd.impl());
-}
-
-BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
-{
-    // Create a simple capture image and dump it to file
-    uint16_t width = 640;
-    uint16_t height = 480;
-    Rect screen_rect(0, 0, width, height);
-    Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0xff, 0xff, 0xff));
-    gd.opaquerect(screen_rect.shrink(5), Drawable::Color(0, 0xff, 0));
-
-    StaticOutStream<1024> deltaRectangles;
-
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(10);
-    deltaRectangles.out_sint16_le(10);
-
-    for (int i = 0; i < 19; i++) {
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-    }
-
-    InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
-
-    gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles_in), screen_rect);
-
-    char message[1024];
-    if (!check_sig(gd, message,
-    "\x3d\x83\xd7\x7e\x0b\x3e\xf4\xd1\x53\x50\x33\x94\x1e\x11\x46\x9c\x60\x76\xd7\x0a"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_multidstblt_000_", gd.impl());
-}*/
-/*
-BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
-{
-    // Create a simple capture image and dump it to file
-    uint16_t width = 640;
-    uint16_t height = 480;
-    Rect screen_rect(0, 0, width, height);
-    Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0xff, 0xff, 0xff)), screen_rect);
-    gd.opaquerect(screen_rect.shrink(5), Drawable::Color(0, 0xff, 0)), screen_rect);
-
-    StaticOutStream<1024> deltaRectangles;
-
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(10);
-    deltaRectangles.out_sint16_le(10);
-
-    for (int i = 0; i < 19; i++) {
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-    }
-
-    InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
-
-    gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x000000, 20, deltaRectangles_in), screen_rect);
-
-    char message[1024];
-    if (!check_sig(gd, message,
-    "\x1d\x52\x8e\x03\x43\xc8\x99\x8d\xeb\x51\xa6\x23\x91\x24\xab\x8c\xa4\xcc\xf0\xc8"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_multiopaquerect_000_", gd.impl());
-}*/
 
 BOOST_AUTO_TEST_CASE(TestEllipse)
 {
@@ -211,13 +81,13 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     uint16_t height = 1024;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0xff, 0xff, 0xff));
-    gd.opaquerect(screen_rect.shrink(5), Drawable::Color(0x90, 0xff, 0xe0));
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(WHITE));
+    gd.opaquerect(screen_rect.shrink(5), gd.u32bgr_to_color(LIGHT_GREEN));
 
 //     uint64_t usec = ustime();
 //     uint64_t cycles = rdtsc();
 
-    gd.ellipse(Ellipse(2, 200, 540, 32), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(2, 200, 540, 32)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
 //     uint64_t elapusec = ustime() - usec;
 //     uint64_t elapcyc = rdtsc() - cycles;
@@ -226,7 +96,7 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 //     usec = ustime();
 //     cycles = rdtsc();
 
-    gd.ellipse(Ellipse(100, 2, 40, 400), 0x06, 0x01, Drawable::Color(0, 0, 0xff));
+    gd.ellipse(Ellipse(Rect(100, 2, 40, 400)), 0x06, 0x01, gd.u32bgr_to_color(RED));
 
 //     elapusec = ustime() - usec;
 //     elapcyc = rdtsc() - cycles;
@@ -235,91 +105,92 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 //     usec = ustime();
 //     cycles = rdtsc();
 
-    gd.ellipse(Ellipse(2, 300, 540, 32), 0x06, 0x00, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(200, 2, 40, 400), 0x06, 0x00, Drawable::Color(0, 0, 0xff));
+    gd.ellipse(Ellipse(Rect(2, 300, 540, 32)), 0x06, 0x00, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(200, 2, 40, 400)), 0x06, 0x00, gd.u32bgr_to_color(RED));
 
-    gd.ellipse(Ellipse(2, 600, 540, 32), 0x0D, 0x00, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(200, 500, 40, 401), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
+    gd.ellipse(Ellipse(Rect(2, 600, 540, 32)), 0x0D, 0x00, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(200, 500, 40, 401)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
 
-    gd.ellipse(Ellipse(2, 610, 540, 32), 0x0D, 0x01, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(300, 500, 40, 401), 0x0D, 0x01, Drawable::Color(0, 0, 0xff));
+    gd.ellipse(Ellipse(Rect(2, 610, 540, 32)), 0x0D, 0x01, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(300, 500, 40, 401)), 0x0D, 0x01, gd.u32bgr_to_color(RED));
 
 
-    gd.ellipse(Ellipse(700, 12, 6, 6), 0x0D, 0x00, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(715, 12, 6, 6), 0x0D, 0x01, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(730, 12, 6, 6), 0x06, 0x00, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(745, 12, 6, 6), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
 
-    gd.ellipse(Ellipse(700, 28, 5, 5), 0x0D, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(715, 28, 5, 5), 0x0D, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(730, 28, 5, 5), 0x06, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(745, 28, 5, 5), 0x06, 0x01, Drawable::Color(0, 0xff, 0));
+    gd.ellipse(Ellipse(Rect(700, 12, 6, 6)), 0x0D, 0x00, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(715, 12, 6, 6)), 0x0D, 0x01, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(730, 12, 6, 6)), 0x06, 0x00, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(745, 12, 6, 6)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
-    gd.ellipse(Ellipse(800, 12, 8, 8), 0x0D, 0x00, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(815, 12, 8, 8), 0x0D, 0x01, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(830, 12, 8, 8), 0x06, 0x00, Drawable::Color(0xff, 0, 0));
-    gd.ellipse(Ellipse(845, 12, 8, 8), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(700, 28, 5, 5)), 0x0D, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(715, 28, 5, 5)), 0x0D, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(730, 28, 5, 5)), 0x06, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(745, 28, 5, 5)), 0x06, 0x01, gd.u32bgr_to_color(GREEN));
 
-    gd.ellipse(Ellipse(800, 38, 15, 15), 0x0D, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(815, 38, 15, 15), 0x0D, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(830, 38, 15, 15), 0x06, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(845, 38, 15, 15), 0x06, 0x01, Drawable::Color(0, 0xff, 0));
+    gd.ellipse(Ellipse(Rect(800, 12, 8, 8)), 0x0D, 0x00, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(815, 12, 8, 8)), 0x0D, 0x01, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(830, 12, 8, 8)), 0x06, 0x00, gd.u32bgr_to_color(BLUE));
+    gd.ellipse(Ellipse(Rect(845, 12, 8, 8)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
-    gd.ellipse(Ellipse(800, 88, 5, 15), 0x0D, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(815, 88, 5, 15), 0x0D, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(830, 88, 5, 15), 0x06, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(845, 88, 5, 15), 0x06, 0x01, Drawable::Color(0, 0xff, 0));
+    gd.ellipse(Ellipse(Rect(800, 38, 15, 15)), 0x0D, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(815, 38, 15, 15)), 0x0D, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(830, 38, 15, 15)), 0x06, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(845, 38, 15, 15)), 0x06, 0x01, gd.u32bgr_to_color(GREEN));
 
-    gd.ellipse(Ellipse(700, 88, 10, 10), 0x0D, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(715, 88, 10, 10), 0x0D, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(730, 88, 10, 10), 0x06, 0x00, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(745, 88, 10, 10), 0x06, 0x01, Drawable::Color(0, 0xff, 0));
+    gd.ellipse(Ellipse(Rect(800, 88, 5, 15)), 0x0D, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(815, 88, 5, 15)), 0x0D, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(830, 88, 5, 15)), 0x06, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(845, 88, 5, 15)), 0x06, 0x01, gd.u32bgr_to_color(GREEN));
 
-    gd.ellipse(Ellipse(700, 888, 40, 30), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(750, 888, 40, 30), 0x0D, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(800, 888, 40, 30), 0x06, 0x00, Drawable::Color(0xAC,  0xE4,  0xC8));
-    gd.ellipse(Ellipse(850, 888, 40, 30), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(700, 88, 10, 10)), 0x0D, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(715, 88, 10, 10)), 0x0D, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(730, 88, 10, 10)), 0x06, 0x00, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(745, 88, 10, 10)), 0x06, 0x01, gd.u32bgr_to_color(GREEN));
 
-    gd.ellipse(Ellipse(700, 930, 30, 40), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(750, 930, 30, 40), 0x0D, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(800, 930, 30, 40), 0x06, 0x00, Drawable::Color(0xAC,  0xE4,  0xC8));
-    gd.ellipse(Ellipse(850, 930, 30, 40), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(700, 888, 40, 30)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(750, 888, 40, 30)), 0x0D, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(800, 888, 40, 30)), 0x06, 0x00, gd.u32bgr_to_color(MEDIUM_BLUE));
+    gd.ellipse(Ellipse(Rect(850, 888, 40, 30)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
-    gd.ellipse(Ellipse(700, 600, 230, 140), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(750, 530, 310, 240), 0x07, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(800, 700, 130, 140), 0x0E, 0x00, Drawable::Color(0xAC,  0xE4,  0xC8));
-    gd.ellipse(Ellipse(880, 700, 130, 40), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(700, 930, 30, 40)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(750, 930, 30, 40)), 0x0D, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(800, 930, 30, 40)), 0x06, 0x00, gd.u32bgr_to_color(MEDIUM_BLUE));
+    gd.ellipse(Ellipse(Rect(850, 930, 30, 40)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
-    gd.ellipse(Ellipse(600, 300, 120, 120), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(650, 300, 130, 130), 0x07, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(700, 300, 140, 140), 0x0E, 0x00, Drawable::Color(0xAC,  0xE4,  0xC8));
-    gd.ellipse(Ellipse(750, 300, 130, 130), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(700, 600, 230, 140)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(750, 530, 310, 240)), 0x07, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(800, 700, 130, 140)), 0x0E, 0x00, gd.u32bgr_to_color(MEDIUM_BLUE));
+    gd.ellipse(Ellipse(Rect(880, 700, 130, 40)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
-    gd.ellipse(Ellipse(900, 20, 120, 130), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(1000, 30, 120, 130), 0x07, 0x01, Drawable::Color(0, 0xff, 0));
-    gd.ellipse(Ellipse(910, 200, 120, 140), 0x0E, 0x00, Drawable::Color(0xAC,  0xE4,  0xC8));
-    gd.ellipse(Ellipse(1000, 180, 140, 120), 0x06, 0x01, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(600, 300, 120, 120)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(650, 300, 130, 130)), 0x07, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(700, 300, 140, 140)), 0x0E, 0x00, gd.u32bgr_to_color(MEDIUM_BLUE));
+    gd.ellipse(Ellipse(Rect(750, 300, 130, 130)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
-    gd.ellipse(Ellipse(1000, 400, 130, 140), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(1100, 550, 140, 130), 0x0D, 0x00, Drawable::Color(0xff, 0, 0));
+    gd.ellipse(Ellipse(Rect(900, 20, 120, 130)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(1000, 30, 120, 130)), 0x07, 0x01, gd.u32bgr_to_color(GREEN));
+    gd.ellipse(Ellipse(Rect(910, 200, 120, 140)), 0x0E, 0x00, gd.u32bgr_to_color(MEDIUM_BLUE));
+    gd.ellipse(Ellipse(Rect(1000, 180, 140, 120)), 0x06, 0x01, gd.u32bgr_to_color(BLUE));
 
-    gd.ellipse(Ellipse(1030, 430, 65, 70), 0x0D, 0x00, Drawable::Color(0, 0, 0xff));
+    gd.ellipse(Ellipse(Rect(1000, 400, 130, 140)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(1100, 550, 140, 130)), 0x0D, 0x00, gd.u32bgr_to_color(BLUE));
+
+    gd.ellipse(Ellipse(Rect(1030, 430, 65, 70)), 0x0D, 0x00, gd.u32bgr_to_color(RED));
 
     // binary raster operations
 
-    gd.ellipse(Ellipse(300, 10, 30, 40), 0x02, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(300, 55, 30, 40), 0x03, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(300, 105, 30, 40), 0x04, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(300, 155, 30, 40), 0x05, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(350, 10, 30, 40), 0x08, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(350, 55, 30, 40), 0x09, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(350, 105, 30, 40), 0x0A, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(350, 155, 30, 40), 0x0C, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(400, 10, 30, 40), 0x0F, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(400, 55, 30, 40), 0x01, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(400, 105, 30, 40), 0x10, 0x01, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(400, 105, 30, 40), 0x10, 0x0B, Drawable::Color(0, 0, 0xff));
-    gd.ellipse(Ellipse(400, 155, 30, 40), 0x06, 0x01, Drawable::Color(0, 0, 0xff));
+    gd.ellipse(Ellipse(Rect(300, 10, 30, 40)), 0x02, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(300, 55, 30, 40)), 0x03, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(300, 105, 30, 40)), 0x04, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(300, 155, 30, 40)), 0x05, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(350, 10, 30, 40)), 0x08, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(350, 55, 30, 40)), 0x09, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(350, 105, 30, 40)), 0x0A, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(350, 155, 30, 40)), 0x0C, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(400, 10, 30, 40)), 0x0F, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(400, 55, 30, 40)), 0x01, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(400, 105, 30, 40)), 0x10, 0x01, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(400, 105, 30, 40)), 0x10, 0x0B, gd.u32bgr_to_color(RED));
+    gd.ellipse(Ellipse(Rect(400, 155, 30, 40)), 0x06, 0x01, gd.u32bgr_to_color(RED));
 
 //     elapusec = ustime() - usec;
 //     elapcyc = rdtsc() - cycles;
@@ -344,60 +215,58 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    uint8_t hatch[7] = {0};
     Drawable gd(width, height);
+    gd.patblt(screen_rect, 0xFF, gd.u32bgr_to_color(WHITE));
+    gd.patblt(screen_rect.shrink(5), 0x00, gd.u32bgr_to_color(WHITE));
 
-    gd.patblt_ex(screen_rect, 0xFF, Drawable::Color(0xff, 0xff, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
-    gd.patblt_ex(screen_rect.shrink(5), 0x00, Drawable::Color(0xff, 0xff, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
 
+    gd.opaquerect(screen_rect.shrink(10), gd.u32bgr_to_color(RED));
+    // RED inverted becomes CYAN
+    gd.patblt(screen_rect.shrink(15), 0x55, gd.u32bgr_to_color(WHITE));
 
-    gd.opaquerect(screen_rect.shrink(10), Drawable::Color(0, 0, 0xff));
-    // Drawable::Color(0, 0, 0xff) inverted becomes CYAN
-    gd.patblt_ex(screen_rect.shrink(15), 0x55, Drawable::Color(0xff, 0xff, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
-
-    gd.opaquerect(screen_rect.shrink(20), Drawable::Color(0, 0, 0xff));
+    gd.opaquerect(screen_rect.shrink(20), gd.u32bgr_to_color(RED));
     // Should be Black
-    gd.patblt_ex(screen_rect.shrink(25), 0x05, Drawable::Color(0xff, 0xff, 0), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(25), 0x05, gd.u32bgr_to_color(0xFFFF00));
 
-    gd.opaquerect(screen_rect.shrink(30), Drawable::Color(0, 0, 0xff));
-    // Should be Drawable::Color(0, 0, 0xff)
-    gd.patblt_ex(screen_rect.shrink(35), 0x0F, Drawable::Color(0xff, 0xff, 0), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.opaquerect(screen_rect.shrink(30), gd.u32bgr_to_color(RED));
+    // Should be RED
+    gd.patblt(screen_rect.shrink(35), 0x0F, gd.u32bgr_to_color(0xFFFF00));
 
-    gd.opaquerect(screen_rect.shrink(40), Drawable::Color(0, 0xff, 0));
-    // Should be Drawable::Color(0xff, 0, 0)
-    gd.patblt_ex(screen_rect.shrink(45), 0x50, Drawable::Color(0xff, 0xff, 0), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.opaquerect(screen_rect.shrink(40), gd.u32bgr_to_color(GREEN));
+    // Should be BLUE
+    gd.patblt(screen_rect.shrink(45), 0x50, gd.u32bgr_to_color(0xFFFF00));
 
-    gd.opaquerect(screen_rect.shrink(50), Drawable::Color(0, 0xff, 0));
+    gd.opaquerect(screen_rect.shrink(50), gd.u32bgr_to_color(GREEN));
     // Should be purple
-    gd.patblt_ex(screen_rect.shrink(55), 0x5A, Drawable::Color(0xff, 0xff, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(55), 0x5A, gd.u32bgr_to_color(WHITE));
 
-    gd.opaquerect(screen_rect.shrink(60), Drawable::Color(0, 0xff, 0));
+    gd.opaquerect(screen_rect.shrink(60), gd.u32bgr_to_color(GREEN));
     // Should be purple
-    gd.patblt_ex(screen_rect.shrink(65), 0x5F, Drawable::Color(0xff, 0xff, 0), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(65), 0x5F, gd.u32bgr_to_color(0xFFFF00));
 
-    gd.opaquerect(screen_rect.shrink(70), Drawable::Color(0xff, 0, 0xff));
+    gd.opaquerect(screen_rect.shrink(70), gd.u32bgr_to_color(0xFF00FF));
     // Should be blue
-    gd.patblt_ex(screen_rect.shrink(75), 0xA0, Drawable::Color(0xff, 0xff, 0), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(75), 0xA0, gd.u32bgr_to_color(0xFFFF00));
 
-    gd.opaquerect(screen_rect.shrink(80), Drawable::Color(0, 0xff, 0));
-    // Should be Drawable::Color(0, 0xff, 0)
-    gd.patblt_ex(screen_rect.shrink(85), 0xA5, Drawable::Color(0xff, 0xff, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.opaquerect(screen_rect.shrink(80), gd.u32bgr_to_color(GREEN));
+    // Should be GREEN
+    gd.patblt(screen_rect.shrink(85), 0xA5, gd.u32bgr_to_color(WHITE));
 
-    gd.opaquerect(screen_rect.shrink(90), Drawable::Color(0, 0, 0xff));
+    gd.opaquerect(screen_rect.shrink(90), gd.u32bgr_to_color(RED));
     // Should be white
-    gd.patblt_ex(screen_rect.shrink(95), 0xAF, Drawable::Color(0, 0, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(95), 0xAF, gd.u32bgr_to_color(RED));
 
-    gd.opaquerect(screen_rect.shrink(100), Drawable::Color(0, 0xff, 0));
+    gd.opaquerect(screen_rect.shrink(100), gd.u32bgr_to_color(GREEN));
     // Should be 0x2F2F2F Dark Grey
-    gd.patblt_ex(screen_rect.shrink(105), 0xF0, Drawable::Color(0x2f, 0x2f, 0x2f), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(105), 0xF0, gd.u32bgr_to_color(0x2F2F2F));
 
-    gd.opaquerect(screen_rect.shrink(110), Drawable::Color(0xff, 0, 0xff));
+    gd.opaquerect(screen_rect.shrink(110), gd.u32bgr_to_color(0xFF00FF));
     // Should be yellow
-    gd.patblt_ex(screen_rect.shrink(115), 0xF5, Drawable::Color(0, 0, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(115), 0xF5, gd.u32bgr_to_color(RED));
 
-    gd.opaquerect(screen_rect.shrink(120), Drawable::Color(0, 0, 0xff));
+    gd.opaquerect(screen_rect.shrink(120), gd.u32bgr_to_color(RED));
     // Should be purple
-    gd.patblt_ex(screen_rect.shrink(125), 0xFA, Drawable::Color(0xff, 0, 0), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
+    gd.patblt(screen_rect.shrink(125), 0xFA, gd.u32bgr_to_color(BLUE));
 
     char message[1024];
     if (!check_sig(gd, message,
@@ -417,12 +286,11 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    //gd.patblt_ex(screen_rect, 0xFF, Drawable::Color(0xff, 0xff, 0xff), Drawable::Color(0xff, 0xff, 0xff), hatch, 0, 0);
-    gd.destblt(screen_rect, 0xFF); // Drawable::Color(0xff, 0xff, 0xff)NESS
-    gd.destblt(screen_rect.shrink(5), 0x00); // Drawable::Color(0, 0, 0)NESS
-    // Drawable::Color(0, 0, 0xff)
-    gd.opaquerect(screen_rect.shrink(10), Drawable::Color(0, 0, 0xff));
-    // Drawable::Color(0, 0, 0xff) inverted becomes CYAN
+    //gd.patblt(screen_rect, 0xFF, gd.u32bgr_to_color(WHITE));
+    gd.destblt(screen_rect, 0xFF); // WHITENESS
+    gd.destblt(screen_rect.shrink(5), 0x00); // BLACKNESS
+    gd.opaquerect(screen_rect.shrink(10), gd.u32bgr_to_color(RED)); // RED
+    // RED inverted becomes CYAN
     gd.destblt(screen_rect.shrink(15), 0x55);
 
     char message[1024];
@@ -444,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
 
-    gd.opaquerect(screen_rect, Drawable::Color(0, 0, 0xff)); // Drawable::Color(0, 0, 0xff)
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.set_mouse_cursor_pos(100, 100);
     gd.trace_mouse();
 
@@ -483,7 +351,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse2)
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
 
-    gd.opaquerect(screen_rect, Drawable::Color(0, 0, 0)); // Drawable::Color(0, 0, 0)
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(BLACK)); // BLACK
     gd.set_mouse_cursor_pos(638, 470);
     gd.trace_mouse();
 
@@ -525,7 +393,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse3)
     gd.default_pointer.hotspot_x = 8;
     gd.default_pointer.hotspot_y = 8;
 
-    gd.opaquerect(screen_rect, Drawable::Color(0, 0, 0xff)); // Drawable::Color(0, 0, 0xff)
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.set_mouse_cursor_pos(0, 0);
     gd.trace_mouse();
 
@@ -563,7 +431,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0, 0, 0xff)); // Drawable::Color(0, 0, 0xff)
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
 
     time_t rawtime;
     time(&rawtime);
@@ -635,16 +503,16 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     //dump_png("/tmp/test_timestamp_002_", gd.impl());
 }
 
-TODO("We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.")
+// TODO We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.
 inline void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    gd.opaquerect(Rect(90, 90, 120, 120), Drawable::Color(0, 0, 0xff));
-    gd.opaquerect(screen_rect, Drawable::Color(0xff, 0, 0));
-    gd.opaquerect(Rect(120, 120, 60, 60), Drawable::Color(0xff, 0, 0xff));
+    gd.opaquerect(Rect(90, 90, 120, 120), gd.u32bgr_to_color(RED));
+    gd.opaquerect(Rect(100, 100, 100, 100), gd.u32bgr_to_color(BLUE));
+    gd.opaquerect(Rect(120, 120, 60, 60).intersect(Rect(100, 100, 100, 100)), gd.u32bgr_to_color(PINK));
     gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
     gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
@@ -665,13 +533,11 @@ inline bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const ch
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    gd.opaquerect(Rect(90, 90, 120, 120), Drawable::Color(0, 0, 0xff));
-    gd.opaquerect(screen_rect, Drawable::Color(0xff, 0, 0));
-    gd.opaquerect(Rect(120, 120, 60, 60), Drawable::Color(0xff, 0, 0xff));
+    gd.opaquerect(Rect(90, 90, 120, 120), gd.u32bgr_to_color(RED));
+    gd.opaquerect(Rect(100, 100, 100, 100), gd.u32bgr_to_color(BLUE));
+    gd.opaquerect(Rect(120, 120, 60, 60).intersect(Rect(100, 100, 100, 100)), gd.u32bgr_to_color(PINK));
     gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
     gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
-//     gd.impl().scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
-//     gd.impl().scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
     // uncomment to see result in png file
     //char tmpname[128];
@@ -805,23 +671,17 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     Rect screen_rect(0, 0, width, height);
 
     Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0x2f, 0x2f, 0x2f));
-    gd.opaquerect(Rect(100,100,20, 20), Drawable::Color(0xff, 0, 0));
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(0x2F2F2F));
+    gd.opaquerect(Rect(100,100,20, 20), gd.u32bgr_to_color(BLUE));
 
     uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
     BGRPalette const & palette332 = BGRPalette::classic_332();
     Bitmap bmp(24, 24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
 
-    gd.mem_blt_ex(Rect(5, 5, 20, 20), bmp, 0, 0, 0xCC);
-
-    // red square
-    gd.mem_blt_ex(Rect(5, 5, 20, 20), bmp, 0, 0, 0xCC);
-    // inverted red square (cyan)
-    gd.mem_blt_ex(Rect(25, 25, 20, 20), bmp, 0, 0, 0x55);
-    // black square
-    gd.mem_blt_ex(Rect(45, 45, 20, 20), bmp, 0, 0, 0x00);
-    // white square
-    gd.mem_blt_ex(Rect(65, 65, 20, 20), bmp, 0, 0, 0xFF);
+    gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
+    gd.mem_blt_invert(Rect(25, 25, 20, 20), bmp, 0, 0);
+    gd.black_color(Rect(45, 45, 20, 20));
+    gd.white_color(Rect(65, 65, 20, 20));
 
     char message[1024];
     if (!check_sig(gd, message,
@@ -842,7 +702,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
     Rect screen_rect(0, 0, width, height);
 
     Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0x2f, 0x2f, 0x2f));
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(0x2F2F2F));
 
     uint8_t raw_palette[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x80, 0x00,  // ................
@@ -955,7 +815,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt2)
     Bitmap bmp(8, 8, &palette, 64, 22, raw_bitmap, sizeof(raw_bitmap), true);
 
     // red square
-    gd.mem_blt_ex(Rect(5, 5, 20, 20), bmp, 0, 0, 0xCC);
+    gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
 
     char message[1024];
     if (!check_sig(gd, message,
@@ -976,7 +836,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
     Rect screen_rect(0, 0, width, height);
 
     Drawable gd(width, height);
-    gd.opaquerect(screen_rect, Drawable::Color(0x2f, 0x2f, 0x2f));
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(0x2F2F2F));
 
     uint8_t raw_palette[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
@@ -1077,7 +937,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt3)
     Bitmap bmp(15, 15, &palette, 32, 32, raw_bitmap, sizeof(raw_bitmap), true);
 
     // red square
-    gd.mem_blt_ex(Rect(5, 5, 20, 20), bmp, 0, 0, 0xCC);
+    gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
 
     char message[1024];
     if (!check_sig(gd, message,

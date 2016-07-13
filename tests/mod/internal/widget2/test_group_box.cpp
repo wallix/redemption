@@ -51,9 +51,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     uint16_t    cx       = 150;
     uint16_t    cy       = 200;
 
-    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
-         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
-         "these possibilities (and others) are supported in RDPGlyphIndex")
+    /* TODO
+     * I believe users of this widget may wish to control text position and behavior inside rectangle
+     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
+     * these possibilities (and others) are supported in RDPGlyphIndex */
     WidgetGroupBox wgroupbox( drawable.gd, x, y, cx, cy, parent, notifier, "Group 1", group_id
                             , fg_color, bg_color, font);
 
@@ -126,9 +127,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                   "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
                   "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà";
 
-    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
-         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
-         "these possibilities (and others) are supported in RDPGlyphIndex")
+    /* TODO
+     * I believe users of this widget may wish to control text position and behavior inside rectangle
+     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
+     * these possibilities (and others) are supported in RDPGlyphIndex */
     WidgetGroupBox wgroupbox( drawable.gd, x, y, cx, cy, parent, notifier, text, group_id
                             , fg_color, bg_color, font);
 

@@ -37,7 +37,7 @@ enum {
     BMPCACHE2_NUM_PSTCELLS         = 0x9f6
 };
 
-TODO(" RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself  but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps  as the actual id to use depends off the bitmap size in bytes  itself depending from bpp. Alternatively  this bpp could be attached to the cache itself as bpp is unique for a given cache.")
+// TODO RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself  but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps  as the actual id to use depends off the bitmap size in bytes  itself depending from bpp. Alternatively  this bpp could be attached to the cache itself as bpp is unique for a given cache.
 class RDPBmpCache {
     // [MS-RDPGDI] 2.2.2.2.1.2.2 Cache Bitmap - Revision 1 (CACHE_BITMAP_ORDER)
     // ========================================================================
@@ -561,7 +561,7 @@ class RDPBmpCache {
     {
         using namespace RDP;
 
-        TODO(" this should become some kind of emit header");
+        // TODO this should become some kind of emit header
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
         stream.out_uint16_le(9 + this->bmp.bmp_size()  - 7); // length after orderType - 7
@@ -804,7 +804,7 @@ class RDPBmpCache {
         stream.out_2BUE(this->bmp.cx());
         stream.out_2BUE(this->bmp.cy());
         uint32_t offset_bitmapLength = stream.get_offset();
-        TODO("define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.");
+        // TODO define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.
         stream.out_uint16_be(0);
         stream.out_2BUE(this->do_not_cache ? BITMAPCACHE_WAITING_LIST_INDEX : this->idx);
         uint32_t offset_startBitmap = stream.get_offset();
@@ -817,7 +817,7 @@ class RDPBmpCache {
     void emit_raw_v2(OutStream & stream) const
     {
         using namespace RDP;
-        TODO(" this should become some kind of emit header");
+        // TODO this should become some kind of emit header
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 
@@ -826,7 +826,7 @@ class RDPBmpCache {
 
         int bitsPerPixelId = nbbytes(this->bmp.bpp())+2;
 
-        TODO(" some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.");
+        // TODO some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.
         uint16_t flags = ((this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0) |
                           (this->do_not_cache ? CBR2_DO_NOT_CACHE           : 0));
 
@@ -1075,7 +1075,7 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).");
+        // TODO some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).
         const uint8_t * buf = stream.in_uint8p(bufsize);
         if (this->verbose & 0x8000) {
             LOG(LOG_INFO,

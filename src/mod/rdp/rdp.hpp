@@ -502,7 +502,7 @@ protected:
         return *this->session_probe_virtual_channel;
     }
 
-    TODO("duplicated code in front")
+    // TODO duplicated code in front
     struct write_x224_dt_tpdu_fn
     {
         void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
@@ -692,7 +692,9 @@ public:
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
-                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)))
+                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
+                                                     (!mod_rdp_params.use_client_provided_alternate_shell ||
+                                                      !info.alternate_shell[0]))
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -793,7 +795,7 @@ public:
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
-        TODO("CGR: license loading should be done before creating protocol layers");
+        // TODO CGR: license loading should be done before creating protocol layers
         struct stat st;
         char path[256];
         snprintf(path, sizeof(path), LICENSE_PATH "/license.%s", info.hostname);
@@ -2066,7 +2068,7 @@ public:
                                 // ------------------------------------------------------------
 
                                 GCC::UserData::CSCluster cs_cluster;
-                                TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
+                                // TODO CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?
                                 if (this->server_redirection_support) {
                                     LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
                                     if (!this->nego.tls){
@@ -2359,19 +2361,17 @@ public:
                                             X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
                                             (void)cert_len;
 
-                            TODO("CGR: Currently, we don't use the CA Certificate, we should"
-                                 "*) Verify the server certificate (server_cert) with the CA certificate."
-                                 "*) Store the CA Certificate with the hostname of the server we are connecting"
-                                 " to as key, and compare it when we connect the next time, in order to prevent"
-                                 " MITM-attacks.")
+                                            // TODO CGR: Currently, we don't use the CA Certificate, we should
+                                            // TODO *) Verify the server certificate (server_cert) with the CA certificate.
+                                            // TODO *) Store the CA Certificate with the hostname of the server we are connecting to as key, and compare it when we connect the next time, in order to prevent MITM-attacks.
 
-                                                /* By some reason, Microsoft sets the OID of the Public RSA key to
-                                                   the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
+                                            /* By some reason, Microsoft sets the OID of the Public RSA key to
+                                                the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
 
-                                                   Kudos to Richard Levitte for the following (. intuitive .)
-                                                   lines of code that resets the OID and let's us extract the key. */
+                                                Kudos to Richard Levitte for the following (. intuitive .)
+                                                lines of code that resets the OID and let's us extract the key. */
 
-                                                int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
+                                            int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
                                             if ((nid == NID_md5WithRSAEncryption)
                                                 || (nid == NID_shaWithRSAEncryption)){
                                                 ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
@@ -2626,7 +2626,7 @@ public:
                                 X224::DT_TPDU_Recv x224(x224_data);
                                 InStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                                TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
+                                // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
                                 if (this->verbose & 16){
                                     LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
                                 }
@@ -2739,7 +2739,7 @@ public:
                         X224::DT_TPDU_Recv x224(x224_data);
                         InStream & mcs_cjcf_data = x224.payload;
                         MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                        TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
+                        // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
 
                         if (this->encryptionLevel){
                             if (this->verbose & 1){
@@ -2872,7 +2872,7 @@ public:
                         X224::RecvFactory f(this->nego.trans, &end, array_size);
                         InStream stream(array, end - array);
                         X224::DT_TPDU_Recv x224(stream);
-                        TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
+                        // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
                         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -2916,7 +2916,7 @@ public:
                                             sign.update(lenhdr, sizeof(lenhdr));
                                             sign.update(hwid, sizeof(hwid));
 
-                                            assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                            static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                             sign.final(signature, sizeof(signature));
 
 
@@ -2980,7 +2980,7 @@ public:
                                     sign.update(lenhdr, sizeof(lenhdr));
                                     sign.update(sealed_buffer, sizeof(sealed_buffer));
 
-                                    assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                    static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                     sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */
@@ -3009,7 +3009,7 @@ public:
 
                                     LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                                    TODO("CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that");
+                                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that
                                         this->state = MOD_RDP_CONNECTED;
 
                                     LOG(LOG_WARNING, "New license not saved");
@@ -3233,7 +3233,7 @@ public:
                                 }
                             }
 
-                            TODO("Chech all data in the PDU is consumed");
+                            // TODO Chech all data in the PDU is consumed
                             break;
                         }
 
@@ -3523,28 +3523,28 @@ public:
                                                     break;
                                                 case PDUTYPE2_CONTROL:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SYNCHRONIZE:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_POINTER:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
                                                     this->process_pointer_pdu(sdata.payload, this);
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_PLAY_SOUND:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SAVE_SESSION_INFO:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                     this->process_save_session_info(sdata.payload);
                                                     break;
                                                 case PDUTYPE2_SET_ERROR_INFO_PDU:
@@ -3572,7 +3572,7 @@ public:
 
                                                 default:
                                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                     sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 }
@@ -3612,7 +3612,7 @@ public:
         //    sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see
         // [T128] section 8.4.1 for more information regarding source descriptors).
 
-                                            TODO("before skipping we should check we do not go outside current stream");
+                                            // TODO before skipping we should check we do not go outside current stream
                                             sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
@@ -3674,8 +3674,8 @@ public:
                                         if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
                                         LOG(LOG_INFO, "Deactivate All PDU");
                                         this->deactivation_reactivation_in_progress = true;
-                                        TODO("CGR: Data should actually be consumed");
-                                            TODO("CGR: Check we are indeed expecting Synchronize... dubious");
+                                        // TODO CGR: Data should actually be consumed
+                                            // TODO CGR: Check we are indeed expecting Synchronize... dubious
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                                         break;
                                     case PDUTYPE_SERVER_REDIR_PKT:
@@ -3702,7 +3702,7 @@ public:
                                         LOG(LOG_INFO, "unknown PDU %u", sctrl.pduType);
                                         break;
                                     }
-                                TODO("check sctrl.payload is completely consumed");
+                                // TODO check sctrl.payload is completely consumed
 
                                 }
                             }
@@ -3897,7 +3897,7 @@ public:
                 confirm_active_pdu.emit_capability_set(general_caps);
 
                 BitmapCaps bitmap_caps;
-                TODO("Client SHOULD set this field to the color depth requested in the Client Core Data")
+                // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
                 bitmap_caps.preferredBitsPerPixel = this->bpp;
                 //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
                 bitmap_caps.desktopWidth          = this->front_width;
@@ -5450,7 +5450,7 @@ public:
         stream.in_skip_bytes(stream.in_remain());
     }
 
-    TODO("CGR: this can probably be unified with process_confirm_active in front")
+    // TODO CGR: this can probably be unified with process_confirm_active in front
     void process_server_caps(InStream & stream, uint16_t len) {
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
@@ -5767,7 +5767,7 @@ public:
         }
     }
 
-    TODO("CGR: duplicated code in front")
+    // TODO CGR: duplicated code in front
     void send_synchronise() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
@@ -6065,7 +6065,7 @@ public:
                 mlen, dlen);
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
-        TODO("this is modifiying cursor in place: we should not do that.");
+        // TODO this is modifiying cursor in place: we should not do that.
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
 
@@ -6094,7 +6094,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
         }
 
-        TODO("Add check that the idx transmitted is actually an used pointer")
+        // TODO Add check that the idx transmitted is actually an used pointer
         uint16_t pointer_idx = stream.in_uint16_le();
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_ERR,
@@ -6162,10 +6162,11 @@ public:
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
 
-        TODO("check code below: why do we revert mask and pointer when pointer is 1 BPP and not with other color depth ?"
-             " Looks fishy, a mask and pointer should always be encoded in the same way, not depending on color depth"
-             "difficult to see for symmetrical pointers... check documentation");
-        TODO("it may be more efficient to revert cursor after creating it instead of doing it on the fly")
+        /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
+         * and not with other color depth ? Looks fishy, a mask and pointer should always
+         * be encoded in the same way, not depending on color depth difficult to see for
+         * symmetrical pointers... check documentation it may be more efficient to revert
+         * cursor after creating it instead of doing it on the fly */
         switch (bpp) {
         case 1 :
         {
@@ -6346,12 +6347,12 @@ public:
                 }
             }
 
-            TODO("move that into cursor")
+            // TODO move that into cursor
             this->to_regular_pointer(data_data, dlen, 1, cursor.data, sizeof(cursor.data));
             this->to_regular_mask(mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
         }
         else {
-            TODO("move that into cursor")
+            // TODO move that into cursor
             this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data, sizeof(cursor.data));
             stream.in_skip_bytes(dlen);
             this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
@@ -6515,7 +6516,7 @@ private:
                 }
             }
 
-            TODO("CGR: check which sanity checks should be done");
+            // TODO CGR: check which sanity checks should be done
                 //            if (bufsize != bitmap.bmp_size){
                 //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                 //                    bufsize, bitmap.bmp_size, width, height, bpp);

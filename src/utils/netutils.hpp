@@ -40,16 +40,16 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/log.hpp"
 
-TODO("-Wold-style-cast is ignored")
+// TODO -Wold-style-cast is ignored
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 static inline bool try_again(int errnum){
     int res = false;
-    TODO("Check wich signals are actually necessary depending on what we are doing "
-         "looks like EINPROGRESS or EALREADY only occurs when calling connect()"
-         "EAGAIN is when blocking IO would block (other name for EWOULDBLOCK)"
-         "EINTR when an interruption stopped system call (and we could do it again)")
+    // TODO Check wich signals are actually necessary depending on what we are doing
+    // looks like EINPROGRESS or EALREADY only occurs when calling connect()
+    // EAGAIN is when blocking IO would block (other name for EWOULDBLOCK)
+    // EINTR when an interruption stopped system call (and we could do it again)
     switch (errnum){
         case EAGAIN:
         /* case EWOULDBLOCK: */ // same as EAGAIN on Linux

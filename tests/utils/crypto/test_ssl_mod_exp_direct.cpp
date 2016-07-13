@@ -14,54 +14,28 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2016
+   Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
-   BigNum Headers
-
+   Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#pragma once
+#define BOOST_TEST_MODULE mod_exp
 
-class Bignum
-{
-public:
-    Bignum(unsigned long w) 
-    {
-    }
-    Bignum(const uint8_t * data, size_t len) 
-    {
-    }
-    Bignum(const Bignum & bn) 
-    {
-    }
-    ~Bignum()
-    {
-    }
+#include "utils/crypto/ssl_mod_exp_direct.hpp"
 
-    size_t get_bin(uint8_t * out, size_t out_len)
-    {
-        return out_len;
-    }
+static inline size_t mod_exp(
+    uint8_t * out, size_t out_len,
+    const uint8_t * inr, size_t in_len,
+    const uint8_t * modulus, size_t modulus_size,
+    const uint8_t * exponent, size_t exponent_size
+) {
+    return mod_exp_direct(
+        out, out_len,
+        inr, in_len,
+        modulus, modulus_size,
+        exponent, exponent_size
+    );
+}
 
-    unsigned long get_word()
-    {
-        return 0UL;
-    }
-    Bignum mod_exp(const Bignum & e, const Bignum & mod) const
-    {
-        return Bignum(0UL);
-    }
-    Bignum operator+(const Bignum & b) const
-    {
-        return Bignum(0UL);
-    }
-    bool operator!=(const Bignum & b) const
-    {
-        return true;
-    }
-    bool operator==(const Bignum & b) const
-    {
-        return true;
-    }
-};
+#include "system/common/test_ssl_mod_exp.cpp"

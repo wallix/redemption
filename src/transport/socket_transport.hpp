@@ -105,7 +105,7 @@ public:
     void enable_server_tls(const char * certificate_password,
             const char * ssl_cipher_list) override {
         if (this->tls != nullptr) {
-            TODO("this should be an error, no need to commute two times to TLS");
+            // TODO this should be an error, no need to commute two times to TLS
             return;
         }
         this->tls = new TLSContext();
@@ -124,7 +124,7 @@ public:
             ) override {
 
         if (this->tls != nullptr) {
-            TODO("this should be an error, no need to commute two times to TLS");
+            // TODO this should be an error, no need to commute two times to TLS
             return;
         }
 
@@ -252,7 +252,7 @@ public:
             LOG(LOG_INFO, "Dump done on %s (%d) %zu bytes", this->name, this->sck, len);
         }
 
-        TODO("move that to base class : accounting_recv(len)");
+        // TODO move that to base class : accounting_recv(len)
         this->last_quantum_received += len;
     }
 
@@ -276,7 +276,7 @@ public:
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
 
-        TODO("move that to base class : accounting_send(len)");
+        // TODO move that to base class : accounting_send(len)
         this->last_quantum_sent += len;
     }
 
@@ -304,7 +304,7 @@ private:
                     if (len != remaining_len){
                         return len - remaining_len;
                     }
-                    TODO("replace this with actual error management, EOF is not even an option for sockets");
+                    // TODO replace this with actual error management, EOF is not even an option for sockets
                     return -1;
                 case 0: /* no data received, socket closed */
                     // if we were not able to receive the amount of data required, this is an error

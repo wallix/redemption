@@ -119,10 +119,7 @@ struct Listen {
             goto end_of_listener;
         }
 
-        TODO("We should find a way to generalize the select loop concept "
-             "say select is waiting on a bunch of transport objects or such "
-             "and whenever one of those wake-up it should get a chance to act "
-             "read data, write data, accept incoming connections, perform some task, etc.")
+        // TODO We should find a way to generalize the select loop concept say select is waiting on a bunch of transport objects or such and whenever one of those wake-up it should get a chance to act read data, write data, accept incoming connections, perform some task, etc.
 
         return;
 
@@ -141,7 +138,7 @@ struct Listen {
         }
     }
 
-    TODO("Some values (server, timeout) become only necessary when calling check")
+    // TODO Some values (server, timeout) become only necessary when calling check
     void run() {
         while (1) {
             fd_set rfds;

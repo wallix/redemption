@@ -30,22 +30,19 @@
 #define LOGPRINT
 //#define LOGNULL
 
-#include <fcntl.h>
+#include <fstream>
 
-#include <iostream>
+#include <algorithm>
+#include <new>
+
+#include <cstdio>
+#include <cstdint>
+
+#include <fcntl.h>
 
 #include "system/ssl_calls.hpp"
 #include "utils/apps/app_verifier.hpp"
-
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <algorithm>
-#include <unistd.h>
 #include "utils/genrandom.hpp"
-
-#include <new>
-
 #include "utils/fdbuf.hpp"
 #include "utils/sugar/local_fd.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
@@ -64,7 +61,7 @@
 BOOST_AUTO_TEST_CASE(TestReverseIterators)
 {
 
-    // Show how to extract filename even if it cvontains spaces
+    // Show how to extract filename even if it contains spaces
     // the idea is that the final fields are fixed, henceforth
     // we can skip these fields by looking for spaces from end of line
     // once filename is found we can manage other fields as usual.
@@ -95,6 +92,62 @@ BOOST_AUTO_TEST_CASE(TestReverseIterators)
     BOOST_CHECK(0 == memcmp("ff fff", filename, filename_len));
 
 }
+
+
+BOOST_AUTO_TEST_CASE(TestLineReader)
+{
+    char const * filename = "/tmp/test_app_verifier_s.txt";
+
+    std::ofstream(filename) <<
+        "abcd\n"
+        "efghi\n"
+        "jklmno\n"
+    ;
+
+    {
+        ifile_read ifile;
+        ifile.open(filename);
+        LineReader line_reader(ifile);
+        BOOST_CHECK(line_reader.next_line());
+        BOOST_CHECK_EQUAL(5, line_reader.get_buf().size());
+        BOOST_CHECK(line_reader.next_line());
+        BOOST_CHECK_EQUAL(6, line_reader.get_buf().size());
+        BOOST_CHECK(line_reader.next_line());
+        BOOST_CHECK_EQUAL(7, line_reader.get_buf().size());
+        BOOST_CHECK(not line_reader.next_line());
+    }
+
+    std::size_t const big_line_len = LineReader::line_max - LineReader::line_max / 4;
+    {
+        std::string s(big_line_len, 'a');
+        std::ofstream(filename) << s << '\n' << s << '\n';
+    }
+
+    {
+        ifile_read ifile;
+        ifile.open(filename);
+        LineReader line_reader(ifile);
+        BOOST_CHECK(line_reader.next_line());
+        BOOST_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
+        BOOST_CHECK(line_reader.next_line());
+        BOOST_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
+        BOOST_CHECK(!line_reader.next_line());
+    }
+
+    std::ofstream(filename) << std::string(LineReader::line_max + 20, 'a');
+
+    {
+        ifile_read ifile;
+        ifile.open(filename);
+        LineReader line_reader(ifile);
+        BOOST_CHECK_EXCEPTION(line_reader.next_line(), Error, [](Error const & e) {
+            return e.id == ERR_TRANSPORT_READ_FAILED && e.errnum == 0;
+        });
+    }
+
+    remove(filename);
+}
+
 
 BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
 {
@@ -198,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     BOOST_CHECK_EQUAL(0, res);
 
     std::string const test_full_mwrm_filename = test_mwrm_path + test_file_name;
-    
+
     {
         uint8_t tmp_hash[SHA256_DIGEST_LENGTH]={};
         int res = file_start_hmac_sha256(test_full_mwrm_filename.c_str(),
@@ -431,18 +484,18 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2)
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
-    
+
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(!reader.header.has_checksum);
-    
+
     MetaLine2 meta_line;
-    reader.read_meta_file(meta_line);
+    BOOST_CHECK(reader.read_meta_file(meta_line));
     BOOST_CHECK(0 == strcmp(meta_line.filename,
                         "/var/wab/recorded/rdp/"
                         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
                         "wab-5-0-0.yourdomain,7681-000000.wrm"));
-    BOOST_CHECK_EQUAL(meta_line.size, 181826); 
+    BOOST_CHECK_EQUAL(meta_line.size, 181826);
     BOOST_CHECK_EQUAL(meta_line.mode, 33056);
     BOOST_CHECK_EQUAL(meta_line.uid, 1001);
     BOOST_CHECK_EQUAL(meta_line.gid, 1001);
@@ -459,18 +512,18 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
     ifile_read fd;
     fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
-    
+
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 1);
     BOOST_CHECK(!reader.header.has_checksum);
-    
+
     MetaLine2 meta_line;
     reader.read_meta_file(meta_line);
     BOOST_CHECK(0 == strcmp(meta_line.filename,
                         "/var/wab/recorded/rdp/"
                         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
                         "wab-5-0-0.yourdomain,7681-000000.wrm"));
-    BOOST_CHECK_EQUAL(meta_line.size, 0); 
+    BOOST_CHECK_EQUAL(meta_line.size, 0);
     BOOST_CHECK_EQUAL(meta_line.mode, 0);
     BOOST_CHECK_EQUAL(meta_line.uid, 0);
     BOOST_CHECK_EQUAL(meta_line.gid, 0);
@@ -481,13 +534,13 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV1)
     BOOST_CHECK_EQUAL(meta_line.start_time, 1455815820);
     BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816422);
 
-    BOOST_CHECK(0 == memcmp(meta_line.hash1, 
+    BOOST_CHECK(0 == memcmp(meta_line.hash1,
                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
                         32));
-    BOOST_CHECK(0 == memcmp(meta_line.hash2, 
+    BOOST_CHECK(0 == memcmp(meta_line.hash2,
                         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 
+                        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
                         32));
 
 }
@@ -497,16 +550,16 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     ifile_read fd;
     fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
     MwrmReader reader(fd);
-    
+
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(reader.header.has_checksum);
-    
+
     MetaLine2 meta_line;
     reader.read_meta_file(meta_line);
     BOOST_CHECK(true);
     BOOST_CHECK(0 == strcmp(meta_line.filename, "./tests/fixtures/sample0.wrm"));
-    BOOST_CHECK_EQUAL(meta_line.size, 1); 
+    BOOST_CHECK_EQUAL(meta_line.size, 1);
     BOOST_CHECK_EQUAL(meta_line.mode, 2);
     BOOST_CHECK_EQUAL(meta_line.uid, 3);
     BOOST_CHECK_EQUAL(meta_line.gid, 4);
@@ -516,13 +569,13 @@ BOOST_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     BOOST_CHECK_EQUAL(meta_line.ctime, 8);
     BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
     BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
-    BOOST_CHECK(0 == memcmp(meta_line.hash1, 
+    BOOST_CHECK(0 == memcmp(meta_line.hash1,
                         "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
-                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA", 
+                        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA",
                         32));
-    BOOST_CHECK(0 == memcmp(meta_line.hash2, 
+    BOOST_CHECK(0 == memcmp(meta_line.hash2,
                         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
-                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB", 
+                        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB",
                         32));
 }
 
@@ -539,20 +592,20 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     cctx.set_get_trace_key_cb(trace_fn);
 
     ifile_read_encrypted fd(&cctx, 1);
-    fd.open(FIXTURES_PATH 
+    fd.open(FIXTURES_PATH
         "/verifier/recorded/"
         "toto@10.10.43.13,Administrateur@QA@cible,"
         "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm");
 
     MwrmReader reader(fd);
-    
+
     reader.read_meta_headers();
     BOOST_CHECK(reader.header.version == 2);
     BOOST_CHECK(reader.header.has_checksum);
 
     MetaLine2 meta_line;
-    BOOST_CHECK_EQUAL(0, reader.read_meta_file2(meta_line));
-    
+    BOOST_CHECK(reader.read_meta_file(meta_line));
+
     printf("%s\n", meta_line.filename);
 
     {
@@ -562,7 +615,7 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
                              "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm");
         BOOST_CHECK_EQUAL(got, expected);
     }
-    BOOST_CHECK_EQUAL(meta_line.size, 163032); 
+    BOOST_CHECK_EQUAL(meta_line.size, 163032);
     BOOST_CHECK_EQUAL(meta_line.mode, 33056);
     BOOST_CHECK_EQUAL(meta_line.uid, 1001);
     BOOST_CHECK_EQUAL(meta_line.gid, 1001);
@@ -572,14 +625,14 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     BOOST_CHECK_EQUAL(meta_line.ctime, 1455816632);
     BOOST_CHECK_EQUAL(meta_line.start_time, 1455816611);
     BOOST_CHECK_EQUAL(meta_line.stop_time, 1455816633);
-    CHECK_MEM(meta_line.hash1, 32, 
+    CHECK_MEM(meta_line.hash1, 32,
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
       "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77");
     CHECK_MEM(meta_line.hash2, 32,
       "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
       "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
 
-    BOOST_CHECK_EQUAL(1, reader.read_meta_file2(meta_line));
+    BOOST_CHECK(!reader.read_meta_file(meta_line));
 }
 
 
