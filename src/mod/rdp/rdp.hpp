@@ -692,7 +692,9 @@ public:
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
-                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)))
+                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
+                                                     (!mod_rdp_params.use_client_provided_alternate_shell ||
+                                                      !info.alternate_shell[0]))
         , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -2914,7 +2916,7 @@ public:
                                             sign.update(lenhdr, sizeof(lenhdr));
                                             sign.update(hwid, sizeof(hwid));
 
-                                            assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                            static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                             sign.final(signature, sizeof(signature));
 
 
@@ -2978,7 +2980,7 @@ public:
                                     sign.update(lenhdr, sizeof(lenhdr));
                                     sign.update(sealed_buffer, sizeof(sealed_buffer));
 
-                                    assert(SslMd5::DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                    static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                     sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */

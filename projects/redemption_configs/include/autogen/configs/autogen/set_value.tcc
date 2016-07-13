@@ -151,14 +151,6 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
-        else if (0 == strcmp(key, "is_rec")) {
-            ::configs::parse_and_log(
-                context, key, 
-                static_cast<cfg::globals::is_rec&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "movie_path")) {
             ::configs::parse_and_log(
                 context, key, 

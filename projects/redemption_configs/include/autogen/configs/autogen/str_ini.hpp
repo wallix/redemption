@@ -72,9 +72,6 @@
 "#_advanced\n"
 "wrm_path = " WRM_PATH "\n\n"
 
-"#_hidden\n"
-"is_rec = 0\n\n"
-
 "#_advanced\n"
 "movie_path = \n\n"
 
@@ -199,7 +196,9 @@
 
 "enable_suppress_output = 1\n\n"
 
-"#_hidden\n"
+"# [Not configured]: Compatible with more RDP clients (less secure)\n"
+"# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure)\n"
+"#_advanced\n"
 "ssl_cipher_list = \n\n"
 
 "[mod_rdp]\n\n"
