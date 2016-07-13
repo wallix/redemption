@@ -117,9 +117,9 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
         BOOST_CHECK(not line_reader.next_line());
     }
 
-    std::size_t big_line = LineReader::line_max - LineReader::line_max / 4;
+    std::size_t const big_line_len = LineReader::line_max - LineReader::line_max / 4;
     {
-        std::string s(big_line, 'a');
+        std::string s(big_line_len, 'a');
         std::ofstream(filename) << s << '\n' << s << '\n';
     }
 
@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE(TestLineReader)
         ifile.open(filename);
         LineReader line_reader(ifile);
         BOOST_CHECK(line_reader.next_line());
-        BOOST_CHECK_EQUAL(big_line+1, line_reader.get_buf().size());
+        BOOST_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
         BOOST_CHECK(line_reader.next_line());
-        BOOST_CHECK_EQUAL(big_line+1, line_reader.get_buf().size());
+        BOOST_CHECK_EQUAL(big_line_len+1, line_reader.get_buf().size());
         BOOST_CHECK(!line_reader.next_line());
     }
 
