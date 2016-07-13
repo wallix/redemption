@@ -788,7 +788,7 @@ class Connector_Qt : public QObject
 Q_OBJECT
 
 public:
-    Front_Qt_API    * _front;
+    Front_Qt        * _front;
     QSocketNotifier * _sckRead;
     mod_api         * _callback;
     SocketTransport * _sck;
@@ -799,9 +799,10 @@ public:
     uint8_t         * _chunk;
     QImage          * _bufferImage;
     uint16_t          _bufferTypeID;
+    std::string       _bufferTypeLongName;
 
 
-    Connector_Qt(Front_Qt_API * front, QWidget * parent)
+    Connector_Qt(Front_Qt * front, QWidget * parent)
     : QObject(parent)
     , _front(front)
     , _sckRead(nullptr)
@@ -814,6 +815,7 @@ public:
     , _chunk(nullptr)
     , _bufferImage(nullptr)
     , _bufferTypeID(0)
+    , _bufferTypeLongName("")
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
@@ -927,12 +929,17 @@ public:
         }
     }
 
-    void setClipboard(const std::string & str) {
+    void setClipboard(const std::string & str) {            // Paste text to client
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
 
-    void setClipboard(const QImage & image) {
+    void setClipboard(const QImage & image) {               // Paste image to client
         this->_clipboard->setImage(image, QClipboard::Clipboard);
+    }
+
+    void setClipboard(const QList<QUrl> & urls) {           // Paste file to client
+        //const QMimeData * mimeData = this->_clipboard->mimeData();
+        //mimeData->setUrls(urls);
     }
 
     void emptyBuffer() {
@@ -945,8 +952,8 @@ public:
     }
 
     void send_FormatListPDU() {
-        uint32_t formatIDs[]                  = {this->_bufferTypeID};
-        std::string formatListDataShortName[] = {std::string("")};
+        uint32_t formatIDs[]                  = { this->_bufferTypeID };
+        std::string formatListDataShortName[] = { this->_bufferTypeLongName };
         this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
     }
 
@@ -961,42 +968,45 @@ public Q_SLOTS:
         if (this->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
 
-            if (!mimeData->hasUrls()) {
-                if (mimeData->hasImage()){
 
-                    this->emptyBuffer();
-
-                    this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
-                    this->_bufferImage = new QImage(this->_clipboard->image());
-                    this->_length = this->_bufferImage->byteCount();
-
-                    this->send_FormatListPDU();
-
-                } else if (mimeData->hasText()){
-
-                    this->emptyBuffer();
-                    this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-                    int cmptCR(0);
-                    std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
-                    std::string tmp(str);
-                    int pos(tmp.find("\n"));
-
-                    while (pos != -1) {
-                        cmptCR++;
-                        tmp = tmp.substr(pos+2, tmp.length());
-                        pos = tmp.find("\n"); // for linux install
-                    }
-                    size_t size((str.length() + cmptCR*2) * 4);
-
-                    this->_chunk  = new uint8_t[size];
-                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
-
-                    this->send_FormatListPDU();
-                }
-            } else {
+            if (mimeData->hasImage()){
                 this->emptyBuffer();
-                this->_bufferTypeID = 0;                    // TODO
-                //QList<QUrl> list = mimeData->urls();
+                this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
+                this->_bufferTypeLongName = "";
+                this->_bufferImage = new QImage(this->_clipboard->image());
+                this->_length = this->_bufferImage->byteCount();
+
+                this->send_FormatListPDU();
+
+
+            } else if (mimeData->hasText()){
+                this->emptyBuffer();
+                this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
+                this->_bufferTypeLongName = "";
+                int cmptCR(0);
+                std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
+                std::string tmp(str);
+                int pos(tmp.find("\n"));
+
+                while (pos != -1) {
+                    cmptCR++;
+                    tmp = tmp.substr(pos+2, tmp.length());
+                    pos = tmp.find("\n"); // for linux install
+                }
+                size_t size((str.length() + cmptCR*2) * 4);
+
+                this->_chunk  = new uint8_t[size];
+                this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
+
+                this->send_FormatListPDU();
+
+
+            } else if (mimeData->hasUrls()){
+                this->emptyBuffer();
+                this->_bufferTypeID = 0;                    //49279;
+                this->_bufferTypeLongName = std::string(this->_front->FILECONTENTS);
+
+                //const QList<QUrl> list = mimeData->urls();
 
                 this->send_FormatListPDU();
 
@@ -1005,4 +1015,5 @@ public Q_SLOTS:
     }
 
 };
+
 

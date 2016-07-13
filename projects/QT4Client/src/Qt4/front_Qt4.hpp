@@ -16,10 +16,12 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Clément Moroldo
-
 */
 
+
 #pragma once
+
+#define LOGPRINT
 
 #ifndef Q_MOC_RUN
 #include <stdio.h>
@@ -205,13 +207,18 @@ public:
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatShortName;
+    std::string          _requestedFormatName;
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
     size_t               _bufferRDPClipboardChannelSizeTotal;
     int                  _bufferRDPCLipboardMetaFilePic_width;
     int                  _bufferRDPCLipboardMetaFilePic_height;
     int                  _bufferRDPClipboardMetaFilePicBPP;
+    uint32_t           * _formatIDs;
+    std::string        * _formatListDataShortName;
+    int                  _nbFormatIDs;
+    const std::string    FILECONTENTS;
+    int                  _streamIdFileContent;
 
 
     enum : int {
@@ -221,7 +228,6 @@ public:
       , IP_GOTTEN     = 4
       , PORT_GOTTEN   = 8
     };
-
 
 
     bool setClientInfo() override;
@@ -255,6 +261,8 @@ public:
     void send_imageBuffer_to_clipboard();
 
     void empty_buffer() override;
+
+    virtual void set_pointer(Pointer const & cursor) override;
 
 
 
