@@ -21,17 +21,23 @@
 
 #pragma once
 
-#include "system/ssl_bignum.hpp"
+#include "system/big_integer.hpp"
 
-static inline size_t mod_exp(uint8_t * out, size_t out_len,
-               const uint8_t * inr, size_t in_len,
-               const uint8_t * modulus, size_t modulus_size,
-               const uint8_t * exponent, size_t exponent_size)
-{
-    Bignum mod(modulus, modulus_size);
-    Bignum exp(exponent, exponent_size);
-    Bignum x(inr, in_len);
-    Bignum y = x.mod_exp(exp, mod); 
-    return y.get_bin(out, out_len);
+/**
+ * \pre  \a out_len >= \a modulus_size
+ * \return  the length of the big-endian number placed at out. ~size_t{} if error
+ */
+static inline size_t mod_exp(
+    uint8_t * out, size_t out_len,
+    const uint8_t * inr, size_t in_len,
+    const uint8_t * modulus, size_t modulus_size,
+    const uint8_t * exponent, size_t exponent_size
+) {
+    BigInteger mod(modulus, modulus_size);
+    BigInteger exp(exponent, exponent_size);
+    BigInteger x(inr, in_len);
+    BigInteger y = x.powAssignUnderMod(exp, mod);
+    // TODO bad format, base 10 -> base 256
+    return y.getNumber().copy(out, out_len);
 }
 

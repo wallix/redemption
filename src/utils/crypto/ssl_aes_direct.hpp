@@ -42,6 +42,8 @@ enum class AES_direction : bool {
     Add any additional defines you need
 */
 
+// TODO macros, no No NOOOOO !
+
 #define     MODE_ECB        1    /*  Are we ciphering in ECB mode?   */
 #define     MODE_CBC        2    /*  Are we ciphering in CBC mode?   */
 #define     MODE_CFB1       3    /*  Are we ciphering in 1-bit CFB mode? */
@@ -148,7 +150,7 @@ private:
        /* multiply two elements of GF(2^m)
         * needed for MixColumn and InvMixColumn
         */
-        uint8_t Alogtable[256] = {
+        constexpr static uint8_t Alogtable[256] = {
           1,   3,   5,  15,  17,  51,  85, 255,  26,  46, 114, 150, 161, 248,  19,  53,
          95, 225,  56,  72, 216, 115, 149, 164, 247,   2,   6,  10,  30,  34, 102, 170,
         229,  52,  92, 228,  55,  89, 235,  38, 106, 190, 217, 112, 144, 171, 230,  49,
@@ -167,7 +169,7 @@ private:
          57,  75, 221, 124, 132, 151, 162, 253,  28,  36, 108, 180, 199,  82, 246,   1,
         };
 
-        uint8_t Logtable[256] = {
+        constexpr static uint8_t Logtable[256] = {
           0,   0,  25,   1,  50,   2,  26, 198,  75, 199,  27, 104,  51, 238, 223,   3,
         100,   4, 224,  14,  52, 141, 129, 239,  76, 113,   8, 200, 248, 105,  28, 193,
         125, 194,  29, 181, 249, 185,  39, 106,  77, 228, 166, 114, 154, 201,   9, 120,
@@ -297,7 +299,7 @@ private:
 
     int rijndaelDecrypt (uint8_t a[4][BC], int keyBits, int blockBits, uint8_t rk[MAXROUNDS+1][4][BC])
     {
-        const uint8_t Si[256] = {
+        constexpr static uint8_t Si[256] = {
          82,   9, 106, 213,  48,  54, 165,  56, 191,  64, 163, 158, 129, 243, 215, 251,
         124, 227,  57, 130, 155,  47, 255, 135,  52, 142,  67,  68, 196, 222, 233, 203,
          84, 123, 148,  50, 166, 194,  35,  61, 238,  76, 149,  11,  66, 250, 195,  78,
@@ -319,10 +321,10 @@ private:
         int r, ROUNDS;
 
         switch (keyBits >= blockBits ? keyBits : blockBits) {
-        case 128: ROUNDS = 10; break;
-        case 192: ROUNDS = 12; break;
-        case 256: ROUNDS = 14; break;
-        default : return (-3); /* this cannot happen */
+            case 128: ROUNDS = 10; break;
+            case 192: ROUNDS = 12; break;
+            case 256: ROUNDS = 14; break;
+            default : return (-3); /* this cannot happen */
         }
 
         /* To decrypt: apply the inverse operations of the encrypt routine,
@@ -365,7 +367,7 @@ private:
          */
         int r, ROUNDS;
 
-        const uint8_t S[256] = {
+        constexpr static uint8_t S[256] = {
              99, 124, 119, 123, 242, 107, 111, 197,  48,   1, 103,  43, 254, 215, 171, 118,
             202, 130, 201, 125, 250,  89,  71, 240, 173, 212, 162, 175, 156, 164, 114, 192,
             183, 253, 147,  38,  54,  63, 247, 204,  52, 165, 229, 241, 113, 216,  49,  21,
@@ -632,14 +634,14 @@ private:
         default : return (-3); /* this cannot happen */
         }
 
-        uint64_t rcon[30] = {
+        constexpr static uint64_t rcon[30] = {
             0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
             0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f,
             0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4,
             0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91,
         };
 
-        const uint8_t S[256] = {
+        constexpr static uint8_t S[256] = {
              99, 124, 119, 123, 242, 107, 111, 197,  48,   1, 103,  43, 254, 215, 171, 118,
             202, 130, 201, 125, 250,  89,  71, 240, 173, 212, 162, 175, 156, 164, 114, 192,
             183, 253, 147,  38,  54,  63, 247, 204,  52, 165, 229, 241, 113, 216,  49,  21,

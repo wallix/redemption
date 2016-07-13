@@ -341,7 +341,7 @@ private:
         bool bogus_refresh_rect_ex;
 
     public:
-        ModOSD(ModuleManager & mm)
+        explicit ModOSD(ModuleManager & mm)
         : ProtectGraphics(mm.front, Rect{})
         , mm(mm)
         {}

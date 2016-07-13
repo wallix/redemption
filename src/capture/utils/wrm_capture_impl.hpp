@@ -74,6 +74,8 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
             }
         }
 
+        TransportVariant & operator = (TransportVariant const &) = delete;
+
         ~TransportVariant() {
             this->trans->~Transport();
         }

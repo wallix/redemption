@@ -19,21 +19,18 @@
 
 #include "program_options/program_options.hpp"
 
-#ifndef HASH_LEN
-#define HASH_LEN 64
-#endif
-
-#define QUICK_CHECK_LENGTH 4096
+enum { QUICK_CHECK_LENGTH = 4096 };
 
 
+// ifile is a thin API layer over system open/read/close
+// it means open/read/close mimicks system open/read/close
 struct ifile_read_API
 {
-    // ifile is a thin API layer over system open/read/close
-    // it means open/read/close mimicks system open/read/close
-    // (except fd is wrapped in an object)
+    ifile_read_API() = default;
 
-    int fd;
-    ifile_read_API() : fd(-1) {}
+    ifile_read_API(ifile_read_API const &) = delete;
+    ifile_read_API & operator = (ifile_read_API const &) = delete;
+
     // We choose to define an open function to mimick system behavior
     // instead of opening through constructor. This allows to manage
     // explicit error management depending on return code.
@@ -51,31 +48,39 @@ struct ifile_read_API
     // this is to avoid performing close twice when called explicitely
     // as it is also performed by destructor (in most cases there will be
     // no reason for calling close explicitly).
-    virtual void close()
+    virtual void close() = 0;
+
+    virtual ~ifile_read_API() = default;
+};
+
+struct ifile_read : ifile_read_API
+{
+    int open(const char * s) override
+    {
+        this->fd = ::open(s, O_RDONLY);
+        return this->fd;
+    }
+
+    int read(char * buf, size_t len) override
+    {
+        return ::read(this->fd, buf, len);
+    }
+
+    void close() override
     {
         ::close(fd);
         this->fd = -1;
     }
 
-    virtual ~ifile_read_API(){
+    ~ifile_read() override
+    {
         if (this->fd != -1){
             this->close();
         }
     }
-};
 
-struct ifile_read : public ifile_read_API
-{
-    int open(const char * s)
-    {
-        this->fd = ::open(s, O_RDONLY);
-        return this->fd;
-    }
-    int read(char * buf, size_t len)
-    {
-        return ::read(this->fd, buf, len);
-    }
-    virtual ~ifile_read(){}
+protected:
+    int fd = -1;
 };
 
 
@@ -101,7 +106,7 @@ struct HashHeader {
     unsigned version;
 };
 
-class ifile_read_encrypted : public ifile_read_API
+class ifile_read_encrypted : public ifile_read
 {
 public:
     CryptoContext * cctx;
@@ -121,7 +126,6 @@ public:
     explicit ifile_read_encrypted(CryptoContext * cctx, int encryption)
 
     : cctx(cctx)
-    , fd(-1)
     , clear_data{}
     , clear_pos(0)
     , raw_size(0)
@@ -132,15 +136,7 @@ public:
     {
     }
 
-    ~ifile_read_encrypted()
-    {
-        if (-1 != this->fd) {
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-    int open(const char * filename)
+    int open(const char * filename) override
     {
         this->fd = ::open(filename, O_RDONLY);
         if (this->fd < 0) {
@@ -264,7 +260,7 @@ public:
         return 0;
     }
 
-    int read(char * data, size_t len)
+    int read(char * data, size_t len) override
     {
         if (this->encrypted){
             if (this->state & CF_EOF) {
@@ -621,9 +617,9 @@ public:
         using reverse_iterator = std::reverse_iterator<char*>;
         reverse_iterator first(cur);
         reverse_iterator space(eol);
-        for(int i = 0; i < ((header.version==1)?2:10) + 2*header.has_checksum; i++){
+        for(int i = 0; i < ((header.version==1)?2:10) + 2*header.has_checksum; ++i){
             space = std::find(space, first, ' ');
-            space++;
+            ++space;
         }
         int path_len = first-space;
         in_copy_bytes(
