@@ -11,9 +11,10 @@ awk '/\/\/(\s*'"$TODO_pattern"'|.*[^-_0-9a-zA-Z]'"$TODO_pattern"')/ {
 }
 /\/\*/ {
   blk=1
-  comment=""
+  comment="/* "
   line=NR
   filename=FILENAME
+  sub(/^.*\/\*/, "")
 }
 {
   if(blk) {
@@ -23,7 +24,9 @@ awk '/\/\/(\s*'"$TODO_pattern"'|.*[^-_0-9a-zA-Z]'"$TODO_pattern"')/ {
 }
 /\*\// {
   blk=0
-  if(comment ~ /([^-_0-9a-zA-Z]|^)'"$TODO_pattern"'/)
-    print "TODO:" filename ":" line ":" comment
+  sub(/\s+\*\/.*$/, "", comment)
+  if(comment ~ /([^-_0-9a-zA-Z]|^)'"$TODO_pattern"'/) {
+    print "TODO:" filename ":" line ":" comment " */"
+  }
 }
 ENDFILE { NR=0 }' "$@"
