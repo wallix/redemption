@@ -1262,9 +1262,6 @@ protected:
         file_system_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_file_system_log_wrm;
 
-        file_system_virtual_channel_params.acl                             =
-            this->acl;
-
         return file_system_virtual_channel_params;
     }
 
@@ -1316,9 +1313,6 @@ protected:
 
         session_probe_virtual_channel_params.lang                                   =
             this->lang;
-
-        session_probe_virtual_channel_params.acl                                    =
-            this->acl;
 
         session_probe_virtual_channel_params.bogus_refresh_rect_ex                  =
             (this->bogus_refresh_rect && this->allow_using_multiple_monitors &&
