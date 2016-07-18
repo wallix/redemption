@@ -74,8 +74,6 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
     const bool        param_dont_log_data_into_syslog;
     const bool        param_dont_log_data_into_wrm;
 
-    auth_api*         param_acl;
-
     bool user_logged_on = false;
 
     class DeviceRedirectionManager
@@ -856,8 +854,6 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
-
-        auth_api* acl;
     };
 
     FileSystemVirtualChannel(
@@ -877,7 +873,6 @@ public:
     , param_random_number(params.random_number)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
-    , param_acl(params.acl)
     , device_redirection_manager(
           file_system_drive_manager,
           user_logged_on,
@@ -1602,12 +1597,12 @@ public:
                                     "/desktop.ini",
                                     sizeof("/desktop.ini")-1
                                 )) {
-                                    if (this->param_acl) {
+                                    if (this->authentifier) {
                                         std::string info("file_name='");
                                         info += target_info.file_path;
                                         info += "'";
 
-                                        this->param_acl->log4(
+                                        this->authentifier->log4(
                                             !this->param_dont_log_data_into_syslog,
                                             "DRIVE_REDIRECTION_READ",
                                             info.c_str());
@@ -1647,12 +1642,12 @@ public:
                         if (target_iter != this->device_io_target_info_inventory.end()) {
                             device_io_target_info_type & target_info = *target_iter;
                             if (!target_info.for_writing) {
-                                if (this->param_acl) {
+                                if (this->authentifier) {
                                     std::string info("file_name='");
                                     info += target_info.file_path;
                                     info += "'";
 
-                                    this->param_acl->log4(
+                                    this->authentifier->log4(
                                         !this->param_dont_log_data_into_syslog,
                                         "DRIVE_REDIRECTION_WRITE",
                                         info.c_str());

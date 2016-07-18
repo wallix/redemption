@@ -53,8 +53,6 @@ private:
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
 
-    auth_api*  param_acl = nullptr;
-
     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
     FrontAPI& front;
@@ -74,8 +72,6 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
-
-        auth_api* acl;
     };
 
     ClipboardVirtualChannel(
@@ -91,7 +87,6 @@ public:
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
-    , param_acl(params.acl)
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr) {}
 
@@ -405,14 +400,14 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->param_acl) {
+                if (this->authentifier) {
                     std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log4(
+                    this->authentifier->log4(
                         !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
                         info.c_str());
@@ -448,14 +443,14 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->param_acl) {
+                if (this->authentifier) {
                     std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log4(
+                    this->authentifier->log4(
                         !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION",
                         info.c_str());
@@ -1009,14 +1004,14 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->param_acl) {
+                if (this->authentifier) {
                     std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log4(
+                    this->authentifier->log4(
                         !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                         info.c_str());
@@ -1043,14 +1038,14 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                if (this->param_acl) {
+                if (this->authentifier) {
                     std::string info("file_name='");
                     info += fd.fileName();
                     info += "' size='";
                     info += std::to_string(fd.file_size());
                     info += "'";
 
-                    this->param_acl->log4(
+                    this->authentifier->log4(
                         !this->param_dont_log_data_into_syslog,
                         "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION",
                         info.c_str());

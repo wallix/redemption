@@ -1221,9 +1221,6 @@ protected:
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_clipboard_log_wrm;
 
-        clipboard_virtual_channel_params.acl                             =
-            this->acl;
-
         return clipboard_virtual_channel_params;
     }
 
