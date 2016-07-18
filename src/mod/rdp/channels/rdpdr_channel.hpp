@@ -1698,12 +1698,12 @@ public:
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
                                 device_io_target_info_type & target_info = *target_iter;
-                                if (this->param_acl) {
+                                if (this->authentifier) {
                                     std::string info("file_name='");
                                     info += target_info.file_path;
                                     info += "'";
 
-                                    this->param_acl->log4(
+                                    this->authentifier->log4(
                                         !this->param_dont_log_data_into_syslog,
                                         "DRIVE_REDIRECTION_DELETE",
                                         info.c_str());
@@ -1717,14 +1717,14 @@ public:
                             auto target_iter = this->find_target_response(device_io_response, FileId);
                             if (target_iter != this->device_io_target_info_inventory.end()) {
                                 device_io_target_info_type & target_info = *target_iter;
-                                if (this->param_acl) {
+                                if (this->authentifier) {
                                     std::string info("old_file_name='");
                                     info += target_info.file_path;
                                     info += "' new_file_name='";
                                     info += file_path;
                                     info += "'";
 
-                                    this->param_acl->log4(
+                                    this->authentifier->log4(
                                         !this->param_dont_log_data_into_syslog,
                                         "DRIVE_REDIRECTION_RENAME",
                                         info.c_str());
