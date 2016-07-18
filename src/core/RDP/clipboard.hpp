@@ -696,7 +696,7 @@ struct FormatListPDU : public CliprdrHeader {
             stream.out_uint32_le(formatListData[i]);
             std::string const & currentStr = formatListDataShortName[i];
             REDASSERT(currentStr.size() <= 32);
-            stream.out_copy_bytes(currentStr.c_str(), currentStr.size());
+            stream.out_copy_bytes(currentStr.data(), currentStr.size());
             stream.out_clear_bytes(32 - currentStr.size()); // formatName(32)
         }
     }
@@ -957,13 +957,94 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 };
 
 
+
+//2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST)
+
+//The File Contents Request PDU is sent by the recipient of the Format List PDU. It is used to request either the size of a remote file copied to the clipboard or a portion of the data in the file.
+
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                            streamId                           |
+// +---------------------------------------------------------------+
+// |                             lindex                            |
+// +---------------------------------------------------------------+
+// |                             dwFlags                           |
+// +---------------------------------------------------------------+
+// |                          nPositionLow                         |
+// +---------------------------------------------------------------+
+// |                          nPositionHigh                        |
+// +---------------------------------------------------------------+
+// |                           cbRequested                         |
+// +---------------------------------------------------------------+
+// |                       clipDataId (optional)                   |
+// +---------------------------------------------------------------+
+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_FILECONTENTS_REQUEST (0x0008), while the msgFlags field MUST be set to 0x0000.
+
+// streamId (4 bytes): An unsigned, 32-bit format ID used to associate the File Contents Request PDU with the corresponding File Contents Response PDU. The File Contents Response PDU is sent as a reply and contains an identical value in the streamId field.
+
+// lindex (4 bytes): A signed, 32-bit integer that specifies the numeric ID of the remote file that is the target of the File Contents Request PDU. This field is used as an index that identifies a particular file in a File List. This File List SHOULD have been obtained as clipboard data in a prior Format Data Request PDU and Format Data Response PDU exchange.
+
+// dwFlags (4 bytes): An unsigned, 32-bit integer that specifies the type of operation to be performed by the recipient.
+
+//  +----------------------------+--------------------------------------------+
+//  | Value                      | Meaning                                    |
+//  +----------------------------+--------------------------------------------+
+//  | FILECONTENTS_SIZE          | A request for the size of the file         |
+//  | 0x00000001                 | identified by the lindex field. The size   |
+//  |                            | MUST be returned as a 64-bit, unsigned     |
+//  |                            | integer. The cbRequested field MUST be set |
+//  |                            | to 0x00000008 and both the nPositionLow and|
+//  |                            | nPositionHigh fields MUST be set to        |
+//  |                            | 0x00000000.                                |
+//  +----------------------------+--------------------------------------------+
+//  | FILECONTENTS_RANGE         | A request for the data present in the file |
+//  | 0x00000002                 | identified by the lindex field. The data to|
+//  |                            | be retrieved is extracted starting from the|
+//  |                            | offset given by the nPositionLow and       |
+//  |                            | nPositionHigh fields. The maximum number   |
+//  |                            | of bytes to extract is specified by the    |
+//  |                            | cbRequested field.                         |
+//  +----------------------------+--------------------------------------------+
+
+//    The FILECONTENTS_SIZE and FILECONTENTS_RANGE flags MUST NOT be set at the same time.
+
+//nPositionLow (4 bytes): An unsigned, 32-bit integer that specifies the low bytes of the offset into the remote file, identified by the lindex field, from where the data needs to be extracted to satisfy a FILECONTENTS_RANGE operation.
+
+//nPositionHigh (4 bytes): An unsigned, 32-bit integer that specifies the high bytes of the offset into the remote file, identified by the lindex field, from where the data needs to be extracted to satisfy a FILECONTENTS_RANGE operation. This field is currently not used because offsets greater than 4,294,967,295 bytes are not supported, and MUST be set to zero.
+
+//cbRequested (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data to retrieve. For a FILECONTENTS_SIZE operation, this field MUST be set to 0x00000008. In the case of a FILECONTENTS_RANGE operation, this field contains the maximum number of bytes to read from the remote file.
+
+//clipDataId (4 bytes): An optional unsigned, 32-bit integer that identifies File Stream data which was tagged in a prior Lock Clipboard Data PDU (section 2.2.4.1).
+
+enum : int {
+    FILECONTENTS_SIZE  = 0x00000001
+  , FILECONTENTS_RANGE = 0x00000002
+};
+
+
 struct FileContentsRequest : CliprdrHeader {
     explicit FileContentsRequest(bool response_ok = false)
-    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
+    : CliprdrHeader( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream, int streamID) {
         CliprdrHeader::emit(stream);
+        stream.out_uint32_le(streamID);
+        stream.out_uint32_le(streamID);
+        stream.out_uint32_le(streamID);
+        stream.out_uint32_le(FILECONTENTS_SIZE);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(0);
     }
 };
 
