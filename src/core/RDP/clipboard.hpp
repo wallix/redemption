@@ -883,78 +883,8 @@ struct FormatDataRequestPDU : public CliprdrHeader {
     }
 };  // struct FormatDataRequestPDU
 
-// [MS-RDPECLIP] 2.2.5.2 Format Data Response PDU (CLIPRDR_FORMAT_DATA_RESPONSE)
-// =============================================================================
 
-// The Format Data Response PDU is sent as a reply to the Format Data Request
-//  PDU. It is used to indicate whether processing of the Format Data Request
-//  PDU was successful. If the processing was successful, the Format Data
-//  Response PDU includes the contents of the requested clipboard data.
 
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                           clipHeader                          |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                 requestedFormatData (variable)                |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
-//  Clipboard PDU Header MUST be set to CB_FORMAT_DATA_RESPONSE (0x0005). The
-//  CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in
-//  the msgFlags field of the Clipboard PDU Header structure.
-
-// requestedFormatData (variable): Variable length clipboard format data. The
-//  contents of this field MUST be one of the following types: generic, Packed
-//  Metafile Payload, or Packed Palette Payload.
-
-struct FormatDataResponsePDU : public CliprdrHeader {
-    FormatDataResponsePDU()
-        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
-                       , CB_RESPONSE_FAIL
-                       , 0) {
-    }
-
-    explicit FormatDataResponsePDU(bool response_ok)
-        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
-                       , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                       , 0) {
-    }
-
-    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
-        stream.out_uint16_le(this->msgType_);
-        stream.out_uint16_le(this->msgFlags_);
-
-        if (this->msgFlags_ == CB_RESPONSE_OK) {
-            stream.out_uint32_le(data_length);  // dataLen(4)
-
-            if (data_length) {
-                stream.out_copy_bytes(data, data_length);
-            }
-        }
-        else {
-            stream.out_uint32_le(0);    // dataLen(4)
-        }
-    }
-
-    void emit_ex(OutStream & stream, size_t data_length) const {
-        stream.out_uint16_le(this->msgType_);
-        stream.out_uint16_le(this->msgFlags_);
-
-        stream.out_uint32_le(                           // dataLen(4)
-                (this->msgFlags_ == CB_RESPONSE_OK) ?
-                data_length :
-                0
-            );
-    }
-
-    using CliprdrHeader::recv;
-};
 
 
 
@@ -1017,27 +947,27 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
 //    The FILECONTENTS_SIZE and FILECONTENTS_RANGE flags MUST NOT be set at the same time.
 
-//nPositionLow (4 bytes): An unsigned, 32-bit integer that specifies the low bytes of the offset into the remote file, identified by the lindex field, from where the data needs to be extracted to satisfy a FILECONTENTS_RANGE operation.
+// nPositionLow (4 bytes): An unsigned, 32-bit integer that specifies the low bytes of the offset into the remote file, identified by the lindex field, from where the data needs to be extracted to satisfy a FILECONTENTS_RANGE operation.
 
-//nPositionHigh (4 bytes): An unsigned, 32-bit integer that specifies the high bytes of the offset into the remote file, identified by the lindex field, from where the data needs to be extracted to satisfy a FILECONTENTS_RANGE operation. This field is currently not used because offsets greater than 4,294,967,295 bytes are not supported, and MUST be set to zero.
+// nPositionHigh (4 bytes): An unsigned, 32-bit integer that specifies the high bytes of the offset into the remote file, identified by the lindex field, from where the data needs to be extracted to satisfy a FILECONTENTS_RANGE operation. This field is currently not used because offsets greater than 4,294,967,295 bytes are not supported, and MUST be set to zero.
 
-//cbRequested (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data to retrieve. For a FILECONTENTS_SIZE operation, this field MUST be set to 0x00000008. In the case of a FILECONTENTS_RANGE operation, this field contains the maximum number of bytes to read from the remote file.
+// cbRequested (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data to retrieve. For a FILECONTENTS_SIZE operation, this field MUST be set to 0x00000008. In the case of a FILECONTENTS_RANGE operation, this field contains the maximum number of bytes to read from the remote file.
 
-//clipDataId (4 bytes): An optional unsigned, 32-bit integer that identifies File Stream data which was tagged in a prior Lock Clipboard Data PDU (section 2.2.4.1).
+// clipDataId (4 bytes): An optional unsigned, 32-bit integer that identifies File Stream data which was tagged in a prior Lock Clipboard Data PDU (section 2.2.4.1).
 
 enum : int {
     FILECONTENTS_SIZE  = 0x00000001
   , FILECONTENTS_RANGE = 0x00000002
 };
 
-
-struct FileContentsRequest : CliprdrHeader {
-    explicit FileContentsRequest(bool response_ok = false)
+struct FileContentsRequestPDU : CliprdrHeader {
+    explicit FileContentsRequestPDU(bool response_ok = false)
     : CliprdrHeader( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
     void emit(OutStream & stream, int streamID) {
-        CliprdrHeader::emit(stream);
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(streamID);
         stream.out_uint32_le(streamID);
         stream.out_uint32_le(streamID);
@@ -1047,6 +977,9 @@ struct FileContentsRequest : CliprdrHeader {
         stream.out_uint32_le(0);
     }
 };
+
+
+
 
 
 struct FileContentsResponse : CliprdrHeader {
@@ -1370,6 +1303,422 @@ enum {
 // A record type is not defined for the WMF Header record, because only one can be present as the first record in the metafile.
 
 
+// [MS-RDPECLIP] 2.2.5.2 Format Data Response PDU (CLIPRDR_FORMAT_DATA_RESPONSE)
+// =============================================================================
+
+// The Format Data Response PDU is sent as a reply to the Format Data Request
+//  PDU. It is used to indicate whether processing of the Format Data Request
+//  PDU was successful. If the processing was successful, the Format Data
+//  Response PDU includes the contents of the requested clipboard data.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 requestedFormatData (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+//  Clipboard PDU Header MUST be set to CB_FORMAT_DATA_RESPONSE (0x0005). The
+//  CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in
+//  the msgFlags field of the Clipboard PDU Header structure.
+
+// requestedFormatData (variable): Variable length clipboard format data. The
+//  contents of this field MUST be one of the following types: generic, Packed
+//  Metafile Payload, or Packed Palette Payload.
+
+enum : int {
+      METAFILE_HEADERS_SIZE      = 130
+    , META_DIBSTRETCHBLT_HEADER_SIZE = 66
+    , METAFILE_WORDS_HEADER_SIZE     = 118
+};
+
+enum : int {
+      PASTE_TEXT_CONTENT_SIZE    = 1592  // = 1600 - 8
+    , PASTE_PIC_CONTENT_SIZE     = 1462  // = 1600 - METAFILE_WORDS_HEADER_SIZE - 8
+    , PDU_MAX_SIZE               = 1600
+};
+
+struct FormatDataResponsePDU : public CliprdrHeader {
+    FormatDataResponsePDU()
+        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
+                       , CB_RESPONSE_FAIL
+                       , 0) {
+    }
+
+    explicit FormatDataResponsePDU(bool response_ok)
+        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
+                       , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
+                       , 0) {
+    }
+
+    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
+
+        if (this->msgFlags_ == CB_RESPONSE_OK) {
+            stream.out_uint32_le(data_length);  // dataLen(4)
+
+            if (data_length) {
+                stream.out_copy_bytes(data, data_length);
+            }
+        }
+        else {
+            stream.out_uint32_le(0);    // dataLen(4)
+        }
+    }
+
+    void emit_ex(OutStream & stream, size_t data_length) const {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
+
+        stream.out_uint32_le(                           // dataLen(4)
+                (this->msgFlags_ == CB_RESPONSE_OK) ?
+                data_length :
+                0
+            );
+    }
+
+    void emit_text(OutStream & stream, int length) {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
+        stream.out_uint32_le(length);
+    }
+
+    void emit_pic(OutStream & stream, int data_length, int width, int height, int depth) {
+        stream.out_uint16_le(this->msgType_);
+        stream.out_uint16_le(this->msgFlags_);
+
+
+        const int largeRecordWordsSize((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+        stream.out_uint32_le(data_length + METAFILE_HEADERS_SIZE);
+
+
+        // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
+        // 12 bytes
+        stream.out_uint32_le(MM_ANISOTROPIC);
+        stream.out_uint32_le(width*40);
+        stream.out_uint32_le(height*40);
+
+
+        // 3.2.1 META_HEADER Example
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |             Type              |          HeaderSize           |
+        // +-------------------------------+-------------------------------+
+        // |           Version             |             Size              |
+        // +-------------------------------+-------------------------------+
+        // |             ...               |        NumberOfObjects        |
+        // +-------------------------------+-------------------------------+
+        // |                     metaFileData (variable)                   |
+        // +-------------------------------+-------------------------------+
+        // |       NumberOfMembers         |                               |
+        // +-------------------------------+-------------------------------+
+
+        // Type: 0x0001 specifies the type of metafile from the MetafileType Enumeration
+        // (section 2.1.1.18) to be a metafile stored in memory.
+
+        // HeaderSize: 0x0009 specifies the number of WORDs in this record, which is equivalent
+        // to 18 (0x0012) bytes.
+
+        // Version: 0x0300 specifies the metafile version from the MetafileVersion Enumeration
+        // (section 2.1.1.19) to be a WMF metafile that supports DIBs.
+
+        // Size: 0x00000036 specifies the number of WORDs in the entire metafile, which is
+        // equivalent to 108 (0x0000006C) bytes.
+
+        // NumberOfObjects: 0x0002 specifies the number of graphics objects that are defined in the metafile.
+
+        // MaxRecord: 0x0000000C specifies the size in WORDs of the largest record in the
+        // metafile, which is equivalent to 24 (0x00000018) bytes.
+
+        // NumberOfMembers: 0x0000 is not used.
+
+        // Note Based on the value of the NumberOfObjects field, a WMF Object Table (section 3.1.4.1)
+        // can be created that is large enough for 2 objects.
+
+        // 18 bytes
+        stream.out_uint16_le(MEMORYMETAFILE);
+        stream.out_uint16_le(9);
+        stream.out_uint16_le(METAVERSION300);
+        stream.out_uint32_le((data_length + METAFILE_WORDS_HEADER_SIZE)/2);
+        stream.out_uint16_le(0);
+        stream.out_uint32_le(largeRecordWordsSize);
+        stream.out_uint16_le(0);
+
+
+        // 2.3 WMF Records
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |                           RecordSize                          |
+        // +-------------------------------+-------------------------------+
+        // |        RecordFunction         |           rdParam             |
+        // +-------------------------------+-------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+
+        // RecordSize (4 bytes): A 32-bit unsigned integer that defines the number of 16-bit WORDs
+        // in the record.
+
+        // RecordFunction (2 bytes): A 16-bit unsigned integer that defines the type of this record.
+        // The low-order byte MUST match the low-order byte of one of the values in the RecordType Enumeration.
+
+        // rdParam (variable): An optional place holder that is provided for record-specific fields.
+
+        //      META_SETMAPMODE (8 bytes)
+        stream.out_uint32_le(4);
+        stream.out_uint16_le(META_SETMAPMODE);
+        stream.out_uint16_le(MM_ANISOTROPIC);
+
+
+        //      META_SETWINDOWEXT (10 bytes)
+        stream.out_uint32_le(5);
+        stream.out_uint16_le(META_SETWINDOWEXT);
+        stream.out_uint16_le( - height);
+        stream.out_uint16_le(width);
+
+
+        //      META_SETWINDOWORG (10 bytes)
+        stream.out_uint32_le(5);
+        stream.out_uint16_le(META_SETWINDOWORG);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le(0);
+
+
+        // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
+
+        // This section specifies the structure of the META_DIBSTRETCHBLT record when it contains an
+        // embedded device-independent bitmap (DIB).
+
+        // Fields not specified in this section are specified in the preceding META_DIBSTRETCHBLT section.
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |                           RecordSize                          |
+        // +-------------------------------+-------------------------------+
+        // |        RecordFunction         |           rdParam             |
+        // +-------------------------------+-------------------------------+
+        // |             ...               |          SrcHeight            |
+        // +-------------------------------+-------------------------------+
+        // |           SrcWidth            |             YSrc              |
+        // +-------------------------------+-------------------------------+
+        // |             XSrc              |         DestHeight            |
+        // +-------------------------------+-------------------------------+
+        // |          DestWidth            |             YDest             |
+        // +-------------------------------+-------------------------------+
+        // |            XDest              |      Target (variable)        |
+        // +-------------------------------+-------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+
+        // RecordFunction (2 bytes): A 16-bit unsigned integer that defines this WMF record type.
+        // The low-order byte MUST match the low-order byte of the RecordType enumeration (section 2.1.1.1)
+        // value META_DIBSTRETCHBLT. The high-order byte MUST contain a value equal to the number of 16-bit
+        // WORDs in the record minus the number of WORDs in the RecordSize and Target fields. That is:
+
+        //      RecordSize - (2 + (sizeof(Target)/2))
+
+        // Target (variable): A variable-sized DeviceIndependentBitmap Object (section 2.2.2.9) that defines
+        // image content. This object MUST be specified, even if the raster operation does not require a source.
+
+        // 26 bytes
+        stream.out_uint32_le(largeRecordWordsSize);
+        stream.out_uint16_le(META_DIBSTRETCHBLT);
+        stream.out_uint32_le(0x00CC0020); // SRCCOPY
+        stream.out_uint16_le(height);
+        stream.out_uint16_le(width);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le(- height);
+        stream.out_uint16_le(width);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le(0);
+
+
+        // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |                     DIBHeaderInfo (variable)                  |
+        // +---------------------------------------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+        // |                        Colors (variable)                      |
+        // +---------------------------------------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+        // |                    BitmapBuffer (variable)                    |
+        // +---------------------------------------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+
+        // DIBHeaderInfo (variable): Either a BitmapCoreHeader Object (section 2.2.2.2) or a BitmapInfoHeader
+        // Object (section 2.2.2.3) that specifies information about the image.
+
+        // The first 32 bits of this field is the HeaderSize value. If it is 0x0000000C, then this is a
+        // BitmapCoreHeader; otherwise, this is a BitmapInfoHeader.
+
+        // Colors (variable): An optional array of either RGBQuad Objects (section 2.2.2.20) or 16-bit unsigned
+        // integers that define a color table.
+
+        // The size and contents of this field SHOULD be determined from the metafile record or object that
+        // contains this DeviceIndependentBitmap and from information in the DIBHeaderInfo field. See ColorUsage
+        // Enumeration (section 2.1.1.6) and BitCount Enumeration (section 2.1.1.3) for additional details.
+
+
+        // BitmapBuffer (variable): A buffer containing the image, which is not required to be contiguous with the
+        // DIB header, unless this is a packed bitmap.
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |                    UndefinedSpace (variable)                  |
+        // +---------------------------------------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+        // |                        aData (variable)                       |
+        // +---------------------------------------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+
+        // UndefinedSpace (variable): An optional field that MUST be ignored. If this DIB is a packed bitmap,
+        // this field MUST NOT be present.
+
+        // aData (variable): An array of bytes that define the image.
+
+        //      The size and format of this data is determined by information in the DIBHeaderInfo field.
+        // If it is a BitmapCoreHeader, the size in bytes MUST be calculated as follows:
+
+        //              (((Width * Planes * BitCount + 31) & ~31) / 8) * abs(Height)
+
+        //      This formula SHOULD also be used to calculate the size of aData when DIBHeaderInfo is a BitmapInfoHeader
+        // Object, using values from that object, but only if its Compression value is BI_RGB, BI_BITFIELDS, or BI_CMYK.
+
+        //      Otherwise, the size of aData MUST be the BitmapInfoHeader Object value ImageSize.
+
+
+        // 2.2.2.3 BitmapInfoHeader Object
+
+        // The BitmapInfoHeader Object contains information about the dimensions and color format of a device-independent
+        // bitmap (DIB).
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |                           HeaderSize                          |
+        // +---------------------------------------------------------------+
+        // |                             Width                             |
+        // +---------------------------------------------------------------+
+        // |                            Height                             |
+        // +-------------------------------+-------------------------------+
+        // |          Planes               |           BitCount            |
+        // +-------------------------------+-------------------------------+
+        // |                         Compression                           |
+        // +---------------------------------------------------------------+
+        // |                          ImageSize                            |
+        // +---------------------------------------------------------------+
+        // |                         XPelsPerMeter                         |
+        // +---------------------------------------------------------------+
+        // |                         YPelsPerMeter                         |
+        // +---------------------------------------------------------------+
+        // |                          ColorUsed                            |
+        // +---------------------------------------------------------------+
+        // |                        ColorImportant                         |
+        // +---------------------------------------------------------------+
+
+        // HeaderSize (4 bytes): A 32-bit unsigned integer that defines the size of this object, in bytes.
+
+        // Width (4 bytes): A 32-bit signed integer that defines the width of the DIB, in pixels. This value
+        // MUST be positive.
+
+        //          This field SHOULD specify the width of the decompressed image file, if the
+        //          Compression value specifies JPEG or PNG format.<44>
+
+        // Height (4 bytes): A 32-bit signed integer that defines the height of the DIB, in pixels. This value MUST NOT
+        // be zero.
+
+        // Planes (2 bytes): A 16-bit unsigned integer that defines the number of planes for the target device.
+        // This value MUST be 0x0001.
+
+        // BitCount (2 bytes): A 16-bit unsigned integer that defines the number of bits that define each pixel
+        // and the maximum number of colors in the DIB. This value MUST be in the BitCount Enumeration (section 2.1.1.3).
+
+        // Compression (4 bytes): A 32-bit unsigned integer that defines the compression mode of the DIB. This value
+        // MUST be in the Compression Enumeration (section 2.1.1.7).
+
+        //          This value MUST NOT specify a compressed format if the DIB is a top-down bitmap, as indicated by
+        //          the Height value.
+
+        // ImageSize (4 bytes): A 32-bit unsigned integer that defines the size, in bytes, of the image.
+
+        //          If the Compression value is BI_RGB, this value SHOULD be zero and MUST be ignored.<45>
+
+        //          If the Compression value is BI_JPEG or BI_PNG, this value MUST specify the size of the JPEG or PNG
+        //          image buffer, respectively.
+
+        // XPelsPerMeter (4 bytes): A 32-bit signed integer that defines the horizontal resolution, in pixels-per-meter,
+        // of the target device for the DIB.
+
+        // YPelsPerMeter (4 bytes): A 32-bit signed integer that defines the vertical resolution, in pixels-per-meter,
+        // of the target device for the DIB.
+
+        // ColorUsed (4 bytes): A 32-bit unsigned integer that specifies the number of indexes in the color table
+        // used by the DIB, as follows:
+
+        //           If this value is zero, the DIB uses the maximum number of colors that correspond to the BitCount value.
+
+        //           If this value is nonzero and the BitCount value is less than 16, this value specifies the number
+        //           of colors used by the DIB.
+
+        //           If this value is nonzero and the BitCount value is 16 or greater, this value specifies the size
+        //           of the color table used to optimize performance of the system palette.
+
+        //           Note If this value is nonzero and greater than the maximum possible size of the color table
+        //          based on the BitCount value, the maximum color table size SHOULD be assumed.
+
+        // ColorImportant (4 bytes): A 32-bit unsigned integer that defines the number of color indexes that are
+        // required for displaying the DIB. If this value is zero, all color indexes are required.
+
+        //           A DIB is specified by a DeviceIndependentBitmap Object (section 2.2.2.9).
+
+        //           When the array of pixels in the DIB immediately follows the BitmapInfoHeader, the DIB is a packed
+        //           bitmap. In a packed bitmap, the ColorUsed value MUST be either 0x00000000 or the actual size
+        //           of the color table.
+
+        // 40 bytes
+        stream.out_uint32_le(40);
+        stream.out_uint32_le(width);
+        stream.out_uint32_le(-height);
+        stream.out_uint16_le(1);
+        stream.out_uint16_le(depth);
+        stream.out_uint32_le(0);  // BI_RGB
+        stream.out_uint32_le(data_length);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(0);
+    }
+
+    using CliprdrHeader::recv;
+};
 
 
 struct PacketFileList {

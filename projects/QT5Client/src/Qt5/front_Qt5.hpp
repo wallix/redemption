@@ -204,14 +204,18 @@ public:
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatShortName;
+    std::string          _requestedFormatName;
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
     size_t               _bufferRDPClipboardChannelSizeTotal;
     int                  _bufferRDPCLipboardMetaFilePic_width;
     int                  _bufferRDPCLipboardMetaFilePic_height;
     int                  _bufferRDPClipboardMetaFilePicBPP;
-
+    uint32_t           * _formatIDs;
+    std::string        * _formatListDataShortName;
+    int                  _nbFormatIDs;
+    const std::string    FILECONTENTS;
+    int                  _streamIdFileContent;
 
     enum : int {
         COMMAND_VALID = 15
@@ -263,6 +267,10 @@ public:
     void send_imageBuffer_to_clipboard();
 
     void empty_buffer() override;
+
+    void cut_data_to_send(int total_length, OutStream & out_streamfirst, int firstPartSize);
+
+    virtual void set_pointer(Pointer const & cursor) override;
 
 
 
