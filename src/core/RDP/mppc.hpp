@@ -469,11 +469,11 @@ static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outpu
             throw Error(ERR_RDP45_COMPRESS_BUFFER_OVERFLOW);
         }
         outputBuffer[opb_index++] |= data >> (bits_to_serialize - bits_left);
-        data                      &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
+        data                      &= (0xFFFFFFFFull >> (32 - (bits_to_serialize - bits_left)));
         bits_to_serialize         -= bits_left;
         for (; bits_to_serialize >= 8 ; bits_to_serialize -= 8) {
             outputBuffer[opb_index++] =  (data >> (bits_to_serialize - 8));
-            data                      &= (0xFFFFFFFF >> (32 - (bits_to_serialize - 8)));
+            data                      &= (0xFFFFFFFFull >> (32 - (bits_to_serialize - 8)));
         }
         outputBuffer[opb_index] = (bits_to_serialize > 0)           ?
                                   (data << (8 - bits_to_serialize)) :
