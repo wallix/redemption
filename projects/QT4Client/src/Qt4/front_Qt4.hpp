@@ -262,6 +262,8 @@ public:
 
     void empty_buffer() override;
 
+    void cut_data_to_send(int total_length, OutStream & out_streamfirst, int firstPartSize);
+
     virtual void set_pointer(Pointer const & cursor) override;
 
 

@@ -56,21 +56,6 @@
 
 #define KEY_SETTING_PATH "keySetting.config"
 
-namespace QT_RDP_CLIPBOARD {
-
-    enum : int {
-          METAFILE_CLIP_PIC_HEADERS_SIZE = 130
-        , META_DIBSTRETCHBLT_HEADER_SIZE = 66
-        , METAFILE_HEADER_SIZE           = 118
-    };
-
-    enum : int {
-          PASTE_TEXT_FIRST_PART_SIZE = 1592                 // = 1600 - 8
-        , PASTE_PIC_FIRST_PART_SIZE  = 1462  // = 1600 - METAFILEPICT_HEADER_SIZE - 8
-        , PDU_MAX_SIZE               = 1600
-    };
-
-}
 
 
 class DialogOptions_Qt : public QDialog
