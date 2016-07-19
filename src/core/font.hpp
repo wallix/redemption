@@ -38,6 +38,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitfu.hpp"
+#include "utils/sugar/local_fd.hpp"
 
 struct FontChar
 {
@@ -88,7 +89,7 @@ struct FontChar
         return bool(this->data);
     }
 
-    int datasize() const noexcept
+    uint16_t datasize() const noexcept
     {
         return align4(nbbytes(this->width) * this->height);
     }
@@ -181,161 +182,160 @@ struct Font
         this->name[0] = 0;
     }
 
-    // Constructor
-    // Params :
-    //    - file_path : path to the font definition file (*.fv1)
-    //==============================================================================
-    explicit Font(const char * file_path) {
-    //==============================================================================
-        int fd;
-        int b;
-         // we start at space, no glyph for chars below 32
-        int file_size;
-
+    /// \param file_path  path to the font definition file (*.fv1)
+    explicit Font(const char * file_path)
+    {
         // TODO Temporary disabling font to avoid useless messages in watchdog
 //        LOG(LOG_INFO, "Reading font file %s", file_path);
         // RAZ of font chars table
 
         // Does font definition file exist and is it accessible ?
         if (access(file_path, F_OK)) {
-            LOG(LOG_ERR, "create: error font file [%s] does not exist\n", file_path);
-            goto ErrorReadingFontFile;
+            LOG(LOG_ERR, "Font: error font file [%s] does not exist\n", file_path);
+            return ;
         }
 
         // Retrieves system stats about the file
         struct stat st;
         if (stat(file_path, &st)) {
-            LOG(LOG_ERR, "create: can't stat file [%s]\n", file_path);
-            goto ErrorReadingFontFile;
+            LOG(LOG_ERR, "Font: can't stat file [%s]\n", file_path);
+            return ;
         }
+
+        using std::size_t;
+        const size_t header_size = 4 + 32 + 2 + 2 + 8;
+
         // Is file empty ?
-        if (st.st_size < 1) {
-            LOG(LOG_ERR, "create: empty font file [%s]\n", file_path);
-            goto ErrorReadingFontFile;
+        if (st.st_size < 1 || size_t(st.st_size) < header_size) {
+            LOG(LOG_ERR, "Font: empty font file [%s]\n", file_path);
+            return ;
         }
 
-        // Allocate a buffer to read the whole file into
-        file_size = st.st_size;
-
-        if (-1 == (fd = open(file_path, O_RDONLY))){
-            LOG(LOG_ERR, "create: can't open font file [%s] for reading\n", file_path);
-            goto ErrorReadingFontFile;
+        int fd;
+        if (-1 == (fd = open(file_path, O_RDONLY))) {
+            LOG(LOG_ERR, "Font: can't open font file [%s] for reading\n", file_path);
+            return ;
         }
+        local_fd auto_close{fd};
 
+
+        size_t const stream_buf_sz = 8192;
+        char stream_buf[stream_buf_sz];
+        ssize_t b;
+        InStream stream(stream_buf, 0);
+
+        auto read = [](int fd, void * buf, size_t len){
+            ssize_t r;
+            do  {
+                r = ::read(fd, buf, len);
+            } while (r == -1 && errno == EINTR);
+            return r;
+        };
+
+        // Read header
         {
-            std::size_t size_to_read = file_size;
-            std::size_t const stream_buf_sz = 8192;
-            char stream_buf[stream_buf_sz];
+            size_t const header_size = 4 + 32 + 2 + 2 + 8;
+            assert(stream_buf_sz >= header_size);
+            b = read(fd, stream_buf, stream_buf_sz);
 
-            // Read header
-            // -----------
-            while ((b = read(fd, stream_buf, stream_buf_sz)) < 0) {
-                if (b >= 0){
-                    break;
-                }
-                if ((errno == EAGAIN)||(errno == EINTR)){
-                    continue;
-                }
-                LOG(LOG_ERR,"create: error reading font file [%s] error: %s\n", file_path, strerror(errno));
-                goto ErrorReadingFontFile;
+            if (size_t(b) < header_size) {
+                LOG(LOG_ERR,"Font: error reading font file [%s] error: %s\n", file_path, strerror(errno));
+                return ;
             }
-            InStream stream(stream_buf, b);
-            size_to_read -= b;
-            if (size_to_read == 0){
-                close(fd);
-                fd = -1;
-            }
+            stream = InStream(stream_buf, b);
 
             // Extract font info from the buffer
             //----------------------------------
             stream.in_skip_bytes(4);                       // >>> 4 bytes for FNT1 (dropped)
             stream.in_copy_bytes(this->name, 32);          // >>> 32 bytes for Font Name
+            this->name[31] = 0;
             this->size = stream.in_uint16_le();            // >>> 2 bytes for Font Size
             // TODO temporary disabled to avoid warning in watchdog, see other TODO above to reenable later
-//            LOG(LOG_INFO, "font name <%s> size <%u>", this->name, this->size);
+            // LOG(LOG_INFO, "font name <%s> size <%u>", this->name, this->size);
             this->style = stream.in_uint16_le();           // >>> 2 bytes for Font Style
             stream.in_skip_bytes(8);                       // >>> 8 bytes for PAD (dropped)
+        }
 
-            // Extract each character glyph
-            for (int index = 32; index < NUM_GLYPHS ; index++) {
-                unsigned remaining = stream.in_remain();
-                if (remaining < 1024){
-                    if (size_to_read > 0){
-                        // TODO Create a pack_left function in stream to do this
-                        //-----------------------------------------------------
-                        memmove(stream_buf, stream.get_current(), remaining);
-                        //-----------------------------------------------------
-                        while ((b = read(fd, stream_buf + remaining, std::min(size_to_read, stream_buf_sz - remaining))) < 0){
-                            if (b >= 0){
-                                break;
-                            }
-                            if ((errno == EAGAIN)||(errno == EINTR)){
-                                continue;
-                            }
-                            LOG(LOG_ERR,"create: error reading font file [%s] error: %s\n", file_path, strerror(errno));
-                            goto ErrorReadingFontFile;
-                        }
-                        stream = InStream(stream_buf, remaining + b);
-                        size_to_read -= b;
-                        if (size_to_read == 0){
-                            close(fd);
-                            fd = -1;
-                        }
-                    }
-                    // no more remaining glyphs in file
-                    if (!stream.in_check_rem(1)){
-                        LOG(LOG_INFO, "Font file %s defines glyphs up to %d", file_path, index);
-                        break;
-                    }
-                    if (!stream.in_check_rem(16)){
-                        LOG(LOG_WARNING, "Font file %s defines glyphs up to %d, file looks broken", file_path, index);
-                        break;
-                    }
+        enum class Read { eof, error, ok };
+
+        auto prepare_stream = [&](size_t const len, unsigned index) -> Read {
+            assert(len);
+            assert(len < stream_buf_sz / 2);
+            size_t const remaining = stream.in_remain();
+            if (remaining < len) {
+                memmove(stream_buf, stream.get_current(), remaining);
+                b = read(fd, stream_buf + remaining, stream_buf_sz - remaining);
+                if (b == 0) {
+                    return Read::eof;
                 }
-
-//                LOG(LOG_INFO, "Reading definition for glyph %u", index);
-                auto width = stream.in_uint16_le(); // >>> 2 bytes for glyph width
-                auto height = stream.in_uint16_le(); // >>> 2 bytes for glyph height
-
-    // TODO baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.
-
-                auto baseline = stream.in_sint16_le(); // >>> 2 bytes for glyph baseline
-                auto offset = stream.in_sint16_le(); // >>> 2 bytes for glyph offset
-                auto incby = stream.in_sint16_le(); // >>> 2 bytes for glyph incby
-                stream.in_skip_bytes(6); // >>> 6 bytes for PAD (dropped)
-                this->font_items[index] = FontChar{offset, baseline, width, height, incby};
-
-                // Check if glyph data size make sense
-                unsigned datasize = this->font_items[index].datasize();
-                if (datasize > 512) { // shouldn't happen, implies broken font file
-                    LOG(LOG_WARNING,
-                        "Error loading font %s. Wrong size for glyph %d"
-                        "width %d height %d \n", file_path, index,
-                        this->font_items[index].width,
-                        this->font_items[index].height);
-                    // one glyph is broken but we continue with other glyphs
-                    continue;
+                if (b < 0) {
+                    LOG(LOG_ERR, "Font: error reading font file [%s] error: %s\n",
+                        file_path, strerror(errno));
+                    return Read::error;
                 }
-
-                // Read the data only if there is enough space left in buffer
-                if (!stream.in_check_rem(datasize)) {
-                    LOG(LOG_ERR
-                       , "Error loading font %s: not enough data for definition of glyph %d (expected %u, got %zu)\n"
-                        , file_path, index, datasize, stream.in_remain()
-                       );
-                    goto ErrorReadingFontFile;
+                size_t const new_size = remaining + b;
+                if (new_size < len) {
+                    LOG(LOG_WARNING, "Font: file %s defines glyphs up to %u, file looks broken",
+                        file_path, index);
+                    return Read::error;
                 }
+                stream = InStream(stream_buf, new_size);
+            }
+            return Read::ok;
+        };
 
-                // >>> <datasize> bytes for glyph data (bitmap)
-                stream.in_copy_bytes(this->font_items[index].data.get(), datasize);
+        // Extract each character glyph
+        for (unsigned index = 32; index < NUM_GLYPHS ; index++) {
+            // Read header
+            size_t const description_size = 16;
+            switch (prepare_stream(description_size, index)) {
+                case Read::eof:
+                case Read::error:
+                    return ;
+                case Read::ok: {
+                    auto width = stream.in_uint16_le(); // >>> 2 bytes for glyph width
+                    auto height = stream.in_uint16_le(); // >>> 2 bytes for glyph height
+
+                    // TODO baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.
+                    auto baseline = stream.in_sint16_le(); // >>> 2 bytes for glyph baseline
+                    auto offset = stream.in_sint16_le(); // >>> 2 bytes for glyph offset
+                    auto incby = stream.in_sint16_le(); // >>> 2 bytes for glyph incby
+                    stream.in_skip_bytes(6); // >>> 6 bytes for PAD (dropped)
+                    FontChar & item = this->font_items[index];
+                    item = FontChar{offset, baseline, width, height, incby};
+
+                    // Check if glyph data size make sense
+                    uint16_t const datasize {item.datasize()};
+                    if (datasize > 512u) { // shouldn't happen, implies broken font file
+                        LOG(LOG_WARNING,
+                            "Error loading font %s. Wrong size for glyph %d"
+                            "width %d height %d \n", file_path, index,
+                            item.width, item.height);
+                        item.data.reset();
+                        // one glyph is broken but we continue with other glyphs
+                        continue;
+                    }
+
+                    switch (prepare_stream(datasize, index)) {
+                        case Read::eof:
+                            item.data.reset();
+                            return ;
+                        case Read::error:
+                            item.data.reset();
+                            LOG(LOG_ERR,
+                                "Error loading font %s: not enough data for definition"
+                                " of glyph %d (expected %u, got %zu)\n",
+                                file_path, index, datasize, stream.in_remain()
+                            );
+                            return ;
+                        case Read::ok:
+                            // >>> <datasize> bytes for glyph data (bitmap)
+                            stream.in_copy_bytes(item.data.get(), datasize);
+                            break;
+                    }
+                } break;
             }
         }
-        return;
-ErrorReadingFontFile:
-        LOG(LOG_ERR, "Error reading font definition file %s, exiting proxy",  file_path);
-        #ifndef __EMSCRIPTEN__
-        exit(-1);
-        #endif
     }
 
     bool glyph_defined(uint32_t charnum) const
