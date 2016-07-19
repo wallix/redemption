@@ -55,12 +55,22 @@
 #include "transport/filter/crypto_filter.hpp"
 
 #include "transport/sequence_generator.hpp"
-#include "transport/detail/no_param.hpp"
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
 
 namespace detail
 {
+
+    struct no_param {};
+
+    template<class Buf>
+    struct empty_ctor
+    : Buf
+    {
+        explicit empty_ctor(no_param = no_param()) noexcept
+        {}
+    };
+
     struct MetaFilename
     {
         char filename[2048];
