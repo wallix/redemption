@@ -50,112 +50,12 @@ namespace detail
           : ((err |= 1), '\0');
     }
 
-    template<class Reader>
-    class ReaderLine
-    {
-        char buf[1024];
-        char * eof;
-        char * cur;
-        Reader reader;
-
-        int read(int err)
-        {
-            ssize_t ret = this->reader.reader_read(this->buf, sizeof(this->buf));
-            if (ret < 0 && errno != EINTR) {
-                return -ERR_TRANSPORT_READ_FAILED;
-            }
-            if (ret == 0) {
-                return -err;
-            }
-            this->eof = this->buf + ret;
-            this->cur = this->buf;
-            return 0;
-        }
-
-    public:
-        explicit ReaderLine(Reader reader) noexcept
-        : eof(buf)
-        , cur(buf)
-        , reader(reader)
-        {}
-
-        ssize_t read_line(char * dest, size_t len, int err)
-        {
-            ssize_t total_read = 0;
-            while (1) {
-                char * pos = std::find(this->cur, this->eof, '\n');
-                if (len < size_t(pos - this->cur)) {
-                    total_read += len;
-                    memcpy(dest, this->cur, len);
-                    this->cur += len;
-                    break;
-                }
-                total_read += pos - this->cur;
-                memcpy(dest, this->cur, pos - this->cur);
-                dest += pos - this->cur;
-                this->cur = pos + 1;
-                if (pos != this->eof) {
-                    break;
-                }
-                if (int e = this->read(err)) {
-                    return e;
-                }
-            }
-            return total_read;
-        }
-
-        int next_line()
-        {
-            char * pos;
-            while ((pos = std::find(this->cur, this->eof, '\n')) == this->eof) {
-                if (int e = this->read(ERR_TRANSPORT_READ_FAILED)) {
-                    return e;
-                }
-            }
-            this->cur = pos+1;
-            return 0;
-        }
-    };
-
     struct MetaHeader {
         unsigned version;
         //unsigned witdh;
         //unsigned height;
         bool has_checksum;
     };
-
-
-    template<class Reader>
-    MetaHeader read_meta_headers(ReaderLine<Reader> & reader)
-    {
-        MetaHeader header{1, false};
-
-        char line[32];
-        auto sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED);
-        if (sz < 0) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-        }
-
-        // v2
-        if (line[0] == 'v') {
-            if (reader.next_line()
-             || (sz = reader.read_line(line, sizeof(line), ERR_TRANSPORT_READ_FAILED)) < 0
-            ) {
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            header.version = 2;
-            header.has_checksum = (line[0] == 'c');
-        }
-        // else v1
-
-        if (reader.next_line()
-         || reader.next_line()
-        ) {
-            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-        }
-
-        return header;
-    }
 
     struct MetaLine
     {
@@ -173,33 +73,6 @@ namespace detail
         unsigned char hash1[MD_HASH_LENGTH];
         unsigned char hash2[MD_HASH_LENGTH];
     };
-
-    inline time_t meta_parse_sec(const char * first, const char * last)
-    {
-        time_t sec = 0;
-        for (; first != last; ++first) {
-            if (*first < '0' || '9' < *first) {
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-            unsigned old_sec = sec;
-            sec *= 10;
-            sec += *first - '0';
-            if (old_sec > sec) {
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-        }
-        return sec;
-    }
-
-    static inline char const * sread_filename(char * p, char const * e, char const * pline)
-    {
-        e -= 1;
-        for (; p < e && *pline && *pline != ' ' && (*pline == '\\' ? *++pline : true); ++pline, ++p) {
-            *p = *pline;
-        }
-        *p = 0;
-        return pline;
-    }
 
     struct temporary_concat
     {
