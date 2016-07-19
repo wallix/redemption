@@ -945,7 +945,6 @@ test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 ## Transport tests
 ## @{
 test-canonical transport/detail/meta_writer.hpp ;
-test-canonical transport/detail/meta_opener.hpp ;
 
 test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 

@@ -25,7 +25,6 @@
 #include <cstdio>
 
 #include "transport/cryptofile.hpp"
-#include "transport/detail/meta_opener.hpp"
 #include "transport/detail/meta_writer.hpp"
 #include "utils/fileutils.hpp"
 

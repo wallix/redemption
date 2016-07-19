@@ -27,9 +27,9 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <memory>
+#include "utils/fileutils.hpp"
 #include "openssl_crypto.hpp"
 #include "utils/log.hpp"
-#include "transport/detail/meta_opener.hpp"
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
 #include "transport/cryptofile.hpp"
@@ -42,6 +42,21 @@ inline char chex_to_int(char c, int & err) {
       : 'A' <= c && c <= 'F' ? c-'A' + 10
       : ((err |= 1), '\0');
 }
+
+struct temporary_concat
+{
+    char str[1024];
+
+    temporary_concat(const char * a, const char * b)
+    {
+        if (std::snprintf(this->str, sizeof(this->str), "%s%s", a, b) >= int(sizeof(this->str))) {
+            throw Error(ERR_TRANSPORT);
+        }
+    }
+
+    const char * c_str() const noexcept
+    { return this->str; }
+};
 
 inline time_t meta_parse_sec(const char * first, const char * last)
 {
@@ -1009,7 +1024,7 @@ public:
     , encryption(encryption)
     , verbose(verbose)
     {
-        detail::temporary_concat tmp(filename, extension);
+        temporary_concat tmp(filename, extension);
         const char * meta_filename = tmp.c_str();
         this->buf_meta.open(meta_filename);
 
