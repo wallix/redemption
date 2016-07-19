@@ -27,6 +27,7 @@
 
 
 #define LOGNULL
+// #define LOGPRINT
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -831,23 +832,23 @@ BOOST_AUTO_TEST_CASE(TestDecrypt)
     Crypto_file * cf_struct = crypto_open_read(system_fd, trace_key, &cctx);
     BOOST_CHECK(cf_struct);
 
-    char buf[1024];
-    int sz = crypto_read(cf_struct, buf, 1024);
+    unsigned char buf[1024];
+    int sz = crypto_read(cf_struct, reinterpret_cast<char*>(buf), 1024);
     BOOST_CHECK_EQUAL(118, sz);
 
     uint32_t i1 = buf[0] + (buf[1]<<8) + (buf[2]<<16) + (buf[3]<<24);
     uint32_t i2 = buf[4] + (buf[5]<<8) + (buf[6]<<16) + (buf[7]<<24);
     uint32_t i3 = buf[8] + (buf[9]<<8) + (buf[10]<<16) + (buf[11]<<24);
 
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(1369971550), i1); // EPOCH: python int(time().time)
-    BOOST_CHECK_EQUAL(static_cast<uint32_t>(397820), i2); // Micro-seconds: (time.time() - EPOCH) * 1000000
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(1386748766), i1); // EPOCH: python int(time.time())
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(398076), i2); // Micro-seconds: (time.time() - EPOCH) * 1000000
     BOOST_CHECK_EQUAL(static_cast<uint32_t>(106), i3);
     BOOST_CHECK(0 == memcmp(
         buf+12,
         "/var/wab/recorded/rdp/x@10.10.43.13,qaadministrateur@win78,20131211-085925,wab2-4-0-0.yourdomain,1188.mwrm",
         106));
 
-    delete reinterpret_cast<Crypto_file_decrypt*>(cf_struct);
+    crypto_close(cf_struct, nullptr, nullptr);
 }
 
 BOOST_AUTO_TEST_CASE(TestDerivationOfHmacKeyFromCryptoKey)

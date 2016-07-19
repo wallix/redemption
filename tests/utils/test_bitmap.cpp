@@ -43,17 +43,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
     const unsigned white = 0xFF;
     const BGRPalette & palette332 = BGRPalette::classic_332();
 
-    // test COLOR COUNT EMPTY
-    {
-        BOOST_CHECK(1);
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        BOOST_CHECK_EQUAL(0, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data(), 0xFF));
-    }
-
     // test COLOR COUNT
     {
         BOOST_CHECK_EQUAL(1,1);
@@ -87,15 +76,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         BOOST_CHECK_EQUAL(2, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data() + 1, 0x02));
     }
 
-    // test BICOLOR COUNT EMPTY
-    {
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmax = bmp.data() + bmp.bmp_size();
-        BOOST_CHECK_EQUAL(0, bmp.get_bicolor_count(::nbbytes(bpp), pmax, bmp.data(), 0xEF, 0xFE));
-    }
-
     // test BICOLOR COUNT
     {
         int bpp = 8;
@@ -127,16 +107,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         const uint8_t * pmax = pmin + bmp.bmp_size();
         BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x01, 0x05));
         BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin + 1, 0x05, 0x01));
-    }
-
-    // test FILL COUNT
-    {
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()));
     }
 
     // test FILL COUNT
@@ -182,17 +152,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         // until the end
         BOOST_CHECK_EQUAL(8, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+8));
 
-    }
-
-    // test MIX COUNT
-    {
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-
-        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data(), white));
     }
 
     // test MIX COUNT

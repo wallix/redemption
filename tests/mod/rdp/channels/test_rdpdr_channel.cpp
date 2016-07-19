@@ -127,6 +127,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannel)
 
     file_system_virtual_channel_params.random_number                = 5245;
 
+    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
+
     FileSystemDriveManager file_system_drive_manager;
 
     bool ignore_existence_check__for_test_only = true;
@@ -248,6 +251,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     file_system_virtual_channel_params.smart_card_authorized        = true;
 
     file_system_virtual_channel_params.random_number                = 5245;
+
+    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -371,6 +377,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
     file_system_virtual_channel_params.random_number                = 5245;
 
+    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
+
     FileSystemDriveManager file_system_drive_manager;
 
     bool ignore_existence_check__for_test_only = true;
@@ -492,6 +501,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     file_system_virtual_channel_params.smart_card_authorized        = true;
 
     file_system_virtual_channel_params.random_number                = 5245;
+
+    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -615,6 +627,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
     file_system_virtual_channel_params.random_number                = 5245;
 
+    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
+
     FileSystemDriveManager file_system_drive_manager;
 
     bool ignore_existence_check__for_test_only = true;
@@ -736,6 +751,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     file_system_virtual_channel_params.smart_card_authorized        = true;
 
     file_system_virtual_channel_params.random_number                = 5245;
+
+    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -860,6 +878,9 @@ BOOST_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     file_system_virtual_channel_params.smart_card_authorized        = false;
 
     file_system_virtual_channel_params.random_number                = 5245;
+
+    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 

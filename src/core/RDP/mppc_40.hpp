@@ -206,7 +206,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
                 if (cur_bits_left < tmp2) {
                     /* we have less bits than we need */
                     uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
-                    d32       |= i32 << ((32 - bits_left) - cur_bits_left);
+                    d32       |= static_cast<uint64_t>(i32) << ((32 - bits_left) - cur_bits_left);
                     bits_left += cur_bits_left;
                     tmp2      -= cur_bits_left;
                     if (cptr < cbuf + len) {

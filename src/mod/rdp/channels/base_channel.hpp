@@ -24,6 +24,7 @@
 #include "utils/asynchronous_task_manager.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 #include "mod/rdp/rdp_log.hpp"
+#include "acl/auth_api.hpp"
 
 typedef int_fast32_t data_size_type;
 
@@ -32,7 +33,10 @@ class BaseVirtualChannel
     VirtualChannelDataSender* to_client_sender;
     VirtualChannelDataSender* to_server_sender;
 
-          auth_api*      authentifier;
+protected:
+    auth_api*      authentifier;
+
+private:
     const data_size_type exchanged_data_limit;
           data_size_type exchanged_data                        = 0;
           bool           exchanged_data_limit_reached_reported = false;

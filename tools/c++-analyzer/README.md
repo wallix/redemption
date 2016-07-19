@@ -14,13 +14,28 @@ Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_
 - `cppcheck-full [cppcheck-args]`: run `cppcheck`.
 - `scan-build`: run `scan-build` on each executable.
 - `unused_files`: show unesed files (files without `#include`).
+- `todo_extractor files...`: extract comment with BUG, ALERT, ATTENTION, DANGER, HACK, SECURITYFIXME, DEPRECATED, TASK, TODO, TBD, WARNING, CAUTION, NOTE, NOTICE, TEST, TESTING, PERFORMANCE, PERF
 
 # Source corrector
 
 - `clang-tidy [clang-tidy-args]`: run `clang-tidy`. Used `-fix` flag for fix detected errors.
 
-# ASAN
+# Sanitizw
+
+ - help: ASAN_OPTIONS=help=1 ./exe
+
+# ASan
 
 - Add the ligne below at the end of your '.bashrc'.
 
 alias bjam="ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=/home/rzhou/dev/wallix-redemption/tools/c++-analyzer/suppr-leak-asan.txt bjam"
+
+# UBSan
+
+http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+
+## Options
+
+- Compile with -g and -fno-omit-frame-pointer
+- UBSAN_OPTIONS=print_stacktrace=1
+- Make sure llvm-symbolizer binary is in PATH (example: `ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-3.8/bin/llvm-symbolizer`).

@@ -60,8 +60,6 @@ private:
 
     Translation::language_t param_lang;
 
-    auth_api* param_acl = nullptr;
-
     const bool param_bogus_refresh_rect_ex;
 
     FrontAPI& front;
@@ -104,8 +102,6 @@ public:
 
         Translation::language_t lang;
 
-        auth_api* acl;
-
         bool bogus_refresh_rect_ex;
     };
 
@@ -138,7 +134,6 @@ public:
     , param_real_alternate_shell(params.real_alternate_shell)
     , param_real_working_dir(params.real_working_dir)
     , param_lang(params.lang)
-    , param_acl(params.acl)
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , front(front)
     , mod(mod)
@@ -159,7 +154,7 @@ public:
 
         this->session_probe_event.object_and_time = true;
 
-        REDASSERT(this->param_acl);
+        REDASSERT(this->authentifier);
     }
 
     void start_launch_timeout_timer()
@@ -661,7 +656,7 @@ public:
             this->session_probe_keep_alive_received = true;
         }
         else if (!session_probe_message.compare("SESSION_ENDING_IN_PROGRESS")) {
-            this->param_acl->log4(
+            this->authentifier->log4(
                 (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                 "SESSION_ENDING_IN_PROGRESS");
 
@@ -681,7 +676,7 @@ public:
 
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     std::string info("status='" + parameters + "'");
-                    this->param_acl->log4(
+                    this->authentifier->log4(
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
 
@@ -690,7 +685,7 @@ public:
                 }
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
                     std::string info("status='" + parameters + "'");
-                    this->param_acl->log4
+                    this->authentifier->log4
                         ((this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
 
@@ -710,7 +705,7 @@ public:
                         std::string info(
                             "identifier='" + identifier +
                             "' display_name='" + display_name + "'");
-                        this->param_acl->log4(
+                        this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
 
@@ -724,7 +719,7 @@ public:
                 else if (!order.compare("NEW_PROCESS") ||
                          !order.compare("COMPLETED_PROCESS")) {
                     std::string info("command_line='" + parameters + "'");
-                    this->param_acl->log4(
+                    this->authentifier->log4(
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
                 }
@@ -741,7 +736,7 @@ public:
                         std::string info(
                             "rule='" + rule +
                             "' application_name='" + application_name + "'");
-                        this->param_acl->log4(
+                        this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
 
@@ -785,7 +780,7 @@ public:
 
                             std::string info(
                                 "source='Probe' window='" + text + "'");
-                            this->param_acl->log4(
+                            this->authentifier->log4(
                                 (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                                 "TITLE_BAR", info.c_str());
                         }
@@ -810,7 +805,7 @@ public:
                         std::string info(
                             "windows='" + window +
                             "' button='" + button + "'");
-                        this->param_acl->log4(
+                        this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
                     }
@@ -831,7 +826,7 @@ public:
                         std::string info(
                             "windows='" + window +
                             "' edit='" + edit + "'");
-                        this->param_acl->log4(
+                        this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
                     }
