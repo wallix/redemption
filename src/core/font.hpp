@@ -39,34 +39,33 @@
 #include "utils/stream.hpp"
 #include "utils/bitfu.hpp"
 
-//##############################################################################
 struct FontChar
-//##############################################################################
 {
-    int       offset = 0;   // leading whistespace before char
-    int       baseline = 0; // real -height (probably unused for now)
-    int       width = 0;    // width of glyph actually containing pixels
-    int       height = 0;   // height of glyph (in pixels)
-    int       incby = 0;    // width of glyph (in pixels) including leading and trailing whitespaces
+    int16_t   offset = 0;   // leading whistespace before char
+    int16_t   baseline = 0; // real -height (probably unused for now)
+    uint16_t  width = 0;    // width of glyph actually containing pixels
+    uint16_t  height = 0;   // height of glyph (in pixels)
+    int16_t   incby = 0;    // width of glyph (in pixels) including leading and trailing whitespaces
     std::unique_ptr<uint8_t[]> data;
 
-    FontChar(int offset, int baseline, int width, int height, int incby)
-        : offset(offset)
-        , baseline(baseline)
-        , width(width)
-        , height(height)
-        , incby(incby)
-        , data(std::make_unique<uint8_t[]>(this->datasize()))
+    // TODO data really aligned ?
+    FontChar(std::unique_ptr<uint8_t[]> data, int16_t offset, int16_t baseline, uint16_t width, uint16_t height, int16_t incby)
+        : offset{offset}
+        , baseline{baseline}
+        , width{width}
+        , height{height}
+        , incby{incby}
+        , data{std::move(data)}
     {
     }
 
-    FontChar(std::unique_ptr<uint8_t[]> data, int offset, int baseline, int width, int height, int incby)
-        : offset(offset)
-        , baseline(baseline)
-        , width(width)
-        , height(height)
-        , incby(incby)
-        , data(std::move(data))
+    FontChar(int16_t offset, int16_t baseline, uint16_t width, uint16_t height, int16_t incby)
+        : offset{offset}
+        , baseline{baseline}
+        , width{width}
+        , height{height}
+        , incby{incby}
+        , data{std::make_unique<uint8_t[]>(this->datasize())}
     {
     }
 
@@ -89,17 +88,13 @@ struct FontChar
         return bool(this->data);
     }
 
-    //==============================================================================
-    inline int datasize() const noexcept
-    //==============================================================================
+    int datasize() const noexcept
     {
         return align4(nbbytes(this->width) * this->height);
     }
 
     /* compare the two font items returns true if they match */
-    //==============================================================================
     bool item_compare(FontChar const & glyph) const noexcept
-    //==============================================================================
     {
         return glyph
             && (this->offset == glyph.offset)
@@ -167,10 +162,7 @@ struct FontChar
 */
 
 
-/* font */
-//##############################################################################
 struct Font
-//##############################################################################
 {
 #ifndef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "dejavu_14.fv1"
@@ -206,9 +198,7 @@ struct Font
 
         // Does font definition file exist and is it accessible ?
         if (access(file_path, F_OK)) {
-            LOG(LOG_ERR,
-                "create: error font file [%s] does not exist\n",
-                file_path);
+            LOG(LOG_ERR, "create: error font file [%s] does not exist\n", file_path);
             goto ErrorReadingFontFile;
         }
 
@@ -304,16 +294,16 @@ struct Font
                 }
 
 //                LOG(LOG_INFO, "Reading definition for glyph %u", index);
-                int width = stream.in_sint16_le(); // >>> 2 bytes for glyph width
-                int height = stream.in_sint16_le(); // >>> 2 bytes for glyph height
+                auto width = stream.in_uint16_le(); // >>> 2 bytes for glyph width
+                auto height = stream.in_uint16_le(); // >>> 2 bytes for glyph height
 
     // TODO baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.
 
-                int baseline = stream.in_sint16_le(); // >>> 2 bytes for glyph baseline
-                int offset = stream.in_sint16_le(); // >>> 2 bytes for glyph offset
-                int incby = stream.in_sint16_le(); // >>> 2 bytes for glyph incby
+                auto baseline = stream.in_sint16_le(); // >>> 2 bytes for glyph baseline
+                auto offset = stream.in_sint16_le(); // >>> 2 bytes for glyph offset
+                auto incby = stream.in_sint16_le(); // >>> 2 bytes for glyph incby
                 stream.in_skip_bytes(6); // >>> 6 bytes for PAD (dropped)
-                this->font_items[index] = FontChar(offset, baseline, width, height, incby);
+                this->font_items[index] = FontChar{offset, baseline, width, height, incby};
 
                 // Check if glyph data size make sense
                 unsigned datasize = this->font_items[index].datasize();
@@ -356,4 +346,3 @@ ErrorReadingFontFile:
         return bool(this->font_items[charnum]);
     }
 }; // END STRUCT - Font
-

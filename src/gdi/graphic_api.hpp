@@ -533,20 +533,20 @@ public:
 
 struct TextMetrics
 {
-    int width;
-    int height;
+    int width = 0;
+    int height = 0;
 
-    TextMetrics(const Font & font, const char * text)
-        : width(0)
-        , height(0)
+    TextMetrics(const Font & font, const char * unicode_text)
     {
-        UTF8toUnicodeIterator unicode_iter(text);
+        UTF8toUnicodeIterator unicode_iter(unicode_text);
+        uint16_t height_max = 0;
         for (; uint32_t c = *unicode_iter; ++unicode_iter) {
             bool exists = font.glyph_defined(c) && font.font_items[c];
             const FontChar & font_item = font.font_items[exists ? c : static_cast<unsigned>('?')];
-            width += font_item.incby;
-            height = std::max(height, font_item.height);
+            this->width += font_item.incby;
+            height_max = std::max(height_max, font_item.height);
         }
+        this->height = height_max;
     }
 };
 
@@ -557,7 +557,7 @@ static inline void server_draw_text(
                 Font const & font, int16_t x, int16_t y, const char * text,
                 uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
 {
-    // TODO non-const static is a bad idea
+    // TODO static not const is a bad idea
     static GlyphCache mod_glyph_cache;
 
     UTF8toUnicodeIterator unicode_iter(text);
@@ -579,7 +579,7 @@ static inline void server_draw_text(
             ++unicode_iter;
 
             int cacheIndex = 0;
-            bool exists = font.glyph_defined(charnum) && font.font_items[charnum];
+            bool const exists = font.glyph_defined(charnum) && font.font_items[charnum];
             if (!exists){
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
             }
@@ -596,7 +596,7 @@ static inline void server_draw_text(
             ++data_begin;
             distance_from_previous_fragment = font_item.incby;
             total_width += font_item.incby;
-            total_height = std::max(total_height, font_item.height);
+            total_height = std::max(uint16_t(total_height), font_item.height);
         }
 
         const Rect bk(x, y, total_width + 1, total_height + 1);
