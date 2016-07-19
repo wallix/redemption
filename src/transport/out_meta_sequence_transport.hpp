@@ -31,7 +31,7 @@
 
 #include "transport/cryptofile.hpp"
 
-#include "transport/detail/meta_writer.hpp"
+//#include "transport/detail/meta_writer.hpp"
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
 #include "utils/fdbuf.hpp"
@@ -43,6 +43,7 @@
 #include "transport/buffer/null_buf.hpp"
 #include "transport/buffer/file_buf.hpp"
 #include "transport/filter/crypto_filter.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
 
 
 namespace transfil {
