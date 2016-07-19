@@ -944,15 +944,9 @@ test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 
 ## Transport tests
 ## @{
-test-canonical transport/detail/meta_writer.hpp ;
+#test-canonical transport/detail/meta_writer.hpp ;
 
 test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
-
-test-run test_filename_sequence_transport
-    : transport/test_filename_sequence_transport.cpp
-    :
-    : <covflag>nocover
-    ;
 
 test-canonical transport/out_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/test_transport.hpp ;
@@ -965,8 +959,6 @@ test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <li
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
-#test-canonical transport/out_filename_sequence_transport.hpp ;
-
 test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
 ## @}
 

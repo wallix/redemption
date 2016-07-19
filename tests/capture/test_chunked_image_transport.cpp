@@ -31,7 +31,7 @@
 // #define LOGPRINT
 
 #include "transport/test_transport.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
 #include "capture/FileToGraphic.hpp"
 #include "capture/GraphicToFile.hpp"
 #include "capture/drawable_to_file.hpp"

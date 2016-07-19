@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-#include "transport/out_filename_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
 
 #include "capture/image_capture.hpp"
 #include "utils/drawable.hpp"
