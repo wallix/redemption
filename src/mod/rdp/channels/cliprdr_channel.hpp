@@ -1402,7 +1402,7 @@ public:
                         this->clipboard_initialize_notifier = nullptr;
                     }
                 }
-                if (this->format_list_response_notifier) {
+                else if (this->format_list_response_notifier) {
                     if (!this->format_list_response_notifier->on_server_format_list_response()) {
                         this->format_list_response_notifier = nullptr;
                     }
