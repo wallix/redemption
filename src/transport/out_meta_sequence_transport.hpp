@@ -39,7 +39,6 @@
 #include "utils/urandom_read.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/fileutils.hpp"
-#include "transport/detail/meta_hash.hpp"
 #include "transport/buffer/checksum_buf.hpp"
 #include "transport/buffer/null_buf.hpp"
 #include "transport/buffer/file_buf.hpp"
