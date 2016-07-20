@@ -37,9 +37,8 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <snappy-c.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <memory>
+#include <cstddef>
+
 
 #include "utils/sugar/iter.hpp"
 #include "utils/fdbuf.hpp"
@@ -47,18 +46,81 @@
 #include "utils/urandom_read.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/sugar/exchange.hpp"
 
 #include "openssl_crypto.hpp"
 
 #include "transport/cryptofile.hpp"
 
 #include "transport/mixin_transport.hpp"
-#include "transport/buffer/file_buf.hpp"
 #include "transport/buffer/null_buf.hpp"
 
 #include "transport/sequence_generator.hpp"
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
+
+#include "utils/log.hpp"
+
+
+namespace transbuf {
+    class ofile_buf_out
+    {
+        int fd;
+    public:
+        ofile_buf_out() : fd(-1) {}
+        ~ofile_buf_out()
+        {
+            this->close();
+        }
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->close();
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
+    };
+
+}
+
 
 namespace transbuf {
 
@@ -636,7 +698,7 @@ namespace detail
             const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
             int err = res1 ? res1 : res2;
             if (!err) {
-                transbuf::ofile_buf ofile;
+                transbuf::ofile_buf_out ofile;
                 return write_meta_hash(
                     this->hash_filename(), this->meta_filename(),
                     ofile, nullptr, this->verbose
@@ -1349,17 +1411,17 @@ namespace detail
     };
 
     struct cctx_ofile_buf
-    : transbuf::ofile_buf
+    : transbuf::ofile_buf_out
     {
         explicit cctx_ofile_buf(CryptoContext &)
         {}
     };
 
     struct cctx_ochecksum_file
-    : transbuf::ochecksum_buf<transbuf::ofile_buf>
+    : transbuf::ochecksum_buf<transbuf::ofile_buf_out>
     {
         explicit cctx_ochecksum_file(CryptoContext & cctx)
-        : transbuf::ochecksum_buf<transbuf::ofile_buf>(cctx.get_hmac_key())
+        : transbuf::ochecksum_buf<transbuf::ofile_buf_out>(cctx.get_hmac_key())
         {}
     };
 }
@@ -1370,7 +1432,7 @@ namespace transbuf {
     {
         transfil::encrypt_filter encrypt;
         CryptoContext * cctx;
-        ofile_buf file;
+        ofile_buf_out file;
 
     public:
         explicit ocrypto_filename_buf(CryptoContext * cctx)
@@ -1442,7 +1504,7 @@ struct OutMetaSequenceTransport
 RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf<
         detail::empty_ctor<io::posix::fdbuf>,
-        detail::empty_ctor<transbuf::ofile_buf>
+        detail::empty_ctor<transbuf::ofile_buf_out>
     >, detail::GetCurrentPath>
 >
 {

@@ -950,11 +950,6 @@ unit-test test_compression_transport_wrapper : tests/utils/test_compression_tran
 ## @}
 
 
-## Buffer Transport tests
-## @{
-unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp : $(TEST_DEPENDENCIES) ;
-## @}
-
 
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp : $(TEST_DEPENDENCIES) <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
