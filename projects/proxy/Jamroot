@@ -963,11 +963,6 @@ test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>sna
 ## @}
 
 
-## Buffer Transport tests
-## @{
-test-canonical transport/buffer/buffering_buf.hpp ;
-## @}
-
 test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;

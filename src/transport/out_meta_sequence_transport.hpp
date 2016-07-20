@@ -713,7 +713,7 @@ struct OutFilenameSequenceTransport
     RequestCleaningTransport<
         OutputNextTransport<
             detail::out_sequence_filename_buf<
-            detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >
+            detail::empty_ctor<io::posix::fdbuf>
     >>>
 
 {
@@ -1483,7 +1483,7 @@ RequestCleaningTransport<
 
 using OutMetaSequenceTransportWithSum = detail::OutHashedMetaSequenceTransport<
     detail::out_hash_meta_sequence_filename_buf_impl<
-        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
+        detail::empty_ctor<io::posix::fdbuf>,
         detail::ochecksum_filter,
         detail::cctx_ochecksum_file,
         detail::cctx_ofile_buf
@@ -1493,7 +1493,7 @@ using OutMetaSequenceTransportWithSum = detail::OutHashedMetaSequenceTransport<
 
 using CryptoOutMetaSequenceTransport = detail::OutHashedMetaSequenceTransport<
     detail::out_hash_meta_sequence_filename_buf_impl<
-        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
+        detail::empty_ctor<io::posix::fdbuf>,
         detail::ocrypto_filter,
         transbuf::ocrypto_filename_buf,
         transbuf::ocrypto_filename_buf
