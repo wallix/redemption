@@ -54,12 +54,112 @@
 
 #include "transport/mixin_transport.hpp"
 #include "transport/buffer/file_buf.hpp"
-#include "transport/buffer/checksum_buf.hpp"
 #include "transport/buffer/null_buf.hpp"
 
 #include "transport/sequence_generator.hpp"
 #include "core/error.hpp"
 #include "acl/auth_api.hpp"
+
+namespace transbuf {
+
+using std::size_t;
+
+template<class Buf>
+class ochecksum_buf
+: public Buf
+{
+    struct HMac
+    {
+        HMAC_CTX hmac;
+        bool initialized = false;
+
+        HMac() = default;
+
+        ~HMac() {
+            if (this->initialized) {
+                HMAC_CTX_cleanup(&this->hmac);
+            }
+        }
+
+        void init(const uint8_t * const crypto_key, size_t key_len) {
+            HMAC_CTX_init(&this->hmac);
+            if (!HMAC_Init_ex(&this->hmac, crypto_key, key_len, EVP_sha256(), nullptr)) {
+                throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+            }
+            this->initialized = true;
+        }
+
+        void update(const void * const data, size_t data_size) {
+            assert(this->initialized);
+            if (!HMAC_Update(&this->hmac, reinterpret_cast<uint8_t const *>(data), data_size)) {
+                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+            }
+        }
+
+        void final(uint8_t (&out_data)[SHA256_DIGEST_LENGTH]) {
+            assert(this->initialized);
+            unsigned int len = 0;
+            if (!HMAC_Final(&this->hmac, out_data, &len)) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            this->initialized = false;
+        }
+    };
+
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+
+    HMac hmac;
+    HMac quick_hmac;
+    unsigned char (&hmac_key)[MD_HASH_LENGTH];
+    size_t file_size = nosize;
+
+public:
+    explicit ochecksum_buf(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    : hmac_key(hmac_key)
+    {}
+
+    ochecksum_buf(ochecksum_buf const &) = delete;
+    ochecksum_buf & operator=(ochecksum_buf const &) = delete;
+
+    template<class... Ts>
+    int open(Ts && ... args)
+    {
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        int ret = this->Buf::open(args...);
+        this->file_size = 0;
+        return ret;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        REDASSERT(this->file_size != nosize);
+        this->hmac.update(data, len);
+        if (this->file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(data, remaining);
+            this->file_size += remaining;
+        }
+        return this->Buf::write(data, len);
+    }
+
+    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+    {
+        REDASSERT(this->file_size != nosize);
+        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+        this->file_size = nosize;
+        return this->Buf::close();
+    }
+
+    int close() {
+        return this->Buf::close();
+    }
+};
+
+}
+
 
 namespace detail
 {
