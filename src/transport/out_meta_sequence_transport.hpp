@@ -61,6 +61,106 @@
 
 #include "utils/log.hpp"
 
+template <class Buf, class PathTraits = detail::NoCurrentPath>
+class OutputTransport
+: public Transport
+{
+    Buf buf;
+
+public:
+    OutputTransport() = default;
+
+    template<class T>
+    explicit OutputTransport(const T & buf_params)
+    : buf(buf_params)
+    {}
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_send(const char * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                const char * filename = PathTraits::current_path(this->buf);
+                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+protected:
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    typedef OutputTransport TransportType;
+};
+
+
+template<class Buf, class PathTraits = detail::NoCurrentPath>
+struct OutputNextTransport
+: OutputTransport<Buf, PathTraits>
+{
+    OutputNextTransport() = default;
+
+    template<class T>
+    explicit OutputNextTransport(const T & buf_params)
+    : OutputTransport<Buf, PathTraits>(buf_params)
+    {}
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+protected:
+    typedef OutputNextTransport TransportType;
+};
+
+
+template<class TTransport>
+struct RequestCleaningTransport
+: TTransport
+{
+    RequestCleaningTransport() = default;
+
+    template<class T>
+    explicit RequestCleaningTransport(const T & params)
+    : TTransport(params)
+    {}
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+protected:
+    typedef RequestCleaningTransport TransportType;
+};
 
 namespace transbuf {
     class ofile_buf_out
@@ -1264,9 +1364,8 @@ namespace detail
 
     template<class Buf, class Params>
     struct OutHashedMetaSequenceTransport
-    : // FlushingTransport<
-    RequestCleaningTransport<OutputNextTransport<CloseWrapper<Buf>, detail::GetCurrentPath>>
-    // >
+    : 
+        RequestCleaningTransport<OutputNextTransport<CloseWrapper<Buf>, detail::GetCurrentPath>>
     {
         OutHashedMetaSequenceTransport(
             CryptoContext * crypto_ctx,
