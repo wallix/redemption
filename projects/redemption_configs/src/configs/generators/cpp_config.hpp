@@ -37,7 +37,6 @@
 #include <cerrno>
 #include <cstring>
 
-class Font;
 
 namespace cfg_generators {
 
@@ -142,6 +141,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         this->inherit().write_type(type);
         this->out() << ";\n";
 
+        // write type
         if (bool(properties) || pack_contains<spec::attr>(infos)) {
             auto type_sesman = pack_get<sesman::type_>(infos);
             auto type_spec = pack_get<spec::type_>(infos);
@@ -162,15 +162,11 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             this->tab(); this->out() << "    using mapped_type = type;\n";
         }
 
-        if (std::is_convertible<decltype(type), type_<Font>>::value) {
-            this->tab(); this->out() << "    font(char const * filename) : value(filename) {}\n";
-            this->tab(); this->out() << "    type value;\n";
-        }
-        else {
-            this->tab(); this->out() << "    type value";
-            this->write_assignable_default(pack_contains<default_>(infos), type, &infos);
-            this->out() << ";\n";
-        }
+        // write value
+        this->tab(); this->out() << "    type value";
+        this->write_assignable_default(pack_contains<default_>(infos), type, &infos);
+        this->out() << ";\n";
+
         this->tab(); this->out() << "};\n";
 
         this->out_ = &this->out_body_parser_;
@@ -376,11 +372,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
        }
     }
     out_varconf <<
-      "{\n"
-      "    explicit VariablesConfiguration(char const * default_font_name)\n"
-      "    : cfg::font{default_font_name}\n"
-      "    {}\n"
-      "};\n\n"
+      "{};\n\n"
       "using VariablesAclPack = Pack<\n  "
     ;
     join(writer.variables_acl, "cfg::", "");

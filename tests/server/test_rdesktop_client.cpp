@@ -78,6 +78,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //listener.run();
 
     Inifile ini;
+    ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
@@ -117,8 +118,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
-    Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini, cctx
-               , fastpath_support, mem3blt_support, now);
+    Front front( front_trans, gen, ini, cctx, fastpath_support, mem3blt_support, now);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {

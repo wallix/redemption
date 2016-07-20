@@ -2660,8 +2660,7 @@ namespace cfg {
         static constexpr char const * name() { return "font"; }
         using type = Font;
         using mapped_type = type;
-        font(char const * filename) : value(filename) {}
-        type value;
+        type value{};
     };
 
 }
@@ -2933,11 +2932,7 @@ struct VariablesConfiguration
 , cfg_section::context
 , cfg::theme
 , cfg::font
-{
-    explicit VariablesConfiguration(char const * default_font_name)
-    : cfg::font{default_font_name}
-    {}
-};
+{};
 
 using VariablesAclPack = Pack<
   cfg::globals::capture_chunk

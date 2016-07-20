@@ -79,6 +79,7 @@ public:
                 close(incoming_sck);
 
                 Inifile ini;
+                ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
                 ini.set<cfg::debug::config>(this->debug_config);
                 { ConfigurationLoader cfg_loader(ini.configuration_holder(), this->config_filename.c_str()); }
 

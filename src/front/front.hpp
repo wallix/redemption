@@ -577,8 +577,6 @@ private:
     CryptoContext & cctx;
     uint32_t verbose;
 
-    Font font;
-
     bool palette_memblt_sent[6];
 
     BGRPalette mod_palette_rgb {BGRPalette::classic_332_rgb()};
@@ -643,7 +641,6 @@ private:
 
 public:
     Front(  Transport & trans
-          , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random & gen
           , Inifile & ini
           , CryptoContext & cctx
@@ -665,7 +662,6 @@ public:
     , ini(ini)
     , cctx(cctx)
     , verbose(this->ini.get<cfg::debug::front>())
-    , font(default_font_name)
     , mod_bpp(0)
     , capture_bpp(0)
     , state(CONNECTION_INITIATION)
