@@ -944,16 +944,9 @@ test-run test_strings : test_strings.cpp : : <covflag>nocover ;
 
 ## Transport tests
 ## @{
-test-canonical transport/detail/meta_writer.hpp ;
-test-canonical transport/detail/meta_opener.hpp ;
+#test-canonical transport/detail/meta_writer.hpp ;
 
 test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
-
-test-run test_filename_sequence_transport
-    : transport/test_filename_sequence_transport.cpp
-    :
-    : <covflag>nocover
-    ;
 
 test-canonical transport/out_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/test_transport.hpp ;
@@ -962,12 +955,10 @@ test-canonical transport/socket_transport.hpp : <library>openssl <library>crypto
 test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
-test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
+#test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
-#test-canonical transport/out_filename_sequence_transport.hpp ;
-
 test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
 ## @}
 
@@ -975,7 +966,6 @@ test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>sna
 ## Buffer Transport tests
 ## @{
 test-canonical transport/buffer/buffering_buf.hpp ;
-test-canonical transport/buffer/checksum_buf.hpp : <library>crypto <library>dl <library>z ;
 ## @}
 
 test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ;
@@ -1356,8 +1346,6 @@ test-canonical regex/regex_states_value.hpp ;
 test-canonical regex/regex_utils.hpp ;
 test-canonical transport/buffer/file_buf.hpp ;
 test-canonical transport/buffer/null_buf.hpp ;
-test-canonical transport/detail/meta_hash.hpp ;
-test-canonical transport/detail/no_param.hpp ;
 test-canonical transport/filter/crypto_filter.hpp ;
 test-canonical transport/mixin_transport.hpp ;
 

@@ -355,168 +355,168 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1)
     BOOST_CHECK_EQUAL(1471394 + 444578 + 290245, total);
 }
 
-BOOST_AUTO_TEST_CASE(TestMetav2)
-{
-    Inifile ini;
-    ini.set<cfg::crypto::key0>(
-        "\x00\x01\x02\x03\x04\x05\x06\x07"
-        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17"
-        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    );
-    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
+//BOOST_AUTO_TEST_CASE(TestMetav2)
+//{
+//    Inifile ini;
+//    ini.set<cfg::crypto::key0>(
+//        "\x00\x01\x02\x03\x04\x05\x06\x07"
+//        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+//        "\x10\x11\x12\x13\x14\x15\x16\x17"
+//        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+//    );
+//    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
-    LCGRandom rnd(0);
+//    LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini);
+//    CryptoContext cctx(rnd, ini);
 
-    ifile_buf ifile(&cctx, 0);
+//    ifile_buf ifile(&cctx, 0);
 
-    ifile.open(FIXTURES_PATH "/sample_v2.mwrm");
+//    ifile.open(FIXTURES_PATH "/sample_v2.mwrm");
 
-    struct ReaderBuf
-    {
-        ifile_buf & buf;
+//    struct ReaderBuf
+//    {
+//        ifile_buf & buf;
 
-        ssize_t reader_read(char * buf, size_t len) const {
-            return this->buf.read(buf, len);
-        }
-    };
+//        ssize_t reader_read(char * buf, size_t len) const {
+//            return this->buf.read(buf, len);
+//        }
+//    };
 
-    detail::ReaderLine<ReaderBuf> reader({ifile});
-    auto meta_header = detail::read_meta_headers(reader);
-    BOOST_REQUIRE_EQUAL(meta_header.version, 2);
-    BOOST_CHECK_EQUAL(meta_header.has_checksum, false);
+//    detail::ReaderLine<ReaderBuf> reader({ifile});
+//    auto meta_header = detail::read_meta_headers(reader);
+//    BOOST_REQUIRE_EQUAL(meta_header.version, 2);
+//    BOOST_CHECK_EQUAL(meta_header.has_checksum, false);
 
-    detail::MetaLine meta_line;
-    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
-    BOOST_CHECK_EQUAL(meta_line.size, 1);
-    BOOST_CHECK_EQUAL(meta_line.mode, 2);
-    BOOST_CHECK_EQUAL(meta_line.uid, 3);
-    BOOST_CHECK_EQUAL(meta_line.gid, 4);
-    BOOST_CHECK_EQUAL(meta_line.dev, 5);
-    BOOST_CHECK_EQUAL(meta_line.ino, 6);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+//    detail::MetaLine meta_line;
+//    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+//    BOOST_CHECK_EQUAL(meta_line.size, 1);
+//    BOOST_CHECK_EQUAL(meta_line.mode, 2);
+//    BOOST_CHECK_EQUAL(meta_line.uid, 3);
+//    BOOST_CHECK_EQUAL(meta_line.gid, 4);
+//    BOOST_CHECK_EQUAL(meta_line.dev, 5);
+//    BOOST_CHECK_EQUAL(meta_line.ino, 6);
+//    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
+//    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
+//    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
+//    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
 
-    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
-    BOOST_CHECK_EQUAL(meta_line.size, 9);
-    BOOST_CHECK_EQUAL(meta_line.mode, 8);
-    BOOST_CHECK_EQUAL(meta_line.uid, 10);
-    BOOST_CHECK_EQUAL(meta_line.gid, 11);
-    BOOST_CHECK_EQUAL(meta_line.dev, 12);
-    BOOST_CHECK_EQUAL(meta_line.ino, 13);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 14);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 15);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304870);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304930);
+//    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+//    BOOST_CHECK_EQUAL(meta_line.size, 9);
+//    BOOST_CHECK_EQUAL(meta_line.mode, 8);
+//    BOOST_CHECK_EQUAL(meta_line.uid, 10);
+//    BOOST_CHECK_EQUAL(meta_line.gid, 11);
+//    BOOST_CHECK_EQUAL(meta_line.dev, 12);
+//    BOOST_CHECK_EQUAL(meta_line.ino, 13);
+//    BOOST_CHECK_EQUAL(meta_line.mtime, 14);
+//    BOOST_CHECK_EQUAL(meta_line.ctime, 15);
+//    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304870);
+//    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304930);
 
-    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
-    BOOST_CHECK_EQUAL(meta_line.size, 16);
-    BOOST_CHECK_EQUAL(meta_line.mode, 17);
-    BOOST_CHECK_EQUAL(meta_line.uid, 18);
-    BOOST_CHECK_EQUAL(meta_line.gid, 19);
-    BOOST_CHECK_EQUAL(meta_line.dev, 20);
-    BOOST_CHECK_EQUAL(meta_line.ino, 21);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 22);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 23);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304930);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304990);
+//    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+//    BOOST_CHECK_EQUAL(meta_line.size, 16);
+//    BOOST_CHECK_EQUAL(meta_line.mode, 17);
+//    BOOST_CHECK_EQUAL(meta_line.uid, 18);
+//    BOOST_CHECK_EQUAL(meta_line.gid, 19);
+//    BOOST_CHECK_EQUAL(meta_line.dev, 20);
+//    BOOST_CHECK_EQUAL(meta_line.ino, 21);
+//    BOOST_CHECK_EQUAL(meta_line.mtime, 22);
+//    BOOST_CHECK_EQUAL(meta_line.ctime, 23);
+//    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304930);
+//    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304990);
 
-    BOOST_CHECK_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), ERR_TRANSPORT_NO_MORE_DATA);
-}
+//    BOOST_CHECK_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), ERR_TRANSPORT_NO_MORE_DATA);
+//}
 
-BOOST_AUTO_TEST_CASE(TestMetav2sum)
-{
-    Inifile ini;
-    ini.set<cfg::crypto::key0>(
-        "\x00\x01\x02\x03\x04\x05\x06\x07"
-        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17"
-        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    );
-    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
+//BOOST_AUTO_TEST_CASE(TestMetav2sum)
+//{
+//    Inifile ini;
+//    ini.set<cfg::crypto::key0>(
+//        "\x00\x01\x02\x03\x04\x05\x06\x07"
+//        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+//        "\x10\x11\x12\x13\x14\x15\x16\x17"
+//        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+//    );
+//    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
 
 
-    LCGRandom rnd(0);
+//    LCGRandom rnd(0);
 
-    CryptoContext cctx(rnd, ini);
+//    CryptoContext cctx(rnd, ini);
 
-    ifile_buf ifile(&cctx, 0);
-    ifile.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
+//    ifile_buf ifile(&cctx, 0);
+//    ifile.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
 
-    struct ReaderBuf
-    {
-        ifile_buf & buf;
+//    struct ReaderBuf
+//    {
+//        ifile_buf & buf;
 
-        ssize_t reader_read(char * buf, size_t len) const {
-            return this->buf.read(buf, len);
-        }
-    };
+//        ssize_t reader_read(char * buf, size_t len) const {
+//            return this->buf.read(buf, len);
+//        }
+//    };
 
-    detail::ReaderLine<ReaderBuf> reader({ifile});
-    auto meta_header = detail::read_meta_headers(reader);
-    BOOST_REQUIRE_EQUAL(meta_header.version, 2);
-    BOOST_CHECK_EQUAL(meta_header.has_checksum, true);
+//    detail::ReaderLine<ReaderBuf> reader({ifile});
+//    auto meta_header = detail::read_meta_headers(reader);
+//    BOOST_REQUIRE_EQUAL(meta_header.version, 2);
+//    BOOST_CHECK_EQUAL(meta_header.has_checksum, true);
 
-    using std::begin;
-    using std::end;
+//    using std::begin;
+//    using std::end;
 
-    struct is_char {
-        unsigned char c;
-        bool operator()(unsigned char c) const {
-            return this->c == c;
-        }
-    };
+//    struct is_char {
+//        unsigned char c;
+//        bool operator()(unsigned char c) const {
+//            return this->c == c;
+//        }
+//    };
 
-    detail::MetaLine meta_line;
-    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
-    BOOST_CHECK_EQUAL(meta_line.size, 1);
-    BOOST_CHECK_EQUAL(meta_line.mode, 2);
-    BOOST_CHECK_EQUAL(meta_line.uid, 3);
-    BOOST_CHECK_EQUAL(meta_line.gid, 4);
-    BOOST_CHECK_EQUAL(meta_line.dev, 5);
-    BOOST_CHECK_EQUAL(meta_line.ino, 6);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
-    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xaa}));
-    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xbb}));
+//    detail::MetaLine meta_line;
+//    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+//    BOOST_CHECK_EQUAL(meta_line.size, 1);
+//    BOOST_CHECK_EQUAL(meta_line.mode, 2);
+//    BOOST_CHECK_EQUAL(meta_line.uid, 3);
+//    BOOST_CHECK_EQUAL(meta_line.gid, 4);
+//    BOOST_CHECK_EQUAL(meta_line.dev, 5);
+//    BOOST_CHECK_EQUAL(meta_line.ino, 6);
+//    BOOST_CHECK_EQUAL(meta_line.mtime, 7);
+//    BOOST_CHECK_EQUAL(meta_line.ctime, 8);
+//    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304810);
+//    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+//    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xaa}));
+//    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xbb}));
 
-    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
-    BOOST_CHECK_EQUAL(meta_line.size, 9);
-    BOOST_CHECK_EQUAL(meta_line.mode, 8);
-    BOOST_CHECK_EQUAL(meta_line.uid, 10);
-    BOOST_CHECK_EQUAL(meta_line.gid, 11);
-    BOOST_CHECK_EQUAL(meta_line.dev, 12);
-    BOOST_CHECK_EQUAL(meta_line.ino, 13);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 14);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 15);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304870);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304930);
-    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xcc}));
-    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xdd}));
+//    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+//    BOOST_CHECK_EQUAL(meta_line.size, 9);
+//    BOOST_CHECK_EQUAL(meta_line.mode, 8);
+//    BOOST_CHECK_EQUAL(meta_line.uid, 10);
+//    BOOST_CHECK_EQUAL(meta_line.gid, 11);
+//    BOOST_CHECK_EQUAL(meta_line.dev, 12);
+//    BOOST_CHECK_EQUAL(meta_line.ino, 13);
+//    BOOST_CHECK_EQUAL(meta_line.mtime, 14);
+//    BOOST_CHECK_EQUAL(meta_line.ctime, 15);
+//    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304870);
+//    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304930);
+//    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xcc}));
+//    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xdd}));
 
-    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
-    BOOST_CHECK_EQUAL(meta_line.size, 16);
-    BOOST_CHECK_EQUAL(meta_line.mode, 17);
-    BOOST_CHECK_EQUAL(meta_line.uid, 18);
-    BOOST_CHECK_EQUAL(meta_line.gid, 19);
-    BOOST_CHECK_EQUAL(meta_line.dev, 20);
-    BOOST_CHECK_EQUAL(meta_line.ino, 21);
-    BOOST_CHECK_EQUAL(meta_line.mtime, 22);
-    BOOST_CHECK_EQUAL(meta_line.ctime, 23);
-    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304930);
-    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304990);
-    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xee}));
-    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xff}));
+//    BOOST_REQUIRE_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), 0);
+//    BOOST_CHECK_EQUAL(meta_line.size, 16);
+//    BOOST_CHECK_EQUAL(meta_line.mode, 17);
+//    BOOST_CHECK_EQUAL(meta_line.uid, 18);
+//    BOOST_CHECK_EQUAL(meta_line.gid, 19);
+//    BOOST_CHECK_EQUAL(meta_line.dev, 20);
+//    BOOST_CHECK_EQUAL(meta_line.ino, 21);
+//    BOOST_CHECK_EQUAL(meta_line.mtime, 22);
+//    BOOST_CHECK_EQUAL(meta_line.ctime, 23);
+//    BOOST_CHECK_EQUAL(meta_line.start_time, 1352304930);
+//    BOOST_CHECK_EQUAL(meta_line.stop_time, 1352304990);
+//    BOOST_CHECK(std::all_of(begin(meta_line.hash1), end(meta_line.hash1), is_char{0xee}));
+//    BOOST_CHECK(std::all_of(begin(meta_line.hash2), end(meta_line.hash2), is_char{0xff}));
 
-    BOOST_CHECK_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), ERR_TRANSPORT_NO_MORE_DATA);
-}
+//    BOOST_CHECK_EQUAL(detail::read_meta_file(reader, meta_header, meta_line), ERR_TRANSPORT_NO_MORE_DATA);
+//}
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM1_v2)
 {

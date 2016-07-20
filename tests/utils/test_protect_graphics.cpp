@@ -29,7 +29,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "transport/out_filename_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
 #include "capture/image_capture.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/protect_graphics.hpp"
