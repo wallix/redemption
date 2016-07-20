@@ -29,11 +29,70 @@
 // #define LOGNULL
 
 #include "transport/mixin_transport.hpp"
-#include "transport/buffer/file_buf.hpp"
 
 #include "utils/fileutils.hpp"
 
 #include "transport/in_filename_transport.hpp"
+
+namespace transbuf {
+    class ofile_buf
+    {
+        int fd;
+    public:
+        ofile_buf() : fd(-1) {}
+        ~ofile_buf()
+        {
+            this->close();
+        }
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->close();
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
+    };
+
+}
+
 
 namespace transfil {
 
