@@ -353,8 +353,7 @@ inline void Font::load_from_file(char const * file_path)
 
     // Extract each character glyph
     Read status = Read::eof;
-    size_t last_index = 0;
-    for (size_t index {}; index < MAX_GLYPHS ; last_index = ++index) {
+    for (size_t index {}; index < MAX_GLYPHS ; ++index) {
         // Read header
         size_t const description_size = 16;
         switch ((status = prepare_stream(description_size, index))) {
@@ -387,11 +386,12 @@ inline void Font::load_from_file(char const * file_path)
                     if (datasize > remaining) {
                         datasize -= remaining;
                         stream = InStream(stream_buf, 0);
-                        lseek(fd, datasize, SEEK_CUR);
+                        if (static_cast<off_t>(-1) == lseek(fd, datasize, SEEK_CUR)) {
+                            return ;
+                        }
                     }
                     else {
                         stream.in_skip_bytes(datasize);
-                        datasize = 0;
                     }
 
                     // one glyph is broken but we continue with other glyphs
