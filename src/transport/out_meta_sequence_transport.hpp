@@ -34,7 +34,12 @@
 #include <stdlib.h> //mkostemps
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <cerrno>
+#include <fcntl.h>
+#include <snappy-c.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <memory>
 
 #include "utils/sugar/iter.hpp"
 #include "utils/fdbuf.hpp"
@@ -51,8 +56,6 @@
 #include "transport/buffer/file_buf.hpp"
 #include "transport/buffer/checksum_buf.hpp"
 #include "transport/buffer/null_buf.hpp"
-#include "transport/buffer/file_buf.hpp"
-#include "transport/filter/crypto_filter.hpp"
 
 #include "transport/sequence_generator.hpp"
 #include "core/error.hpp"
