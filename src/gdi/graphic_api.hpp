@@ -541,8 +541,7 @@ struct TextMetrics
         UTF8toUnicodeIterator unicode_iter(unicode_text);
         uint16_t height_max = 0;
         for (; uint32_t c = *unicode_iter; ++unicode_iter) {
-            bool exists = font.glyph_defined(c) && font.font_items[c];
-            const FontChar & font_item = font.font_items[exists ? c : static_cast<unsigned>('?')];
+            const FontChar & font_item = font.glyph_or_unknown(c);
             this->width += font_item.incby;
             height_max = std::max(height_max, font_item.height);
         }
@@ -579,24 +578,24 @@ static inline void server_draw_text(
             ++unicode_iter;
 
             int cacheIndex = 0;
-            bool const exists = font.glyph_defined(charnum) && font.font_items[charnum];
-            if (!exists){
+            FontChar const * font_item = font.glyph_at(charnum);
+            if (!font_item) {
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
+                font_item = &font.unknown_glyph();
             }
-            FontChar const & font_item = font.font_items[exists ? charnum : static_cast<unsigned>('?')];
 
             // TODO avoid passing parameters by reference to get results
             const GlyphCache::t_glyph_cache_result cache_result =
-                mod_glyph_cache.add_glyph(font_item, cacheId, cacheIndex);
+                mod_glyph_cache.add_glyph(*font_item, cacheId, cacheIndex);
             (void)cache_result; // supress warning
 
             *data_begin = cacheIndex;
             ++data_begin;
             *data_begin = distance_from_previous_fragment;
             ++data_begin;
-            distance_from_previous_fragment = font_item.incby;
-            total_width += font_item.incby;
-            total_height = std::max(uint16_t(total_height), font_item.height);
+            distance_from_previous_fragment = font_item->incby;
+            total_width += font_item->incby;
+            total_height = std::max(uint16_t(total_height), font_item->height);
         }
 
         const Rect bk(x, y, total_width + 1, total_height + 1);

@@ -782,15 +782,6 @@ public:
             clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
     }
 
-    static const FontChar & get_font(const Font& font, uint32_t c)
-    {
-        if (!font.glyph_defined(c) || !font.font_items[c]) {
-            LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
-            return font.font_items[unsigned('?')];
-        }
-        return font.font_items[c];
-    }
-
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
