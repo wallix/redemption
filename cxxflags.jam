@@ -211,7 +211,7 @@ variant san : debug :
 
 
 constant CXXFLAGS-clang-warnings :
-    $(CXXFLAGS-CLANG-X)
+    <toolset>clang:$(CXXFLAGS-CLANG-X)
 ;
 
 constant CXXFLAGS-clang-sanitize :
