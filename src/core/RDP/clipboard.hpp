@@ -1663,6 +1663,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     }
 
     // Files List
+    // TODO std::string* + int* -> array_view { name, size };
     void emit(OutStream & stream, std::string * namesList, int * sizesList, int cItems) {
         this->dataLen_ = (cItems * 592) + 4;
         CliprdrHeader::emit(stream);
@@ -1679,20 +1680,24 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             stream.out_uint64_le(10000); //  random
             stream.out_uint32_le(0);
             stream.out_uint32_le(sizesList[i]);
+            // TODO range-for
             for (int j = 0; j < namesList[i].size(); j++) {
                 stream.out_uint8(namesList[i].c_str()[j]);
             }
+            // TODO assert(sz <= 520) ?
             stream.out_skip_bytes(520-namesList[i].size());
         }
 
     }
 
+    // TODO negative length is not correct
     void emit_text(OutStream & stream, int length) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(length);
     }
 
+    // TODO negative sizes is not correct
     void emit_metaFilePic(OutStream & stream, int data_length, int width, int height, int depth) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);

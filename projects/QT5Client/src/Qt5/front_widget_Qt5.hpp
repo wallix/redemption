@@ -63,8 +63,11 @@ class DialogOptions_Qt : public QDialog
 Q_OBJECT
 
 public:
+    // TODO Front_Qt_API * -> Front_Qt_API &
     Front_Qt_API       * _front;
+    // TODO negatif size, what ?
     const int            _width;
+    // TODO negatif size, what ?
     const int            _height;
     QWidget              _emptyPanel;
     QWidget            * _viewTab;
@@ -92,6 +95,7 @@ public:
     const int            _tableKeySettingMaxHeight;
 
 
+    // TODO Front_Qt_API * -> Front_Qt_API &
     DialogOptions_Qt(Front_Qt_API * front, QWidget * parent)
         : QDialog(parent)
         , _front(front)
@@ -222,23 +226,30 @@ public:
 
                 int pos(ligne.find(delimiter));
 
+                // TODO std::string::compare
                 if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
 
+                    // TODO std::string::erase
+                    // TODO std::strtol
                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                     pos = ligne.find(delimiter);
 
+                    // TODO std::strtol
                     int qtKeyID  = std::stoi(ligne.substr(0, pos));
                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                     pos = ligne.find(delimiter);
 
+                    // TODO std::strtol
                     int scanCode = std::stoi(ligne.substr(0, pos));
                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                     pos = ligne.find(delimiter);
-;
+
+                    // TODO std::strtol
                     int ASCII8   = std::stoi(ligne.substr(0, pos));
                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                     pos = ligne.find(delimiter);
 
+                    // TODO std::strtol
                     int extended = std::stoi(ligne.substr(0, pos));
 
                     this->_front->_qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
@@ -311,15 +322,19 @@ private:
     void setRowValues(int qtKeyID, int scanCode, int ASCII8, int extended) {
         int row(this->_tableKeySetting->rowCount() - 1);
 
+        // TODO QString::number
         QTableWidgetItem * item1 = new QTableWidgetItem;
+        // TODO QString::number
         item1->setText(std::to_string(qtKeyID).c_str());
         this->_tableKeySetting->setItem(row, 0, item1);
 
         QTableWidgetItem * item2 = new QTableWidgetItem;
+        // TODO QString::number
         item2->setText(std::to_string(scanCode).c_str());
         this->_tableKeySetting->setItem(row, 1, item2);
 
         QTableWidgetItem * item3 = new QTableWidgetItem;
+        // TODO QString::number
         item3->setText(std::to_string(ASCII8).c_str());
         this->_tableKeySetting->setItem(row, 2, item3);
 
@@ -328,6 +343,7 @@ private:
     }
 
     void updateKeySetting() {
+        // TODO magic number \o\\o//o/
         int tableKeySettingHeight((20*(this->_tableKeySetting->rowCount()+1))+11);
         if (tableKeySettingHeight > this->_tableKeySettingMaxHeight) {
             tableKeySettingHeight = this->_tableKeySettingMaxHeight;
@@ -451,6 +467,7 @@ class Form_Qt : public QWidget
 Q_OBJECT
 
 public:
+    // TODO Front_Qt_API * -> Front_Qt_API &
     Front_Qt_API       * _front;
     const int            _width;
     const int            _height;
@@ -468,7 +485,9 @@ public:
     QPushButton          _buttonOptions;
 
 
+    // TODO Front_Qt_API * -> Front_Qt_API &
     Form_Qt(Front_Qt_API * front)
+    // TODO parent parameter
         : QWidget()
         , _front(front)
         , _width(400)
@@ -593,6 +612,7 @@ class Screen_Qt : public QWidget
 Q_OBJECT
 
 public:
+    // TODO Front_Qt_API * -> Front_Qt_API &
     Front_Qt_API       * _front;
     QPushButton          _buttonCtrlAltDel;
     QPushButton          _buttonRefresh;
@@ -609,7 +629,9 @@ public:
     QTimer               _timer;
 
 
+    // TODO Front_Qt_API * -> Front_Qt_API &
     Screen_Qt (Front_Qt_API * front)
+    // TODO parent parameter
     : QWidget()
     , _front(front)
     , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
@@ -774,12 +796,14 @@ Q_OBJECT
 public:
     Front_Qt_API    * _front;
     QSocketNotifier * _sckRead;
+    // TODO unused std::unique_ptr
     mod_api         * _callback;
     SocketTransport * _sck;
     int               _client_sck;
     QClipboard      * _clipboard;
     bool              _local_clipboard_stream;
     size_t            _length;
+    // TODO unused std::unique_ptr
     uint8_t         * _chunk;
     QImage          * _bufferImage;
     uint16_t          _bufferTypeID;
