@@ -12,7 +12,7 @@ int main(int ac, char ** av)
         {
             cfg_specs::config_type_definition(this->enums);
             cfg_specs::config_spec_definition(*this);
-        };
+        }
     };
     return cfg_generators::app_write_ini<Writer>(ac, av);
 }

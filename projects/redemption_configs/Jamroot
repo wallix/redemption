@@ -73,6 +73,7 @@ project configs
     <cxxflags>-std=c++14
 
     $(CXXFLAGS)
+    <toolset>clang:<cxxflags>-Wno-class-varargs
 
     <define>PUBLIC
 
