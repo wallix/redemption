@@ -172,3 +172,111 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     BOOST_CHECK_EQUAL(-1, filesize("./xxx.mwrm"));
 }
 
+
+template<size_t N>
+long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]) {
+    return buf.write(s, N-1);
+}
+
+BOOST_AUTO_TEST_CASE(TestOSumBuf)
+{
+    Inifile ini;
+
+    ini.set<cfg::crypto::key0>(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    );
+    ini.set<cfg::crypto::key1>("12345678901234567890123456789012");
+
+    LCGRandom rnd(0);
+    CryptoContext cctx(rnd, ini);
+    cctx.get_master_key();
+//    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
+    transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.get_hmac_key());
+    buf.open();
+    BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
+    BOOST_CHECK_EQUAL(write(buf, "cde"), 3);
+
+    detail::hash_type hash;
+    buf.close(hash);
+
+    char hash_str[detail::hash_string_len + 1];
+    *detail::swrite_hash(hash_str, hash) = 0;
+    BOOST_CHECK_EQUAL(
+        hash_str,
+        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+        " 03cb482c5a6af0d37b74d0a8b1facf6a02b619068e92495f469e0098b662fe3f"
+    );
+}
+
+#include <string>
+
+BOOST_AUTO_TEST_CASE(TestWriteFilename)
+{
+    using detail::write_filename;
+
+    struct {
+        std::string s;
+
+        int write(char const * data, std::size_t len) {
+            s.append(data, len);
+            return len;
+        }
+    } writer;
+
+#define TEST_WRITE_FILENAME(origin_filename, wrote_filename) \
+    write_filename(writer, origin_filename);                 \
+    BOOST_CHECK_EQUAL(writer.s, wrote_filename);             \
+    writer.s.clear()
+
+    TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
+
+    TEST_WRITE_FILENAME(R"(\abcde.txt)", R"(\\abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc\de.txt)", R"(abc\\de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt\)", R"(abcde.txt\\)");
+    TEST_WRITE_FILENAME(R"(abc\\de.txt)", R"(abc\\\\de.txt)");
+    TEST_WRITE_FILENAME(R"(\\\\)", R"(\\\\\\\\)");
+
+    TEST_WRITE_FILENAME(R"( abcde.txt)", R"(\ abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc de.txt)", R"(abc\ de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt )", R"(abcde.txt\ )");
+    TEST_WRITE_FILENAME(R"(abc  de.txt)", R"(abc\ \ de.txt)");
+    TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
+}
+
+BOOST_AUTO_TEST_CASE(TestWriteHash)
+{
+    detail::hash_type hash;
+    std::iota(std::begin(hash), std::end(hash), 0);
+
+    char hash_str[detail::hash_string_len + 1];
+    *detail::swrite_hash(hash_str, hash) = 0;
+    BOOST_CHECK_EQUAL(
+        hash_str,
+        " 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+        " 202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+    );
+}
+
+#include "utils/fileutils.hpp"
+
+BOOST_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
+{
+    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid());
+    fnt.send("We write, ", 10);
+    fnt.send("and again, ", 11);
+    fnt.send("and so on.", 10);
+
+    fnt.next();
+    fnt.send(" ", 1);
+    fnt.send("A new file.", 11);
+
+    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(0)), 31);
+    BOOST_CHECK_EQUAL(filesize(fnt.seqgen()->get(1)), 12);
+
+    fnt.disconnect();
+    unlink(fnt.seqgen()->get(0));
+    unlink(fnt.seqgen()->get(1));
+}

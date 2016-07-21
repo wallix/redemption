@@ -74,8 +74,6 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
     const bool        param_dont_log_data_into_syslog;
     const bool        param_dont_log_data_into_wrm;
 
-    auth_api*         param_acl;
-
     bool user_logged_on = false;
 
     class DeviceRedirectionManager
@@ -856,8 +854,6 @@ public:
 
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
-
-        auth_api* acl;
     };
 
     FileSystemVirtualChannel(
@@ -877,7 +873,6 @@ public:
     , param_random_number(params.random_number)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
-    , param_acl(params.acl)
     , device_redirection_manager(
           file_system_drive_manager,
           user_logged_on,
@@ -1602,12 +1597,12 @@ public:
                                     "/desktop.ini",
                                     sizeof("/desktop.ini")-1
                                 )) {
-                                    if (this->param_acl) {
+                                    if (this->authentifier) {
                                         std::string info("file_name='");
                                         info += target_info.file_path;
                                         info += "'";
 
-                                        this->param_acl->log4(
+                                        this->authentifier->log4(
                                             !this->param_dont_log_data_into_syslog,
                                             "DRIVE_REDIRECTION_READ",
                                             info.c_str());
@@ -1640,19 +1635,19 @@ public:
                             "Write request.");
                 }
 
-                if (device_io_response.IoStatus() == 0x00000000  /*STATUS_SUCCESS*/) {
+                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
                     auto request_iter = this->find_request_response(device_io_response);
                     if (request_iter != this->device_io_request_info_inventory.end()) {
                         auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
                         if (target_iter != this->device_io_target_info_inventory.end()) {
                             device_io_target_info_type & target_info = *target_iter;
                             if (!target_info.for_writing) {
-                                if (this->param_acl) {
+                                if (this->authentifier) {
                                     std::string info("file_name='");
                                     info += target_info.file_path;
                                     info += "'";
 
-                                    this->param_acl->log4(
+                                    this->authentifier->log4(
                                         !this->param_dont_log_data_into_syslog,
                                         "DRIVE_REDIRECTION_WRITE",
                                         info.c_str());
@@ -1693,6 +1688,52 @@ public:
                 this->process_client_drive_directory_control_response(
                     total_length, flags, chunk,
                     /* FsInformationClass = */extra_data);
+            break;
+
+            case rdpdr::IRP_MJ_SET_INFORMATION:
+                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
+                    switch (extra_data) {
+                        case rdpdr::FileDispositionInformation:
+                        {
+                            auto target_iter = this->find_target_response(device_io_response, FileId);
+                            if (target_iter != this->device_io_target_info_inventory.end()) {
+                                device_io_target_info_type & target_info = *target_iter;
+                                if (this->authentifier) {
+                                    std::string info("file_name='");
+                                    info += target_info.file_path;
+                                    info += "'";
+
+                                    this->authentifier->log4(
+                                        !this->param_dont_log_data_into_syslog,
+                                        "DRIVE_REDIRECTION_DELETE",
+                                        info.c_str());
+                                }
+                            }
+                        }
+                        break;
+
+                        case rdpdr::FileRenameInformation:
+                        {
+                            auto target_iter = this->find_target_response(device_io_response, FileId);
+                            if (target_iter != this->device_io_target_info_inventory.end()) {
+                                device_io_target_info_type & target_info = *target_iter;
+                                if (this->authentifier) {
+                                    std::string info("old_file_name='");
+                                    info += target_info.file_path;
+                                    info += "' new_file_name='";
+                                    info += file_path;
+                                    info += "'";
+
+                                    this->authentifier->log4(
+                                        !this->param_dont_log_data_into_syslog,
+                                        "DRIVE_REDIRECTION_RENAME",
+                                        info.c_str());
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
             break;
 
             default:
@@ -2312,6 +2353,53 @@ public:
                 else {
                     do_not_add_to_inventory = true;
                 }
+            break;
+
+            case rdpdr::IRP_MJ_SET_INFORMATION:
+            {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_server_drive_io_request: "
+                            "Server Drive Set Information Request");
+                }
+
+                rdpdr::ServerDriveSetInformationRequest
+                    server_drive_set_information_request;
+
+                server_drive_set_information_request.receive(chunk);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    server_drive_set_information_request.log(LOG_INFO);
+                }
+
+                extra_data =
+                    server_drive_set_information_request.FsInformationClass();
+
+                if (server_drive_set_information_request.FsInformationClass() ==
+                    rdpdr::FileRenameInformation) {
+
+                    rdpdr::RDPFileRenameInformation rdp_file_rename_information;
+
+                    rdp_file_rename_information.receive(chunk);
+
+                    if (verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        rdp_file_rename_information.log(LOG_INFO);
+                    }
+
+                    std::string const * device_name =
+                        this->device_redirection_manager.get_device_name(
+                            this->server_device_io_request.DeviceId());
+                    if (device_name) {
+                        file_path =
+                            *device_name + rdp_file_rename_information.FileName();
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                    "FileName=\"%s\"",
+                                file_path.c_str());
+                        }
+                    }
+                }
+            }
             break;
 
             default:

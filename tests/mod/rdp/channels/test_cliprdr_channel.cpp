@@ -119,6 +119,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
@@ -227,6 +228,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
@@ -335,6 +337,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
@@ -443,6 +446,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
@@ -557,6 +561,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     NullSender to_client_sender;

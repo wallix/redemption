@@ -72,7 +72,6 @@ public:
     bool must_be_stop_capture() override { return false; }
 
     MyFront( Transport & trans
-            , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
             , Random & gen
             , Inifile & ini
             , CryptoContext & cctx
@@ -83,7 +82,6 @@ public:
             , Transport * persistent_key_list_transport = nullptr
             )
     : Front( trans
-            , default_font_name
             , gen
             , ini
             , cctx
@@ -192,9 +190,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        char const * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME;
-        MyFront front( front_trans, default_font_name, gen1, ini
-                     , cctx, fastpath_support, mem3blt_support
+        MyFront front( front_trans, gen1, ini , cctx, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count());
         null_mod no_mod(front);
 
@@ -378,8 +374,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
         ini.set<cfg::globals::is_rec>(true);
         ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-        char const * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME;
-        MyFront front( front_trans, default_font_name, gen1, ini
+        MyFront front( front_trans, gen1, ini
                      , cctx, fastpath_support, mem3blt_support
                      , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
         null_mod no_mod(front);

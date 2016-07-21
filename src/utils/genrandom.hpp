@@ -21,83 +21,87 @@
 
 */
 
-
 #pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdint.h>
+#include <cerrno>
+#include <cstdint>
 
 #include "utils/log.hpp"
+#include "utils/sugar/compiler_attributes.hpp"
+
 
 class Random
 {
-    protected:
-        // this makes object noncopyable by removing copy constructors
-        Random(Random&&) = delete;
-        Random(const Random&) = delete;
-        Random& operator=(Random&&) = delete;
-        Random& operator=(const Random&) = delete;
+    // this makes object noncopyable by removing copy constructors
+    Random(Random&&) = delete;
+    Random(const Random&) = delete;
+    Random& operator=(Random&&) = delete;
+    Random& operator=(const Random&) = delete;
 
-    public:
+public:
              Random() = default;
     virtual ~Random() = default;
 
     virtual void random(void * dest, size_t size) = 0;
+
     virtual uint32_t rand32() = 0;
+
     uint64_t rand64()
     {
         uint64_t p1 = this->rand32();
         uint64_t p2 = this->rand32();
         return (p1 << 32) | p2;
     }
-
 };
+
 
 class LCGRandom : public Random
 {
     uint64_t seed;
-    public:
-        explicit LCGRandom(uint32_t seed)
-        : seed(seed)
-        {
-        }
+public:
+    explicit LCGRandom(uint32_t seed)
+    : seed(seed)
+    {
+    }
 
     void random(void * dest, size_t size) override {
-        for (size_t x = 0; x < size ; x++){
-            reinterpret_cast<uint32_t*>(dest)[x / sizeof(uint32_t)] = this->rand32();
+        for (size_t x = 0; x < size ; ++x) {
+            uint32_t r{this->rand32()};
+
+            // TODO suspicious, p[0..3] re-assigned 4 times.
+            uint8_t * p = reinterpret_cast<uint8_t*>(dest) + x / sizeof(uint32_t) * sizeof(uint32_t);
+            // BUG buffer overflow if size % 4 > 0
+            p[0] = r >> 0;
+            p[1] = r >> 8;
+            p[2] = r >> 16;
+            p[3] = r >> 24;
         }
+        /*
+        uint8_t * p = reinterpret_cast<uint8_t*>(dest);
+        for (size_t x = 0; x < size/4 ; ++x) {
+            uint32_t r{this->rand32()};
+            *p++ = r >> 0;
+            *p++ = r >> 8;
+            *p++ = r >> 16;
+            *p++ = r >> 24;
+        }
+        if (size % 4) {
+            uint32_t r{this->rand32()};
+            switch (size % 4) {
+                case 3: *p++ = r >> 0; CPP_FALLTHROUGH;
+                case 2: *p++ = r >> 8; CPP_FALLTHROUGH;
+                case 1: *p++ = r >> 16; CPP_FALLTHROUGH;
+                default:;
+            }
+        }*/
     }
 
     uint32_t rand32() override
     {
         return this->seed = 999331UL * this->seed + 200560490131ULL;
-    }
-};
-
-class LCGRand : public Random
-{
-    uint64_t seed;
-    public:
-        explicit LCGRand(uint32_t seed)
-        : seed(seed)
-        {
-        }
-
-    ~LCGRand() override {}
-
-    void random(void * dest, size_t size) override {
-        for (size_t x = 0; x < size ; x++){
-            static_cast<uint32_t*>(dest)[x / sizeof(uint32_t)] = this->rand32();
-        }
-    }
-
-    uint32_t rand32() override
-    {
-        return this->seed = 999331UL * this->seed + 7913UL;
     }
 };
 
@@ -108,7 +112,6 @@ class UdevRandom : public Random
     {
         // TODO See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.
     }
-    ~UdevRandom() override {}
 
     void random(void * dest, size_t size) override {
 
@@ -184,4 +187,3 @@ class UdevRandom : public Random
         return result;
     }
 };
-

@@ -27,7 +27,7 @@
 #include <cstdint>
 #include <cstddef>
 
-constexpr static inline uint16_t align4(int value) noexcept
+constexpr static inline uint16_t align4(uint16_t value) noexcept
 {
     return (value+3) & ~3;
 }

@@ -1,5 +1,3 @@
-<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,19 +15,20 @@
 
 <!--      <script src='draw.js'></script>         -->
 <!--     <script src='/jquery/dist/jquery.min.js'></script>         -->
+<!--<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>  -->
+
+<script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
 
 <body>
     <h1>Communication avec socket.io !</h1>
     <script src="/socket.io/socket.io.js"></script>
 
 
-
     <script>
 
       var socket;
       
-      function connecting()
-      {
+      function connecting() {
         console.log('>> connecting()'); 
 
         var ip = document.getElementById("ip").value;
@@ -60,13 +59,18 @@
 
         /* EVENTS LISTENERS */
         socket.on('event', function (data) {
-          console.log("Client : received from Server : " + data.msg + "  number  " + data.num);
-
+          console.log("Client on \'event\': received from Server : " + data.msg + "  number  " + data.num);
         });
 
+        socket.on('data', function (data) {
+          console.log("Client on \'data\': received from Server : " + data.data + "  index  " + data.index);
+
+         // var ob = JSON.parse(data.pdu);
+         // dispMessage("Text received... " + ob.pdu.content + " index " + ob.pdu.index);
+        });
 
         socket.on('message', function (msg) {
-           console.log("Client : received from Server : " + msg);
+           console.log("Client on \'message\': received from Server : " + msg);
         });
 
         socket.on('disconnect', function() { 
@@ -74,43 +78,42 @@
         });
 
         /* Test */
-        var data = {
-                       "type":"type1",
-                       "content":"0xA1",
-                       "index":"0"
-                   };
-        socket.send(JSON.stringify({data:data, msg:'sending data type1', index:0}));
-
         data = {
                    "type":"type2",
                    "content":"0xA1",
                    "index":"0"
                };
-        socket.send(JSON.stringify({data:data, msg:'sending data type2', index:0}));
+       socket.send(JSON.stringify({data:data, msg:'sending data type2', index:0}));
 
         console.log('<< connecting()'); 
       }
 
-
-      function helloServer()
-      {
+      function helloServer() {
           console.log("Socket id = " + socket.id);
           console.log(" poke ! helloServer");
-  //        socket = io.connect('http://localhost:8080');
-          socket.emit('poke', 'helloServer Hi server, how are you ?');
-
           var data = {
-                       "type":"text",
+                       "type":"type1",
                        "content":"0x0005",
                        "index":"0"
                      };
           send_to_serveur(data, 0);
       }
 
-      function send_to_serveur(data, size)
-      { 
+      function disconnecting() {
+          socket.onclose();
+      }
+
+      function poking() {
+           socket.emit('poke', 'helloServer : Hi server, how are you ?');
+      }
+
+      function send_to_serveur(data, size) { 
         console.log('send_to_serveur');
         socket.send(JSON.stringify({data:data, msg:'send_to_serveur : sending data', index:0}));
+      }
+
+      function dispMessage(str) {
+                document.getElementById("message").innerHTML = str;
       }
 
     </script>
@@ -1142,89 +1145,6 @@
 </head>
 
 <body id="wrapper">
-  <!-- NavBar -->
-  <nav id="extracommands" class="navbar navbar-default navbar-static-top">
-    <div class="container-fluid">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand mobileOnly" style="display: none;" href="#" onclick="toggleKeyboard();">
-          <i class="fa fa-keyboard-o fa-lg"></i>
-        </a>
-        <a id="canvasNavigation" class="navbar-brand mobileOnly" style="display: none;" href="#" onclick="toggleZoomMode();">
-          <i class="fa fa-arrows-alt fa-lg"></i>
-        </a>
-      </div>
-      
-      <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-        <ul class="nav navbar-nav">
-          <li>
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-              <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-              <li id="ctrlaltdelete"><a href="#><%=rdpMsg.ctrlAltDelete()%"></a></li>
-              <li id="numlock" class="desktopOnly"><a href="#><%=rdpMsg.numLock()%"></a></li>
-              <li id="capslock" class="desktopOnly"><a href="#><%=rdpMsg.capsLock()%"></a></li>
-            </ul>
-          </li>
-          <li>
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-              <span class="caret"></span>
-            </a>
-              <li id="showclipboard" data-toggle="modal" data-target="#clipboardDiv"><a href="#><%=rdpMsg.showClipboard()%"></a></li>
-              <li id="sendclipboard"><a href="#><%=rdpMsg.sendClipboard()%"></a></li>
-              <li id="downloadfile"><a href="#><%=rdpMsg.downloadFile()%"></a></li>
-              <li id="uploadfile"><a href="#><%=rdpMsg.uploadFile()%"></a></li>
-            </ul>
-          </li>
-          <li>
-            <select id="layoutselect" onchange="changeLayout(this.value)">
-                <option id="input_layout_us" value="us><%=rdpMsg.unitedStates() %"></option>
-                <option id="input_layout_fr" value="fr><%=rdpMsg.french()%"></option>
-                    <option id="input_layout_uk" value="uk><%=rdpMsg.unitedKingdom() %>"</option>
-                    <option id="input_layout_es" value="es><%=rdpMsg.spain() %"></option>
-                    <option id="input_layout_de" value="de><%=rdpMsg.germany() %"></option>
-                    <option id="input_layout_ru" value="ru><%=rdpMsg.russian() %"></option>
-                </select>
-          </li>
-        </ul>
-        
-        <ul class="nav navbar-nav navbar-right">
-          <li id="disconnect"><a href="#"><i class="fa fa-sign-out fa-lg"></i> </a></li>
-        </ul>
-      </div><!-- /.navbar-collapse -->
-    </div>
-    <iframe id="downloadfileiframe" style="display:none;"></iframe>
-    <div class="hiddenfile">
-        <form id="uploadform" method="post" enctype="multipart/form-data">
-          <input name="upload" type="file" id="fileinput" onchange="submitFiles()" multiple="true"/>
-        </form>
-    </div>
-  </nav>
-
-  <div id="clipboardDiv" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div id="clipboardHeader" class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-              <div id="clipboardHeaderTitle><%=rdpMsg.clipboard()%"></div>
-            </div>
-            <div class="modal-body">
-              <textarea id="clipboardContent" class="form-control" placeholder="<%=rdpMsg.pasteYourTextHere()%>" rows="10"></textarea>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default btn-sm" data-dismiss="modal><%=commonMsg.close()%"></button>
-            </div>
-        </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
-  </div><!--  /.modal -->
-
   <div id="form" style ="display:block">
     <form action="demo_form.asp" width="1024px" height="768px">
         IP :       <input type="text" id="ip"><br>
@@ -1234,7 +1154,13 @@
         <input type="button" value="Connect" onclick="connecting()">
     </form> 
 
-    <p><input type="button" value="Send data to serveur" onclick="helloServer()" /></p>
+    <p><input type="button" value="Send data to serveur" onclick="helloServer();"></p>
+    <p><input type="button" value="Disconnect" onclick="disconnecting();"></p>
+    <p><input type="button" value="Poke" onclick="poking();"></p>
+    <fieldset><legend>Message</legend> 
+      <div id="message"></div>
+    </fieldset>
+
   </div>
 
   <div class="emscripten_border" id="emscripten_canvas" style ="display:none">

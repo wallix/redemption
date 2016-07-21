@@ -30,7 +30,7 @@
 // #define LOGPRINT
 
 #include "transport/out_file_transport.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
 #include "transport/test_transport.hpp"
 #include "capture/drawable_to_file.hpp"
 #include "capture/image_capture.hpp"

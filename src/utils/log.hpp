@@ -59,7 +59,7 @@ namespace { namespace compiler_aux_ {
 
 // checked by the compiler
 #define LOG_FORMAT_CHECK(...) \
-    void(decltype(printf(" " __VA_ARGS__)){})
+    void(sizeof(printf(" " __VA_ARGS__)))
 
 
 #ifdef IN_IDE_PARSER

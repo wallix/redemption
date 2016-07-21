@@ -114,8 +114,7 @@ public:
     using parse_error = configs::parse_error;
 
 
-    explicit Inifile(const char * default_font_name = SHARE_PATH "/" DEFAULT_FONT_NAME)
-    : variables(default_font_name)
+    explicit Inifile()
     {
         this->initialize();
     }
