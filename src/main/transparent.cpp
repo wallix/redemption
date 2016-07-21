@@ -171,6 +171,7 @@ int main(int argc, char * argv[]) {
 
     Inifile ini;
     { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
+    ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char *>(&nodelay)
@@ -205,7 +206,7 @@ int main(int argc, char * argv[]) {
 
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
-    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini, cctx,
+    Front front(front_trans, gen, ini, cctx,
         fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 

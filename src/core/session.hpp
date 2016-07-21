@@ -144,7 +144,7 @@ public:
 
             time_t now = time(nullptr);
 
-            this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
+            this->front = new Front( front_trans, this->gen
                                    , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support
                                    , now);
 

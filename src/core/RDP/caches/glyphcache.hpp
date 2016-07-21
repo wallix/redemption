@@ -108,10 +108,8 @@ private:
             }
         }
 
-        this->glyphs[cacheid][ci].stamp = this->glyph_stamp;
-
         cacheidx = ci;
-
+        this->glyphs[cacheid][ci].stamp = this->glyph_stamp;
         this->glyphs[cacheid][ci].cached = true;
 
         return GLYPH_ADDED_TO_CACHE;
