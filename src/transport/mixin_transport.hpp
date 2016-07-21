@@ -24,22 +24,6 @@
 #include "transport/transport.hpp"
 #include <cerrno>
 
-namespace detail
-{
-    struct NoCurrentPath {
-        template<class Buf>
-        static const char * current_path(Buf &)
-        { return nullptr; }
-    };
-
-    struct GetCurrentPath {
-        template<class Buf>
-        static const char * current_path(Buf & buf)
-        { return buf.current_path(); }
-    };
-}
-
-
 
 
 

@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <snappy-c.h>
 #include <cstddef>
+#include <cerrno>
 
 
 #include "utils/sugar/iter.hpp"
@@ -47,19 +48,49 @@
 #include "utils/genrandom.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/exchange.hpp"
+#include "core/error.hpp"
+#include "acl/auth_api.hpp"
 
 #include "openssl_crypto.hpp"
 
 #include "transport/cryptofile.hpp"
-
+#include "transport/transport.hpp"
 #include "transport/mixin_transport.hpp"
-#include "transport/buffer/null_buf.hpp"
-
 #include "transport/sequence_generator.hpp"
-#include "core/error.hpp"
-#include "acl/auth_api.hpp"
 
 #include "utils/log.hpp"
+
+namespace transbuf
+{
+    struct null_buf
+    {
+        int open() noexcept { return 0; }
+
+        int close() noexcept { return 0; }
+
+        ssize_t write(const void *, size_t len) noexcept { return len; }
+
+        ssize_t read(void *, size_t len) noexcept { return len; }
+
+        int flush() const noexcept { return 0; }
+    };
+}
+
+
+namespace detail
+{
+    struct NoCurrentPath {
+        template<class Buf>
+        static const char * current_path(Buf &)
+        { return nullptr; }
+    };
+
+    struct GetCurrentPath {
+        template<class Buf>
+        static const char * current_path(Buf & buf)
+        { return buf.current_path(); }
+    };
+}
 
 template <class Buf, class PathTraits = detail::NoCurrentPath>
 class OutputTransport

@@ -21,10 +21,19 @@
 
 #pragma once
 
-#include "transport/mixin_transport.hpp"
+//#include "transport/mixin_transport.hpp"
 #include "utils/fdbuf.hpp"
 
-template <class Buf, class PathTraits = detail::NoCurrentPath>
+namespace detail
+{
+    struct NoCurrentPath2 {
+        template<class Buf>
+        static const char * current_path(Buf &)
+        { return nullptr; }
+    };
+}
+
+template <class Buf, class PathTraits = detail::NoCurrentPath2>
 class OutputTransportFile
 : public Transport
 {
@@ -80,4 +89,3 @@ struct OutFileTransport
     : OutFileTransport::TransportType(fd)
     {}
 };
-
