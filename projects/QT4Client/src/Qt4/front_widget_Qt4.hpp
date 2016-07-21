@@ -785,6 +785,10 @@ public:
     QImage          * _bufferImage;
     uint16_t          _bufferTypeID;
     std::string       _bufferTypeLongName;
+    int               _cItems;
+    int               _itemsSizeList[Front_Qt::LIST_FILES_MAX_SIZE];
+    std::string       _itemsNameList[Front_Qt::LIST_FILES_MAX_SIZE];
+    uint8_t         * _files_chunk[Front_Qt::LIST_FILES_MAX_SIZE];
 
 
     Connector_Qt(Front_Qt * front, QWidget * parent)
@@ -801,6 +805,7 @@ public:
     , _bufferImage(nullptr)
     , _bufferTypeID(0)
     , _bufferTypeLongName("")
+    ,  _cItems(0)
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
@@ -936,10 +941,10 @@ public:
         }
     }
 
-    void send_FormatListPDU() {
-        uint32_t formatIDs[]                  = { this->_bufferTypeID };
-        std::string formatListDataShortName[] = { this->_bufferTypeLongName };
-        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1);
+    void send_FormatListPDU(bool isLong) {
+        uint32_t formatIDs[]                  = { this->_bufferTypeID }; //, 49002, 49003} ;
+        std::string formatListDataShortName[] = { this->_bufferTypeLongName }; //, "FileGroupDescriptorW", "Preferred DropEffect"};
+        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, isLong);
     }
 
 
@@ -953,7 +958,6 @@ public Q_SLOTS:
         if (this->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
 
-
             if (mimeData->hasImage()){
                 this->emptyBuffer();
                 this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
@@ -961,41 +965,82 @@ public Q_SLOTS:
                 this->_bufferImage = new QImage(this->_clipboard->image());
                 this->_length = this->_bufferImage->byteCount();
 
-                this->send_FormatListPDU();
+                this->send_FormatListPDU(false);
 
 
             } else if (mimeData->hasText()){
                 this->emptyBuffer();
-                this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-                this->_bufferTypeLongName = "";
-                int cmptCR(0);
                 std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
-                std::string tmp(str);
-                int pos(tmp.find("\n"));
 
-                while (pos != -1) {
-                    cmptCR++;
-                    tmp = tmp.substr(pos+2, tmp.length());
-                    pos = tmp.find("\n"); // for linux install
+                if (str.at(0) == '/') {
+                    //std::ifstream iFile(str, std::ios::in);
+                    //if (iFile) {
+                        //std::cout << "has file" <<  std::endl;
+                        this->_bufferTypeID = Front_Qt::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;                    //49279;
+                        this->_bufferTypeLongName = this->_front->FILEGROUPDESCRIPTORW;
+
+                        std::string delimiter = "\n";
+                        int i = 0;
+                        int pos = 0;
+                        while (pos != str.size()) {
+                            pos = str.find(delimiter);
+                            std::string path = str.substr(1, pos);
+
+                            std::cout << path << std::endl;
+                            str = str.substr(pos+1, str.size());
+                            std::ifstream iFile(path, std::ios::in);
+                            std::string content = "";
+                            if (iFile) {
+                                std::string line = "";
+                                while(getline(iFile, line)) {
+                                    content += line;
+                                }
+                            }
+                            //this->_files_chunk[i]   = content.data();
+                            this->_itemsSizeList[i] = content.size();
+                            this->_itemsNameList[i] = path;
+
+                            i++;
+                            if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
+                                i = Front_Qt::LIST_FILES_MAX_SIZE;
+                                pos = str.size();
+                            }
+                        }
+
+                        this->_cItems = i;
+
+                        std::cout <<  "file list =" <<  str <<  std::endl;
+
+                        this->send_FormatListPDU(true);
+                    //}
+
+                } else {
+                    this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
+                    this->_bufferTypeLongName = "";
+
+                    int cmptCR(0);
+                    std::string tmp(str);
+                    int pos(tmp.find("\n"));
+
+                    while (pos != -1) {
+                        cmptCR++;
+                        tmp = tmp.substr(pos+2, tmp.length());
+                        pos = tmp.find("\n"); // for linux install
+                    }
+
+                    size_t size((str.length() + cmptCR*2) * 4);
+
+                    this->_chunk  = new uint8_t[size];
+                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
+
+                    this->send_FormatListPDU(false);
+
                 }
-                size_t size((str.length() + cmptCR*2) * 4);
-
-                this->_chunk  = new uint8_t[size];
-                this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
-
-                this->send_FormatListPDU();
 
 
-            } else if (mimeData->hasUrls()){
-                this->emptyBuffer();
-                this->_bufferTypeID = 0;                    //49279;
-                this->_bufferTypeLongName = std::string(this->_front->FILECONTENTS);
-
-                //const QList<QUrl> list = mimeData->urls();
-
-                this->send_FormatListPDU();
 
             }
+
         }
     }
 

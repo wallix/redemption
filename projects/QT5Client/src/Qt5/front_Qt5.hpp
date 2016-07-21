@@ -58,6 +58,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
+#include "core/RDP/clipboard.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
@@ -185,6 +186,34 @@ class Front_Qt : public Front_Qt_API
 
 public:
 
+    enum : int {
+        COMMAND_VALID = 15
+      , NAME_GOTTEN   =  1
+      , PWD_GOTTEN    =  2
+      , IP_GOTTEN     =  4
+      , PORT_GOTTEN   =  8
+    };
+
+    enum : int {
+        PDU_MAX_SIZE    = 1600
+      , PDU_HEADER_SIZE =    8
+    };
+
+    enum : int {
+        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
+      , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
+    };
+
+    enum : int {
+        LIST_FILES_MAX_SIZE = 5
+    };
+
+    enum : uint16_t {
+        CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+      , CF_QT_CLIENT_FILECONTENTS         = 48026
+    };
+    
+
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
@@ -215,15 +244,14 @@ public:
     std::string        * _formatListDataShortName;
     int                  _nbFormatIDs;
     const std::string    FILECONTENTS;
-    int                  _streamIdFileContent;
+    const std::string    FILEGROUPDESCRIPTORW;
+    int                  _cItems;
+    int                  _streamID;
+    int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
+    std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
 
-    enum : int {
-        COMMAND_VALID = 15
-      , NAME_GOTTEN   =  1
-      , PWD_GOTTEN    =  2
-      , IP_GOTTEN     =  4
-      , PORT_GOTTEN   =  8
-    };
+
+
 
 
 
