@@ -634,5 +634,3 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
     BOOST_CHECK(!reader.read_meta_file(meta_line));
 }
-
-

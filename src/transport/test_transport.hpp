@@ -36,7 +36,6 @@
 #include <cstring>
 
 #include "transport/transport.hpp"
-#include "transport/mixin_transport.hpp"
 #include "utils/stream.hpp"
 
 namespace transbuf {
@@ -375,4 +374,3 @@ public:
         this->out_stream.out_copy_bytes(buffer, len);
     }
 };
-

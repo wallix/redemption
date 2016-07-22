@@ -34,12 +34,11 @@
 #include "utils/fileutils.hpp"
 #include "openssl_crypto.hpp"
 #include "utils/log.hpp"
-//#include "transport/mixin_transport.hpp"
-#include "transport/cryptofile.hpp"
 #include "utils/urandom_read.hpp"
-
 #include "utils/sugar/exchange.hpp"
 
+#include "transport/cryptofile.hpp"
+#include "transport/transport.hpp"
 
 namespace transbuf {
     class ofile_buf

@@ -55,7 +55,6 @@
 
 #include "transport/cryptofile.hpp"
 #include "transport/transport.hpp"
-#include "transport/mixin_transport.hpp"
 #include "transport/sequence_generator.hpp"
 
 #include "utils/log.hpp"
@@ -957,7 +956,7 @@ struct OutFilenameSequenceSeekableTransport
 
     const FilenameGenerator * seqgen() const noexcept
     { return &(this->buffer().seqgen()); }
-    
+
     void seek(int64_t offset, int whence) override {
         if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
@@ -1395,7 +1394,7 @@ namespace detail
 
     template<class Buf, class Params>
     struct OutHashedMetaSequenceTransport
-    : 
+    :
         RequestCleaningTransport<OutputNextTransport<CloseWrapper<Buf>, detail::GetCurrentPath>>
     {
         OutHashedMetaSequenceTransport(
@@ -1692,4 +1691,3 @@ using CryptoOutMetaSequenceTransport = detail::OutHashedMetaSequenceTransport<
     >,
     detail::out_hash_meta_sequence_filename_buf_param<CryptoContext&>
 >;
-

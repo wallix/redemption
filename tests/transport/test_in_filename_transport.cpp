@@ -28,12 +28,18 @@
 #define LOGPRINT
 // #define LOGNULL
 
-#include "transport/mixin_transport.hpp"
-
 #include "utils/fileutils.hpp"
 
 #include "transport/in_filename_transport.hpp"
 
+namespace detail
+{
+    struct NoCurrentPath {
+        template<class Buf>
+        static const char * current_path(Buf &)
+        { return nullptr; }
+    };
+}
 
 template <class Buf, class PathTraits = detail::NoCurrentPath>
 class OutputTransport

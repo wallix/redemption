@@ -113,22 +113,22 @@ install pentamino
     : <location>./sandbox
     ;
 
-objjs penta.bc 
-    : 
-    src/ftests/penta.cpp 
-    : 
-    <cxxflags>-g3 
+objjs penta.bc
+    :
+    src/ftests/penta.cpp
+    :
+    <cxxflags>-g3
     ;
 
-exejs pentamino.js : penta.bc : 
+exejs pentamino.js : penta.bc :
     <cxxflags>-O2
     <cxxflags>-g3
-    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
     <cxxflags>"--shell-file templates/penta_template.html"
  ;
 
 make pentamino.html : pentamino.js : nothing ;
-make pentamino.html.mem : pentamino.js : @nothing ;   
+make pentamino.html.mem : pentamino.js : @nothing ;
 
 install client_rdp_JS_natif
     : [ glob ./sys/js_client/* ] client_rdp_JS_natif.js client_rdp_JS_natif.html client_rdp_JS_natif.html.mem
@@ -141,39 +141,39 @@ install client_rdp_JS_SDL
     ;
 
 
-    
-objjs test_rdp_client_test_card_JS_SDL.bc 
-    : src/test_rdp_client_test_card_JS_SDL.cpp 
-    : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+
+objjs test_rdp_client_test_card_JS_SDL.bc
+    : src/test_rdp_client_test_card_JS_SDL.cpp
+    : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
     ;
 
-objjs test_rdp_client_test_card_JS_natif.bc 
-    : src/test_rdp_client_test_card_JS_natif.cpp 
-    : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+objjs test_rdp_client_test_card_JS_natif.bc
+    : src/test_rdp_client_test_card_JS_natif.cpp
+    : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
     ;
 
-objjs bitmap_data_allocator.bc 
-    : $(SRCDIR)/utils/bitmap_data_allocator.cpp 
+objjs bitmap_data_allocator.bc
+    : $(SRCDIR)/utils/bitmap_data_allocator.cpp
     : <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
     ;
 
 
-exejs client_rdp_JS_SDL.js 
-     : 
-        test_rdp_client_test_card_JS_SDL.bc 
+exejs client_rdp_JS_SDL.js
+     :
+        test_rdp_client_test_card_JS_SDL.bc
         bitmap_data_allocator.bc
-     :  
+     :
         <cxxflags>-O2
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEventG']\""
         <cxxflags>-s\ EXPORTED_FUNCTIONS="[]"
      ;
 
-exejs client_rdp_JS_natif.js 
-     : 
-        test_rdp_client_test_card_JS_natif.bc 
+exejs client_rdp_JS_natif.js
+     :
+        test_rdp_client_test_card_JS_natif.bc
         bitmap_data_allocator.bc
-     :  
+     :
         <cxxflags>-O2
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_keyPressEvent']\""
@@ -181,10 +181,10 @@ exejs client_rdp_JS_natif.js
 
 
 make client_rdp_JS_natif.html : client_rdp_JS_natif.js : @nothing ;
-make client_rdp_JS_natif.html.mem : client_rdp_JS_natif.js : @nothing ;      
+make client_rdp_JS_natif.html.mem : client_rdp_JS_natif.js : @nothing ;
 
-make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ; 
-make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;   
+make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ;
+make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;
 
 
 
@@ -193,7 +193,7 @@ actions nodejs
     echo "Running nodejs tests for $(>) -> $(<)" ;
 
     if /usr/bin/nodejs sandbox/$(>:B).js ; then
-        touch $(<) 
+        touch $(<)
     fi;
 }
 
@@ -240,7 +240,7 @@ rule test-canonical ( base : requirements * )
 #        basetopdir = $(base:B) ;
 #        basedir = $(basedir:P) ;
 #    }
-    
+
     target = _$(base:B) ;
     source = $(base:P)/test_$(base:B).cpp ;
     tested = $(base) ;
@@ -249,7 +249,7 @@ rule test-canonical ( base : requirements * )
     #echo "source=" $(source) ;
     #echo "tested=" $(tested) ;
 
-    
+
     test-run $(target) : $(source) : $(tested) : $(requirements) ;
 }
 
@@ -307,7 +307,7 @@ test-canonical utils/sugar/update_lock.hpp ;
 
 test-canonical utils/stream.hpp ;
 test-canonical utils/utf.hpp ;
-test-canonical utils/rect.hpp ; 
+test-canonical utils/rect.hpp ;
 test-canonical utils/ellipse.hpp ;
 #test-canonical utils/drawable.hpp : <library>bitmap <library>png <library>crypto ;
 test-canonical utils/region.hpp ;
@@ -389,25 +389,25 @@ test-canonical core/RDP/GraphicUpdatePDU.hpp ;
 test-canonical core/RDP/RefreshRectPDU.hpp ;
 test-canonical core/RDP/logon.hpp ;
 #test-canonical core/RDP/nego.hpp : <library>openssl <library>crypto <library>dl <library>krb5 <library>gssglue ;
-test-canonical core/RDP/orders/RDPOrdersCommon.hpp ; 
+test-canonical core/RDP/orders/RDPOrdersCommon.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp ;
 #test-canonical core/RDP/RDPDrawable.hpp : <library>crypto <library>png ;
 test-canonical core/RDP/RDPSerializer.hpp ;
-test-canonical core/RDP/remote_programs.hpp ; 
+test-canonical core/RDP/remote_programs.hpp ;
 test-canonical core/server.hpp ;
 test-canonical core/session.hpp ;
 test-canonical core/session_server.hpp ;
 #test-canonical core/wait_obj.hpp ; # error
 
-#test-run test_front : front/test_front.cpp : front/front.hpp 
-#    : <library>bitmap <library>openssl 
-#      <library>snappy <library>d3des 
-#      <library>krb5 <library>gssglue 
-#      <library>png <library>d3des 
-#      <library>dl <library>crypto 
+#test-run test_front : front/test_front.cpp : front/front.hpp
+#    : <library>bitmap <library>openssl
+#      <library>snappy <library>d3des
+#      <library>krb5 <library>gssglue
+#      <library>png <library>d3des
+#      <library>dl <library>crypto
 #    ;
-#    
+#
 test-canonical mod/mod_api.hpp ;
 #test-canonical mod/mod_osd.hpp : <library>bitmap <library>png ;
 test-canonical mod/null/null.hpp ;
@@ -415,13 +415,13 @@ test-canonical mod/rdp/rdp_orders.hpp ;
 #test-canonical mod/rdp/channels/rdpdr_asynchronous_task.hpp ; # error
 #test-canonical mod/rdp/channels/cliprdr_channel.hpp : <library>png ;
 #test-canonical mod/rdp/channels/rdpdr_channel.hpp : <library>png ;
-#test-canonical mod/vnc/vnc.hpp : <library>png ; 
+#test-canonical mod/vnc/vnc.hpp : <library>png ;
 test-canonical mod/xup/xup.hpp ;
 #test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
 
-#test-run test_bitmap_perf 
-#    : test_bitmap_perf.cpp 
-#    : 
+#test-run test_bitmap_perf
+#    : test_bitmap_perf.cpp
+#    :
 #    : <library>bitmap <library>png <covflag>nocover
 #    ;
 
@@ -455,10 +455,10 @@ test-canonical system/ssl_sha512.hpp ;
 
 #test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 
-#test-run test_filename_sequence_transport 
-#    : transport/test_filename_sequence_transport.cpp 
+#test-run test_filename_sequence_transport
+#    : transport/test_filename_sequence_transport.cpp
 #    :
-#    : <covflag>nocover 
+#    : <covflag>nocover
 #    ;
 
 #test-canonical transport/out_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
@@ -469,7 +469,7 @@ test-canonical transport/in_file_transport.hpp ;
 test-canonical transport/out_file_transport.hpp ;
 #test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
 #test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
-test-canonical transport/bulk_compression_transport.hpp ; 
+test-canonical transport/bulk_compression_transport.hpp ;
 #test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 #test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
 #test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
@@ -490,7 +490,7 @@ test-canonical transport/out_filename_sequence_transport.hpp ;
 #test-run test_crypt_openssl : test_crypt_openssl.cpp : <library>z <library>dl <library>crypto <library>png <library>libboost_unit_test ;
 #test-run test_capture_wrm : capture/test_capture_wrm.cpp : <library>png <library>z <library>crypto <library>libboost_unit_test ;
 
-test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error 
+test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ; # error
 test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp ;
@@ -505,131 +505,131 @@ test-canonical core/RDP/orders/RDPOrdersPrimaryPolyline.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
-test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
+test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;
 #test-canonical core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp : <library>bitmap <library>crypto ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
 test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
 
-#test-run test_libpng 
-#    : test_libpng.cpp 
-#    :  
+#test-run test_libpng
+#    : test_libpng.cpp
+#    :
 #    : <library>png <library>z <covflag>nocover
 #    ;
 
-#test-canonical mod/rdp/rdp.hpp 
-#    : <library>bitmap <library>krb5 
-#      <library>gssglue <library>png 
-#      <library>d3des <library>z 
-#      <library>dl <library>crypto 
+#test-canonical mod/rdp/rdp.hpp
+#    : <library>bitmap <library>krb5
+#      <library>gssglue <library>png
+#      <library>d3des <library>z
+#      <library>dl <library>crypto
 #    ;
 
-#test-run test_rdp_client_test_card 
-#    : client_mods/test_rdp_client_test_card.cpp 
-#    : 
+#test-run test_rdp_client_test_card
+#    : client_mods/test_rdp_client_test_card.cpp
+#    :
 #    : <library>bitmap
 #      <library>z
 #      <library>png
-#      <library>crypto 
+#      <library>crypto
 #      <library>dl
-#      <library>openssl 
-#      <covflag>nocover
-#    ;
-#test-run test_rdp_client_tls_w2008 
-#    : client_mods/test_rdp_client_tls_w2008.cpp 
-#    : 
-#    : <library>bitmap
-#      <library>krb5 
-#      <library>gssglue
-#      <library>png 
-#      <library>crypto
-#      <library>d3des 
-#      <library>z
-#      <library>dl 
-#      <library>openssl 
-#      <covflag>nocover
-#    ;
-
-#test-run test_rdp_client_wab 
-#    : client_mods/test_rdp_client_wab.cpp 
-#    : 
-#    : <library>bitmap
-#      <library>krb5 
-#      <library>gssglue
-#      <library>png 
-#      <library>crypto
-#      <library>d3des 
 #      <library>openssl
-#      <library>dl 
+#      <covflag>nocover
+#    ;
+#test-run test_rdp_client_tls_w2008
+#    : client_mods/test_rdp_client_tls_w2008.cpp
+#    :
+#    : <library>bitmap
 #      <library>krb5
-#      <library>gssglue 
-#      <covflag>nocover
-#    ;
-
-#test-run test_vnc_client_simple 
-#    : client_mods/test_vnc_client_simple.cpp 
-#    : 
-#    : <library>bitmap
-#      <library>krb5 
 #      <library>gssglue
-#      <library>png 
+#      <library>png
 #      <library>crypto
-#      <library>d3des 
-#      <library>dl 
+#      <library>d3des
+#      <library>z
+#      <library>dl
+#      <library>openssl
 #      <covflag>nocover
 #    ;
 
-#test-run test_rdesktop_client 
-#    : server/test_rdesktop_client.cpp 
-#    : 
+#test-run test_rdp_client_wab
+#    : client_mods/test_rdp_client_wab.cpp
+#    :
 #    : <library>bitmap
-#      <library>png 
-#      <library>openssl
-#      <library>snappy 
+#      <library>krb5
+#      <library>gssglue
+#      <library>png
+#      <library>crypto
 #      <library>d3des
-#      <library>crypto 
-#      <library>dl 
+#      <library>openssl
+#      <library>dl
+#      <library>krb5
+#      <library>gssglue
 #      <covflag>nocover
 #    ;
 
-
-#test-run test_mstsc_client 
-#    : server/test_mstsc_client.cpp 
-#    : 
+#test-run test_vnc_client_simple
+#    : client_mods/test_vnc_client_simple.cpp
+#    :
 #    : <library>bitmap
-#      <library>png 
-#      <library>openssl
-#      <library>snappy 
+#      <library>krb5
+#      <library>gssglue
+#      <library>png
+#      <library>crypto
 #      <library>d3des
-#      <library>crypto 
+#      <library>dl
+#      <covflag>nocover
+#    ;
+
+#test-run test_rdesktop_client
+#    : server/test_rdesktop_client.cpp
+#    :
+#    : <library>bitmap
+#      <library>png
+#      <library>openssl
+#      <library>snappy
+#      <library>d3des
+#      <library>crypto
 #      <library>dl
 #      <covflag>nocover
 #    ;
 
 
-#test-run test_mstsc_client_rdp50bulk 
-#    : server/test_mstsc_client_rdp50bulk.cpp 
-#    : 
+#test-run test_mstsc_client
+#    : server/test_mstsc_client.cpp
+#    :
 #    : <library>bitmap
-#      <library>png 
+#      <library>png
 #      <library>openssl
-#      <library>snappy 
+#      <library>snappy
 #      <library>d3des
-#      <library>crypto 
-#      <library>dl 
+#      <library>crypto
+#      <library>dl
+#      <covflag>nocover
+#    ;
+
+
+#test-run test_mstsc_client_rdp50bulk
+#    : server/test_mstsc_client_rdp50bulk.cpp
+#    :
+#    : <library>bitmap
+#      <library>png
+#      <library>openssl
+#      <library>snappy
+#      <library>d3des
+#      <library>crypto
+#      <library>dl
 #      <covflag>nocover
 #    ;
 
 #if [ SHELL false ] {
 
-#test-run test_keymap2 
-#    : test_keymap2.cpp 
-#    : keymap2.hpp 
+#test-run test_keymap2
+#    : test_keymap2.cpp
+#    : keymap2.hpp
 #    ;
-#    
-#test-run test_keymapSym 
-#    : test_keymapSym.cpp 
-#    : keymapSym.hpp 
+#
+#test-run test_keymapSym
+#    : test_keymapSym.cpp
+#    : keymapSym.hpp
 #    ;
 #}
 
@@ -695,8 +695,8 @@ test-canonical mod/internal/internal_mod.hpp ;
 ### @{
 test-canonical regex/regex_state.hpp ;
 #test-canonical regex/regex_parser.hpp ;
-test-canonical regex/regex_st_automate.hpp ; 
-test-canonical regex/regex.hpp ; 
+test-canonical regex/regex_st_automate.hpp ;
+test-canonical regex/regex.hpp ;
 
 ## test-run benchmark_regex_parser : benchmark/parser.cpp ;
 ## test-run benchmark_regex_search : benchmark/search.cpp ;
@@ -716,7 +716,7 @@ test-canonical core/RDP/nla/sspi.hpp ;
 ##alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
 #test-canonical core/RDP/nla/ntlm/ntlm_message_negotiate.hpp : <library>crypto ;
-test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ; 
+test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ;
 #test-canonical core/RDP/nla/ntlm/ntlm_message_challenge.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_message_authenticate.hpp : <library>crypto ;
 #test-canonical core/RDP/nla/ntlm/ntlm_context.hpp : <library>dl <library>z <library>crypto ;
@@ -732,7 +732,7 @@ test-canonical core/RDP/nla/ntlm/ntlm_avpair.hpp ;
 #test-canonical mod/internal/widget2/flat_wait.hpp : <library>png <library>crypto ;
 #test-canonical mod/internal/widget2/flat_form.hpp : <library>png <library>crypto ;
 ### @}
-test-canonical utils/authorization_channels.hpp ; 
+test-canonical utils/authorization_channels.hpp ;
 test-canonical utils/pattutils.hpp ;
 test-canonical utils/diffiehellman.hpp ;
 
@@ -778,7 +778,6 @@ test-canonical transport/buffer/null_buf.hpp ;
 test-canonical transport/detail/meta_hash.hpp ;
 test-canonical transport/detail/no_param.hpp ;
 test-canonical transport/filter/crypto_filter.hpp ;
-test-canonical transport/mixin_transport.hpp ;
 test-canonical utils/apps/app_decrypter.hpp ;
 test-canonical utils/apps/app_proxy.hpp ;
 test-canonical utils/apps/app_recorder.hpp ;
@@ -798,4 +797,3 @@ test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/urandom_read.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
-

@@ -1340,7 +1340,6 @@ test-canonical regex/regex_consumer.hpp ;
 test-canonical regex/regex_states_value.hpp ;
 test-canonical regex/regex_utils.hpp ;
 test-canonical transport/buffer/null_buf.hpp ;
-test-canonical transport/mixin_transport.hpp ;
 
 test-canonical utils/apps/app_decrypter.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
@@ -1368,4 +1367,3 @@ test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/urandom_read.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
-

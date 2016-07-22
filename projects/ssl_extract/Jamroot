@@ -626,11 +626,11 @@ actions cover
             echo "coverage file $(>:S=.gcno) does not exist"
             exit 1
         fi
-        
+
         #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
         gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
         if [ $? = "0" ]; then
-        
+
             mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
             if [ $? = "0" ]; then
 
@@ -643,7 +643,7 @@ actions cover
                 if [ ! -e "$(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov" ]; then
                     touch $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov
                 fi
-                
+
                 etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(SRCDIR)/$(COVERFILE)
                 if [ $? = "0" ]; then
                     python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(SRCDIR) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).report
@@ -682,8 +682,8 @@ rule test-run ( target : sources + : tested ? : requirements * )
     run $(sources) : : : $(requirements) $(TEST_DEPENDENCIES) : $(target) ;
 
     if ($(tested)) {
-        make $(target:S=.coverage) : $(target) : id 
-            : <variant>coverage:<action>@cover 
+        make $(target:S=.coverage) : $(target) : id
+            : <variant>coverage:<action>@cover
               <covfile>$(tested) $(requirements)
             ;
     }
@@ -699,7 +699,7 @@ rule test-canonical ( base : requirements * )
     #    base = $(base:P) ;
     #}
     #target = test_$(basetarget) ;
-    
+
     target = test_$(base:B) ;
     source = $(base:P)/test_$(base:B).cpp ;
     tested = $(base) ;
@@ -708,14 +708,14 @@ rule test-canonical ( base : requirements * )
     #echo "source=" $(source) ;
     #echo "tested=" $(tested) ;
 
-    
+
     test-run $(target) : $(source) : $(tested) : $(requirements) ;
 }
 
 
 # To compute coverage
 # ===================
-# bjam coverage test_utf.coverage 
+# bjam coverage test_utf.coverage
 
 ## Acl tests
 ## @{
@@ -862,14 +862,14 @@ test-canonical core/session.hpp ;
 test-canonical core/session_server.hpp ;
 test-canonical core/wait_obj.hpp ;
 
-test-run test_front : front/test_front.cpp : front/front.hpp 
-    : <library>bitmap <library>openssl 
-      <library>snappy <library>d3des 
-      <library>krb5 <library>gssglue 
-      <library>png <library>d3des 
-      <library>dl <library>crypto 
+test-run test_front : front/test_front.cpp : front/front.hpp
+    : <library>bitmap <library>openssl
+      <library>snappy <library>d3des
+      <library>krb5 <library>gssglue
+      <library>png <library>d3des
+      <library>dl <library>crypto
     ;
-    
+
 test-canonical mod/mod_api.hpp ;
 test-canonical mod/mod_osd.hpp : <library>bitmap <library>png ;
 test-canonical mod/null/null.hpp ;
@@ -881,9 +881,9 @@ test-canonical mod/vnc/vnc.hpp ;
 test-canonical mod/xup/xup.hpp ;
 test-canonical utils/bitmap.hpp : <library>bitmap <library>png <library>crypto ;
 
-test-run test_bitmap_perf 
-    : test_bitmap_perf.cpp 
-    : 
+test-run test_bitmap_perf
+    : test_bitmap_perf.cpp
+    :
     : <library>bitmap <library>png <covflag>nocover
     ;
 
@@ -910,10 +910,10 @@ test-canonical transport/detail/meta_opener.hpp ;
 
 test-canonical transport/in_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
 
-test-run test_filename_sequence_transport 
-    : transport/test_filename_sequence_transport.cpp 
+test-run test_filename_sequence_transport
+    : transport/test_filename_sequence_transport.cpp
     :
-    : <covflag>nocover 
+    : <covflag>nocover
     ;
 
 test-canonical transport/out_meta_sequence_transport.hpp : <library>crypto <library>snappy <library>dl <library>z ;
@@ -960,132 +960,132 @@ test-canonical core/RDP/orders/RDPOrdersPrimaryPolyline.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp ;
-test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;    
+test-canonical core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp : <library>bitmap <library>crypto ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryColorCache.hpp ;
 test-canonical core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp ;
 test-canonical core/RDP/orders/AlternateSecondaryWindowing.hpp ;
 
-test-run test_libpng 
-    : test_libpng.cpp 
-    :  
+test-run test_libpng
+    : test_libpng.cpp
+    :
     : <library>png <library>z <covflag>nocover
     ;
 
 #test-run test_convert_bitmap : test_convert_bitmap.cpp : <library>png <library>z <library>crypto <library>dl <library>libboost_unit_test ;
-test-canonical mod/rdp/rdp.hpp 
-    : <library>bitmap <library>krb5 
-      <library>gssglue <library>png 
-      <library>d3des <library>z 
-      <library>dl <library>crypto 
+test-canonical mod/rdp/rdp.hpp
+    : <library>bitmap <library>krb5
+      <library>gssglue <library>png
+      <library>d3des <library>z
+      <library>dl <library>crypto
     ;
 
-test-run test_rdp_client_test_card 
-    : client_mods/test_rdp_client_test_card.cpp 
-    : 
+test-run test_rdp_client_test_card
+    : client_mods/test_rdp_client_test_card.cpp
+    :
     : <library>bitmap
       <library>z
       <library>png
-      <library>crypto 
+      <library>crypto
       <library>dl
-      <library>openssl 
-      <covflag>nocover
-    ;
-test-run test_rdp_client_tls_w2008 
-    : client_mods/test_rdp_client_tls_w2008.cpp 
-    : 
-    : <library>bitmap
-      <library>krb5 
-      <library>gssglue
-      <library>png 
-      <library>crypto
-      <library>d3des 
-      <library>z
-      <library>dl 
-      <library>openssl 
-      <covflag>nocover
-    ;
-
-test-run test_rdp_client_wab 
-    : client_mods/test_rdp_client_wab.cpp 
-    : 
-    : <library>bitmap
-      <library>krb5 
-      <library>gssglue
-      <library>png 
-      <library>crypto
-      <library>d3des 
       <library>openssl
-      <library>dl 
+      <covflag>nocover
+    ;
+test-run test_rdp_client_tls_w2008
+    : client_mods/test_rdp_client_tls_w2008.cpp
+    :
+    : <library>bitmap
       <library>krb5
-      <library>gssglue 
-      <covflag>nocover
-    ;
-
-test-run test_vnc_client_simple 
-    : client_mods/test_vnc_client_simple.cpp 
-    : 
-    : <library>bitmap
-      <library>krb5 
       <library>gssglue
-      <library>png 
+      <library>png
       <library>crypto
-      <library>d3des 
-      <library>dl 
+      <library>d3des
+      <library>z
+      <library>dl
+      <library>openssl
       <covflag>nocover
     ;
 
-test-run test_rdesktop_client 
-    : server/test_rdesktop_client.cpp 
-    : 
+test-run test_rdp_client_wab
+    : client_mods/test_rdp_client_wab.cpp
+    :
     : <library>bitmap
-      <library>png 
-      <library>openssl
-      <library>snappy 
+      <library>krb5
+      <library>gssglue
+      <library>png
+      <library>crypto
       <library>d3des
-      <library>crypto 
-      <library>dl 
+      <library>openssl
+      <library>dl
+      <library>krb5
+      <library>gssglue
       <covflag>nocover
     ;
 
-
-test-run test_mstsc_client 
-    : server/test_mstsc_client.cpp 
-    : 
+test-run test_vnc_client_simple
+    : client_mods/test_vnc_client_simple.cpp
+    :
     : <library>bitmap
-      <library>png 
-      <library>openssl
-      <library>snappy 
+      <library>krb5
+      <library>gssglue
+      <library>png
+      <library>crypto
       <library>d3des
-      <library>crypto 
+      <library>dl
+      <covflag>nocover
+    ;
+
+test-run test_rdesktop_client
+    : server/test_rdesktop_client.cpp
+    :
+    : <library>bitmap
+      <library>png
+      <library>openssl
+      <library>snappy
+      <library>d3des
+      <library>crypto
       <library>dl
       <covflag>nocover
     ;
 
 
-test-run test_mstsc_client_rdp50bulk 
-    : server/test_mstsc_client_rdp50bulk.cpp 
-    : 
+test-run test_mstsc_client
+    : server/test_mstsc_client.cpp
+    :
     : <library>bitmap
-      <library>png 
+      <library>png
       <library>openssl
-      <library>snappy 
+      <library>snappy
       <library>d3des
-      <library>crypto 
-      <library>dl 
+      <library>crypto
+      <library>dl
+      <covflag>nocover
+    ;
+
+
+test-run test_mstsc_client_rdp50bulk
+    : server/test_mstsc_client_rdp50bulk.cpp
+    :
+    : <library>bitmap
+      <library>png
+      <library>openssl
+      <library>snappy
+      <library>d3des
+      <library>crypto
+      <library>dl
       <covflag>nocover
     ;
 
 if [ SHELL false ] {
 
-test-run test_keymap2 
-    : test_keymap2.cpp 
-    : keymap2.hpp 
+test-run test_keymap2
+    : test_keymap2.cpp
+    : keymap2.hpp
     ;
-    
-test-run test_keymapSym 
-    : test_keymapSym.cpp 
-    : keymapSym.hpp 
+
+test-run test_keymapSym
+    : test_keymapSym.cpp
+    : keymapSym.hpp
     ;
 }
 
@@ -1194,14 +1194,14 @@ test-canonical utils/diffiehellman.hpp ;
 
 if [ SHELL false ] {
 
-test-run test_verifier 
-    : test_verifier.cpp 
-    : verifier.hpp 
-    : <library>program_options 
-      <library>openssl 
-      <library>crypto 
-      <library>snappy 
-      <library>dl 
+test-run test_verifier
+    : test_verifier.cpp
+    : verifier.hpp
+    : <library>program_options
+      <library>openssl
+      <library>crypto
+      <library>snappy
+      <library>dl
       <library>z ;
 
 }
@@ -1270,19 +1270,19 @@ lib sashimi :
 ## Unit Tests
 ##
 
-unit-test test_buffer : 
-    $(SRCDIR)/sashimi/tests/buffer.cpp 
-    sashimi_error 
-    libboost_unit_test 
+unit-test test_buffer :
+    $(SRCDIR)/sashimi/tests/buffer.cpp
+    sashimi_error
+    libboost_unit_test
     :
     $(TEST_DEPENDENCIES)
     ;
 
-unit-test test_crypto : 
-    $(SRCDIR)/sashimi/tests/test_crypto.cpp 
-    sashimi_error 
+unit-test test_crypto :
+    $(SRCDIR)/sashimi/tests/test_crypto.cpp
+    sashimi_error
     crypto
-    libboost_unit_test 
+    libboost_unit_test
     :
     $(TEST_DEPENDENCIES)
     ;
@@ -1332,7 +1332,6 @@ test-canonical transport/buffer/null_buf.hpp ;
 test-canonical transport/detail/meta_hash.hpp ;
 test-canonical transport/detail/no_param.hpp ;
 test-canonical transport/filter/crypto_filter.hpp ;
-test-canonical transport/mixin_transport.hpp ;
 test-canonical utils/apps/app_decrypter.hpp ;
 test-canonical utils/apps/app_proxy.hpp ;
 test-canonical utils/apps/app_recorder.hpp ;
@@ -1353,4 +1352,3 @@ test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/urandom_read.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
-
