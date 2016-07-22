@@ -674,7 +674,7 @@ unit-test test_socket_transport : tests/transport/test_socket_transport.cpp : $(
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>z ;
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>snappy ;
 
-unit-test test_cryptofile : tests/transport/test_cryptofile.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+unit-test test_cryptofile : tests/utils/apps/test_cryptofile.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp : $(TEST_DEPENDENCIES) <library>z <library>snappy ;
 ## @}

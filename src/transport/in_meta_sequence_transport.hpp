@@ -37,7 +37,7 @@
 #include "utils/urandom_read.hpp"
 #include "utils/sugar/exchange.hpp"
 
-#include "transport/cryptofile.hpp"
+#include "utils/apps/cryptofile.hpp"
 #include "transport/transport.hpp"
 
 namespace transbuf {

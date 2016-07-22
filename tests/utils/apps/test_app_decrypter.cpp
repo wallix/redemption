@@ -49,7 +49,7 @@
 #include "utils/fdbuf.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-#include "transport/cryptofile.hpp"
+#include "utils/apps/cryptofile.hpp"
 
 #ifdef IN_IDE_PARSER
 #define FIXTURES_PATH ""
