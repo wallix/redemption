@@ -492,6 +492,7 @@ unit-test test_algostring : tests/utils/sugar/test_algostring.cpp : $(TEST_DEPEN
 unit-test test_make_unique : tests/utils/sugar/test_make_unique.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_array_view : tests/utils/sugar/test_array_view.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_local_fd : tests/utils/sugar/test_local_fd.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_bytes_t : tests/utils/sugar/test_bytes_t.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
 

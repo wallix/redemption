@@ -36,6 +36,8 @@ struct array_view
     using const_reference = T const &;
 
     constexpr array_view() = default;
+    constexpr array_view(array_view const &) = default;
+    array_view & operator = (array_view const &) = default;
 
     constexpr array_view(std::nullptr_t)
     : array_view(nullptr, nullptr)
