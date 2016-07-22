@@ -156,7 +156,7 @@ struct TLSContext
         // only understand the TLSv1 protocol. A client will send out TLSv1 client hello messages
         // and will indicate that it only understands TLSv1.
 
-        SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
+        SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
 
         if (ctx == nullptr) {
             LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
@@ -1213,4 +1213,3 @@ struct TLSContext
     }
 
 };
-
