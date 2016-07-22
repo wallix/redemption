@@ -25,23 +25,23 @@ install pentamino
     : <location>./sandbox
     ;
 
-objjs penta.bc 
-    : 
-    src/ftests/penta.cpp 
-    : 
-    <cxxflags>-g3 
+objjs penta.bc
+    :
+    src/ftests/penta.cpp
+    :
+    <cxxflags>-g3
     ;
 
-exejs pentamino.js : penta.bc : 
+exejs pentamino.js : penta.bc :
     <cxxflags>-g3
-    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\"" 
+    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
     <cxxflags>"--shell-file templates/penta_template.html"
  ;
 
 actions nothing { }
 
 make pentamino.html : pentamino.js : nothing ;
-make pentamino.html.mem : pentamino.js : @nothing ;   
+make pentamino.html.mem : pentamino.js : @nothing ;
 
 
 
@@ -61,44 +61,44 @@ install test_transport_web_socket
     ;
 
 
-    
-#objjs test_rdp_client_test_card_JS_SDL.bc 
-#	: src/test_rdp_client_test_card_JS_SDL.cpp 
-#	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
+
+#objjs test_rdp_client_test_card_JS_SDL.bc
+#	: src/test_rdp_client_test_card_JS_SDL.cpp
+#	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
 #	;
 
-objjs test_rdp_client_test_card_JS_natif.bc 
-	: src/test_rdp_client_test_card_JS_natif.cpp 
-	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include 
-	;
-
-objjs bitmap_data_allocator.bc 
-	: $(SRCDIR)/utils/bitmap_data_allocator.cpp 
+objjs test_rdp_client_test_card_JS_natif.bc
+	: src/test_rdp_client_test_card_JS_natif.cpp
 	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
 	;
 
-objjs test_transport_web_socket.bc 
-	: src/test_transport_web_socket.cpp 
+objjs bitmap_data_allocator.bc
+	: $(SRCDIR)/utils/bitmap_data_allocator.cpp
+	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+	;
+
+objjs test_transport_web_socket.bc
+	: src/test_transport_web_socket.cpp
 	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
 	;
 
 
 
-#exejs client_rdp_JS_SDL.js 
-#     : 
-#        test_rdp_client_test_card_JS_SDL.bc 
+#exejs client_rdp_JS_SDL.js
+#     :
+#        test_rdp_client_test_card_JS_SDL.bc
 #        bitmap_data_allocator.bc
-#     :  
+#     :
 #        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
 #        <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEventG']\""
 #	<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
 #     ;
 
-exejs client_rdp_JS_natif.js 
-     : 
-        test_rdp_client_test_card_JS_natif.bc 
+exejs client_rdp_JS_natif.js
+     :
+        test_rdp_client_test_card_JS_natif.bc
         bitmap_data_allocator.bc
-     :  
+     :
         <cxxflags>"-Werror"
         <cxxflags>"-02"
         <cxxflags>"-s ASSERTIONS=2"
@@ -108,20 +108,20 @@ exejs client_rdp_JS_natif.js
 	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_connexion','_recv_value','_disconnexion','_CtrlAltDelPressed']\""
      ;
 
-exejs test_transport_web_socket.js 
-     : 
-        test_transport_web_socket.bc 
-     :  
+exejs test_transport_web_socket.js
+     :
+        test_transport_web_socket.bc
+     :
         <cxxflags>"--shell-file templates/test_transport_web_socket_template.html"
 	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_recv_value']\""
      ;
 
 
 make client_rdp_JS_natif.html : client_rdp_JS_natif.js : @nothing ;
-#make client_rdp_JS_natif.html.mem : client_rdp_JS_natif.js : @nothing ;      
+#make client_rdp_JS_natif.html.mem : client_rdp_JS_natif.js : @nothing ;
 
-#make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ; 
-#make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;  
+#make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ;
+#make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;
 
 make test_transport_web_socket.html : test_transport_web_socket.js : @nothing ;
 #make test_transport_web_socket.html.mem : test_transport_web_socket.js : @nothing ;

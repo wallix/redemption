@@ -58,6 +58,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
+#include "core/RDP/clipboard.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
@@ -125,6 +126,7 @@ public:
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
+    // TODO ised std::unique_ptr
     mod_api         * _callback;
     QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
@@ -185,6 +187,34 @@ class Front_Qt : public Front_Qt_API
 
 public:
 
+    enum : int {
+        COMMAND_VALID = 15
+      , NAME_GOTTEN   =  1
+      , PWD_GOTTEN    =  2
+      , IP_GOTTEN     =  4
+      , PORT_GOTTEN   =  8
+    };
+
+    enum : int {
+        PDU_MAX_SIZE    = 1600
+      , PDU_HEADER_SIZE =    8
+    };
+
+    enum : int {
+        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
+      , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
+    };
+
+    enum : int {
+        LIST_FILES_MAX_SIZE = 5
+    };
+
+    enum : uint16_t {
+        CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+      , CF_QT_CLIENT_FILECONTENTS         = 48026
+    };
+
+
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
@@ -205,25 +235,28 @@ public:
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
     std::string          _requestedFormatName;
+    // TODO ised std::unique_ptr
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
     size_t               _bufferRDPClipboardChannelSizeTotal;
     int                  _bufferRDPCLipboardMetaFilePic_width;
     int                  _bufferRDPCLipboardMetaFilePic_height;
     int                  _bufferRDPClipboardMetaFilePicBPP;
+    // TODO FormatList { uint32_t id, char short_name[255]{}; }
+    // TODO std::unique_ptr<FormatList[]>
     uint32_t           * _formatIDs;
     std::string        * _formatListDataShortName;
     int                  _nbFormatIDs;
     const std::string    FILECONTENTS;
-    int                  _streamIdFileContent;
+    const std::string    FILEGROUPDESCRIPTORW;
+    int                  _cItems;
+    int                  _streamID;
+    // TODO negative size, really ?
+    int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
+    std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
 
-    enum : int {
-        COMMAND_VALID = 15
-      , NAME_GOTTEN   =  1
-      , PWD_GOTTEN    =  2
-      , IP_GOTTEN     =  4
-      , PORT_GOTTEN   =  8
-    };
+
+
 
 
 
@@ -233,14 +266,18 @@ public:
 
 //    virtual void flush() override;
 
+    // TODO vritual + override -> override
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override;
 
+    // TODO vritual + override -> override
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) override;
 
 //    virtual void send_global_palette() override;
 
+    // TODO vritual + override -> override
     virtual void begin_update() override;
 
+    // TODO vritual + override -> override
     virtual void end_update() override;
 
 //    virtual void set_mod_palette(const BGRPalette & palette) override;
@@ -248,8 +285,10 @@ public:
 //    virtual void server_set_pointer(const Pointer & cursor) override;
 
     // Added
+    // TODO vritual + override -> override
     virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override;
 
+    // TODO vritual + override -> override
     virtual int server_resize(int width, int height, int bpp) override;
 
     void send_buffer_to_clipboard();
@@ -270,6 +309,7 @@ public:
 
     void cut_data_to_send(int total_length, OutStream & out_streamfirst, int firstPartSize);
 
+    // TODO vritual + override -> override
     virtual void set_pointer(Pointer const & cursor) override;
 
 
@@ -296,30 +336,42 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override;
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override;
 
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override;
@@ -328,22 +380,31 @@ public:
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDP::FrameMarker & order) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDP::RAIL::WindowIcon & order) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDP::RAIL::CachedIcon & order) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPColCache   & cmd);
 
+    // TODO vritual + override -> override
     virtual void draw(const RDPBrushCache & cmd);
 
 

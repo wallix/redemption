@@ -28,7 +28,7 @@ int main(int ac, char ** av)
         void do_init()
         {
             cfg_specs::config_spec_definition(*this);
-        };
+        }
     };
     return cfg_generators::app_write_cpp_config<Writer>(ac, av);
 }

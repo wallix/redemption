@@ -60,6 +60,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "core/RDP/pointer.hpp"
+#include "core/RDP/clipboard.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
@@ -173,7 +174,7 @@ public:
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
     virtual void writeClientInfo() = 0;
-    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) = 0;
+    virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size, bool) = 0;
     virtual void empty_buffer() = 0;
     virtual bool can_be_start_capture(auth_api * auth) override { return true; }
     virtual bool can_be_pause_capture() override { return true; }
@@ -187,6 +188,33 @@ class Front_Qt : public Front_Qt_API
 {
 
 public:
+    enum : int {
+        COMMAND_VALID = 15
+      , NAME_GOTTEN   = 1
+      , PWD_GOTTEN    = 2
+      , IP_GOTTEN     = 4
+      , PORT_GOTTEN   = 8
+    };
+
+    enum : int {
+        PDU_MAX_SIZE    = 1600
+      , PDU_HEADER_SIZE =    8
+    };
+
+    enum : int {
+        PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
+      , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
+    };
+
+    enum : int {
+        LIST_FILES_MAX_SIZE = 5
+    };
+
+    enum : uint16_t {
+        CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+      , CF_QT_CLIENT_FILECONTENTS         = 48026
+    };
+
 
     // Graphic members
     uint8_t               mod_bpp;
@@ -206,6 +234,8 @@ public:
     StaticOutStream<256> _decoded_data;    // currently not initialised
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
+
+    //  Clipboard Channel Management members
     uint32_t             _requestedFormatId = 0;
     std::string          _requestedFormatName;
     uint8_t            * _bufferRDPClipboardChannel;
@@ -216,18 +246,14 @@ public:
     int                  _bufferRDPClipboardMetaFilePicBPP;
     uint32_t           * _formatIDs;
     std::string        * _formatListDataShortName;
-    int                  _nbFormatIDs;
+    const int            _nbFormatIDs;
     const std::string    FILECONTENTS;
-    int                  _streamIdFileContent;
-
-
-    enum : int {
-        COMMAND_VALID = 15
-      , NAME_GOTTEN   = 1
-      , PWD_GOTTEN    = 2
-      , IP_GOTTEN     = 4
-      , PORT_GOTTEN   = 8
-    };
+    const std::string    FILEGROUPDESCRIPTORW;
+    int                  _cItems;
+    int                  _streamID;
+    int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
+    std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
+    
 
 
     bool setClientInfo() override;
@@ -250,7 +276,7 @@ public:
 
     void process_server_clipboard_data(int flags, InStream & chunk);
 
-    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
+    void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool) override;
 
     std::string HTMLtoText(const std::string & html);
 
@@ -265,6 +291,8 @@ public:
     void cut_data_to_send(int total_length, OutStream & out_streamfirst, int firstPartSize);
 
     virtual void set_pointer(Pointer const & cursor) override;
+
+    void process_server_file_clipboard_data(int flags, InStream & chunk);
 
 
 

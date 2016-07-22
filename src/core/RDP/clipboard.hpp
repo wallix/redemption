@@ -684,7 +684,7 @@ struct FormatListPDU : public CliprdrHeader {
         stream.out_clear_bytes(32); // formatName(32)
     }
 
-    void emit(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
+    void emit_short(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
         this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
         CliprdrHeader::emit(stream);
 
@@ -698,6 +698,23 @@ struct FormatListPDU : public CliprdrHeader {
             REDASSERT(currentStr.size() <= 32);
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
             stream.out_clear_bytes(32 - currentStr.size()); // formatName(32)
+        }
+    }
+
+    void emit_long(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDatalongName, std::size_t formatListData_size) {
+        this->dataLen_ = 46*formatListData_size;    /* formatId(4) + formatName(42) */
+        CliprdrHeader::emit(stream);
+
+        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        if (formatListData_size > 32) {
+            formatListData_size = 32;
+        }
+        for (std::size_t i = 0; i < formatListData_size; i++) {
+            stream.out_uint32_le(formatListData[i]);
+            std::string const & currentStr = formatListDatalongName[i];
+            //REDASSERT(currentStr.size() <= 32);
+            stream.out_copy_bytes(currentStr.data(), currentStr.size());
+            stream.out_clear_bytes(42 - currentStr.size()); // formatName(32)
         }
     }
 
@@ -956,8 +973,9 @@ struct FormatDataRequestPDU : public CliprdrHeader {
 // clipDataId (4 bytes): An optional unsigned, 32-bit integer that identifies File Stream data which was tagged in a prior Lock Clipboard Data PDU (section 2.2.4.1).
 
 enum : int {
-    FILECONTENTS_SIZE  = 0x00000001
-  , FILECONTENTS_RANGE = 0x00000002
+    FILECONTENTS_SIZE              = 0x00000001
+  , FILECONTENTS_RANGE             = 0x00000002
+  , FILECONTENTS_SIZE_CB_REQUESTED = 0x00000008
 };
 
 struct FileContentsRequestPDU : CliprdrHeader {
@@ -965,21 +983,18 @@ struct FileContentsRequestPDU : CliprdrHeader {
     : CliprdrHeader( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
-    void emit(OutStream & stream, int streamID) {
+    void emit(OutStream & stream, int streamID, int flag, int lindex, int sizeRequested) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
+        stream.out_uint32_le(this->dataLen_);
         stream.out_uint32_le(streamID);
-        stream.out_uint32_le(streamID);
-        stream.out_uint32_le(streamID);
-        stream.out_uint32_le(FILECONTENTS_SIZE);
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(0);
+        stream.out_uint32_le(lindex);
+        stream.out_uint32_le(flag);
+        stream.out_uint32_le(uint64_t(sizeRequested) << 32);
+        stream.out_uint32_le(sizeRequested);
+        stream.out_uint32_le(sizeRequested);
     }
 };
-
-
-
 
 
 struct FileContentsResponse : CliprdrHeader {
@@ -993,6 +1008,274 @@ struct FileContentsResponse : CliprdrHeader {
 //         stream.out_uint64_le(0);
     }
 };
+
+
+
+
+struct PacketFileList {
+    uint32_t cItems;
+    /*variable fileDescriptorArray*/
+};
+
+// [MS-RDPECLIP] - 2.2.5.2.3.1 File Descriptor (CLIPRDR_FILEDESCRIPTOR)
+// ====================================================================
+
+// The CLIPRDR_FILEDESCRIPTOR structure describes the properties of a file.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             flags                             |
+// +---------------------------------------------------------------+
+// |                           reserved1                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         fileAttributes                        |
+// +---------------------------------------------------------------+
+// |                           reserved2                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         lastWriteTime                         |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                          fileSizeHigh                         |
+// +---------------------------------------------------------------+
+// |                          fileSizeLow                          |
+// +---------------------------------------------------------------+
+// |                            fileName                           |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 (fileName cont'd for 122 rows)                |
+// +---------------------------------------------------------------+
+
+// flags (4 bytes): An unsigned 32-bit integer that specifies which fields
+//  contain valid data and the usage of progress UI during a copy operation.
+
+//  +-------------------+---------------------------------------------------+
+//  | Value             | Meaning                                           |
+//  +-------------------+---------------------------------------------------+
+//  | FD_ATTRIBUTES     | The fileAttributes field contains valid data.     |
+//  | 0x00000004        |                                                   |
+//  +-------------------+---------------------------------------------------+
+//  | FD_FILESIZE       | The fileSizeHigh and fileSizeLow fields contain   |
+//  | 0x00000040        | valid data.                                       |
+//  +-------------------+---------------------------------------------------+
+//  | FD_WRITESTIME     | The lastWriteTime field contains valid data.      |
+//  | 0x00000020        |                                                   |
+//  +-------------------+---------------------------------------------------+
+//  | FD_SHOWPROGRESSUI | A progress indicator SHOULD be shown when copying |
+//  | 0x00004000        | the file.                                         |
+//  +-------------------+---------------------------------------------------+
+
+enum {
+    FD_ATTRIBUTES     = 0x0004,
+    FD_FILESIZE       = 0x0040,
+    FD_WRITESTIME     = 0x0020,
+    FD_SHOWPROGRESSUI = 0x4000
+};
+
+// reserved1 (32 bytes): An array of 32 bytes. This field MUST be initialized
+//  with zeros when sent and MUST be ignored on receipt.
+
+// fileAttributes (4 bytes): An unsigned 32-bit integer that specifies file
+//  attribute flags.
+
+//  +--------------------------+-----------------------------------------------+
+//  | Value                    | Meaning                                       |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_READONLY  | A file that is read-only. Applications can    |
+//  | 0x00000001               | read the file, but cannot write to it or      |
+//  |                          | delete it.                                    |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_HIDDEN    | The file or directory is hidden. It is not    |
+//  | 0x00000002               | included in an ordinary directory listing.    |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_SYSTEM    | A file or directory that the operating system |
+//  | 0x00000004               | uses a part of, or uses exclusively.          |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_DIRECTORY | Identifies a directory.                       |
+//  | 0x00000010               |                                               |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_ARCHIVE   | A file or directory that is an archive file   |
+//  | 0x00000020               | or directory. Applications typically use this |
+//  |                          | attribute to mark files for backup or         |
+//  |                          | removal.                                      |
+//  +--------------------------+-----------------------------------------------+
+//  | FILE_ATTRIBUTE_NORMAL    | A file that does not have other attributes    |
+//  | 0x00000080               | set. This attribute is valid only when used   |
+//  |                          | alone.                                        |
+//  +--------------------------+-----------------------------------------------+
+
+enum FileAttributes : uint32_t {
+    FILE_ATTRIBUTES_READONLY  = 0x0001,
+    FILE_ATTRIBUTES_HIDDEN    = 0x0002,
+    FILE_ATTRIBUTES_SYSTEM    = 0x0004,
+    FILE_ATTRIBUTES_DIRECTORY = 0x0010,
+    FILE_ATTRIBUTES_ARCHIVE   = 0x0020,
+    FILE_ATTRIBUTES_NORMAL    = 0x0080
+};
+
+// reserved2 (16 bytes): An array of 16 bytes. This field MUST be initialized
+//  with zeros when sent and MUST be ignored on receipt.
+
+// lastWriteTime (8 bytes): An unsigned 64-bit integer that specifies the
+//  number of 100-nanoseconds intervals that have elapsed since 1 January
+//  1601 to the time of the last write operation on the file.
+
+// fileSizeHigh (4 bytes): An unsigned 32-bit integer that contains the most
+//  significant 4 bytes of the file size.
+
+// fileSizeLow (4 bytes): An unsigned 32-bit integer that contains the least
+//  significant 4 bytes of the file size.
+
+// fileName (520 bytes): A null-terminated 260 character Unicode string that
+//  contains the name of the file.
+
+class FileDescriptor {
+    uint32_t flags;
+    uint32_t fileAttributes;
+    uint64_t lastWriteTime;
+    uint32_t fileSizeHigh;
+    uint32_t fileSizeLow;
+
+    std::string file_name;
+
+public:
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->flags);
+
+        stream.out_clear_bytes(32); // reserved1(32)
+
+        stream.out_uint32_le(this->fileAttributes);
+
+        stream.out_clear_bytes(16); // reserved2(16)
+
+        stream.out_uint64_le(this->lastWriteTime);
+        stream.out_uint32_le(this->fileSizeHigh);
+        stream.out_uint32_le(this->fileSizeLow);
+
+        // The null-terminator is included.
+        uint8_t fileName_unicode_data[520]; // fileName(520)
+
+        size_t size_of_fileName_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            fileName_unicode_data, sizeof(fileName_unicode_data));
+
+        stream.out_copy_bytes(fileName_unicode_data,
+            size_of_fileName_unicode_data);
+
+        stream.out_clear_bytes(520 /* fileName(520) */ -
+            size_of_fileName_unicode_data);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 592;  // flags(4) + reserved1(32) +
+                                            //     fileAttributes(4) +
+                                            //     reserved2(16) +
+                                            //     lastWriteTime(8) +
+                                            //     fileSizeHigh(4) +
+                                            //     fileSizeLow(4) +
+                                            //     fileName(520)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated FileDescriptor: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+
+        this->flags = stream.in_uint32_le();
+
+        stream.in_skip_bytes(32);   // reserved1(32)
+
+        this->fileAttributes = stream.in_uint32_le();
+
+        stream.in_skip_bytes(16);   // reserved2(16)
+
+        this->lastWriteTime = stream.in_uint64_le();
+        this->fileSizeHigh  = stream.in_uint32_le();
+        this->fileSizeLow   = stream.in_uint32_le();
+
+        uint8_t const * const fileName_unicode_data = stream.get_current();
+        uint8_t fileName_utf8_string[520 /* fileName(520) */ / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+        ::UTF16toUTF8(fileName_unicode_data, 520 /* fileName(520) */ / 2,
+            fileName_utf8_string, sizeof(fileName_utf8_string));
+        // The null-terminator is included.
+        this->file_name = ::char_ptr_cast(fileName_utf8_string);
+
+        stream.in_skip_bytes(520);  // fileName(520)
+    }
+
+    const char * fileName() const { return this->file_name.c_str(); }
+
+    uint64_t file_size() const {
+        return (static_cast<uint64_t>(this->fileSizeLow)) |
+            (static_cast<uint64_t>(this->fileSizeHigh) << 32);
+    }
+
+    static constexpr size_t size() {
+        return 592; // flags(4) + reserved1(32) + fileAttributes(4) +
+                    //     reserved2(16) + lastWriteTime(8) +
+                    //     fileSizeHigh(4) + fileSizeLow(4) +
+                    //     fileName(520)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = ::snprintf(buffer, size,
+            "FileDescriptor: flags=0x%X fileAttributes=0x%X lastWriteTime=%" PRIu64 " "
+                "fileSizeHigh=0x%X fileSizeLow=0x%X "
+                "fileName=\"%s\"",
+            this->flags, this->fileAttributes, this->lastWriteTime,
+            this->fileSizeHigh, this->fileSizeLow, this->file_name.c_str());
+        return ((length < size) ? length : size - 1);
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // class FileDescriptor
+
+
 
 // 2.1.1.18 MetafileType Enumeration
 
@@ -1334,15 +1617,9 @@ enum {
 //  Metafile Payload, or Packed Palette Payload.
 
 enum : int {
-      METAFILE_HEADERS_SIZE      = 130
+      METAFILE_HEADERS_SIZE          = 130
     , META_DIBSTRETCHBLT_HEADER_SIZE = 66
     , METAFILE_WORDS_HEADER_SIZE     = 118
-};
-
-enum : int {
-      PASTE_TEXT_CONTENT_SIZE    = 1592  // = 1600 - 8
-    , PASTE_PIC_CONTENT_SIZE     = 1462  // = 1600 - METAFILE_WORDS_HEADER_SIZE - 8
-    , PDU_MAX_SIZE               = 1600
 };
 
 struct FormatDataResponsePDU : public CliprdrHeader {
@@ -1385,13 +1662,44 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             );
     }
 
+    // Files List
+    // TODO std::string* + int* -> array_view { name, size };
+    void emit(OutStream & stream, std::string * namesList, int * sizesList, int cItems) {
+        this->dataLen_ = (cItems * 592) + 4;
+        CliprdrHeader::emit(stream);
+
+        stream.out_uint32_le(cItems);
+        for (int i = 0; i < cItems; i++) {
+            stream.out_uint32_le(FD_SHOWPROGRESSUI |
+                                 FD_FILESIZE       |
+                                 FD_ATTRIBUTES
+                                );
+            stream.out_clear_bytes(32);
+            stream.out_uint32_le(FILE_ATTRIBUTES_NORMAL);
+            stream.out_clear_bytes(16);
+            stream.out_uint64_le(10000); //  random
+            stream.out_uint32_le(0);
+            stream.out_uint32_le(sizesList[i]);
+            int size(namesList[i].size());
+            for (int j = 0; j < size; j++) {
+                stream.out_uint8(namesList[i].c_str()[j]);
+            }
+            REDASSERT(namesList[i].size() <= 520);
+            stream.out_skip_bytes(520-namesList[i].size());
+        }
+
+    }
+
     void emit_text(OutStream & stream, int length) {
+        REDASSERT(length >= 0);
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(length);
     }
 
-    void emit_pic(OutStream & stream, int data_length, int width, int height, int depth) {
+    void emit_metaFilePic(OutStream & stream, int data_length, int width, int height, int depth) {
+        REDASSERT(width >= 0);
+        REDASSERT(height >= 0);
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
@@ -1718,271 +2026,102 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     }
 
     using CliprdrHeader::recv;
-};
+}; // struct FormatDataResponsePDU
 
-
-struct PacketFileList {
-    uint32_t cItems;
-    /*variable fileDescriptorArray*/
-};
-
-// [MS-RDPECLIP] - 2.2.5.2.3.1 File Descriptor (CLIPRDR_FILEDESCRIPTOR)
-// ====================================================================
-
-// The CLIPRDR_FILEDESCRIPTOR structure describes the properties of a file.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                             flags                             |
-// +---------------------------------------------------------------+
-// |                           reserved1                           |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                         fileAttributes                        |
-// +---------------------------------------------------------------+
-// |                           reserved2                           |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                         lastWriteTime                         |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                          fileSizeHigh                         |
-// +---------------------------------------------------------------+
-// |                          fileSizeLow                          |
-// +---------------------------------------------------------------+
-// |                            fileName                           |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                 (fileName cont'd for 122 rows)                |
-// +---------------------------------------------------------------+
-
-// flags (4 bytes): An unsigned 32-bit integer that specifies which fields
-//  contain valid data and the usage of progress UI during a copy operation.
-
-//  +-------------------+---------------------------------------------------+
-//  | Value             | Meaning                                           |
-//  +-------------------+---------------------------------------------------+
-//  | FD_ATTRIBUTES     | The fileAttributes field contains valid data.     |
-//  | 0x00000004        |                                                   |
-//  +-------------------+---------------------------------------------------+
-//  | FD_FILESIZE       | The fileSizeHigh and fileSizeLow fields contain   |
-//  | 0x00000040        | valid data.                                       |
-//  +-------------------+---------------------------------------------------+
-//  | FD_WRITESTIME     | The lastWriteTime field contains valid data.      |
-//  | 0x00000020        |                                                   |
-//  +-------------------+---------------------------------------------------+
-//  | FD_SHOWPROGRESSUI | A progress indicator SHOULD be shown when copying |
-//  | 0x00004000        | the file.                                         |
-//  +-------------------+---------------------------------------------------+
-
-enum {
-    FD_ATTRIBUTES     = 0x0004,
-    FD_FILESIZE       = 0x0040,
-    FD_WRITESTIME     = 0x0020,
-    FD_SHOWPROGRESSUI = 0x4000
-};
-
-// reserved1 (32 bytes): An array of 32 bytes. This field MUST be initialized
-//  with zeros when sent and MUST be ignored on receipt.
-
-// fileAttributes (4 bytes): An unsigned 32-bit integer that specifies file
-//  attribute flags.
-
-//  +--------------------------+-----------------------------------------------+
-//  | Value                    | Meaning                                       |
-//  +--------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_READONLY  | A file that is read-only. Applications can    |
-//  | 0x00000001               | read the file, but cannot write to it or      |
-//  |                          | delete it.                                    |
-//  +--------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_HIDDEN    | The file or directory is hidden. It is not    |
-//  | 0x00000002               | included in an ordinary directory listing.    |
-//  +--------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_SYSTEM    | A file or directory that the operating system |
-//  | 0x00000004               | uses a part of, or uses exclusively.          |
-//  +--------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_DIRECTORY | Identifies a directory.                       |
-//  | 0x00000010               |                                               |
-//  +--------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_ARCHIVE   | A file or directory that is an archive file   |
-//  | 0x00000020               | or directory. Applications typically use this |
-//  |                          | attribute to mark files for backup or         |
-//  |                          | removal.                                      |
-//  +--------------------------+-----------------------------------------------+
-//  | FILE_ATTRIBUTE_NORMAL    | A file that does not have other attributes    |
-//  | 0x00000080               | set. This attribute is valid only when used   |
-//  |                          | alone.                                        |
-//  +--------------------------+-----------------------------------------------+
-
-enum FileAttributes : uint32_t {
-    FILE_ATTRIBUTES_READONLY  = 0x0001,
-    FILE_ATTRIBUTES_HIDDEN    = 0x0002,
-    FILE_ATTRIBUTES_SYSTEM    = 0x0004,
-    FILE_ATTRIBUTES_DIRECTORY = 0x0010,
-    FILE_ATTRIBUTES_ARCHIVE   = 0x0020,
-    FILE_ATTRIBUTES_NORMAL    = 0x0080
-};
-
-// reserved2 (16 bytes): An array of 16 bytes. This field MUST be initialized
-//  with zeros when sent and MUST be ignored on receipt.
-
-// lastWriteTime (8 bytes): An unsigned 64-bit integer that specifies the
-//  number of 100-nanoseconds intervals that have elapsed since 1 January
-//  1601 to the time of the last write operation on the file.
-
-// fileSizeHigh (4 bytes): An unsigned 32-bit integer that contains the most
-//  significant 4 bytes of the file size.
-
-// fileSizeLow (4 bytes): An unsigned 32-bit integer that contains the least
-//  significant 4 bytes of the file size.
-
-// fileName (520 bytes): A null-terminated 260 character Unicode string that
-//  contains the name of the file.
-
-class FileDescriptor {
-    uint32_t flags;
-    uint32_t fileAttributes;
-    uint64_t lastWriteTime;
-    uint32_t fileSizeHigh;
-    uint32_t fileSizeLow;
-
-    std::string file_name;
+class MetaFilePicDescriptor
+{
 
 public:
-    void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->flags);
+    int recordSize;
+    int type;
+    int height;
+    int width;
+    int bpp;
+    int imageSize;
 
-        stream.out_clear_bytes(32); // reserved1(32)
 
-        stream.out_uint32_le(this->fileAttributes);
+    MetaFilePicDescriptor() :
+      recordSize(0)
+    , type(0)
+    , height(0)
+    , width(0)
+    , bpp(0)
+    , imageSize(0)
+    {}
 
-        stream.out_clear_bytes(16); // reserved2(16)
+    void receive(InStream & chunk) {
+        // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
+        chunk.in_skip_bytes(12);
 
-        stream.out_uint64_le(this->lastWriteTime);
-        stream.out_uint32_le(this->fileSizeHigh);
-        stream.out_uint32_le(this->fileSizeLow);
+        // 3.2.1 META_HEADER Example
+        chunk.in_skip_bytes(18);
 
-        // The null-terminator is included.
-        uint8_t fileName_unicode_data[520]; // fileName(520)
+        bool notEOF(true);
+        while(notEOF) {
 
-        size_t size_of_fileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            fileName_unicode_data, sizeof(fileName_unicode_data));
+            // 2.3 WMF Records
+            this->recordSize = chunk.in_uint32_le();
+            this->type = chunk.in_uint16_le();
 
-        stream.out_copy_bytes(fileName_unicode_data,
-            size_of_fileName_unicode_data);
+            switch (type) {
 
-        stream.out_clear_bytes(520 /* fileName(520) */ -
-            size_of_fileName_unicode_data);
-    }
+                case META_SETWINDOWEXT:
+                    chunk.in_skip_bytes(recordSize*2 - 6);
+                break;
 
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 592;  // flags(4) + reserved1(32) +
-                                            //     fileAttributes(4) +
-                                            //     reserved2(16) +
-                                            //     lastWriteTime(8) +
-                                            //     fileSizeHigh(4) +
-                                            //     fileSizeLow(4) +
-                                            //     fileName(520)
+                case META_SETWINDOWORG:
+                    chunk.in_skip_bytes(recordSize*2 - 6);
+                break;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileDescriptor: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                case META_SETMAPMODE:
+                    chunk.in_skip_bytes(recordSize*2 - 6);
+                break;
+
+                case META_DIBSTRETCHBLT:
+                {
+                    notEOF = false;
+
+                    // 2.3.1.3.1 META_DIBSTRETCHBLT With Bitmap
+                    chunk.in_skip_bytes(4);
+
+                    this->height = chunk.in_uint16_le();
+                    this->width  = chunk.in_uint16_le();
+                    chunk.in_skip_bytes(12);
+
+                    // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
+
+                    // 2.2.2.3 BitmapInfoHeader Object
+                    chunk.in_skip_bytes(14);
+
+                    this->bpp     = chunk.in_uint16_le();
+                    chunk.in_skip_bytes(4);
+
+                    this->imageSize   = chunk.in_uint32_le();
+                    chunk.in_skip_bytes(8);
+
+                    int skip(0);
+                    if (chunk.in_uint32_le() == 0) { // if colorUsed == 0
+                        skip = 0;
+                    }
+                    chunk.in_skip_bytes(4);
+
+                        // Colors (variable)
+                    chunk.in_skip_bytes(skip);
+
+                        // BitmapBuffer (variable)
+                    chunk.in_skip_bytes(0);
+                }
+                break;
+
+                default:
+                    //std::cout << " CF_METAFILEPICT record unknow (" << type << ")" << std::endl;
+                break;
             }
         }
-
-        this->flags = stream.in_uint32_le();
-
-        stream.in_skip_bytes(32);   // reserved1(32)
-
-        this->fileAttributes = stream.in_uint32_le();
-
-        stream.in_skip_bytes(16);   // reserved2(16)
-
-        this->lastWriteTime = stream.in_uint64_le();
-        this->fileSizeHigh  = stream.in_uint32_le();
-        this->fileSizeLow   = stream.in_uint32_le();
-
-        uint8_t const * const fileName_unicode_data = stream.get_current();
-        uint8_t fileName_utf8_string[520 /* fileName(520) */ / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
-        ::UTF16toUTF8(fileName_unicode_data, 520 /* fileName(520) */ / 2,
-            fileName_utf8_string, sizeof(fileName_utf8_string));
-        // The null-terminator is included.
-        this->file_name = ::char_ptr_cast(fileName_utf8_string);
-
-        stream.in_skip_bytes(520);  // fileName(520)
     }
 
-    const char * fileName() const { return this->file_name.c_str(); }
+};  // class MetaFilePicDescriptor
 
-    uint64_t file_size() const {
-        return (static_cast<uint64_t>(this->fileSizeLow)) |
-            (static_cast<uint64_t>(this->fileSizeHigh) << 32);
-    }
-
-    static constexpr size_t size() {
-        return 592; // flags(4) + reserved1(32) + fileAttributes(4) +
-                    //     reserved2(16) + lastWriteTime(8) +
-                    //     fileSizeHigh(4) + fileSizeLow(4) +
-                    //     fileName(520)
-    }
-
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "FileDescriptor: flags=0x%X fileAttributes=0x%X lastWriteTime=%" PRIu64 " "
-                "fileSizeHigh=0x%X fileSizeLow=0x%X "
-                "fileName=\"%s\"",
-            this->flags, this->fileAttributes, this->lastWriteTime,
-            this->fileSizeHigh, this->fileSizeLow, this->file_name.c_str());
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-};  // class FileDescriptor
 
 }   // namespace RDPECLIP
 
