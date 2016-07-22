@@ -990,7 +990,7 @@ struct FileContentsRequestPDU : CliprdrHeader {
         stream.out_uint32_le(streamID);
         stream.out_uint32_le(lindex);
         stream.out_uint32_le(flag);
-        stream.out_uint32_le(sizeRequested << 32);
+        stream.out_uint32_le(uint64_t(sizeRequested) << 32);
         stream.out_uint32_le(sizeRequested);
         stream.out_uint32_le(sizeRequested);
     }
@@ -1680,25 +1680,26 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             stream.out_uint64_le(10000); //  random
             stream.out_uint32_le(0);
             stream.out_uint32_le(sizesList[i]);
-            // TODO range-for
-            for (int j = 0; j < namesList[i].size(); j++) {
+            int size(namesList[i].size());
+            for (int j = 0; j < size; j++) {
                 stream.out_uint8(namesList[i].c_str()[j]);
             }
-            // TODO assert(sz <= 520) ?
+            REDASSERT(namesList[i].size() <= 520);
             stream.out_skip_bytes(520-namesList[i].size());
         }
 
     }
 
-    // TODO negative length is not correct
     void emit_text(OutStream & stream, int length) {
+        REDASSERT(length >= 0);
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(length);
     }
 
-    // TODO negative sizes is not correct
     void emit_metaFilePic(OutStream & stream, int data_length, int width, int height, int depth) {
+        REDASSERT(width >= 0);
+        REDASSERT(height >= 0);
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 

@@ -246,17 +246,14 @@ public:
     int                  _bufferRDPClipboardMetaFilePicBPP;
     uint32_t           * _formatIDs;
     std::string        * _formatListDataShortName;
-    int                  _nbFormatIDs;
+    const int            _nbFormatIDs;
     const std::string    FILECONTENTS;
     const std::string    FILEGROUPDESCRIPTORW;
     int                  _cItems;
     int                  _streamID;
     int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
     std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
-
-
-
-
+    
 
 
     bool setClientInfo() override;

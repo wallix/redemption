@@ -981,7 +981,7 @@ public Q_SLOTS:
 
                         std::string delimiter = "\n";
                         int i = 0;
-                        int pos = 0;
+                        uint32_t pos = 0;
                         while (pos != str.size()) {
                             pos = str.find(delimiter);
                             std::string path = str.substr(1, pos);
