@@ -222,11 +222,12 @@ obj bitmap : src/utils/bitmap_data_allocator.cpp ;
 obj program_options : modules/program_options/src/program_options.cpp ;
 
 
-constant COMMON_OBJ_DEPENDENCIES : <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
+constant COMMON_OBJ_DEPENDENCIES : <define>SHARE_PATH='\"$(SHARE_PREFIX)\"' ;
 constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
 constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
 constant TEST_DEPENDENCIES :
-    <library>libboost_unit_test
+    $(LIB_TEST_DEPENDENCY)
     $(GCOV)
     <include>tests
     <cxxflags>-frtti

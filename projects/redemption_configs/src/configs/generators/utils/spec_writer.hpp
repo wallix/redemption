@@ -155,8 +155,8 @@ auto pack_contains(pack_type<Ts...> const & pack)
 { return detail_::pack_contains_tpl<Tpl>(pack, 1); }
 
 
-bool is_empty(char const * s) { return !*s; }
-bool is_empty(std::string const & str) { return str.empty(); }
+inline bool is_empty(char const * s) { return !*s; }
+inline bool is_empty(std::string const & str) { return str.empty(); }
 template<class T> bool is_empty(cfg_attributes::types::list<T> const &) { return true; }
 
 

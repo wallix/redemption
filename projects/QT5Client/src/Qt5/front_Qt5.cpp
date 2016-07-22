@@ -250,6 +250,7 @@ void Front_Qt::writeClientInfo() {
     std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
     if(ofichier) {
 
+        // TODO std::endl -> "\n"/'\n'
         ofichier << "User Info" << std::endl << std::endl;
 
         ofichier << "keylayout "             << this->_info.keylayout             << std::endl;
@@ -261,6 +262,7 @@ void Front_Qt::writeClientInfo() {
         ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
         ofichier << "fps "                   << this->_fps                        << std::endl;
 
+        // TODO unused
         ofichier.close();
     }
 }
@@ -2083,7 +2085,9 @@ void Front_Qt::empty_buffer() {
 }
 
 std::string Front_Qt::HTMLtoText(const std::string & html) {
+    // TODO is a char
     std::string openDelimiter(">");
+    // TODO is a char
     std::string endDelimiter("<");
     std::string tmp(html + "<");
     std::string str;
@@ -2093,10 +2097,12 @@ std::string Front_Qt::HTMLtoText(const std::string & html) {
     while (pos0 != -1 && posEnd != -1) {
         pos0 = tmp.find(openDelimiter);
         if (pos0 != -1) {
+            // TODO std::string::erase
             tmp = tmp.substr(pos0 + 1, tmp.length());
         }
 
         posEnd = tmp.find(endDelimiter);
+        // TODO str.append(tmp, 0, posEnd)
         str = std::string(str + tmp.substr(0, posEnd));
         if (posEnd != -1) {
            tmp = tmp.substr(posEnd + 1, tmp.length());
@@ -2117,12 +2123,14 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
     }
     const uint32_t total_length = out_stream.get_offset();
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
+    // TODO What ? Down casting is very bad.
     static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                 chunk,
                                                                 total_length,
                                                                 CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                );
 
+    // TODO replaced by LOG function
     std::cout << "client >> Format List PDU" << std::endl;
 }
 
