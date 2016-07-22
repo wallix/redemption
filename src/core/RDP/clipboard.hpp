@@ -990,7 +990,7 @@ struct FileContentsRequestPDU : CliprdrHeader {
         stream.out_uint32_le(streamID);
         stream.out_uint32_le(lindex);
         stream.out_uint32_le(flag);
-        stream.out_uint32_le(sizeRequested << 32);
+        stream.out_uint32_le(uint64_t(sizeRequested) << 32);
         stream.out_uint32_le(sizeRequested);
         stream.out_uint32_le(sizeRequested);
     }
@@ -1679,7 +1679,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             stream.out_uint64_le(10000); //  random
             stream.out_uint32_le(0);
             stream.out_uint32_le(sizesList[i]);
-            for (int j = 0; j < namesList[i].size(); j++) {
+            int size(namesList[i].size());
+            for (int j = 0; j < size; j++) {
                 stream.out_uint8(namesList[i].c_str()[j]);
             }
             stream.out_skip_bytes(520-namesList[i].size());

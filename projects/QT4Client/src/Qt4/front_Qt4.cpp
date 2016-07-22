@@ -57,8 +57,6 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         params.dont_log_data_into_syslog = true;
         params.dont_log_data_into_wrm = true;
 
-        params.acl = nullptr;
-
         return params;
     }())
     , _keymap()
@@ -68,6 +66,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _bufferRDPClipboardChannelSizeTotal(0)
     , _bufferRDPCLipboardMetaFilePic_width(0)
     , _bufferRDPCLipboardMetaFilePic_height(0)
+    , _nbFormatIDs(4)
     , FILECONTENTS("F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0", 26)
     , FILEGROUPDESCRIPTORW("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0",42 )
     , _cItems(0)
@@ -125,7 +124,6 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
                                                               GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL,
                                                               PDU_MAX_SIZE+1);
 
-    this->_nbFormatIDs = 4;
     this->_formatIDs    = new uint32_t[this->_nbFormatIDs];
     this->_formatIDs[0] = RDPECLIP::CF_UNICODETEXT;
     this->_formatIDs[1] = RDPECLIP::CF_TEXT;
@@ -1509,6 +1507,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
         const uint16_t server_message_type = chunk.in_uint16_le();
 
+
         switch (server_message_type) {
             case RDPECLIP::CB_CLIP_CAPS:
                 if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
@@ -1792,9 +1791,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         std::cout <<  std::endl;
                     }
                 }
+
                 if(this->_requestedFormatName == this->FILEGROUPDESCRIPTORW) {
                     this->_requestedFormatId = CF_QT_CLIENT_FILECONTENTS;
-                    this->process_server_clipboard_data(flags, chunk_series);
+                    this->process_server_clipboard_data(flags, chunk);
                 }
 
             break;
@@ -1810,7 +1810,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 void Front_Qt::process_server_file_clipboard_data(int flags, InStream & chunk) {
     std::cout <<  std::hex;
     for (int i = 0; i < 20; i++) {
-        std::cout << "0" <<  int(chunk.in_uint8()) <<  " ";
+        int bit(chunk.in_uint8());
+        if (bit < 0x10) {
+            std::cout << "0";
+        }
+        std::cout <<  bit <<  " ";
     }
     std::cout << std::dec << std::endl;
 
@@ -1943,9 +1947,12 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
         case CF_QT_CLIENT_FILECONTENTS:
 
+
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->_bufferRDPClipboardChannelSizeTotal -= 4;
-                chunk.in_uint32_le();  // streamID
+                int id = chunk.in_uint32_le();
+
+                std::cout << "streamID=" << id << std::endl;
             }
 
             this->send_to_clipboard_Buffer(chunk);
@@ -1955,11 +1962,21 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
                 //std::cout << "file_name=" << "\"" << this->_itemsNameList[this->_streamID] << "\" ID=" << this->_streamID << std::endl;
 
-                std::ofstream ofichier(this->_itemsNameList[this->_streamID], std::ios::out | std::ios::trunc);
-                if(ofichier) {
-                    for (int i = 0; i < this->_bufferRDPClipboardChannelSizeTotal; i++) {
-                        ofichier << this->_bufferRDPClipboardChannel[i];
-                    }
+                std::ofstream oFile(this->_itemsNameList[this->_streamID], std::ios::out | std::ios::binary);
+                if(oFile.is_open()) {
+                    /*int j = 0;
+                    while (this->_bufferRDPClipboardChannel[j] == 0) {
+                        j++;
+                    }*/
+                    std::cout << "size=" << this->_bufferRDPClipboardChannelSizeTotal << std::endl;
+                    //std::string content(reinterpret_cast<char *>(this->_bufferRDPClipboardChannel+j), 599);
+                    //std::cout << content << std::endl;
+                    //oFile << content;
+                    oFile.write(reinterpret_cast<char *>(this->_bufferRDPClipboardChannel), this->_bufferRDPClipboardChannelSizeTotal+4);
+                    /*for (int i = 0; i < this->_bufferRDPClipboardChannelSizeTotal; i++) {
+                        oFile << this->_bufferRDPClipboardChannel[i];
+                    }*/
+                    oFile.close();
                 }
 
                 this->_streamID++;
@@ -2031,7 +2048,7 @@ void Front_Qt::send_to_clipboard_Buffer(InStream & chunk) {
 
 void Front_Qt::send_imageBuffer_to_clipboard() {
 
-    QImage image(reinterpret_cast<uchar *>(this->_bufferRDPClipboardChannel),
+    QImage image(this->_bufferRDPClipboardChannel,
                  this->_bufferRDPCLipboardMetaFilePic_width,
                  this->_bufferRDPCLipboardMetaFilePic_height,
                  this->bpp_to_QFormat(this->_bufferRDPClipboardMetaFilePicBPP, false));
