@@ -52,6 +52,9 @@ private:
 
     // For Persistent Disk Bitmap Cache's Wait List.
     struct cache_lite_element {
+        #ifndef NDEBUG
+        Bitmap bmp;
+        #endif
         uint_fast32_t stamp;
         uint8_t sha1[20];
         bool is_valid;
@@ -296,6 +299,20 @@ private:
             return &it->elem - this->first;
         }
 
+        #ifndef NDEBUG
+        void check_uniq_bmp(uint8_t const * sig, Bitmap const & bmp) const {
+            auto pred = [sig, &bmp](const T & e) {
+                return e
+                    && (*reinterpret_cast<uint64_t const *>(&sig[0]) == *reinterpret_cast<uint64_t const *>(&e.sha1[0]))
+                    ? (bmp.cx() != e.bmp.cx() || bmp.cy() != e.bmp.cy() || memcmp(bmp.data(), e.bmp.data(), bmp.bmp_size()))
+                    : false;
+            };
+            if (std::count_if(this->first, this->last, pred) > 1) {
+                assert(false && "bitmap duplicated");
+            }
+        }
+        #endif
+
         void remove(T const & e) {
             this->sorted_elements.erase(e);
         }
@@ -338,6 +355,7 @@ public:
             return this->bmp_size_;
         }
 
+        // TODO renamed to is_persistent()
         bool persistent() const {
             return this->is_persistent_;
         }
@@ -723,12 +741,17 @@ public:
             if (e) {
                 cache_real.remove(e);
             }
-           ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
+            ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
             ::memcpy(e.sha1, e_compare.sha1, 20);
             e.bmp = bmp;
             e.stamp = ++this->stamp;
             e.cached = true;
             cache_real.add(e);
+            #ifndef NDEBUG
+            if (cache_real.persistent()) {
+                cache_real.check_uniq_bmp(e.sig.sig_8, bmp);
+            }
+            #endif
         }
         else {
             cache_lite_element & e = this->waiting_list[oldest_cidx];
@@ -738,8 +761,16 @@ public:
             ::memcpy(e.sha1, e_compare.sha1, 20);
             e.is_valid = true;
             this->waiting_list_bitmap = std::move(e_compare.bmp);
+            #ifndef NDEBUG
+            e.bmp = e_compare.bmp;
+            #endif
             e.stamp = ++this->stamp;
             this->waiting_list.add(e);
+            #ifndef NDEBUG
+            if (this->waiting_list.persistent()) {
+                this->waiting_list.check_uniq_bmp(e.sha1, e_compare.bmp);
+            }
+            #endif
         }
 
         // Generating source code for unit test.
