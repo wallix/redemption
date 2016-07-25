@@ -381,6 +381,8 @@ public:
 
         const char request_hello[] = "Request=Hello";
 
+        const char version[] = "Version=";
+
         if (!session_probe_message.compare(request_hello)) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
@@ -453,6 +455,29 @@ public:
                 this->session_probe_event.set(
                     std::chrono::duration_cast<std::chrono::microseconds>(
                         this->param_session_probe_keepalive_timeout).count());
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "Version=" "1" "\x01" "1";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
             }
 
             {
@@ -588,6 +613,25 @@ public:
         }
         else if (!session_probe_message.compare(
                      0,
+                     sizeof(version) - 1,
+                     version)) {
+            const char * subitems          =
+                (session_probe_message.c_str() + sizeof(version) - 1);
+            const char * subitem_separator =
+                ::strchr(subitems, '\x01');
+
+            if (subitem_separator && (subitem_separator != subitems)) {
+                if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
+                    LOG(LOG_INFO,
+                        "SessionProbeVirtualChannel::process_server_message: "
+                            "OtherVersion=%lu.%lu",
+                        ::strtoul(subitems, nullptr, 10),
+                        ::strtoul(subitem_separator + 1, nullptr, 10));
+                }
+            }
+        }
+        else if (!session_probe_message.compare(
+                     0,
                      sizeof(request_outbound_connection_monitoring_rule) - 1,
                      request_outbound_connection_monitoring_rule)) {
             const char * remaining_data =
@@ -614,11 +658,13 @@ public:
 
                 unsigned int type = 0;
                 std::string  host_address_or_subnet;
-                unsigned int port = 0;
+                std::string  port_range;
+                std::string  description;
 
                 const bool result =
                     this->outbound_connection_monitor_rules.get(
-                        rule_index, type, host_address_or_subnet, port);
+                        rule_index, type, host_address_or_subnet, port_range,
+                        description);
 
                 {
                     const int error_code = (result ? 0 : -1);
@@ -630,8 +676,8 @@ public:
 
                 if (result) {
                     char cstr[1024];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%s" "\x01" "%u",
-                        type, host_address_or_subnet.c_str(), port);
+                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%s" "\x01" "%s",
+                        type, host_address_or_subnet.c_str(), port_range.c_str());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
@@ -723,7 +769,10 @@ public:
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
                 }
-                else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED")) {
+                else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED") ||
+                         !order.compare("OUTBOUND_CONNECTION_DETECTED")) {
+                    bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED"));
+
                     const char * subitems          = parameters.c_str();
                     const char * subitem_separator =
                         ::strchr(subitems, '\x01');
@@ -740,21 +789,87 @@ public:
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
 
-                        char message[4096];
+                        if (deny) {
+                            char message[4096];
+
 #ifdef __GNUG__
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 # endif
-                        snprintf(message, sizeof(message),
-                            TR("process_interrupted_security_policies",
-                               this->param_lang),
-                            application_name.c_str());
+                            snprintf(message, sizeof(message),
+                                TR("process_interrupted_security_policies",
+                                   this->param_lang),
+                                application_name.c_str());
 #ifdef __GNUG__
     #pragma GCC diagnostic pop
 # endif
 
-                        std::string string_message = message;
-                        this->mod.display_osd_message(string_message);
+                            std::string string_message = message;
+                            this->mod.display_osd_message(string_message);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED_2") ||
+                         !order.compare("OUTBOUND_CONNECTION_DETECTED_2")) {
+                    bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED_2"));
+
+                    const char * subitems          = parameters.c_str();
+                    const char * subitem_separator =
+                        ::strchr(subitems, '\x01');
+
+                    if (subitem_separator) {
+                        std::string rule_index(subitems,
+                            subitem_separator - subitems);
+
+                        subitems = subitem_separator + 1;
+                        subitem_separator = ::strchr(subitems, '\x01');
+
+                        if (subitem_separator) {
+                            std::string application_name(subitems,
+                                subitem_separator - subitems);
+
+                            unsigned int type = 0;
+                            std::string  host_address_or_subnet;
+                            std::string  port_range;
+                            std::string  description;
+
+                            const bool result =
+                                this->outbound_connection_monitor_rules.get(
+                                    ::strtoul(rule_index.c_str(), nullptr, 10),
+                                    type, host_address_or_subnet, port_range,
+                                    description);
+
+                            if (result) {
+                                std::string info(
+                                    "rule='" + description +
+                                    "' application_name='" + application_name + "'");
+                                this->authentifier->log4(
+                                    (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                                    order.c_str(), info.c_str());
+
+                                if (deny) {
+                                    char message[4096];
+
+#ifdef __GNUG__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# endif
+                                    snprintf(message, sizeof(message),
+                                        TR("process_interrupted_security_policies",
+                                           this->param_lang),
+                                        application_name.c_str());
+#ifdef __GNUG__
+    #pragma GCC diagnostic pop
+# endif
+
+                                    std::string string_message = message;
+                                    this->mod.display_osd_message(string_message);
+                                }
+                            }
+                        }
                     }
                     else {
                         message_format_invalid = true;
