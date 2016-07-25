@@ -36,7 +36,7 @@
 #include "utils/log.hpp"
 #include "utils/urandom_read.hpp"
 #include "utils/sugar/exchange.hpp"
-
+#include "utils/chex_to_int.hpp"
 #include "utils/apps/cryptofile.hpp"
 #include "transport/transport.hpp"
 
@@ -97,15 +97,6 @@ namespace transbuf {
         { return 0; }
     };
 
-}
-
-
-inline char chex_to_int(char c, int & err) {
-    return
-        '0' <= c && c <= '9' ? c-'0'
-      : 'a' <= c && c <= 'f' ? c-'a' + 10
-      : 'A' <= c && c <= 'F' ? c-'A' + 10
-      : ((err |= 1), '\0');
 }
 
 struct temporary_concat

@@ -318,7 +318,7 @@ public:
     {
         this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
         this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = this->ochecksum_buf_ofile_buf_out::open(args...);
+        int ret = this->transbuf::ofile_buf_out::open(args...);
         this->file_size = 0;
         return ret;
     }
@@ -332,7 +332,7 @@ public:
             this->quick_hmac.update(data, remaining);
             this->file_size += remaining;
         }
-        return this->ochecksum_buf_ofile_buf_out::write(data, len);
+        return this->transbuf::ofile_buf_out::write(data, len);
     }
 
     int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
@@ -341,11 +341,11 @@ public:
         this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
         this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
         this->file_size = nosize;
-        return this->ochecksum_buf_ofile_buf_out::close();
+        return this->transbuf::ofile_buf_out::close();
     }
 
     int close() {
-        return this->ochecksum_buf_ofile_buf_out::close();
+        return this->transbuf::ofile_buf_out::close();
     }
 };
 
