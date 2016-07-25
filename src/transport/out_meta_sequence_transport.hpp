@@ -256,9 +256,8 @@ namespace transbuf {
 
 using std::size_t;
 
-template<class Buf>
-class ochecksum_buf
-: public Buf
+class ochecksum_buf_ofile_buf_out
+: public transbuf::ofile_buf_out
 {
     struct HMac
     {
@@ -307,19 +306,19 @@ class ochecksum_buf
     size_t file_size = nosize;
 
 public:
-    explicit ochecksum_buf(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    explicit ochecksum_buf_ofile_buf_out(unsigned char (&hmac_key)[MD_HASH_LENGTH])
     : hmac_key(hmac_key)
     {}
 
-    ochecksum_buf(ochecksum_buf const &) = delete;
-    ochecksum_buf & operator=(ochecksum_buf const &) = delete;
+    ochecksum_buf_ofile_buf_out(ochecksum_buf_ofile_buf_out const &) = delete;
+    ochecksum_buf_ofile_buf_out & operator=(ochecksum_buf_ofile_buf_out const &) = delete;
 
     template<class... Ts>
     int open(Ts && ... args)
     {
         this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
         this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
-        int ret = this->Buf::open(args...);
+        int ret = this->ochecksum_buf_ofile_buf_out::open(args...);
         this->file_size = 0;
         return ret;
     }
@@ -333,7 +332,7 @@ public:
             this->quick_hmac.update(data, remaining);
             this->file_size += remaining;
         }
-        return this->Buf::write(data, len);
+        return this->ochecksum_buf_ofile_buf_out::write(data, len);
     }
 
     int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
@@ -342,11 +341,11 @@ public:
         this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
         this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
         this->file_size = nosize;
-        return this->Buf::close();
+        return this->ochecksum_buf_ofile_buf_out::close();
     }
 
     int close() {
-        return this->Buf::close();
+        return this->ochecksum_buf_ofile_buf_out::close();
     }
 };
 
@@ -1609,7 +1608,7 @@ namespace detail
 
     class ochecksum_filter
     {
-        transbuf::ochecksum_buf<transbuf::null_buf> sum_buf;
+        transbuf::ochecksum_buf_null_buf sum_buf;
 
     public:
         explicit ochecksum_filter(CryptoContext & cctx)
@@ -1641,10 +1640,10 @@ namespace detail
     };
 
     struct cctx_ochecksum_file
-    : transbuf::ochecksum_buf<transbuf::ofile_buf_out>
+    : transbuf::ochecksum_buf_ofile_buf_out
     {
         explicit cctx_ochecksum_file(CryptoContext & cctx)
-        : transbuf::ochecksum_buf<transbuf::ofile_buf_out>(cctx.get_hmac_key())
+        : transbuf::ochecksum_buf_ofile_buf_out(cctx.get_hmac_key())
         {}
     };
 }
