@@ -772,8 +772,6 @@ test-canonical regex/regex_consumer.hpp ;
 test-canonical regex/regex_states_value.hpp ;
 test-canonical regex/regex_utils.hpp ;
 test-canonical system/linux/system/openssl.hpp ;
-test-canonical transport/buffer/file_buf.hpp ;
-test-canonical transport/buffer/null_buf.hpp ;
 test-canonical transport/detail/meta_hash.hpp ;
 test-canonical transport/detail/no_param.hpp ;
 test-canonical transport/filter/crypto_filter.hpp ;
