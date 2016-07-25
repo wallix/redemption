@@ -471,7 +471,7 @@ test-canonical transport/out_file_transport.hpp ;
 test-canonical transport/bulk_compression_transport.hpp ;
 #test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 #test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
-#test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+#test-canonical utils/apps/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical transport/out_filename_sequence_transport.hpp ;
 
 #test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
@@ -772,12 +772,9 @@ test-canonical regex/regex_consumer.hpp ;
 test-canonical regex/regex_states_value.hpp ;
 test-canonical regex/regex_utils.hpp ;
 test-canonical system/linux/system/openssl.hpp ;
-test-canonical transport/buffer/file_buf.hpp ;
-test-canonical transport/buffer/null_buf.hpp ;
 test-canonical transport/detail/meta_hash.hpp ;
 test-canonical transport/detail/no_param.hpp ;
 test-canonical transport/filter/crypto_filter.hpp ;
-test-canonical transport/mixin_transport.hpp ;
 test-canonical utils/apps/app_decrypter.hpp ;
 test-canonical utils/apps/app_proxy.hpp ;
 test-canonical utils/apps/app_recorder.hpp ;
@@ -797,4 +794,3 @@ test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/urandom_read.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
-

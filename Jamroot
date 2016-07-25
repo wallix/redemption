@@ -492,6 +492,7 @@ unit-test test_algostring : tests/utils/sugar/test_algostring.cpp : $(TEST_DEPEN
 unit-test test_make_unique : tests/utils/sugar/test_make_unique.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_array_view : tests/utils/sugar/test_array_view.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_local_fd : tests/utils/sugar/test_local_fd.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_bytes_t : tests/utils/sugar/test_bytes_t.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
 
@@ -674,16 +675,11 @@ unit-test test_socket_transport : tests/transport/test_socket_transport.cpp : $(
 unit-test test_gzip_compression_transport : tests/transport/test_gzip_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>z ;
 unit-test test_snappy_compression_transport : tests/transport/test_snappy_compression_transport.cpp : $(TEST_DEPENDENCIES) <library>snappy ;
 
-unit-test test_cryptofile : tests/transport/test_cryptofile.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+unit-test test_cryptofile : tests/utils/apps/test_cryptofile.cpp : $(TEST_DEPENDENCIES) <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 
 unit-test test_compression_transport_wrapper : tests/utils/test_compression_transport_wrapper.cpp : $(TEST_DEPENDENCIES) <library>z <library>snappy ;
 ## @}
 
-
-## Buffer Transport tests
-## @{
-unit-test test_buffering_buf : tests/transport/buffer/test_buffering_buf.cpp : $(TEST_DEPENDENCIES) ;
-## @}
 
 
 

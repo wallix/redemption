@@ -31,14 +31,14 @@
 #include "utils/log.hpp"
 #include "openssl_crypto.hpp"
 #include "transport/transport.hpp"
-#include "transport/cryptofile.hpp"
+#include "utils/apps/cryptofile.hpp"
 #include "utils/urandom_read.hpp"
 
 struct InFilenameTransport : public Transport
 {
     int fd;
     int encryption;
-    
+
     struct raw_t {
         uint8_t b[65536];
         size_t start;
@@ -139,7 +139,7 @@ public:
             const uint8_t salt[]  = { 0x39, 0x30, 0, 0, 0x31, 0xd4, 0, 0 };
             const int          nrounds = 5;
             unsigned char      key[32];
-            
+
             // Key Derivation Algorithm
             // ------------------------
 
@@ -148,11 +148,11 @@ public:
             // is defined as:
 
             // D_i = HASH^count(D_(i-1) || data || salt)
-            // where || denotes concatentaion, D_0 is empty, 
+            // where || denotes concatentaion, D_0 is empty,
             // HASH is the digest algorithm in use,
             // HASH^1(data) is simply HASH (data),
             // HASH^2(data) is HASH ( HASH (data)) and so on.
-            
+
             const int i = ::EVP_BytesToKey(cipher
                                            , ::EVP_sha1()
                                            , &salt[0]
@@ -212,7 +212,7 @@ private:
                 // Check how much we have decoded
                 if (!this->raw_size) {
                     this->raw.read_min(this->fd, 4, 4);
-                    
+
                     uint32_t ciphered_buf_size = this->raw.get_uint32_le(0);
                     this->raw.end = 0;
 
@@ -310,7 +310,7 @@ private:
 
                     }
                 }
-                
+
                 // remaining_size is the amount of data available in decoded buffer
                 unsigned int remaining_size = this->raw_size - this->pos;
                 // Check how much we can copy
@@ -325,10 +325,10 @@ private:
                     this->raw_size = 0;
                 }
             }
-            
+
             *pbuffer += requested_size - remaining_requested_size;
             this->last_quantum_received += requested_size - remaining_requested_size;
-            
+
             if (remaining_requested_size > 0){
                 this->status = false;
             }
@@ -349,7 +349,7 @@ private:
                 this->last_quantum_received += requested_size;
                 *pbuffer += requested_size;
                 return;
-            }            
+            }
             if (this->raw.end > 0 && this->raw.end <= requested_size){
                 memcpy(&(*pbuffer)[end], &this->raw.b[0], this->raw.end);
                 end = this->raw.end;
@@ -377,4 +377,3 @@ private:
         }
     }
 };
-

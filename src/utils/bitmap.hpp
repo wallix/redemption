@@ -240,6 +240,7 @@ public:
     Bitmap(const Bitmap & other) noexcept
     : data_bitmap(other.data_bitmap)
     {
+        // TODO used a default DataBitmap instead of nullptr
         if (this->data_bitmap) {
             this->data_bitmap->inc();
         }
