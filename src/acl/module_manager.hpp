@@ -733,6 +733,11 @@ public:
 private:
     void set_mod(non_null_ptr<mod_api> mod)
     {
+        while (this->front.keymap.nb_char_available())
+            this->front.keymap.get_char();
+        while (this->front.keymap.nb_kevent_available())
+            this->front.keymap.get_kevent();
+
         this->internal_mod = mod.get();
         this->mod = mod.get();
     }
