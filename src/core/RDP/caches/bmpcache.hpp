@@ -760,15 +760,15 @@ public:
             }
             ::memcpy(e.sha1, e_compare.sha1, 20);
             e.is_valid = true;
-            this->waiting_list_bitmap = std::move(e_compare.bmp);
             #ifndef NDEBUG
             e.bmp = e_compare.bmp;
             #endif
+            this->waiting_list_bitmap = std::move(e_compare.bmp);
             e.stamp = ++this->stamp;
             this->waiting_list.add(e);
             #ifndef NDEBUG
             if (this->waiting_list.persistent()) {
-                this->waiting_list.check_uniq_bmp(e.sha1, e_compare.bmp);
+                this->waiting_list.check_uniq_bmp(e.sha1, e.bmp);
             }
             #endif
         }
