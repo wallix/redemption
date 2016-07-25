@@ -1716,8 +1716,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         // 2.2.5.2.1 Packed Metafile Payload
         // 12 bytes
         stream.out_uint32_le(MM_ANISOTROPIC);
-        stream.out_uint32_le(width*26.459999999999999077);
-        stream.out_uint32_le(height*26.459999999999999077);
+        stream.out_uint32_le(width*26.46);
+        stream.out_uint32_le(height*26.46);
 
 
         // 3.2.1 META_HEADER Example
@@ -2019,7 +2019,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         // 40 bytes
         stream.out_uint32_le(40);
         stream.out_uint32_le(width);
-        stream.out_uint32_le(-height);
+        stream.out_uint32_le(-height);                      //  optimization
         stream.out_uint16_le(1);
         stream.out_uint16_le(depth);
         stream.out_uint32_le(0);  // BI_RGB
