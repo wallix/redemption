@@ -1170,7 +1170,6 @@ class FileDescriptor {
     uint64_t lastWriteTime;
     uint32_t fileSizeHigh;
     uint32_t fileSizeLow;
-
     std::string file_name;
 
 public:
@@ -1238,7 +1237,8 @@ public:
         // The null-terminator is included.
         this->file_name = ::char_ptr_cast(fileName_utf8_string);
 
-        stream.in_skip_bytes(520);  // fileName(520)
+        stream.in_skip_bytes(520 - file_name.size());       // fileName(520)
+
     }
 
     const char * fileName() const { return this->file_name.c_str(); }
@@ -1662,30 +1662,35 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             );
     }
 
+
+
     // Files List
     // TODO std::string* + int* -> array_view { name, size };
-    void emit(OutStream & stream, std::string * namesList, int * sizesList, int cItems) {
+    void emit_fileList(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems) {
         this->dataLen_ = (cItems * 592) + 4;
         CliprdrHeader::emit(stream);
 
         stream.out_uint32_le(cItems);
         for (int i = 0; i < cItems; i++) {
+            REDASSERT(sizesList[i] >= 0);
             stream.out_uint32_le(FD_SHOWPROGRESSUI |
                                  FD_FILESIZE       |
+                                 FD_WRITESTIME     |
                                  FD_ATTRIBUTES
                                 );
             stream.out_clear_bytes(32);
-            stream.out_uint32_le(FILE_ATTRIBUTES_NORMAL);
+            stream.out_uint32_le(FILE_ATTRIBUTES_ARCHIVE);
             stream.out_clear_bytes(16);
-            stream.out_uint64_le(10000); //  random
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(sizesList[i]);
+            //  random
+            stream.out_uint64_le(0x01d1e2a0379fb504);
+            stream.out_uint32_le(sizesList[i] >> 32);
+            stream.out_uint32_le(sizesList[i] & 0x00000000ffffffff);
             int size(namesList[i].size());
             for (int j = 0; j < size; j++) {
-                stream.out_uint8(namesList[i].c_str()[j]);
+                stream.out_uint8(namesList[i].data()[j]);
             }
             REDASSERT(namesList[i].size() <= 520);
-            stream.out_skip_bytes(520-namesList[i].size());
+            stream.out_clear_bytes(520);
         }
 
     }
@@ -1708,11 +1713,11 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_uint32_le(data_length + METAFILE_HEADERS_SIZE);
 
 
-        // 2.2.5.2.1 Packed Metafile Payload (cliboard.hpp)
+        // 2.2.5.2.1 Packed Metafile Payload
         // 12 bytes
         stream.out_uint32_le(MM_ANISOTROPIC);
-        stream.out_uint32_le(width*40);
-        stream.out_uint32_le(height*40);
+        stream.out_uint32_le(width*26.46);
+        stream.out_uint32_le(height*26.46);
 
 
         // 3.2.1 META_HEADER Example
@@ -2014,7 +2019,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         // 40 bytes
         stream.out_uint32_le(40);
         stream.out_uint32_le(width);
-        stream.out_uint32_le(-height);
+        stream.out_uint32_le(-height);                      //  optimization
         stream.out_uint16_le(1);
         stream.out_uint16_le(depth);
         stream.out_uint32_le(0);  // BI_RGB
@@ -2027,6 +2032,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
     using CliprdrHeader::recv;
 }; // struct FormatDataResponsePDU
+
 
 class MetaFilePicDescriptor
 {
@@ -2114,7 +2120,6 @@ public:
                 break;
 
                 default:
-                    //std::cout << " CF_METAFILEPICT record unknow (" << type << ")" << std::endl;
                 break;
             }
         }
