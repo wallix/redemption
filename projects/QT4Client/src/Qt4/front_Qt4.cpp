@@ -1676,7 +1676,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             "Format Data Response PDU");
                 }
 
-
                 if(this->_requestedFormatName == this->FILEGROUPDESCRIPTORW) {
                     this->_requestedFormatId = CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                 }
@@ -1689,6 +1688,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         std::cout <<  std::endl;
                     }
                 }
+
+                this->process_server_file_clipboard_data(flags, chunk_series);
 
                 this->process_server_clipboard_data(flags, chunk);
 
@@ -1753,11 +1754,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             first_part_data_size = 0;
                             total_length  = (RDPECLIP::FileDescriptor::size() * this->_connector->_cItems) + 4;
                             RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
-                            formatDataResponsePDU.emit( out_streamfirst
-                                                      , this->_connector->_itemsNameList
-                                                      , this->_connector->_itemsSizeList
-                                                      , this->_connector->_cItems
-                                                      );
+                            formatDataResponsePDU.emit_fileList( out_streamfirst
+                                                               , this->_connector->_itemsNameList
+                                                               , this->_connector->_itemsSizeList
+                                                               , this->_connector->_cItems
+                                                               );
                         }
                         break;
 
@@ -1809,12 +1810,17 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
 void Front_Qt::process_server_file_clipboard_data(int flags, InStream & chunk) {
     std::cout <<  std::hex;
-    for (int i = 0; i < 20; i++) {
-        int bit(chunk.in_uint8());
-        if (bit < 0x10) {
+    for (int i = 0; i < 604; i++) {
+        int byte(chunk.in_uint8());
+        if ((i % 20) == 0) {
+            std::cout << "\"" << std::endl << "\"";
+        }
+
+        std::cout << "\\x";
+        if (byte < 0x10) {
             std::cout << "0";
         }
-        std::cout <<  bit <<  " ";
+        std::cout  <<  byte;
     }
     std::cout << std::dec << std::endl;
 
@@ -1942,6 +1948,9 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
                                                                             );
 
                 std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE " << this->_streamID << std::endl;
+
+                this->empty_buffer();
+
             }
         break;
 
@@ -1950,45 +1959,29 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->_bufferRDPClipboardChannelSizeTotal -= 4;
-                int id = chunk.in_uint32_le();
-
-                std::cout << "streamID=" << id << std::endl;
+                this->_streamID = chunk.in_uint32_le();
             }
 
             this->send_to_clipboard_Buffer(chunk);
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
 
-
-                //std::cout << "file_name=" << "\"" << this->_itemsNameList[this->_streamID] << "\" ID=" << this->_streamID << std::endl;
-
                 std::ofstream oFile(this->_itemsNameList[this->_streamID], std::ios::out | std::ios::binary);
                 if(oFile.is_open()) {
-                    /*int j = 0;
-                    while (this->_bufferRDPClipboardChannel[j] == 0) {
-                        j++;
-                    }*/
-                    std::cout << "size=" << this->_bufferRDPClipboardChannelSizeTotal << std::endl;
-                    //std::string content(reinterpret_cast<char *>(this->_bufferRDPClipboardChannel+j), 599);
-                    //std::cout << content << std::endl;
-                    //oFile << content;
-                    oFile.write(reinterpret_cast<char *>(this->_bufferRDPClipboardChannel), this->_bufferRDPClipboardChannelSizeTotal+4);
-                    /*for (int i = 0; i < this->_bufferRDPClipboardChannelSizeTotal; i++) {
-                        oFile << this->_bufferRDPClipboardChannel[i];
-                    }*/
+                    oFile.write(reinterpret_cast<char *>(this->_bufferRDPClipboardChannel), this->_bufferRDPClipboardChannelSizeTotal);
                     oFile.close();
                 }
 
                 this->_streamID++;
                 if (this->_streamID >= this->_cItems) {
-                    std::string TEST_TEMP_PATH("/home/cmoroldo/Bureau/redemption/projects/QT4Client/bin/gcc-4.9.2/release/threading-multi/");
+                    std::string TEST_TEMP_PATH("/home/cmoroldo/Bureau/redemption/projects/QT4Client/");
                     int nbItems(this->_cItems - 1);
                     std::string str(TEST_TEMP_PATH + this->_itemsNameList[0]);
                     for (int i = 1; i < nbItems; i++) {
                         str += "\n" + TEST_TEMP_PATH + this->_itemsNameList[i];
                     }
                     this->_connector->_local_clipboard_stream = false;
-                    this->_connector->setClipboard(str);
+                    this->_connector->setClipboard(str, true);
                     this->_connector->_local_clipboard_stream = true;
                     this->empty_buffer();
                 } else {
@@ -2074,7 +2067,7 @@ void Front_Qt::send_textBuffer_to_clipboard(bool isTextHtml) {
     }
 
     this->_connector->_local_clipboard_stream = false;
-    this->_connector->setClipboard(str);
+    this->_connector->setClipboard(str, false);
     this->_connector->_local_clipboard_stream = true;
 
     this->empty_buffer();
@@ -2088,16 +2081,10 @@ void Front_Qt::empty_buffer() {
     this->_bufferRDPCLipboardMetaFilePic_height = 0;
     this->_bufferRDPClipboardChannelSize        = 0;
     this->_cItems                               = 0;
-    this->_requestedFormatName                  = "";
     this->_streamID                             = 0;
-    for (int i = 0; i < 5; i++) {
-        this->_itemsSizeList[i] = 0;
-        this->_itemsNameList[i] = "";
-    }
-    if (this->_bufferRDPClipboardChannel != nullptr) {
-        delete[] (this->_bufferRDPClipboardChannel);
-        this->_bufferRDPClipboardChannel = nullptr;
-    }
+
+    delete[] (this->_bufferRDPClipboardChannel);
+    this->_bufferRDPClipboardChannel = nullptr;
 }
 
 std::string Front_Qt::HTMLtoText(const std::string & html) {

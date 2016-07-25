@@ -253,7 +253,7 @@ public:
     int                  _streamID;
     int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
     std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
-    
+
 
 
     bool setClientInfo() override;
