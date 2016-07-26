@@ -1672,10 +1672,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     void emit_fileList(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems) {
         this->dataLen_ = (cItems * 592) + 4;
         CliprdrHeader::emit(stream);
-
         stream.out_uint32_le(cItems);
         for (int i = 0; i < cItems; i++) {
-            REDASSERT(sizesList[i] >= 0);
             stream.out_uint32_le(FD_SHOWPROGRESSUI |
                                  FD_FILESIZE       |
                                  //FD_WRITESTIME     |
@@ -2093,7 +2091,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         // 40 bytes
         stream.out_uint32_le(40);
         stream.out_uint32_le(width);
-        stream.out_uint32_le(-height);                      //  optimization
+        stream.out_uint32_le(height);                      //  optimization
         stream.out_uint16_le(1);
         stream.out_uint16_le(depth);
         stream.out_uint32_le(0);  // BI_RGB
