@@ -4030,6 +4030,7 @@ public:
                             120,   nbbytes(this->bpp) * 16 * 16, false,
                             120,   nbbytes(this->bpp) * 32 * 32, false,
                             2553,  nbbytes(this->bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
                 }
@@ -4044,6 +4045,7 @@ public:
                             0x258, nbbytes(this->bpp) * 0x100,   false,
                             0x12c, nbbytes(this->bpp) * 0x400,   false,
                             0x106, nbbytes(this->bpp) * 0x1000,  false,
+                            false,
                             this->cache_verbose);
                     }
                 }
