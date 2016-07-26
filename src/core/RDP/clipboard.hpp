@@ -1704,9 +1704,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_uint32_le(length);
     }
 
-    void emit_metaFilePic(OutStream & stream, int data_length, int width, int height, int depth) {
-        REDASSERT(width >= 0);
-        REDASSERT(height >= 0);
+    void emit_metaFilePic(OutStream & stream, uint32_t data_length, uint16_t width, uint16_t height, uint16_t depth) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
 
