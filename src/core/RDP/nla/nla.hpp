@@ -60,6 +60,7 @@ struct rdpCredssp
 
     const char * target_host;
     Random & rand;
+    TimeObj & timeobj;
     const uint32_t verbose;
 
     rdpCredssp(Transport & transport,
@@ -71,6 +72,7 @@ struct rdpCredssp
                const bool krb,
                const bool restricted_admin_mode,
                Random & rand,
+               TimeObj & timeobj,
                const uint32_t verbose = 0)
         : server(false)
         , send_seq_num(0)
@@ -84,6 +86,7 @@ struct rdpCredssp
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_host(target_host)
         , rand(rand)
+        , timeobj(timeobj)
         , verbose(verbose)
     {
         if (this->verbose & 0x400) {
@@ -147,7 +150,7 @@ public:
         }
         if (secInter == NTLM_Interface) {
             LOG(LOG_INFO, "Credssp: NTLM Authentication");
-            this->table = new Ntlm_SecurityFunctionTable(this->rand);
+            this->table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
         }
         if (secInter == Kerberos_Interface) {
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");

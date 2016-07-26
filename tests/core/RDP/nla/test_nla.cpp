@@ -105,7 +105,8 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
     uint8_t pass[] = "Pénélope";
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand);
+    LCGTime timeobj;
+    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
     int res = credssp.credssp_client_authenticate();
     BOOST_CHECK_EQUAL(res, 1);
 }
@@ -181,7 +182,8 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
     uint8_t pass[] = "Pénélope";
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand);
+    LCGTime timeobj;
+    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
     int res = credssp.credssp_server_authenticate();
     BOOST_CHECK_EQUAL(res, 1);
 }

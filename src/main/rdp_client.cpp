@@ -478,10 +478,11 @@ int main(int argc, char** argv)
     wait_obj front_event;
 
     /* Random */
-    LCGRandom gen(0);
+    UdevRandom gen;
+    TimeSystem timeobj;
 
     /* mod_api */
-    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, mod_rdp_params);
+    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params);
 
     run_mod(mod, front, front_event, &mod_trans, nullptr);
 

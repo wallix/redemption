@@ -84,11 +84,13 @@ struct RdpNego
 
     uint8_t * current_password;
     Random & rand;
+    TimeObj & timeobj;
     const uint32_t verbose;
     char * lb_info;
 
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
-            const char * target_host, const char krb, Random & rand, const uint32_t verbose = 0)
+            const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
+            const uint32_t verbose = 0)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -101,6 +103,7 @@ struct RdpNego
     , target_host(target_host)
     , current_password(nullptr)
     , rand(rand)
+    , timeobj(timeobj)
     , verbose(verbose)
     , lb_info(nullptr)
     {
@@ -346,7 +349,7 @@ struct RdpNego
                                    this->domain, this->current_password,
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
-                                   this->rand,
+                                   this->rand, this->timeobj,
                                    this->verbose);
 
                 int res = 0;

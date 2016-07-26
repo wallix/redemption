@@ -83,6 +83,7 @@ class Session {
     Front * front;
 
     UdevRandom gen;
+    TimeSystem timeobj;
 
     class Client {
         SocketTransport auth_trans;
@@ -147,7 +148,7 @@ public:
                                    , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support
                                    , now);
 
-            ModuleManager mm(*this->front, this->ini, this->gen);
+            ModuleManager mm(*this->front, this->ini, this->gen, this->timeobj);
             BackEvent_t signal = BACK_EVENT_NONE;
 
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)

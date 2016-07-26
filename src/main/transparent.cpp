@@ -182,7 +182,8 @@ int main(int argc, char * argv[]) {
                                , ini.get<cfg::debug::front>(), nullptr);
     wait_obj front_event;
 
-    LCGRandom gen(0);
+    UdevRandom gen;
+    TimeSystem timeobj;
 
     CryptoContext cctx(gen, ini);
 
@@ -293,7 +294,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        gen, mod_rdp_params);
+                        gen, timeobj, mod_rdp_params);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 

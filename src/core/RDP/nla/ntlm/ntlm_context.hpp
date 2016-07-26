@@ -56,10 +56,7 @@ static const uint8_t server_seal_magic[] =
 
 struct NTLMContext
 {
-    TimeSystem timesys;
-    LCGTime lcgtime;
-
-    TimeObj * timeobj;
+    TimeObj & timeobj;
     Random & rand;
 
     bool server;
@@ -122,10 +119,8 @@ struct NTLMContext
 
     uint32_t verbose;
 
-    explicit NTLMContext(Random & rand)
-        : timesys()
-        , lcgtime()
-        , timeobj(&this->timesys)
+    explicit NTLMContext(Random & rand, TimeObj & timeobj)
+        : timeobj(timeobj)
         , rand(rand)
         , server(false)
         , NTLMv2(true)
@@ -216,7 +211,7 @@ struct NTLMContext
         if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0)
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
         else {
-            timeval tv = this->timeobj->get_time();
+            timeval tv = this->timeobj.get_time();
             struct {
                 uint32_t low;
                 uint32_t high;

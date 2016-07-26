@@ -249,11 +249,12 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
+        LCGTime timeobj;
 
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params);
         mod_api * mod = &mod_;
         BOOST_CHECK(true);
 
@@ -434,11 +435,12 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         // To always get the same client random, in tests
         LCGRandom gen2(0);
+        LCGTime timeobj;
 
         BOOST_CHECK(true);
 
         front.clear_channels();
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params);
+        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params);
         mod_api * mod = &mod_;
          BOOST_CHECK(true);
 

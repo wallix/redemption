@@ -115,8 +115,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
+    LCGTime timeobj;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, mod_rdp_params);
+        gen, timeobj, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
@@ -206,7 +207,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    LCGTime timeobj;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen, timeobj, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {

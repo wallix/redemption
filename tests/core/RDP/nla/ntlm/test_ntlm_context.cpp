@@ -30,13 +30,13 @@
 BOOST_AUTO_TEST_CASE(TestNtlmContext)
 {
     LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext context(rand);
+    NTLMContext context(rand, timeobj);
     // context.init();
     context.NTLMv2 = true;
     context.confidentiality = true;
     context.ntlm_set_negotiate_flags();
-    context.timeobj = &context.lcgtime;
     context.verbose = 0x400;
     // context.hardcoded_tests = true;
 
@@ -186,8 +186,9 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
 BOOST_AUTO_TEST_CASE(TestNTOWFv2)
 {
     LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext context(rand);
+    NTLMContext context(rand, timeobj);
     uint8_t buff[16];
 
     uint8_t password[] = "Password";
@@ -215,8 +216,9 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
 BOOST_AUTO_TEST_CASE(TestSetters)
 {
     LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext context(rand);
+    NTLMContext context(rand, timeobj);
     // context.init();
 
     uint8_t work[] = "Carpe Diem";
@@ -302,9 +304,10 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
 BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 {
     LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext client_context(rand);
-    NTLMContext server_context(rand);
+    NTLMContext client_context(rand, timeobj);
+    NTLMContext server_context(rand, timeobj);
     client_context.verbose = 0x400;
     server_context.verbose = 0x400;
     const uint8_t password[] = {
@@ -485,9 +488,10 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 {
     LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext client_context(rand);
-    NTLMContext server_context(rand);
+    NTLMContext client_context(rand, timeobj);
+    NTLMContext server_context(rand, timeobj);
 
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
@@ -647,11 +651,12 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 BOOST_AUTO_TEST_CASE(TestWrittersReaders)
 {
     LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext context_write(rand);
+    NTLMContext context_write(rand, timeobj);
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-    NTLMContext context_read(rand);
+    NTLMContext context_read(rand, timeobj);
     context_read.verbose = 0x400;
     context_write.verbose = 0x400;
     context_read.server = true;

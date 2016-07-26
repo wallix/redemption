@@ -43,8 +43,9 @@ namespace {
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     Random & rand;
+    TimeObj & timeobj;
 
-    explicit Ntlm_SecurityFunctionTable(Random & rand) : rand(rand) {}
+    explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj) : rand(rand), timeobj(timeobj) {}
 
     SEC_STATUS CompleteAuthToken(PCtxtHandle, SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
     SEC_STATUS ImportSecurityContext(char*, SecBuffer*, HANDLE, PCtxtHandle) override
@@ -178,7 +179,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
 
         if (!context) {
-            context = new NTLMContext(this->rand);
+            context = new NTLMContext(this->rand, this->timeobj);
 
             if (!context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
@@ -293,7 +294,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
 
         if (!context) {
-            context = new NTLMContext(this->rand);
+            context = new(std::nothrow) NTLMContext(this->rand, this->timeobj);
 
             if (!context) {
                 return SEC_E_INSUFFICIENT_MEMORY;

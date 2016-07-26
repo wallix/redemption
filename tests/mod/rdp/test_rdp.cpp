@@ -195,7 +195,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    LCGTime timeobj;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2){

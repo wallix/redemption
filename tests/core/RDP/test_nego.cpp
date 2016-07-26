@@ -107,8 +107,9 @@ BOOST_AUTO_TEST_CASE(TestNego)
     char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
     LCGRandom rand(0);
+    LCGTime timeobj;
     NullServerNotifier null_server_notifier;
-    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand);
+    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand, timeobj);
     nego.set_identity(user, domain, pass, host);
     const bool server_cert_store = true;
     nego.server_event(
@@ -149,7 +150,8 @@ BOOST_AUTO_TEST_CASE(TestSetIdentity) {
     LogTransport null_transport;
 
     LCGRandom rand(0);
-    RdpNego nego(true, null_transport, "test", true, "127.0.0.1", false, rand);
+    LCGTime timeobj;
+    RdpNego nego(true, null_transport, "test", true, "127.0.0.1", false, rand, timeobj);
 
     char pass[] = "Password\x00Pass\x00";
 

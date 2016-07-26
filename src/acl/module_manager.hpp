@@ -710,14 +710,16 @@ public:
     mod_api * internal_mod = &no_mod;
     SocketTransport * mod_transport;
     Random & gen;
+    TimeObj & timeobj;
 
-    ModuleManager(Front & front, Inifile & ini, Random & gen)
+    ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
         , front(front)
         , no_mod(this->front)
         , mod_osd(*this)
         , mod_transport(nullptr)
         , gen(gen)
+        , timeobj(timeobj)
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -1245,6 +1247,7 @@ public:
                         client_info,
                         ini.get_ref<cfg::mod_rdp::redir_info>(),
                         this->gen,
+                        this->timeobj,
                         mod_rdp_params
                     ));
                 }
