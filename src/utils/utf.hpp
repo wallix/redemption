@@ -874,7 +874,7 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
 }
 
 static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len,
-        uint8_t * utf16_target_, size_t utf16_len, bool LfToCrLf = false) {
+        uint8_t * utf16_target_, size_t utf16_len) {
     uint16_t * utf16_target = reinterpret_cast<uint16_t *>(utf16_target_);
 
     auto converter = [](uint8_t src, uint16_t *& dst, size_t & remaining_dst_len) -> bool {

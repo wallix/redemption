@@ -62,9 +62,6 @@ struct rdpCredssp
     Random & rand;
     const uint32_t verbose;
 
-    // TODO Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static
-    bool hardcodedtests;
-
     rdpCredssp(Transport & transport,
                uint8_t * user,
                uint8_t * domain,
@@ -88,7 +85,6 @@ struct rdpCredssp
         , target_host(target_host)
         , rand(rand)
         , verbose(verbose)
-        , hardcodedtests(false)
     {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "rdpCredssp:: Initialization");
@@ -155,7 +151,7 @@ public:
         }
         if (secInter == Kerberos_Interface) {
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
-            
+
             #ifndef __EMSCRIPTEN__
             this->table = new Kerberos_SecurityFunctionTable;
             #endif
@@ -588,7 +584,6 @@ public:
          * ISC_REQ_ALLOCATE_MEMORY
          */
 
-        unsigned long pfContextAttr;
         unsigned long fContextReq = 0;
         fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
@@ -604,13 +599,11 @@ public:
                                                             reinterpret_cast<char*>(
                                                                 this->ServicePrincipalName.get_data()),
                                                             fContextReq,
-                                                            this->hardcodedtests?1:0,
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : nullptr,
                                                             this->verbose, &this->context,
                                                             &output_buffer_desc,
-                                                            &pfContextAttr,
                                                             &expiration);
             if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
                 (status != SEC_I_COMPLETE_NEEDED) &&
@@ -794,7 +787,6 @@ public:
         * ASC_REQ_ALLOCATE_MEMORY
         */
 
-       unsigned long pfContextAttr = this->hardcodedtests?1:0;
        unsigned long fContextReq = 0;
        fContextReq |= ASC_REQ_MUTUAL_AUTH;
        fContextReq |= ASC_REQ_CONFIDENTIALITY;
@@ -837,8 +829,7 @@ public:
                                                        have_context? &this->context: nullptr,
                                                        &input_buffer_desc, fContextReq,
                                                        SECURITY_NATIVE_DREP, &this->context,
-                                                       &output_buffer_desc, &pfContextAttr,
-                                                       &expiration);
+                                                       &output_buffer_desc, &expiration);
 
            this->negoToken.init(output_buffer.Buffer.size());
            this->negoToken.copy(output_buffer.Buffer.get_data(),

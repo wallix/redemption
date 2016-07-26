@@ -643,7 +643,7 @@ static void Random_dealloc(PyORandom* self) {
     self->ob_type->tp_free(reinterpret_cast<PyObject*>(self));
 }
 
-static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+static PyObject *Random_new(PyTypeObject *type, PyObject */*args*/, PyObject */*kwds*/)
 {
     PyORandom *self = reinterpret_cast<PyORandom *>(type->tp_alloc(type, 0));
     if (self != nullptr) {
@@ -652,7 +652,7 @@ static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return reinterpret_cast<PyObject*>(self);
 }
 
-static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
+static int Random_init(PyORandom *self, PyObject */*args*/, PyObject */*kwds*/)
 {
     if (self != nullptr) {
         if (self->rnd == nullptr){
@@ -751,7 +751,7 @@ namespace {
     }
 }
 
-static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
+static PyObject *python_redcryptofile_open(PyObject* /*self*/, PyObject* args)
 {
     char *path = nullptr;
     char *omode = nullptr;
@@ -813,7 +813,7 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
     return py_return_none();
 }
 
-static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
+static PyObject *python_redcryptofile_flush(PyObject* /*self*/, PyObject* args)
 {
     int fd = 0;
     if (!PyArg_ParseTuple(args, "i", &fd)){
@@ -831,7 +831,7 @@ static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
     return Py_BuildValue("i", result);
 }
 
-static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
+static PyObject *python_redcryptofile_close(PyObject* /*self*/, PyObject* args)
 {
     int fd = 0;
     unsigned char hash[MD_HASH_LENGTH<<1];
@@ -890,7 +890,7 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
     return Py_BuildValue("s", hash_digest);
 }
 
-static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
+static PyObject *python_redcryptofile_write(PyObject* /*self*/, PyObject* args)
 {
     int fd;
     PyObject *python_buf;
@@ -918,7 +918,7 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
     return Py_BuildValue("i", result);
 }
 
-static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
+static PyObject *python_redcryptofile_read(PyObject* /*self*/, PyObject* args)
 {
     int fd;
     int buf_len;

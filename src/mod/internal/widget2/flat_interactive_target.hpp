@@ -19,7 +19,7 @@
  *              Jennifer Inthavong
  */
 
-#pragma once 
+#pragma once
 
 #include "edit.hpp"
 #include "edit_valid.hpp"

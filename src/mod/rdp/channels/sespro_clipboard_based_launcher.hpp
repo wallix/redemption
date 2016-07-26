@@ -512,6 +512,9 @@ public:
     }   // bool on_event() override
 
     bool on_image_read(uint64_t offset, uint32_t length) override {
+        (void)offset;
+        (void)length;
+
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher :=> on_image_read");
@@ -587,8 +590,9 @@ public:
     }
 
     // Returns false to prevent message to be sent to server.
-    bool process_client_cliprdr_message(InStream & chunk,
-        uint32_t length, uint32_t flags) override {
+    bool process_client_cliprdr_message(InStream & chunk, uint32_t length, uint32_t flags) override {
+        (void)length;
+
 
         if (this->state == State::STOP) {
             return true;

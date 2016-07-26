@@ -137,7 +137,7 @@ public:
     , bRop(bRop)
     , nXSrc(nXSrc)
     , nYSrc(nYSrc)
-    , nDeltaEntries(0) {
+    , nDeltaEntries(nDeltaEntries) {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
         for (int i = 0; i < this->nDeltaEntries; i++) {
             this->deltaEncodedRectangles[i].leftDelta = deltaEncodedRectangles.in_sint16_le();

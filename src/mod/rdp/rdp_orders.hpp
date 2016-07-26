@@ -275,7 +275,7 @@ private:
         gd.draw(order);
     }
 
-    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
+    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                    , gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");

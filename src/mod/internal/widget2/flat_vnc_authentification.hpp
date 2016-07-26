@@ -58,7 +58,7 @@ public:
                          theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, font,  -1u, 1, 1, true)
+                        theme.edit.focus_color, font, -1u, 1, 1, true)
         // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :

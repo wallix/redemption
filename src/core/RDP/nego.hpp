@@ -84,8 +84,6 @@ struct RdpNego
 
     uint8_t * current_password;
     Random & rand;
-    // TODO Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static
-    bool test;
     const uint32_t verbose;
     char * lb_info;
 
@@ -103,7 +101,6 @@ struct RdpNego
     , target_host(target_host)
     , current_password(nullptr)
     , rand(rand)
-    , test(false)
     , verbose(verbose)
     , lb_info(nullptr)
     {
@@ -354,9 +351,6 @@ struct RdpNego
                                    this->krb, this->restricted_admin_mode,
                                    this->rand,
                                    this->verbose);
-                if (this->test) {
-                    credssp.hardcodedtests = true;
-                }
 
                 int res = 0;
                 bool fallback = false;

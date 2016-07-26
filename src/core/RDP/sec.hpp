@@ -709,7 +709,7 @@ enum {
         InStream signature;
         InStream payload;
 
-        SecInfoPacket_Recv(InStream & stream, uint16_t available_len, CryptContext & crypt)
+        SecInfoPacket_Recv(InStream & stream, CryptContext & crypt)
         : basicSecurityHeader([&stream](){
             const unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
             if (!stream.in_check_rem(expected)){

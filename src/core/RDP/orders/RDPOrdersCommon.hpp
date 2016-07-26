@@ -755,7 +755,7 @@ class RDPPrimaryOrderHeader
 
     void emit_pen(OutStream & stream, uint32_t base,
                   const RDPPen & pen,
-                  const RDPPen & old_pen) const {
+                  const RDPPen & /*old_pen*/) const {
 
         using namespace RDP;
         if (this->fields & base) {
@@ -793,7 +793,7 @@ class RDPPrimaryOrderHeader
 
     void emit_brush(OutStream & stream, uint32_t base,
                   const RDPBrush & brush,
-                  const RDPBrush & old_brush) const {
+                  const RDPBrush & /*old_brush*/) const {
 
         using namespace RDP;
         if (this->fields & base) {

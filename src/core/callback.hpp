@@ -79,7 +79,7 @@ struct RdpInput : noncopyable
 {
     virtual ~RdpInput() = default;
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
-    virtual void rdp_input_unicode(uint16_t unicode, uint8_t flag) {}
+    virtual void rdp_input_unicode(uint16_t unicode, uint8_t flag) { (void)unicode; (void)flag; }
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_invalidate(const Rect & r) = 0;
@@ -93,8 +93,9 @@ struct RdpInput : noncopyable
     // Client calls this member function when it became up and running.
     virtual void rdp_input_up_and_running() { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
 
-    virtual void rdp_allow_display_updates(uint16_t left, uint16_t top,
-        uint16_t right, uint16_t bottom) {}
+    virtual void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
+    { (void)left; (void)top; (void)right; (void)bottom; }
+
     virtual void rdp_suppress_display_updates() {}
 };
 
@@ -102,8 +103,12 @@ struct Callback : RdpInput
 {
     virtual void send_to_mod_channel(const char * const front_channel_name, InStream & chunk, std::size_t length, uint32_t flags)
     {
+        (void)front_channel_name;
+        (void)chunk;
+        (void)length;
+        (void)flags;
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
-    virtual void send_auth_channel_data(const char * data) {}
+    virtual void send_auth_channel_data(const char * data) { (void)data; }
 };
 

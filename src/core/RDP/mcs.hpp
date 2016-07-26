@@ -1132,6 +1132,7 @@ namespace MCS
     {
         [[noreturn]] PlumbDomainIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1141,6 +1142,7 @@ namespace MCS
     {
         [[noreturn]] PlumbDomainIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1297,6 +1299,7 @@ namespace MCS
     {
         [[noreturn]] MergeChannelRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1306,6 +1309,7 @@ namespace MCS
     {
         [[noreturn]] MergeChannelRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1321,6 +1325,7 @@ namespace MCS
     {
         [[noreturn]] MergeChannelsConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1330,6 +1335,7 @@ namespace MCS
     {
         [[noreturn]] MergeChannelsConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1346,6 +1352,7 @@ namespace MCS
     {
         [[noreturn]] PurgeChannelsIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1355,6 +1362,7 @@ namespace MCS
     {
         [[noreturn]] PurgeChannelsIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1407,6 +1415,7 @@ namespace MCS
     {
         [[noreturn]] MergeTokensRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1416,6 +1425,7 @@ namespace MCS
     {
         [[noreturn]] MergeTokensRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1431,6 +1441,7 @@ namespace MCS
     {
         [[noreturn]] MergeTokensConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1440,6 +1451,7 @@ namespace MCS
     {
         [[noreturn]] MergeTokensConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1454,6 +1466,7 @@ namespace MCS
     {
         [[noreturn]] PurgeTokensIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1463,6 +1476,7 @@ namespace MCS
     {
         [[noreturn]] PurgeTokensIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1528,6 +1542,7 @@ namespace MCS
     {
         [[noreturn]] RejectMCSPDUUltimatum_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1537,6 +1552,7 @@ namespace MCS
     {
         [[noreturn]] RejectMCSPDUUltimatum_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1792,6 +1808,7 @@ namespace MCS
     {
         [[noreturn]] DetachUserRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1801,6 +1818,7 @@ namespace MCS
     {
         [[noreturn]] DetachUserRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1816,6 +1834,7 @@ namespace MCS
     {
         [[noreturn]] DetachUserIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -1825,6 +1844,7 @@ namespace MCS
     {
         [[noreturn]] DetachUserIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2119,6 +2139,7 @@ namespace MCS
     {
         [[noreturn]] ChannelLeaveRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2128,6 +2149,7 @@ namespace MCS
     {
         [[noreturn]] ChannelLeaveRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2142,6 +2164,7 @@ namespace MCS
     {
         [[noreturn]] ChannelConveneRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2151,6 +2174,7 @@ namespace MCS
     {
         [[noreturn]] ChannelConveneRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2167,6 +2191,7 @@ namespace MCS
     {
         [[noreturn]] ChannelConveneConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2176,6 +2201,7 @@ namespace MCS
     {
         [[noreturn]] ChannelConveneConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2191,6 +2217,7 @@ namespace MCS
     {
         [[noreturn]] ChannelDisbandRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2200,6 +2227,7 @@ namespace MCS
     {
         [[noreturn]] ChannelDisbandRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2214,6 +2242,7 @@ namespace MCS
     {
         [[noreturn]] ChannelDisbandIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2223,6 +2252,7 @@ namespace MCS
     {
         [[noreturn]] ChannelDisbandIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2239,6 +2269,7 @@ namespace MCS
     {
         [[noreturn]] ChannelAdmitRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2248,6 +2279,7 @@ namespace MCS
     {
         [[noreturn]] ChannelAdmitRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2265,6 +2297,7 @@ namespace MCS
     {
         [[noreturn]] ChannelAdmitIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2274,6 +2307,7 @@ namespace MCS
     {
         [[noreturn]] ChannelAdmitIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2291,6 +2325,7 @@ namespace MCS
     {
         [[noreturn]] ChannelExpelRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2300,6 +2335,7 @@ namespace MCS
     {
         [[noreturn]] ChannelExpelRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2315,6 +2351,7 @@ namespace MCS
     {
         [[noreturn]] ChannelExpelIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2324,6 +2361,7 @@ namespace MCS
     {
         [[noreturn]] ChannelExpelIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2533,6 +2571,7 @@ namespace MCS
     {
         [[noreturn]] UniformSendDataRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2542,6 +2581,7 @@ namespace MCS
     {
         [[noreturn]] UniformSendDataRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2560,6 +2600,7 @@ namespace MCS
     {
         [[noreturn]] UniformSendDataIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2569,6 +2610,7 @@ namespace MCS
     {
         [[noreturn]] UniformSendDataIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2584,6 +2626,7 @@ namespace MCS
     {
         [[noreturn]] TokenGrabRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2593,6 +2636,7 @@ namespace MCS
     {
         [[noreturn]] TokenGrabRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2610,6 +2654,7 @@ namespace MCS
     {
         [[noreturn]] TokenGrabConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2619,6 +2664,7 @@ namespace MCS
     {
         [[noreturn]] TokenGrabConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2634,6 +2680,7 @@ namespace MCS
     {
         [[noreturn]] TokenInhibitRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2643,6 +2690,7 @@ namespace MCS
     {
         [[noreturn]] TokenInhibitRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2661,6 +2709,7 @@ namespace MCS
     {
         [[noreturn]] TokenInhibitConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2670,6 +2719,7 @@ namespace MCS
     {
         [[noreturn]] TokenInhibitConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2686,6 +2736,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2695,6 +2746,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2712,6 +2764,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2721,6 +2774,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2738,6 +2792,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveResponse_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2747,6 +2802,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveResponse_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2764,6 +2820,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2773,6 +2830,7 @@ namespace MCS
     {
         [[noreturn]] TokenGiveConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2788,6 +2846,7 @@ namespace MCS
     {
         [[noreturn]] TokenPleaseRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2797,6 +2856,7 @@ namespace MCS
     {
         [[noreturn]] TokenPleaseRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2813,6 +2873,7 @@ namespace MCS
     {
         [[noreturn]] TokenPleaseIndication_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2822,6 +2883,7 @@ namespace MCS
     {
         [[noreturn]] TokenPleaseIndication_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2837,6 +2899,7 @@ namespace MCS
     {
         [[noreturn]] TokenReleaseRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2846,6 +2909,7 @@ namespace MCS
     {
         [[noreturn]] TokenReleaseRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2864,6 +2928,7 @@ namespace MCS
     {
         [[noreturn]] TokenReleaseConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2873,6 +2938,7 @@ namespace MCS
     {
         [[noreturn]] TokenReleaseConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2888,6 +2954,7 @@ namespace MCS
     {
         [[noreturn]] TokenTestRequest_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2897,6 +2964,7 @@ namespace MCS
     {
         [[noreturn]] TokenTestRequest_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2913,6 +2981,7 @@ namespace MCS
     {
         [[noreturn]] TokenTestConfirm_Send(OutStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }
@@ -2922,6 +2991,7 @@ namespace MCS
     {
         [[noreturn]] TokenTestConfirm_Recv(InStream & stream, int encoding)
         {
+            (void)stream; (void)encoding;
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
         }

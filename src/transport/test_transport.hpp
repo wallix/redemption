@@ -86,6 +86,7 @@ struct GeneratorTransport : public InputTransportDynarray
 {
     GeneratorTransport(const void * data, size_t len, uint32_t verbose = 0)
     {
+        (void)verbose;
         if (this->buffer().open(len, data)) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -120,6 +121,7 @@ public:
     , len(len)
     , current(0)
     {
+        (void)verbose;
         if (!this->data) {
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -194,13 +196,14 @@ class TestTransport
     std::size_t public_key_length;
 
 public:
-    TestTransport(const char * name, const char * outdata, size_t outlen,
-                  const char * indata, size_t inlen, uint32_t verbose = 0)
+    TestTransport(
+        const char * outdata, size_t outlen,
+        const char * indata, size_t inlen,
+        uint32_t verbose = 0)
     : check(indata, inlen, verbose)
     , gen(outdata, outlen, verbose)
     , public_key_length(0)
-    {
-    }
+    {}
 
 
     void disable_remaining_error() {

@@ -25,7 +25,6 @@
 
 #define LOGNULL
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
-#include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNtlmContext)
@@ -37,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     context.NTLMv2 = true;
     context.confidentiality = true;
     context.ntlm_set_negotiate_flags();
-    context.set_tests();
+    context.timeobj = &context.lcgtime;
     context.verbose = 0x400;
     // context.hardcoded_tests = true;
 

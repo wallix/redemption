@@ -338,6 +338,8 @@ public:
         uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask>& out_asynchronous_task) override
     {
+        (void)out_asynchronous_task;
+
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: "

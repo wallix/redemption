@@ -1247,11 +1247,6 @@ class RDPBmpCache {
         }
     }
 
-
-    bool operator==(const RDPBmpCache & other) const {
-        return true;
-    }
-
     size_t str(char * buffer, size_t sz) const
     {
         size_t lg = snprintf(buffer, sz,

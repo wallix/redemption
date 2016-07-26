@@ -185,11 +185,15 @@ public:
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
+        // TODO clip is not used
+        (void)clip;
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(cmd.color));
     }
 
     // TODO This will draw a standard ellipse without brush style
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
+        // TODO clip is not used
+        (void)clip;
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
     }
 
@@ -868,10 +872,10 @@ public:
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {}
-    void draw(const RDP::RAIL::WindowIcon          & order) override {}
-    void draw(const RDP::RAIL::CachedIcon          & order) override {}
-    void draw(const RDP::RAIL::DeletedWindow       & order) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow &) override {}
+    void draw(const RDP::RAIL::WindowIcon          &) override {}
+    void draw(const RDP::RAIL::CachedIcon          &) override {}
+    void draw(const RDP::RAIL::DeletedWindow       &) override {}
 
     void set_pointer(const Pointer & cursor) override {
         this->drawable.use_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);

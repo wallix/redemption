@@ -1072,7 +1072,7 @@ namespace details_ {
     /// @{
     template<class T, class U>
     std::integral_constant<std::size_t, T::value + U::value>
-    packet_size_add(T const & a, U const & b) {
+    packet_size_add(T const &, U const &) {
         return {};
     }
 

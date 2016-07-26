@@ -53,7 +53,7 @@ public:
     RDPDrawable gd;
     CHANNELS::ChannelDefArray   cl;
 
-    bool can_be_start_capture(auth_api* auth) override { return false; }
+    bool can_be_start_capture(auth_api*) override { return false; }
     bool can_be_pause_capture() override { return false; }
     bool can_be_resume_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
@@ -384,10 +384,14 @@ public:
 
     // reutiliser le FakeFront
     // creer un main calqué sur celui de transparent.cpp et reussir a lancer un mod_rdp
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
+    const CHANNELS::ChannelDefArray & get_channel_list() const override { return cl; }
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, const uint8_t * data, std::size_t length
+    void send_to_channel( const CHANNELS::ChannelDef &, const uint8_t * data, std::size_t length
                         , std::size_t chunk_size, int flags) override {
+        (void)data;
+        (void)length;
+        (void)chunk_size;
+        (void)flags;
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "send_to_channel");
@@ -467,7 +471,7 @@ int main(int argc, char** argv)
     }
 
     /* SocketTransport mod_trans */
-    int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms, {}, verbose);
+    int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms, {});
     SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, verbose, nullptr);
 
 
@@ -486,7 +490,7 @@ int main(int argc, char** argv)
 
 
 
-void run_mod(mod_api & mod, ClientFront & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front) {
+void run_mod(mod_api & mod, ClientFront & front, wait_obj &, SocketTransport * st_mod, SocketTransport *) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
 

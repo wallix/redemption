@@ -27,6 +27,7 @@
 #include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "check_sig.hpp"
 
+
 BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
 {
     LCGRandom rand(0);
@@ -62,7 +63,6 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
                         creds->identity.Password.size()));
     status = table.FreeCredentialsHandle(&credentials);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestInitialize)
@@ -116,7 +116,6 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     output_buffer.BufferType = SECBUFFER_TOKEN;
     output_buffer.Buffer.init(packageInfo.cbMaxToken);
 
-    unsigned long pfContextAttr;
     unsigned long fContextReq = 0;
     fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
@@ -124,18 +123,17 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     status = table.InitializeSecurityContext(&credentials,
                                              nullptr, // context
                                              nullptr, // TargetName
-                                             fContextReq, 0, SECURITY_NATIVE_DREP,
+                                             fContextReq, SECURITY_NATIVE_DREP,
                                              nullptr, // input buffer desc
                                              0, &client_context, // context (NTLMContext)
                                              &output_buffer_desc, // output buffer desc
-                                             &pfContextAttr, &expiration);
+                                             &expiration);
 
     BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
 
     BOOST_CHECK_EQUAL(output_buffer.Buffer.size(), 40);
     // hexdump_c(output_buffer.Buffer.get_data(), 40);
 
-    unsigned long pfsContextAttr = 0;
     unsigned long fsContextReq = 0;
     fsContextReq |= ASC_REQ_MUTUAL_AUTH;
     fsContextReq |= ASC_REQ_CONFIDENTIALITY;
@@ -160,8 +158,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     status = table.AcceptSecurityContext(&credentials, nullptr,
                                          &output_buffer_desc, fsContextReq,
                                          SECURITY_NATIVE_DREP, &server_context,
-                                         &input_buffer_desc, &pfsContextAttr,
-                                         &expiration);
+                                         &input_buffer_desc, &expiration);
 
     BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
@@ -178,11 +175,11 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     status = table.InitializeSecurityContext(&credentials,
                                              &client_context, // context
                                              nullptr, // TargetName
-                                             fContextReq, 0, SECURITY_NATIVE_DREP,
+                                             fContextReq, SECURITY_NATIVE_DREP,
                                              &input_buffer_desc, // input buffer desc
                                              0, &client_context, // context (NTLMContext)
                                              &output_buffer_desc, // output buffer desc
-                                             &pfContextAttr, &expiration);
+                                             &expiration);
 
     BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     BOOST_CHECK_EQUAL(output_buffer.Buffer.size(), 266);
@@ -202,8 +199,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     status = table.AcceptSecurityContext(&credentials, &server_context,
                                          &output_buffer_desc, fsContextReq,
                                          SECURITY_NATIVE_DREP, &server_context,
-                                         &input_buffer_desc, &pfsContextAttr,
-                                         &expiration);
+                                         &input_buffer_desc, &expiration);
 
     BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 0);

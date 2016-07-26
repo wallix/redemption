@@ -2531,13 +2531,11 @@ private:
                             );
                     }
                     else {
-                        bool LfToCrLf = true;
                         utf16_data_length = Latin1toUTF16(
                                 this->to_rdp_clipboard_data.get_data(),
                                 this->to_rdp_clipboard_data.get_offset(),
                                 out_data_stream.get_data(),
-                                out_data_stream.get_capacity(),
-                                LfToCrLf
+                                out_data_stream.get_capacity()
                             );
                     }
 

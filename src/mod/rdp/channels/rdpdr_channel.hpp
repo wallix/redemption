@@ -198,6 +198,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         , remaining_device_announce_request_header_stream(
               this->remaining_device_announce_request_header_data)
         , verbose(verbose) {
+            (void)channel_chunk_length;
         }
 
     private:
@@ -385,6 +386,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
         void process_client_device_list_announce_request(
             uint32_t total_length, uint32_t flags, InStream& chunk)
         {
+            (void)total_length;
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
             {
                 REDASSERT(
@@ -666,6 +668,8 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
         void process_client_drive_device_list_remove(uint32_t total_length,
                 uint32_t flags, InStream& chunk) {
+            (void)total_length;
+            (void)flags;
             {
                 const unsigned int expected = 4;    // DeviceCount(4)
                 if (!chunk.in_check_rem(expected)) {
@@ -798,11 +802,17 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
 
         void process_server_user_logged_on(uint32_t total_length,
                 uint32_t flags, InStream& chunk) {
+            (void)total_length;
+            (void)flags;
+            (void)chunk;
             this->announce_device();
         }
 
         void process_server_device_announce_response(uint32_t total_length,
-                uint32_t flags, InStream& chunk) {
+            uint32_t flags, InStream& chunk
+        ) {
+            (void)total_length;
+            (void)flags;
             this->waiting_for_server_device_announce_response = false;
 
             this->announce_device();
@@ -965,7 +975,11 @@ private:
 
 public:
     void process_client_general_capability_set(uint32_t total_length,
-            uint32_t flags, InStream& chunk, uint32_t Version) {
+        uint32_t flags, InStream& chunk, uint32_t Version
+    ) {
+        (void)total_length;
+        (void)flags;
+
         rdpdr::GeneralCapabilitySet general_capability_set;
 
         InStream tmp_chunk = chunk.clone();
@@ -1128,6 +1142,8 @@ public:
         uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
+        (void)total_length;
+        (void)flags;
         switch (FsInformationClass) {
             case rdpdr::FileFullDirectoryInformation:
             {
@@ -1256,6 +1272,8 @@ public:
         uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
+        (void)total_length;
+        (void)flags;
         switch (FsInformationClass) {
             case rdpdr::FileBasicInformation:
             {
@@ -1332,6 +1350,8 @@ public:
         uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
+        (void)total_length;
+        (void)flags;
         switch (FsInformationClass) {
             case rdpdr::FileFsVolumeInformation:
             {
@@ -1935,6 +1955,9 @@ public:
     bool process_server_announce_request(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+
         rdpdr::ServerAnnounceRequest server_announce_request;
 
         server_announce_request.receive(chunk);
@@ -2012,6 +2035,10 @@ public:
     bool process_server_client_id_confirm(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+        (void)chunk;
+
         if (this->drive_redirection_initialize_notifier) {
             if (!this->drive_redirection_initialize_notifier->on_drive_redirection_initialize()) {
                 this->drive_redirection_initialize_notifier = nullptr;
@@ -2116,6 +2143,9 @@ public:
         uint32_t flags, InStream& chunk,
         std::string& file_path)
     {
+        (void)total_length;
+        (void)flags;
+        
         rdpdr::DeviceCreateRequest device_create_request;
 
         //auto chunk_p = chunk.get_current();

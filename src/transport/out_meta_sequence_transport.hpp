@@ -661,7 +661,7 @@ struct OutFilenameSequenceSeekableTransport
 
     const FilenameGenerator * seqgen() const noexcept
     { return &(this->buffer().seqgen()); }
-    
+
     void seek(int64_t offset, int whence) override {
         if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
@@ -1344,7 +1344,6 @@ RequestCleaningTransport<
 >
 {
     OutMetaSequenceTransport(
-        CryptoContext * cctx,
         const char * path,
         const char * hash_path,
         const char * basename,

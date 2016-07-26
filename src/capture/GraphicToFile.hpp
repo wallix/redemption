@@ -149,6 +149,8 @@ public:
     , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
     //, verbose(verbose)
     {
+        (void)verbose;
+
         if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
                , static_cast<unsigned>(this->ini.get<cfg::video::wrm_compression_algorithm>()));
@@ -186,6 +188,7 @@ public:
     }
 
     bool kbd_input(const timeval & now, uint32_t uchar) override {
+        (void)now;
         if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
             keyboard_buffer_32.out_uint32_le(uchar);
         }

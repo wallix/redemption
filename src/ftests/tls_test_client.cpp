@@ -136,7 +136,7 @@ int tcp_connect(const char *host, int port)
 
 }
 
-int main(int argc, char ** argv)
+int main()
 {
     const char *host = "localhost";
     int port = 4433;
