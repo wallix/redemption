@@ -286,8 +286,6 @@ private:
                   (*/this->requestedFormatId == RDPECLIP::CF_UNICODETEXT/*)*/) ?
                  ":" : "."));
 
-            const size_t max_length_of_data_to_dump = 256;
-
             switch (this->requestedFormatId)
             {
 /*
@@ -307,6 +305,8 @@ private:
                 {
                     REDASSERT(!(chunk.in_remain() & 1));
 
+                    constexpr size_t max_length_of_data_to_dump = 256;
+
                     const size_t length_of_data_to_dump = std::min(
                         chunk.in_remain(), max_length_of_data_to_dump * 2);
 
@@ -314,14 +314,11 @@ private:
                         max_length_of_data_to_dump *
                             maximum_length_of_utf8_character_in_bytes;
 
-                    uint8_t utf8_string[size_of_utf8_string + 1];
-                    ::memset(utf8_string, 0, sizeof(utf8_string));
+                    uint8_t utf8_string[size_of_utf8_string + 1] {};
                     const size_t length_of_utf8_string = ::UTF16toUTF8(
                         chunk.get_current(), length_of_data_to_dump / 2,
                         utf8_string, size_of_utf8_string);
-                    const std::string data_to_dump(
-                        ::char_ptr_cast(utf8_string), length_of_utf8_string);
-                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                    LOG(LOG_INFO, "%*s", int(length_of_utf8_string), ::char_ptr_cast(utf8_string));
                 }
                 break;
 
