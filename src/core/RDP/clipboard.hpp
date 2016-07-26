@@ -1623,6 +1623,9 @@ enum : int {
 };
 
 struct FormatDataResponsePDU : public CliprdrHeader {
+
+    const double ARBITRARY_SCALE = 26.46;
+
     FormatDataResponsePDU()
         : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
                        , CB_RESPONSE_FAIL
@@ -1715,9 +1718,79 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
         // 2.2.5.2.1 Packed Metafile Payload
         // 12 bytes
+
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        // |                          mappingMode                          |
+        // +---------------------------------------------------------------+
+        // |                             xExt                              |
+        // +---------------------------------------------------------------+
+        // |                             yExt                              |
+        // +---------------------------------------------------------------+
+        // |                    metaFileData (variable)                    |
+        // +---------------------------------------------------------------+
+        // |                              ...                              |
+        // +---------------------------------------------------------------+
+
+        // mappingMode (4 bytes): An unsigned, 32-bit integer specifying the mapping mode in which the picture is drawn.
+
+        //  +----------------------------+--------------------------------------------+
+        //  | Value                      | Meaning                                    |
+        //  +----------------------------+--------------------------------------------+
+        //  | MM_TEXT                    | Each logical unit is mapped to one device  |
+        //  |                            | pixel. Positive x is to the right; positive|
+        //  | 0x00000001                 | y is down.                                 |
+        //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+        //  | MM_LOMETRIC                | Each logical unit is mapped to 0.1         |
+        //  |                            | millimeter. Positive x is to the right;    |
+        //  | 0x00000002                 | positive y is up.                          |
+        //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+        //  | MM_HIMETRIC                | Each logical unit is mapped to 0.01        |
+        //  |                            | millimeter. Positive x is to the right;    |
+        //  | 0x00000003                 | positive y is up.                          |
+        //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+        //  | MM_LOENGLISH               | Each logical unit is mapped to 0.01        |
+        //  |                            | inch. Positive x is to the right;          |
+        //  | 0x00000004                 | positive y is up.                          |
+        //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+        //  | MM_HIENGLISH               | Each logical unit is mapped to 0.001       |
+        //  |                            | inch. Positive x is to the right;          |
+        //  | 0x00000005                 | positive y is up.                          |
+        //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+        //  | 0x00000006                 | Each logical unit is mapped to 1/20 of a   |
+        //  |                            | printer's point (1/1440 of an inch), also  |
+        //  | 0x00000006                 | called a twip. Positive x is to the right; |
+        //  |                            | positive y is up.                          |                                                   //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+        //  | MM_ISOTROPIC               | Logical units are mapped to arbitrary units|
+        //  |                            | with equally scaled axes; one unit along   |
+        //  | 0x00000007                 | the x-axis is equal to one unit along the  |
+        //  |                            | y-axis.                                    |                                                   //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+        //  | MM_ANISOTROPIC             | Logical units are mapped to arbitrary units|
+        //  |                            | with arbitrarily scaled axes.              |
+        //  | 0x00000008                 |                                            |
+        //  |                            |                                            |
+        //  +----------------------------+--------------------------------------------+
+
+        // For MM_ISOTROPIC and MM_ANISOTROPIC modes, which can be scaled, the xExt and yExt fields contain an optional suggested size in MM_HIMETRIC units. For MM_ANISOTROPIC pictures, xExt and yExt SHOULD be zero when no suggested size is given. For MM_ISOTROPIC pictures, an aspect ratio MUST be supplied even when no suggested size is given. If a suggested size is given, the aspect ratio is implied by the size. To give an aspect ratio without implying a suggested size, the xExt and yExt fields are set to negative values whose ratio is the appropriate aspect ratio. The magnitude of the negative xExt and yExt values is ignored; only the ratio is used.
+
+        // xExt (4 bytes): An unsigned, 32-bit integer that specifies the width of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+
+        // yExt (4 bytes): An unsigned, 32-bit integer that specifies the height of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
+
+        // metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2.
+
         stream.out_uint32_le(MM_ANISOTROPIC);
-        stream.out_uint32_le(width*26.46);
-        stream.out_uint32_le(height*26.46);
+        stream.out_uint32_le(int(double(width)  * this->ARBITRARY_SCALE));
+        stream.out_uint32_le(int(double(height) * this->ARBITRARY_SCALE));
 
 
         // 3.2.1 META_HEADER Example

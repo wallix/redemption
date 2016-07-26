@@ -1689,8 +1689,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     }
                 }
 
-                this->process_server_file_clipboard_data(flags, chunk_series);
-
                 this->process_server_clipboard_data(flags, chunk);
 
 
@@ -1974,6 +1972,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
                 this->_streamID++;
                 if (this->_streamID >= this->_cItems) {
+
                     std::string TEST_TEMP_PATH("/home/cmoroldo/Bureau/redemption/projects/QT4Client/");
                     int nbItems(this->_cItems - 1);
                     std::string str(TEST_TEMP_PATH + this->_itemsNameList[0]);
@@ -1984,6 +1983,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
                     this->_connector->setClipboard(str, true);
                     this->_connector->_local_clipboard_stream = true;
                     this->empty_buffer();
+
                 } else {
 
                     RDPECLIP::FileContentsRequestPDU fileContentsRequest(true);
