@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
 
         ;
-    TestTransport logtrans("test", server, sizeof(server)-1, client, sizeof(client)-1);
+    TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";
@@ -109,7 +109,6 @@ BOOST_AUTO_TEST_CASE(TestNego)
     LCGRandom rand(0);
     NullServerNotifier null_server_notifier;
     RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand);
-    nego.test = true;
     nego.set_identity(user, domain, pass, host);
     const bool server_cert_store = true;
     nego.server_event(
@@ -139,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
 // /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x02" //................
 // /* 0010 */ "\x00\x00\x00"                                                     //...
 //         ;
-//     TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
+//     TestTransport logtrans(client, sizeof(client), server, sizeof(server));
 //     RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
 //     ClientInfo client_info(0, true);
 //     nego.recv_resquest(nullptr, client_info, true, true);

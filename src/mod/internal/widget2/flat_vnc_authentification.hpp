@@ -47,8 +47,7 @@ public:
     CompositeArray composite_array;
 
     FlatVNCAuthentification(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
-                            Widget2 & parent, NotifyApi* notifier, const char* caption,
-                            int group_id, const char * password,
+                            Widget2 & parent, NotifyApi* notifier, const char * password,
                             Theme const & theme, const char * label_text_message,
                             const char * label_text_password, Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)

@@ -62,8 +62,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     FakeFront front(info, verbose);
 
-    const char * name = "RDP Wab Target";
-
+    // const char * name = "RDP Wab Target";
     // Uncomment the code block below to generate testing data.
     //int             client_sck = ip_connect("10.10.47.154", 3389, 3, 1000, {}, verbose);
     //std::string     error_message;
@@ -77,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // Comment the code block below to generate testing data.
     #include "../fixtures/dump_wab.hpp"
-    TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

@@ -201,6 +201,8 @@ public:
     }
 
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
+        (void)bg_color;
+        (void)fg_color;
     }
 
     enum {

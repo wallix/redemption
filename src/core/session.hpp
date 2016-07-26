@@ -93,7 +93,7 @@ class Session {
     public:
         SessionManager  acl;
 
-        Client(int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
+        Client(int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t now)
         : auth_trans( "Authentifier"
                     , client_sck
                     , ini.get<cfg::globals::authfile>().c_str()
@@ -103,7 +103,6 @@ class Session {
         , acl( ini
              , activity_checker
              , this->auth_trans
-             , start_time // proxy start time
              , now        // acl start time
         )
         {}
@@ -360,7 +359,7 @@ public:
                                 try {
                                     int client_sck = local_connect(
                                         this->ini.get<cfg::globals::authfile>().c_str(),
-                                        30, 1000, this->ini.get<cfg::debug::auth>()
+                                        30, 1000
                                     );
 
                                     if (client_sck == -1) {
@@ -368,7 +367,7 @@ public:
                                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                                     }
 
-                                    this->client = new Client(client_sck, ini, *this->front, start_time, now);
+                                    this->client = new Client(client_sck, ini, *this->front, now);
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {

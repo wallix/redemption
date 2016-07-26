@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);
-    wgrid.set_selection(2, static_cast<uint16_t>(-1));
+    wgrid.set_selection(2);
 
     ColumnWidthStrategy column_width_strategies[] = {
         { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }

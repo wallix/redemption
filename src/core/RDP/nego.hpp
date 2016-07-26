@@ -123,9 +123,6 @@ struct RdpNego
         memset(this->domain,   0, sizeof(this->domain));
     }
 
-    virtual ~RdpNego() {
-    }
-
     void set_identity(char const * user, char const * domain, char const * pass, char const * hostname) {
         if (this->nla) {
             snprintf(reinterpret_cast<char*>(this->user), sizeof(this->user), "%s", user);
@@ -357,7 +354,7 @@ struct RdpNego
                 try {
                     res = credssp.credssp_client_authenticate();
                 }
-                catch (Error & e) {
+                catch (Error const & e) {
                     if ((e.id == ERR_TRANSPORT_NO_MORE_DATA) ||
                         (e.id == ERR_TRANSPORT_WRITE_FAILED)) {
                         LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed");

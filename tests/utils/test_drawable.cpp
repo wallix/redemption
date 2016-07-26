@@ -503,30 +503,6 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     //dump_png("/tmp/test_timestamp_002_", gd.impl());
 }
 
-// TODO We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.
-inline void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
-    // Create a simple capture image and dump it to file
-    uint16_t width = 640;
-    uint16_t height = 480;
-    Rect screen_rect(0, 0, width, height);
-    Drawable gd(width, height);
-    gd.opaquerect(Rect(90, 90, 120, 120), gd.u32bgr_to_color(RED));
-    gd.opaquerect(Rect(100, 100, 100, 100), gd.u32bgr_to_color(BLUE));
-    gd.opaquerect(Rect(120, 120, 60, 60).intersect(Rect(100, 100, 100, 100)), gd.u32bgr_to_color(PINK));
-    gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
-    gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
-
-    char message[1024];
-    if (!check_sig(gd, message, shasig)){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-
-    // uncomment to see result in png file
-    //char tmpname[128];
-    //sprintf(tmpname, "/tmp/test_scrblt_%s", name);
-    //dump_png(tmpname, gd.impl());
-}
-
 inline bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig, char * message){
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -539,6 +515,7 @@ inline bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const ch
     gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
     gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
+    (void)name;
     // uncomment to see result in png file
     //char tmpname[128];
     //sprintf(tmpname, "/tmp/test_scrblt_%s", name);

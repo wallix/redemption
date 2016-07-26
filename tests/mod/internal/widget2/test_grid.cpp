@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     compute_format(wgrid, column_width_strategies, row_height, column_width);
     apply_format(wgrid, row_height, column_width);
 
-    wgrid.set_selection(2, static_cast<uint16_t>(-1));
+    wgrid.set_selection(2);
 
     // ask to widget to redraw at it's current position
     wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     }
 
 
-    wgrid.set_selection(4, static_cast<uint16_t>(-1));
+    wgrid.set_selection(4);
 
     // ask to widget to redraw at it's current position
     wgrid.rdp_input_invalidate(Rect(0 + wgrid.dx(),

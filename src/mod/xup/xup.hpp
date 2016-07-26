@@ -111,7 +111,7 @@ enum {
         XUPWM_INVALIDATE = 200
     };
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
         LOG(LOG_INFO, "input mouse");
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
@@ -142,7 +142,13 @@ enum {
         }
     }
 
-    void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap)override {
+    void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap) override {
+        // TODO xup_mod::rdp_input_scancode: unimplemented
+        (void)param1;
+        (void)param2;
+        (void)device_flags;
+        (void)param4;
+        (void)keymap;
         LOG(LOG_INFO, "scan code");
         /*
         if (ki != 0) {
@@ -153,6 +159,11 @@ enum {
     }
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+        // TODO xup_mod::rdp_input_scancode: unimplemented
+        (void)time;
+        (void)device_flags;
+        (void)param1;
+        (void)param2;
         LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
@@ -183,6 +194,7 @@ enum {
     }
 
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        (void)now;
         try{
             uint8_t buf[32768];
             {
@@ -327,5 +339,11 @@ enum {
     }
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
+        // TODO xup_mod::send_to_front_channel: unimplemented
+        (void)mod_channel_name;
+        (void)data;
+        (void)length;
+        (void)chunk_size;
+        (void)flags;
     }
 };

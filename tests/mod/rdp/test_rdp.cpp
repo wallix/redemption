@@ -149,8 +149,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     FakeFront front(info, verbose);
 
-    const char * name = "RDP W2008 Target";
-
+    // const char * name = "RDP W2008 Target";
     // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
     // std::string error_message;
     // SocketTransport t( name
@@ -162,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //                  );
 
     #include "../../fixtures/dump_w2008.hpp"
-    TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

@@ -158,9 +158,12 @@ public:
     explicit MMIni(Inifile & _ini) : ini(_ini)
                           , verbose(ini.get<cfg::debug::auth>())
     {}
+
     ~MMIni() override {}
+
     void remove_mod() override {}
-    void new_mod(int target_module, time_t now, auth_api * acl) override {
+
+    void new_mod(int target_module, time_t now, auth_api *) override {
         LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
         switch (target_module) {
         case MODULE_VNC:
@@ -402,6 +405,10 @@ private:
 
         bool try_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
         {
+            (void)param1;
+            (void)param2;
+            (void)param3;
+            (void)param4;
             if (this->is_disable_by_input
              && keymap->nb_kevent_available() > 0
              && !(param3 & SlowPath::KBDFLAGS_DOWN)
@@ -414,7 +421,7 @@ private:
             return false;
         }
 
-        bool try_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+        bool try_input_mouse(int device_flags, int x, int y, Keymap2 *)
         {
             if (this->is_disable_by_input
              && this->get_protected_rect().contains_pt(x, y)
@@ -1042,9 +1049,7 @@ public:
 
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
-                                            4, 1000,
-                                            ip_addr,
-                                            this->ini.get<cfg::debug::mod_xup>());
+                                            4, 1000, ip_addr);
 
                 if (client_sck == -1){
                     this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
@@ -1097,9 +1102,7 @@ public:
 
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
-                                            3, 1000,
-                                            ip_addr,
-                                            this->ini.get<cfg::debug::mod_rdp>());
+                                            3, 1000, ip_addr);
 
                 if (client_sck == -1) {
                     if (acl) {
@@ -1275,9 +1278,7 @@ public:
 
                 int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
                                             this->ini.get<cfg::context::target_port>(),
-                                            3, 1000,
-                                            ip_addr,
-                                            this->ini.get<cfg::debug::mod_vnc>());
+                                            3, 1000, ip_addr);
 
                 if (client_sck == -1) {
                     if (acl) {

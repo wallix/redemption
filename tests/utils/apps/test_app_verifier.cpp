@@ -289,6 +289,8 @@ extern "C" {
 
     inline int trace_fn(char * base, int len, char * buffer)
     {
+        (void)base;
+        (void)len;
         // in real uses actual trace_key is derived from base and some master key
         uint8_t trace_key[32] = {
             0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,

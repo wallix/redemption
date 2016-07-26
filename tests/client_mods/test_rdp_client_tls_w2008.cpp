@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     FakeFront front(info, verbose);
 
-    const char * name       = "RDP W2008 TLS Target";
+    //const char * name       = "RDP W2008 TLS Target";
     // Uncomment the code block below to generate testing data.
     //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000, {},
     //                                     verbose);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // Comment the code block below to generate testing data.
     #include "../fixtures/dump_TLSw2008.hpp"
-    TestTransport t(name, indata, sizeof(indata) - 1,
+    TestTransport t(indata, sizeof(indata) - 1,
         outdata, sizeof(outdata) - 1, verbose);
 
     if (verbose > 2) {
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
 
     FakeFront front(info, verbose);
 
-    const char * name       = "RDP W2008 TLS Target";
+    //const char * name       = "RDP W2008 TLS Target";
     //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, verbose);
 
     //std::string  error_message;
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     //                     );
 
     #include "../fixtures/dump_TLSw2008_2.hpp"
-    TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

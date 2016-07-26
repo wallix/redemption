@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
 
     LOG(LOG_INFO, "TEST CLIENT SIDE");
 
-    TestTransport logtrans("test", server, sizeof(server)-1, client, sizeof(client)-1);
+    TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
     logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
@@ -106,7 +106,6 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
     rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand);
-    credssp.hardcodedtests = true;
     int res = credssp.credssp_client_authenticate();
     BOOST_CHECK_EQUAL(res, 1);
 }
@@ -174,7 +173,7 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
         ;
 
     LOG(LOG_INFO, "TEST SERVER SIDE");
-    TestTransport logtrans("test", client, sizeof(client)-1, server, sizeof(server)-1);
+    TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
     logtrans.disable_remaining_error();
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
@@ -183,7 +182,6 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
     uint8_t host[] = "Télémaque";
     LCGRandom rand(0);
     rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand);
-    credssp.hardcodedtests = true;
     int res = credssp.credssp_server_authenticate();
     BOOST_CHECK_EQUAL(res, 1);
 }

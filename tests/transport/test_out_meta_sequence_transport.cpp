@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./", "./hash-", "xxx", now, 800, 600, groupid);
+        OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     struct {
         size_t len = 0;
-        ssize_t write(char const * s, size_t len) {
+        ssize_t write(char const *, size_t len) {
             this->len += len;
             return len;
         }
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     now.tv_sec = 1352304810;
     now.tv_usec = 0;
     const int groupid = 0;
-    OutMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr, 0,
+    OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr, 0,
                                        FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
     wrm_trans.send("AAAAX", 5);
     wrm_trans.send("BBBBX", 5);

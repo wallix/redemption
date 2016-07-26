@@ -104,11 +104,11 @@ public:
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef & channel,
-        uint8_t const * data,
-        size_t length,
-        size_t chunk_size,
-        int flags) override
+        const CHANNELS::ChannelDef &,
+        uint8_t const *,
+        size_t ,
+        size_t ,
+        int ) override
     {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         LOG(LOG_INFO, "send_to_channel");
