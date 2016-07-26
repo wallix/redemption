@@ -1001,12 +1001,14 @@ public Q_SLOTS:
                         std::cout << path <<  std::endl;
                         str = str.substr(pos+1, str.size());
 
-                        int posSlash(-1);
+                        int posSlash(0);
                         std::string slash = "/";
                         while (posSlash <= path.size()) {
-                            int currentPos = str.find(slash, currentPos+1);
-                            path = path.substr(0, posSlash) + "/" + path.substr(posSlash+1, path.size());
+                            int posSlash = str.find(slash, posSlash);
+                            posSlash += 2;
+                            path = path.substr(0, posSlash) + "k" + path.substr(posSlash, path.size());
                         }
+                        std::cout << path <<  std::endl;
 
                         std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
                         if (iFile.is_open()) {

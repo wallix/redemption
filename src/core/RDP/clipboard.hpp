@@ -2091,7 +2091,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         // 40 bytes
         stream.out_uint32_le(40);
         stream.out_uint32_le(width);
-        stream.out_uint32_le(height);                      //  optimization
+        stream.out_uint32_le( - height);
         stream.out_uint16_le(1);
         stream.out_uint16_le(depth);
         stream.out_uint32_le(0);  // BI_RGB
