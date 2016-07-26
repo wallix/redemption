@@ -12,11 +12,31 @@
 #include <string>
 
 #include "main/version.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
+//#include "transport/in_meta_sequence_transport.hpp"
+#include <cerrno>
+#include <fcntl.h>
+#include <snappy-c.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <memory>
+#include <cstddef>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "utils/fileutils.hpp"
+#include "openssl_crypto.hpp"
+#include "utils/log.hpp"
+#include "utils/urandom_read.hpp"
+#include "utils/sugar/exchange.hpp"
+
+#include "utils/apps/cryptofile.hpp"
+#include "transport/transport.hpp"
+
 #include "system/ssl_calls.hpp"
 #include "configs/config.hpp"
 
 #include "program_options/program_options.hpp"
+#include "utils/chex_to_int.hpp"
 
 enum { QUICK_CHECK_LENGTH = 4096 };
 
