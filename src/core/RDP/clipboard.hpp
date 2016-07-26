@@ -1237,7 +1237,7 @@ public:
         // The null-terminator is included.
         this->file_name = ::char_ptr_cast(fileName_utf8_string);
 
-        stream.in_skip_bytes(520 - file_name.size());       // fileName(520)
+        stream.in_skip_bytes(520);       // fileName(520)
 
     }
 
@@ -1678,7 +1678,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             REDASSERT(sizesList[i] >= 0);
             stream.out_uint32_le(FD_SHOWPROGRESSUI |
                                  FD_FILESIZE       |
-                                 FD_WRITESTIME     |
+                                 //FD_WRITESTIME     |
                                  FD_ATTRIBUTES
                                 );
             stream.out_clear_bytes(32);
@@ -1687,7 +1687,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             //  random
             stream.out_uint64_le(0x01d1e2a0379fb504);
             stream.out_uint32_le(sizesList[i] >> 32);
-            stream.out_uint32_le(sizesList[i] & 0x00000000ffffffff);
+            stream.out_uint32_le(sizesList[i]);
+
             int size(namesList[i].size());
             for (int j = 0; j < size; j++) {
                 stream.out_uint8(namesList[i].data()[j]);

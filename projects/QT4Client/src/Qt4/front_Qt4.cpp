@@ -1757,6 +1757,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                , this->_connector->_itemsSizeList
                                                                , this->_connector->_cItems
                                                                );
+                            this->show_out_stream(flags, out_streamfirst);
+
                         }
                         break;
 
@@ -1805,8 +1807,26 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
     }
 }
+void Front_Qt::show_out_stream(int flags, OutStream & chunk) {
+    uint8_t * data = chunk.get_data();
 
-void Front_Qt::process_server_file_clipboard_data(int flags, InStream & chunk) {
+    std::cout <<  std::hex;
+    for (int i = 0; i < 604; i++) {
+        int byte(data[i]);
+        if ((i % 20) == 0) {
+            std::cout << "\"" << std::endl << "\"";
+        }
+
+        std::cout << "\\x";
+        if (byte < 0x10) {
+            std::cout << "0";
+        }
+        std::cout  <<  byte;
+    }
+    std::cout << std::dec << std::endl;
+}
+
+void Front_Qt::show_in_stream(int flags, InStream & chunk) {
     std::cout <<  std::hex;
     for (int i = 0; i < 604; i++) {
         int byte(chunk.in_uint8());

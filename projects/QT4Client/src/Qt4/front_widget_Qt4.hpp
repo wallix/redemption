@@ -951,8 +951,8 @@ public:
     }
 
     void send_FormatListPDU(bool isLong) {
-        uint32_t formatIDs[]                  = { this->_bufferTypeID }; //, 49002, 49003} ;
-        std::string formatListDataShortName[] = { this->_bufferTypeLongName }; //, "FileGroupDescriptorW", "Preferred DropEffect"};
+        uint32_t formatIDs[]                  = { this->_bufferTypeID };
+        std::string formatListDataShortName[] = { this->_bufferTypeLongName };
         this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, isLong);
     }
 
@@ -997,11 +997,14 @@ public Q_SLOTS:
                     uint32_t pos = 0;
                     while (pos <= str.size()) {
                         pos = str.find(delimiter);
-                        std::string path = str.substr(1, pos);
+                        // = "" + str.substr(0, pos);
+                        std::string path("\\home\\cmoroldo\\Bureau\\redemption\\projects\\QT4Client\\abcde.txt");
+                        std::cout << path <<  std::endl;
                         str = str.substr(pos+1, str.size());
 
-                        std::ifstream iFile(path, std::ios::in | std::ios::binary);
+                        std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
                         if (iFile.is_open()) {
+                            std::cout << "file openned" << std::endl;
                             std::streampos begin,end;
                             begin = iFile.tellg();
                             iFile.seekg (0, std::ios::end);
@@ -1011,6 +1014,8 @@ public Q_SLOTS:
                             this->_files_chunk[i] = new uint8_t[this->_itemsSizeList[i]];
                             iFile.read(reinterpret_cast<char *>(this->_files_chunk[i]), size);
                             iFile.close();
+                        } else {
+                            this->_itemsSizeList[i] = 17;
                         }
 
                         int posName(path.size()-1);
@@ -1037,7 +1042,7 @@ public Q_SLOTS:
                         i++;
                         if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
                             i = Front_Qt::LIST_FILES_MAX_SIZE;
-                            pos = str.size();
+                            pos = str.size()+1;
                         }
                     }
 

@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         std::string out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 604);
 
         const uint8_t file_list_out_data[] =
-            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
+            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x44\x40\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
@@ -83,6 +83,8 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00";
+
+
 
         std::string expected(reinterpret_cast<const char *>(file_list_out_data), 604);
 
@@ -205,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TestFileDescriptor)
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump(out_stream.get_data(), out_stream.get_offset());
 
-    //BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
+    BOOST_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     BOOST_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
