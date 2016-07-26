@@ -287,7 +287,8 @@ public:
                     }
 
                     if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
-                        throw Error(ERR_SESSION_PROBE_KEEPALIVE);
+                        this->authentifier->report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+//                        throw Error(ERR_SESSION_PROBE_KEEPALIVE);
                     }
                     else {
                         this->front.session_probe_started(false);
