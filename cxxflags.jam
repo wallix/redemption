@@ -50,7 +50,7 @@ constant CXXFLAGS-COMMON :
 #     <cxxflags>-Wsign-conversion
 #     <cxxflags>-Wconversion
 #     <cxxflags>-Wno-unused-parameter
-    <cxxflags>-Werror
+#     <cxxflags>-Werror
 
     <cxxflags>-fno-rtti
 ;
