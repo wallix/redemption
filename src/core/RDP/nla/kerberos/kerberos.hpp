@@ -47,7 +47,7 @@ namespace {
 
 
 
-struct KERBEROSContext {
+struct KERBEROSContext final {
     gss_ctx_id_t gss_ctx;
     gss_name_t target_name;
     OM_uint32 actual_services;
@@ -61,7 +61,7 @@ struct KERBEROSContext {
         , deleg_cred(GSS_C_NO_CREDENTIAL)
     {}
 
-    virtual ~KERBEROSContext() {
+    ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
         if (this->target_name != GSS_C_NO_NAME) {
             major_status = gss_release_name(&minor_status, &this->target_name);

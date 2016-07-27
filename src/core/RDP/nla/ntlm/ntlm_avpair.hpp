@@ -164,7 +164,7 @@ struct NtlmAvPair {
     }
 };
 
-struct NtlmAvPairList {
+struct NtlmAvPairList final {
     NtlmAvPair * list[AV_ID_MAX];
 
     NtlmAvPairList() {
@@ -174,7 +174,7 @@ struct NtlmAvPairList {
         this->list[MsvAvEOL] = new NtlmAvPair(MsvAvEOL, nullptr, 0);
     }
 
-    virtual ~NtlmAvPairList() {
+    ~NtlmAvPairList() {
         for (int i = 0; i < AV_ID_MAX; i++) {
             delete this->list[i];
         }
