@@ -35,7 +35,7 @@ typedef PyObject * __attribute__((__may_alias__)) AlPyObject;
 
 #include <snappy-c.h>
 
-#include "transport/cryptofile.hpp"
+#include "utils/apps/cryptofile.hpp"
 #include "transport/in_filename_transport.hpp"
 #include "utils/fileutils.hpp"
 

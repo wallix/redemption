@@ -253,7 +253,7 @@ public:
     int                  _streamID;
     int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
     std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
-    
+
 
 
     bool setClientInfo() override;
@@ -292,8 +292,9 @@ public:
 
     virtual void set_pointer(Pointer const & cursor) override;
 
-    void process_server_file_clipboard_data(int flags, InStream & chunk);
+    void show_in_stream(int flags, InStream & chunk);
 
+    void show_out_stream(int flags, OutStream & chunk);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

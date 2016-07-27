@@ -766,15 +766,10 @@ test-canonical transport/in_filename_transport.hpp : <library>z <library>dl <lib
 #test-canonical transport/out_filename_transport.hpp : <library>z <library>dl <library>snappy <library>crypto ;
 test-canonical transport/gzip_compression_transport.hpp : <library>z ;
 test-canonical transport/snappy_compression_transport.hpp : <library>snappy ;
-test-canonical transport/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
+test-canonical utils/apps/cryptofile.hpp : <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
 test-canonical utils/compression_transport_wrapper.hpp : <library>z <library>snappy ;
 ## @}
 
-
-## Buffer Transport tests
-## @{
-test-canonical transport/buffer/buffering_buf.hpp ;
-## @}
 
 test-canonical core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp ;
 test-canonical core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp ;
@@ -1152,10 +1147,6 @@ test-canonical regex/regex_automate.hpp ;
 test-canonical regex/regex_consumer.hpp ;
 test-canonical regex/regex_states_value.hpp ;
 test-canonical regex/regex_utils.hpp ;
-test-canonical transport/buffer/file_buf.hpp ;
-test-canonical transport/buffer/null_buf.hpp ;
-test-canonical transport/filter/crypto_filter.hpp ;
-test-canonical transport/mixin_transport.hpp ;
 
 test-canonical utils/apps/app_decrypter.hpp :
     <library>program_options <library>openssl <library>crypto <library>snappy <library>dl <library>z ;
@@ -1183,4 +1174,3 @@ test-canonical utils/timeval_ops.hpp ;
 test-canonical utils/urandom_read.hpp ;
 test-canonical utils/virtual_channel_data_sender.hpp ;
 test-canonical utils/winpr/pattern.hpp ;
-

@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 
 
 template<size_t N>
-long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]) {
+long write(transbuf::ochecksum_buf_null_buf & buf, char const (&s)[N]) {
     return buf.write(s, N-1);
 }
 
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
     CryptoContext cctx(rnd, ini);
     cctx.get_master_key();
 //    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
-    transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.get_hmac_key());
+    transbuf::ochecksum_buf_null_buf buf(cctx.get_hmac_key());
     buf.open();
     BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
     BOOST_CHECK_EQUAL(write(buf, "cde"), 3);

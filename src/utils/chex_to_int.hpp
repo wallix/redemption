@@ -14,24 +14,16 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *   Product name: redemption, a FLOSS RDP proxy
- *   Copyright (C) Wallix 2010-2013
+ *   Copyright (C) Wallix 2010-2016
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-
 #pragma once
 
-#include "utils/log.hpp"
-
-#include "openssl_crypto.hpp"
-
-#include <cerrno>
-#include <fcntl.h>
-#include <snappy-c.h>
-#include <stdint.h>
-#include <unistd.h>
-
-#include <memory>
-
-#include "transport/cryptofile.hpp"
-
+inline char chex_to_int(char c, int & err) {
+    return
+        '0' <= c && c <= '9' ? c-'0'
+      : 'a' <= c && c <= 'f' ? c-'a' + 10
+      : 'A' <= c && c <= 'F' ? c-'A' + 10
+      : ((err |= 1), '\0');
+}

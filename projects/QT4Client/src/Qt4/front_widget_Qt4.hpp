@@ -52,6 +52,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QTimer>
 #include <QtCore/QMimeData>
+#include <QtCore/QUrl>
 
 
 #define KEY_SETTING_PATH "keySetting.config"
@@ -786,7 +787,7 @@ public:
     uint16_t          _bufferTypeID;
     std::string       _bufferTypeLongName;
     int               _cItems;
-    int               _itemsSizeList[Front_Qt::LIST_FILES_MAX_SIZE];
+    uint64_t          _itemsSizeList[Front_Qt::LIST_FILES_MAX_SIZE];
     std::string       _itemsNameList[Front_Qt::LIST_FILES_MAX_SIZE];
     uint8_t         * _files_chunk[Front_Qt::LIST_FILES_MAX_SIZE];
 
@@ -919,15 +920,23 @@ public:
         }
     }
 
-    void setClipboard(const std::string & str) {            // Paste text to client
-        this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+    void setClipboard(const std::string & str, bool path) { // Paste text or file to client
+        if (path) {
+            QMimeData* mimeData = new QMimeData();
+            //mimeData->setData("text/uri-list", str.c_str());
+            mimeData->setUrls({QUrl::fromLocalFile(str.c_str())});
+            this->_clipboard->setMimeData(mimeData);
+            this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+        } else {
+            this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+        }
     }
 
     void setClipboard(const QImage & image) {               // Paste image to client
         this->_clipboard->setImage(image, QClipboard::Clipboard);
     }
 
-    void setClipboard(const QList<QUrl> & urls) {           // Paste file to client
+    void setClipboard() {           // Paste file to client
         //const QMimeData * mimeData = this->_clipboard->mimeData();
         //mimeData->setUrls(urls);
     }
@@ -942,8 +951,8 @@ public:
     }
 
     void send_FormatListPDU(bool isLong) {
-        uint32_t formatIDs[]                  = { this->_bufferTypeID }; //, 49002, 49003} ;
-        std::string formatListDataShortName[] = { this->_bufferTypeLongName }; //, "FileGroupDescriptorW", "Preferred DropEffect"};
+        uint32_t formatIDs[]                  = { this->_bufferTypeID };
+        std::string formatListDataShortName[] = { this->_bufferTypeLongName };
         this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, isLong);
     }
 
@@ -970,49 +979,89 @@ public Q_SLOTS:
 
             } else if (mimeData->hasText()){
                 this->emptyBuffer();
+                for (int i = 0; i < Front_Qt::LIST_FILES_MAX_SIZE; i++) {
+                    this->_itemsSizeList[i] = 0;
+                    this->_itemsNameList[i] = "";
+                }
                 std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
 
                 if (str.at(0) == '/') {
                     //std::ifstream iFile(str, std::ios::in);
                     //if (iFile) {
                         //std::cout << "has file" <<  std::endl;
-                        this->_bufferTypeID = Front_Qt::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;                    //49279;
-                        this->_bufferTypeLongName = this->_front->FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeID = Front_Qt::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;                    //49279;
+                    this->_bufferTypeLongName = this->_front->FILEGROUPDESCRIPTORW;
 
-                        std::string delimiter = "\n";
-                        int i = 0;
-                        uint32_t pos = 0;
-                        while (pos != str.size()) {
-                            pos = str.find(delimiter);
-                            std::string path = str.substr(1, pos);
+                    std::string delimiter = "\n";
+                    int i = 0;
+                    uint32_t pos = 0;
+                    while (pos <= str.size()) {
+                        pos = str.find(delimiter);
+                        std::string path = str.substr(0, pos);
+                        std::cout << path <<  std::endl;
+                        str = str.substr(pos+1, str.size());
 
-                            std::cout << path << std::endl;
-                            str = str.substr(pos+1, str.size());
-                            std::ifstream iFile(path, std::ios::in);
-                            std::string content = "";
-                            if (iFile) {
-                                std::string line = "";
-                                while(getline(iFile, line)) {
-                                    content += line;
-                                }
+                        int posSlash(0);
+                        std::string slash = "/";
+                        while (posSlash != -1) {
+                            posSlash = path.find(slash, posSlash);
+                            if (posSlash != -1) {
+                                std::cout << "lol " << posSlash << std::endl;
+                                path = path.substr(0, posSlash) + "\\\\" + path.substr(posSlash+1, path.size());
+                                std::cout << path <<  std::endl;
+                                posSlash += 2;
+                            } else {
+                                std::cout << "loooooooool " << posSlash << std::endl;
                             }
-                            //this->_files_chunk[i]   = content.data();
-                            this->_itemsSizeList[i] = content.size();
-                            this->_itemsNameList[i] = path;
 
-                            i++;
-                            if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
-                                i = Front_Qt::LIST_FILES_MAX_SIZE;
-                                pos = str.size();
-                            }
                         }
 
-                        this->_cItems = i;
+                        std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
+                        if (iFile.is_open()) {
+                            std::streampos begin,end;
+                            begin = iFile.tellg();
+                            iFile.seekg (0, std::ios::end);
+                            end = iFile.tellg();
+                            uint64_t size(end-begin);
+                            std::cout << "file size=" << int(size) <<  std::endl;
+                            this->_itemsSizeList[i] = size;
+                            this->_files_chunk[i] = new uint8_t[this->_itemsSizeList[i]];
+                            iFile.read(reinterpret_cast<char *>(this->_files_chunk[i]), size);
+                            iFile.close();
+                        }
 
-                        std::cout <<  "file list =" <<  str <<  std::endl;
+                        int posName(path.size()-1);
+                        bool lookForName = true;
+                        while (pos >= 0 && lookForName) {
+                            if (path.at(posName) == '/') {
+                                lookForName = false;
+                            }
+                            posName--;
+                        }
 
-                        this->send_FormatListPDU(true);
-                    //}
+                        this->_itemsNameList[i] = path.substr(posName+2, path.size());
+
+                        int UTF8nameSize(this->_itemsNameList[i].size() * 2);
+                        if (UTF8nameSize > 520) {
+                            UTF8nameSize = 520;
+                        }
+
+                        uint8_t UTF16nameData[520];
+
+                        int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(this->_itemsNameList[i].c_str()), UTF16nameData, UTF8nameSize);
+
+                        this->_itemsNameList[i] = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+                        i++;
+                        if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
+                            i = Front_Qt::LIST_FILES_MAX_SIZE;
+                            pos = str.size()+1;
+                        }
+                    }
+
+                    this->_cItems = i;
+
+                    this->send_FormatListPDU(true);
+
 
                 } else {
                     this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
