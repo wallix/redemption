@@ -188,9 +188,9 @@ Drawable.prototype.rDPScrBlt_Invert = function(sx, sy, dx, dy, w, h) {
     var size = w * h;
 
     for (var i = 0; i < size; i++) {
-        imgData.data[i+0]= imgData.data[i+0] ^ 0xff;
-        imgData.data[i+1]= imgData.data[i+1] ^ 0xff;
-        imgData.data[i+2]= imgData.data[i+2] ^ 0xff;
+        imgData.data[i+0] ^= 0xff;
+        imgData.data[i+1] ^= 0xff;
+        imgData.data[i+2] ^= 0xff;
         imgData.data[i+3]= 255;
     }
 
@@ -229,9 +229,9 @@ Drawable.prototype.RDPPatBlt_0x5A = function(dx, dy, w, h, r_back, g_back, b_bac
         shift = (y%2)*4;
         for (var x = 0; x < dw; x += 8) {
             var i = y*dw + x + shift;
-            imgData.data[i+0]= b_back ^ imgData.data[i+0];
-            imgData.data[i+1]= g_back ^ imgData.data[i+1];
-            imgData.data[i+2]= r_back ^ imgData.data[i+2];
+            imgData.data[i+0] ^= b_back;
+            imgData.data[i+1] ^= g_back;
+            imgData.data[i+2] ^= r_back;
             imgData.data[i+3]= 255;
         }
     }
@@ -239,9 +239,9 @@ Drawable.prototype.RDPPatBlt_0x5A = function(dx, dy, w, h, r_back, g_back, b_bac
         shift = (y%2)*4;
         for (var x = 1; x < dw; x += 8) {
             var i = y*dw + x + shift;
-            imgData.data[i+0]= b_fore ^ imgData.data[i+0];
-            imgData.data[i+1]= g_fore ^ imgData.data[i+1];
-            imgData.data[i+2]= r_fore ^ imgData.data[i+2];
+            imgData.data[i+0] ^= b_fore;
+            imgData.data[i+1] ^= g_fore;
+            imgData.data[i+2] ^= r_fore;
             imgData.data[i+3]= 255;
         }
     }
@@ -257,12 +257,12 @@ Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
     var i = 0;
     var j = 0;
     for (var dy=0; dy<h+1; dy++) {
+        j = (h-dy)*dw3;
         for (var dx=0; dx<dw; dx+=4) {
             i = dy*dw + dx;
-            j = (h-dy)*dw + dx;
-            imgData.data[i+0]= data[j+0];
-            imgData.data[i+1]= data[j+1];
-            imgData.data[i+2]= data[j+2];
+            imgData.data[i+0]= data[j++];
+            imgData.data[i+1]= data[j++];
+            imgData.data[i+2]= data[j++];
             imgData.data[i+3]= 255;
         }
     }
@@ -278,16 +278,18 @@ Drawable.prototype.rDPMemBlt = function(x, y, w, h, data, shift, sx, sy) {
     var imgData=this.cctx.createImageData(w, h+1);
 
     var dw = (sx+w)*4;
+    var dw3 = (sx+w)*3;
     var dh = h+1;
     var i = 0;
     var j = 0;
     for (var dy=0; dy<dh; dy++) {
+        j = (sy+h-dy)*dw3 + sx*3;
+        // TODO sx * 4 ?
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
-            j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= data[j+0];
-            imgData.data[i+1]= data[j+1];
-            imgData.data[i+2]= data[j+2];
+            imgData.data[i+0]= data[j++];
+            imgData.data[i+1]= data[j++];
+            imgData.data[i+2]= data[j++];
             imgData.data[i+3]= 255;
         }
     }
@@ -299,16 +301,18 @@ Drawable.prototype.rDPMemBlt_0x22 = function(x, y, w, h, data, shift, sx, sy) {
     this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
     var dw = (sx+w)*4;
+    var dw3 = (sx+w)*3;
     var dh = h+1;
     var i = 0;
     var j = 0;
     for (var dy=0; dy<dh; dy++) {
+        j = (sy+h-dy)*dw3 + sx*3;
+        // TODO sx * 4 ?
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
-            j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= imgData.data[i+0] & ~(data[j+0]);
-            imgData.data[i+1]= imgData.data[i+1] & ~(data[j+1]);
-            imgData.data[i+2]= imgData.data[i+2] & ~(data[j+2]);
+            imgData.data[i+0] &= ~(data[j++]);
+            imgData.data[i+1] &= ~(data[j++]);
+            imgData.data[i+2] &= ~(data[j++]);
             imgData.data[i+3]= 255;
         }
     }
@@ -320,16 +324,18 @@ Drawable.prototype.rDPMemBlt_0x55 = function(x, y, w, h, data, shift, sx, sy) {
     this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
     var dw = (sx+w)*4;
+    var dw3 = (sx+w)*3;
     var dh = h+1;
     var i = 0;
     var j = 0;
     for (var dy=0; dy<dh; dy++) {
+        j = (sy+h-dy)*dw3 + sx*3;
+        // TODO sx * 4 ?
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
-            j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= 0xff ^ data[j+0];
-            imgData.data[i+1]= 0xff ^ data[j+1];
-            imgData.data[i+2]= 0xff ^ data[j+2];
+            imgData.data[i+0]= 0xff ^ data[j++];
+            imgData.data[i+1]= 0xff ^ data[j++];
+            imgData.data[i+2]= 0xff ^ data[j++];
             imgData.data[i+3]= 255;
         }
     }
@@ -341,16 +347,18 @@ Drawable.prototype.rDPMemBlt_0x66 = function(x, y, w, h, data, shift, sx, sy) {
     this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
     var dw = (sx+w)*4;
+    var dw3 = (sx+w)*3;
     var dh = h+1;
     var i = 0;
     var j = 0;
     for (var dy=0; dy<dh; dy++) {
+        j = (sy+h-dy)*dw3 + sx*3;
+        // TODO sx * 4 ?
         for (var dx=sx; dx<dw; dx+=4) {
             i = dy*dw + dx;
-            j = (sy+h-dy)*dw + dx;
-            imgData.data[i+0]= imgData.data[i+0] ^ data[j+0];
-            imgData.data[i+1]= imgData.data[i+1] ^ data[j+1];
-            imgData.data[i+2]= imgData.data[i+2] ^ data[j+2];
+            imgData.data[i+0] ^= data[j++];
+            imgData.data[i+1] ^= data[j++];
+            imgData.data[i+2] ^= data[j++];
             imgData.data[i+3]= 255;
         }
     }
@@ -362,16 +370,17 @@ Drawable.prototype.rDPMem3Blt_0xB8 = function(x, y, w, h, data, shift, back_colo
     this._ctxS();
     var imgData=this.cctx.createImageData(w, h+1);
     var dw = w*4;
+    var dw3 = (sx+w)*3;
     var i = 0;
     var j = 0;
     for (var dy=0; dy<h+1; dy++) {
+        j = (h-dy)*dw3;
         for (var dx=0; dx<dw; dx+=4) {
             i = dy*dw + dx;
-            j = (h-dy)*dw + dx;
 
-            var r = data[j+0];
-            var g = data[j+1];
-            var b = data[j+2];
+            var r = data[j++];
+            var g = data[j++];
+            var b = data[j++];
 
             if ( (r + (g << 8) + (b << 16)) != back_color) {
                 imgData.data[i+0]= r;

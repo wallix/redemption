@@ -393,7 +393,7 @@ public:
                         int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                         int srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-                        Bitmap bitmapBpp(32, bitmap);
+                        Bitmap bitmapBpp(24, bitmap);
                         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
                         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
@@ -407,7 +407,7 @@ public:
                         int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                         int srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-                        Bitmap bitmapBpp(32, bitmap);
+                        Bitmap bitmapBpp(24, bitmap);
                         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
                         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
@@ -421,7 +421,7 @@ public:
                         int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                         int srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-                        Bitmap bitmapBpp(32, bitmap);
+                        Bitmap bitmapBpp(24, bitmap);
                         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
                         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
@@ -438,7 +438,7 @@ public:
                         int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                         int srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-                        Bitmap bitmapBpp(32, bitmap);
+                        Bitmap bitmapBpp(24, bitmap);
                         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
                         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
@@ -453,7 +453,7 @@ public:
                         int srcx = cmd.srcx + (rect.x - cmd.rect.x);
                         int srcy = cmd.srcy + (rect.y - cmd.rect.y);
 
-                        Bitmap bitmapBpp(32, bitmap);
+                        Bitmap bitmapBpp(24, bitmap);
                         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
                         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
@@ -584,7 +584,7 @@ public:
             switch (cmd.rop) {
                 case 0xB8: // TODO
                     {
-                        Bitmap bitmapBpp(32, bitmap);
+                        Bitmap bitmapBpp(24, bitmap);
 
                         EM_ASM_({drawable.rDPMem3Blt_0xB8($0    , $1    , $2   , $3   , HEAPU8.subarray($4, $4 + $5),  $6,  $7);},
                                                         rect.x, rect.y, rect.cx, rect.cy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, cmd.back_color);
@@ -605,7 +605,7 @@ public:
                      (bitmap_data.dest_bottom - bitmap_data.dest_top  + 5));
         const Rect rect = rectBmp.intersect(this->_clipRect);
 
-        Bitmap bitmapBpp(32, bmp);
+        Bitmap bitmapBpp(24, bmp);
         const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
         const int shift = bitmapBpp.cx() - (bitmap_data.dest_right  - bitmap_data.dest_left + 1);
