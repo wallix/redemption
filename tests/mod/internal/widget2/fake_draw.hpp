@@ -37,12 +37,12 @@ struct TestDraw : mod_api
 
     TestDraw(uint16_t w, uint16_t h) : gd(w, h, 24) {}
 
-    void draw_event(time_t now, gdi::GraphicApi& drawable) override {}
-    void rdp_input_invalidate(const Rect& r) override {}
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {}
-    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {}
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {}
-    void send_to_front_channel(const char*const mod_channel_name, const uint8_t* data, size_t length, size_t chunk_size, int flags) override {}
+    void draw_event(time_t now, gdi::GraphicApi&) override { (void)now; }
+    void rdp_input_invalidate(const Rect&) override {}
+    void rdp_input_mouse(int, int, int, Keymap2*) override {}
+    void rdp_input_scancode(long, long, long, long, Keymap2*) override {}
+    void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
+    void send_to_front_channel(const char * const, const uint8_t*, size_t, size_t, int) override {}
 
     void server_draw_text_deprecated(Font const & font, int16_t x, int16_t y, const char * text,
                           uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)

@@ -61,17 +61,17 @@ public:
         , ask_login(vars.is_asked<cfg::globals::target_user>())
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, front, front, this->font(), this->theme())
-        , challenge(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, 0,
-                    this->ask_device, this->ask_login, this->ask_password,
-                    vars.get<cfg::theme>(),
-                    TR("target_info_required", language(vars)),
-                    TR("device", language(vars)),
-                    vars.get<cfg::globals::target_device>().c_str(),
-                    TR("login", language(vars)),
-                    vars.get<cfg::globals::target_user>().c_str(),
-                    TR("password", language(vars)),
-                    vars.get<cfg::font>(),
-                    &this->language_button)
+        , challenge(
+            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this,
+            this->ask_device, this->ask_login, this->ask_password,
+            vars.get<cfg::theme>(),
+            TR("target_info_required", language(vars)),
+            TR("device", language(vars)), vars.get<cfg::globals::target_device>().c_str(),
+            TR("login", language(vars)), vars.get<cfg::globals::target_user>().c_str(),
+            TR("password", language(vars)),
+            vars.get<cfg::font>(),
+            &this->language_button)
         , vars(vars)
     {
         this->screen.add_widget(&this->challenge);
@@ -98,6 +98,7 @@ public:
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
+        (void)sender;
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -133,7 +134,8 @@ private:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         this->event.reset();
     }
 

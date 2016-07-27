@@ -58,12 +58,16 @@ public:
                   const char * caption, const char * message, const char * cancel_text,
                   time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget, front, front, this->font(), this->theme())
-        , dialog_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
-                        &this->language_button,
-                        vars.get<cfg::theme>(), vars.get<cfg::font>(),
-                        TR("OK", language(vars)),
-                        cancel_text, has_challenge)
+        , language_button(
+            vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget,
+            front, front, this->font(), this->theme())
+        , dialog_widget(
+            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this, caption, message,
+            &this->language_button,
+            vars.get<cfg::theme>(), vars.get<cfg::font>(),
+            TR("OK", language(vars)),
+            cancel_text, has_challenge)
         , vars(vars)
         , timeout(now, vars.get<cfg::debug::pass_dialog_box>())
     {
@@ -83,6 +87,7 @@ public:
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
+        (void)sender;
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -123,7 +128,7 @@ private:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->accepted();

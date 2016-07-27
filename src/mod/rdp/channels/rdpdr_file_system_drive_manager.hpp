@@ -115,7 +115,11 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose
+      ) {
+        (void)path;
+        (void)device_control_request;
+        (void)in_stream;
         REDASSERT(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
@@ -147,7 +151,9 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose
+      ) {
+        (void)in_stream;
         REDASSERT(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
@@ -335,7 +341,10 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose
+      ) {
+        (void)path;
+        (void)in_stream;
         REDASSERT(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
@@ -664,7 +673,13 @@ public:
             InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) {
+            uint32_t verbose
+      ) {
+        (void)path;
+        (void)in_stream;
+        (void)drive_access_mode;
+        (void)first_chunk;
+
         SendClientDriveIoUnsuccessfulResponse(
             device_io_request,
             "ManagedFileSystemObject::ProcessServerDriveWriteRequest",
@@ -826,7 +841,10 @@ public:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             bool is_session_probe_image,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)in_stream;
+        (void)is_session_probe_image;
         REDASSERT(!this->dir);
 
         out_drive_created = false;
@@ -937,7 +955,11 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)path;
+        (void)in_stream;
+
         REDASSERT(this->dir);
 
         //LOG(LOG_INFO, "ManagedDirectory::ProcessServerCloseDriveRequest(): <%p> fd=%d",
@@ -975,7 +997,11 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)device_read_request;
+        (void)path;
+        (void)in_stream;
         REDASSERT(this->dir);
 
         StaticOutStream<65536> out_stream;
@@ -1002,7 +1028,11 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)path;
+        (void)in_stream;
+
         if (server_drive_query_directory_request.InitialQuery()) {
             ::rewinddir(this->dir);
 
@@ -1214,7 +1244,9 @@ public:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             bool is_session_probe_image,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)in_stream;
         REDASSERT(this->fd == -1);
 
         out_drive_created = false;
@@ -1360,7 +1392,10 @@ public:
             InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)path;
+        (void)in_stream;
         REDASSERT(this->fd > -1);
 
         //LOG(LOG_INFO, "ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd=%d",
@@ -1397,7 +1432,10 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)path;
+        (void)in_stream;
         REDASSERT(this->fd > -1);
 
         const uint32_t Length = device_read_request.Length();
@@ -1444,7 +1482,11 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)device_control_request;
+        (void)path;
+        (void)in_stream;
         REDASSERT(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
@@ -1482,7 +1524,10 @@ public:
             bool first_chunk, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)path;
+        (void)drive_access_mode;
         REDASSERT(this->fd > -1);
 
         if (first_chunk) {
@@ -1551,7 +1596,12 @@ public:
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            uint32_t verbose) override {
+            uint32_t verbose
+      ) override {
+        (void)server_drive_query_directory_request;
+        (void)path;
+        (void)in_stream;
+
         StaticOutStream<65536> out_stream;
 
         this->MakeClientDriveIoResponse(
@@ -1605,6 +1655,7 @@ class FileSystemDriveManager {
 public:
     void AnnounceDrive(bool device_capability_version_02_supported,
             VirtualChannelDataSender& to_server_sender, uint32_t verbose) {
+        (void)device_capability_version_02_supported;
         uint8_t   virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
         OutStream virtual_channel_stream(virtual_channel_data);
 

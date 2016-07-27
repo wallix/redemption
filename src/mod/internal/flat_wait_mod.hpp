@@ -124,7 +124,7 @@ private:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->refused();
@@ -144,6 +144,7 @@ public:
     bool is_up_and_running() override { return true; }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        (void)length;
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }

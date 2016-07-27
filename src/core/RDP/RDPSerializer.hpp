@@ -686,7 +686,7 @@ public:
         }
     }
 
-    // TODO
-    void set_palette(const BGRPalette& palette) override {}
+    // TODO set_palette unimplemented
+    void set_palette(const BGRPalette&) override {}
 };
 

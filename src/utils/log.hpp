@@ -95,7 +95,8 @@ namespace { namespace compiler_aux_ {
     ))
 
 #elif defined(LOGNULL)
-#  define LOG(priority, ...) LOG_FORMAT_CHECK(__VA_ARGS__)
+#  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL(( \
+        LOG_FORMAT_CHECK(__VA_ARGS__), priority))
 #  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
         ip_client, ip_target, user, device, service, account, priority, ...)     \
     LOGCHECK__REDEMPTION__INTERNAL((                                             \

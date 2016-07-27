@@ -997,25 +997,37 @@ public Q_SLOTS:
                     uint32_t pos = 0;
                     while (pos <= str.size()) {
                         pos = str.find(delimiter);
-                        // = "" + str.substr(0, pos);
-                        std::string path("\\home\\cmoroldo\\Bureau\\redemption\\projects\\QT4Client\\abcde.txt");
+                        std::string path = str.substr(0, pos);
                         std::cout << path <<  std::endl;
                         str = str.substr(pos+1, str.size());
 
+                        int posSlash(0);
+                        std::string slash = "/";
+                        while (posSlash != -1) {
+                            posSlash = path.find(slash, posSlash);
+                            if (posSlash != -1) {
+                                std::cout << "lol " << posSlash << std::endl;
+                                path = path.substr(0, posSlash) + "\\\\" + path.substr(posSlash+1, path.size());
+                                std::cout << path <<  std::endl;
+                                posSlash += 2;
+                            } else {
+                                std::cout << "loooooooool " << posSlash << std::endl;
+                            }
+
+                        }
+
                         std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
                         if (iFile.is_open()) {
-                            std::cout << "file openned" << std::endl;
                             std::streampos begin,end;
                             begin = iFile.tellg();
                             iFile.seekg (0, std::ios::end);
                             end = iFile.tellg();
                             uint64_t size(end-begin);
+                            std::cout << "file size=" << int(size) <<  std::endl;
                             this->_itemsSizeList[i] = size;
                             this->_files_chunk[i] = new uint8_t[this->_itemsSizeList[i]];
                             iFile.read(reinterpret_cast<char *>(this->_files_chunk[i]), size);
                             iFile.close();
-                        } else {
-                            this->_itemsSizeList[i] = 17;
                         }
 
                         int posName(path.size()-1);

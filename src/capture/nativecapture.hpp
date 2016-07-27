@@ -85,6 +85,7 @@ private:
     std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
+        (void)ignore_frame_in_timeval;
         if (difftimeval(now, this->start_native_capture)
                 >= this->inter_frame_interval_native_capture) {
             this->recorder.timestamp(now);

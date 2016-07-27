@@ -199,10 +199,7 @@ public:
 
     bool connect() override {
         if (this->sck_closed == 1){
-            this->sck = ip_connect(this->ip_address,
-                                    this->port,
-                                    3, 1000, {},
-                                    this->verbose);
+            this->sck = ip_connect(this->ip_address, this->port, 3, 1000, {});
             this->sck_closed = 0;
         }
         return true;
@@ -278,10 +275,6 @@ public:
 
         // TODO move that to base class : accounting_send(len)
         this->last_quantum_sent += len;
-    }
-
-    void seek(int64_t offset, int whence) override {
-        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
 private:

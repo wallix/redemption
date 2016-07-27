@@ -43,7 +43,7 @@ struct CaptureApi : private noncopyable
         bool ignore_frame_in_timeval
     ) {
         // assert(now >= previous);
-        auto next_duration = this->do_snapshot(now, cursor_x, cursor_x, ignore_frame_in_timeval);
+        auto next_duration = this->do_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
         assert(next_duration.count() >= 0);
         return next_duration;
     }

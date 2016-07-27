@@ -817,10 +817,8 @@ BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
 
     uint8_t utf16_dst[64];
 
-    const bool LfToCrLf = true;
-
     BOOST_CHECK_EQUAL(
-        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst), LfToCrLf),
+        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst)),
         number_of_characters * 2 + 2 /* '\n' -> 0x0D 0x00 0x0A 0x00 */);
 
     BOOST_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected,

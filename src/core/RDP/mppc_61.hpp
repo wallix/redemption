@@ -224,6 +224,7 @@ private:
 public:
     int decompress(uint8_t const * compressed_data, int compressed_data_size,
         int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size) override {
+        (void)compressionFlags;
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
         //    this->historyOffset, compressed_data_size, compressionFlags);
 
@@ -377,6 +378,7 @@ struct rdp_mppc_enc_match_finder {
 struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
 {
     void dump(bool mini_dump) const override {
+        (void)mini_dump;
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder sequential search match finder");
     }
 
@@ -745,7 +747,7 @@ private:
     }
 
     void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t reserved) override {
+        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t /*reserved*/) override {
         this->compress_61(uncompressed_data, uncompressed_data_size);
 
         if (this->bytes_in_output_buffer) {

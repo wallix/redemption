@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
     decrypt.rc4.set_key(decrypt.key, (decrypt.encryptionMethod==1)?8:16);
 
-    SEC::SecInfoPacket_Recv sec(stream, length, decrypt);
+    SEC::SecInfoPacket_Recv sec(stream, decrypt);
 
     const char expected[] =
         /* 0000 */ "\x0c\x04\x0c\x04\xb3\x47\x03\x00\x00\x00\x02\x00\x00\x00\x00\x00" //.....G..........

@@ -1731,7 +1731,6 @@ RequestCleaningTransport<
 >
 {
     OutMetaSequenceTransport(
-        CryptoContext * cctx,
         const char * path,
         const char * hash_path,
         const char * basename,

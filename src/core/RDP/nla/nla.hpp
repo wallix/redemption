@@ -60,10 +60,10 @@ struct rdpCredssp
 
     const char * target_host;
     Random & rand;
+    TimeObj & timeobj;
     const uint32_t verbose;
 
-    // TODO Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static
-    bool hardcodedtests;
+    bool hardcoded_tests = false;
 
     rdpCredssp(Transport & transport,
                uint8_t * user,
@@ -74,6 +74,7 @@ struct rdpCredssp
                const bool krb,
                const bool restricted_admin_mode,
                Random & rand,
+               TimeObj & timeobj,
                const uint32_t verbose = 0)
         : server(false)
         , send_seq_num(0)
@@ -87,8 +88,8 @@ struct rdpCredssp
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_host(target_host)
         , rand(rand)
+        , timeobj(timeobj)
         , verbose(verbose)
-        , hardcodedtests(false)
     {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "rdpCredssp:: Initialization");
@@ -151,11 +152,15 @@ public:
         }
         if (secInter == NTLM_Interface) {
             LOG(LOG_INFO, "Credssp: NTLM Authentication");
-            this->table = new Ntlm_SecurityFunctionTable(this->rand);
+            auto table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
+            if (this->hardcoded_tests) {
+                table->hardcoded_tests = true;
+            }
+            this->table = table;
         }
         if (secInter == Kerberos_Interface) {
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
-            
+
             #ifndef __EMSCRIPTEN__
             this->table = new Kerberos_SecurityFunctionTable;
             #endif
@@ -588,7 +593,6 @@ public:
          * ISC_REQ_ALLOCATE_MEMORY
          */
 
-        unsigned long pfContextAttr;
         unsigned long fContextReq = 0;
         fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
@@ -604,13 +608,11 @@ public:
                                                             reinterpret_cast<char*>(
                                                                 this->ServicePrincipalName.get_data()),
                                                             fContextReq,
-                                                            this->hardcodedtests?1:0,
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : nullptr,
                                                             this->verbose, &this->context,
                                                             &output_buffer_desc,
-                                                            &pfContextAttr,
                                                             &expiration);
             if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
                 (status != SEC_I_COMPLETE_NEEDED) &&
@@ -794,7 +796,6 @@ public:
         * ASC_REQ_ALLOCATE_MEMORY
         */
 
-       unsigned long pfContextAttr = this->hardcodedtests?1:0;
        unsigned long fContextReq = 0;
        fContextReq |= ASC_REQ_MUTUAL_AUTH;
        fContextReq |= ASC_REQ_CONFIDENTIALITY;
@@ -837,8 +838,7 @@ public:
                                                        have_context? &this->context: nullptr,
                                                        &input_buffer_desc, fContextReq,
                                                        SECURITY_NATIVE_DREP, &this->context,
-                                                       &output_buffer_desc, &pfContextAttr,
-                                                       &expiration);
+                                                       &output_buffer_desc, &expiration);
 
            this->negoToken.init(output_buffer.Buffer.size());
            this->negoToken.copy(output_buffer.Buffer.get_data(),

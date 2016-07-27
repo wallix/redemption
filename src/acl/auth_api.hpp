@@ -39,14 +39,14 @@ public:
 
 
 class NullAuthentifier : public auth_api {
-    void set_auth_channel_target(const char * target) override {}
+    void set_auth_channel_target(const char * target) override { (void)target; }
 
-    void set_auth_error_message(const char * error_message) override {}
+    void set_auth_error_message(const char * error_message) override { (void)error_message; }
 
-    void report(const char * reason, const char * message) override {}
+    void report(const char * reason, const char * message) override { (void)reason; (void)message; }
 
     void log4(bool duplicate_with_pid, const char * type,
-        const char * extra = nullptr) const override {}
+        const char * extra = nullptr) const override { (void)duplicate_with_pid; (void)type; (void)extra; }
 };
 
 

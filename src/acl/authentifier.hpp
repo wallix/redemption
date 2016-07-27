@@ -182,9 +182,9 @@ class SessionManager : public auth_api {
     mutable std::string session_type;
 
 public:
-    SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
+    SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & auth_trans, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(ini, _auth_trans, ini.get<cfg::debug::auth>())
+        , acl_serial(ini, auth_trans, ini.get<cfg::debug::auth>())
         , remote_answer(false)
         , verbose(ini.get<cfg::debug::auth>())
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), ini.get<cfg::debug::auth>())

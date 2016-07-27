@@ -149,6 +149,9 @@ private:
     bool process_client_clipboard_capabilities_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+
         {
             const unsigned int expected = 10;   // msgFlags(2) + dataLen(4) +
                                                 //     cCapabilitiesSets(2) +
@@ -196,6 +199,10 @@ private:
     bool process_client_file_contents_request_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+        (void)chunk;
+
         if (!this->param_clipboard_file_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                 LOG(LOG_INFO,
@@ -213,6 +220,9 @@ private:
     bool process_client_format_data_request_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+
         if (!this->param_clipboard_down_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                 LOG(LOG_INFO,
@@ -256,6 +266,8 @@ private:
     bool process_client_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
             !this->param_dont_log_data_into_syslog) {
             const auto saved_chunk_p = chunk.get_current();
@@ -286,8 +298,6 @@ private:
                   (*/this->requestedFormatId == RDPECLIP::CF_UNICODETEXT/*)*/) ?
                  ":" : "."));
 
-            const size_t max_length_of_data_to_dump = 256;
-
             switch (this->requestedFormatId)
             {
 /*
@@ -307,6 +317,8 @@ private:
                 {
                     REDASSERT(!(chunk.in_remain() & 1));
 
+                    constexpr size_t max_length_of_data_to_dump = 256;
+
                     const size_t length_of_data_to_dump = std::min(
                         chunk.in_remain(), max_length_of_data_to_dump * 2);
 
@@ -314,14 +326,11 @@ private:
                         max_length_of_data_to_dump *
                             maximum_length_of_utf8_character_in_bytes;
 
-                    uint8_t utf8_string[size_of_utf8_string + 1];
-                    ::memset(utf8_string, 0, sizeof(utf8_string));
+                    uint8_t utf8_string[size_of_utf8_string + 1] {};
                     const size_t length_of_utf8_string = ::UTF16toUTF8(
                         chunk.get_current(), length_of_data_to_dump / 2,
                         utf8_string, size_of_utf8_string);
-                    const std::string data_to_dump(
-                        ::char_ptr_cast(utf8_string), length_of_utf8_string);
-                    LOG(LOG_INFO, "%s", data_to_dump.c_str());
+                    LOG(LOG_INFO, "%*s", int(length_of_utf8_string), ::char_ptr_cast(utf8_string));
                 }
                 break;
 
@@ -489,6 +498,8 @@ private:
     bool process_client_format_list_pdu(uint32_t total_length, uint32_t flags,
         InStream& chunk)
     {
+        (void)total_length;
+
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized &&
             !this->format_list_response_notifier) {
@@ -792,6 +803,9 @@ public:
     bool process_server_clipboard_capabilities_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
@@ -830,6 +844,10 @@ public:
     bool process_server_file_contents_request_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+        (void)chunk;
+
         if (!this->param_clipboard_file_authorized) {
             if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
                 LOG(LOG_INFO,
@@ -847,6 +865,9 @@ public:
     bool process_server_format_data_request_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         this->requestedFormatId = chunk.in_uint32_le();
@@ -887,6 +908,8 @@ public:
     bool process_server_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
             !this->param_dont_log_data_into_syslog) {
             const auto saved_chunk_p = chunk.get_current();
@@ -1084,6 +1107,9 @@ public:
     bool process_server_format_list_pdu(uint32_t total_length, uint32_t flags,
         InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized) {
             LOG(LOG_WARNING,
@@ -1206,6 +1232,10 @@ public:
     bool process_server_monitor_ready_pdu(uint32_t total_length, uint32_t flags,
         InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+        (void)chunk;
+
         if (this->proxy_managed) {
             // Client Clipboard Capabilities PDU.
             {
@@ -1276,6 +1306,8 @@ public:
         uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override
     {
+        (void)out_asynchronous_task;
+
         if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_server_message: "

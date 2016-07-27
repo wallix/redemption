@@ -61,10 +61,9 @@ private:
     // WidgetHScrollBar hbar;
 
 public:
-    FlatLogin(gdi::GraphicApi & drawable, 
+    FlatLogin(gdi::GraphicApi & drawable,
               int16_t left, int16_t top, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
-              bool focus_on_password, int group_id,
               const char * login, const char * password,
               const char * label_text_login,
               const char * label_text_password,

@@ -63,6 +63,9 @@ private:
     std::chrono::microseconds do_snapshot(
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
+        (void)x;
+        (void)y;
+        (void)ignore_frame_in_timeval;
         using std::chrono::microseconds;
         uint64_t const duration = difftimeval(now, this->start_capture);
         uint64_t const interval = this->frame_interval.count();

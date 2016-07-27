@@ -73,12 +73,12 @@ public:
     // used when context changed to avoid creating a new module
     // it usually perform some task identical to what constructor does
     // henceforth it should often be called by constructors
-    virtual void refresh_context(Inifile & ini) {}
+    virtual void refresh_context(Inifile &) {}
 
     virtual bool is_up_and_running() { return false; }
 
     virtual void disconnect() {}
 
-    virtual void display_osd_message(std::string const & message) {}
+    virtual void display_osd_message(std::string const &) {}
 };
 
