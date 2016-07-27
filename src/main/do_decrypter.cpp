@@ -12,6 +12,8 @@
 #include "main/version.hpp"
 
 extern "C" {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
     __attribute__((__visibility__("default")))
     int recmemcpy(char * dest, char * source, int len)
     {
