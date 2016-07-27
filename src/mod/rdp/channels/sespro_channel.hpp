@@ -78,6 +78,8 @@ private:
 
     bool has_additional_launch_time = false;
 
+    std::string server_message;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         std::chrono::duration<unsigned, std::milli> session_probe_launch_timeout;
@@ -355,26 +357,25 @@ public:
 
         InStream chunk(chunk_data, chunk_data_length);
 
-        if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            LOG(LOG_ERR,
-                "SessionProbeVirtualChannel::process_server_message: "
-                    "Chunked Virtual Channel Data is not supported!");
-        }
-
         uint16_t message_length = chunk.in_uint16_le();
-        REDASSERT(message_length == chunk.in_remain());
-        // Disable -Wunused-variable if REDASSERT is disabled.
-        (void)message_length;
+        this->server_message.reserve(message_length);
 
-        std::string session_probe_message(
-            char_ptr_cast(chunk.get_current()), chunk.in_remain());
-        while (session_probe_message.back() == '\0') {
-            session_probe_message.pop_back();
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
+            this->server_message.clear();
+
+        this->server_message.append(char_ptr_cast(chunk.get_current()),
+            chunk.in_remain());
+
+        if (!(flags & CHANNELS::CHANNEL_FLAG_LAST))
+            return;
+
+        while (this->server_message.back() == '\0') {
+            this->server_message.pop_back();
         }
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: \"%s\"",
-                session_probe_message.c_str());
+                this->server_message.c_str());
         }
 
         const char request_outbound_connection_monitoring_rule[] =
@@ -384,7 +385,7 @@ public:
 
         const char version[] = "Version=";
 
-        if (!session_probe_message.compare(request_hello)) {
+        if (!this->server_message.compare(request_hello)) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
@@ -513,7 +514,7 @@ public:
                     out_s.get_data(), out_s.get_offset());
             }
         }
-        else if (!session_probe_message.compare(
+        else if (!this->server_message.compare(
                      "Request=Get target informations")) {
             StaticOutStream<1024> out_s;
 
@@ -539,7 +540,7 @@ public:
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                 out_s.get_data(), out_s.get_offset());
         }
-        else if (!session_probe_message.compare(
+        else if (!this->server_message.compare(
                     "Request=Get startup application")) {
             StaticOutStream<8192> out_s;
 
@@ -579,7 +580,7 @@ public:
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                 out_s.get_data(), out_s.get_offset());
         }
-        else if (!session_probe_message.compare(
+        else if (!this->server_message.compare(
                      "Request=Disconnection-Reconnection")) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
                 LOG(LOG_INFO,
@@ -612,12 +613,12 @@ public:
                     out_s.get_data(), out_s.get_offset());
             }
         }
-        else if (!session_probe_message.compare(
+        else if (!this->server_message.compare(
                      0,
                      sizeof(version) - 1,
                      version)) {
             const char * subitems          =
-                (session_probe_message.c_str() + sizeof(version) - 1);
+                (this->server_message.c_str() + sizeof(version) - 1);
             const char * subitem_separator =
                 ::strchr(subitems, '\x01');
 
@@ -631,12 +632,12 @@ public:
                 }
             }
         }
-        else if (!session_probe_message.compare(
+        else if (!this->server_message.compare(
                      0,
                      sizeof(request_outbound_connection_monitoring_rule) - 1,
                      request_outbound_connection_monitoring_rule)) {
             const char * remaining_data =
-                (session_probe_message.c_str() +
+                (this->server_message.c_str() +
                  sizeof(request_outbound_connection_monitoring_rule) - 1);
 
             const unsigned int rule_index =
@@ -694,7 +695,7 @@ public:
                     out_s.get_data(), out_s.get_offset());
             }
         }
-        else if (!session_probe_message.compare("KeepAlive=OK")) {
+        else if (!this->server_message.compare("KeepAlive=OK")) {
             if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_REPETITIVE) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
@@ -702,7 +703,7 @@ public:
             }
             this->session_probe_keep_alive_received = true;
         }
-        else if (!session_probe_message.compare("SESSION_ENDING_IN_PROGRESS")) {
+        else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
             this->authentifier->log4(
                 (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                 "SESSION_ENDING_IN_PROGRESS");
@@ -710,8 +711,8 @@ public:
             this->session_probe_ending_in_progress = true;
         }
         else {
-            const char * message   = session_probe_message.c_str();
-            this->front.session_update({message, session_probe_message.size()});
+            const char * message   = this->server_message.c_str();
+            this->front.session_update({message, this->server_message.size()});
 
             const char * separator = ::strchr(message, '=');
 
