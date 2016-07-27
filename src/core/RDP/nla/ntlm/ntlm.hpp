@@ -44,6 +44,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     Random & rand;
     TimeObj & timeobj;
+    bool hardcoded_tests = false;
 
     explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj) : rand(rand), timeobj(timeobj) {}
 
@@ -369,6 +370,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             }
             if (input_buffer->Buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
+            }
+
+            if (this->hardcoded_tests) {
+                context->identity.SetPasswordFromUtf8(reinterpret_cast<uint8_t const *>("Pénélope"));
             }
             SEC_STATUS status = context->read_authenticate(input_buffer);
 

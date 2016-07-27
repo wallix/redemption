@@ -63,6 +63,8 @@ struct rdpCredssp
     TimeObj & timeobj;
     const uint32_t verbose;
 
+    bool hardcoded_tests = false;
+
     rdpCredssp(Transport & transport,
                uint8_t * user,
                uint8_t * domain,
@@ -150,7 +152,11 @@ public:
         }
         if (secInter == NTLM_Interface) {
             LOG(LOG_INFO, "Credssp: NTLM Authentication");
-            this->table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
+            auto table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
+            if (this->hardcoded_tests) {
+                table->hardcoded_tests = true;
+            }
+            this->table = table;
         }
         if (secInter == Kerberos_Interface) {
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");

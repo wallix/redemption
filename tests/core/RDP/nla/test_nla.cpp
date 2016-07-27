@@ -184,6 +184,7 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
     LCGRandom rand(0);
     LCGTime timeobj;
     rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
+    credssp.hardcoded_tests = true;
     int res = credssp.credssp_server_authenticate();
     BOOST_CHECK_EQUAL(res, 1);
 }
