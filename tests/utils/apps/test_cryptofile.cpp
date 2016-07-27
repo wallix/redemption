@@ -42,7 +42,7 @@
 #include "utils/fdbuf.hpp"
 #include "utils/fileutils.hpp"
 
-#include "transport/cryptofile.hpp"
+#include "utils/apps/cryptofile.hpp"
 
 namespace transfil {
 

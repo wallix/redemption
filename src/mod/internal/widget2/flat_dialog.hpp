@@ -19,7 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
-#pragma once 
+#pragma once
 
 #include "core/defines.hpp"
 #include "composite.hpp"
@@ -59,7 +59,7 @@ public:
 
     FlatDialog(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
-               const char* caption, const char * text, int group_id,
+               const char* caption, const char * text,
                WidgetFlatButton * extra_button,
                Theme const & theme, Font const & font, const char * ok_text = "Ok",
                const char * cancel_text = "Cancel",

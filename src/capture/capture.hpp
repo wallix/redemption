@@ -103,6 +103,8 @@ public:
     {
         // TODO Remove that after change of capture interface
         (void)full_video;
+        (void)no_timestamp;
+        (void)rnd;
 
         bool const enable_kbd
           = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)

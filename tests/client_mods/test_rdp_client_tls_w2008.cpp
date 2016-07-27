@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     FakeFront front(info, verbose);
 
-    const char * name       = "RDP W2008 TLS Target";
+    //const char * name       = "RDP W2008 TLS Target";
     // Uncomment the code block below to generate testing data.
     //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000, {},
     //                                     verbose);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // Comment the code block below to generate testing data.
     #include "../fixtures/dump_TLSw2008.hpp"
-    TestTransport t(name, indata, sizeof(indata) - 1,
+    TestTransport t(indata, sizeof(indata) - 1,
         outdata, sizeof(outdata) - 1, verbose);
 
     if (verbose > 2) {
@@ -115,8 +115,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
+    LCGTime timeobj;
     mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, mod_rdp_params);
+        gen, timeobj, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
@@ -157,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
 
     FakeFront front(info, verbose);
 
-    const char * name       = "RDP W2008 TLS Target";
+    //const char * name       = "RDP W2008 TLS Target";
     //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, verbose);
 
     //std::string  error_message;
@@ -170,7 +171,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     //                     );
 
     #include "../fixtures/dump_TLSw2008_2.hpp"
-    TestTransport t(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -206,7 +207,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    LCGTime timeobj;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen, timeobj, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {

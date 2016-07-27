@@ -54,7 +54,7 @@ public:
              Font const & font, Theme const & theme, Translation::language_t lang,
              bool showform = false, int required = FlatForm::NONE)
         : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier, group_id)
-        , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption, -6,
+        , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption,
                    theme.global.fgcolor, theme.global.bgcolor, font)
         , bg_color(theme.global.bgcolor)
         , dialog(drawable, 0, 0, this->groupbox, nullptr, text, true, -10,

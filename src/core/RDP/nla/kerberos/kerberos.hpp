@@ -83,15 +83,13 @@ struct KERBEROSContext {
 };
 
 
-struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
-
-    ~Kerberos_SecurityFunctionTable() override {}
-
-
+struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
+{
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) override {
 
+        (void)pszPackageName;
         // if (strcmp(pszPackageName, KERBEROS_SecPkgInfo.Name) == 0) {
         if (pPackageInfo) {
             pPackageInfo->fCapabilities = KERBEROS_SecPkgInfo.fCapabilities;
@@ -108,7 +106,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SEC_STATUS QueryContextAttributes(PCtxtHandle phContext,
+    SEC_STATUS QueryContextAttributes(PCtxtHandle,
                                               unsigned long ulAttribute,
                                               void* pBuffer) override {
         if (!pBuffer) {
@@ -136,6 +134,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                                 void * pvGetKeyArgument,
                                                 PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) override {
+        (void)pszPackage;
+        (void)fCredentialUse;
+        (void)pGetKeyFn;
+        (void)pvGetKeyArgument;
+        (void)ptsExpiry;
 
         if (pszPrincipal && pvLogonID) {
             Array * spn = static_cast<Array *>(pvLogonID);
@@ -220,15 +223,17 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                                  PCtxtHandle phContext,
                                                  char* pszTargetName,
                                                  unsigned long fContextReq,
-                                                 unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
                                                  SecBufferDesc * pInput,
                                                  unsigned long Reserved2,
                                                  PCtxtHandle phNewContext,
                                                  SecBufferDesc * pOutput,
-                                                 unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) override {
-
+        (void)phCredential;
+        (void)fContextReq;
+        (void)TargetDataRep;
+        (void)Reserved2;
+        (void)ptsExpiry;
 
         OM_uint32 major_status, minor_status;
 
@@ -350,8 +355,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                              unsigned long TargetDataRep,
                                              PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
-                                             unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) override {
+        (void)fContextReq;
+        (void)TargetDataRep;
+        (void)ptsTimeStamp;
+        (void)phCredential;
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
@@ -471,6 +479,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
                                       PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
+        (void)fQOP;
+        (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
         //     OM_uint32 *,        /* minor_status */
@@ -481,9 +491,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         //     int *,              /* conf_state */
         //     gss_buffer_t);      /* output_message_buffer */
 
-	OM_uint32 major_status;
-	OM_uint32 minor_status;
-	int conf_state;
+        OM_uint32 major_status;
+        OM_uint32 minor_status;
+        int conf_state;
         KERBEROSContext* context = nullptr;
 
         if (phContext) {
@@ -493,7 +503,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_NO_CONTEXT;
         }
         PSecBuffer data_buffer = nullptr;
-	gss_buffer_desc inbuf, outbuf;
+        gss_buffer_desc inbuf, outbuf;
         for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
                 data_buffer = &pMessage->pBuffers[index];
@@ -507,7 +517,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_INVALID_TOKEN;
         }
         // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
-	major_status = gss_wrap(&minor_status, context->gss_ctx, true,
+        major_status = gss_wrap(&minor_status, context->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -518,7 +528,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);
         data_buffer->Buffer.copy(reinterpret_cast<const uint8_t *>(outbuf.value), outbuf.length);
-	gss_release_buffer(&minor_status, &outbuf);
+        gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
     }
@@ -527,6 +537,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     // DECRYPT_MESSAGE DecryptMessage;
     SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) override {
+        (void)MessageSeqNo;
+        (void)pfQOP;
 
         // OM_uint32 gss_unwrap
         //     (OM_uint32 ,             /* minor_status */
@@ -580,11 +592,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    SEC_STATUS ImpersonateSecurityContext(PCtxtHandle phContext) override {
+    SEC_STATUS ImpersonateSecurityContext(PCtxtHandle) override {
         return SEC_E_OK;
     }
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) override {
+    SEC_STATUS RevertSecurityContext(PCtxtHandle) override {
         return SEC_E_OK;
     }
 

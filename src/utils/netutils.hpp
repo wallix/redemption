@@ -173,8 +173,7 @@ inline int connect_sck(
 
 static inline int ip_connect(const char* ip, int port,
              int nbretry = 3, int retry_delai_ms = 1000,
-             array_view<char> out_ip_addr = {},
-             uint32_t verbose = 0)
+             array_view<char> out_ip_addr = {})
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
     // we will try connection several time
@@ -229,9 +228,9 @@ static inline int ip_connect(const char* ip, int port,
 }
 
 
+// TODO int retry_delai_ms -> std::milliseconds
 static inline int local_connect(const char* sck_name,
-             int nbretry = 3, int retry_delai_ms = 1000,
-             uint32_t verbose = 0)
+             int nbretry = 3, int retry_delai_ms = 1000)
 {
     LOG(LOG_INFO, "connecting to %s", sck_name);
     // we will try connection several time

@@ -19,7 +19,7 @@
  *              Jennifer Inthavong
  */
 
-#pragma once 
+#pragma once
 
 #include "edit.hpp"
 #include "edit_valid.hpp"
@@ -46,7 +46,7 @@ public:
     WidgetEditValid login_edit;
     WidgetLabel     password_label;
     WidgetEditValid password_edit;
-    WidgetRect separator;
+    WidgetRect      separator;
     Widget2 *       last_interactive;
 
     int fgcolor;
@@ -59,8 +59,7 @@ public:
 
     FlatInteractiveTarget(gdi::GraphicApi & drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,
                           Widget2 & parent, NotifyApi* notifier,
-                          int group_id, bool ask_device,
-                          bool ask_login, bool ask_password,
+                          bool ask_device, bool ask_login, bool ask_password,
                           Theme const & theme, const char* caption,
                           const char * text_device,
                           const char * device_str,

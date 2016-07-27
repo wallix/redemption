@@ -1531,6 +1531,12 @@ class Sesman():
                                             update_args["target_account"] = redir_login
                                         self.engine.update_session(physical_target,
                                                                    **update_args)
+                                    elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe Keepalive missed')
+                                        release_reason = u'Session Probe Keepalive missed'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_keepalive_missed")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break

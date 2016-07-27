@@ -48,6 +48,7 @@ extern "C" {
 
     inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
     {
+        (void)rwflag;
         const char * pass = static_cast<const char*>(userdata);
         size_t pass_len = strlen(pass);
         if(num < static_cast<int>(pass_len+1u)) {

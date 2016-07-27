@@ -123,8 +123,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -232,8 +231,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -341,8 +339,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -450,8 +447,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -529,8 +525,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
 class NullSender : public VirtualChannelDataSender {
 public:
-    virtual void operator() (uint32_t total_length, uint32_t flags,
-        const uint8_t* chunk_data, uint32_t chunk_data_length) override {}
+    virtual void operator() (uint32_t, uint32_t, const uint8_t*, uint32_t) override {}
 };
 
 BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)

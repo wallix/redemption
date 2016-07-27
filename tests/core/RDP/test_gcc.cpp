@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     "\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
 
 
-    TestTransport t("test_gcc",
+    TestTransport t(
         "", 0,
         gcc_conference_create_request_expected,
         sizeof(gcc_conference_create_request_expected) - sizeof(gcc_user_data),

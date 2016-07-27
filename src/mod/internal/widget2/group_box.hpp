@@ -42,7 +42,7 @@ public:
     WidgetGroupBox( gdi::GraphicApi & drawable, int16_t x, int16_t y
                   , uint16_t cx, uint16_t cy, Widget2 & parent
                   , NotifyApi * notifier, const char * text
-                  , int group_id, int fgcolor, int bgcolor, Font const & font)
+                  , int fgcolor, int bgcolor, Font const & font)
     : WidgetParent(drawable, Rect(x, y, cx, cy), parent, notifier)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
@@ -74,7 +74,7 @@ public:
 
         auto wlabel = text_margin * 2 + tm2.width;
         auto y = this->rect.y + tm1.height / 2;
-        
+
 
         // Top Line and Label
         auto rect1 = Rect(px, y, text_indentation - text_margin - border + 2, 1);
@@ -90,7 +90,7 @@ public:
         auto rect2 = Rect(px + wlabel + 4, y, gcx + 1 - wlabel - 4, 1);
         this->drawable.draw(RDPOpaqueRect(rect2, this->fg_color), clip);
         // Bottom line
-        auto rect3 = Rect(px, y + gcy, gcx + 1, 1);        
+        auto rect3 = Rect(px, y + gcy, gcx + 1, 1);
         this->drawable.draw(RDPOpaqueRect(rect3, this->fg_color), clip);
 
         // Left border

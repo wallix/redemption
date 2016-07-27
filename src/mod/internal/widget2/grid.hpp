@@ -266,7 +266,8 @@ public:
         row_index    = this->selection_y;
         column_index = static_cast<uint16_t>(-1);
     }
-    void set_selection(uint16_t row_index, uint16_t column_index = static_cast<uint16_t>(-1)) {
+
+    void set_selection(uint16_t row_index) {
         if (this->focus_flag == Widget2::IGNORE_FOCUS) {
             return;
         }
@@ -295,6 +296,7 @@ public:
     }
 
     void focus(int reason) override {
+        (void)reason;
         if (!this->has_focus){
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
@@ -320,7 +322,7 @@ public:
                 if (rectRow.contains_pt(mouse_x, mouse_y)) {
                     if (row_index != this->selection_y) {
                         this->click_interval.update();
-                        this->set_selection(row_index, static_cast<uint16_t>(-1));
+                        this->set_selection(row_index);
                     }
                     else {
                         if (this->click_interval.tick() <= uint64_t(700000L)) {
@@ -350,28 +352,26 @@ public:
                 case Keymap2::KEVENT_UP_ARROW:
                     keymap->get_kevent();
                     if (this->nb_rows > 1) {
-                        this->set_selection(((this->selection_y > 0) ? this->selection_y - 1 : this->nb_rows - 1),
-                                            static_cast<uint16_t>(-1));
+                        this->set_selection((this->selection_y > 0) ? this->selection_y - 1 : this->nb_rows - 1);
                     }
                 break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
                     keymap->get_kevent();
                     if (this->nb_rows > 1) {
-                        this->set_selection(((this->selection_y + 1 != this->nb_rows) ? this->selection_y + 1 : 0),
-                                            static_cast<uint16_t>(-1));
+                        this->set_selection((this->selection_y + 1 != this->nb_rows) ? this->selection_y + 1 : 0);
                     }
                 break;
                 case Keymap2::KEVENT_END:
                     keymap->get_kevent();
                     if ((this->nb_rows > 1) && (this->nb_rows - 1 != this->selection_y)) {
-                        this->set_selection(this->nb_rows - 1, static_cast<uint16_t>(-1));
+                        this->set_selection(this->nb_rows - 1);
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
                     keymap->get_kevent();
                     if ((this->nb_rows > 1) && this->selection_y) {
-                        this->set_selection(0, static_cast<uint16_t>(-1));
+                        this->set_selection(0);
                     }
                     break;
                 case Keymap2::KEVENT_ENTER:

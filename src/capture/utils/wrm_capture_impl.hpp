@@ -53,23 +53,39 @@ class WrmCaptureImpl final : private gdi::KbdInputApi, private gdi::CaptureApi
         ::Transport * trans;
 
         template<class... Ts>
-        TransportVariant(TraceType trace_type, Ts && ... args)
-        {
+        TransportVariant(
+            TraceType trace_type,
+            CryptoContext & cctx,
+            const char * path,
+            const char * hash_path,
+            const char * basename,
+            timeval const & now,
+            uint16_t width,
+            uint16_t height,
+            const int groupid,
+            auth_api * authentifier
+        ) {
             // TODO there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not. Here is not the right level to manage anything related to encryption.
             // TODO Also we may wonder why we are encrypting wrm and not png (This is related to the path split between png and wrm). We should stop and consider what we should actually do
             switch (trace_type) {
                 case TraceType::cryptofile:
                     this->trans = new (&this->variant.out_crypto)
-                    CryptoOutMetaSequenceTransport(std::forward<Ts>(args)...);
+                    CryptoOutMetaSequenceTransport(
+                        &cctx, path, hash_path, basename, now,
+                        width, height, groupid, authentifier);
                     break;
                 case TraceType::localfile_hashed:
                     this->trans = new (&this->variant.out_with_sum)
-                    OutMetaSequenceTransportWithSum(std::forward<Ts>(args)...);
+                    OutMetaSequenceTransportWithSum(
+                        &cctx, path, hash_path, basename, now,
+                        width, height, groupid, authentifier);
                     break;
                 default:
                 case TraceType::localfile:
                     this->trans = new (&this->variant.out)
-                    OutMetaSequenceTransport(std::forward<Ts>(args)...);
+                    OutMetaSequenceTransport(
+                        path, hash_path, basename, now,
+                        width, height, groupid, authentifier);
                     break;
             }
         }
@@ -140,7 +156,7 @@ public:
     , ptr_cache(/*pointerCacheSize=*/0x19)
     , dump_png24_api{drawable}
     , trans_variant(
-        trace_type, &cctx, record_path, hash_path, basename, now,
+        trace_type, cctx, record_path, hash_path, basename, now,
         drawable.width(), drawable.height(), groupid, authentifier)
     , graphic_to_file(
         now, *this->trans_variant.trans, drawable.width(), drawable.height(), capture_bpp,

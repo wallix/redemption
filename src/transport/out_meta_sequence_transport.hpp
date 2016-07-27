@@ -34,6 +34,11 @@
 #include <stdlib.h> //mkostemps
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <cerrno>
+#include <fcntl.h>
+#include <snappy-c.h>
+#include <cstddef>
+#include <cerrno>
 
 
 #include "utils/sugar/iter.hpp"
@@ -42,21 +47,404 @@
 #include "utils/urandom_read.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/sugar/exchange.hpp"
+#include "core/error.hpp"
+#include "acl/auth_api.hpp"
 
 #include "openssl_crypto.hpp"
 
-#include "transport/cryptofile.hpp"
-
-#include "transport/mixin_transport.hpp"
-#include "transport/buffer/file_buf.hpp"
-#include "transport/buffer/checksum_buf.hpp"
-#include "transport/buffer/null_buf.hpp"
-#include "transport/buffer/file_buf.hpp"
-#include "transport/filter/crypto_filter.hpp"
-
+#include "utils/apps/cryptofile.hpp"
+#include "transport/transport.hpp"
 #include "transport/sequence_generator.hpp"
-#include "core/error.hpp"
-#include "acl/auth_api.hpp"
+
+#include "utils/log.hpp"
+
+namespace transbuf
+{
+    struct null_buf
+    {
+        int open() noexcept { return 0; }
+
+        int close() noexcept { return 0; }
+
+        ssize_t write(const void *, size_t len) noexcept { return len; }
+
+        ssize_t read(void *, size_t len) noexcept { return len; }
+
+        int flush() const noexcept { return 0; }
+    };
+}
+
+
+namespace detail
+{
+    struct NoCurrentPath {
+        template<class Buf>
+        static const char * current_path(Buf &)
+        { return nullptr; }
+    };
+
+    struct GetCurrentPath {
+        template<class Buf>
+        static const char * current_path(Buf & buf)
+        { return buf.current_path(); }
+    };
+}
+
+template <class Buf, class PathTraits = detail::NoCurrentPath>
+class OutputTransport
+: public Transport
+{
+    Buf buf;
+
+public:
+    OutputTransport() = default;
+
+    template<class T>
+    explicit OutputTransport(const T & buf_params)
+    : buf(buf_params)
+    {}
+
+    bool disconnect() override {
+        return !this->buf.close();
+    }
+
+private:
+    void do_send(const char * data, size_t len) override {
+        const ssize_t res = this->buf.write(data, len);
+        if (res < 0) {
+            this->status = false;
+            if (errno == ENOSPC) {
+                char message[1024];
+                const char * filename = PathTraits::current_path(this->buf);
+                snprintf(message, sizeof(message), "100|%s", filename ? filename : "unknow");
+                this->authentifier->report("FILESYSTEM_FULL", message);
+                errno = ENOSPC;
+                throw Error(ERR_TRANSPORT_WRITE_NO_ROOM, ENOSPC);
+            }
+            else {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->last_quantum_sent += res;
+    }
+
+protected:
+    Buf & buffer() noexcept
+    { return this->buf; }
+
+    const Buf & buffer() const noexcept
+    { return this->buf; }
+
+    typedef OutputTransport TransportType;
+};
+
+
+template<class Buf, class PathTraits = detail::NoCurrentPath>
+struct OutputNextTransport
+: OutputTransport<Buf, PathTraits>
+{
+    OutputNextTransport() = default;
+
+    template<class T>
+    explicit OutputNextTransport(const T & buf_params)
+    : OutputTransport<Buf, PathTraits>(buf_params)
+    {}
+
+    bool next() override {
+        if (this->status == false) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        const ssize_t res = this->buffer().next();
+        if (res) {
+            this->status = false;
+            if (res < 0){
+                LOG(LOG_ERR, "Write to transport failed (M): code=%d", errno);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, -res);
+            }
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+        ++this->seqno;
+        return true;
+    }
+
+protected:
+    typedef OutputNextTransport TransportType;
+};
+
+
+template<class TTransport>
+struct RequestCleaningTransport
+: TTransport
+{
+    RequestCleaningTransport() = default;
+
+    template<class T>
+    explicit RequestCleaningTransport(const T & params)
+    : TTransport(params)
+    {}
+
+    void request_full_cleaning() override {
+        this->buffer().request_full_cleaning();
+    }
+
+protected:
+    typedef RequestCleaningTransport TransportType;
+};
+
+namespace transbuf {
+    class ofile_buf_out
+    {
+        int fd;
+    public:
+        ofile_buf_out() : fd(-1) {}
+        ~ofile_buf_out()
+        {
+            this->close();
+        }
+
+        int open(const char * filename, mode_t mode)
+        {
+            this->close();
+            this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
+            return this->fd;
+        }
+
+        int close()
+        {
+            if (this->is_open()) {
+                const int ret = ::close(this->fd);
+                this->fd = -1;
+                return ret;
+            }
+            return 0;
+        }
+
+        ssize_t write(const void * data, size_t len)
+        {
+            size_t remaining_len = len;
+            size_t total_sent = 0;
+            while (remaining_len) {
+                ssize_t ret = ::write(this->fd,
+                    static_cast<const char*>(data) + total_sent, remaining_len);
+                if (ret <= 0){
+                    if (errno == EINTR){
+                        continue;
+                    }
+                    return -1;
+                }
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            return total_sent;
+        }
+
+        bool is_open() const noexcept
+        { return -1 != this->fd; }
+
+        off64_t seek(off64_t offset, int whence) const
+        { return ::lseek64(this->fd, offset, whence); }
+
+        int flush() const
+        { return 0; }
+    };
+
+}
+
+
+namespace transbuf {
+
+using std::size_t;
+
+class ochecksum_buf_ofile_buf_out
+: public transbuf::ofile_buf_out
+{
+    struct HMac
+    {
+        HMAC_CTX hmac;
+        bool initialized = false;
+
+        HMac() = default;
+
+        ~HMac() {
+            if (this->initialized) {
+                HMAC_CTX_cleanup(&this->hmac);
+            }
+        }
+
+        void init(const uint8_t * const crypto_key, size_t key_len) {
+            HMAC_CTX_init(&this->hmac);
+            if (!HMAC_Init_ex(&this->hmac, crypto_key, key_len, EVP_sha256(), nullptr)) {
+                throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+            }
+            this->initialized = true;
+        }
+
+        void update(const void * const data, size_t data_size) {
+            assert(this->initialized);
+            if (!HMAC_Update(&this->hmac, reinterpret_cast<uint8_t const *>(data), data_size)) {
+                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+            }
+        }
+
+        void final(uint8_t (&out_data)[SHA256_DIGEST_LENGTH]) {
+            assert(this->initialized);
+            unsigned int len = 0;
+            if (!HMAC_Final(&this->hmac, out_data, &len)) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            this->initialized = false;
+        }
+    };
+
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+
+    HMac hmac;
+    HMac quick_hmac;
+    unsigned char (&hmac_key)[MD_HASH_LENGTH];
+    size_t file_size = nosize;
+
+public:
+    explicit ochecksum_buf_ofile_buf_out(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    : hmac_key(hmac_key)
+    {}
+
+    ochecksum_buf_ofile_buf_out(ochecksum_buf_ofile_buf_out const &) = delete;
+    ochecksum_buf_ofile_buf_out & operator=(ochecksum_buf_ofile_buf_out const &) = delete;
+
+    template<class... Ts>
+    int open(Ts && ... args)
+    {
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        int ret = this->transbuf::ofile_buf_out::open(args...);
+        this->file_size = 0;
+        return ret;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        REDASSERT(this->file_size != nosize);
+        this->hmac.update(data, len);
+        if (this->file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(data, remaining);
+            this->file_size += remaining;
+        }
+        return this->transbuf::ofile_buf_out::write(data, len);
+    }
+
+    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+    {
+        REDASSERT(this->file_size != nosize);
+        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+        this->file_size = nosize;
+        return this->transbuf::ofile_buf_out::close();
+    }
+
+    int close() {
+        return this->transbuf::ofile_buf_out::close();
+    }
+};
+
+class ochecksum_buf_null_buf
+: public transbuf::null_buf
+{
+    struct HMac
+    {
+        HMAC_CTX hmac;
+        bool initialized = false;
+
+        HMac() = default;
+
+        ~HMac() {
+            if (this->initialized) {
+                HMAC_CTX_cleanup(&this->hmac);
+            }
+        }
+
+        void init(const uint8_t * const crypto_key, size_t key_len) {
+            HMAC_CTX_init(&this->hmac);
+            if (!HMAC_Init_ex(&this->hmac, crypto_key, key_len, EVP_sha256(), nullptr)) {
+                throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
+            }
+            this->initialized = true;
+        }
+
+        void update(const void * const data, size_t data_size) {
+            assert(this->initialized);
+            if (!HMAC_Update(&this->hmac, reinterpret_cast<uint8_t const *>(data), data_size)) {
+                throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
+            }
+        }
+
+        void final(uint8_t (&out_data)[SHA256_DIGEST_LENGTH]) {
+            assert(this->initialized);
+            unsigned int len = 0;
+            if (!HMAC_Final(&this->hmac, out_data, &len)) {
+                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+            }
+            this->initialized = false;
+        }
+    };
+
+    static constexpr size_t nosize = ~size_t{};
+    static constexpr size_t quick_size = 4096;
+
+    HMac hmac;
+    HMac quick_hmac;
+    unsigned char (&hmac_key)[MD_HASH_LENGTH];
+    size_t file_size = nosize;
+
+public:
+    explicit ochecksum_buf_null_buf(unsigned char (&hmac_key)[MD_HASH_LENGTH])
+    : hmac_key(hmac_key)
+    {}
+
+    ochecksum_buf_null_buf(ochecksum_buf_null_buf const &) = delete;
+    ochecksum_buf_null_buf & operator=(ochecksum_buf_null_buf const &) = delete;
+
+    template<class... Ts>
+    int open(Ts && ... args)
+    {
+        this->hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        this->quick_hmac.init(this->hmac_key, sizeof(this->hmac_key));
+        int ret = this->transbuf::null_buf::open(args...);
+        this->file_size = 0;
+        return ret;
+    }
+
+    ssize_t write(const void * data, size_t len)
+    {
+        REDASSERT(this->file_size != nosize);
+        this->hmac.update(data, len);
+        if (this->file_size < quick_size) {
+            auto const remaining = std::min(quick_size - this->file_size, len);
+            this->quick_hmac.update(data, remaining);
+            this->file_size += remaining;
+        }
+        return this->transbuf::null_buf::write(data, len);
+    }
+
+    int close(unsigned char (&hash)[MD_HASH_LENGTH * 2])
+    {
+        REDASSERT(this->file_size != nosize);
+        this->quick_hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[0]));
+        this->hmac.final(reinterpret_cast<unsigned char(&)[MD_HASH_LENGTH]>(hash[MD_HASH_LENGTH]));
+        this->file_size = nosize;
+        return this->transbuf::null_buf::close();
+    }
+
+    int close() {
+        return this->transbuf::null_buf::close();
+    }
+};
+
+
+}
+
 
 namespace detail
 {
@@ -533,7 +921,7 @@ namespace detail
             const int res2 = (this->meta_buf().is_open() ? this->meta_buf_.close() : 0);
             int err = res1 ? res1 : res2;
             if (!err) {
-                transbuf::ofile_buf ofile;
+                transbuf::ofile_buf_out ofile;
                 return write_meta_hash(
                     this->hash_filename(), this->meta_filename(),
                     ofile, nullptr, this->verbose
@@ -610,7 +998,7 @@ struct OutFilenameSequenceTransport
     RequestCleaningTransport<
         OutputNextTransport<
             detail::out_sequence_filename_buf<
-            detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/ >
+            detail::empty_ctor<io::posix::fdbuf>
     >>>
 
 {
@@ -661,7 +1049,7 @@ struct OutFilenameSequenceSeekableTransport
 
     const FilenameGenerator * seqgen() const noexcept
     { return &(this->buffer().seqgen()); }
-    
+
     void seek(int64_t offset, int whence) override {
         if (static_cast<off64_t>(-1) == this->buffer().seek(offset, whence)){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
@@ -1099,9 +1487,8 @@ namespace detail
 
     template<class Buf, class Params>
     struct OutHashedMetaSequenceTransport
-    : // FlushingTransport<
-    RequestCleaningTransport<OutputNextTransport<CloseWrapper<Buf>, detail::GetCurrentPath>>
-    // >
+    :
+        RequestCleaningTransport<OutputNextTransport<CloseWrapper<Buf>, detail::GetCurrentPath>>
     {
         OutHashedMetaSequenceTransport(
             CryptoContext * crypto_ctx,
@@ -1221,7 +1608,7 @@ namespace detail
 
     class ochecksum_filter
     {
-        transbuf::ochecksum_buf<transbuf::null_buf> sum_buf;
+        transbuf::ochecksum_buf_null_buf sum_buf;
 
     public:
         explicit ochecksum_filter(CryptoContext & cctx)
@@ -1246,17 +1633,17 @@ namespace detail
     };
 
     struct cctx_ofile_buf
-    : transbuf::ofile_buf
+    : transbuf::ofile_buf_out
     {
         explicit cctx_ofile_buf(CryptoContext &)
         {}
     };
 
     struct cctx_ochecksum_file
-    : transbuf::ochecksum_buf<transbuf::ofile_buf>
+    : transbuf::ochecksum_buf_ofile_buf_out
     {
         explicit cctx_ochecksum_file(CryptoContext & cctx)
-        : transbuf::ochecksum_buf<transbuf::ofile_buf>(cctx.get_hmac_key())
+        : transbuf::ochecksum_buf_ofile_buf_out(cctx.get_hmac_key())
         {}
     };
 }
@@ -1267,7 +1654,7 @@ namespace transbuf {
     {
         transfil::encrypt_filter encrypt;
         CryptoContext * cctx;
-        ofile_buf file;
+        ofile_buf_out file;
 
     public:
         explicit ocrypto_filename_buf(CryptoContext * cctx)
@@ -1339,12 +1726,11 @@ struct OutMetaSequenceTransport
 RequestCleaningTransport<
     OutputNextTransport<detail::out_meta_sequence_filename_buf<
         detail::empty_ctor<io::posix::fdbuf>,
-        detail::empty_ctor<transbuf::ofile_buf>
+        detail::empty_ctor<transbuf::ofile_buf_out>
     >, detail::GetCurrentPath>
 >
 {
     OutMetaSequenceTransport(
-        CryptoContext * cctx,
         const char * path,
         const char * hash_path,
         const char * basename,
@@ -1380,7 +1766,7 @@ RequestCleaningTransport<
 
 using OutMetaSequenceTransportWithSum = detail::OutHashedMetaSequenceTransport<
     detail::out_hash_meta_sequence_filename_buf_impl<
-        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
+        detail::empty_ctor<io::posix::fdbuf>,
         detail::ochecksum_filter,
         detail::cctx_ochecksum_file,
         detail::cctx_ofile_buf
@@ -1390,11 +1776,10 @@ using OutMetaSequenceTransportWithSum = detail::OutHashedMetaSequenceTransport<
 
 using CryptoOutMetaSequenceTransport = detail::OutHashedMetaSequenceTransport<
     detail::out_hash_meta_sequence_filename_buf_impl<
-        detail::empty_ctor</*transbuf::obuffering_buf<*/io::posix::fdbuf/*>*/>,
+        detail::empty_ctor<io::posix::fdbuf>,
         detail::ocrypto_filter,
         transbuf::ocrypto_filename_buf,
         transbuf::ocrypto_filename_buf
     >,
     detail::out_hash_meta_sequence_filename_buf_param<CryptoContext&>
 >;
-

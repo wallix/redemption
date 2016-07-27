@@ -23,12 +23,6 @@
 
 #pragma once
 
-#include "transport/transport.hpp"
-#include "transport/mixin_transport.hpp"
-#include "transport/buffer/dynarray_buf.hpp"
-#include "transport/buffer/check_buf.hpp"
-#include "utils/stream.hpp"
-
 #include <new>
 #include <memory>
 #include <stdexcept>
@@ -37,6 +31,119 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+
+#include <algorithm>
+#include <cstring>
+
+#include "transport/transport.hpp"
+#include "utils/stream.hpp"
+
+namespace transbuf {
+
+    class dynarray_buf
+    {
+        std::unique_ptr<uint8_t[]> data;
+        std::size_t len = 0;
+        std::size_t current = 0;
+
+    public:
+        dynarray_buf() = default;
+
+        int open(size_t len, const void * data = nullptr)
+        {
+            this->data.reset(new(std::nothrow) uint8_t[len]);
+            if (!this->data) {
+                return -1;
+            }
+            if (data) {
+                memcpy(this->data.get(), data, len);
+            }
+            this->len = len;
+            this->current = 0;
+            return 0;
+        }
+
+        int close() noexcept
+        {
+            this->data.reset();
+            this->current = 0;
+            this->len = 0;
+            return 0;
+        }
+
+        long int read(void * buffer, size_t len)
+        { return this->copy(buffer, this->data.get() + this->current, len); }
+
+        long int write(const void * buffer, size_t len)
+        { return this->copy(this->data.get() + this->current, buffer, len); }
+
+        bool is_open() const noexcept
+        { return this->data.get(); }
+
+        int flush() const noexcept
+        { return 0; }
+
+    private:
+        long int copy(void * dest, const void * src, size_t len)
+        {
+            const size_t rlen = std::min<size_t>(this->len - this->current, len);
+            memcpy(dest, src, rlen);
+            this->current += rlen;
+            return rlen;
+        }
+    };
+
+}
+
+
+namespace transbuf {
+
+    class check_base
+    {
+        std::unique_ptr<uint8_t[]> data;
+        std::size_t len;
+        std::size_t current;
+
+    public:
+        check_base() noexcept
+        : len(0)
+        , current(0)
+        {}
+
+        int open(const char * data, size_t len)
+        {
+            this->data.reset(new(std::nothrow) uint8_t[len]);
+            memcpy(this->data.get(), data, len);
+            this->len = len;
+            this->current = 0;
+            return 0;
+        }
+
+        int close() noexcept
+        {
+            this->data.reset();
+            this->current = 0;
+            this->len = 0;
+            return 0;
+        }
+
+        int write(const void * buffer, size_t len)
+        {
+            const size_t rlen = std::min<size_t>(this->len - this->current, len);
+            const uint8_t * databuf = static_cast<const uint8_t *>(buffer);
+            const uint8_t * p = std::mismatch(databuf, databuf + rlen, this->data.get() + this->current).first;
+            this->current += rlen;
+            return p - (databuf + rlen);
+        }
+
+        bool is_open() const noexcept
+        { return this->data.get(); }
+
+        int flush() const noexcept
+        { return 0; }
+    };
+
+}
 
 
 
@@ -86,6 +193,7 @@ struct GeneratorTransport : public InputTransportDynarray
 {
     GeneratorTransport(const void * data, size_t len, uint32_t verbose = 0)
     {
+        (void)verbose;
         if (this->buffer().open(len, data)) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -120,6 +228,7 @@ public:
     , len(len)
     , current(0)
     {
+        (void)verbose;
         if (!this->data) {
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -194,13 +303,14 @@ class TestTransport
     std::size_t public_key_length;
 
 public:
-    TestTransport(const char * name, const char * outdata, size_t outlen,
-                  const char * indata, size_t inlen, uint32_t verbose = 0)
+    TestTransport(
+        const char * outdata, size_t outlen,
+        const char * indata, size_t inlen,
+        uint32_t verbose = 0)
     : check(indata, inlen, verbose)
     , gen(outdata, outlen, verbose)
     , public_key_length(0)
-    {
-    }
+    {}
 
 
     void disable_remaining_error() {
@@ -267,4 +377,3 @@ public:
         this->out_stream.out_copy_bytes(buffer, len);
     }
 };
-

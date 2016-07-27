@@ -103,7 +103,7 @@ public:
     bool can_be_resume_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
-    void set_palette(const BGRPalette & palette) override {
+    void set_palette(const BGRPalette &) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "set_palette");
@@ -131,8 +131,8 @@ public:
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
-                        , size_t chunk_size, int flags) override {
+    void send_to_channel( const CHANNELS::ChannelDef &, uint8_t const * /*data*/, size_t /*length*/
+                        , size_t /*chunk_size*/, int /*flags*/) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "send_to_channel");

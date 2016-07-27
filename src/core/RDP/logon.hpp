@@ -679,7 +679,7 @@ struct ClientTimeZone {
 
     } // END CONSTRUCTOR
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & /*stream*/) {
     }
 
     void recv(InStream & stream) {

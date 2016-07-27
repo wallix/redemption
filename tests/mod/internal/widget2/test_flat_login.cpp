@@ -41,11 +41,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
-    int id = 0;
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         false, id, "rec", "rec", "Login", "Password", "", extra_button, font);
+                         "rec", "rec", "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.rect);
@@ -71,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test2",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
+                         nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -112,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     WidgetScreen parent(drawable.gd, 800, 600, font);
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test3",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
+                         nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget2::focus_reason_tabkey);
 
@@ -162,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test4",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
+                         nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -203,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
+                         nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -233,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
+                         nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -274,7 +273,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test6",
-                         false, 0, nullptr, nullptr, "Login", "Password", "", extra_button, font);
+                         nullptr, nullptr, "Login", "Password", "", extra_button, font);
 
     BOOST_CHECK(notifier.sender == nullptr);
     BOOST_CHECK(notifier.event == 0);

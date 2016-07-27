@@ -207,7 +207,7 @@ public:
         stream.out_copy_bytes(this->aj.get(), size);
     }
 
-    void receive(InStream & stream, const RDPSecondaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPSecondaryOrderHeader &) {
         this->cacheId    = stream.in_uint8();
         this->cGlyphs    = stream.in_uint8();
         this->cacheIndex = stream.in_uint16_le();

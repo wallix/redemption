@@ -214,7 +214,8 @@ public:
     void create_cache_bitmap(const uint8_t bpp,
         uint16_t small_entries, uint16_t small_size, bool small_persistent,
         uint16_t medium_entries, uint16_t medium_size, bool medium_persistent,
-        uint16_t big_entries, uint16_t big_size, bool big_persistent, uint32_t verbose)
+        uint16_t big_entries, uint16_t big_size, bool big_persistent,
+        bool enable_waiting_list, uint32_t verbose)
     {
         if (this->bmp_cache) {
             if (this->bmp_cache->bpp == bpp) {
@@ -227,9 +228,9 @@ public:
         }
 
         this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, bpp, 3, false,
-                                       BmpCache::CacheOption(small_entries, small_size, small_persistent),
-                                       BmpCache::CacheOption(medium_entries, medium_size, medium_persistent),
-                                       BmpCache::CacheOption(big_entries, big_size, big_persistent),
+                                       BmpCache::CacheOption(small_entries + (enable_waiting_list ? 1 : 0), small_size, small_persistent),
+                                       BmpCache::CacheOption(medium_entries + (enable_waiting_list ? 1 : 0), medium_size, medium_persistent),
+                                       BmpCache::CacheOption(big_entries + (enable_waiting_list ? 1 : 0), big_size, big_persistent),
                                        BmpCache::CacheOption(),
                                        BmpCache::CacheOption(),
                                        verbose);
@@ -275,7 +276,7 @@ private:
         gd.draw(order);
     }
 
-    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
+    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
                                    , gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");

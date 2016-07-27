@@ -84,13 +84,13 @@ struct RdpNego
 
     uint8_t * current_password;
     Random & rand;
-    // TODO Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static
-    bool test;
+    TimeObj & timeobj;
     const uint32_t verbose;
     char * lb_info;
 
     RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
-            const char * target_host, const char krb, Random & rand, const uint32_t verbose = 0)
+            const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
+            const uint32_t verbose = 0)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -103,7 +103,7 @@ struct RdpNego
     , target_host(target_host)
     , current_password(nullptr)
     , rand(rand)
-    , test(false)
+    , timeobj(timeobj)
     , verbose(verbose)
     , lb_info(nullptr)
     {
@@ -124,9 +124,6 @@ struct RdpNego
         memset(this->user,     0, sizeof(this->user));
         memset(this->password, 0, sizeof(this->password));
         memset(this->domain,   0, sizeof(this->domain));
-    }
-
-    virtual ~RdpNego() {
     }
 
     void set_identity(char const * user, char const * domain, char const * pass, char const * hostname) {
@@ -352,18 +349,15 @@ struct RdpNego
                                    this->domain, this->current_password,
                                    this->hostname, this->target_host,
                                    this->krb, this->restricted_admin_mode,
-                                   this->rand,
+                                   this->rand, this->timeobj,
                                    this->verbose);
-                if (this->test) {
-                    credssp.hardcodedtests = true;
-                }
 
                 int res = 0;
                 bool fallback = false;
                 try {
                     res = credssp.credssp_client_authenticate();
                 }
-                catch (Error & e) {
+                catch (Error const & e) {
                     if ((e.id == ERR_TRANSPORT_NO_MORE_DATA) ||
                         (e.id == ERR_TRANSPORT_WRITE_FAILED)) {
                         LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed");

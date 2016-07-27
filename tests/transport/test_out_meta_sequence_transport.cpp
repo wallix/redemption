@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        OutMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./", "./hash-", "xxx", now, 800, 600, groupid);
+        OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     struct {
         size_t len = 0;
-        ssize_t write(char const * s, size_t len) {
+        ssize_t write(char const *, size_t len) {
             this->len += len;
             return len;
         }
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
     now.tv_sec = 1352304810;
     now.tv_usec = 0;
     const int groupid = 0;
-    OutMetaSequenceTransport wrm_trans(static_cast<CryptoContext*>(nullptr), "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr, 0,
+    OutMetaSequenceTransport wrm_trans("./", "./hash-", "xxx", now, 800, 600, groupid, nullptr, 0,
                                        FilenameGenerator::PATH_FILE_COUNT_EXTENSION);
     wrm_trans.send("AAAAX", 5);
     wrm_trans.send("BBBBX", 5);
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TestRequestFullCleaning)
 
 
 template<size_t N>
-long write(transbuf::ochecksum_buf<transbuf::null_buf> & buf, char const (&s)[N]) {
+long write(transbuf::ochecksum_buf_null_buf & buf, char const (&s)[N]) {
     return buf.write(s, N-1);
 }
 
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(TestOSumBuf)
     CryptoContext cctx(rnd, ini);
     cctx.get_master_key();
 //    memcpy(cctx.hmac_key, "12345678901234567890123456789012", 32);
-    transbuf::ochecksum_buf<transbuf::null_buf> buf(cctx.get_hmac_key());
+    transbuf::ochecksum_buf_null_buf buf(cctx.get_hmac_key());
     buf.open();
     BOOST_CHECK_EQUAL(write(buf, "ab"), 2);
     BOOST_CHECK_EQUAL(write(buf, "cde"), 3);

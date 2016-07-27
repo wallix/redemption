@@ -43,6 +43,7 @@ public:
     }
 
     void notify(Widget2 * sender, notify_event_t event) override {
+        (void)sender;
         if (event == NOTIFY_SUBMIT) {
             this->selected_index = (this->selected_index +1) % texts.size();
             if (this->label) {
@@ -79,10 +80,11 @@ public:
 
     }
 
-    void notify(Widget2 * sender, notify_event_t event) override {}
+    void notify(Widget2 *, notify_event_t) override {}
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         this->event.reset();
     }
 

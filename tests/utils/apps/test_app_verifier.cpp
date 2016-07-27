@@ -47,7 +47,7 @@
 #include "utils/sugar/local_fd.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-#include "transport/cryptofile.hpp"
+#include "utils/apps/cryptofile.hpp"
 
 #ifdef IN_IDE_PARSER
 #define FIXTURES_PATH ""
@@ -289,6 +289,8 @@ extern "C" {
 
     inline int trace_fn(char * base, int len, char * buffer)
     {
+        (void)base;
+        (void)len;
         // in real uses actual trace_key is derived from base and some master key
         uint8_t trace_key[32] = {
             0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
@@ -634,5 +636,3 @@ BOOST_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
     BOOST_CHECK(!reader.read_meta_file(meta_line));
 }
-
-

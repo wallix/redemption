@@ -495,6 +495,8 @@ protected:
 
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size) const
     {
+        (void)src_cy;
+
         const uint8_t Bpp = nbbytes(this->bpp());
         const uint16_t dst_cx = this->cx();
         uint8_t* pmin = this->data_bitmap->get();

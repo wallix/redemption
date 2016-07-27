@@ -83,7 +83,7 @@ public:
         stream.out_uint32_le(this->action);
     }
 
-    void receive(InStream & stream, const AltsecDrawingOrderHeader & header) {
+    void receive(InStream & stream, const AltsecDrawingOrderHeader & /*header*/) {
         this->action = stream.in_uint32_le();
     }
 

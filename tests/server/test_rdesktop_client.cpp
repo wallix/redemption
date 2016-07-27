@@ -105,9 +105,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     // Comment the code block below to generate testing data.
     uint32_t     verbose = 511;
-    const char * name    = "Test Front Transport";
-    TestTransport front_trans(name, indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,
-        verbose);
+    TestTransport front_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
