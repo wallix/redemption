@@ -49,7 +49,6 @@ constant CXXFLAGS-COMMON :
 #     <cxxflags>-Wswitch-default
 #     <cxxflags>-Wsign-conversion
 #     <cxxflags>-Wconversion
-#     <cxxflags>-Wno-unused-parameter
 #     <cxxflags>-Werror
 
     <cxxflags>-fno-rtti
@@ -232,6 +231,7 @@ constant CXXFLAGS-gcc-warnings :
     <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.3:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.4:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.4.0:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1)
@@ -251,6 +251,7 @@ constant CXXFLAGS-gcc-sanitize :
     <variant>san,<toolset>gcc-5.3:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-5.4:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.4.0:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-sanitize)
     <variant>san,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-sanitize)
     <variant>san,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-sanitize)
@@ -270,7 +271,6 @@ constant CXXFLAGS-gcc :
 
 variant strict :
     <cxxflags>-Wsign-conversion
-    <cxxflags>-Wunused-parameter
 ;
 
 constant CXXFLAGS :
