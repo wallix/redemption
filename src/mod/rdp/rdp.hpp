@@ -6674,9 +6674,12 @@ private:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void process_auth_event(const CHANNELS::ChannelDef & auth_channel,
-            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+    void process_auth_event(
+        const CHANNELS::ChannelDef & auth_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
         (void)length;
+        (void)chunk_size;
         REDASSERT(stream.in_remain() == chunk_size);
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
