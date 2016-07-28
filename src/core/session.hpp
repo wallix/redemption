@@ -364,7 +364,9 @@ public:
                                     );
 
                                     if (client_sck == -1) {
-                                        LOG(LOG_ERR, "Failed to connect to authentifier");
+                                        LOG(LOG_ERR,
+                                            "Failed to connect to authentifier (%s)",
+                                            this->ini.get<cfg::globals::authfile>().c_str());
                                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                                     }
 
