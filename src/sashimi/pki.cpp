@@ -456,7 +456,6 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
         syslog(LOG_INFO, "%s RSA OK", __FUNCTION__);
         return SSH_OK;
     }
-    break;
     case SSH_KEYTYPE_DSS:
     {
         syslog(LOG_INFO, "%s DSS", __FUNCTION__);
@@ -611,7 +610,7 @@ int ssh_pki_import_pubkey_blob(ssh_buffer_struct & buffer, ssh_key_struct **pkey
  *
  * @see free_char()
  */
-int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
+inline int ssh_pki_export_pubkey_base64(const ssh_key_struct *pubkey,  char **b64_key)
 {
     syslog(LOG_INFO, "%s", __FUNCTION__);
 
@@ -711,7 +710,7 @@ int ssh_pki_export_pubkey_base64_p(const ssh_key_struct *key, char *b64, int b64
 
 
 
-SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
+inline SSHString pki_signature_to_blob(const ssh_signature_struct * sig)
 {
     switch(sig->sig_type) {
         case SSH_KEYTYPE_DSS:
@@ -1150,7 +1149,6 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
         ssh_signature_free(sig);
         return rc;
     }
-    break;
     case SSH_KEYTYPE_DSS:
     {
         SslSha1 sha1;
@@ -1202,7 +1200,6 @@ int ssh_pki_signature_verify_blob(const SSHString & sig_blob,
         ssh_signature_free(sig);
         return SSH_ERROR;
     }
-    break;
     }
     return SSH_OK;
 }

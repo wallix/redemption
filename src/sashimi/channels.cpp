@@ -140,7 +140,7 @@ struct ssh_timestamp {
 };
 
 
-char *ssh_get_local_username(void) {
+inline char *ssh_get_local_username(void) {
     struct passwd pwd;
     struct passwd *pwdbuf;
     char buf[NSS_BUFLEN_PASSWD];
@@ -593,14 +593,13 @@ int options_set(options_struct & opts, enum ssh_options_e type, const void *valu
         default:
             ssh_set_error(error, SSH_REQUEST_DENIED, "Unknown ssh option %d", type);
             return -1;
-            break;
     }
 
     return 0;
 }
 
 
-int options_set_host(options_struct & opts, const char *value, error_struct & error)
+inline int options_set_host(options_struct & opts, const char *value, error_struct & error)
 {
     if (value[0] == '\0') {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
@@ -633,7 +632,7 @@ int options_set_host(options_struct & opts, const char *value, error_struct & er
 }
 
 
-int options_set_port(options_struct & opts, int value, error_struct & error)
+inline int options_set_port(options_struct & opts, int value, error_struct & error)
 {
 
     if (value <= 0) {
@@ -645,7 +644,7 @@ int options_set_port(options_struct & opts, int value, error_struct & error)
 }
 
 
-int options_set_port_str(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_port_str(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -668,7 +667,7 @@ int options_set_port_str(options_struct & opts, const void *value, error_struct 
     return 0;
 }
 
-int options_set_fd(options_struct & opts, socket_t value, error_struct & error)
+inline int options_set_fd(options_struct & opts, socket_t value, error_struct & error)
 {
     if (value < 0) {
         opts.fd = INVALID_SOCKET;
@@ -680,7 +679,7 @@ int options_set_fd(options_struct & opts, socket_t value, error_struct & error)
     return 0;
 }
 
-int options_set_bindaddr(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_bindaddr(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -698,8 +697,9 @@ int options_set_bindaddr(options_struct & opts, const void *value, error_struct 
 }
 
 
-int options_set_user(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_user(options_struct & opts, const void *value, error_struct & error)
 {
+    (void)error;
     const char *v = static_cast<const char*>(value);
     free(opts.username);
     opts.username = nullptr;
@@ -718,7 +718,7 @@ int options_set_user(options_struct & opts, const void *value, error_struct & er
     return 0;
 }
 
-int options_set_timeout(options_struct & opts, int value, error_struct & error)
+inline int options_set_timeout(options_struct & opts, int value, error_struct & error)
 {
 
     if (value < 0) {
@@ -730,7 +730,7 @@ int options_set_timeout(options_struct & opts, int value, error_struct & error)
     return 0;
 }
 
-int options_set_timeout_usec(options_struct & opts, int value, error_struct & error)
+inline int options_set_timeout_usec(options_struct & opts, int value, error_struct & error)
 {
     if (value < 0) {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
@@ -742,7 +742,7 @@ int options_set_timeout_usec(options_struct & opts, int value, error_struct & er
 }
 
 
-int options_set_ssh1(options_struct & opts, int value, error_struct & error)
+inline int options_set_ssh1(options_struct & opts, int value, error_struct & error)
 {
     if (value < 0) {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
@@ -754,7 +754,7 @@ int options_set_ssh1(options_struct & opts, int value, error_struct & error)
 }
 
 
-int options_set_ssh2(options_struct & opts, int value, error_struct & error)
+inline int options_set_ssh2(options_struct & opts, int value, error_struct & error)
 {
     if (value < 0) {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
@@ -765,7 +765,7 @@ int options_set_ssh2(options_struct & opts, int value, error_struct & error)
     return 0;
 }
 
-int options_set_cipher_c_s(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_cipher_c_s(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -790,7 +790,7 @@ int options_set_cipher_c_s(options_struct & opts, const void *value, error_struc
 }
 
 
-int options_set_cipher_s_c(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_cipher_s_c(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -815,7 +815,7 @@ int options_set_cipher_s_c(options_struct & opts, const void *value, error_struc
     return 0;
 }
 
-int options_set_keyexchange(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_keyexchange(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -840,7 +840,7 @@ int options_set_keyexchange(options_struct & opts, const void *value, error_stru
 }
 
 
-int options_set_hostkeys(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_hostkeys(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -865,7 +865,7 @@ int options_set_hostkeys(options_struct & opts, const void *value, error_struct 
 }
 
 
-int options_set_compression_c_s(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_compression_c_s(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -915,7 +915,7 @@ int options_set_compression_c_s(options_struct & opts, const void *value, error_
 }
 
 
-int options_set_compression_s_c(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_compression_s_c(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -965,7 +965,7 @@ int options_set_compression_s_c(options_struct & opts, const void *value, error_
 }
 
 
-int options_set_compression(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_compression(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -981,7 +981,7 @@ int options_set_compression(options_struct & opts, const void *value, error_stru
 }
 
 
-int options_set_compression_level(options_struct & opts, int value, error_struct & error)
+inline int options_set_compression_level(options_struct & opts, int value, error_struct & error)
 {
     if (value < 1 || value > 9) {
         ssh_set_error(error, SSH_FATAL, "Invalid argument in %s", __FUNCTION__);
@@ -991,14 +991,15 @@ int options_set_compression_level(options_struct & opts, int value, error_struct
     return 0;
 }
 
-int options_set_stricthostkeycheck(options_struct & opts, int value, error_struct & error)
+inline int options_set_stricthostkeycheck(options_struct & opts, int value, error_struct & error)
 {
+    (void)error;
     opts.StrictHostKeyChecking = value;
     return 0;
 }
 
 
-int options_set_gssapi_server_identity(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_gssapi_server_identity(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -1014,7 +1015,7 @@ int options_set_gssapi_server_identity(options_struct & opts, const void *value,
     return 0;
 }
 
-int options_set_gssapi_client_identity(options_struct & opts, const void *value, error_struct & error)
+inline int options_set_gssapi_client_identity(options_struct & opts, const void *value, error_struct & error)
 {
     const char *v = static_cast<const char*>(value);
     if (v[0] == '\0') {
@@ -1030,8 +1031,9 @@ int options_set_gssapi_client_identity(options_struct & opts, const void *value,
     return 0;
 }
 
-int options_set_gssapi_delegate_credentials(options_struct & opts, int value, error_struct & error)
+inline int options_set_gssapi_delegate_credentials(options_struct & opts, int value, error_struct & error)
 {
+    (void)error;
     opts.gss_delegate_creds = (value & 0xff);
     return 0;
 }
@@ -1623,7 +1625,7 @@ int dopoll(ssh_poll_ctx_struct * ctx, int timeout)
 
 
 
-void ssh_poll_cleanup(void) {
+inline void ssh_poll_cleanup(void) {
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     return;
 }
@@ -1712,6 +1714,7 @@ ssh_poll_ctx_struct * ssh_new_poll_ctx()
 // TODO: this should be client session constructor
 ssh_session_struct * ssh_new_client_session(ssh_client_callbacks cb, ssh_poll_ctx_struct * ctx, char * host, char * port, char * user, char * hostkeys, char * verbosity, error_struct * error)
 {
+    (void)verbosity;
     syslog(LOG_INFO, "%s ---", __FUNCTION__);
     if (!ctx) {
         syslog(LOG_WARNING, "Client must provide context =========================================== done 1.1");

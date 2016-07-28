@@ -37,7 +37,7 @@
 ssh_channel ssh_new_channel(ssh_session_struct * session, ssh_channel_callbacks cb)
 {
     if(session == NULL) { return NULL; }
-   
+
     ssh_channel_struct * channel = new ssh_channel_struct(session, cb, 0);
     channel->version = session->version;
     session->channels[session->nbchannels++] = channel;
@@ -46,7 +46,7 @@ ssh_channel ssh_new_channel(ssh_session_struct * session, ssh_channel_callbacks 
 
 void ssh_set_blocking(ssh_session_struct * session, int blocking) {
     if (!session) {
-        syslog(LOG_INFO, "%s --- NULL SESSION", __FUNCTION__);    	
+        syslog(LOG_INFO, "%s --- NULL SESSION", __FUNCTION__);
         return;
   }
   session->flags &= ~SSH_SESSION_FLAG_BLOCKING;
@@ -73,7 +73,7 @@ void ssh_free(ssh_session_struct * session)
  *          SSH_ERROR   Error happened during the poll.
  */
 int ssh_event_dopoll(ssh_poll_ctx_struct * ctx, int timeout) {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
     if(ctx == NULL) {
         return SSH_ERROR;
@@ -95,12 +95,12 @@ void ssh_event_set_session_server(ssh_poll_ctx_struct * ctx, ssh_session_struct 
     return ssh_event_set_session_server(ctx, static_cast<SshServerSession*>(session));
 }
 
-void ssh_disconnect_server(ssh_session_struct * session) 
+void ssh_disconnect_server(ssh_session_struct * session)
 {
     return ssh_disconnect_server(static_cast<SshServerSession*>(session));
 }
 
-void ssh_disconnect_client(ssh_session_struct * client_session) 
+void ssh_disconnect_client(ssh_session_struct * client_session)
 {
     return ssh_disconnect_client(static_cast<SshClientSession*>(client_session));
 }
@@ -116,7 +116,7 @@ int ssh_userauth_kbdint_settmpprompts_server(ssh_session_struct * server_session
 {
     return ssh_userauth_kbdint_settmpprompts_server(static_cast<SshServerSession*>(server_session), name, instruction, num_prompts, prompts, echo);
 }
-                                      
+
 int ssh_userauth_kbdint_settmpprompt_server(ssh_session_struct * server_session, const char * name,
                          const char * instruction, const char * prompt,
                          unsigned char echo, error_struct * error)
@@ -139,6 +139,7 @@ const char *ssh_userauth_kbdint_getanswer_server(ssh_session_struct * server_ses
 
 int ssh_userauth_list_client(ssh_session_struct * client_session, const char *username, error_struct * error)
 {
+    (void)username;
     if (client_session == NULL) {
         return 0;
     }
@@ -149,13 +150,13 @@ int ssh_userauth_list_client(ssh_session_struct * client_session, const char *us
 int ssh_userauth_agent_client(ssh_session_struct * client_session, ssh_session_struct * front_session, const char *username, error_struct * error)
 {
     return ssh_userauth_agent_client(
-        static_cast<SshClientSession*>(client_session), 
+        static_cast<SshClientSession*>(client_session),
         static_cast<SshServerSession*>(front_session), username, error);
 }
 
 int ssh_userauth_password_client(ssh_session_struct * client_session,
                           const char *username,
-                          const char *password, 
+                          const char *password,
                           error_struct * error)
 {
     return ssh_userauth_password_client(static_cast<SshClientSession*>(client_session), username, password, error);
@@ -187,15 +188,15 @@ const char *ssh_userauth_kbdint_getprompt_client(ssh_session_struct * client_ses
 }
 
 
-int ssh_sessionchannel_open_client(ssh_session_struct * client_session, ssh_channel channel) 
+int ssh_sessionchannel_open_client(ssh_session_struct * client_session, ssh_channel channel)
 {
     return ssh_sessionchannel_open_client(static_cast<SshClientSession*>(client_session), channel);
 }
 
-int ssh_channel_open_forward_client(ssh_session_struct * client_session, ssh_channel channel, const char *remotehost, int remoteport, const char *sourcehost, int localport) 
+int ssh_channel_open_forward_client(ssh_session_struct * client_session, ssh_channel channel, const char *remotehost, int remoteport, const char *sourcehost, int localport)
 {
-    return ssh_channel_open_forward_client(static_cast<SshClientSession*>(client_session), 
-                                           channel, 
+    return ssh_channel_open_forward_client(static_cast<SshClientSession*>(client_session),
+                                           channel,
                                            remotehost, remoteport, sourcehost, localport);
 }
 
@@ -271,7 +272,7 @@ void ssh_event_x11_requested_channel_client(ssh_session_struct * client_session,
 
 void ssh_event_x11_requested_channel_failure_client(ssh_session_struct * client_session, uint32_t sender)
 {
-    return static_cast<SshClientSession*>(client_session)->ssh_event_x11_requested_channel_failure_client(sender); 
+    return static_cast<SshClientSession*>(client_session)->ssh_event_x11_requested_channel_failure_client(sender);
 }
 
 int ssh_channel_request_x11_client(ssh_session_struct * client_session, ssh_channel channel, int single_connection, const char *protocol, const char *cookie, int screen_number)
@@ -329,18 +330,18 @@ int ssh_channel_write_server(ssh_session_struct * server_session, ssh_channel ch
         return SSH_ERROR;
     }
 
-    if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN 
+    if (channel->state != ssh_channel_struct::ssh_channel_state_e::SSH_CHANNEL_STATE_OPEN
     || channel->delayed_close != 0) {
         syslog(LOG_INFO, "Remote channel is closed");
         ssh_set_error(*error, SSH_REQUEST_DENIED, "Remote channel is closed");
         return SSH_ERROR;
     }
-    
+
     if (static_cast<SshServerSession*>(server_session)->session_state == SSH_SESSION_STATE_ERROR){
         syslog(LOG_INFO, "Remote channel is closed : session error");
         return SSH_ERROR;
     }
-        
+
     return static_cast<SshServerSession*>(server_session)->ssh_channel_write_server(channel, data, len);
 }
 
@@ -384,7 +385,7 @@ int ssh_channel_is_eof_client(ssh_session_struct * client_session, ssh_channel c
     return static_cast<SshClientSession*>(client_session)->ssh_channel_is_eof_client(channel);
 }
 
-int ssh_channel_request_auth_agent_client(ssh_session_struct * client_session, ssh_channel channel) 
+int ssh_channel_request_auth_agent_client(ssh_session_struct * client_session, ssh_channel channel)
 {
     return static_cast<SshClientSession*>(client_session)->ssh_channel_request_auth_agent_client(channel);
 }
@@ -416,7 +417,7 @@ int ssh_channel_request_send_exit_signal_server(ssh_session_struct * server_sess
 
 int ssh_set_auth_methods_server(ssh_session_struct * server_session, int authmethods)
 {
-    syslog(LOG_INFO, "%s ---", __FUNCTION__);    
+    syslog(LOG_INFO, "%s ---", __FUNCTION__);
     return static_cast<SshServerSession*>(server_session)->ssh_set_auth_methods_server(authmethods);
 }
 
