@@ -76,6 +76,8 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         this->writeClientInfo();
     }
 
+
+
     const char * localIPtmp = "unknow_local_IP";
     /*union
     {
@@ -177,6 +179,10 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 
 
 bool Front_Qt::setClientInfo() {
+    GCC::UserData::CSMonitor cs_monitor;
+    cs_monitor.monitorCount = 2;
+    this->_info.cs_monitor = cs_monitor;
+
     std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
     if(ifichier) {
         // get config from conf file
@@ -492,10 +498,6 @@ void Front_Qt::draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool inver
     qbitmap = qbitmap.mirrored(false, true);
 
     qbitmap = qbitmap.copy(srcx, srcy, drect.cx, drect.cy);
-
-    /*if (bitmap.bpp() > this->_info.bpp) {
-        qbitmap = qbitmap.convertToFormat(this->_imageFormatRGB);
-    }*/
 
     if (invert) {
         qbitmap.invertPixels();
@@ -1749,6 +1751,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         case CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
                         {
+                            time_t  timev;
+                            time(&timev);
                             first_part_data_size = 0;
                             total_length  = (RDPECLIP::FileDescriptor::size() * this->_connector->_cItems) + 4;
                             RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
@@ -1756,6 +1760,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                , this->_connector->_itemsNameList
                                                                , this->_connector->_itemsSizeList
                                                                , this->_connector->_cItems
+                                                               , timev
                                                                );
                             this->show_out_stream(flags, out_streamfirst);
 
@@ -1807,6 +1812,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
     }
 }
+
+
 void Front_Qt::show_out_stream(int flags, OutStream & chunk) {
     uint8_t * data = chunk.get_data();
 
@@ -1823,7 +1830,7 @@ void Front_Qt::show_out_stream(int flags, OutStream & chunk) {
         }
         std::cout  <<  byte;
     }
-    std::cout << std::dec << std::endl;
+    std::cout << "\"" << std::dec << std::endl;
 }
 
 void Front_Qt::show_in_stream(int flags, InStream & chunk) {
@@ -1840,14 +1847,7 @@ void Front_Qt::show_in_stream(int flags, InStream & chunk) {
         }
         std::cout  <<  byte;
     }
-    std::cout << std::dec << std::endl;
-
-    /*uint32_t length_ = chunk.in_uint32_le();
-    std::cout <<  "length_=" <<  int(length_) <<  std::endl;
-    uint32_t streamID = chunk.in_uint32_le();
-    std::cout <<  "streamID=" <<  int(streamID) <<  std::endl;
-    uint16_t responseType = chunk.in_uint32_le();
-    std::cout <<  "responseType=" <<  int(responseType) <<  std::endl;*/
+    std::cout << "\"" << std::dec << std::endl;
 }
 
 void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
@@ -1994,10 +1994,14 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
                 if (this->_streamID >= this->_cItems) {
 
                     std::string TEST_TEMP_PATH("/home/cmoroldo/Bureau/redemption/projects/QT4Client/");
-                    int nbItems(this->_cItems - 1);
-                    std::string str(TEST_TEMP_PATH + this->_itemsNameList[0]);
-                    for (int i = 1; i < nbItems; i++) {
-                        str += "\n" + TEST_TEMP_PATH + this->_itemsNameList[i];
+
+                    std::string str;
+                    for (int i = 0; i < this->_cItems; i++) {
+                        if (i > 0) {
+                            str +=  "\n";
+                        }
+
+                        str += TEST_TEMP_PATH + this->_itemsNameList[i];
                     }
                     this->_connector->_local_clipboard_stream = false;
                     this->_connector->setClipboard(str, true);
@@ -2100,7 +2104,6 @@ void Front_Qt::empty_buffer() {
     this->_bufferRDPCLipboardMetaFilePic_width  = 0;
     this->_bufferRDPCLipboardMetaFilePic_height = 0;
     this->_bufferRDPClipboardChannelSize        = 0;
-    this->_cItems                               = 0;
     this->_streamID                             = 0;
 
     delete[] (this->_bufferRDPClipboardChannel);
@@ -2122,7 +2125,7 @@ std::string Front_Qt::HTMLtoText(const std::string & html) {
         }
 
         posEnd = tmp.find(endDelimiter);
-        str = std::string(str + tmp.substr(0, posEnd));
+        str = str + tmp.substr(0, posEnd);
         if (posEnd != -1) {
            tmp = tmp.substr(posEnd + 1, tmp.length());
         }
@@ -2311,7 +2314,7 @@ int main(int argc, char** argv){
 
     //" -name QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389";
 
-    //bjam -a client_rdp_Qt4 |& grep error || bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
+    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' || bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
 
     QApplication app(argc, argv);
 

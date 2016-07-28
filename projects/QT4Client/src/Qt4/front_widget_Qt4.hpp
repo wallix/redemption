@@ -922,11 +922,25 @@ public:
 
     void setClipboard(const std::string & str, bool path) { // Paste text or file to client
         if (path) {
+            std::cout <<  "path sent " <<  str << std::endl;
             QMimeData* mimeData = new QMimeData();
-            //mimeData->setData("text/uri-list", str.c_str());
+            //const QMimeData * mimeData = this->_clipboard->mimeData();
+
             mimeData->setUrls({QUrl::fromLocalFile(str.c_str())});
+            mimeData->setText(QString::fromUtf8(str.c_str()));
+            mimeData->setData(QString::fromUtf8("x-special/gnome-copied-files"), QByteArray(str.c_str(), str.size()));
+            if (mimeData->hasUrls()) {
+                std::cout << "hasURLS" << std::endl;
+            }
+
             this->_clipboard->setMimeData(mimeData);
-            this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+
+            //this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+
+            std::string paths(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
+
+            std::cout << "path in clipboard " <<   paths << std::endl;
+
         } else {
             this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
         }
@@ -997,23 +1011,22 @@ public Q_SLOTS:
                     uint32_t pos = 0;
                     while (pos <= str.size()) {
                         pos = str.find(delimiter);
-                        std::string path = str.substr(0, pos);
-                        std::cout << path <<  std::endl;
+                        std::string path = str.substr(0, pos-1);
                         str = str.substr(pos+1, str.size());
 
-                        int posSlash(0);
+                        uint32_t posSlash(0);
                         std::string slash = "/";
-                        while (posSlash != -1) {
+                        bool stillSlash = true;
+                        while (stillSlash) {
                             posSlash = path.find(slash, posSlash);
-                            if (posSlash != -1) {
-                                std::cout << "lol " << posSlash << std::endl;
-                                path = path.substr(0, posSlash) + "\\\\" + path.substr(posSlash+1, path.size());
-                                std::cout << path <<  std::endl;
+                            if (posSlash < path.size()) {
+                                path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
                                 posSlash += 2;
-                            } else {
-                                std::cout << "loooooooool " << posSlash << std::endl;
-                            }
 
+                            } else {
+                                path = path.substr(0, path.size() - 1);
+                                stillSlash = false;
+                            }
                         }
 
                         std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
@@ -1023,7 +1036,6 @@ public Q_SLOTS:
                             iFile.seekg (0, std::ios::end);
                             end = iFile.tellg();
                             uint64_t size(end-begin);
-                            std::cout << "file size=" << int(size) <<  std::endl;
                             this->_itemsSizeList[i] = size;
                             this->_files_chunk[i] = new uint8_t[this->_itemsSizeList[i]];
                             iFile.read(reinterpret_cast<char *>(this->_files_chunk[i]), size);
@@ -1032,25 +1044,21 @@ public Q_SLOTS:
 
                         int posName(path.size()-1);
                         bool lookForName = true;
-                        while (pos >= 0 && lookForName) {
+                        while (posName >= 0 && lookForName) {
                             if (path.at(posName) == '/') {
                                 lookForName = false;
                             }
                             posName--;
                         }
-
-                        this->_itemsNameList[i] = path.substr(posName+2, path.size());
-
-                        int UTF8nameSize(this->_itemsNameList[i].size() * 2);
+                        std::string name = path.substr(posName+2, path.size());
+                        int UTF8nameSize(name.size() * 2);
                         if (UTF8nameSize > 520) {
                             UTF8nameSize = 520;
                         }
-
                         uint8_t UTF16nameData[520];
-
-                        int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(this->_itemsNameList[i].c_str()), UTF16nameData, UTF8nameSize);
-
+                        int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(name.c_str()), UTF16nameData, UTF8nameSize);
                         this->_itemsNameList[i] = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+
                         i++;
                         if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
                             i = Front_Qt::LIST_FILES_MAX_SIZE;
@@ -1084,14 +1092,12 @@ public Q_SLOTS:
 
                     this->send_FormatListPDU(false);
 
+
                 }
-
-
-
             }
-
         }
     }
+
 
 };
 
