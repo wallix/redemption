@@ -496,8 +496,18 @@ protected:
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size) const
     {
         (void)src_cy;
+        switch (this->bpp()) {
+            case 8 :return this->decompress_(std::integral_constant<uint8_t, nbbytes(8)>{}, input, src_cx, size);
+            case 15:return this->decompress_(std::integral_constant<uint8_t, nbbytes(15)>{}, input, src_cx, size);
+            case 16:return this->decompress_(std::integral_constant<uint8_t, nbbytes(16)>{}, input, src_cx, size);
+            default:return this->decompress_(std::integral_constant<uint8_t, nbbytes(24)>{}, input, src_cx, size);
+        }
+    }
 
-        const uint8_t Bpp = nbbytes(this->bpp());
+private:
+    template<class TBpp>
+    void decompress_(TBpp Bpp, const uint8_t* input, uint16_t src_cx, size_t size) const
+    {
         const uint16_t dst_cx = this->cx();
         uint8_t* pmin = this->data_bitmap->get();
         uint8_t* pmax = pmin + this->bmp_size();
@@ -1225,6 +1235,18 @@ public:
             return this->compress60(outbuffer);
         }
 
+        switch (this->bpp()) {
+            case 8 : return this->compress_(std::integral_constant<uint8_t, nbbytes(8)>{}, outbuffer);
+            case 15: return this->compress_(std::integral_constant<uint8_t, nbbytes(15)>{}, outbuffer);
+            case 16: return this->compress_(std::integral_constant<uint8_t, nbbytes(16)>{}, outbuffer);
+            default: return this->compress_(std::integral_constant<uint8_t, nbbytes(24)>{}, outbuffer);
+        }
+    }
+
+private:
+    template<class TBpp>
+    void compress_(TBpp Bpp, OutStream & outbuffer) const
+    {
         struct RLE_OutStream {
             OutStream & stream;
             explicit RLE_OutStream(OutStream & outbuffer)
@@ -1338,7 +1360,7 @@ public:
                 this->out_count(in_count, 0x01);
             }
 
-            void out_mix_count_set(const int in_count, const uint8_t Bpp, unsigned new_foreground)
+            void out_mix_count_set(const int in_count, const TBpp Bpp, unsigned new_foreground)
             {
                 const uint8_t mask = 0x06;
                 if (in_count < 16) {
@@ -1470,7 +1492,7 @@ public:
                 }
             }
 
-            void out_fom_sequence_set(const uint8_t Bpp, const int count,
+            void out_fom_sequence_set(const TBpp Bpp, const int count,
                                       const unsigned foreground, const uint8_t * masks) {
                 this->out_fom_count_set(count);
                 this->stream.out_bytes_le(Bpp, foreground);
@@ -1501,7 +1523,7 @@ public:
             // |                          | little-endian format).                     |
             // +--------------------------+--------------------------------------------+
 
-            void out_color_sequence(const uint8_t Bpp, const int count, const uint32_t color)
+            void out_color_sequence(const TBpp Bpp, const int count, const uint32_t color)
             {
                 this->out_color_count(count);
                 this->stream.out_bytes_le(Bpp, color);
@@ -1539,7 +1561,7 @@ public:
             // |                             | format).                                |
             // +-----------------------------+-----------------------------------------+
 
-            void out_copy_sequence(const uint8_t Bpp, const int count, const uint8_t * data)
+            void out_copy_sequence(const TBpp Bpp, const int count, const uint8_t * data)
             {
                 this->out_copy_count(count);
                 this->stream.out_copy_bytes(data, count * Bpp);
@@ -1576,7 +1598,7 @@ public:
             // |                             | format).                                |
             // +-----------------------------+-----------------------------------------+
 
-            void out_bicolor_sequence(const uint8_t Bpp, const int count,
+            void out_bicolor_sequence(const TBpp Bpp, const int count,
                                       const unsigned color1, const unsigned color2)
             {
                 this->out_bicolor_count(count);
@@ -1603,7 +1625,6 @@ public:
 
         uint8_t * tmp_data_compressed = out.stream.get_current();
 
-        const uint8_t Bpp = nbbytes(this->bpp());
         const uint8_t * pmin = this->data_bitmap->get();
         const uint8_t * p = pmin;
 
@@ -1758,6 +1779,7 @@ public:
         this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, out.stream.get_current() - tmp_data_compressed);
     }
 
+public:
     static void get_run(const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint32_t & run_length,
         uint32_t & raw_bytes)
     {
@@ -1932,7 +1954,7 @@ public:
         //LOG(LOG_INFO, "compress_color_plane: exit");
     }
 
-protected:
+private:
     void compress60(OutStream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
