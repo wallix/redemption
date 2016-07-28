@@ -3719,7 +3719,12 @@ public:
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
-                    this->acl->report("SESSION_EXCEPTION", message);
+
+                    char const* reason =
+                        ((UP_AND_RUNNING == this->connection_finalization_state) ?
+                         "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
+
+                    this->acl->report(reason, message);
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
