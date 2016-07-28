@@ -182,11 +182,11 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.FreeCredentialsHandle(nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.InitializeSecurityContext(nullptr, nullptr, nullptr, 0, 0, 0, nullptr,
-                                             0, nullptr, nullptr, nullptr, nullptr);
+    status = table.InitializeSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr,
+                                             0, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcceptSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr, nullptr, nullptr, nullptr);
+    status = table.AcceptSecurityContext(nullptr, nullptr, nullptr, 0, 0, nullptr, nullptr, nullptr);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.CompleteAuthToken(nullptr, nullptr);

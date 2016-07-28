@@ -96,6 +96,7 @@ class LanguageButton : public WidgetFlatButton
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
+        (void)widget;
         if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {
             auto rect = this->rect;
 

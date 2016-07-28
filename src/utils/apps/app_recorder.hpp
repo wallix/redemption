@@ -493,7 +493,6 @@ static int do_recompress( CryptoContext & cctx, Transport & in_wrm_trans, const 
         else {
             run(
                 OutMetaSequenceTransport(
-                    &cctx,
                     outfile_path.c_str(),
                     ini.get<cfg::video::hash_path>().c_str(),
                     outfile_basename.c_str(),

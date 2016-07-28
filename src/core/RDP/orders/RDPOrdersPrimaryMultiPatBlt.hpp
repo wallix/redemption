@@ -164,7 +164,7 @@ public:
     , BackColor(BackColor)
     , ForeColor(ForeColor)
     , brush(_brush)
-    , nDeltaEntries(0) {
+    , nDeltaEntries(nDeltaEntries) {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
         for (int i = 0; i < this->nDeltaEntries; i++) {
             this->deltaEncodedRectangles[i].leftDelta = deltaEncodedRectangles.in_sint16_le();

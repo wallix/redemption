@@ -12,8 +12,10 @@
 #include "main/version.hpp"
 
 extern "C" {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
     __attribute__((__visibility__("default")))
-    inline int vermemcpy(char * dest, char * source, int len)
+    int vermemcpy(char * dest, char * source, int len)
     {
 //        hexdump(dest, 32);
 //        hexdump(source, 32);
@@ -24,7 +26,7 @@ extern "C" {
 
 
     __attribute__((__visibility__("default")))
-    inline int do_main(int argc, char ** argv,
+    int do_main(int argc, char ** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
     {

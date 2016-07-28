@@ -155,8 +155,8 @@ struct GraphicApi : private noncopyable
 
     virtual ~GraphicApi() = default;
 
-    virtual void set_pointer(Pointer      const & cursor) {}
-    virtual void set_palette(BGRPalette   const & palette) {}
+    virtual void set_pointer(Pointer      const &) {}
+    virtual void set_palette(BGRPalette   const &) {}
 
     virtual void draw(RDP::FrameMarker    const & order) = 0;
     virtual void draw(RDPDestBlt          const & cmd, Rect const & clip) = 0;
@@ -185,8 +185,8 @@ struct GraphicApi : private noncopyable
     virtual void draw(const RDP::RAIL::DeletedWindow       &) {}
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
-    virtual void draw(RDPColCache   const & cmd) {}
-    virtual void draw(RDPBrushCache const & cmd) {}
+    virtual void draw(RDPColCache   const &) {}
+    virtual void draw(RDPBrushCache const &) {}
 
     virtual void begin_update() {}
     virtual void end_update() {}
@@ -194,7 +194,7 @@ struct GraphicApi : private noncopyable
     virtual void sync() {}
 
     // TODO berk, data within size
-    virtual void set_row(std::size_t rownum, const uint8_t * data) {}
+    virtual void set_row(std::size_t rownum, const uint8_t * data) { (void)rownum; (void)data; }
 
     GraphicDepth const & order_depth() const {
         return this->order_depth_;

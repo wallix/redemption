@@ -97,7 +97,7 @@ namespace CredSSP {
 
 }
 
-struct TSRequest {
+struct TSRequest final {
     /* TSRequest */
 
     /* [0] version */
@@ -129,9 +129,6 @@ struct TSRequest {
     {
         this->recv(stream);
         // LOG(LOG_INFO, "TSRequest recv %d", res);
-    }
-
-    virtual ~TSRequest() {
     }
 
     int ber_sizeof(int length) {

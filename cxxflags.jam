@@ -1,26 +1,18 @@
 ## Warnings
 ## @{
 constant CXXFLAGS-COMMON :
-#    <cxxflags>-Wswitch-enum
-#    <cxxflags>-Wswitch-default
     <cxxflags>-pedantic
     <cxxflags>-pedantic-errors
-#   <cxxflags>-Wconversion
     <cxxflags>-Wvla
-#     <cxxflags>-Wstrict-aliasing=2
-#     <cxxflags>-Wstrict-aliasing=3
-
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
     <cxxflags>-Wall
     <cxxflags>-Wextra
-    <cxxflags>-Wno-unused-parameter
     <cxxflags>-Wno-long-long
     <cxxflags>-Wtype-limits
     <cxxflags>-Wundef
     <cxxflags>-Wcast-align
     <cxxflags>-Wchar-subscripts
-#    <cxxflags>-Wformat
     <cxxflags>-Wformat=2
     <cxxflags>-Wformat-security
 #    <cxxflags>-Wmissing-format-attribute
@@ -30,7 +22,7 @@ constant CXXFLAGS-COMMON :
 #    <cxxflags>-Wshadow
     <cxxflags>-Wpointer-arith
     <cxxflags>-Wsign-compare
-#    <cxxflags>-Wmissing-declarations
+    <cxxflags>-Wmissing-declarations
     <cxxflags>-Wpacked
     <cxxflags>-Wredundant-decls
 #    <cxxflags>-Winline
@@ -38,7 +30,6 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Wcast-qual
     <cxxflags>-Woverloaded-virtual
     <cxxflags>-Wunused-variable
-#    <cxxflags>-Wunused-parameter
     <cxxflags>-Wmissing-include-dirs
     <cxxflags>-Wunused
     <cxxflags>-Wendif-labels
@@ -53,6 +44,13 @@ constant CXXFLAGS-COMMON :
     <cxxflags>-Warray-bounds
     <cxxflags>-Wold-style-cast
     <cxxflags>-Wno-overlength-strings
+    <cxxflags>-Wunused-macros
+
+#     <cxxflags>-Wswitch-enum
+#     <cxxflags>-Wswitch-default
+#     <cxxflags>-Wsign-conversion
+#     <cxxflags>-Wconversion
+#     <cxxflags>-Werror
 
     <cxxflags>-fno-rtti
 ;
@@ -234,6 +232,7 @@ constant CXXFLAGS-gcc-warnings :
     <toolset>gcc-5.2:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.3:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5.2)
+    <toolset>gcc-5.4:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-5.4.0:$(CXXFLAGS-GCC-5.2)
     <toolset>gcc-6.0:$(CXXFLAGS-GCC-6)
     <toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1)
@@ -253,6 +252,7 @@ constant CXXFLAGS-gcc-sanitize :
     <variant>san,<toolset>gcc-5.3:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-5.3.1:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-5.4:$(CXXFLAGS-GCC-5-sanitize)
+    <variant>san,<toolset>gcc-5.4.0:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-6.0:$(CXXFLAGS-GCC-6-sanitize)
     <variant>san,<toolset>gcc-6.1:$(CXXFLAGS-GCC-6.1-sanitize)
     <variant>san,<toolset>gcc-6.1.0:$(CXXFLAGS-GCC-6.1-sanitize)
@@ -272,7 +272,6 @@ constant CXXFLAGS-gcc :
 
 variant strict :
     <cxxflags>-Wsign-conversion
-    <cxxflags>-Wunused-parameter
 ;
 
 constant CXXFLAGS :

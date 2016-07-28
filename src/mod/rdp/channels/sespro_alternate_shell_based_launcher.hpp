@@ -77,6 +77,9 @@ public:
     bool on_event() override { return false; }
 
     bool on_image_read(uint64_t offset, uint32_t length) override {
+        (void)offset;
+        (void)length;
+
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE_LAUNCHER) {
             LOG(LOG_INFO,
                 "SessionProbeAlternateShellBasedLauncher :=> on_image_read");
@@ -100,15 +103,17 @@ public:
     bool on_server_format_list_response() override { return false; }
 
     // Returns false to prevent message to be sent to server.
-    bool process_client_cliprdr_message(InStream & chunk,
-        uint32_t length, uint32_t flags) override { return true; }
-
-    void set_clipboard_virtual_channel(
-            BaseVirtualChannel* channel) override {
+    bool process_client_cliprdr_message(InStream & chunk,uint32_t length, uint32_t flags) override {
+        (void)chunk;
+        (void)length;
+        (void)flags;
+        return true;
     }
 
-    void set_session_probe_virtual_channel(
-        BaseVirtualChannel* channel) override {
+    void set_clipboard_virtual_channel(BaseVirtualChannel*) override {
+    }
+
+    void set_session_probe_virtual_channel(BaseVirtualChannel* channel) override {
         this->channel = static_cast<SessionProbeVirtualChannel*>(channel);
     }
 

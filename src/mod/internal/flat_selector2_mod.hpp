@@ -291,7 +291,7 @@ private:
         } else {
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
-            this->selector.selector_lines.set_selection(0, static_cast<uint16_t>(-1));
+            this->selector.selector_lines.set_selection(0);
             this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         }
         this->selector.rearrange();
@@ -345,7 +345,8 @@ public:
     }
 
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
@@ -355,6 +356,7 @@ public:
     bool is_up_and_running() override { return true; }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        (void)length;
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }

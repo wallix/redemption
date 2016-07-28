@@ -44,8 +44,8 @@ BiIt rtrim(BiIt first, BiIt last, Pred pred = Pred()) {
 
 template<class BiIt, class Pred = is_blanck_fn>
 range<BiIt> trim(BiIt first, BiIt last, Pred pred = Pred()) {
-    first = ltrim(first, last);
-    return {first, rtrim(first, last)};
+    first = ltrim(first, last, pred);
+    return {first, rtrim(first, last, pred)};
 }
 
 template<class R, class Pred = is_blanck_fn>

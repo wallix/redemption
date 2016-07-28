@@ -229,6 +229,8 @@ struct ssh_channel_struct {
     , request_state(SSH_CHANNEL_REQ_STATE_NONE)
     , callbacks(callbacks)
     {
+        (void)session;
+        (void)dummy;
     }
 
     ~ssh_channel_struct()
@@ -478,6 +480,7 @@ struct ssh_agent_struct {
   , count(0)
   , channel(nullptr)
   {
+        (void)session;
   }
 
     /* caller has to free comment */
@@ -647,6 +650,7 @@ struct ssh_agent_struct {
     // TODO: move this method to error ?
     void set_error(error_struct & error, int eid, int code, const char *function, const char *descr, ...)
     {
+        (void)function;
         ssh_set_error(error, code, descr);
         error.eid = eid;
         syslog(LOG_ERR, "%s", error.error_buffer);

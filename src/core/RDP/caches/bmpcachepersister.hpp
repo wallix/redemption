@@ -120,12 +120,12 @@ public:
         }
 
         for (uint8_t cache_id = 0; cache_id < this->bmp_cache.number_of_cache; cache_id++) {
-            this->preload_from_disk(t, filename, version, cache_id);
+            this->preload_from_disk(t, cache_id);
         }
     }
 
 private:
-    void preload_from_disk(Transport & t, const char * filename, uint8_t version, uint8_t cache_id) {
+    void preload_from_disk(Transport & t, uint8_t cache_id) {
         uint8_t buf[65536];
         InStream stream(buf);
         auto end = buf;
@@ -265,13 +265,13 @@ public:
         }
 
         for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
-            load_from_disk(bmp_cache, t, filename, cache_id, version, verbose);
+            load_from_disk(bmp_cache, t, cache_id, verbose);
         }
     }
 
 private:
-    static void load_from_disk( BmpCache & bmp_cache, Transport & t, const char * filename
-                              , uint8_t cache_id, uint8_t version, uint32_t verbose) {
+    static void load_from_disk( BmpCache & bmp_cache, Transport & t
+                              , uint8_t cache_id, uint32_t verbose) {
         uint8_t buf[65536];
         InStream stream(buf);
         auto end = buf;

@@ -103,7 +103,10 @@ public:
                 }
 
                 char target_ip[256];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
                 const int target_port = ntohs(localAddress.s4.sin_port);
+#pragma GCC diagnostic pop
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 

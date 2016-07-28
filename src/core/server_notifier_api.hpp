@@ -39,6 +39,7 @@ public:
     void server_cert_create() override {}
     void server_cert_success() override {}
     void server_cert_failure() override {}
-    void server_cert_error(const char * str_error) override {}
+    // TODO used array_view ?
+    void server_cert_error(const char * str_error) override { (void)str_error; }
 };
 

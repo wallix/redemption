@@ -54,7 +54,7 @@ struct CopyPasteFront : FakeFront
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t chunk_size, int flags
+        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t, int
     ) override {
         BOOST_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
 

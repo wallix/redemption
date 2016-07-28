@@ -32,15 +32,17 @@
 namespace po = program_options;
 
 extern "C" {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
     __attribute__((__visibility__("default")))
-    inline int recmemcpy(char * dest, char * source, int len)
+    int recmemcpy(char * dest, char * source, int len)
     {
         ::memcpy(dest, source, static_cast<size_t>(len));
         return 0;
     }
 
     __attribute__((__visibility__("default")))
-    inline int do_main(int argc, char** argv,
+    int do_main(int argc, char** argv,
             get_hmac_key_prototype * hmac_fn,
             get_trace_key_prototype * trace_fn)
     {

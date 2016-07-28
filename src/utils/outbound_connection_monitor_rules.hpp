@@ -93,7 +93,7 @@ public:
                     std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
 
                     this->rules.push_back({
-                        uType, std::move(host_address_or_subnet), std::move(std::string(info_separator + 1)),
+                        uType, std::move(host_address_or_subnet), std::string(info_separator + 1),
                         std::move(description_string)
                     });
                 }

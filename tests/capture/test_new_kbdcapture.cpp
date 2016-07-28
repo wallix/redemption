@@ -37,7 +37,9 @@ BOOST_AUTO_TEST_CASE(TestKbdCapture)
     struct : auth_api {
         mutable std::string s;
 
-        void log4(bool duplicate_with_pid, const char* type, const char* extra = nullptr) const override {
+        void log4(bool duplicate_with_pid, const char* type, const char* extra) const override {
+            (void)duplicate_with_pid;
+            (void)type;
             BOOST_REQUIRE(extra);
             s += extra;
         }

@@ -152,7 +152,8 @@
 
 
 
-struct NTLMNegotiateMessage : public NTLMMessage {
+struct NTLMNegotiateMessage {
+    NTLMMessage message;
 
     NtlmNegotiateFlags negoFlags; /* 4 Bytes */
     NtlmField DomainName;         /* 8 Bytes */
@@ -161,7 +162,7 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     uint32_t PayloadOffset;
 
     NTLMNegotiateMessage()
-        : NTLMMessage(NtlmNegotiate)
+        : message(NtlmNegotiate)
         , PayloadOffset(12+4+8+8+8)
     {
     }
@@ -171,7 +172,7 @@ struct NTLMNegotiateMessage : public NTLMMessage {
         if (this->version.ignore_version) {
             currentOffset -= 8;
         }
-        NTLMMessage::emit(stream);
+        this->message.emit(stream);
         this->negoFlags.emit(stream);
         currentOffset += this->DomainName.emit(stream, currentOffset);
         currentOffset += this->Workstation.emit(stream, currentOffset);
@@ -186,9 +187,9 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     void recv(InStream & stream) {
         uint8_t const * pBegin = stream.get_current();
         bool res;
-        res = NTLMMessage::recv(stream);
+        res = this->message.recv(stream);
         if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->message.msgType);
         }
         this->negoFlags.recv(stream);
         this->DomainName.recv(stream);

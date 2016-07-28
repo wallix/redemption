@@ -73,29 +73,33 @@ public:
     virtual wait_obj& get_event() { return this->event; }
 
     // TODO RZ : Move these methods in OrderCaps class, give more generic access to front order caps?
-    virtual uint8_t get_order_cap(int idx) const { return 0xFF; }
+    virtual uint8_t get_order_cap(int idx) const { (void)idx; return 0xFF; }
     virtual uint16_t get_order_caps_ex_flags() const { return 0xFFFF; }
 
     ////////////////////////////////
     // Used by transparent proxy.
 
-    virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size) {}
-    virtual void send_fastpath_data(InStream & data) {}
-    virtual bool retrieve_client_capability_set(Capability & caps) { return true; }
+    // TODO uint16_t -> CHannelId ; (data + size) -> array_view
+    virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size)
+    { (void)channelId; (void)data; (void)size; }
+    virtual void send_fastpath_data(InStream &) {}
+    virtual bool retrieve_client_capability_set(Capability &) { return true; }
 
-    virtual void set_keyboard_indicators(uint16_t LedFlags) {}
+    virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
 
     ////////////////////////////////
     // Session Probe.
 
-    virtual void session_probe_started(bool started) {}
-    virtual void set_keylayout(int LCID) {}
-    virtual void set_focus_on_password_textbox(bool set) {}
-    virtual void set_consent_ui_visible(bool set) {}
-    virtual void session_update(array_view_const_char message) {}
+    virtual void session_probe_started(bool) {}
+    virtual void set_keylayout(int LCID) { (void)LCID; }
+    virtual void set_focus_on_password_textbox(bool) {}
+    virtual void set_consent_ui_visible(bool) {}
+    virtual void session_update(array_view_const_char message) { (void)message; }
 
     virtual bool disable_input_event_and_graphics_update(
             bool disable_input_event, bool disable_graphics_update) {
+        (void)disable_input_event;
+        (void)disable_graphics_update;
         return false;
     }
 

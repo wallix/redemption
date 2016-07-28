@@ -75,7 +75,7 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
     return(0);
 }
 
-int main(int argc, char **argv)
+int main()
 {
     SSL_library_init();
     SSL_load_error_strings();

@@ -495,7 +495,19 @@ protected:
 
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size) const
     {
-        const uint8_t Bpp = nbbytes(this->bpp());
+        (void)src_cy;
+        switch (this->bpp()) {
+            case 8 :return this->decompress_(std::integral_constant<uint8_t, nbbytes(8)>{}, input, src_cx, size);
+            case 15:return this->decompress_(std::integral_constant<uint8_t, nbbytes(15)>{}, input, src_cx, size);
+            case 16:return this->decompress_(std::integral_constant<uint8_t, nbbytes(16)>{}, input, src_cx, size);
+            default:return this->decompress_(std::integral_constant<uint8_t, nbbytes(24)>{}, input, src_cx, size);
+        }
+    }
+
+private:
+    template<class TBpp>
+    void decompress_(TBpp Bpp, const uint8_t* input, uint16_t src_cx, size_t size) const
+    {
         const uint16_t dst_cx = this->cx();
         uint8_t* pmin = this->data_bitmap->get();
         uint8_t* pmax = pmin + this->bmp_size();
@@ -1006,8 +1018,10 @@ protected:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
-        // TODO not used alloca !!!
-        uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
+        struct Mem {
+            void * p; ~Mem() { aux_::bitmap_data_allocator.dealloc(p); }
+        } mem { aux_::bitmap_data_allocator.alloc(color_plane_size * 3) };
+        uint8_t * mem_color   = static_cast<uint8_t *>(mem.p);
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
         uint8_t * green_plane = mem_color + color_plane_size * 1;
         uint8_t * blue_plane  = mem_color + color_plane_size * 2;
@@ -1223,6 +1237,18 @@ public:
             return this->compress60(outbuffer);
         }
 
+        switch (this->bpp()) {
+            case 8 : return this->compress_(std::integral_constant<uint8_t, nbbytes(8)>{}, outbuffer);
+            case 15: return this->compress_(std::integral_constant<uint8_t, nbbytes(15)>{}, outbuffer);
+            case 16: return this->compress_(std::integral_constant<uint8_t, nbbytes(16)>{}, outbuffer);
+            default: return this->compress_(std::integral_constant<uint8_t, nbbytes(24)>{}, outbuffer);
+        }
+    }
+
+private:
+    template<class TBpp>
+    void compress_(TBpp Bpp, OutStream & outbuffer) const
+    {
         struct RLE_OutStream {
             OutStream & stream;
             explicit RLE_OutStream(OutStream & outbuffer)
@@ -1336,7 +1362,7 @@ public:
                 this->out_count(in_count, 0x01);
             }
 
-            void out_mix_count_set(const int in_count, const uint8_t Bpp, unsigned new_foreground)
+            void out_mix_count_set(const int in_count, const TBpp Bpp, unsigned new_foreground)
             {
                 const uint8_t mask = 0x06;
                 if (in_count < 16) {
@@ -1468,7 +1494,7 @@ public:
                 }
             }
 
-            void out_fom_sequence_set(const uint8_t Bpp, const int count,
+            void out_fom_sequence_set(const TBpp Bpp, const int count,
                                       const unsigned foreground, const uint8_t * masks) {
                 this->out_fom_count_set(count);
                 this->stream.out_bytes_le(Bpp, foreground);
@@ -1499,7 +1525,7 @@ public:
             // |                          | little-endian format).                     |
             // +--------------------------+--------------------------------------------+
 
-            void out_color_sequence(const uint8_t Bpp, const int count, const uint32_t color)
+            void out_color_sequence(const TBpp Bpp, const int count, const uint32_t color)
             {
                 this->out_color_count(count);
                 this->stream.out_bytes_le(Bpp, color);
@@ -1537,7 +1563,7 @@ public:
             // |                             | format).                                |
             // +-----------------------------+-----------------------------------------+
 
-            void out_copy_sequence(const uint8_t Bpp, const int count, const uint8_t * data)
+            void out_copy_sequence(const TBpp Bpp, const int count, const uint8_t * data)
             {
                 this->out_copy_count(count);
                 this->stream.out_copy_bytes(data, count * Bpp);
@@ -1574,7 +1600,7 @@ public:
             // |                             | format).                                |
             // +-----------------------------+-----------------------------------------+
 
-            void out_bicolor_sequence(const uint8_t Bpp, const int count,
+            void out_bicolor_sequence(const TBpp Bpp, const int count,
                                       const unsigned color1, const unsigned color2)
             {
                 this->out_bicolor_count(count);
@@ -1601,7 +1627,6 @@ public:
 
         uint8_t * tmp_data_compressed = out.stream.get_current();
 
-        const uint8_t Bpp = nbbytes(this->bpp());
         const uint8_t * pmin = this->data_bitmap->get();
         const uint8_t * p = pmin;
 
@@ -1756,6 +1781,7 @@ public:
         this->data_bitmap->copy_compressed_buffer(tmp_data_compressed, out.stream.get_current() - tmp_data_compressed);
     }
 
+public:
     static void get_run(const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint32_t & run_length,
         uint32_t & raw_bytes)
     {
@@ -1930,7 +1956,7 @@ public:
         //LOG(LOG_INFO, "compress_color_plane: exit");
     }
 
-protected:
+private:
     void compress60(OutStream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
@@ -1943,8 +1969,10 @@ protected:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
-        // TODO not used alloca !!!
-        uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
+        struct Mem {
+            void * p; ~Mem() { aux_::bitmap_data_allocator.dealloc(p); }
+        } mem { aux_::bitmap_data_allocator.alloc(color_plane_size * 3) };
+        uint8_t * mem_color   = static_cast<uint8_t *>(mem.p);
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
         uint8_t * green_plane = mem_color + color_plane_size * 1;
         uint8_t * blue_plane  = mem_color + color_plane_size * 2;
@@ -2014,65 +2042,38 @@ public:
         if (out_bpp != bmp.bpp()) {
             this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
 
-            uint8_t * dest = this->data_bitmap->get();
-            const uint8_t * src = bmp.data_bitmap->get();
-            const uint8_t src_nbbytes = nbbytes(bmp.bpp());
-            const uint8_t Bpp = nbbytes(out_bpp);
+            auto buf2col_1B = [ ](uint8_t const * p) -> BGRColor { return p[0]; };
+            auto buf2col_2B = [=](uint8_t const * p) -> BGRColor { return buf2col_1B(p) | (p[1] << 8); };
+            auto buf2col_3B = [=](uint8_t const * p) -> BGRColor { return buf2col_2B(p) | (p[2] << 16); };
 
-            for (size_t y = 0; y < bmp.cy() ; y++) {
-                for (size_t x = 0; x < bmp.cx() ; x++) {
-                    uint32_t pixel = in_uint32_from_nb_bytes_le(src_nbbytes, src);
-
-                    pixel = color_decode(pixel, bmp.bpp(), bmp.palette());
-                    if (out_bpp != 24){
-                        pixel = RGBtoBGR(pixel);
-                    }
-                    pixel = color_encode(pixel, out_bpp);
-
-                    out_bytes_le(dest, Bpp, pixel);
-                    src += src_nbbytes;
-                    dest += Bpp;
-                }
-                src += bmp.line_size() - bmp.cx() * src_nbbytes;
-                dest += this->line_size() - bmp.cx() * Bpp;
-            }
-
-            if (out_bpp == 8){
-                this->data_bitmap->palette() = BGRPalette::classic_332();
-/*
-            auto buf2col_1B = [](uint8_t const * p) -> BGRColor { return p[0]; };
-            auto buf2col_2B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8); };
-            auto buf2col_3B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8) | (p[2] << 16); };
-            auto buf2col_4B = [](uint8_t const * p) -> BGRColor { return p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24); };
-
-            auto col2buf_1B = [](BGRColor c, uint8_t * p) { p[0] = c; };
-            auto col2buf_2B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; };
-            auto col2buf_3B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; p[2] = c >> 16; };
-            auto col2buf_4B = [](BGRColor c, uint8_t * p) { p[0] = c; p[1] = c >> 8; p[2] = c >> 16; p[3] = c >> 24; };
+            auto col2buf_1B = [ ](BGRColor c, uint8_t * p) { p[0] = c; };
+            auto col2buf_2B = [=](BGRColor c, uint8_t * p) { col2buf_1B(c, p); p[1] = c >> 8; };
+            auto col2buf_3B = [=](BGRColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c >> 16; };
 
             using namespace shortcut_encode;
             using namespace shortcut_decode_with_palette;
 
-            switch (bmp.bpp() * 5 + out_bpp){
-                case 8*5+15: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
-                case 8*5+16: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
-                case 8*5+24: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
-                case 15*5+8: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_1B, enc8());
-                    this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
-                case 15*5+16: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_2B, enc16()); break;
-                case 15*5+24: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_3B, enc24()); break;
-                case 16*5+8: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_1B, enc8());
-                    this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
-                case 16*5+15: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_2B, enc15()); break;
-                case 16*5+24: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_3B, enc24()); break;
-                case 16*5+32: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_4B, enc24()); break;
-                case 24*5+8: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_1B, enc8());
-                    this->data_bitmap->palette() = BGRPalette::classic_332_rgb(); break;
-                case 24*5+15: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc15()); break;
-                case 24*5+16: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc16()); break;
-                default: assert(!"unknown bpp");*/
+            switch ((bmp.bpp() << 8) + out_bpp) {
+                case  (8<<8)+15: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
+                case  (8<<8)+16: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
+                case  (8<<8)+24: this->bpp2bpp(bmp, buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
 
+                case (15<<8)+8 : this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_1B, enc8()); break;
+                case (15<<8)+16: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_2B, enc16()); break;
+                case (15<<8)+24: this->bpp2bpp(bmp, buf2col_2B, dec15(), col2buf_3B, enc24()); break;
 
+                case (16<<8)+8 : this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_1B, enc8()); break;
+                case (16<<8)+15: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_2B, enc15()); break;
+                case (16<<8)+24: this->bpp2bpp(bmp, buf2col_2B, dec16(), col2buf_3B, enc24()); break;
+
+                case (24<<8)+8 : this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_1B, enc8()); break;
+                case (24<<8)+15: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc15()); break;
+                case (24<<8)+16: this->bpp2bpp(bmp, buf2col_3B, dec24(), col2buf_2B, enc16()); break;
+                default: assert(!"unknown bpp");
+            }
+
+            if (out_bpp == 8) {
+                this->data_bitmap->palette() = BGRPalette::classic_332();
             }
         }
         else {

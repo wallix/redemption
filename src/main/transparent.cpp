@@ -182,7 +182,8 @@ int main(int argc, char * argv[]) {
                                , ini.get<cfg::debug::front>(), nullptr);
     wait_obj front_event;
 
-    LCGRandom gen(0);
+    UdevRandom gen;
+    TimeSystem timeobj;
 
     CryptoContext cctx(gen, ini);
 
@@ -253,7 +254,7 @@ int main(int argc, char * argv[]) {
                     persistent_key_list_filename.c_str());
             }
 
-            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, {}, ini.get<cfg::debug::mod_rdp>());
+            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, {});
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
                                      , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
 
@@ -293,7 +294,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        gen, mod_rdp_params);
+                        gen, timeobj, mod_rdp_params);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 

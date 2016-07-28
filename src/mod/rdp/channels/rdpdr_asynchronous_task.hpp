@@ -201,7 +201,7 @@ public:
         wait_object.set(1000);  // 1 ms
     }
 
-    bool run(const wait_obj & wait_object) override {
+    bool run(const wait_obj &) override {
         if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             this->to_server_sender(this->data_length, this->flags, this->data.get(), this->data_length);
 
@@ -268,7 +268,7 @@ public:
         wait_object.set(1000);  // 1 ms
     }
 
-    bool run(const wait_obj & wait_object) override {
+    bool run(const wait_obj &) override {
         REDASSERT(this->chunked_data_length <=
             CHANNELS::CHANNEL_CHUNK_LENGTH);
 

@@ -26,7 +26,7 @@
 
 #include "utils/log.hpp"
 
-class Krb5Creds {
+class Krb5Creds final {
 public:
     krb5_context ctx;
 
@@ -38,7 +38,7 @@ public:
         }
     }
 
-    virtual ~Krb5Creds() {
+    ~Krb5Creds() {
         krb5_free_context(this->ctx);
     }
 

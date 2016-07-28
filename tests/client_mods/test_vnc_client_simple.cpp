@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 // Socket VNC Target (3) : closing connection
     };
 
-    TestTransport t("test_vnc_client_simple", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
     const bool is_socket_transport = false;
 
     // To always get the same client random, in tests

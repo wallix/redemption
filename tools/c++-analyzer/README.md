@@ -12,7 +12,7 @@ Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_
 
 - `cppcheck [cppcheck-args]`: run `cppcheck` on `main/*`.
 - `cppcheck-full [cppcheck-args]`: run `cppcheck`.
-- `scan-build`: run `scan-build` on each executable.
+- `scan-build [-h | jamdir [targers pattern-filter-cmd]]]`: run `scan-build` on each executable.
 - `unused_files`: show unesed files (files without `#include`).
 - `todo_extractor files...`: extract comment with BUG, ALERT, ATTENTION, DANGER, HACK, SECURITYFIXME, DEPRECATED, TASK, TODO, TBD, WARNING, CAUTION, NOTE, NOTICE, TEST, TESTING, PERFORMANCE, PERF
 
@@ -28,7 +28,7 @@ Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_
 
 - Add the ligne below at the end of your '.bashrc'.
 
-alias bjam="ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=/home/rzhou/dev/wallix-redemption/tools/c++-analyzer/suppr-leak-asan.txt bjam"
+alias bjam="ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=./tools/c++-analyzer/suppr-leak-asan.txt bjam"
 
 # UBSan
 

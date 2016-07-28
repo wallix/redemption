@@ -669,6 +669,11 @@ public:
         const Rect & rect, const uint8_t * brush_data, int8_t org_x, int8_t org_y,
         const color_t back_color, const color_t fore_color)
     {
+        // TODO org_x is not used
+        (void)org_x;
+        // TODO org_y is not used
+        (void)org_y;
+
         P const base = this->first_pixel(rect);
         P       p    = base;
 
@@ -731,7 +736,7 @@ public:
     }
 
 private:
-    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc op)
+    void scr_blt_op_overlap(Rect const & rect_dest, size_t srcx, size_t srcy, Ops::CopySrc)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [](P dest, cP src, size_t n) {
             memmove(dest, src, n);
@@ -2303,6 +2308,9 @@ public:
     // nor horizontal nor vertical, use Bresenham
     void diagonal_line(int mix_mode, int x, int y, int endx, int endy, uint8_t rop, Color color)
     {
+        // TODO mix_mode is not used
+        (void)mix_mode;
+
         if (endx <= x) {
             std::swap(x, endx);
             std::swap(y, endy);
@@ -2323,6 +2331,9 @@ public:
 
     void vertical_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endy, uint8_t rop, Color color)
     {
+        // TODO mix_mode is not used
+        (void)mix_mode;
+
         if (endy < y) {
             std::swap(y, endy);
         }
@@ -2342,6 +2353,9 @@ public:
 
     void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color)
     {
+        // TODO mix_mode is not used
+        (void)mix_mode;
+
         if (endx < x) {
             std::swap(x, endx);
         }

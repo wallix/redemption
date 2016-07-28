@@ -94,7 +94,7 @@ enum NtlmMessageType {
     NtlmAuthenticate = 0x00000003
 };
 static const uint8_t NTLM_MESSAGE_SIGNATURE[] = "NTLMSSP\0";
-struct NTLMMessage {
+struct NTLMMessage final {
     uint8_t signature[8];      /* 8 Bytes */
     NtlmMessageType msgType;   /* 4 Bytes */
 
@@ -112,8 +112,6 @@ struct NTLMMessage {
         // signature[6] = 'P';
         // signature[7] = '\0';
     }
-
-    virtual ~NTLMMessage() {}
 
     void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->signature, 8);

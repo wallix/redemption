@@ -33,6 +33,8 @@
 #include "sashimi/pki.hpp"
 #include "sashimi/libcrypto.hpp"
 
+#include "utils/sugar/compiler_attributes.hpp"
+
 #include <gssapi/gssapi.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -978,7 +980,7 @@ struct SshServerSession : public ssh_session_struct
     {
     }
 
-    virtual const char * session_type() { return "Server"; }
+    virtual const char * session_type() override { return "Server"; }
 
     /* auths accepted by server */
     int auth_methods;
@@ -1836,7 +1838,7 @@ struct SshServerSession : public ssh_session_struct
                 }
 
                 this->packet_state = PACKET_STATE_SIZEREAD;
-                /* FALL TROUGH */
+                CPP_FALLTHROUGH;
             case PACKET_STATE_SIZEREAD:
                 syslog(LOG_INFO, "%s --- [F]", __PRETTY_FUNCTION__);
 
@@ -4447,7 +4449,7 @@ struct SshServerSession : public ssh_session_struct
                 j+= 3;
             }
             hexa[j>0?(j-1):0] = 0;
-            delete hexa;
+            delete[] hexa;
         }
 
         for (i=0 ; i< n_oid ; ++i){
@@ -4782,7 +4784,7 @@ struct SshServerSession : public ssh_session_struct
             }
             hexa[j>0?(j-1):0] = 0;
             syslog(LOG_INFO, "GSSAPI: sending token %s",hexa);
-            delete hexa;
+            delete[] hexa;
 
             SSHString token(static_cast<uint32_t>(output_token.length));
             memcpy(token.data.get(), output_token.value, output_token.length);
@@ -5357,7 +5359,7 @@ struct SshServerSession : public ssh_session_struct
         }
         hexa[j>0?(j-1):0] = 0;
         syslog(LOG_INFO, "GSSAPI Token : %s",hexa);
-        delete hexa;
+        delete[] hexa;
 
         input_token.length = token.size;
         input_token.value = token.data.get();
@@ -5403,7 +5405,7 @@ struct SshServerSession : public ssh_session_struct
             }
             hexa[j>0?(j-1):0] = 0;
             syslog(LOG_INFO, "GSSAPI: sending token %s",hexa);
-            delete hexa;
+            delete[] hexa;
 
             SSHString token2(static_cast<uint32_t>(output_token.length));
             memcpy(token2.data.get(), output_token.value, output_token.length);
@@ -5493,6 +5495,8 @@ struct SshServerSession : public ssh_session_struct
 
     void handle_ssh_packet_unimplemented_server(ssh_buffer_struct* packet, error_struct & error)
     {
+        (void)packet;
+        (void)error;
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         uint32_t seq = this->in_buffer->in_uint32_be();
         syslog(LOG_ERR, "Received SSH_MSG_UNIMPLEMENTED (sequence number %d)", seq);
@@ -5516,6 +5520,7 @@ struct SshServerSession : public ssh_session_struct
 
     int handle_ssh_packet_service_request_server(ssh_buffer_struct* packet, error_struct & error)
     {
+        (void)error;
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         // SSH_REQUEST_SERVICE
         char * service = packet->in_strdup_cstr();
@@ -6782,6 +6787,7 @@ struct SshServerSession : public ssh_session_struct
 
     void handle_shell_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
+        (void)packet;
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         syslog(LOG_INFO,
           "SSH_MSG_CHANNEL_REQUEST '%s' <> for channel %s wr=%d",
@@ -6872,6 +6878,7 @@ struct SshServerSession : public ssh_session_struct
 
     void handle_x11_req_request_server(ssh_channel channel, int want_reply, ssh_buffer_struct *packet)
     {
+        (void)want_reply;
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
         syslog(LOG_INFO,
           "Received a %s channel_request for channel (%d:%d) (want_reply=%hhd)",
@@ -6952,7 +6959,7 @@ struct SshClientSession : public ssh_session_struct
     {
     }
 
-    virtual const char * session_type() { return "Client"; }
+    virtual const char * session_type() override { return "Client"; }
 
     int ssh_channel_is_open_client(ssh_channel_struct * channel) {
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
@@ -6993,6 +7000,7 @@ struct SshClientSession : public ssh_session_struct
     // (and also servers are not supposed to work if username change)
     int ssh_userauth_none_client(const char *username, error_struct * error)
     {
+        (void)error;
         syslog(LOG_INFO, "%s ---", __FUNCTION__);
 
         this->out_buffer->out_uint8(SSH_MSG_SERVICE_REQUEST);
@@ -7030,14 +7038,14 @@ struct SshClientSession : public ssh_session_struct
                 syslog(LOG_INFO, "%s --- [D]", __FUNCTION__);
             }
 
-            int trigger()
+            int trigger() override
             {
                 syslog(LOG_INFO, "%s --- [E]", __FUNCTION__);
                 syslog(LOG_INFO, "Event_userauth_none_status_client trigger");
                 return this->client_session->auth_state != SSH_AUTH_STATE_NONE;
             }
 
-            void action()
+            void action() override
             {
                 syslog(LOG_INFO, "%s --- [F]", __FUNCTION__);
 

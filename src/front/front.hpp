@@ -4169,8 +4169,8 @@ protected:
         this->orders.graphics_update_pdu().draw(cmd);
     }
 
-    void draw_impl(RDPBrushCache const & cmd) {
-        // TODO
+    void draw_impl(RDPBrushCache const &) {
+        // TODO unimplemented
     }
 
 private:

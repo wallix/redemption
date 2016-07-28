@@ -213,8 +213,7 @@ public:
     //==============================================================================================================
     : InternalMod(front, front_width, front_height, font, theme)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
-                "Redemption " VERSION,
-                0, nullptr, this->theme(),
+                "Redemption " VERSION, this->theme(),
                 tr("authentication_required"),
                 tr("password"),
                 this->font())
@@ -617,6 +616,7 @@ protected:
 
 public:
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        (void)now;
         if (this->verbose & 2) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -2531,13 +2531,11 @@ private:
                             );
                     }
                     else {
-                        bool LfToCrLf = true;
                         utf16_data_length = Latin1toUTF16(
                                 this->to_rdp_clipboard_data.get_data(),
                                 this->to_rdp_clipboard_data.get_offset(),
                                 out_data_stream.get_data(),
-                                out_data_stream.get_capacity(),
-                                LfToCrLf
+                                out_data_stream.get_capacity()
                             );
                     }
 
@@ -2718,6 +2716,7 @@ public:
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
+        (void)sender;
         switch (event) {
         case NOTIFY_SUBMIT:
             this->screen.clear();

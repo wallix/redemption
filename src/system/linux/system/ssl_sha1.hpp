@@ -56,6 +56,7 @@ public:
 
     void final(uint8_t * out_data, size_t out_data_size)
     {
+        (void)out_data_size;
         assert(DIGEST_LENGTH == out_data_size);
         int res = 0;
         res = SHA1_Final(out_data, &this->sha1);

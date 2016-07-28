@@ -35,6 +35,7 @@ static inline size_t mod_exp(
     const uint8_t * modulus, size_t modulus_size,
     const uint8_t * exponent, size_t exponent_size
 ) {
+    (void)out_len;
     assert(out_len >= modulus_size);
 
     struct Bignum_base

@@ -347,7 +347,7 @@ public:
     }
 
 protected:
-    void write_shadow_keys(uint32_t k) {
+    void write_shadow_keys() {
         if (!this->kbd_stream.has_room(1)) {
             this->inherit_flush();
         }
@@ -403,7 +403,7 @@ public:
 
     bool kbd_input(const timeval& /*now*/, uint32_t keys) override {
         if (this->keyboard_input_mask_enabled) {
-            this->write_shadow_keys(keys);
+            this->write_shadow_keys();
         }
         else {
             this->write_keys(keys);
@@ -424,6 +424,9 @@ private:
     std::chrono::microseconds do_snapshot(
         const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
     ) override {
+        (void)cursor_x;
+        (void)cursor_y;
+        (void)ignore_frame_in_timeval;
         std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
         std::chrono::microseconds const diff {difftimeval(now, this->last_snapshot)};
 
@@ -467,7 +470,7 @@ public:
     bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
         if (this->keyboard_input_mask_enabled) {
             if (this->is_probe_enabled_session) {
-                this->write_shadow_keys(uchar);
+                this->write_shadow_keys();
             }
         }
         else {

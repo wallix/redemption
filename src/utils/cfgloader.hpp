@@ -36,7 +36,7 @@ struct ConfigurationHolder : private noncopyable
 
 
 struct ConfigurationLoader {
-    explicit ConfigurationLoader(ConfigurationHolder & configuration_holder) {
+    explicit ConfigurationLoader(ConfigurationHolder &) {
     }
 
     ConfigurationLoader(ConfigurationHolder & configuration_holder, const char * filename) {

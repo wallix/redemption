@@ -54,19 +54,11 @@ static const uint8_t client_seal_magic[] =
 static const uint8_t server_seal_magic[] =
     "session key to server-to-client sealing key magic constant";
 
-struct NTLMContext {
+struct NTLMContext
+{
+    TimeObj & timeobj;
+    Random & rand;
 
-    UdevRandom randgen;
-    LCGRandom lcgrand;
-
-    TimeSystem timesys;
-    LCGTime lcgtime;
-
-    TimeObj * timeobj;
-    Random * rand;
-
-    // TODO Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static
-    bool hardcoded_tests;
     bool server;
     bool NTLMv2;
     bool UseMIC;
@@ -127,14 +119,9 @@ struct NTLMContext {
 
     uint32_t verbose;
 
-    explicit NTLMContext(Random & rand)
-        : randgen()
-        , lcgrand(0)
-        , timesys()
-        , lcgtime()
-        , timeobj(&this->timesys)
-        , rand(&this->randgen)
-        , hardcoded_tests(false)
+    explicit NTLMContext(Random & rand, TimeObj & timeobj)
+        : timeobj(timeobj)
+        , rand(rand)
         , server(false)
         , NTLMv2(true)
         , UseMIC(false)
@@ -207,20 +194,8 @@ struct NTLMContext {
         }
     }
 
-    virtual ~NTLMContext() {
-    }
-
-    void set_tests() {
-        this->hardcoded_tests = true;
-        this->timeobj = &(this->lcgtime);
-        this->rand = &(this->lcgrand);
-    }
-
-    void unset_tests() {
-        this->hardcoded_tests = false;
-        this->timeobj = &(this->timesys);
-        this->rand = &(this->randgen);
-    }
+    NTLMContext(NTLMContext const &) = delete;
+    NTLMContext operator = (NTLMContext const &) = delete;
 
     /**
      * Generate timestamp for AUTHENTICATE_MESSAGE.
@@ -236,7 +211,7 @@ struct NTLMContext {
         if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0)
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
         else {
-            timeval tv = this->timeobj->get_time();
+            timeval tv = this->timeobj.get_time();
             struct {
                 uint32_t low;
                 uint32_t high;
@@ -257,7 +232,7 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Generate Client Challenge");
         }
-        this->rand->random(this->ClientChallenge, 8);
+        this->rand.random(this->ClientChallenge, 8);
 
     }
     /**
@@ -269,7 +244,7 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Generate Server Challenge");
         }
-        this->rand->random(this->ServerChallenge, 8);
+        this->rand.random(this->ServerChallenge, 8);
     }
     // client method
     void ntlm_get_server_challenge() {
@@ -285,7 +260,7 @@ struct NTLMContext {
     //    if (this->verbose & 0x400) {
     //        LOG(LOG_INFO, "NTLMContext Generate Random Session Key");
     //    }
-    //    this->rand->random(this->RandomSessionKey, 16);
+    //    this->rand.random(this->RandomSessionKey, 16);
     //}
 
     // client method ??
@@ -293,7 +268,7 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Generate Exported Session Key");
         }
-        this->rand->random(this->ExportedSessionKey, 16);
+        this->rand.random(this->ExportedSessionKey, 16);
     }
 
     // client method
@@ -1000,12 +975,6 @@ struct NTLMContext {
         //     this->identity.User.size(),
         //     this->identity.Domain.size(),
         //     this->identity.Password.size());
-
-        // Hardcoded Tests
-        if (this->hardcoded_tests) {
-            uint8_t pass[] = "Pénélope";
-            this->identity.SetPasswordFromUtf8(pass);
-        }
 
         if (this->identity.Password.size() > 0) {
             // password is available

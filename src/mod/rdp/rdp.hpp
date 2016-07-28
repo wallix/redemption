@@ -628,6 +628,7 @@ public:
            , const ClientInfo & info
            , RedirectionInfo & redir_info
            , Random & gen
+           , TimeObj & timeobj
            , const ModRDPParams & mod_rdp_params
            )
         : front_width(info.width - (info.width % 4))
@@ -665,7 +666,7 @@ public:
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
-              , mod_rdp_params.enable_krb, gen, mod_rdp_params.verbose)
+              , mod_rdp_params.enable_krb, gen, timeobj, mod_rdp_params.verbose)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -1443,8 +1444,7 @@ public:
         }
     }   // configure_proxy_managed_drives
 
-    void rdp_input_scancode( long param1, long param2, long device_flags, long time
-                                     , Keymap2 * keymap) override {
+    void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
@@ -1456,14 +1456,15 @@ public:
         }
     }
 
-    void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
-                                        , int16_t param2) override {
+    void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+        (void)time;
+        (void)param2;
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
         }
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
         }
@@ -1554,7 +1555,7 @@ public:
     }
 
 private:
-    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
+    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef *,
                                      InStream & chunk, size_t length, uint32_t flags) {
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
@@ -2692,7 +2693,7 @@ public:
                             LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
                         }
 
-                        this->send_client_info_pdu(this->userid, this->password, now);
+                        this->send_client_info_pdu(now);
     #ifndef __EMSCRIPTEN__
                         this->state = MOD_RDP_GET_LICENSE;
     #else
@@ -2749,7 +2750,7 @@ public:
                             );
                         }
 
-                        this->send_client_info_pdu(this->userid, this->password, now);
+                        this->send_client_info_pdu(now);
 
                         this->num_channels_JS--;
                         this->index_JS++;
@@ -3528,7 +3529,7 @@ public:
                                                     break;
                                                 case PDUTYPE2_POINTER:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
-                                                    this->process_pointer_pdu(sdata.payload, this);
+                                                    this->process_pointer_pdu(sdata.payload);
                                                     // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
@@ -4155,7 +4156,7 @@ public:
         }
     }   // send_confirm_active
 
-    void process_pointer_pdu(InStream & stream, mod_api * mod)
+    void process_pointer_pdu(InStream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
@@ -5449,6 +5450,8 @@ public:
 
     // TODO CGR: this can probably be unified with process_confirm_active in front
     void process_server_caps(InStream & stream, uint16_t len) {
+        // TODO check stream consumed and len
+        (void)len;
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
@@ -5831,6 +5834,7 @@ public:
     }
 
     void send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2) {
+        (void)time;
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
         }
@@ -6154,7 +6158,7 @@ public:
         }
     }
 
-    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask, size_t mask_size) {
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
@@ -6184,7 +6188,7 @@ public:
         }
     }
 
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len) {
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
@@ -6345,14 +6349,14 @@ public:
             }
 
             // TODO move that into cursor
-            this->to_regular_pointer(data_data, dlen, 1, cursor.data, sizeof(cursor.data));
-            this->to_regular_mask(mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
+            this->to_regular_pointer(data_data, dlen, 1, cursor.data);
+            this->to_regular_mask(mask_data, mlen, 1, cursor.mask);
         }
         else {
             // TODO move that into cursor
-            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data, sizeof(cursor.data));
+            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data);
             stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
 
@@ -6560,14 +6564,14 @@ private:
         }
     }   // process_bitmap_updates
 
-    void send_client_info_pdu(int userid, const char * password, const time_t & now) {
+    void send_client_info_pdu(const time_t & now) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
                              , this->username
-                             , password
+                             , this->password
                              , this->program
                              , this->directory
                              , this->performanceFlags
@@ -6576,7 +6580,7 @@ private:
         infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
+            [this, &infoPacket](StreamSize<1024>, OutStream & stream) {
                 if (bool(this->rdp_compression)) {
                     infoPacket.flags |= INFO_COMPRESSION;
                     infoPacket.flags &= ~CompressionTypeMask;
@@ -6674,8 +6678,12 @@ private:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void process_auth_event(const CHANNELS::ChannelDef & auth_channel,
-            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+    void process_auth_event(
+        const CHANNELS::ChannelDef & auth_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)length;
+        (void)chunk_size;
         REDASSERT(stream.in_remain() == chunk_size);
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
@@ -6690,8 +6698,11 @@ private:
         }
     }
 
-    void process_session_probe_event(const CHANNELS::ChannelDef & session_probe_channel,
-            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+    void process_session_probe_event(
+        const CHANNELS::ChannelDef & session_probe_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)session_probe_channel;
         BaseVirtualChannel& channel = this->get_session_probe_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
@@ -6703,8 +6714,10 @@ private:
     }
 
     void process_cliprdr_event(
-            const CHANNELS::ChannelDef & cliprdr_channel, InStream & stream,
-            uint32_t length, uint32_t flags, size_t chunk_size) {
+        const CHANNELS::ChannelDef & cliprdr_channel, InStream & stream,
+        uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)cliprdr_channel;
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
@@ -6738,7 +6751,7 @@ private:
         );
     }
 
-    void process_rdpdr_event(const CHANNELS::ChannelDef & rdpdr_channel,
+    void process_rdpdr_event(const CHANNELS::ChannelDef &,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {

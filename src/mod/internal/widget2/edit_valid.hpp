@@ -40,7 +40,8 @@ public:
                     Widget2 & parent, NotifyApi* notifier, const char * text,
                     int group_id, int fgcolor, int bgcolor,
                     int focus_color, Font const & font, std::size_t edit_position = -1,
-                    int xtext = 0, int ytext = 0, bool pass = false,
+                    // TODO re-enable
+                    int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false,
                     const char * title = nullptr)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
@@ -171,6 +172,8 @@ public:
     }
 
     Widget2 * widget_at_pos(int16_t x, int16_t y) override {
+        // TODO y is not used: suspicious
+        (void)y;
         Widget2 * w = this->editbox;
         if (x > this->editbox->lx()) {
             w = &this->button;
