@@ -1018,8 +1018,10 @@ protected:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
-        // TODO not used alloca !!!
-        uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
+        struct Mem {
+            void * p; ~Mem() { aux_::bitmap_data_allocator.dealloc(p); }
+        } mem { aux_::bitmap_data_allocator.alloc(color_plane_size * 3) };
+        uint8_t * mem_color   = static_cast<uint8_t *>(mem.p);
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
         uint8_t * green_plane = mem_color + color_plane_size * 1;
         uint8_t * blue_plane  = mem_color + color_plane_size * 2;
@@ -1967,8 +1969,10 @@ private:
 
         const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
 
-        // TODO not used alloca !!!
-        uint8_t * mem_color   = static_cast<uint8_t *>(alloca(color_plane_size * 3));
+        struct Mem {
+            void * p; ~Mem() { aux_::bitmap_data_allocator.dealloc(p); }
+        } mem { aux_::bitmap_data_allocator.alloc(color_plane_size * 3) };
+        uint8_t * mem_color   = static_cast<uint8_t *>(mem.p);
         uint8_t * red_plane   = mem_color + color_plane_size * 0;
         uint8_t * green_plane = mem_color + color_plane_size * 1;
         uint8_t * blue_plane  = mem_color + color_plane_size * 2;
