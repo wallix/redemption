@@ -1659,6 +1659,10 @@ class Sesman():
             self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(filesystem, used)
         elif reason == u'SESSION_EXCEPTION':
             pass
+        elif reason == u'SESSION_EXCEPTION_NO_RECORD':
+            pass
+        elif reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
+            pass
         elif reason == u'SERVER_REDIRECTION':
             (nlogin, _, nhost) = message.rpartition('@')
             Logger().info("Server Redirection: login='%s', host='%s'" % (nlogin, nhost))
