@@ -268,8 +268,11 @@
 "bogus_sc_net_size = 1\n\n"
 
 "# Needed to get the old behavior of cursor rendering.\n"
+"#   0: More compatible with MSTSC.\n"
+"#   1: The old behavior of cursor rendering.\n"
+"#   2: Depend on platform RDP client.\n"
 "#_advanced\n"
-"bogus_linux_cursor = 0\n\n"
+"bogus_linux_cursor = 2\n\n"
 
 "#_advanced\n"
 "proxy_managed_drives = \n\n"

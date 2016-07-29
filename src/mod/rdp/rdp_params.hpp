@@ -118,7 +118,7 @@ struct ModRDPParams {
     bool server_redirection_support = false;
 
     bool bogus_sc_net_size = true;
-    bool bogus_linux_cursor = true;
+    BogusLinuxCursor bogus_linux_cursor = BogusLinuxCursor::smart;
     bool bogus_refresh_rect = true;
 
     const char * proxy_managed_drives = "";
@@ -247,7 +247,7 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_sc_net_size);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_linux_cursor);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      bogus_linux_cursor);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_refresh_rect);
 

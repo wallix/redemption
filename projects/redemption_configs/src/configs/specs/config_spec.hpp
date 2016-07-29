@@ -227,7 +227,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true), r);
         W.sep();
-        W.member(A, type_<bool>(), "bogus_linux_cursor", desc{"Needed to get the old behavior of cursor rendering."}, set(false));
+        W.member(A, type_<BogusLinuxCursor>(), "bogus_linux_cursor", set(BogusLinuxCursor::smart));
         W.member(A, type_<types::list<std::string>>(), "proxy_managed_drives", r);
         W.sep();
         W.sep();

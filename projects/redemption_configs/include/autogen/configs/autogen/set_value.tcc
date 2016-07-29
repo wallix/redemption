@@ -536,7 +536,7 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::parse_and_log(
                 context, key, 
                 static_cast<cfg::mod_rdp::bogus_linux_cursor&>(this->variables).value,
-                ::configs::spec_type<bool>{},
+                ::configs::spec_type<BogusLinuxCursor>{},
                 av
             );
         }
