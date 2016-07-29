@@ -3341,7 +3341,7 @@ public:
                                             LOG(LOG_ERR, "Rdp::finalization is early");
                                             throw Error(ERR_SEC);
                                         case WAITING_SYNCHRONIZE:
-                                            //std::cout << "WAITING_SYNCHRONIZE" <<  std::endl;
+                                            std::cout << "WAITING_SYNCHRONIZE" <<  std::endl;
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                                             }
@@ -3359,11 +3359,11 @@ public:
                                                     if (this->cs_monitor.monitorCount &&
                                                         (monitor_layout_pdu.get_monitorCount() !=
                                                          this->cs_monitor.monitorCount)) {
-                                                             //std::cout << "loool " << monitor_layout_pdu.get_monitorCount() << std::endl;
+                                                             std::cout << "loool " << monitor_layout_pdu.get_monitorCount() << std::endl;
                                                         LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
                                                         throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
                                                     } else {
-                                                        //std::cout << "it support " << monitor_layout_pdu.get_monitorCount() << std::endl;
+                                                        std::cout << "it support " << monitor_layout_pdu.get_monitorCount() << std::endl;
                                                     }
                                                 }
                                                 else {

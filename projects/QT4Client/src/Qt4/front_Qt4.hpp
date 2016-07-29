@@ -137,6 +137,7 @@ public:
     ClipboardClientChannelDataSender _to_client_sender;
     Qt_ScanCode_KeyMap   _qtRDPKeymap;
     int                  _fps;
+    int                  _monitorCount;
 
 
     Front_Qt_API( bool param1
@@ -149,20 +150,22 @@ public:
     , _callback(nullptr)
     , _qtRDPKeymap()
     , _fps(30)
+    , _monitorCount(GCC::UserData::CSMonitor::MAX_MONITOR_COUNT)
     {
         this->_to_client_sender._front = this;
     }
 
-
+    virtual Screen_Qt * getMainScreen() = 0;
     virtual void connexionPressed() = 0;
     virtual void connexionReleased() = 0;
-    virtual void closeFromScreen() = 0;
+    virtual void closeFromScreen(int screen_index) = 0;
     virtual void RefreshPressed() = 0;
     virtual void RefreshReleased() = 0;
     virtual void CtrlAltDelPressed() = 0;
     virtual void CtrlAltDelReleased() = 0;
     virtual void disconnexionPressed() = 0;
     virtual void disconnexionReleased() = 0;
+    virtual void setMainScreenOnTopRelease() = 0;
     virtual void mousePressEvent(QMouseEvent *e) = 0;
     virtual void mouseReleaseEvent(QMouseEvent *e) = 0;
     virtual void keyPressEvent(QKeyEvent *e) = 0;
@@ -177,7 +180,7 @@ public:
     virtual void writeClientInfo() = 0;
     virtual void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size, bool) = 0;
     virtual void empty_buffer() = 0;
-    virtual bool can_be_start_capture(auth_api * auth) override { return true; }
+    virtual bool can_be_start_capture(auth_api *) override { return true; }
     virtual bool can_be_pause_capture() override { return true; }
     virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
@@ -221,7 +224,7 @@ public:
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
     Form_Qt            * _form;
-    Screen_Qt          * _screen;
+    Screen_Qt          * _screen[GCC::UserData::CSMonitor::MAX_MONITOR_COUNT];
 
     // Connexion socket members
     Connector_Qt       * _connector;
@@ -296,6 +299,8 @@ public:
     void show_in_stream(int flags, InStream & chunk);
 
     void show_out_stream(int flags, OutStream & chunk);
+
+    Screen_Qt * getMainScreen();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -418,6 +423,8 @@ public:
 
     void disconnexionReleased() override;
 
+    void setMainScreenOnTopRelease() override;
+
     void refresh(int x, int y, int w, int h);
 
     void send_rdp_scanCode(int keyCode, int flag);
@@ -426,7 +433,7 @@ public:
 
     void disconnect(std::string) override;
 
-    void closeFromScreen() override;
+    void closeFromScreen(int screen_index) override;
 
     void dropScreen() override;
 
