@@ -64,7 +64,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class T>
-    void write_type_info(type_<bool>, T x)
+    void write_type_info(type_<bool>, T)
     { this->write_comment_line("0 or 1"); }
 
     template<class Int, class T>
@@ -73,7 +73,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
         or
         std::is_integral<Int>::value
     >
-    write_type_info(type_<Int>, T i)
+    write_type_info(type_<Int>, T)
     {
         if (std::is_unsigned<Int>::value || std::is_base_of<types::unsigned_base, Int>::value) {
             this->write_comment_line("min = 0");
@@ -81,20 +81,20 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class Int, long min, long max, class T>
-    void write_type_info(type_<types::range<Int, min, max>>, T i)
+    void write_type_info(type_<types::range<Int, min, max>>, T)
     { this->write_comment_line("min = ", min, ", max = ", max); }
 
 
     template<class T, class Ratio, class U>
-    void write_type_info(type_<std::chrono::duration<T, Ratio>>, U i)
+    void write_type_info(type_<std::chrono::duration<T, Ratio>>, U)
     { this->write_comment_line("min = 0"); }
 
     template<unsigned N, class T>
-    void write_type_info(type_<types::fixed_binary<N>>, T const & x)
+    void write_type_info(type_<types::fixed_binary<N>>, T const &)
     { this->write_comment_line("(hexadecimal string) size = ", N*2); }
 
     template<unsigned N, class T>
-    void write_type_info(type_<types::fixed_string<N>>, T const & x)
+    void write_type_info(type_<types::fixed_string<N>>, T const &)
     {this->write_comment_line("size_max = ", N); }
 
     template<class T>
@@ -103,7 +103,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
 
     template<class T, class E>
     enable_if_enum_t<T>
-    write_type_info(type_<T> t, E const & x)
+    write_type_info(type_<T>, E const & x)
     {
         static_assert(std::is_same<T, E>::value, "");
         apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
@@ -112,7 +112,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class T>
-    void write_enum_info(type_enumeration const & e, T default_value)
+    void write_enum_info(type_enumeration const & e, T /*default_value*/)
     {
         if (e.flag == type_enumeration::flags) {
             this->write_comment_line("(flags) min = 0, max = ", e.max());
@@ -130,7 +130,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class T>
-    void write_enum_info(type_enumeration_set const & e, T default_value)
+    void write_enum_info(type_enumeration_set const & e, T /*default_value*/)
     {
         this->out() << "\"# ";
         for (type_enumeration_set::Value const & v : e.values) {
@@ -193,7 +193,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
 
     template<class T, class E>
     enable_if_enum_t<T>
-    write_type(type_<T> t, E const & x)
+    write_type(type_<T>, E const & x)
     {
         static_assert(std::is_same<T, E>::value, "");
         apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
@@ -216,7 +216,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class T>
-    void write_enum_value(type_enumeration_set const & e, T default_value)
+    void write_enum_value(type_enumeration_set const &, T default_value)
     { this->out() << default_value; }
 };
 
