@@ -1531,6 +1531,16 @@ class Sesman():
                                             update_args["target_account"] = redir_login
                                         self.engine.update_session(physical_target,
                                                                    **update_args)
+                                    elif _reporting_reason == u'SESSION_EXCEPTION':
+                                        Logger().info(u"RDP connection terminated. Reason: Session exception")
+                                        release_reason = u'Session exception: ' + _reporting_message
+                                        self.engine.set_session_status(
+                                            diag=release_reason)
+                                    elif _reporting_reason == u'SESSION_EXCEPTION_NO_RECORD':
+                                        Logger().info(u"RDP connection terminated. Reason: Session exception (no record)")
+                                        release_reason = u'Session exception: ' + _reporting_message
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
                                     elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
                                         Logger().info(u'RDP connection terminated. Reason: Session Probe Keepalive missed')
                                         release_reason = u'Session Probe Keepalive missed'
@@ -1648,6 +1658,10 @@ class Sesman():
 
             self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(filesystem, used)
         elif reason == u'SESSION_EXCEPTION':
+            pass
+        elif reason == u'SESSION_EXCEPTION_NO_RECORD':
+            pass
+        elif reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
             pass
         elif reason == u'SERVER_REDIRECTION':
             (nlogin, _, nhost) = message.rpartition('@')

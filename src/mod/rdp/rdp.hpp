@@ -373,8 +373,9 @@ protected:
     RedirectionInfo & redir_info;
 
     const bool bogus_sc_net_size;
-    const bool bogus_linux_cursor;
     const bool bogus_refresh_rect;
+
+    BogusLinuxCursor bogus_linux_cursor;
 
     std::string real_alternate_shell;
     std::string real_working_dir;
@@ -736,8 +737,8 @@ public:
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
-        , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
+        , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , server_notifier(mod_rdp_params.acl,
@@ -768,7 +769,13 @@ public:
             mod_rdp_params.log();
         }
 
-
+        if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
+            GeneralCaps general_caps;
+            this->front.retrieve_client_capability_set(general_caps);
+            this->bogus_linux_cursor =
+                ((general_caps.os_major == OSMAJORTYPE_UNIX) ?
+                 BogusLinuxCursor::enable : BogusLinuxCursor::disable);
+        }
 
         if (this->enable_session_probe) {
             this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
@@ -3723,7 +3730,12 @@ public:
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
-                    this->acl->report("SESSION_EXCEPTION", message);
+
+                    char const* reason =
+                        ((UP_AND_RUNNING == this->connection_finalization_state) ?
+                         "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
+
+                    this->acl->report(reason, message);
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
@@ -6339,7 +6351,7 @@ public:
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
 
-            if (this->bogus_linux_cursor) {
+            if (this->bogus_linux_cursor == BogusLinuxCursor::enable) {
                 for (unsigned i = 0 ; i < mlen; i++) {
                     uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
                     uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);

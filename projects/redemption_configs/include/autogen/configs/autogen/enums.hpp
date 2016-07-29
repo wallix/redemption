@@ -370,6 +370,25 @@ operator << (std::basic_ostream<Ch, Tr> & os, RdpCompression e)
 { return os << static_cast<unsigned long>(e); }
 
 
+// Needed to get the old behavior of cursor rendering.
+enum class BogusLinuxCursor {
+    // More compatible with MSTSC.
+    disable = 0,
+    // The old behavior of cursor rendering.
+    enable = 1,
+    // Depend on platform RDP client.
+    smart = 2,
+};
+
+inline bool is_valid_enum_value(BogusLinuxCursor e)
+{ return static_cast<unsigned long>(e) < 3; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, BogusLinuxCursor e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth {
     // 8-bit
