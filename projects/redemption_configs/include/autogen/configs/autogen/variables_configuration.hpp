@@ -925,17 +925,16 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{1};
         };
-        // Needed to get the old behavior of cursor rendering.
-        // type: bool
+        // type: BogusLinuxCursor
         struct bogus_linux_cursor {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "mod_rdp"; }
             static constexpr char const * name() { return "bogus_linux_cursor"; }
-            using type = bool;
-            using sesman_and_spec_type = bool;
+            using type = BogusLinuxCursor;
+            using sesman_and_spec_type = BogusLinuxCursor;
             using mapped_type = sesman_and_spec_type;
-            type value{0};
+            type value{static_cast<type>(2)};
         };
         // AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES
         // type: std::string

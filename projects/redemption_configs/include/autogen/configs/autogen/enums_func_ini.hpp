@@ -295,6 +295,22 @@ inline parse_error parse(RdpCompression & x, spec_type<RdpCompression>, array_vi
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (5 - 1)) - 1));
 }
 
+template<> struct zstr_buffer_traits<BogusLinuxCursor> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<BogusLinuxCursor> & buf,
+    cfg_s_type<BogusLinuxCursor>,
+    BogusLinuxCursor x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(BogusLinuxCursor & x, spec_type<BogusLinuxCursor>, array_view_const_char value)
+{
+    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+}
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(
