@@ -285,6 +285,7 @@ public:
 
                 if (!this->disconnection_reconnection_required) {
                     if (this->session_probe_ending_in_progress) {
+                        this->authentifier->disconnect_target();
                         throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
                     }
 
