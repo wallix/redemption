@@ -1547,6 +1547,12 @@ class Sesman():
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_keepalive_missed")})
+                                    elif _reporting_reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block outbound connection')
+                                        release_reason = u'Session Probe failed to block outbound connection'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_outbound_connection_blocking_failed")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break
@@ -1662,6 +1668,8 @@ class Sesman():
         elif reason == u'SESSION_EXCEPTION_NO_RECORD':
             pass
         elif reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
+            pass
+        elif reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
             pass
         elif reason == u'SERVER_REDIRECTION':
             (nlogin, _, nhost) = message.rpartition('@')

@@ -82,6 +82,7 @@ public:
     QCheckBox            _perfCheckBox;
     QComboBox            _languageComboBox;
     QComboBox            _fpsComboBox;
+    QComboBox            _monitorCountComboBox;
     QFormLayout        * _layoutView;
     QFormLayout        * _layoutKeyboard;
     QLabel               _labelBpp;
@@ -151,7 +152,7 @@ public:
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
         this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(new QLabel("", this));
+        //this->_layoutView->addRow(QLabel ("", this););
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
 
         this->_resolutionComboBox.addItem( "640 * 480", 640);
@@ -163,7 +164,7 @@ public:
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(new QLabel("", this));
+        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
 
         this->_fpsComboBox.addItem("20", 20);
@@ -176,13 +177,28 @@ public:
             this->_fpsComboBox.setCurrentIndex(indexFps);
         }
         this->_fpsComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(new QLabel("", this));
+        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelFps), &(this->_fpsComboBox));
+
+
+        for (int i = 1; i <= GCC::UserData::CSMonitor::MAX_MONITOR_COUNT; i++) {
+            this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
+        }
+
+        int indexMonitorCount = this->_monitorCountComboBox.findData(this->_front->_info.cs_monitor.monitorCount);
+        if ( indexFps != -1 ) {
+            this->_monitorCountComboBox.setCurrentIndex(indexMonitorCount);
+        }
+        this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
+        //this->_layoutView->addRow(new QLabel("", this));
+        this->_layoutView->addRow(&(this->_labelFps), &(this->_monitorCountComboBox));
+
+
 
         if (this->_front->_info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
             this->_perfCheckBox.setCheckState(Qt::Checked);
         }
-        this->_layoutView->addRow(new QLabel("", this));
+        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
 
         this->_viewTab->setLayout(this->_layoutView);
@@ -348,9 +364,7 @@ private:
 public Q_SLOTS:
     void savePressed() {}
 
-    void saveReleased() {
-        //this->_front->_info.console_session = 0;
-        //this->_front->_info.brush_cache_code = 0;
+    void saveReleased() {;
         this->_front->_info.bpp = this->_bppComboBox.currentText().toInt();
         this->_front->_imageFormatRGB  = this->_front->bpp_to_QFormat(this->_front->_info.bpp, false);
         this->_front->_imageFormatARGB = this->_front->bpp_to_QFormat(this->_front->_info.bpp, true);
@@ -366,7 +380,11 @@ public Q_SLOTS:
             this->_front->_info.rdp5_performanceflags = 0;
         }
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->_front->_info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
+        this->_front->_monitorCount = this->_front->_info.cs_monitor.monitorCount;
+
         this->_front->writeClientInfo();
+
 
         remove(KEY_SETTING_PATH);
         this->_front->_qtRDPKeymap.clearCustomKeyCod();
@@ -600,7 +618,7 @@ public:
     QPushButton          _buttonRefresh;
     QPushButton          _buttonDisconnexion;
     QColor               _penColor;
-    QPixmap              _cache;
+    QPixmap            * _cache;
     //QGraphicsScene       _scene;
     //QGraphicsView        _view;
     QPainter             _cache_painter;
@@ -609,24 +627,24 @@ public:
     bool                 _connexionLasted;
     const int            _buttonHeight;
     QTimer               _timer;
+    uint8_t              _screen_index;
 
 
-    Screen_Qt (Front_Qt_API * front)
+    Screen_Qt (Front_Qt_API * front, int screen_index)
     : QWidget()
     , _front(front)
     , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
     , _buttonRefresh("Refresh", this)
     , _buttonDisconnexion("Disconnection", this)
     , _penColor(Qt::black)
-    , _cache(this->_front->_info.width, this->_front->_info.height)
-    //, _scene(0, 0, this->_front->_info.width, this->_front->_info.height, this)
-    //, _view(&(this->_scene), this)
-    , _cache_painter(&(this->_cache))
+    , _cache(front->getMainScreen()->_cache)
+    //, _cache_painter(&(this->_cache))
     , _width(this->_front->_info.width)
     , _height(this->_front->_info.height)
     , _connexionLasted(false)
     , _buttonHeight(20)
     , _timer(this)
+    , _screen_index(screen_index)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -635,7 +653,6 @@ public:
         this->setWindowTitle(QString(title.c_str()));
 
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
-        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
 
         QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
@@ -662,8 +679,72 @@ public:
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
         QDesktopWidget* desktop = QApplication::desktop();
-        int centerW = (desktop->width()/2)  - (this->_width/2);
-        int centerH = (desktop->height()/2) - ((this->_height+20)/2);
+        int shift(10 * this->_screen_index);
+        uint32_t centerW = (desktop->width()/2)  - (this->_width/2);
+        uint32_t centerH = (desktop->height()/2) - ((this->_height+this->_buttonHeight)/2);
+        this->move(centerW + shift, centerH + shift);
+
+        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        this->_timer.start(1000/this->_front->_fps);
+
+        this->setFocusPolicy(Qt::StrongFocus);
+    }
+
+
+    Screen_Qt (Front_Qt_API * front)
+    : QWidget()
+    , _front(front)
+    , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
+    , _buttonRefresh("Refresh", this)
+    , _buttonDisconnexion("Disconnection", this)
+    , _penColor(Qt::black)
+    , _cache(new QPixmap(this->_front->_info.width, this->_front->_info.height))
+    , _cache_painter(this->_cache)
+    , _width(this->_front->_info.width)
+    , _height(this->_front->_info.height)
+    , _connexionLasted(false)
+    , _buttonHeight(20)
+    , _timer(this)
+    , _screen_index(0)
+    {
+
+        this->setMouseTracking(true);
+        this->installEventFilter(this);
+        this->setAttribute(Qt::WA_DeleteOnClose);
+        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
+        this->setWindowTitle(QString(title.c_str()));
+
+        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
+
+        this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
+
+        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
+        this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
+        this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
+        this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
+        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
+
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
+        this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
+        this->_buttonRefresh.setGeometry(rectRefresh);
+        this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (RefreshPressed()));
+        this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
+        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
+
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), this->_buttonHeight));
+        this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
+        this->_buttonDisconnexion.setGeometry(rectDisconnexion);
+        this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
+        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
+        this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
+
+        QDesktopWidget* desktop = QApplication::desktop();
+        uint32_t centerW = (desktop->width()/2)  - (this->_width/2);
+        uint32_t centerH = (desktop->height()/2) - ((this->_height+20)/2);
         this->move(centerW, centerH);
 
         this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
@@ -674,7 +755,7 @@ public:
 
     ~Screen_Qt() {
         if (!this->_connexionLasted) {
-            this->_front->closeFromScreen();
+            this->_front->closeFromScreen(this->_screen_index);
         }
     }
 
@@ -696,12 +777,12 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(0, 0, this->_cache);
+        painter.drawPixmap(0, 0, *(this->_cache));
         painter.end();
     }
 
     QPixmap * getCache() {
-        return &(this->_cache);
+        return this->_cache;
     }
 
     void setPenColor(QColor color) {
@@ -764,6 +845,14 @@ private Q_SLOTS:
     void disconnexionRelease(){
         this->_front->disconnexionReleased();
     }
+
+    void setMainScreenOnTopPressed() {
+
+    }
+
+    void setMainScreenOnTopRelease() {
+        this->_front->setMainScreenOnTopRelease();
+    }
 };
 
 
@@ -790,6 +879,7 @@ public:
     uint64_t          _itemsSizeList[Front_Qt::LIST_FILES_MAX_SIZE];
     std::string       _itemsNameList[Front_Qt::LIST_FILES_MAX_SIZE];
     uint8_t         * _files_chunk[Front_Qt::LIST_FILES_MAX_SIZE];
+    TimeSystem        _timeSystem;
 
 
     Connector_Qt(Front_Qt * front, QWidget * parent)
@@ -806,7 +896,7 @@ public:
     , _bufferImage(nullptr)
     , _bufferTypeID(0)
     , _bufferTypeLongName("")
-    ,  _cItems(0)
+    , _cItems(0)
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
@@ -843,7 +933,7 @@ public:
 
         //std::cout << name << " " << this->_front->_pwd << " " << this->_front->_targetIP.c_str() << " " << this->_front->_port << std::endl;
 
-        this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay, {}, this->_front->verbose);
+        this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay, {});
 
         if (this->_client_sck > 0) {
             try {
@@ -859,14 +949,14 @@ public:
                 return true;
 
             } catch (const std::exception & e) {
-                std::cout << errorMsg << std::endl;
-                std::string windowErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+                std::string windowErrorMsg("<font color='Red'>"+errorMsg+" Socket error.</font>");
+                std::cout << windowErrorMsg << std::endl;
                 this->_front->disconnect(windowErrorMsg);
                 return false;
             }
         } else {
-            std::cout << errorMsg << std::endl;
-            std::string windowErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+            std::string windowErrorMsg("<font color='Red'>"+errorMsg+" IP connection error("+std::to_string(this->_client_sck)+").</font>");
+            std::cout << windowErrorMsg << std::endl;
             this->_front->disconnect(windowErrorMsg);
             return false;
         }
@@ -901,7 +991,7 @@ public:
         LCGRandom gen(0); // To always get the same client random, in tests
 
         try {
-            this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+            this->_callback = new mod_rdp(*(this->_sck), *(this->_front), this->_front->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, this->_timeSystem, mod_rdp_params);
             this->_front->_to_server_sender._callback = this->_callback;
             this->_front->_callback = this->_callback;
             this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
@@ -922,11 +1012,25 @@ public:
 
     void setClipboard(const std::string & str, bool path) { // Paste text or file to client
         if (path) {
+            std::cout <<  "path sent " <<  str << std::endl;
             QMimeData* mimeData = new QMimeData();
-            //mimeData->setData("text/uri-list", str.c_str());
+            //const QMimeData * mimeData = this->_clipboard->mimeData();
+
             mimeData->setUrls({QUrl::fromLocalFile(str.c_str())});
+            mimeData->setText(QString::fromUtf8(str.c_str()));
+            mimeData->setData(QString::fromUtf8("x-special/gnome-copied-files"), QByteArray(str.c_str(), str.size()));
+            if (mimeData->hasUrls()) {
+                std::cout << "hasURLS" << std::endl;
+            }
+
             this->_clipboard->setMimeData(mimeData);
-            this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+
+            //this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+
+            std::string paths(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
+
+            std::cout << "path in clipboard " <<   paths << std::endl;
+
         } else {
             this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
         }
@@ -997,23 +1101,22 @@ public Q_SLOTS:
                     uint32_t pos = 0;
                     while (pos <= str.size()) {
                         pos = str.find(delimiter);
-                        std::string path = str.substr(0, pos);
-                        std::cout << path <<  std::endl;
+                        std::string path = str.substr(0, pos-1);
                         str = str.substr(pos+1, str.size());
 
-                        int posSlash(0);
+                        uint32_t posSlash(0);
                         std::string slash = "/";
-                        while (posSlash != -1) {
+                        bool stillSlash = true;
+                        while (stillSlash) {
                             posSlash = path.find(slash, posSlash);
-                            if (posSlash != -1) {
-                                std::cout << "lol " << posSlash << std::endl;
-                                path = path.substr(0, posSlash) + "\\\\" + path.substr(posSlash+1, path.size());
-                                std::cout << path <<  std::endl;
+                            if (posSlash < path.size()) {
+                                path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
                                 posSlash += 2;
-                            } else {
-                                std::cout << "loooooooool " << posSlash << std::endl;
-                            }
 
+                            } else {
+                                path = path.substr(0, path.size() - 1);
+                                stillSlash = false;
+                            }
                         }
 
                         std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
@@ -1023,7 +1126,6 @@ public Q_SLOTS:
                             iFile.seekg (0, std::ios::end);
                             end = iFile.tellg();
                             uint64_t size(end-begin);
-                            std::cout << "file size=" << int(size) <<  std::endl;
                             this->_itemsSizeList[i] = size;
                             this->_files_chunk[i] = new uint8_t[this->_itemsSizeList[i]];
                             iFile.read(reinterpret_cast<char *>(this->_files_chunk[i]), size);
@@ -1032,25 +1134,21 @@ public Q_SLOTS:
 
                         int posName(path.size()-1);
                         bool lookForName = true;
-                        while (pos >= 0 && lookForName) {
+                        while (posName >= 0 && lookForName) {
                             if (path.at(posName) == '/') {
                                 lookForName = false;
                             }
                             posName--;
                         }
-
-                        this->_itemsNameList[i] = path.substr(posName+2, path.size());
-
-                        int UTF8nameSize(this->_itemsNameList[i].size() * 2);
+                        std::string name = path.substr(posName+2, path.size());
+                        int UTF8nameSize(name.size() * 2);
                         if (UTF8nameSize > 520) {
                             UTF8nameSize = 520;
                         }
-
                         uint8_t UTF16nameData[520];
-
-                        int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(this->_itemsNameList[i].c_str()), UTF16nameData, UTF8nameSize);
-
+                        int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(name.c_str()), UTF16nameData, UTF8nameSize);
                         this->_itemsNameList[i] = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+
                         i++;
                         if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
                             i = Front_Qt::LIST_FILES_MAX_SIZE;
@@ -1084,14 +1182,12 @@ public Q_SLOTS:
 
                     this->send_FormatListPDU(false);
 
+
                 }
-
-
-
             }
-
         }
     }
+
 
 };
 

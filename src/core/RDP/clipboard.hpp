@@ -852,7 +852,7 @@ struct FormatListResponsePDU : public CliprdrHeader {
 // ===========================================================================
 
 // The Format Data Request PDU is sent by the recipient of the Format List
-//  PDU. It is used to request the data for one of the formats that was listed
+//  PDU. It is used to request tFormatDataResponsePDUhe data for one of the formats that was listed
 //  in the Format List PDU.
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1622,6 +1622,15 @@ enum : int {
     , METAFILE_WORDS_HEADER_SIZE     = 118
 };
 
+enum : uint32_t {
+    FILE_ATTRIBUTE_READONLY  = 0x0001,
+    FILE_ATTRIBUTE_HIDDEN    = 0x0002,
+    FILE_ATTRIBUTE_SYSTEM    = 0x0004,
+    FILE_ATTRIBUTE_DIRECTORY = 0x0010,
+    FILE_ATTRIBUTE_ARCHIVE   = 0x0020,
+    FILE_ATTRIBUTE_NORMAL    = 0x0080
+};
+
 struct FormatDataResponsePDU : public CliprdrHeader {
 
     const double ARBITRARY_SCALE = 26.46;
@@ -1669,7 +1678,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
     // Files List
     // TODO std::string* + int* -> array_view { name, size };
-    void emit_fileList(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems) {
+    void emit_fileList(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems, uint64_t time) {
         this->dataLen_ = (cItems * 592) + 4;
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(cItems);
@@ -1680,34 +1689,27 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                                  FD_ATTRIBUTES
                                 );
             stream.out_clear_bytes(32);
-            stream.out_uint32_le(FILE_ATTRIBUTES_ARCHIVE);
+            stream.out_uint32_le(FILE_ATTRIBUTE_NORMAL);
             stream.out_clear_bytes(16);
-            //  random
-            stream.out_uint64_le(0x01d1e2a0379fb504);
+            stream.out_uint64_le(time);
             stream.out_uint32_le(sizesList[i] >> 32);
             stream.out_uint32_le(sizesList[i]);
-
-            int size(namesList[i].size());
-            for (int j = 0; j < size; j++) {
-                stream.out_uint8(namesList[i].data()[j]);
-            }
+            size_t size(namesList[i].size());
+            stream.out_copy_bytes(namesList[i].data(), size);
             REDASSERT(namesList[i].size() <= 520);
-            stream.out_clear_bytes(520);
+            stream.out_clear_bytes(520 - size);
         }
 
     }
 
-    void emit_text(OutStream & stream, int length) {
-        REDASSERT(length >= 0);
-        stream.out_uint16_le(this->msgType_);
-        stream.out_uint16_le(this->msgFlags_);
-        stream.out_uint32_le(length);
+    void emit_text(OutStream & stream, uint32_t length) {
+        this->dataLen_ = length;
+        CliprdrHeader::emit(stream);
     }
 
     void emit_metaFilePic(OutStream & stream, uint32_t data_length, uint16_t width, uint16_t height, uint16_t depth) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
-
 
         const int largeRecordWordsSize((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
         stream.out_uint32_le(data_length + METAFILE_HEADERS_SIZE);
