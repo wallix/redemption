@@ -70,9 +70,6 @@ public:
     virtual ~Transport()
     {}
 
-    //virtual const FilenameGenerator * seqgen() const noexcept
-    //{ return this->pseq; }
-
     uint32_t get_seqno() const
     { return this->seqno; }
 
@@ -215,4 +212,3 @@ private:
     Transport(const Transport &) = delete;
     Transport& operator=(const Transport &) = delete;
 };
-
