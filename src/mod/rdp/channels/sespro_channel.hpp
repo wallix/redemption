@@ -29,8 +29,9 @@
 #include "core/error.hpp"
 #include "mod/mod_api.hpp"
 
-#include <memory>
 #include <chrono>
+#include <memory>
+#include <sstream>
 
 class SessionProbeVirtualChannel : public BaseVirtualChannel
 {
@@ -723,45 +724,56 @@ public:
 
             if (separator) {
                 std::string order(message, separator - message);
-                std::string parameters(separator + 1);
+                std::vector<std::string> parameters;
+
+                {
+                    std::istringstream ss(std::string(separator + 1));
+                    std::string        parameter;
+
+                    while (std::getline(ss, parameter, '\x01')) {
+                        parameters.push_back(std::move(parameter));
+                    }
+                }
 
                 if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
-                    std::string info("status='" + parameters + "'");
+                    std::string info("status='" + parameters[0] + "'");
                     this->authentifier->log4(
                         (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
 
-                    this->front.set_focus_on_password_textbox(
-                        !parameters.compare("yes"));
+                    if (parameters.size() == 1) {
+                        this->front.set_focus_on_password_textbox(
+                            !parameters[0].compare("yes"));
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
                 }
                 else if (!order.compare("UAC_PROMPT_BECOME_VISIBLE")) {
-                    std::string info("status='" + parameters + "'");
+                    std::string info("status='" + parameters[0] + "'");
                     this->authentifier->log4
                         ((this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                         order.c_str(), info.c_str());
 
-                    this->front.set_consent_ui_visible(
-                        !parameters.compare("yes"));
+                    if (parameters.size() == 1) {
+                        this->front.set_consent_ui_visible(
+                            !parameters[0].compare("yes"));
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
                 }
                 else if (!order.compare("INPUT_LANGUAGE")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator =
-                        ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string identifier(subitems,
-                                               subitem_separator - subitems);
-                        std::string display_name(subitem_separator + 1);
-
+                    if (parameters.size() == 2) {
                         std::string info(
-                            "identifier='" + identifier +
-                            "' display_name='" + display_name + "'");
+                            "identifier='" + parameters[0] +
+                            "' display_name='" + parameters[1] + "'");
                         this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
 
-                        this->front.set_keylayout(::strtol(identifier.c_str(),
-                            nullptr, 16));
+                        this->front.set_keylayout(
+                            ::strtol(parameters[0].c_str(), nullptr, 16));
                     }
                     else {
                         message_format_invalid = true;
@@ -769,27 +781,24 @@ public:
                 }
                 else if (!order.compare("NEW_PROCESS") ||
                          !order.compare("COMPLETED_PROCESS")) {
-                    std::string info("command_line='" + parameters + "'");
-                    this->authentifier->log4(
-                        (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                        order.c_str(), info.c_str());
+                    if (parameters.size() == 1) {
+                        std::string info("command_line='" + parameters[0] + "'");
+                        this->authentifier->log4(
+                            (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                            order.c_str(), info.c_str());
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
                 }
                 else if (!order.compare("OUTBOUND_CONNECTION_BLOCKED") ||
                          !order.compare("OUTBOUND_CONNECTION_DETECTED")) {
                     bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED"));
 
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator =
-                        ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string rule(subitems,
-                            subitem_separator - subitems);
-                        std::string application_name(subitem_separator + 1);
-
+                    if (parameters.size() == 2) {
                         std::string info(
-                            "rule='" + rule +
-                            "' application_name='" + application_name + "'");
+                            "rule='" + parameters[0] +
+                            "' application_name='" + parameters[1] + "'");
                         this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
@@ -804,7 +813,7 @@ public:
                             snprintf(message, sizeof(message),
                                 TR("process_interrupted_security_policies",
                                    this->param_lang),
-                                application_name.c_str());
+                                parameters[1].c_str());
 #ifdef __GNUG__
     #pragma GCC diagnostic pop
 # endif
@@ -821,58 +830,50 @@ public:
                          !order.compare("OUTBOUND_CONNECTION_DETECTED_2")) {
                     bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED_2"));
 
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator =
-                        ::strchr(subitems, '\x01');
+                    if (parameters.size() == 5) {
+                        unsigned int type = 0;
+                        std::string  host_address_or_subnet;
+                        std::string  port_range;
+                        std::string  description;
 
-                    if (subitem_separator) {
-                        std::string rule_index(subitems,
-                            subitem_separator - subitems);
+                        const bool result =
+                            this->outbound_connection_monitor_rules.get(
+                                ::strtoul(parameters[0].c_str(), nullptr, 10),
+                                type, host_address_or_subnet, port_range,
+                                description);
 
-                        subitems = subitem_separator + 1;
-                        subitem_separator = ::strchr(subitems, '\x01');
+                        if (result) {
+                            std::string info(
+                                "rule='" + description +
+                                "' application_name='" + parameters[1] + "'");
+                            this->authentifier->log4(
+                                (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                                order.c_str(), info.c_str());
 
-                        if (subitem_separator) {
-                            std::string application_name(subitems,
-                                subitem_separator - subitems);
+                            if (deny) {
+                                if (!::strtoul(parameters[4].c_str(), nullptr, 10)) {
+                                    LOG(LOG_ERR,
+                                        "Session Probe failed to block outbound connection!");
+                                    this->authentifier->report(
+                                        "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
+                                }
 
-                            unsigned int type = 0;
-                            std::string  host_address_or_subnet;
-                            std::string  port_range;
-                            std::string  description;
-
-                            const bool result =
-                                this->outbound_connection_monitor_rules.get(
-                                    ::strtoul(rule_index.c_str(), nullptr, 10),
-                                    type, host_address_or_subnet, port_range,
-                                    description);
-
-                            if (result) {
-                                std::string info(
-                                    "rule='" + description +
-                                    "' application_name='" + application_name + "'");
-                                this->authentifier->log4(
-                                    (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                                    order.c_str(), info.c_str());
-
-                                if (deny) {
-                                    char message[4096];
+                                char message[4096];
 
 #ifdef __GNUG__
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 # endif
-                                    snprintf(message, sizeof(message),
-                                        TR("process_interrupted_security_policies",
-                                           this->param_lang),
-                                        application_name.c_str());
+                                snprintf(message, sizeof(message),
+                                    TR("process_interrupted_security_policies",
+                                       this->param_lang),
+                                    parameters[1].c_str());
 #ifdef __GNUG__
     #pragma GCC diagnostic pop
 # endif
 
-                                    std::string string_message = message;
-                                    this->mod.display_osd_message(string_message);
-                                }
+                                std::string string_message = message;
+                                this->mod.display_osd_message(string_message);
                             }
                         }
                     }
@@ -881,50 +882,22 @@ public:
                     }
                 }
                 else if (!order.compare("FOREGROUND_WINDOW_CHANGED")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator =
-                        ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string text(subitems,
-                            subitem_separator - subitems);
-                        std::string remaining(subitem_separator + 1);
-
-                        subitems          = remaining.c_str();
-                        subitem_separator = ::strchr(subitems, '\x01');
-
-                        if (subitem_separator) {
-                            //std::string window_class(subitems,
-                            //    subitem_separator - subitems);
-                            //std::string command_line(subitem_separator + 1);
-
-                            std::string info(
-                                "source='Probe' window='" + text + "'");
-                            this->authentifier->log4(
-                                (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
-                                "TITLE_BAR", info.c_str());
-                        }
-                        else {
-                            message_format_invalid = true;
-                        }
+                    if (parameters.size() == 3) {
+                        std::string info(
+                            "source='Probe' window='" + parameters[0] + "'");
+                        this->authentifier->log4(
+                            (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                            "TITLE_BAR", info.c_str());
                     }
                     else {
                         message_format_invalid = true;
                     }
                 }
                 else if (!order.compare("BUTTON_CLICKED")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator =
-                        ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string window(subitems,
-                            subitem_separator - subitems);
-                        std::string button(subitem_separator + 1);
-
+                    if (parameters.size() == 2) {
                         std::string info(
-                            "windows='" + window +
-                            "' button='" + button + "'");
+                            "windows='" + parameters[0] +
+                            "' button='" + parameters[1] + "'");
                         this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
@@ -934,18 +907,10 @@ public:
                     }
                 }
                 else if (!order.compare("EDIT_CHANGED")) {
-                    const char * subitems          = parameters.c_str();
-                    const char * subitem_separator =
-                        ::strchr(subitems, '\x01');
-
-                    if (subitem_separator) {
-                        std::string window(subitems,
-                            subitem_separator - subitems);
-                        std::string edit(subitem_separator + 1);
-
+                    if (parameters.size() == 2) {
                         std::string info(
-                            "windows='" + window +
-                            "' edit='" + edit + "'");
+                            "windows='" + parameters[0] +
+                            "' edit='" + parameters[1] + "'");
                         this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
