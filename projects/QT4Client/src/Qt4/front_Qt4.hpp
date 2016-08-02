@@ -123,6 +123,8 @@ private:
 public:
     uint32_t          verbose;
     ClientInfo        _info;
+    int               _width;
+    int               _height;
     std::string       _userName;
     std::string       _pwd;
     std::string       _targetIP;
@@ -150,7 +152,7 @@ public:
     , _callback(nullptr)
     , _qtRDPKeymap()
     , _fps(30)
-    , _monitorCount(GCC::UserData::CSMonitor::MAX_MONITOR_COUNT)
+    , _monitorCount(1)
     {
         this->_to_client_sender._front = this;
     }
@@ -166,12 +168,12 @@ public:
     virtual void disconnexionPressed() = 0;
     virtual void disconnexionReleased() = 0;
     virtual void setMainScreenOnTopRelease() = 0;
-    virtual void mousePressEvent(QMouseEvent *e) = 0;
-    virtual void mouseReleaseEvent(QMouseEvent *e) = 0;
+    virtual void mousePressEvent(QMouseEvent *e, int screen_index) = 0;
+    virtual void mouseReleaseEvent(QMouseEvent *e, int screen_index) = 0;
     virtual void keyPressEvent(QKeyEvent *e) = 0;
     virtual void keyReleaseEvent(QKeyEvent *e) = 0;
     virtual void wheelEvent(QWheelEvent *e) = 0;
-    virtual bool eventFilter(QObject *obj, QEvent *e) = 0;
+    virtual bool eventFilter(QObject *obj, QEvent *e, int screen_index) = 0;
     virtual void call_Draw() = 0;
     virtual void disconnect(std::string txt) = 0;
     virtual QImage::Format bpp_to_QFormat(int bpp, bool alpha) = 0;
@@ -395,9 +397,9 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void mousePressEvent(QMouseEvent *e) override;
+    void mousePressEvent(QMouseEvent *e, int screen_index) override;
 
-    void mouseReleaseEvent(QMouseEvent *e) override;
+    void mouseReleaseEvent(QMouseEvent *e, int screen_index) override;
 
     void keyPressEvent(QKeyEvent *e) override;
 
@@ -405,7 +407,7 @@ public:
 
     void wheelEvent(QWheelEvent *e) override;
 
-    bool eventFilter(QObject *obj, QEvent *e) override;
+    bool eventFilter(QObject *obj, QEvent *e, int screen_index) override;
 
     void connexionPressed() override;
 

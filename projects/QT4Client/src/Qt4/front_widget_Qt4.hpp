@@ -90,6 +90,7 @@ public:
     QLabel               _labelPerf;
     QLabel               _labelLanguage;
     QLabel               _labelFps;
+    QLabel               _labelScreen;
     QTableWidget       * _tableKeySetting;
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
@@ -121,6 +122,7 @@ public:
         , _labelPerf("Disable wallaper :", this)
         , _labelLanguage("Keyboard Language :", this)
         , _labelFps("Refresh per second :", this)
+        , _labelScreen("Screen :", this)
         , _tableKeySetting(nullptr)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
@@ -143,6 +145,7 @@ public:
         const QString strView("View");
         this->_layoutView = new QFormLayout(this->_viewTab);
 
+
         this->_bppComboBox.addItem("32", 32);
         this->_bppComboBox.addItem("24", 24);
         this->_bppComboBox.addItem("16", 16);
@@ -152,20 +155,20 @@ public:
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
         this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(QLabel ("", this););
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
+
 
         this->_resolutionComboBox.addItem( "640 * 480", 640);
         this->_resolutionComboBox.addItem( "800 * 600", 800);
         this->_resolutionComboBox.addItem("1024 * 768", 1024);
         this->_resolutionComboBox.addItem("1600 * 900", 1600);
-        int indexResolution = this->_resolutionComboBox.findData(this->_front->_info.width);
+        int indexResolution = this->_resolutionComboBox.findData(this->_front->_width);
         if ( indexResolution != -1 ) {
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+
 
         this->_fpsComboBox.addItem("20", 20);
         this->_fpsComboBox.addItem("30", 30);
@@ -177,33 +180,30 @@ public:
             this->_fpsComboBox.setCurrentIndex(indexFps);
         }
         this->_fpsComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelFps), &(this->_fpsComboBox));
 
 
         for (int i = 1; i <= GCC::UserData::CSMonitor::MAX_MONITOR_COUNT; i++) {
             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
         }
-
         int indexMonitorCount = this->_monitorCountComboBox.findData(this->_front->_info.cs_monitor.monitorCount);
         if ( indexFps != -1 ) {
             this->_monitorCountComboBox.setCurrentIndex(indexMonitorCount);
         }
         this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(new QLabel("", this));
-        this->_layoutView->addRow(&(this->_labelFps), &(this->_monitorCountComboBox));
-
+        this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
 
 
         if (this->_front->_info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
             this->_perfCheckBox.setCheckState(Qt::Checked);
         }
-        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
+
 
         this->_viewTab->setLayout(this->_layoutView);
 
         this->_tabs->addTab(this->_viewTab, strView);
+
 
 
         // Keyboard tab
@@ -371,8 +371,8 @@ public Q_SLOTS:
         std::string delimiter = " * ";
         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
-        this->_front->_info.width  = std::stoi(resolution.substr(0, pos));
-        this->_front->_info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->_front->_width  = std::stoi(resolution.substr(0, pos));
+        this->_front->_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
         this->_front->_fps = this->_fpsComboBox.currentText().toInt();
         if (this->_perfCheckBox.isChecked()) {
             this->_front->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
@@ -382,6 +382,8 @@ public Q_SLOTS:
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
         this->_front->_info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
         this->_front->_monitorCount = this->_front->_info.cs_monitor.monitorCount;
+        this->_front->_info.width   = this->_front->_width; // * this->_front->_monitorCount;
+        this->_front->_info.height  = this->_front->_height;
 
         this->_front->writeClientInfo();
 
@@ -631,20 +633,20 @@ public:
 
 
     Screen_Qt (Front_Qt_API * front, int screen_index)
-    : QWidget()
-    , _front(front)
-    , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
-    , _buttonRefresh("Refresh", this)
-    , _buttonDisconnexion("Disconnection", this)
-    , _penColor(Qt::black)
-    , _cache(front->getMainScreen()->_cache)
-    //, _cache_painter(&(this->_cache))
-    , _width(this->_front->_info.width)
-    , _height(this->_front->_info.height)
-    , _connexionLasted(false)
-    , _buttonHeight(20)
-    , _timer(this)
-    , _screen_index(screen_index)
+        : QWidget()
+        , _front(front)
+        , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
+        , _buttonRefresh("Refresh", this)
+        , _buttonDisconnexion("Disconnection", this)
+        , _penColor(Qt::black)
+        , _cache(front->getMainScreen()->_cache)
+        //, _cache_painter(&(this->_cache))
+        , _width(this->_front->_width)
+        , _height(this->_front->_height)
+        , _connexionLasted(false)
+        , _buttonHeight(20)
+        , _timer(this)
+        , _screen_index(screen_index)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -692,29 +694,28 @@ public:
 
 
     Screen_Qt (Front_Qt_API * front)
-    : QWidget()
-    , _front(front)
-    , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
-    , _buttonRefresh("Refresh", this)
-    , _buttonDisconnexion("Disconnection", this)
-    , _penColor(Qt::black)
-    , _cache(new QPixmap(this->_front->_info.width, this->_front->_info.height))
-    , _cache_painter(this->_cache)
-    , _width(this->_front->_info.width)
-    , _height(this->_front->_info.height)
-    , _connexionLasted(false)
-    , _buttonHeight(20)
-    , _timer(this)
-    , _screen_index(0)
+        : QWidget()
+        , _front(front)
+        , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
+        , _buttonRefresh("Refresh", this)
+        , _buttonDisconnexion("Disconnection", this)
+        , _penColor(Qt::black)
+        , _cache(new QPixmap(this->_front->_width*front->_monitorCount, this->_front->_info.height))
+        , _cache_painter(this->_cache)
+        , _width(this->_front->_width)
+        , _height(this->_front->_height)
+        , _connexionLasted(false)
+        , _buttonHeight(20)
+        , _timer(this)
+        , _screen_index(0)
     {
-
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str()));
 
-        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
+        this->_cache_painter.fillRect(0, 0, this->_width * this->_front->_monitorCount, this->_height, QColor(127, 127, 127, 0));
 
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
 
@@ -777,7 +778,7 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(0, 0, *(this->_cache));
+        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_width * this->_screen_index, 0, this->_width, this->_height));
         painter.end();
     }
 
@@ -792,16 +793,20 @@ public:
 
 private:
     void mousePressEvent(QMouseEvent *e) {
-        this->_front->mousePressEvent(e);
+        this->_front->mousePressEvent(e, this->_screen_index);
     }
 
     void mouseReleaseEvent(QMouseEvent *e) {
-        this->_front->mouseReleaseEvent(e);
+        this->_front->mouseReleaseEvent(e, this->_screen_index);
     }
 
     void keyPressEvent(QKeyEvent *e) {
         this->_front->keyPressEvent(e);
     }
+
+    //void enterEvent(QEvent * event) {
+        //this->_front->enterEvent(event, this->_screen_index);
+    //}
 
     void keyReleaseEvent(QKeyEvent *e) {
         this->_front->keyReleaseEvent(e);
@@ -812,7 +817,7 @@ private:
     }
 
     bool eventFilter(QObject *obj, QEvent *e) {
-        this->_front->eventFilter(obj, e);
+        this->_front->eventFilter(obj, e, this->_screen_index);
         return false;
     }
 
@@ -949,15 +954,15 @@ public:
                 return true;
 
             } catch (const std::exception & e) {
-                std::string windowErrorMsg("<font color='Red'>"+errorMsg+" Socket error.</font>");
+                std::string windowErrorMsg(errorMsg+" Socket error.");
                 std::cout << windowErrorMsg << std::endl;
-                this->_front->disconnect(windowErrorMsg);
+                this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
                 return false;
             }
         } else {
-            std::string windowErrorMsg("<font color='Red'>"+errorMsg+" IP connection error("+std::to_string(this->_client_sck)+").</font>");
+            std::string windowErrorMsg(errorMsg+" ip_connect error.");
             std::cout << windowErrorMsg << std::endl;
-            this->_front->disconnect(windowErrorMsg);
+            this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
             return false;
         }
     }
@@ -969,6 +974,7 @@ public:
         const char * localIP(this->_front->_localIP.c_str());
 
         Inifile ini;
+        ini.set<cfg::debug::rdp>(0xffffffff);
 
         ModRDPParams mod_rdp_params( name
                                     , pwd
@@ -987,6 +993,7 @@ public:
         mod_rdp_params.server_redirection_support      = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
+        mod_rdp_params.allow_using_multiple_monitors   = true;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 

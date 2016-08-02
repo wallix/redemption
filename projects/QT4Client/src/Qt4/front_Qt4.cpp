@@ -26,6 +26,8 @@
 #include <QtGui/QRegion>
 #include <QtGui/QBitmap>
 
+#define LOGPRINT
+
 #include "front_widget_Qt4.hpp"
 #pragma GCC diagnostic pop
 
@@ -68,15 +70,13 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _bufferRDPCLipboardMetaFilePic_height(0)
     , _nbFormatIDs(4)
     , FILECONTENTS("F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0", 26)
-    , FILEGROUPDESCRIPTORW("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0",42 )
+    , FILEGROUPDESCRIPTORW("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42)
     , _cItems(0)
     , _streamID(0)
-    {
-        if(this->setClientInfo()) {
+{
+    if(this->setClientInfo()) {
         this->writeClientInfo();
     }
-
-
 
     const char * localIPtmp = "unknow_local_IP";
     /*union
@@ -180,6 +180,22 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 
 bool Front_Qt::setClientInfo() {
 
+    // default config
+    this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+    this->_info.console_session = 0;
+    this->_info.brush_cache_code = 0;
+    this->_info.bpp = 24;
+    this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
+    if (this->_info.bpp ==  32) {
+        this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
+    }
+    this->_width  = 800;
+    this->_height = 600;
+    this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    this->_fps = 30;
+    this->_info.cs_monitor.monitorCount = 1;
+
+
     // file config
     std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
     if(ifichier) {
@@ -206,10 +222,10 @@ bool Front_Qt::setClientInfo() {
                 this->_info.bpp = std::stoi(info);
             } else
             if (strcmp(tag.c_str(), "width") == 0) {
-                this->_info.width = std::stoi(info);
+                this->_width      = std::stoi(info);
             } else
             if (strcmp(tag.c_str(), "height") == 0) {
-                this->_info.height = std::stoi(info);
+                this->_height     = std::stoi(info);
             } else
             if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
                 this->_info.rdp5_performanceflags = std::stoi(info);
@@ -219,8 +235,13 @@ bool Front_Qt::setClientInfo() {
             } else
             if (strcmp(tag.c_str(), "monitorCount") == 0) {
                 this->_info.cs_monitor.monitorCount = std::stoi(info);
+                this->_monitorCount                 = std::stoi(info);
             }
         }
+
+        this->_info.width  = this->_width;                  //  * this->_monitorCount;
+        this->_info.height = this->_height;
+
         ifichier.close();
 
         this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
@@ -231,20 +252,9 @@ bool Front_Qt::setClientInfo() {
         return false;
 
     } else {
-        // default config
-        this->_info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-        this->_info.console_session = 0;
-        this->_info.brush_cache_code = 0;
-        this->_info.bpp = 24;
-        this->_imageFormatRGB  = this->bpp_to_QFormat(this->_info.bpp, false);
-        if (this->_info.bpp ==  32) {
-            this->_imageFormatARGB = this->bpp_to_QFormat(this->_info.bpp, true);
-        }
-        this->_info.width = 800;
-        this->_info.height = 600;
-        this->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        this->_fps = 30;
-        this->_info.cs_monitor.monitorCount = 1;
+
+        this->_info.width  = this->_width  * this->_monitorCount;
+        this->_info.height = this->_height;
 
         return true;
     }
@@ -261,8 +271,8 @@ void Front_Qt::writeClientInfo() {
         ofichier << "console_session "       << this->_info.console_session       << std::endl;
         ofichier << "brush_cache_code "      << this->_info.brush_cache_code      << std::endl;
         ofichier << "bpp "                   << this->_info.bpp                   << std::endl;
-        ofichier << "width "                 << this->_info.width                 << std::endl;
-        ofichier << "height "                << this->_info.height                << std::endl;
+        ofichier << "width "                 << this->_width                      << std::endl;
+        ofichier << "height "                << this->_height                     << std::endl;
         ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags << std::endl;
         ofichier << "fps "                   << this->_fps                        << std::endl;
         ofichier << "monitorCount "          << this->_info.cs_monitor.monitorCount << std::endl;
@@ -327,17 +337,27 @@ void Front_Qt::closeFromScreen(int screen_index) {
 }
 
 void Front_Qt::connect() {
+
+    for (int i = 0; i < this->_monitorCount; i++) {
+        this->_info.cs_monitor.monitorDefArray[i].left   = this->_width * i;
+        this->_info.cs_monitor.monitorDefArray[i].top    = 0;
+        this->_info.cs_monitor.monitorDefArray[i].right  = this->_width * (i + 1);
+        this->_info.cs_monitor.monitorDefArray[i].bottom = this->_height;
+        this->_info.cs_monitor.monitorDefArray[i].flags  = 0;
+    }
+    this->_info.cs_monitor.monitorDefArray[0].flags  = GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY;
+
     if (this->_connector->connect()) {
         this->_connected = true;
         this->_form->hide();
 
+
+
+
         this->_screen[0] = new Screen_Qt(this);
         this->_screen[0]->show();
 
-
         this->_connector->listen();
-
-        //this->_clipboard_channel.process_server_clipboard_capabilities_pdu();
     }
 }
 
@@ -370,7 +390,7 @@ void Front_Qt::connexionReleased(){
     this->_form->setCursor(Qt::ArrowCursor);
 }
 
-void Front_Qt::mousePressEvent(QMouseEvent *e) {
+void Front_Qt::mousePressEvent(QMouseEvent *e, int screen_index) {
     if (this->_callback != nullptr) {
         int flag(0);
         switch (e->button()) {
@@ -379,12 +399,12 @@ void Front_Qt::mousePressEvent(QMouseEvent *e) {
             case 4: flag = MOUSE_FLAG_BUTTON4; break;
             default: break;
         }
-        //std::cout << "mousePressed" << std::endl;
-        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x(), e->y(), &(this->_keymap));
+        //std::cout << "mousePressed " << e->x() + this->_info.width *screen_index << " " <<  e->y() << std::endl;
+        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x() + this->_width *screen_index, e->y(), &(this->_keymap));
     }
 }
 
-void Front_Qt::mouseReleaseEvent(QMouseEvent *e) {
+void Front_Qt::mouseReleaseEvent(QMouseEvent *e, int screen_index) {
     if (this->_callback != nullptr) {
         int flag(0);
         switch (e->button()) {
@@ -395,7 +415,7 @@ void Front_Qt::mouseReleaseEvent(QMouseEvent *e) {
             default: break;
         }
         //std::cout << "mouseRelease" << std::endl;
-        this->_callback->rdp_input_mouse(flag, e->x(), e->y(), &(this->_keymap));
+        this->_callback->rdp_input_mouse(flag, e->x() + this->_width *screen_index, e->y(), &(this->_keymap));
     }
 }
 
@@ -425,13 +445,23 @@ void Front_Qt::wheelEvent(QWheelEvent *e) {
     }
 }
 
-bool Front_Qt::eventFilter(QObject *, QEvent *e)  {
+bool Front_Qt::eventFilter(QObject *, QEvent *e, int screen_index)  {
     if (e->type() == QEvent::MouseMove)
     {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
         //std::cout << "MouseMove " <<  mouseEvent->x() << " " <<  mouseEvent->y()<< std::endl;
+        int x = mouseEvent->x() + this->_width *screen_index;
+        int y = mouseEvent->y();
+
+        if (x < 0) {
+            x = 0;
+        }
+        if (y < 0) {
+            y = 0;
+        }
+
         if (this->_callback != nullptr) {
-            this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, mouseEvent->x(), mouseEvent->y(), &(this->_keymap));
+            this->_callback->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->_keymap));
         }
     }
     return false;
@@ -440,7 +470,7 @@ bool Front_Qt::eventFilter(QObject *, QEvent *e)  {
 void Front_Qt::connexionPressed() {}
 
 void Front_Qt::RefreshPressed() {
-    this->refresh(0, 0, this->_info.width, this->_info.height);
+    this->refresh(0, 0, this->_info.width * this->_monitorCount, this->_info.height);
 }
 
 void Front_Qt::RefreshReleased() {}
@@ -601,7 +631,7 @@ void Front_Qt::draw(const RDPPatBlt & cmd, const Rect & clip) {
     RDPPatBlt new_cmd24 = cmd;
     new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
     new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-    const Rect rect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
+    const Rect rect = clip.intersect(this->_info.width * this->_monitorCount, this->_info.height).intersect(cmd.rect);
 
     if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) { // external
         enum { BackColor, ForeColor };
@@ -770,7 +800,7 @@ void Front_Qt::draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) {
     Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
                             (bitmap_data.dest_right - bitmap_data.dest_left + 1),
                             (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
-    const Rect clipRect(0, 0, this->_info.width, this->_info.height);
+    const Rect clipRect(0, 0, this->_info.width * this->_monitorCount, this->_info.height);
     const Rect drect = rectBmp.intersect(clipRect);
 
     const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->_info.width - drect.x, drect.cx));
@@ -831,7 +861,7 @@ void Front_Qt::draw(const RDPScrBlt & cmd, const Rect & clip) {
 
     //std::cout << "RDPScrBlt" << std::endl;
 
-    const Rect drect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
+    const Rect drect = clip.intersect(this->_info.width * this->_monitorCount, this->_info.height).intersect(cmd.rect);
     if (drect.isempty()) {
         return;
     }
@@ -1242,7 +1272,7 @@ void Front_Qt::draw(const RDPDestBlt & cmd, const Rect & clip) {
         LOG(LOG_INFO, "========================================\n");
     }
 
-    const Rect drect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
+    const Rect drect = clip.intersect(this->_info.width * this->_monitorCount, this->_info.height).intersect(cmd.rect);
 
     switch (cmd.rop) {
         case 0x00: // blackness
@@ -2348,13 +2378,17 @@ void Front_Qt::call_Draw() {
 // APPLICATION
 int main(int argc, char** argv){
 
-    //" -name QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389";
+    //" -name QA\\administrateur -pwd '' -ip 10.10.46.88 -p 3389";
 
-    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' || bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
+    // sudo python ./sesman/sesmanlink/WABRDPAuthentifier
+
+    // sudo bin/gcc-4.9.2/san/rdpproxy -nf
+
+    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd "$testmdp" -ip 10.10.46.88 -p 3389
 
     QApplication app(argc, argv);
 
-    int verbose = 0x04000000 | 0x40000000;
+    int verbose = 0xffffffff;                               //0x04000000 | 0x40000000;
 
     Front_Qt front(argv, argc, verbose);
 

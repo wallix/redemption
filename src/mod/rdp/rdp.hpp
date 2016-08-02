@@ -2280,6 +2280,7 @@ public:
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
                     }
+                    std::cout << "case MOD_RDP_BASIC_SETTINGS_EXCHANGE:" << std::endl;
                     {
                         constexpr std::size_t array_size = 65536;
                         uint8_t array[array_size];
