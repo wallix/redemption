@@ -18,10 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGE_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGE_HPP_
 
-#include "stream.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
 
 // [MS-NLMP]
 
@@ -94,7 +94,7 @@ enum NtlmMessageType {
     NtlmAuthenticate = 0x00000003
 };
 static const uint8_t NTLM_MESSAGE_SIGNATURE[] = "NTLMSSP\0";
-struct NTLMMessage {
+struct NTLMMessage final {
     uint8_t signature[8];      /* 8 Bytes */
     NtlmMessageType msgType;   /* 4 Bytes */
 
@@ -112,8 +112,6 @@ struct NTLMMessage {
         // signature[6] = 'P';
         // signature[7] = '\0';
     }
-
-    virtual ~NTLMMessage() {}
 
     void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->signature, 8);
@@ -251,12 +249,12 @@ struct NtlmVersion {
     }
 
     void print() {
-	LOG(LOG_INFO, "VERSION = {");
-	LOG(LOG_INFO, "\tProductMajorVersion: %d", this->ProductMajorVersion);
-	LOG(LOG_INFO, "\tProductMinorVersion: %d", this->ProductMinorVersion);
-	LOG(LOG_INFO, "\tProductBuild: %d", this->ProductBuild);
-	LOG(LOG_INFO, "\tNTLMRevisionCurrent: 0x%02X", this->NtlmRevisionCurrent);
-	LOG(LOG_INFO, "}\n");
+        LOG(LOG_INFO, "VERSION = {");
+        LOG(LOG_INFO, "\tProductMajorVersion: %d", this->ProductMajorVersion);
+        LOG(LOG_INFO, "\tProductMinorVersion: %d", this->ProductMinorVersion);
+        LOG(LOG_INFO, "\tProductBuild: %d", this->ProductBuild);
+        LOG(LOG_INFO, "\tNTLMRevisionCurrent: 0x%02X", this->NtlmRevisionCurrent);
+        LOG(LOG_INFO, "}\n");
     }
 };
 
@@ -544,7 +542,7 @@ struct NtlmField {
             auto p = this->ostream.get_data();
             if (sz > this->sz_buf) {
                 p = this->buf;
-                if (sz > sizeof(sizeof(this->buf))) {
+                if (sz > sizeof(this->buf)) {
                     p = new uint8_t[sz];
                     this->dynbuf.reset(p);
                     this->sz_buf = sz;
@@ -705,4 +703,3 @@ struct NTLMSSPMessageSignatureESS {
 };
 
 
-#endif

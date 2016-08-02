@@ -18,13 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_TRANSPARENTPLAYER_HPP_
-#define _REDEMPTION_CAPTURE_TRANSPARENTPLAYER_HPP_
 
-#include "transport.hpp"
+#pragma once
+
+#include "transport/transport.hpp"
 #include "transparentchunk.hpp"
-#include "front_api.hpp"
-#include "difftimeval.hpp"
+#include "core/front_api.hpp"
+#include "core/channel_list.hpp"
+#include "utils/difftimeval.hpp"
 
 class TransparentPlayer {
 private:
@@ -154,4 +155,3 @@ public:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_CAPTURE_TRANSPARENTPLAYER_HPP_

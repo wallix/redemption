@@ -21,103 +21,169 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_GENRANDOM_HPP_
-#define _REDEMPTION_UTILS_GENRANDOM_HPP_
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdint>
 
-#include <stdint.h>
-#include "log.hpp"
-#include "noncopyable.hpp"
-#include "fdbuf.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/compiler_attributes.hpp"
 
-class Random : noncopyable
+
+class Random
 {
-    public:
-    virtual ~Random() {}
+    // this makes object noncopyable by removing copy constructors
+    Random(Random&&) = delete;
+    Random(const Random&) = delete;
+    Random& operator=(Random&&) = delete;
+    Random& operator=(const Random&) = delete;
+
+public:
+             Random() = default;
+    virtual ~Random() = default;
+
     virtual void random(void * dest, size_t size) = 0;
+
+    virtual uint32_t rand32() = 0;
+
+    uint64_t rand64()
+    {
+        uint64_t p1 = this->rand32();
+        uint64_t p2 = this->rand32();
+        return (p1 << 32) | p2;
+    }
 };
+
 
 class LCGRandom : public Random
 {
     uint64_t seed;
-    public:
-        explicit LCGRandom(uint32_t seed)
-        : seed(seed)
-        {
-        }
-
-    void random(void * dest, size_t size) override {
-        for (size_t x = 0; x < size ; x++){
-            reinterpret_cast<uint32_t*>(dest)[x / sizeof(uint32_t)] = this->rand32();
-        }
+public:
+    explicit LCGRandom(uint32_t seed)
+    : seed(seed)
+    {
     }
 
-    uint32_t rand32()
+    void random(void * dest, size_t size) override {
+        for (size_t x = 0; x < size ; ++x) {
+            uint32_t r{this->rand32()};
+
+            // TODO suspicious, p[0..3] re-assigned 4 times.
+            uint8_t * p = reinterpret_cast<uint8_t*>(dest) + x / sizeof(uint32_t) * sizeof(uint32_t);
+            // BUG buffer overflow if size % 4 > 0
+            p[0] = r >> 0;
+            p[1] = r >> 8;
+            p[2] = r >> 16;
+            p[3] = r >> 24;
+        }
+        /*
+        uint8_t * p = reinterpret_cast<uint8_t*>(dest);
+        for (size_t x = 0; x < size/4 ; ++x) {
+            uint32_t r{this->rand32()};
+            *p++ = r >> 0;
+            *p++ = r >> 8;
+            *p++ = r >> 16;
+            *p++ = r >> 24;
+        }
+        if (size % 4) {
+            uint32_t r{this->rand32()};
+            switch (size % 4) {
+                case 3: *p++ = r >> 0; CPP_FALLTHROUGH;
+                case 2: *p++ = r >> 8; CPP_FALLTHROUGH;
+                case 1: *p++ = r >> 16; CPP_FALLTHROUGH;
+                default:;
+            }
+        }*/
+    }
+
+    uint32_t rand32() override
     {
         return this->seed = 999331UL * this->seed + 200560490131ULL;
     }
 };
 
-class LCGRand : public Random
-{
-    uint64_t seed;
-    public:
-        explicit LCGRand(uint32_t seed)
-        : seed(seed)
-        {
-        }
-
-    ~LCGRand() override {}
-
-    void random(void * dest, size_t size) override {
-        for (size_t x = 0; x < size ; x++){
-            ((uint32_t*)dest)[x / sizeof(uint32_t)] = this->rand32();
-        }
-    }
-
-    uint32_t rand32()
-    {
-        return this->seed = 999331UL * this->seed + 7913UL;
-    }
-};
-
 class UdevRandom : public Random
 {
-    public:
+   public:
     UdevRandom()
     {
+        // TODO See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.
     }
-    ~UdevRandom() override {}
 
     void random(void * dest, size_t size) override {
-        io::posix::fdbuf file(open("/dev/urandom", O_RDONLY));
-        if (!file.is_open()) {
-            LOG(LOG_INFO, "using /dev/random as random source");
-            file.open("/dev/random", O_RDONLY);
-            if (!file.is_open()) {
-                LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
+
+        int fd = open("/dev/urandom", O_RDONLY);
+        if (fd == -1){
+            LOG(LOG_INFO, "access to /dev/urandom failed: %s", strerror(errno));
+            fd = open("/dev/random", O_RDONLY);
+            if (fd == -1){
+                LOG(LOG_ERR, "random source failed to provide random data : couldn't open device");
+                // TODO If random fails an exception should be raised, because security layers depends on random and should probably refuse working
+                memset(dest, 0x44, size);
+                return;
             }
+            LOG(LOG_INFO, "using /dev/random as random source");
         }
         else {
             LOG(LOG_INFO, "using /dev/urandom as random source");
         }
 
-        ssize_t res = file.read(dest, size);
+         // this object is useful for RAII, do not unwrap
+        struct fdbuf
+        {
+            const int fd;
+            explicit fdbuf(int fd) : fd(fd){}
+            ~fdbuf() { ::close(this->fd);}
+
+            // TODO This is basically a blocking read, we should provide timeout management and behaviour
+            ssize_t read(uint8_t * data, size_t len) const
+            {
+                size_t remaining_len = len;
+                while (remaining_len) {
+                    ssize_t ret = ::read(this->fd
+                                , data + (len - remaining_len)
+                                , remaining_len);
+                    if (ret < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Error should still be there next time we try to read
+                        if (remaining_len != len){
+                            return len - remaining_len;
+                        }
+                        return ret;
+                    }
+                    // We must exit loop or we will enter infinite loop
+                    if (ret == 0){
+                        break;
+                    }
+                    remaining_len -= ret;
+                }
+                return len - remaining_len;
+            }
+        } file(fd);
+
+        ssize_t res = file.read(static_cast<uint8_t*>(dest), size);
         if (res != static_cast<ssize_t>(size)) {
             if (res >= 0){
-                LOG(LOG_ERR, "random source failed to provide enough random data [%u]", res);
+                LOG(LOG_ERR, "random source failed to provide enough random data [%zd]", res);
             }
             else {
-                LOG(LOG_ERR, "random source failed to provide random data [%u]", strerror(errno));
+                LOG(LOG_ERR, "random source failed to provide random data [%s]", strerror(errno));
             }
             memset(dest, 0x44, size);
         }
     }
+
+    uint32_t rand32() override
+    {
+        uint32_t result = 0;
+        char buffer[sizeof(result)];
+        this->random(buffer, sizeof(result));
+        memcpy(&result, buffer, sizeof(result));
+        return result;
+    }
 };
-
-
-#endif

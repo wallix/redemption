@@ -22,20 +22,14 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWidgetFlatButton
-#include <boost/test/auto_unit_test.hpp>
-
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/flat_button.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
 
 #include "fake_draw.hpp"
 
@@ -46,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -58,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test1", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test1", auto_resize, id,
                              fg_color, bg_color, fc_color, font, xtext, ytext);
 
     // ask to widget to redraw at it's current position
@@ -68,8 +62,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x97\x74\x69\x41\x37\x9c\x8d\xa6\x89\x14"
-        "\x88\x63\x79\x8e\x3f\xae\x3c\x22\xef\x55"
+        "\x68\xe5\xb3\xd8\x73\x90\x97\x63\x7b\x69\x3f\xb3\x59\x98\xf5\xff\xe6\x1a\x39\x6f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -82,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -92,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test2", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test2", auto_resize, id,
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
@@ -105,8 +98,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf9\x01\x08\x71\xcc\x4f\xfb\x43\x6a\xec"
-        "\xf7\xbd\x43\x10\xa0\x4b\x21\x44\x8a\x3f"
+        "\x2a\x11\x27\x83\xfc\xca\xe3\x9d\x61\x10\x17\xd8\xbc\xae\x31\x27\x4f\x67\x6d\x71"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -120,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -130,7 +122,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test3", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test3", auto_resize, id,
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
@@ -143,8 +135,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x30\xfc\xe0\x34\xff\x78\x9b\x9e\x96\x6d"
-        "\xf0\xa6\x9d\x15\xff\x0a\x1b\x10\xb6\xc0"
+        "\xd4\x20\x28\xee\x67\x81\xee\x29\x81\xa2\xe2\x2a\xe9\xdc\x3b\xb6\x96\x09\xd6\xd5"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -158,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -168,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test4", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test4", auto_resize, id,
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
@@ -181,8 +172,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x6f\xb0\x8d\x93\xaf\xfb\x71\x11\x65\x4a"
-        "\xf4\x68\x8f\xaa\xf0\x67\xb3\xf5\x10\x19"
+        "\xa0\x82\xc3\x05\x38\x74\xb0\xe0\xa6\xb7\x6e\x4e\xc7\xaf\x7c\x0c\xe7\x95\xad\x33"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -196,7 +186,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -206,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test5", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test5", auto_resize, id,
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
@@ -219,8 +209,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x0a\x74\xd0\x5a\xe7\x29\x61\x18\x0c\x73"
-        "\xef\x7d\xf3\x87\x9e\x79\xb4\x3d\x76\x08"
+        "\xdb\xab\xd3\x2c\x94\x64\xa7\xf0\xd8\xf5\xc6\xda\xc9\x29\x69\x72\x0f\xda\xcf\xe5"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -234,7 +223,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -244,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id,
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at it's current position
@@ -257,8 +246,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xca\x98\xb2\x78\x2e\xbc\xb4\xfb\xbf\x00"
-        "\x7d\x3d\x38\x59\x77\x4e\xa6\x32\xaf\x0b"
+        "\x6c\x19\x06\x10\x85\xc1\x56\x63\xf3\x0a\xef\x1f\xed\xce\xf8\xa2\x36\x0a\x12\x78"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -272,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -282,7 +270,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id,
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
@@ -295,8 +283,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x65\x01\x76\x90\x19\x3f\x9d\x67\xa0\xae"
-        "\xdc\x0e\xc9\xf8\x10\x5b\xae\xc4\xfb\x70"
+        "\x85\x49\x79\x3f\xf1\x05\x4d\x53\x2d\x0c\x58\xe6\xf3\x6b\xb8\x7a\xb0\x21\xe5\x9d"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -310,7 +297,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -320,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id,
                              fg_color, bg_color, fc_color, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
@@ -333,8 +320,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x3c\x4c\x75\x45\x7c\xfc\x6f\xc7\x43\x99"
-        "\x28\x6e\xc2\x38\xcc\x14\x81\xf7\xee\x3c"
+        "\x84\x60\xe3\xf9\x31\xe5\x7e\x90\x4a\xb5\x18\xd9\xc9\x3a\xc5\x8f\xf3\x38\x30\xae"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -346,7 +332,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -358,7 +344,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test6", auto_resize, id,
                              fg_color, bg_color, fc_color, font, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
@@ -367,8 +353,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x63\xf6\xb9\xf7\xea\x5d\xaf\xaa\x5f\x9b"
-        "\x4d\xd9\x59\xbc\x32\x86\x8c\x6f\x7b\x4f"
+        "\x4d\x48\x1f\x6f\xe8\x0e\x26\x61\x7c\xfb\xdd\x70\x77\x94\xd6\x70\x10\xce\xe0\xda"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -380,8 +365,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x6b\x2b\x42\xf0\xd0\x72\xef\x60\xa5\x10"
-        "\xf2\xb3\x20\x2e\x7f\xa2\x8f\xd0\xf2\xc0"
+        "\x69\x43\xb9\x96\x60\x66\xb9\xe6\x32\x1a\x66\xdb\xa4\xf6\x69\x99\x0c\x5b\xd7\x0a"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -393,8 +377,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x63\xf6\xb9\xf7\xea\x5d\xaf\xaa\x5f\x9b"
-        "\x4d\xd9\x59\xbc\x32\x86\x8c\x6f\x7b\x4f"
+        "\x4d\x48\x1f\x6f\xe8\x0e\x26\x61\x7c\xfb\xdd\x70\x77\x94\xd6\x70\x10\xce\xe0\xda"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -409,13 +392,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
         NotifyApi::notify_event_t event = 0;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), *this, nullptr)
+        : Widget2(drawable.gd, Rect(), *this, nullptr)
         {}
 
-        virtual void draw(const Rect&)
+        void draw(const Rect&) override
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
+        void notify(Widget2* sender, NotifyApi::notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -427,7 +410,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
         notify_event_t event = 0;
 
         Notify() = default;
-        virtual void notify(Widget2* sender, notify_event_t event)
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -441,7 +424,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
 
     Font font;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize, 0, WHITE,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, &notifier, "", auto_resize, 0, WHITE,
                              DARK_BLUE_BIS, WINBLUE, font);
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
@@ -505,22 +488,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetFlatButton is a button widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
-    WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
+    WidgetComposite wcomposite(drawable.gd, Rect(0,0,800,600), parent, notifier);
 
-    WidgetFlatButton wbutton1(drawable, 0,0, wcomposite, notifier,
+    WidgetFlatButton wbutton1(drawable.gd, 0,0, wcomposite, notifier,
                               "abababab", true, 0, YELLOW, BLACK, WINBLUE, font);
-    WidgetFlatButton wbutton2(drawable, 0,100, wcomposite, notifier,
+    WidgetFlatButton wbutton2(drawable.gd, 0,100, wcomposite, notifier,
                               "ggghdgh", true, 0, WHITE, RED, WINBLUE, font);
-    WidgetFlatButton wbutton3(drawable, 100,100, wcomposite, notifier,
+    WidgetFlatButton wbutton3(drawable.gd, 100,100, wcomposite, notifier,
                               "lldlslql", true, 0, BLUE, RED, WINBLUE, font);
-    WidgetFlatButton wbutton4(drawable, 300,300, wcomposite, notifier,
+    WidgetFlatButton wbutton4(drawable.gd, 300,300, wcomposite, notifier,
                               "LLLLMLLM", true, 0, PINK, DARK_GREEN, WINBLUE, font);
-    WidgetFlatButton wbutton5(drawable, 700,-10, wcomposite, notifier,
+    WidgetFlatButton wbutton5(drawable.gd, 700,-10, wcomposite, notifier,
                               "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE, WINBLUE, font);
-    WidgetFlatButton wbutton6(drawable, -10,550, wcomposite, notifier,
+    WidgetFlatButton wbutton6(drawable.gd, -10,550, wcomposite, notifier,
                               "xxwwp", true, 0, ANTHRACITE, PALE_GREEN, WINBLUE, font);
 
     wcomposite.add_widget(&wbutton1);
@@ -537,8 +520,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xd2\xb7\x90\xff\xad\xe1\xd3\x5b\x20\x59"
-        "\x14\x83\x8e\x0d\xbf\xd0\x9a\xd7\x3a\xe5"
+        "\xea\x26\xfc\x6b\x6e\x30\x6d\x39\xa4\x06\xb2\xae\xe0\xde\x95\x20\x67\x8a\x44\xba"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -550,8 +532,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button13.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x4b\xd7\x1c\xe2\x2b\x46\x34\xd7\xdb\x56"
-        "\xd7\x64\x03\xba\xbf\xd7\xfd\xc9\x13\xa8"
+        "\x56\x5c\x7e\x82\x85\xba\xdf\x0b\xf8\x63\x07\x97\x71\xba\x55\x91\x2f\xfc\x70\xe2"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -566,7 +547,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -578,7 +559,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test7", auto_resize, id,
+    WidgetFlatButton wbutton(drawable.gd, x, y, parent, notifier, "test7", auto_resize, id,
                              fg_color, bg_color, fc_color, font, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
@@ -587,8 +568,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf4\xb4\xb3\xcd\x42\x49\xd9\x38\x38\xd8"
-        "\x25\x94\x25\x37\x96\xe6\xea\x76\xca\x6f"
+        "\x49\x06\x79\x76\xc9\x88\xca\xd0\x0c\xca\x82\x27\xe0\xe4\xe4\xd9\x8b\xf0\xb1\x39"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -601,8 +581,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xd1\x14\x95\x71\x12\x28\x07\xf5\x8d\x5a"
-        "\x43\xbe\x26\x41\xd3\x0d\xfb\x13\x4f\xbf"
+        "\xca\xc9\xc3\xa6\xd9\xa2\x8b\xd8\xce\x1f\x8d\x18\xf2\x94\xda\x44\x3a\xfe\x41\x78"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -616,8 +595,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     // drawable.save_to_png(OUTPUT_FILE_PATH "button16.png");
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf4\xb4\xb3\xcd\x42\x49\xd9\x38\x38\xd8"
-        "\x25\x94\x25\x37\x96\xe6\xea\x76\xca\x6f"
+        "\x49\x06\x79\x76\xc9\x88\xca\xd0\x0c\xca\x82\x27\xe0\xe4\xe4\xd9\x8b\xf0\xb1\x39"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -631,8 +609,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xd1\x14\x95\x71\x12\x28\x07\xf5\x8d\x5a"
-        "\x43\xbe\x26\x41\xd3\x0d\xfb\x13\x4f\xbf"
+    "\xca\xc9\xc3\xa6\xd9\xa2\x8b\xd8\xce\x1f\x8d\x18\xf2\x94\xda\x44\x3a\xfe\x41\x78"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

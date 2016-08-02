@@ -21,11 +21,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_OFFSCREENCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_OFFSCREENCACHE_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.7.1.9 Offscreen Bitmap Cache Capability Set (TS_OFFSCREEN_CAPABILITYSET)
 // ============================================================================
@@ -90,4 +90,3 @@ struct OffScreenCacheCaps : public Capability {
     }
 };
 
-#endif

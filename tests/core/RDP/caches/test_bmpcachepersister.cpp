@@ -21,14 +21,14 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBmpCachePersister
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/caches/bmpcachepersister.hpp"
-#include "RDP/PersistentKeyListPDU.hpp"
-#include "test_transport.hpp"
+#include "core/RDP/caches/bmpcachepersister.hpp"
+#include "core/RDP/PersistentKeyListPDU.hpp"
+#include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
 {
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCachePersister)
     //LogTransport t;
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
-    CheckTransport t(outdata, sizeof(outdata), verbose);
+    CheckTransport t(outdata, sizeof(outdata)-1, verbose);
 
     BmpCachePersister::save_all_to_disk(bmp_cache, t, verbose);
 }

@@ -21,16 +21,17 @@
    header file. Check object, used to check file's existance
 */
 
-#ifndef _REDEMPTION_CORE_CHECK_FILES_HPP_
-#define _REDEMPTION_CORE_CHECK_FILES_HPP_
+
+#pragma once
 
 #include <cstring>
 #include <cstdio>
 #include <sys/types.h>
-#include "log.hpp"
-#include "font.hpp" //DEFAULT_FONT_NAME
+#include "utils/log.hpp"
+#include "core/font.hpp" //DEFAULT_FONT_NAME
+#include "defines.hpp"
 
-TODO("merge that with find and unlink")
+// TODO merge that with find and unlink
 
 struct CheckFileList
 {
@@ -238,4 +239,3 @@ struct CheckFile {
     }
 };
 
-#endif

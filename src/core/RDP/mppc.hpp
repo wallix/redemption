@@ -24,13 +24,14 @@
    Copyright 2012 Jiten Pathy
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_HPP_
+
+#pragma once
 
 #include <stdint.h>
+#include <cinttypes>
 
-#include "log.hpp"
-#include "error.hpp"
+#include "utils/log.hpp"
+#include "core/error.hpp"
 class OutStream;
 
 // 3.1.8 MPPC-Based Bulk Data Compression
@@ -468,11 +469,11 @@ static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outpu
             throw Error(ERR_RDP45_COMPRESS_BUFFER_OVERFLOW);
         }
         outputBuffer[opb_index++] |= data >> (bits_to_serialize - bits_left);
-        data                      &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
+        data                      &= (0xFFFFFFFFull >> (32 - (bits_to_serialize - bits_left)));
         bits_to_serialize         -= bits_left;
         for (; bits_to_serialize >= 8 ; bits_to_serialize -= 8) {
             outputBuffer[opb_index++] =  (data >> (bits_to_serialize - 8));
-            data                      &= (0xFFFFFFFF >> (32 - (bits_to_serialize - 8)));
+            data                      &= (0xFFFFFFFFull >> (32 - (bits_to_serialize - 8)));
         }
         outputBuffer[opb_index] = (bits_to_serialize > 0)           ?
                                   (data << (8 - bits_to_serialize)) :
@@ -532,13 +533,13 @@ public:
                 uncompressed_data_size);
 
         if (verbose & 128) {
-            LOG(LOG_INFO, "compressedType=0x%02X", compressedType);
-            LOG(LOG_INFO, "uncompressed_data_size=%u compressed_data_size=%u rate=%.2f",
+            LOG(LOG_INFO, "compressedType=0x%02X", static_cast<unsigned>(compressedType));
+            LOG(LOG_INFO, "uncompressed_data_size=%" PRIu16 " compressed_data_size=%" PRIu16 " rate=%.2f",
                 uncompressed_data_size, compressed_data_size,
                 compressed_data_size * 100.0 / uncompressed_data_size);
-            LOG(LOG_INFO, "total_uncompressed_data_size=%llu total_compressed_data_size=%llu total_rate=%.2Lf",
+            LOG(LOG_INFO, "total_uncompressed_data_size=%" PRIu64 " total_compressed_data_size=%" PRIu64 " total_rate=%.2Lf",
                 total_uncompressed_data_size, total_compressed_data_size,
-                static_cast<long double>(total_compressed_data_size) * 100.0
+                static_cast<long double>(total_compressed_data_size) * 100
                 / static_cast<long double>(total_uncompressed_data_size));
         }
     }
@@ -694,5 +695,3 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
 
 
 static const size_t RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH = 3;
-
-#endif  /* _REDEMPTION_CORE_RDP_MPPC_HPP_ */

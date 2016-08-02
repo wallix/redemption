@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00010426_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00010426_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00010426 {    // Latvian (Latvia) // Latvian (QWERTY)
 
 const static int LCID = 0x00010426;
+
+const static char * const locale_name = "lv-LV.qwerty";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -248,6 +250,7 @@ const static uint8_t nbDeadkeys = 4;
 } // END NAMESPACE - x00010426
 
 static const Keylayout keylayout_x00010426( x00010426::LCID
+                                          , x00010426::locale_name
                                           , x00010426::noMod
                                           , x00010426::shift
                                           , x00010426::altGr
@@ -261,4 +264,3 @@ static const Keylayout keylayout_x00010426( x00010426::LCID
                                           , x00010426::nbDeadkeys
 );
 
-#endif

@@ -21,11 +21,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.7.2.6 Multifragment Update Capability Set (TS_MULTIFRAGMENTUPDATE_CAPABILITYSET)
 // ====================================================================================
@@ -74,4 +74,3 @@ struct MultiFragmentUpdateCaps : public Capability {
         LOG(LOG_INFO, "MultifragmentUpdate caps::MaxRequestSize %u", this->MaxRequestSize);
     }
 };
-#endif

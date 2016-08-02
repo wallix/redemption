@@ -20,16 +20,17 @@
  *
  */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET2_STACKLAYOUT_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET2_STACKLAYOUT_HPP_
+#pragma once
+
 #include "widget.hpp"
 #include "layout.hpp"
+#include "gdi/graphic_api.hpp"
 
 struct WidgetStackLayout : public WidgetLayout {
     size_t selected;
     int bgcolor;
 
-    WidgetStackLayout(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetStackLayout(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                       NotifyApi * notifier, int group_id = 0, int bgcolor = BLACK)
         : WidgetLayout(drawable, rect, parent, notifier, group_id)
         , selected(0)
@@ -77,4 +78,3 @@ struct WidgetStackLayout : public WidgetLayout {
 };
 
 
-#endif

@@ -24,11 +24,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestCapabilityDrawGdiPlus
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/capabilities/drawgdiplus.hpp"
+#include "core/RDP/capabilities/drawgdiplus.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
 {
@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
     BOOST_CHECK_EQUAL(drawgdiplus_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS));
     BOOST_CHECK_EQUAL(drawgdiplus_caps2.len, static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_DRAWGDIPLUS, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_DRAWGDIPLUS, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_DRAWGDIPLUS), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_DRAWGDIPLUS), stream.in_uint16_le());
     drawgdiplus_caps2.recv(stream, CAPLEN_DRAWGDIPLUS);
 
     BOOST_CHECK_EQUAL(drawgdiplus_caps2.drawGDIPlusSupportLevel, static_cast<uint32_t>(5));

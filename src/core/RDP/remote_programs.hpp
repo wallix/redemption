@@ -18,12 +18,13 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
-#define _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_
 
-#include "cast.hpp"
-#include "error.hpp"
-#include "stream.hpp"
+#pragma once
+
+#include "utils/sugar/cast.hpp"
+#include "core/error.hpp"
+#include "utils/stream.hpp"
+#include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
 // ========================================================
@@ -137,7 +138,7 @@ public:
         const unsigned expected = 4;    // orderType(2) + orderLength(2)
 
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated RAIL PDU header: expected=%u remains=%u",
+            LOG(LOG_ERR, "Truncated RAIL PDU header: expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
@@ -206,7 +207,7 @@ public:
         const unsigned expected = 4;    // buildNumber(4)
 
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Handshake PDU: expected=%u remains=%u",
+            LOG(LOG_ERR, "Handshake PDU: expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
@@ -274,7 +275,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Client Information PDU: expected=%u remains=%u",
+                    "Truncated Client Information PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -370,6 +371,7 @@ enum {
     , TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        = 0x0008
 };
 
+
 // ExeOrFileLength (2 bytes): An unsigned 16-bit integer. Specifies the
 //  length of the ExeOrFile field in bytes. The length MUST be nonzero. The
 //  maximum length is 520 bytes.
@@ -421,7 +423,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Client Execute PDU: expected=%u remains=%u",
+                    "Truncated Client Execute PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -432,38 +434,12 @@ public:
         this->WorkingDirLength  = stream.in_uint16_le();
         this->ArgumentsLen      = stream.in_uint16_le();
 
-        auto get_non_null_terminated_utf16_string =
-            [&stream] (std::string & out,
-                       size_t length_of_utf16_data_in_bytes) {
-                if (!stream.in_check_rem(length_of_utf16_data_in_bytes)) {
-                    LOG(LOG_ERR,
-                        "Truncated Client Execute PDU: expected=%u remains=%u",
-                        length_of_utf16_data_in_bytes, stream.in_remain());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-                uint8_t * const utf16_data = static_cast<uint8_t *>(
-                    ::alloca(length_of_utf16_data_in_bytes));
-                stream.in_copy_bytes(utf16_data,
-                    length_of_utf16_data_in_bytes);
-
-                const size_t size_of_utf8_string =
-                    length_of_utf16_data_in_bytes / 2 *
-                    maximum_length_of_utf8_character_in_bytes + 1;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
-                const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    utf16_data, length_of_utf16_data_in_bytes / 2,
-                    utf8_string, size_of_utf8_string);
-                out.assign(::char_ptr_cast(utf8_string),
-                    length_of_utf8_string);
-            };
-
-        get_non_null_terminated_utf16_string(this->exe_or_file_,
-            this->ExeOrFileLength);
-        get_non_null_terminated_utf16_string(this->working_dir_,
-            this->WorkingDirLength);
-        get_non_null_terminated_utf16_string(this->arguments_,
-            this->ArgumentsLen);
+        get_non_null_terminated_utf16_from_utf8(
+            this->exe_or_file_, stream, this->ExeOrFileLength, "Client Execute PDU");
+        get_non_null_terminated_utf16_from_utf8(
+            this->working_dir_, stream, this->WorkingDirLength, "Client Execute PDU");
+        get_non_null_terminated_utf16_from_utf8(
+            this->arguments_, stream, this->ArgumentsLen, "Client Execute PDU");
     }
 
     uint16_t Flags() const { return this->Flags_; }
@@ -489,35 +465,19 @@ public:
         const uint32_t offset_of_Arguments  = stream.get_offset();
         stream.out_clear_bytes(2);
 
-        auto put_non_null_terminate_utf16_string =
-            [&stream] (const char * in,
-                       size_t maximum_length_of_utf16_data_in_bytes,
-                       uint32_t offset_of_data_length) {
-                uint8_t * const utf16_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_utf16_data_in_bytes));
-                const size_t size_of_utf16_data = ::UTF8toUTF16(
-                    reinterpret_cast<const uint8_t *>(in), utf16_data,
-                    maximum_length_of_utf16_data_in_bytes);
-
-                stream.out_copy_bytes(utf16_data, size_of_utf16_data);
-
-                stream.set_out_uint16_le(size_of_utf16_data,
-                    offset_of_data_length);
-            };
-
         const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
-        put_non_null_terminate_utf16_string(
-            exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
+        put_non_null_terminated_utf16_from_utf8(
+            stream, exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
             offset_of_ExeOrFile);
 
         const size_t maximum_length_of_WorkingDir_in_bytes = 520;
-        put_non_null_terminate_utf16_string(
-            working_dir, maximum_length_of_WorkingDir_in_bytes,
+        put_non_null_terminated_utf16_from_utf8(
+            stream, working_dir, maximum_length_of_WorkingDir_in_bytes,
             offset_of_WorkingDir);
 
         const size_t maximum_length_of_Arguments_in_bytes = 16000;
-        put_non_null_terminate_utf16_string(
-            arguments, maximum_length_of_Arguments_in_bytes,
+        put_non_null_terminated_utf16_from_utf8(
+            stream, arguments, maximum_length_of_Arguments_in_bytes,
             offset_of_Arguments);
     }
 };
@@ -656,7 +616,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Client System Parameters Update PDU: expected=%u remains=%u",
+                    "Truncated Client System Parameters Update PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -720,7 +680,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated High Contrast System Information Structure: expected=%u remains=%u (0)",
+                    "Truncated High Contrast System Information Structure: expected=%u remains=%zu (0)",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -731,34 +691,16 @@ public:
 
         if (!stream.in_check_rem(this->ColorSchemeLength)) {
             LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%u (1)",
+                "Truncated High Contrast System Information Structure: expected=%u remains=%zu (1)",
                 this->ColorSchemeLength, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
 
         REDASSERT(this->ColorSchemeLength >= 2 /* CbString(2) */);
 
-        const uint16_t CbString = stream.in_uint16_le();
-
-        if (!stream.in_check_rem(CbString)) {
-            LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%u (2)",
-                this->ColorSchemeLength, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(CbString));
-
-        stream.in_copy_bytes(unicode_data, CbString);
-
-        const size_t size_of_utf8_string =
-                    CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            unicode_data, CbString / 2, utf8_string, size_of_utf8_string);
-        this->ColorScheme_.assign(::char_ptr_cast(utf8_string),
-            length_of_utf8_string);
+        get_non_null_terminated_utf16_from_utf8(
+            this->ColorScheme_, stream, stream.in_uint16_le(),
+            "High Contrast System Information Structure");
     }
 
     uint32_t Flags() const { return this->Flags_; }
@@ -772,20 +714,13 @@ public:
                                                 const char * color_scheme) {
         stream.out_uint32_le(Flags);
 
-        const size_t maximum_length_of_ColorScheme_in_bytes = strlen(color_scheme) * 2;
+        const size_t offset_of_data_length = stream.get_offset();
+        stream.out_skip_bytes(4);
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_ColorScheme_in_bytes));
-        const size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(color_scheme), unicode_data,
-            maximum_length_of_ColorScheme_in_bytes);
+        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+            stream, color_scheme, strlen(color_scheme) * 2);
 
-        stream.out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data);
-
-        stream.out_uint16_le(size_of_unicode_data);
-
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
     }
 };
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_REMOTE_PROGRAMS_HPP_

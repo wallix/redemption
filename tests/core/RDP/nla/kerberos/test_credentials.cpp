@@ -21,11 +21,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestkrbCredentials
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-// #include "RDP/nla/kerberos/credentials.hpp"
+#include "core/RDP/nla/kerberos/credentials.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestTSRequest)

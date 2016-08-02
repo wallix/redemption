@@ -18,648 +18,311 @@
    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
-#define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
-#include "out_meta_sequence_transport.hpp"
-#include "crypto_out_meta_sequence_transport.hpp"
-#include "out_filename_sequence_transport.hpp"
+#pragma once
 
-#include "RDP/caches/pointercache.hpp"
+#include "core/wait_obj.hpp"
 
-#include "nativecapture.hpp"
-#include "staticcapture.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+#include "gdi/input_pointer_api.hpp"
+#include "gdi/capture_probe_api.hpp"
 
-#include "RDP/compress_and_draw_bitmap_update.hpp"
+#include "utils/pattutils.hpp"
 
-#include "wait_obj.hpp"
+#include "capture/utils/graphic_capture_impl.hpp"
+#include "capture/utils/wrm_capture_impl.hpp"
+#include "capture/utils/kbd_capture_impl.hpp"
+#include "capture/utils/image_capture_impl.hpp"
+#include "capture/utils/capture_apis_impl.hpp"
 
-class Capture : public RDPGraphicDevice, public RDPCaptureDevice {
+class Capture final
+: public gdi::GraphicBase<Capture>
+, public gdi::CaptureApi
+, public gdi::KbdInputApi
+, public gdi::MouseInputApi
+, public gdi::CaptureProbeApi
+, public gdi::ExternalCaptureApi
+, public gdi::UpdateConfigCaptureApi
+{
+    using Graphic = GraphicCaptureImpl;
+
+    using Static = ImageCaptureImpl;
+
+    using Native = WrmCaptureImpl;
+
+    using Kbd = KbdCaptureImpl;
+
 public:
     const bool capture_wrm;
-    const bool capture_drawable;
     const bool capture_png;
-
-    const bool enable_file_encryption;
-
-    OutFilenameSequenceTransport * png_trans;
-    StaticCapture                * psc;
+// for extension
+// end extension
 
 private:
-    Transport                    * wrm_trans;
+// for extension
+// end extension
 
-private:
-    BmpCache      * pnc_bmp_cache;
-    GlyphCache    * pnc_gly_cache;
-    PointerCache  * pnc_ptr_cache;
-    NativeCapture * pnc;
+    std::unique_ptr<Graphic> gd;
+    std::unique_ptr<Native> pnc;
+    std::unique_ptr<Static> psc;
+    std::unique_ptr<Kbd> pkc;
 
-    RDPDrawable * drawable;
+    CaptureApisImpl::Capture capture_api;
+    CaptureApisImpl::KbdInput kbd_input_api;
+    CaptureApisImpl::MouseInput mouse_input_api;
+    CaptureApisImpl::CaptureProbe capture_probe_api;
+    CaptureApisImpl::ExternalCapture external_capture_api;
+    CaptureApisImpl::UpdateConfigCapture update_config_capture_api;
+    Graphic::GraphicApi * graphic_api = nullptr;
+
+    ApisRegister get_apis_register() {
+        return {
+            this->graphic_api ? &this->graphic_api->gds : nullptr,
+            this->graphic_api ? &this->graphic_api->snapshoters : nullptr,
+            this->capture_api.caps,
+            this->kbd_input_api.kbds,
+            this->mouse_input_api.mouses,
+            this->capture_probe_api.probes,
+            this->external_capture_api.objs,
+            this->update_config_capture_api.objs,
+        };
+    }
 
 public:
-    wait_obj capture_event;
-
-private:
-    FilenameGenerator const * wrm_filename_generator;
-
-    CryptoContext crypto_ctx;
-
-private:
-    RDPGraphicDevice * gd;
-
-    timeval last_now;
-    int     last_x;
-    int     last_y;
-
-    bool    clear_png;
-
-    uint8_t order_bpp;
-    uint8_t capture_bpp;
-
-    const BGRPalette & mod_palette_rgb = BGRPalette::classic_332_rgb();
-
-public:
-    Capture( const timeval & now, int width, int height, int order_bpp, int capture_bpp, const char * wrm_path
-           , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini, bool externally_generated_breakpoint = false)
-    : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & configs::CaptureFlags::wrm))
-    , capture_drawable(this->capture_wrm || (ini.get<cfg::video::png_limit>() > 0))
+    Capture(
+        const timeval & now,
+        uint16_t width, uint16_t height, int order_bpp, int capture_bpp,
+        bool enable_rt, bool no_timestamp, auth_api * authentifier,
+        const Inifile & ini, Random & rnd, CryptoContext & cctx,
+        bool full_video)
+    : capture_wrm(bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::wrm))
     , capture_png(ini.get<cfg::video::png_limit>() > 0)
-    , enable_file_encryption(ini.get<cfg::globals::enable_file_encryption>())
-    , png_trans(nullptr)
-    , psc(nullptr)
-    , wrm_trans(nullptr)
-    , pnc_bmp_cache(nullptr)
-    , pnc_gly_cache(nullptr)
-    , pnc_ptr_cache(nullptr)
-    , pnc(nullptr)
-    , drawable(nullptr)
-    , gd(nullptr)
-    , last_now(now)
-    , last_x(width / 2)
-    , last_y(height / 2)
-    , clear_png(clear_png)
-    , order_bpp(order_bpp)
-    , capture_bpp(capture_bpp)
+    , capture_api(now, width / 2, height / 2)
     {
-        if (this->capture_drawable) {
-            this->drawable = new RDPDrawable(width, height, capture_bpp);
+        // TODO Remove that after change of capture interface
+        (void)full_video;
+        (void)no_timestamp;
+        (void)rnd;
+
+        bool const enable_kbd
+          = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+          || (ini.get<cfg::session_log::enable_session_log>() &&
+              (ini.get<cfg::session_log::keyboard_input_masking_level>()
+               != ::KeyboardInputMaskingLevel::fully_masked)
+             )
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+        ;
+
+        if (ini.get<cfg::debug::capture>()) {
+            LOG(LOG_INFO, "Enable capture:  wrm=%d  png=%d  kbd=%d",
+                this->capture_wrm ? 1 : 0,
+                this->capture_png ? 1 : 0,
+                enable_kbd ? 1 : 0
+            );
         }
 
-        if (this->capture_png) {
-            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.get<cfg::video::capture_groupid>()) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
-            }
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const bool capture_drawable = this->capture_wrm || this->capture_png;
+        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        const char * record_path = ini.get<cfg::video::record_path>().c_str();
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
-//            this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, png_path
-            this->png_trans = new OutFilenameSequenceTransport( FilenameGenerator::PATH_FILE_COUNT_EXTENSION, png_path
-                                                              , basename, ".png", ini.get<cfg::video::capture_groupid>(), authentifier);
-            this->psc = new StaticCapture( now, *this->png_trans, this->png_trans->seqgen(), width, height
-                                         , clear_png, ini, this->drawable->impl());
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
+        strcpy(basename, "redemption"); // default value actual one should come from movie_path
+        strcpy(extension, "");          // extension is currently ignored
+
+        if (!canonical_path(
+            ini.get<cfg::globals::movie_path>().c_str()
+          , path, sizeof(path)
+          , basename, sizeof(basename)
+          , extension, sizeof(extension))
+        ) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
         }
 
-        if (this->capture_wrm) {
-            if (recursive_create_directory( wrm_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
+        if (capture_drawable) {
+            this->gd.reset(new Graphic(width, height, order_bpp, this->capture_api.mouse_trace()));
+            this->graphic_api = &this->gd->get_graphic_api();
+            this->capture_api.set_drawable(&this->gd->impl());
+
+            if (this->capture_png) {
+                if (recursive_create_directory(record_tmp_path, S_IRWXU | S_IRWXG, groupid) != 0) {
+                    LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_tmp_path);
+                }
+
+                this->psc.reset(new Static(
+                    now, enable_rt, authentifier, this->gd->impl(),
+                    record_tmp_path, basename, groupid, ini
+                ));
             }
 
-            if (recursive_create_directory( hash_path
-                                          , S_IRWXU | S_IRGRP | S_IXGRP, ini.get<cfg::video::capture_groupid>()) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
-            }
+            if (this->capture_wrm) {
+                if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                    LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
+                }
 
-            memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
-            memcpy(this->crypto_ctx.crypto_key, ini.get<cfg::crypto::key0>(), sizeof(this->crypto_ctx.crypto_key));
-            memcpy(this->crypto_ctx.hmac_key,   ini.get<cfg::crypto::key1>(), sizeof(this->crypto_ctx.hmac_key  ));
+                if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                    LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
+                }
 
-            TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
-                 "Here is not the right level to manage anything related to encryption.")
-            TODO("Also we may wonder why we are encrypting wrm and not png"
-                 "(This is related to the path split between png and wrm)."
-                 "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache( BmpCache::Recorder, capture_bpp, 3, false
-                                              , BmpCache::CacheOption(600, 768, false)
-                                              , BmpCache::CacheOption(300, 3072, false)
-                                              , BmpCache::CacheOption(262, 12288, false)
-                                              );
-            this->pnc_gly_cache = new GlyphCache();
-            const int pointerCacheSize = 0x19;
-            this->pnc_ptr_cache = new PointerCache(pointerCacheSize);
-
-            if (this->enable_file_encryption) {
-                auto * trans = new CryptoOutMetaSequenceTransport(
-                    &this->crypto_ctx, wrm_path, hash_path, basename, now
-                  , width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
-                this->wrm_trans = trans;
-                this->wrm_filename_generator = trans->seqgen();
+                this->pnc.reset(new Native(
+                    now, capture_bpp, ini.get<cfg::globals::trace_type>(),
+                    cctx, record_path, hash_path, basename,
+                    groupid, authentifier, this->gd->rdp_drawable(), ini
+                ));
             }
-            else {
-                auto * trans = new OutMetaSequenceTransport(
-                    wrm_path, basename, now, width, height, ini.get<cfg::video::capture_groupid>(), authentifier);
-                this->wrm_trans = trans;
-                this->wrm_filename_generator = trans->seqgen();
-            }
-            this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, capture_bpp
-                                         , *this->pnc_bmp_cache, *this->pnc_gly_cache, *this->pnc_ptr_cache
-                                         , *this->drawable, ini, externally_generated_breakpoint
-                                         , NativeCapture::SendInput::YES);
         }
 
-        if (this->capture_wrm) {
-            this->gd = this->pnc;
+        if (enable_kbd) {
+            this->pkc.reset(new Kbd(now, authentifier, ini));
         }
-        else if (this->capture_drawable) {
-            this->gd = this->drawable;
-        }
+
+        ApisRegister apis_register = this->get_apis_register();
+
+        if (this->gd ) { this->gd->attach_apis (apis_register, ini); }
+        if (this->pnc) { this->pnc->attach_apis(apis_register, ini); }
+        if (this->psc) { this->psc->attach_apis(apis_register, ini); }
+        if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
+
+        if (this->gd ) { this->gd->start(); }
     }
 
     ~Capture() override {
-        delete this->psc;
-        delete this->png_trans;
+        this->pkc.reset();
+
+        this->psc.reset();
 
         if (this->pnc) {
             timeval now = tvtime();
-            this->pnc->recorder.timestamp(now);
-            this->pnc->recorder.send_timestamp_chunk(false);
-            delete this->pnc;
+            this->pnc->send_timestamp_chunk(now, false);
+            this->pnc.reset();
         }
-        delete this->wrm_trans;
-        delete this->pnc_bmp_cache;
-        delete this->pnc_gly_cache;
-        delete this->pnc_ptr_cache;
-        delete this->drawable;
 
-        if (this->clear_png) {
-            auto i = this->wrm_trans->get_seqno();
-            while (i > 0) {
-                auto filename = this->wrm_filename_generator->get(--i);
-                if (::unlink(filename) < 0) {
-                    LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", filename, errno, strerror(errno));
-                }
-            }
+        this->gd.reset();
+    }
+
+    wait_obj & get_capture_event() {
+        return this->capture_api.get_capture_event();
+    }
+
+    void update_config(const Inifile & ini) override {
+        this->update_config_capture_api.update_config(ini);
+    }
+
+    bool kbd_input(const timeval & now, uint32_t uchar) override {
+        return this->kbd_input_api.kbd_input(now, uchar);
+    }
+
+    void update_pointer_position(uint16_t x, uint16_t y) override {
+        this->mouse_input_api.update_pointer_position(x, y);
+    }
+
+    void enable_kbd_input_mask(bool enable) override {
+        this->kbd_input_api.enable_kbd_input_mask(enable);
+    }
+
+private:
+    std::chrono::microseconds do_snapshot(
+        const timeval & now,
+        int x, int y,
+        bool ignore_frame_in_timeval
+    ) override {
+        return this->capture_api.snapshot(now, x, y, ignore_frame_in_timeval);
+    }
+
+    void do_pause_capture(timeval const & now) override {
+        this->capture_api.pause_capture(now);
+    }
+
+    void do_resume_capture(timeval const & now) override {
+        this->capture_api.resume_capture(now);
+    }
+
+    friend gdi::GraphicCoreAccess;
+
+    template<class... Ts>
+    void draw_impl(Ts const & ... args) {
+        if (this->graphic_api) {
+            this->graphic_api->draw(args...);
         }
     }
 
-    void request_full_cleaning()
-    {
-        this->wrm_trans->request_full_cleaning();
-    }
-
-    void pause() {
-        if (this->capture_png) {
-            timeval now = tvtime();
-            this->psc->pause_snapshot(now);
+public:
+    void set_pointer(const Pointer & cursor) override {
+        if (this->graphic_api) {
+            this->graphic_api->set_pointer(cursor);
         }
     }
 
-    void resume() {
-        if (this->capture_wrm){
-            this->wrm_trans->next();
-            timeval now = tvtime();
-            this->pnc->recorder.timestamp(now);
-            this->pnc->recorder.send_timestamp_chunk(true);
+    void set_palette(const BGRPalette & palette) override {
+        if (this->graphic_api) {
+            this->graphic_api->set_palette(palette);
         }
     }
 
-    void update_config(const Inifile & ini) {
-        if (this->capture_png) {
-            this->psc->update_config(ini);
-        }
-        if (this->capture_wrm) {
-            this->pnc->update_config(ini);
+    void sync() override {
+        if (this->graphic_api) {
+            this->graphic_api->sync();
         }
     }
 
     void set_row(size_t rownum, const uint8_t * data) override {
-        if (this->capture_drawable){
-            this->drawable->set_row(rownum, data);
+        if (this->gd){
+            this->gd->rdp_drawable().set_row(rownum, data);
         }
     }
 
-    void snapshot(const timeval & now, int x, int y, bool ignore_frame_in_timeval,
-                          bool const & requested_to_stop) override {
-        this->capture_event.reset();
+    gdi::GraphicApi * get_graphic_api() const {
+        return this->graphic_api;
+    }
 
-        if (this->capture_drawable) {
-            this->drawable->set_mouse_cursor_pos(x, y);
-        }
-
-        this->last_now = now;
-        this->last_x   = x;
-        this->last_y   = y;
-
-        if (this->capture_png) {
-            this->psc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
-            this->capture_event.update(this->psc->time_to_wait);
-        }
-        if (this->capture_wrm) {
-            this->pnc->snapshot(now, x, y, ignore_frame_in_timeval, requested_to_stop);
-            this->capture_event.update(this->pnc->time_to_wait);
+    void add_graphic(gdi::GraphicApi & gd) {
+        if (this->graphic_api) {
+            this->get_apis_register().graphic_list->push_back(gd);
+            // TODO
+            this->gd->start();
         }
     }
 
-    void flush() override {
-        if (this->capture_wrm) {
-            this->pnc->flush();
+    void set_order_bpp(uint8_t order_bpp) {
+        if (this->graphic_api) {
+            this->gd->update_order_bpp(order_bpp);
         }
     }
 
-    bool input(const timeval & now, uint8_t const * input_data_32, std::size_t data_sz) override {
-        if (this->capture_wrm) {
-            return this->pnc->input(now, input_data_32, data_sz);
-        }
-
-        return true;
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
+    void set_pointer_display() /*override*/ {
         if (this->gd) {
-            this->gd->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
-        if (this->gd) {
-            this->gd->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (this->gd) {
-            this->gd->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPMultiOpaqueRect capture_cmd = cmd;
-
-                capture_cmd._Color = color_encode(
-                      color_decode_opaquerect(cmd._Color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDP::RDPMultiPatBlt capture_cmd = cmd;
-
-                capture_cmd.BackColor = color_encode(
-                      color_decode_opaquerect(cmd.BackColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.ForeColor = color_encode(
-                      color_decode_opaquerect(cmd.ForeColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (this->gd) {
-            this->gd->draw(cmd, clip);
-        }
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPatBlt capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        if (this->gd) {
-            this->gd->draw(cmd, clip, bmp);
-        }
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPMem3Blt capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip, bmp);
-            }
-            else {
-                this->gd->draw(cmd, clip, bmp);
-            }
-        }
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPOpaqueRect capture_cmd = cmd;
-
-                capture_cmd.color = color_encode(
-                      color_decode_opaquerect(cmd.color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPLineTo capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.pen.color = color_encode(
-                      color_decode_opaquerect(cmd.pen.color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDPBrushCache & cmd) override {
-        if (this->gd) {
-            this->gd->draw(cmd);
-        }
-    }
-
-    void draw(const RDPColCache & cmd) override {
-        if (this->gd) {
-            this->gd->draw(cmd);
-        }
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPGlyphIndex capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip, gly_cache);
-            }
-            else {
-                this->gd->draw(cmd, clip, gly_cache);
-            }
-        }
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data , size_t size, const Bitmap & bmp) override {
-        if (this->gd) {
-            if (this->capture_wrm) {
-                if (bmp.bpp() > this->capture_bpp) {
-                    // reducing the color depth of image.
-                    Bitmap capture_bmp(this->capture_bpp, bmp);
-
-                    ::compress_and_draw_bitmap_update(bitmap_data, capture_bmp, this->capture_bpp, *this->gd);
-                }
-                else if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
-                    ::compress_and_draw_bitmap_update(bitmap_data, bmp, this->capture_bpp, *this->gd);
-                }
-                else {
-                    this->gd->draw(bitmap_data, data, size, bmp);
-                }
-            }
-            else {
-                this->gd->draw(bitmap_data, data, size, bmp);
-            }
-        }
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        if (this->gd) {
-            this->gd->draw(order);
-        }
-
-        if (order.action == RDP::FrameMarker::FrameEnd) {
-            if (this->capture_png) {
-                bool requested_to_stop = false;
-                this->psc->snapshot(this->last_now, this->last_x, this->last_y, false, requested_to_stop);
-            }
-        }
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPolygonSC capture_cmd = cmd;
-
-                capture_cmd.BrushColor = color_encode(
-                      color_decode_opaquerect(cmd.BrushColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPolygonCB capture_cmd = cmd;
-
-                capture_cmd.foreColor = color_encode(
-                      color_decode_opaquerect(cmd.foreColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.backColor = color_encode(
-                      color_decode_opaquerect(cmd.backColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPPolyline capture_cmd = cmd;
-
-                capture_cmd.PenColor = color_encode(
-                      color_decode_opaquerect(cmd.PenColor, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPEllipseSC capture_cmd = cmd;
-
-                capture_cmd.color = color_encode(
-                      color_decode_opaquerect(cmd.color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (this->gd) {
-            if (this->capture_bpp != this->order_bpp) {
-                RDPEllipseCB capture_cmd = cmd;
-
-                capture_cmd.back_color = color_encode(
-                      color_decode_opaquerect(cmd.back_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-                capture_cmd.fore_color = color_encode(
-                      color_decode_opaquerect(cmd.fore_color, this->order_bpp, this->mod_palette_rgb)
-                    , this->capture_bpp
-                    );
-
-                this->gd->draw(capture_cmd, clip);
-            }
-            else {
-                this->gd->draw(cmd, clip);
-            }
-        }
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        if (this->gd) {
-            this->gd->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        if (this->gd) {
-            this->gd->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        if (this->gd) {
-            this->gd->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        if (this->gd) {
-            this->gd->draw(order);
-        }
-    }
-
-    void server_set_pointer(const Pointer & cursor) override {
-        if (this->gd) {
-            this->gd->server_set_pointer(cursor);
-        }
-    }
-
-    void set_mod_palette(const BGRPalette & palette) override {
-        if (this->capture_drawable) {
-            this->drawable->set_mod_palette(palette);
-        }
-    }
-
-    void set_pointer_display() override {
-        if (this->capture_drawable) {
-            this->drawable->show_mouse_cursor(false);
+            this->gd->rdp_drawable().show_mouse_cursor(false);
         }
     }
 
     // toggles externally genareted breakpoint.
     void external_breakpoint() override {
-        if (this->capture_wrm) {
-            this->pnc->external_breakpoint();
-        }
+        this->external_capture_api.external_breakpoint();
     }
 
     void external_time(const timeval & now) override {
-        if (this->capture_wrm) {
-            this->pnc->external_time(now);
-        }
+        this->external_capture_api.external_time(now);
     }
 
-    void session_update(const timeval & now, const char * message,
-            bool & out__contian_window_title) override {
-        if (this->capture_wrm) {
-            this->pnc->session_update(now, message,
-                out__contian_window_title);
+    void session_update(const timeval & now, array_view_const_char message) override {
+        this->capture_probe_api.session_update(now, message);
+    }
 
-            return;
-        }
+    void possible_active_window_change() override {
+        this->capture_probe_api.possible_active_window_change();
+    }
 
-        out__contian_window_title = false;
+    void zoom(unsigned percent) {
+        assert(this->psc);
+        this->psc->zoom(percent);
     }
 };
 
-#endif

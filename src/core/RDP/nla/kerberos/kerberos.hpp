@@ -18,28 +18,36 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_KERBEROS_KERBEROS_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_KERBEROS_KERBEROS_HPP_
+
+#pragma once
 
 #include <gssapi/gssapi.h>
-#include "RDP/nla/sspi.hpp"
-#include "RDP/nla/kerberos/credentials.hpp"
+#include "core/RDP/nla/sspi.hpp"
+#include "core/RDP/nla/kerberos/credentials.hpp"
 
-const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
-const char Kerberos_Name[] = "Kerberos";
-const char Kerberos_Comment[] = "Kerberos Security Package";
-const SecPkgInfo KERBEROS_SecPkgInfo = {
-    0x00082B37,             // fCapabilities
-    1,                      // wVersion
-    0x000A,                 // wRPCID
-    0x00000B48,             // cbMaxToken
-    Kerberos_Name,          // Name
-    Kerberos_Comment        // Comment
-};
-static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
+namespace {
+    const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
+    const char Kerberos_Name[] = "Kerberos";
+    const char Kerberos_Comment[] = "Kerberos Security Package";
+    const SecPkgInfo KERBEROS_SecPkgInfo = {
+        0x00082B37,             // fCapabilities
+        1,                      // wVersion
+        0x000A,                 // wRPCID
+        0x00000B48,             // cbMaxToken
+        Kerberos_Name,          // Name
+        Kerberos_Comment        // Comment
+    };
+
+    static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
     { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
+}
 
-struct KERBEROSContext {
+
+
+struct KERBEROSContext final {
     gss_ctx_id_t gss_ctx;
     gss_name_t target_name;
     OM_uint32 actual_services;
@@ -53,7 +61,7 @@ struct KERBEROSContext {
         , deleg_cred(GSS_C_NO_CREDENTIAL)
     {}
 
-    virtual ~KERBEROSContext() {
+    ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
         if (this->target_name != GSS_C_NO_NAME) {
             major_status = gss_release_name(&minor_status, &this->target_name);
@@ -75,15 +83,13 @@ struct KERBEROSContext {
 };
 
 
-struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
-
-    ~Kerberos_SecurityFunctionTable() override {}
-
-
+struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
+{
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) override {
 
+        (void)pszPackageName;
         // if (strcmp(pszPackageName, KERBEROS_SecPkgInfo.Name) == 0) {
         if (pPackageInfo) {
             pPackageInfo->fCapabilities = KERBEROS_SecPkgInfo.fCapabilities;
@@ -100,7 +106,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SEC_STATUS QueryContextAttributes(PCtxtHandle phContext,
+    SEC_STATUS QueryContextAttributes(PCtxtHandle,
                                               unsigned long ulAttribute,
                                               void* pBuffer) override {
         if (!pBuffer) {
@@ -128,6 +134,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                                 void * pvGetKeyArgument,
                                                 PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) override {
+        (void)pszPackage;
+        (void)fCredentialUse;
+        (void)pGetKeyFn;
+        (void)pvGetKeyArgument;
+        (void)ptsExpiry;
 
         if (pszPrincipal && pvLogonID) {
             Array * spn = static_cast<Array *>(pvLogonID);
@@ -195,7 +206,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         output.value = malloc(size);
         snprintf(reinterpret_cast<char*>(output.value), size, "%s@%s", service_name, server);
         output.length = strlen(reinterpret_cast<const char*>(output.value)) + 1;
-        LOG(LOG_INFO, "GSS IMPORT NAME : %s", output.value);
+        LOG(LOG_INFO, "GSS IMPORT NAME : %s", reinterpret_cast<char const *>(output.value));
         major_status = gss_import_name(&minor_status, &output, type, name);
         free(output.value);
         if (GSS_ERROR(major_status)) {
@@ -212,15 +223,17 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                                  PCtxtHandle phContext,
                                                  char* pszTargetName,
                                                  unsigned long fContextReq,
-                                                 unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
                                                  SecBufferDesc * pInput,
                                                  unsigned long Reserved2,
                                                  PCtxtHandle phNewContext,
                                                  SecBufferDesc * pOutput,
-                                                 unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) override {
-
+        (void)phCredential;
+        (void)fContextReq;
+        (void)TargetDataRep;
+        (void)Reserved2;
+        (void)ptsExpiry;
 
         OM_uint32 major_status, minor_status;
 
@@ -342,8 +355,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                              unsigned long TargetDataRep,
                                              PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
-                                             unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) override {
+        (void)fContextReq;
+        (void)TargetDataRep;
+        (void)ptsTimeStamp;
+        (void)phCredential;
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
@@ -463,6 +479,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
                                       PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
+        (void)fQOP;
+        (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
         //     OM_uint32 *,        /* minor_status */
@@ -473,9 +491,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         //     int *,              /* conf_state */
         //     gss_buffer_t);      /* output_message_buffer */
 
-	OM_uint32 major_status;
-	OM_uint32 minor_status;
-	int conf_state;
+        OM_uint32 major_status;
+        OM_uint32 minor_status;
+        int conf_state;
         KERBEROSContext* context = nullptr;
 
         if (phContext) {
@@ -485,7 +503,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_NO_CONTEXT;
         }
         PSecBuffer data_buffer = nullptr;
-	gss_buffer_desc inbuf, outbuf;
+        gss_buffer_desc inbuf, outbuf;
         for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
                 data_buffer = &pMessage->pBuffers[index];
@@ -499,7 +517,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_INVALID_TOKEN;
         }
         // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
-	major_status = gss_wrap(&minor_status, context->gss_ctx, true,
+        major_status = gss_wrap(&minor_status, context->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -510,7 +528,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);
         data_buffer->Buffer.copy(reinterpret_cast<const uint8_t *>(outbuf.value), outbuf.length);
-	gss_release_buffer(&minor_status, &outbuf);
+        gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
     }
@@ -519,6 +537,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     // DECRYPT_MESSAGE DecryptMessage;
     SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) override {
+        (void)MessageSeqNo;
+        (void)pfQOP;
 
         // OM_uint32 gss_unwrap
         //     (OM_uint32 ,             /* minor_status */
@@ -572,11 +592,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    SEC_STATUS ImpersonateSecurityContext(PCtxtHandle phContext) override {
+    SEC_STATUS ImpersonateSecurityContext(PCtxtHandle) override {
         return SEC_E_OK;
     }
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) override {
+    SEC_STATUS RevertSecurityContext(PCtxtHandle) override {
         return SEC_E_OK;
     }
 
@@ -605,7 +625,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         	if (ms != GSS_S_COMPLETE)
                     continue;
 
-                LOG(LOG_ERR," - %s\n", status_string.value);
+                LOG(LOG_ERR," - %s\n", reinterpret_cast<char const *>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
 
@@ -649,4 +669,5 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
 };
 
-#endif
+#pragma GCC diagnostic pop
+

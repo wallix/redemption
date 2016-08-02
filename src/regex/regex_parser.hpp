@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_FTESTS_REGEX_REGEX_PARSER_HPP
-#define REDEMPTION_FTESTS_REGEX_REGEX_PARSER_HPP
+
+#pragma once
 
 #include "regex_utils.hpp"
 
@@ -586,7 +586,8 @@ namespace re {
                     }
                 }
                 ++result;
-                ranges.ranges.resize(ranges.ranges.size() - (last - result));
+                ranges.ranges.erase(result, ranges.ranges.end());
+                result = ranges.ranges.end();
             }
 
             State * eps = accu.epsilone();
@@ -1121,4 +1122,3 @@ namespace re {
     };
 }
 
-#endif

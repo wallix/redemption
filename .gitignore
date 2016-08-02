@@ -1,5 +1,7 @@
 .gitignore
 *.kdev*
+*.kate-swp
+/cmake_compil
 /bin
 /build
 /coverage.summary
@@ -8,6 +10,13 @@
 /tools/sesman/logger.pyc
 /tools/sesman/sesmanworker/password.py
 /tools/sesman/sesmanworker/*.pyc
+/tools/redcryptofile/redcryptofile.so
+/projects/QT4Client/bin
+/projects/QT5Client/bin
+/projects/browser_client/bin
+/projects/redemption_configs/bin
+/projects/proxy/coverage
+/projects/proxy/bin
 [#]*[#]
 .\#*
 password.py
@@ -15,5 +24,4 @@ password.py
 /debian
 /tools/valgrind-filter/valgrind-filter
 *~
-*.ii
-*.s
+/projects/proxy/tools/redcryptofile/redcryptofile.so

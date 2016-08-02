@@ -20,11 +20,11 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_ELLIPSE_HPP_
-#define _REDEMPTION_UTILS_ELLIPSE_HPP_
+
+#pragma once
 
 #include <cstddef>
-#include "rect.hpp"
+#include "utils/rect.hpp"
 
 class Ellipse {
     int16_t  leftRect;
@@ -98,4 +98,3 @@ public:
     }
 };
 
-#endif

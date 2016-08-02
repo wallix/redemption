@@ -22,12 +22,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWidgetComposite
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "internal/widget2/widget2_rect.hpp"
-#include "internal/widget2/composite.hpp"
+#include "mod/internal/widget2/widget2_rect.hpp"
+#include "mod/internal/widget2/composite.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
 
@@ -37,17 +37,14 @@ public:
     int color;
 
     WidgetCompositeRect(TestDraw & drawable)
-    : WidgetComposite(drawable, Rect(0, 0,
+    : WidgetComposite(drawable.gd, Rect(0, 0,
                                       drawable.gd.width(),
                                       drawable.gd.height()),
                       *this, nullptr)
     , color(0x27642F)
     {}
 
-    virtual ~WidgetCompositeRect()
-    {}
-
-    virtual void draw(const Rect& clip)
+    void draw(const Rect& clip) override
     {
         this->drawable.draw(RDPOpaqueRect(clip, color), this->rect);
         this->WidgetComposite::draw(clip);
@@ -61,17 +58,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     int id = 0;
 
     WidgetCompositeRect wcomposite(drawable);
-    WidgetRect wrect1(drawable, Rect(0,0,100,100),
+    WidgetRect wrect1(drawable.gd, Rect(0,0,100,100),
                       wcomposite, notifier, id++, CYAN);
-    WidgetRect wrect2(drawable, Rect(0,100,100,100),
+    WidgetRect wrect2(drawable.gd, Rect(0,100,100,100),
                       wcomposite, notifier, id++, RED);
-    WidgetRect wrect3(drawable, Rect(100,100,100,100),
+    WidgetRect wrect3(drawable.gd, Rect(100,100,100,100),
                       wcomposite, notifier, id++, BLUE);
-    WidgetRect wrect4(drawable, Rect(300,300,100,100),
+    WidgetRect wrect4(drawable.gd, Rect(300,300,100,100),
                       wcomposite, notifier, id++, GREEN);
-    WidgetRect wrect5(drawable, Rect(700,-50,100,100),
+    WidgetRect wrect5(drawable.gd, Rect(700,-50,100,100),
                       wcomposite, notifier, id++, WHITE);
-    WidgetRect wrect6(drawable, Rect(-50,550,100,100),
+    WidgetRect wrect6(drawable.gd, Rect(-50,550,100,100),
                       wcomposite, notifier, id++, GREY);
     wcomposite.add_widget(&wrect1);
     wcomposite.add_widget(&wrect2);
@@ -79,6 +76,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     wcomposite.add_widget(&wrect4);
     wcomposite.add_widget(&wrect5);
     wcomposite.add_widget(&wrect6);
+
+    {
+        WidgetRect wrect7(drawable.gd, Rect(0, 0, 800, 600),
+                          wcomposite, notifier, id++, GREY);
+        wcomposite.add_widget(&wrect7);
+        wcomposite.remove_widget(&wrect7);
+    }
 
     // ask to widget to redraw at position 150,500 and of size 800x600
     wcomposite.rdp_input_invalidate(Rect(150 + wcomposite.dx(),

@@ -24,12 +24,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRDP
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGPRINT
 
-#include "stream.hpp"
-#include "RDP/share.hpp"
+#include "utils/stream.hpp"
+#include "core/RDP/share.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 {
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
     BOOST_CHECK_EQUAL(0, data[4]);
     BOOST_CHECK_EQUAL(2, data[5]);
     BOOST_CHECK_EQUAL(18, data[6] + data[7]*256);
-    BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[8]);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(PDUTYPE2_UPDATE), data[8]);
     BOOST_CHECK_EQUAL(0, data[9]);
     BOOST_CHECK_EQUAL(0, (data[11] << 8) + data[10]);
 
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
     BOOST_CHECK_EQUAL(0, data[4]);
     BOOST_CHECK_EQUAL(2, data[5]);
     BOOST_CHECK_EQUAL(18, data[6] + data[7]*256);
-    BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[8]);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(PDUTYPE2_UPDATE), data[8]);
     BOOST_CHECK_EQUAL(0, data[9]);
     BOOST_CHECK_EQUAL(0, (data[11] << 8) + data[10]);
 

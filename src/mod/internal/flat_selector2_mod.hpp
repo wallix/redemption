@@ -15,42 +15,46 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR2_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR2_MOD_HPP
 
-#include "front_api.hpp"
-#include "config.hpp"
+#pragma once
+
+#include "core/front_api.hpp"
+#include "configs/config.hpp"
 #include "widget2/flat_selector2.hpp"
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
+#include "widget2/language_button.hpp"
 
 
 using FlatSelector2ModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,          vcfg::ask | vcfg::write | vcfg::read>,
-    vcfg::var<cfg::context::selector,           vcfg::ask | vcfg::write>,
-    vcfg::var<cfg::context::target_protocol,    vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_device,      vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_user,        vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::context::password,           vcfg::ask>,
-    vcfg::var<cfg::context::selector_current_page,      vcfg::wait | vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::wait | vcfg::read>,
-    vcfg::var<cfg::context::selector_device_filter,     vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_group_filter,      vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::read | vcfg::write>,
-    vcfg::var<cfg::context::selector_proto_filter,      vcfg::read | vcfg::write>,
-    vcfg::var<cfg::globals::host>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::selector_current_page,      vcfg::accessmode::is_asked | vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_number_of_pages,   vcfg::accessmode::is_asked | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::selector_device_filter,     vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_group_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_lines_per_page,    vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_proto_filter,      vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
 class FlatSelector2Mod : public InternalMod, public NotifyApi
 {
+    LanguageButton language_button;
     WidgetSelectorFlat2 selector;
+
 
     int current_page;
     int number_page;
@@ -74,19 +78,24 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
     };
 
 public:
-    FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height)
+    FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , selector(*this, temporary_login(vars).buffer, width, height, this->screen, this,
-                    vars.is_asked<cfg::context::selector_current_page>()
-                        ? "" : configs::make_c_str_buf(vars.get<cfg::context::selector_current_page>()).get(),
-                    vars.is_asked<cfg::context::selector_number_of_pages>()
-                        ? "" : configs::make_c_str_buf(vars.get<cfg::context::selector_number_of_pages>()).get(),
-                   vars.get<cfg::context::selector_group_filter>().c_str(),
-                   vars.get<cfg::context::selector_device_filter>().c_str(),
-                   vars.get<cfg::context::selector_proto_filter>().c_str(),
-                   vars.get<cfg::font>(),
-                   vars.get<cfg::theme>(),
-                   language(vars))
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->selector, front, front, this->font(), this->theme())
+        , selector(
+            front, temporary_login(vars).buffer,
+            widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this,
+            vars.is_asked<cfg::context::selector_current_page>()
+                ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_current_page>()).get(),
+            vars.is_asked<cfg::context::selector_number_of_pages>()
+                ? "" : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
+            vars.get<cfg::context::selector_group_filter>().c_str(),
+            vars.get<cfg::context::selector_device_filter>().c_str(),
+            vars.get<cfg::context::selector_proto_filter>().c_str(),
+            &this->language_button,
+            vars.get<cfg::font>(),
+            vars.get<cfg::theme>(),
+            language(vars))
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , vars(vars)
@@ -96,9 +105,10 @@ public:
         this->screen.set_widget_focus(&this->selector, Widget2::focus_reason_tabkey);
 
         uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
-        int w, h = 0;
-        this->text_metrics(this->vars.get<cfg::font>(), "Édp", w, h);
-        uint16_t line_height = h + 2 * (this->selector.selector_lines.border + this->selector.selector_lines.y_padding_label);
+        gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
+        uint16_t line_height = tm.height + 2 * (
+                                this->selector.selector_lines.border
+                             +  this->selector.selector_lines.y_padding_label);
 
         this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
         this->ask_page();
@@ -112,9 +122,9 @@ public:
     void ask_page()
     {
         this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
-        this->vars.set<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
-        this->vars.set<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
-        this->vars.set<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
+        this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.filter_target_group.get_text());
+        this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.filter_target.get_text());
+        this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.filter_protocol.get_text());
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::selector>();
@@ -281,7 +291,7 @@ private:
         } else {
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
-            this->selector.selector_lines.set_selection(0, static_cast<uint16_t>(-1));
+            this->selector.selector_lines.set_selection(0);
             this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         }
         this->selector.rearrange();
@@ -335,18 +345,21 @@ public:
     }
 
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
         this->event.reset();
     }
 
+    bool is_up_and_running() override { return true; }
+
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        (void)length;
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
 };
 
-#endif

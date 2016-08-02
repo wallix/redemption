@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000440_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000440_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00000440 {    // Kyrgyz (Kyrgyzstan) // Kyrgyz Cyrillic
 
 const static int LCID = 0x00000440;
+
+const static char * const locale_name = "ky-KG";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00000440
 
 static const Keylayout keylayout_x00000440( x00000440::LCID
+                                          , x00000440::locale_name
                                           , x00000440::noMod
                                           , x00000440::shift
                                           , x00000440::altGr
@@ -221,4 +224,3 @@ static const Keylayout keylayout_x00000440( x00000440::LCID
                                           , x00000440::nbDeadkeys
 );
 
-#endif

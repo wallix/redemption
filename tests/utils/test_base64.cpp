@@ -24,12 +24,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBase64
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include "base64.hpp"
-#include "genrandom.hpp"
+#include "utils/genrandom.hpp"
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestEncoding)

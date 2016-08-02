@@ -19,39 +19,51 @@
 
     rdp transparent analyzer module main header file
 */
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <string>
 
 #define LOGPRINT
-#include "log.hpp"
+#include "utils/log.hpp"
 
-#include "channel_list.hpp"
-#include "front_api.hpp"
-#include "in_file_transport.hpp"
-#include "RDP/autoreconnect.hpp"
-#include "RDP/mppc_unified_dec.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "RDP/orders/AlternateSecondaryWindowing.hpp"
-#include "RDP/protocol.hpp"
-#include "RDP/SaveSessionInfoPDU.hpp"
-#include "transparentplayer.hpp"
-#include "version.hpp"
+#include "core/channel_list.hpp"
+#include "core/front_api.hpp"
+#include "transport/in_file_transport.hpp"
+#include "core/RDP/autoreconnect.hpp"
+#include "core/RDP/mppc_unified_dec.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/protocol.hpp"
+#include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "capture/transparentplayer.hpp"
+#include "main/version.hpp"
 #include "program_options/program_options.hpp"
 
-class Analyzer : public FrontAPI {
+
+class Analyzer : public gdi::GraphicProxyBase<Analyzer, FrontAPI>
+{
+    friend gdi::GraphicCoreAccess;
+
+    struct NullFn { template<class... Ts> void operator()(Ts const & ...) {} };
+    gdi::GraphicUniformProxy<NullFn> get_graphic_proxy() { return {}; }
+
 private:
     CHANNELS::ChannelDefArray channel_list;
 
@@ -116,67 +128,32 @@ private:
     } statistic;
 
 public:
-    // RDPGraphicDevice
-    void draw(const RDPOpaqueRect      & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPScrBlt          & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPDestBlt         & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPMultiDstBlt     & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPPatBlt          & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPMemBlt          & cmd, const Rect & clip, const Bitmap & bmp) override { REDASSERT(false); }
-    void draw(const RDPMem3Blt         & cmd, const Rect & clip, const Bitmap & bmp) override { REDASSERT(false); }
-    void draw(const RDPLineTo          & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPGlyphIndex      & cmd, const Rect & clip, const GlyphCache * gly_cache) override { REDASSERT(false); }
-    void draw(const RDPPolygonSC       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPPolygonCB       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPPolyline        & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPEllipseSC       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDPEllipseCB       & cmd, const Rect & clip) override { REDASSERT(false); }
-    void draw(const RDP::FrameMarker &) override { REDASSERT(false); }
-    void draw(const RDPBitmapData &, const uint8_t *, size_t, const Bitmap &) override { REDASSERT(false); }
-    void draw(const RDPBrushCache &) override { REDASSERT(false); }
-    void draw(const RDPColCache &) override { REDASSERT(false); }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override { REDASSERT(false); }
-    void draw(const RDP::RAIL::WindowIcon          & order) override { REDASSERT(false); }
-    void draw(const RDP::RAIL::CachedIcon          & order) override { REDASSERT(false); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) override { REDASSERT(false); }
-
-    void server_set_pointer(const Pointer & cursor) override { REDASSERT(false); }
-
-    void flush() override { REDASSERT(false); }
-
     // DrawApi
     void begin_update() override { REDASSERT(false); }
     void end_update() override { REDASSERT(false); }
 
-    void text_metrics(Font const & font, const char * text, int & width, int & height) override { REDASSERT(false); }
-
-    void server_draw_text( Font const & font, int16_t x, int16_t y, const char * text
-                                 , uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) override { REDASSERT(false); }
+    bool can_be_start_capture(auth_api*) override { REDASSERT(false); return false; }
+    bool can_be_pause_capture() override { REDASSERT(false); return false; }
+    bool can_be_resume_capture() override { REDASSERT(false); return false; }
+    bool must_be_stop_capture() override { REDASSERT(false); return false; }
 
     // FrontAPI
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->channel_list;
     }
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * /*data*/
                                 , size_t length, size_t chunk_size, int flags) override {
-        LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%u chunk_size=%u flags=0x%X",
+        LOG(LOG_INFO, "send_to_channel: channel_name=\"%s\"(%d) data_length=%zu chunk_size=%zu flags=0x%X",
             channel.name, channel.chanid, length, chunk_size, flags);
     }
-
-    void send_global_palette() override { REDASSERT(false); }
-    void set_mod_palette(const BGRPalette & palette) override { REDASSERT(false); }
 
     int server_resize(int width, int height, int bpp) override {
         LOG(LOG_INFO, "server_resize: width=%u height=%u bpp=%u", width, height, bpp);
         return 1;
-    };
+    }
 
     void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
-        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, data_size);
+        LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%zu", channelId, data_size);
 
         InStream stream(data, data_size);
         ShareControl_Recv sctrl(stream);
@@ -276,41 +253,44 @@ public:
     }
 
     void send_fastpath_data(InStream & data) override {
-        LOG(LOG_INFO, "send_fastpath_data: data_size=%u", data.get_capacity());
+        LOG(LOG_INFO, "send_fastpath_data: data_size=%zu", data.get_capacity());
 
         while (data.in_remain()) {
             FastPath::Update_Recv fp_upd_r(data, &this->mppc_dec);
-            switch (fp_upd_r.updateCode) {
-                case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+            switch (static_cast<FastPath::UpdateType>(fp_upd_r.updateCode)) {
+                case FastPath::UpdateType::ORDERS:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_ORDERS(0x%X)", fp_upd_r.updateCode);
                     this->process_orders(fp_upd_r.payload, true);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                case FastPath::UpdateType::BITMAP:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", fp_upd_r.updateCode);
                     this->statistic.bitmapupdate_count++;
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                case FastPath::UpdateType::PALETTE:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PALETTE(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
+                case FastPath::UpdateType::SYNCHRONIZE:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_SYNCHRONIZE(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                case FastPath::UpdateType::SURFCMDS:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_SURFCMDS(0x%X)", fp_upd_r.updateCode);
+                break;
+                case FastPath::UpdateType::PTR_NULL:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_NULL(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                case FastPath::UpdateType::PTR_DEFAULT:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_DEFAULT(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                case FastPath::UpdateType::PTR_POSITION:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_POSITION(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                case FastPath::UpdateType::COLOR:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_COLOR(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_POINTER:
+                case FastPath::UpdateType::POINTER:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_POINTER(0x%X)", fp_upd_r.updateCode);
                 break;
-                case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                case FastPath::UpdateType::CACHED:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_CACHED(0x%X)", fp_upd_r.updateCode);
                 break;
                 default:
@@ -456,8 +436,10 @@ public:
         }
     }
 
+    void update_pointer_position(uint16_t, uint16_t) override {}
+
     Analyzer()
-    : FrontAPI(false, false)
+    : base_type(false, false)
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
     , patblt(Rect(), 0, 0, 0, RDPBrush())
@@ -549,17 +531,17 @@ int main(int argc, char * argv[]) {
         std::cout << copyright_notice;
         std::cout << "Usage: rdptanalyzer [options]\n\n";
         std::cout << desc << std::endl;
-        exit(-1);
+        return 1;
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice;
-        exit(-1);
+        return 1;
     }
 
     if (input_filename.empty()) {
         std::cout << "Use -i filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     int fd = open(input_filename.c_str(), O_RDONLY);
@@ -580,7 +562,7 @@ int main(int argc, char * argv[]) {
     }
     else {
         std::cout << "Failed to open input file: " << input_filename << "\n\n";
-        exit(-1);
+        return 1;
     }
 
     return 0;

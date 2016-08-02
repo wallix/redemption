@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00010402_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00010402_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00010402 {    // Bulgarian (Bulgaria) // Bulgare (latin)
 
 const static int LCID = 0x00010402;
+
+const static char * const locale_name = "bg-BG.latin";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00010402
 
 static const Keylayout keylayout_x00010402( x00010402::LCID
+                                          , x00010402::locale_name
                                           , x00010402::noMod
                                           , x00010402::shift
                                           , x00010402::altGr
@@ -221,4 +224,3 @@ static const Keylayout keylayout_x00010402( x00010402::LCID
                                           , x00010402::nbDeadkeys
 );
 
-#endif

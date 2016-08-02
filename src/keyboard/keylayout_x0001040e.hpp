@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0001040E_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0001040E_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x0001040e {    // Hungarian (Hungary) // Hungarian 101-key
 
 const static int LCID = 0x0001040e;
+
+const static char * const locale_name = "hu-HU";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x0001040e
 
 static const Keylayout keylayout_x0001040e( x0001040e::LCID
+                                          , x0001040e::locale_name
                                           , x0001040e::noMod
                                           , x0001040e::shift
                                           , x0001040e::altGr
@@ -221,4 +224,3 @@ static const Keylayout keylayout_x0001040e( x0001040e::LCID
                                           , x0001040e::nbDeadkeys
 );
 
-#endif

@@ -18,11 +18,11 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
-#define REDEMPTION_UTILS_AUTHORIZATION_CHANNELS_HPP
 
-#include "movable_noncopyable.hpp"
-#include "apply_for_delim.hpp"
+#pragma once
+
+#include "utils/sugar/movable_noncopyable.hpp"
+#include "utils/sugar/splitter.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -30,38 +30,46 @@
 #include <array>
 #include <iosfwd>
 
-#include "RDP/channels/rdpdr.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 
-struct AuthorizationChannels
+#include "utils/sugar/algostring.hpp"
+
+class AuthorizationChannels
 : public movable_noncopyable
 {
+public:
     AuthorizationChannels() = default;
 
     AuthorizationChannels(std::string allow, std::string deny)
     : allow_(std::move(allow))
     , deny_(std::move(deny))
     {
-        apply_for_delim(this->allow_.c_str(), ',', [this](char const * & s) {
-            if (*s == '*') {
+        auto start_with_star = [](range<std::string::iterator> const & r) {
+            auto first = ltrim(begin(r), end(r));
+            return first != end(r) && *first == '*';
+        };
+
+        for (auto && r : get_split(this->allow_, ',')) {
+            if (start_with_star(r)) {
                 this->all_allow_ = true;
                 this->rdpdr_restriction_.fill(true);
                 this->cliprdr_restriction_.fill(true);
                 this->rdpsnd_restriction_.fill(true);
-                s = "";
+                break;
             }
-        });
+        }
 
-        apply_for_delim(this->deny_.c_str(), ',', [this](char const * & s) {
-            if (*s == '*') {
+        for (auto && r : get_split(this->deny_, ',')) {
+            if (start_with_star(r)) {
                 this->all_deny_ = true;
                 if (this->all_allow_) {
                     this->rdpdr_restriction_.fill(false);
                     this->cliprdr_restriction_.fill(false);
                     this->rdpsnd_restriction_.fill(false);
                 }
-                s = "";
+                break;
             }
-        });
+        }
 
         this->normalize(this->allow_);
         this->normalize(this->deny_);
@@ -82,8 +90,9 @@ struct AuthorizationChannels
         };
 
         normalize_channel("cliprdr", (this->cliprdr_restriction_[0] || this->cliprdr_restriction_[1]));
-        normalize_channel("rdpdr", (contains_true(this->rdpdr_restriction_) || contains_true(this->rdpsnd_restriction_)));
-        normalize_channel("rdpsnd", contains_true(this->rdpsnd_restriction_));
+        bool is_allowed = (contains_true(this->rdpdr_restriction_) || contains_true(this->rdpsnd_restriction_));
+        normalize_channel("rdpdr", is_allowed);
+        normalize_channel("rdpsnd", is_allowed);
     }
 
     bool is_authorized(const char * s) const noexcept {
@@ -163,17 +172,17 @@ struct AuthorizationChannels
                 os << name << '=';
                 for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
                     if (auth.cliprdr_restriction_[i] == val_ok) {
-                        os << cliprde_list[i];
+                        os << cliprde_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
                     if (auth.rdpdr_restriction_[i] == val_ok) {
-                        os << rdpdr_list[i];
+                        os << rdpdr_list()[i];
                     }
                 }
                 for (size_t i = 0; i < auth.rdpsnd_restriction_.size(); ++i) {
                     if (auth.rdpsnd_restriction_[i] == val_ok) {
-                        os << rdpdr_list[i];
+                        os << rdpdr_list()[i];
                     }
                 }
                 os << s << '\n';
@@ -184,17 +193,110 @@ struct AuthorizationChannels
         return os;
     }
 
-    static constexpr const std::array<const char *, 3> cliprde_list {{
-        "cliprdr_up,", "cliprdr_down,", "cliprdr_file,"
-    }};
-    static constexpr const std::array<const char *, 5> rdpdr_list {{
-        "rdpdr_printer,", "rdpdr_port,", "rdpdr_drive_read,", "rdpdr_drive_write,", "rdpdr_smartcard,"
-    }};
-    static constexpr const std::array<const char *, 1> rdpsnd_list {{
-        "rdpsnd_audio_output,"
-    }};
+    // TODO review
+    static void update_authorized_channels(std::string & allow,
+                                    std::string & deny,
+                                    const std::string & proxy_opt) {
+        auto remove = [] (std::string & str, const char * pattern) -> bool {
+            bool removed = false;
+            size_t pos = 0;
+            while ((pos = str.find(pattern, pos)) != std::string::npos) {
+                str.erase(pos, strlen(pattern));
+                removed = true;
+            }
+
+            return removed;
+        };
+
+        std::string expanded_proxy_opt = proxy_opt;
+        while (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
+            expanded_proxy_opt.pop_back();
+        }
+        expanded_proxy_opt += ',';
+        if (remove(expanded_proxy_opt, "RDP_DRIVE,")) {
+            expanded_proxy_opt += "RDP_DRIVE_READ,RDP_DRIVE_WRITE";
+        }
+        if (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
+            expanded_proxy_opt.pop_back();
+        }
+
+        allow += ',';
+        deny += ',';
+
+        struct ref_string {
+            std::string & s;
+            std::string & get() { return this->s; }
+            operator std::string & () { return this->s; }
+        };
+
+        std::array<ref_string, 2> ret{{{allow}, {deny}}};
+
+        for (std::string & s : ret) {
+            remove(s, "cliprdr,");
+            remove(s, "rdpdr,");
+            remove(s, "rdpsnd,");
+            for (auto str : AuthorizationChannels::cliprde_list()) {
+                remove(s, str);
+            }
+            for (auto str : AuthorizationChannels::rdpdr_list()) {
+                remove(s, str);
+            }
+            for (auto str : AuthorizationChannels::rdpsnd_list()) {
+                remove(s, str);
+            }
+            if (!s.empty() && s.back() == ',') {
+                s.pop_back();
+            }
+        }
+
+        constexpr struct {
+            const char * opt;
+            const char * channel;
+        } opts_channels[] {
+            {"RDP_CLIPBOARD_UP",   ",cliprdr_up"          },
+            {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"        },
+            {"RDP_CLIPBOARD_FILE", ",cliprdr_file"        },
+
+            {"RDP_PRINTER",        ",rdpdr_printer"       },
+            {"RDP_COM_PORT",       ",rdpdr_port"          },
+            {"RDP_DRIVE_READ",     ",rdpdr_drive_read"    },
+            {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"   },
+            {"RDP_SMARTCARD",      ",rdpdr_smartcard"     },
+
+            {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" }
+        };
+
+        static_assert(
+            decltype(AuthorizationChannels::cliprde_list())().size()
+          + decltype(AuthorizationChannels::rdpdr_list())().size()
+          + decltype(AuthorizationChannels::rdpsnd_list())().size()
+        == std::extent<decltype(opts_channels)>::value
+        , "opts_channels.size() error");
+
+        for (auto & x : opts_channels) {
+            ret[(expanded_proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
+        }
+
+        for (std::string & s : ret) {
+            if (!s.empty() && s.front() == ',') {
+                s.erase(0,1);
+            }
+        }
+    }
 
 private:
+    static constexpr const std::array<const char *, 3> cliprde_list() {
+
+        return {{"cliprdr_up,", "cliprdr_down,", "cliprdr_file,"}};
+    }
+    static constexpr const std::array<const char *, 5> rdpdr_list() {
+        return {{"rdpdr_printer,", "rdpdr_port,", "rdpdr_drive_read,", "rdpdr_drive_write,", "rdpdr_smartcard,"}};
+    }
+    static constexpr const std::array<const char *, 1> rdpsnd_list() {
+        return {{"rdpsnd_audio_output,"}};
+    }
+
+
     template<class Cont>
     static bool contains_true(Cont const & cont) {
         for (bool x : cont) {
@@ -232,9 +334,9 @@ private:
         const bool set = (&s == &this->allow_);
         if (!s.empty()) {
             s += ',';
-            this->normalize(s, set, this->cliprdr_restriction_, "cliprdr,", cliprde_list);
-            this->normalize(s, set, this->rdpdr_restriction_, "rdpdr,", rdpdr_list);
-            this->normalize(s, set, this->rdpsnd_restriction_, "rdpsnd,", rdpsnd_list);
+            this->normalize(s, set, this->cliprdr_restriction_, "cliprdr,", cliprde_list());
+            this->normalize(s, set, this->rdpdr_restriction_, "rdpdr,", rdpdr_list());
+            this->normalize(s, set, this->rdpsnd_restriction_, "rdpsnd,", rdpsnd_list());
             if (!s.empty() && s.front() == ',') {
                 s.erase(0, 1);
             }
@@ -245,19 +347,21 @@ private:
     }
 
     static bool contains(std::string const & s, const char * search) noexcept {
-        bool ret = false;
-        apply_for_delim(s.c_str(), ',', [&ret, search](const char * & s) {
+        for (auto && r : get_split(s, ',')) {
+            auto const trimmed_range = trim(r);
+            auto first = begin(trimmed_range);
+            auto last = end(trimmed_range);
+
             char const * s2 = search;
-            while (*s2 == *s && *s2) {
-                ++s;
+            while (*s2 == *first && *s2 && first != last) {
+                ++first;
                 ++s2;
             }
-            if (!*s2 && (!*s || *s == ',' || is_blanck_fn()(*s))) {
-                ret = true;
-                s = "";
+            if (!*s2 && first == last) {
+                return true;
             }
-        });
-        return ret;
+        }
+        return false;
     }
 
     std::string allow_;
@@ -267,100 +371,10 @@ private:
     std::array<bool, 5> rdpdr_restriction_ {{}};
     std::array<bool, 3> cliprdr_restriction_ {{}};
     std::array<bool, 1> rdpsnd_restriction_ {{}};
+
+
 };
-constexpr decltype(AuthorizationChannels::cliprde_list) AuthorizationChannels::cliprde_list;
-constexpr decltype(AuthorizationChannels::rdpdr_list) AuthorizationChannels::rdpdr_list;
-constexpr decltype(AuthorizationChannels::rdpsnd_list) AuthorizationChannels::rdpsnd_list;
 
 
-void update_authorized_channels(std::string & allow,
-                                std::string & deny,
-                                const std::string & proxy_opt) {
-    auto remove = [] (std::string & str, const char * pattern) -> bool {
-        bool removed = false;
-        size_t pos = 0;
-        while ((pos = str.find(pattern, pos)) != std::string::npos) {
-            str.erase(pos, strlen(pattern));
-            removed = true;
-        }
 
-        return removed;
-    };
 
-    std::string expanded_proxy_opt = proxy_opt;
-    while (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
-        expanded_proxy_opt.pop_back();
-    }
-    expanded_proxy_opt += ',';
-    if (remove(expanded_proxy_opt, "RDP_DRIVE,")) {
-        expanded_proxy_opt += "RDP_DRIVE_READ,RDP_DRIVE_WRITE";
-    }
-    if (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
-        expanded_proxy_opt.pop_back();
-    }
-
-    allow += ',';
-    deny += ',';
-
-    struct ref_string {
-        std::string & s;
-        std::string & get() { return this->s; };
-        operator std::string & () { return this->s; };
-    };
-
-    std::array<ref_string, 2> ret{{{allow}, {deny}}};
-
-    for (std::string & s : ret) {
-        remove(s, "cliprdr,");
-        remove(s, "rdpdr,");
-        remove(s, "rdpsnd,");
-        for (auto str : AuthorizationChannels::cliprde_list) {
-            remove(s, str);
-        }
-        for (auto str : AuthorizationChannels::rdpdr_list) {
-            remove(s, str);
-        }
-        for (auto str : AuthorizationChannels::rdpsnd_list) {
-            remove(s, str);
-        }
-        if (!s.empty() && s.back() == ',') {
-            s.pop_back();
-        }
-    }
-
-    constexpr struct {
-        const char * opt;
-        const char * channel;
-    } opts_channels[] {
-        {"RDP_CLIPBOARD_UP",   ",cliprdr_up"          },
-        {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"        },
-        {"RDP_CLIPBOARD_FILE", ",cliprdr_file"        },
-
-        {"RDP_PRINTER",        ",rdpdr_printer"       },
-        {"RDP_COM_PORT",       ",rdpdr_port"          },
-        {"RDP_DRIVE_READ",     ",rdpdr_drive_read"    },
-        {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"   },
-        {"RDP_SMARTCARD",      ",rdpdr_smartcard"     },
-
-        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" }
-    };
-
-    static_assert(
-        AuthorizationChannels::cliprde_list.size()
-      + AuthorizationChannels::rdpdr_list.size()
-      + AuthorizationChannels::rdpsnd_list.size()
-     == std::extent<decltype(opts_channels)>::value
-    , "opts_channels.size() error");
-
-    for (auto & x : opts_channels) {
-        ret[(expanded_proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
-    }
-
-    for (std::string & s : ret) {
-        if (!s.empty() && s.front() == ',') {
-            s.erase(0,1);
-        }
-    }
-}
-
-#endif

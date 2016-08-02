@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_FTESTS_REGEX_REGEX_UTILS_HPP
-#define REDEMPTION_FTESTS_REGEX_REGEX_UTILS_HPP
+
+#pragma once
 
 #include <vector>
 
@@ -141,4 +141,3 @@ namespace re {
     };
 }
 
-#endif

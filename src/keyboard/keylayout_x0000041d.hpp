@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000041D_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000041D_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x0000041d {    // Swedish (Sweden) // Swedish
 
 const static int LCID = 0x0000041d;
+
+const static char * const locale_name = "sv-SE";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x0000041d
 
 static const Keylayout keylayout_x0000041d( x0000041d::LCID
+                                          , x0000041d::locale_name
                                           , x0000041d::noMod
                                           , x0000041d::shift
                                           , x0000041d::altGr
@@ -286,4 +289,3 @@ static const Keylayout keylayout_x0000041d( x0000041d::LCID
                                           , x0000041d::nbDeadkeys
 );
 
-#endif

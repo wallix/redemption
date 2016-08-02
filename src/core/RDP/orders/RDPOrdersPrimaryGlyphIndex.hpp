@@ -20,8 +20,8 @@
     New RDP Orders Coder / Decoder : Primary Order GlyphIndex
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYGLYPHINDEX_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYGLYPHINDEX_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -317,9 +317,8 @@ public:
     , glyph_x(glyph_x)
     , glyph_y(glyph_y)
     , data_len(data_len) {
-        if (data_len > 0) {
-            memcpy(this->data, data, data_len);
-        }
+        memcpy(this->data, data, data_len);
+        memset(this->data + data_len, 0, sizeof(this->data) - data_len);
     }
 
     RDPGlyphIndex(const RDPGlyphIndex & gi)
@@ -335,10 +334,11 @@ public:
     , glyph_x(gi.glyph_x)
     , glyph_y(gi.glyph_y)
     , data_len(gi.data_len) {
-        if (gi.data_len > 0) {
-            memcpy(this->data, gi.data, gi.data_len);
-        }
+        memcpy(this->data, gi.data, gi.data_len);
+        memset(this->data + gi.data_len, 0, sizeof(this->data) - gi.data_len);
     }
+
+    RDPGlyphIndex & operator = (const RDPGlyphIndex &) = default;
 
     bool operator==(const RDPGlyphIndex & other) const {
         return  (this->cache_id       == other.cache_id)
@@ -564,7 +564,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -575,4 +575,3 @@ public:
     }
 };
 
-#endif

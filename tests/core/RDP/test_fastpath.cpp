@@ -25,21 +25,21 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFastPath
 
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
-#include "stream.hpp"
-#include "test_transport.hpp"
-#include "RDP/sec.hpp"
-#include "RDP/x224.hpp"
-#include "RDP/fastpath.hpp"
+#include "utils/stream.hpp"
+#include "transport/test_transport.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/x224.hpp"
+#include "core/RDP/fastpath.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     CryptContext decrypt;
 
-    TODO("We should fix that test (and a few other below) to make it independant from transport");
+    // TODO We should fix that test (and a few other below) to make it independant from transport
 
     const char *payload =
 /* 0000 */ "\x10\x0e\x01\x0f\x62\x01\x0f\x20\x00\x08\xca\x00\x41\x03"         // ....b.. ....A.   |
@@ -214,7 +214,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     size_t payload_length = 46;
 
     GeneratorTransport in_t(payload, payload_length);
-    CheckTransport     out_t(payload, payload_length);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -224,10 +223,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
     uint8_t updateCodes[4] = {
-          FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
-        , FastPath::FASTPATH_UPDATETYPE_BITMAP
-        , FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
-        , FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT
+          static_cast<uint8_t>(FastPath::UpdateType::SYNCHRONIZE)
+        , static_cast<uint8_t>(FastPath::UpdateType::BITMAP)
+        , static_cast<uint8_t>(FastPath::UpdateType::SYNCHRONIZE)
+        , static_cast<uint8_t>(FastPath::UpdateType::PTR_DEFAULT)
     };
 
     uint8_t i = 0;
@@ -283,10 +282,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
     uint8_t updateCodes[4] = {
-          FastPath::FASTPATH_UPDATETYPE_ORDERS
-        , FastPath::FASTPATH_UPDATETYPE_BITMAP
-        , FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
-        , FastPath::FASTPATH_UPDATETYPE_POINTER
+          static_cast<uint8_t>(FastPath::UpdateType::ORDERS)
+        , static_cast<uint8_t>(FastPath::UpdateType::BITMAP)
+        , static_cast<uint8_t>(FastPath::UpdateType::SYNCHRONIZE)
+        , static_cast<uint8_t>(FastPath::UpdateType::POINTER)
     };
 
     uint8_t i = 0;
@@ -324,7 +323,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     out_s.out_clear_bytes(FastPath::Update_Send::GetSize(false)); // Fast-Path Update (TS_FP_UPDATE structure) size
 
-    uint8_t updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
+    uint8_t updateCode = static_cast<uint8_t>(FastPath::UpdateType::CACHED);
 
     if (in_su.payload.in_remain()) {
         FastPath::Update_Recv in_upd(in_su.payload, nullptr);

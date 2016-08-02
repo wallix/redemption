@@ -22,21 +22,20 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestCopyPaste
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #include <string>
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
-
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/copy_paste.hpp"
-#include "internal/widget2/edit.hpp"
-#include "internal/widget2/screen.hpp"
+#include "widget2/fake_draw.hpp"
+#include "core/font.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/widget2/edit.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "../../front/fake_front.hpp"
 #include "check_sig.hpp"
+
 
 struct CopyPasteFront : FakeFront
 {
@@ -55,7 +54,7 @@ struct CopyPasteFront : FakeFront
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t chunk_size, int flags
+        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t, int
     ) override {
         BOOST_REQUIRE(!strcmp(channel.name, channel_names::cliprdr));
 
@@ -116,7 +115,7 @@ public:
     : copy_paste(copy_paste)
     {}
 
-    virtual void notify(Widget2 * sender, notify_event_t event) {
+    void notify(Widget2 * sender, notify_event_t event) override {
         BOOST_REQUIRE(sender);
         copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
     }
@@ -134,6 +133,7 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     CopyPaste copy_paste;
     CopyPasteFront front(info, copy_paste);
+    TestDraw mod(info.width, info.height);
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
@@ -142,29 +142,42 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(front, info.width, info.height, font);
-    WidgetEdit edit(front, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
+    WidgetScreen parent(mod.gd, info.width, info.height, font);
+    WidgetEdit edit(mod.gd, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
 
     BOOST_REQUIRE(copy_paste.ready(front));
 
-    auto edit_paste = [&](const char * s, const char * sig){
+    auto edit_paste = [&](const char * s, const char * sig, int linenum){
         keymap.push_kevent(Keymap2::KEVENT_PASTE);
         copy_paste.paste(edit);
         edit.rdp_input_invalidate(edit.rect);
         //front.dump_png("/tmp/test_copy_paste_");
         BOOST_CHECK_EQUAL(s, edit.get_text());
         char message[1024];
-        if (!check_sig(front.gd.impl(), message, sig)){
+        if (!check_sig(mod.gd.impl(), message, sig)){
+            sprintf(message+strlen(message), "(%d)", linenum);
             BOOST_CHECK_MESSAGE(false, message);
         }
     };
-    edit_paste("", "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c");
-    edit_paste("", "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c");
+    edit_paste("",
+        "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c",
+        __LINE__);
+    edit_paste("",
+        "\x00\xc3\x7a\x5d\xfc\x63\x81\x79\x9b\x75\x8c\x58\x92\xc9\x2e\xec\x9d\xbe\x43\x5c",
+        __LINE__);
     front.copy("plop");
-    edit_paste("plop", "\xd1\x79\xc9\xd1\x98\x18\x48\xb6\x11\x44\x21\x26\xc1\xd1\x80\x52\xa5\x04\x23\x90");
+    edit_paste("plop",
+        "\x23\x7f\x9c\xa5\xbb\x4a\xdb\x79\x97\x8e\x53\xb7\x14\x56\xa7\x26\x6d\xaa\xec\x2d",
+        __LINE__);
     edit.decrement_edit_pos();
-    edit_paste("ploplopp", "\xca\xfa\xb0\xdd\xee\x87\x3c\x4d\xee\x3d\x88\x4e\x6e\x55\x18\x49\x6d\x3c\x6e\xe3");
+    edit_paste("ploplopp",
+        "\x76\x0d\xa0\x57\x73\xc1\x96\xc5\x4c\xb2\x67\x00\xe9\x51\x54\xa2\x27\x73\x45\xd2",
+        __LINE__);
     front.copy("xxx");
-    edit_paste("ploplopxxxp", "\xf1\x16\x0e\xe8\xac\xa0\x1d\xd9\x54\x16\xba\xa8\x8d\x72\x0d\x44\xd7\x5e\xf4\x66");
-    edit_paste("ploplopxxxxxxp", "\x70\x58\x4e\x18\x8a\xd6\x0c\x24\xf6\x82\x5b\xe7\x48\x2d\x01\x86\xe5\x9a\x62\xf3");
+    edit_paste("ploplopxxxp",
+        "\x4f\xf1\xdf\x1c\x52\xe1\x44\x31\x0e\xd5\x7e\x0b\x5f\x5a\x0a\x43\x31\x0e\x6e\xf6",
+        __LINE__);
+    edit_paste("ploplopxxxxxxp",
+        "\x97\x5d\xb1\x21\xb1\xce\x9d\x66\x27\xbb\x85\xf1\xc5\xb4\xef\x4d\x70\x71\xbb\xab",
+        __LINE__);
 }

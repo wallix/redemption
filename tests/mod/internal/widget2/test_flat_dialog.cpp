@@ -16,27 +16,22 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatDialog
-#include <boost/test/auto_unit_test.hpp>
-
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "log.hpp"
+#include "utils/log.hpp"
 
-#include "font.hpp"
-#include "internal/widget2/flat_dialog.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_dialog.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/widget2/flat_button.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
 
 #include "fake_draw.hpp"
 
@@ -47,18 +42,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test1",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, notifier, "test1",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
@@ -67,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xf6\x79\x28\xaa\x73\x62\x02\x09\x8a\x7b\xbc\x6d\x81\xc7\xa1\xb2\xd7\x6e\xd2\x4e"
+        "\x90\x1d\x52\xa3\x11\x2f\xd3\xed\x6e\xe7\xbd\x98\x3d\x57\xe9\xdb\x0a\x72\xe9\x31"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -80,18 +76,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test2",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 640, 480, parent, notifier, "test2",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -104,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x64\x4f\xfb\xad\xa1\x7d\xd0\x11\x43\x1c\xfd\xe2\x3a\xcd\x67\xe7\x77\xa3\x54\xce"
+        "\x75\x16\xab\xf9\x4a\xab\xf8\x20\x06\x9e\x50\x6f\xce\x58\xe8\x36\xf0\x53\xd2\x38"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -117,18 +114,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test3",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 1280, 1024, parent, notifier, "test3",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -141,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xa1\xb7\xce\xbd\x69\x55\x5c\x97\x38\x96\xd4\x89\x5d\x96\x39\xd0\x99\xea\x7b\x29"
+        "\x74\xfd\xcc\x8d\x7b\xe8\xe0\xa2\x5f\x23\xa0\x3a\xe5\x04\x30\x93\x87\x73\x1d\xd3"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -154,18 +152,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 1280, 1024, font);
+    WidgetScreen parent(drawable.gd, 1280, 1024, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test4",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 1280, 1024, parent, notifier, "test4",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -178,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xd7\x57\x39\xbd\x99\x5d\xff\xee\x76\x3c\xf0\xd3\x1b\x31\xfd\xba\xb1\xa4\x78\xe9"
+        "\x64\x9c\x88\xe4\xf1\xe7\x64\x81\xec\x12\x3e\x28\x28\x33\xe9\x96\x15\x34\x4b\x3d"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -191,18 +190,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 640, 480, font);
+    WidgetScreen parent(drawable.gd, 640, 480, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test5",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 640, 480, parent, notifier, "test5",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x56\x37\x5b\xd5\x40\xc4\xe7\x54\x23\xe0\x51\x32\xe9\x9c\x2e\xb6\x4e\x90\x3f\xdb"
+        "\x8f\x5a\xdc\xe7\x0d\xb2\xff\x5b\xed\x9d\x9e\xa4\x22\xfa\x36\x95\x46\x33\x05\x16"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -228,18 +228,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 300, 600, font);
+    WidgetScreen parent(drawable.gd, 300, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 350, 500, parent, notifier, "test6",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 350, 500, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -252,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xbc\x1a\x27\x17\xaf\x9e\xe2\x71\xb6\x7c\x6f\xdb\xdb\x0d\x93\x6e\x3b\x7a\x0c\x7c"
+        "\x81\x25\xbb\xbe\xd1\x82\x8f\x02\xb2\x62\xec\xa6\xdb\xfb\x01\xe6\x58\x52\x6e\xdd"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -265,18 +266,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 300, 600, parent, notifier, "test6",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 300, 600, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
@@ -289,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xe3\x0c\xbc\xfd\x66\xd7\xf2\x26\x43\x59\xb6\x59\x53\x86\x3f\x07\xcd\x8a\x5e\x34"
+        "\xf7\x9e\x59\x23\x0b\x84\x1b\x90\x1d\x6e\x3b\xe2\x2f\x0c\x39\x1f\x95\xac\xaf\x4f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -302,18 +304,19 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test6",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
@@ -326,7 +329,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x00\x23\xbe\x2f\x39\x72\xfe\x7f\xad\x7d\x89\x90\x88\x85\xac\xbb\xed\x3b\x91\x86"
+        "\x8e\x3b\x71\xe6\x83\xd8\xae\x56\xe6\xea\xd6\x6d\x09\x40\xf7\xe9\x0d\x88\xdb\x1b"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -338,12 +341,12 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
 
-        virtual void notify(Widget2* sender, notify_event_t event)
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -352,13 +355,14 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test6",
                            "line 1<br>"
                            "line 2<br>"
                            "<br>"
                            "line 3, blah blah<br>"
                            "line 4",
-                           0, colors, font);
+                           extra_button, colors, font);
 
 //    BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.sender == &flat_dialog);
@@ -378,7 +382,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x7a\x05\x83\xc8\xf7\x52\x91\xce\x20\xa5\xb6\xd8\x11\x04\x47\xb9\xc7\x52\x18\x72"
+        "\x6e\x22\xbd\x87\x7b\x9c\x93\xb3\x62\xe6\x47\x36\xae\xb0\x2d\x95\x7b\x0d\xf1\xc9"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -397,7 +401,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x71\xa3\x07\xf2\x93\xb2\x6a\x6e\x63\xe7\x3a\x37\xb0\x89\x8f\xba\xb6\x47\x88\x12"
+        "\xa6\x1d\x30\x14\x91\x5b\x81\xa0\xf4\x6d\x44\x30\x88\x3c\xfc\x83\x80\x79\x52\xd8"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -417,7 +421,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x27\x41\xda\x14\x2d\xe8\xd1\x8e\x2b\xe3\x66\x1d\x6f\x49\x0f\xfe\x5d\x65\x7c\x91"
+        "\xe5\x54\xf4\x28\x42\xd1\xfc\xb5\xf5\x46\xe5\xb9\x18\xa5\x25\x87\x50\x8b\x5b\x97"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -444,14 +448,14 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     struct Notify : NotifyApi {
         Widget2* sender = nullptr;
         notify_event_t event = 0;
 
         Notify() = default;
 
-        virtual void notify(Widget2* sender, notify_event_t event)
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -460,7 +464,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
+    WidgetFlatButton * extra_button = nullptr;
+    FlatDialog flat_dialog(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test6",
                            "Lorem ipsum dolor sit amet, consectetur<br>"
                            "adipiscing elit. Nam purus lacus, luctus sit<br>"
                            "amet suscipit vel, posuere quis turpis. Sed<br>"
@@ -474,7 +479,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
                            "porttitor tortor, sit amet tincidunt odio<br>"
                            "erat ut ligula. Fusce sit amet mauris neque.<br>"
                            "Sed orci augue, luctus in ornare sed,<br>"
-                           "adipiscing et arcu.", 0, colors, font,
+                           "adipiscing et arcu.", extra_button, colors, font,
                            "Ok", "Cancel", CHALLENGE_ECHO);
 
 //    BOOST_CHECK(notifier.sender == 0);
@@ -494,7 +499,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x18\xfb\x60\x47\x6d\xca\x82\x0b\x54\xf3\xbc\xda\x46\x29\xd2\x12\x5d\x42\x1f\x02"
+        "\xd2\xe8\x8e\x94\xe5\x8f\xcb\x67\xff\xbb\x48\x5c\x2b\x9a\x5b\x8f\xdb\x01\x16\xd9"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

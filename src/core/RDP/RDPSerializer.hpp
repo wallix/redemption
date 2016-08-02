@@ -17,14 +17,14 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Raphael Zhou
 
-   RDPSerializer is an implementation of RDPGraphicDevice that know how to serialize RDP Orders
+   RDPSerializer is an implementation of GraphicApi that know how to serialize RDP Orders
    and send them on the wire or store them in a file (actual storage will be provided as a Transport class).
    Serialized RDP orders are put in a chunk and sent when flush is called (either explicit call or because
    the provided buffer is full).
 */
 
-#ifndef _REDEMPTION_CORE_RDP_RDPSERIALIZER_HPP_
-#define _REDEMPTION_CORE_RDP_RDPSERIALIZER_HPP_
+
+#pragma once
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
@@ -88,31 +88,16 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-#include "config.hpp"
+#include "configs/config.hpp"
 
-#include "RDPGraphicDevice.hpp"
 #include "bitmapupdate.hpp"
 
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/pointercache.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
 #include "caches/glyphcache.hpp"
 
-#include "orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "orders/RDPOrdersPrimaryLineTo.hpp"
-#include "orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "orders/RDPOrdersPrimaryPolyline.hpp"
-#include "orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "orders/RDPOrdersSecondaryColorCache.hpp"
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
@@ -120,60 +105,42 @@
 #include "orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
 
-#include "transport.hpp"
+#include "transport/transport.hpp"
 
-#include "finally.hpp"
-#include "stream.hpp"
+#include "utils/sugar/finally.hpp"
+#include "utils/stream.hpp"
 
-struct RDPSerializer : public RDPGraphicDevice
+#include "capture/utils/save_state_chunk.hpp"
+
+#include "gdi/graphic_api.hpp"
+
+struct RDPSerializer
+: public gdi::GraphicApi
 {
     // Packet more than 16384 bytes can cause MSTSC to crash.
-    enum { MAX_ORDERS_SIZE = 16384,
-           MAX_BITMAP_SIZE_8K = 8192,
-           MAX_BITMAP_SIZE_64K = 65536
-    };
-
-    using RDPGraphicDevice::draw;
+    enum { MAX_ORDERS_SIZE = 16384, };
 
 protected:
     OutStream & stream_orders;
     OutStream & stream_bitmaps;
 
-private:
-    uint8_t bpp;
+    const uint8_t capture_bpp;
 
-protected:
-    Transport * trans;
-
-protected:
     const Inifile & ini;
 
 private:
     const int bitmap_cache_version;
-    const int use_bitmap_comp;
-    const int op2;
+    const bool use_bitmap_comp;
+    const bool use_compact_packets;
     const size_t max_bitmap_size;
 
 protected:
     // Internal state of orders
-    RDPOrderCommon     common;
-    RDPDestBlt         destblt;
-    RDPMultiDstBlt     multidstblt;
-    RDPMultiOpaqueRect multiopaquerect;
-    RDP::RDPMultiPatBlt multipatblt;
-    RDP::RDPMultiScrBlt multiscrblt;
-    RDPPatBlt          patblt;
-    RDPScrBlt          scrblt;
-    RDPOpaqueRect      opaquerect;
-    RDPMemBlt          memblt;
-    RDPMem3Blt         mem3blt;
-    RDPLineTo          lineto;
-    RDPGlyphIndex      glyphindex;
-    RDPPolygonSC       polygonSC;
-    RDPPolygonCB       polygonCB;
-    RDPPolyline        polyline;
-    RDPEllipseSC       ellipseSC;
-    RDPEllipseCB       ellipseCB;
+    RDPPolygonSC polygonSC;
+    RDPPolygonCB polygonCB;
+    RDPEllipseCB ellipseCB;
+
+    SaveStateChunk ssc;
 
     // state variables for gathering batch of orders
     size_t order_count;
@@ -186,46 +153,30 @@ protected:
     const uint32_t verbose;
 
 public:
-    RDPSerializer( Transport * trans
-                 , OutStream & stream_orders
+    RDPSerializer( OutStream & stream_orders
                  , OutStream & stream_bitmaps
                  , const uint8_t bpp
                  , BmpCache & bmp_cache
                  , GlyphCache & glyph_cache
                  , PointerCache & pointer_cache
                  , const int bitmap_cache_version
-                 , const int use_bitmap_comp
-                 , const int op2
+                 , const bool use_bitmap_comp
+                 , const bool use_compact_packets
                  , size_t max_bitmap_size
                  , const Inifile & ini
                  , uint32_t verbose = 0)
-    : RDPGraphicDevice()
+    : GraphicApi(gdi::GraphicDepth::unspecified())
     , stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
-    , bpp(bpp)
-    , trans(trans)
+    , capture_bpp(bpp)
     , ini(ini)
     , bitmap_cache_version(bitmap_cache_version)
     , use_bitmap_comp(use_bitmap_comp)
-    , op2(op2)
+    , use_compact_packets(use_compact_packets)
     , max_bitmap_size(max_bitmap_size)
     // Internal state of orders
-    , common(RDP::PATBLT, Rect(0, 0, 1, 1))
-    , destblt(Rect(), 0)
-    , multidstblt()
-    , patblt(Rect(), 0, 0, 0, RDPBrush())
-    , scrblt(Rect(), 0, 0, 0)
-    , opaquerect(Rect(), 0)
-    , memblt(0, Rect(), 0, 0, 0, 0)
-    , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
-    , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
-    , glyphindex( 0, 0, 0, 0, 0, 0
-                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                , reinterpret_cast<const uint8_t *>(""))
     , polygonSC()
     , polygonCB()
-    , polyline()
-    , ellipseSC()
     , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
     // state variables for a batch of orders
     , order_count(0)
@@ -233,7 +184,9 @@ public:
     , bmp_cache(bmp_cache)
     , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)
-    , verbose(verbose) {}
+    , verbose(verbose) {
+
+    }
 
     ~RDPSerializer() override {}
 
@@ -256,22 +209,21 @@ public:
         size_t used_size = this->stream_orders.get_offset();
         if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
-               , "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u"
-               , this
+               , "<Serializer %p> RDPSerializer::reserve_order[%zu](%zu) used=%zu free=%zu"
+               , static_cast<void*>(this)
                , this->order_count
                , asked_size, used_size
-               , max_packet_size - used_size - 106
+               , max_packet_size - used_size - 106u
                );
         }
         if (asked_size + 106 > max_packet_size) {
             LOG( LOG_ERR
-               , "(asked size (%u) + 106 = %d) > order batch capacity (%u)"
+               , "(asked size (%zu) + 106 = %zu) > order batch capacity (%zu)"
                , asked_size
-               , asked_size + 106
+               , asked_size + 106u
                , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
-        REDASSERT(!this->bitmap_count);
         if (this->bitmap_count) { this->flush_bitmaps(); }
         const size_t max_order_batch = 4096;
         if (   (this->order_count >= max_order_batch)
@@ -286,12 +238,12 @@ public:
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->opaquerect);
-        this->common = newcommon;
-        this->opaquerect = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.opaquerect);
+        this->ssc.common = newcommon;
+        this->ssc.opaquerect = cmd;
 
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect done");
     }
@@ -299,85 +251,87 @@ public:
     void draw(const RDPScrBlt & cmd, const Rect &clip) override {
         this->reserve_order(25);
         RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->scrblt);
-        this->common = newcommon;
-        this->scrblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.scrblt);
+        this->ssc.common = newcommon;
+        this->ssc.scrblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip) override {
         this->reserve_order(21);
         RDPOrderCommon newcommon(RDP::DESTBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->destblt);
-        this->common = newcommon;
-        this->destblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.destblt);
+        this->ssc.common = newcommon;
+        this->ssc.destblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
         this->reserve_order(395 * 2);
         RDPOrderCommon newcommon(RDP::MULTIDSTBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multidstblt);
-        this->common      = newcommon;
-        this->multidstblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multidstblt);
+        this->ssc.common      = newcommon;
+        this->ssc.multidstblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
         this->reserve_order(397 * 2);
         RDPOrderCommon newcommon(RDP::MULTIOPAQUERECT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multiopaquerect);
-        this->common          = newcommon;
-        this->multiopaquerect = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiopaquerect);
+        this->ssc.common          = newcommon;
+        this->ssc.multiopaquerect = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
         this->reserve_order(412 * 2);
         RDPOrderCommon newcommon(RDP::MULTIPATBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multipatblt);
-        this->common      = newcommon;
-        this->multipatblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multipatblt);
+        this->ssc.common      = newcommon;
+        this->ssc.multipatblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
         this->reserve_order(399 * 2);
         RDPOrderCommon newcommon(RDP::MULTISCRBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->multiscrblt);
-        this->common      = newcommon;
-        this->multiscrblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiscrblt);
+        this->ssc.common      = newcommon;
+        this->ssc.multiscrblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip) override {
         this->reserve_order(29);
         RDPOrderCommon newcommon(RDP::PATBLT, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->patblt);
-        this->common = newcommon;
-        this->patblt = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.patblt);
+        this->ssc.common = newcommon;
+        this->ssc.patblt = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
 protected:
     void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx, bool in_wait_list)
     {
-        const Bitmap & bmp = this->bmp_cache.get(
-            (in_wait_list ? BmpCache::MAXIMUM_NUMBER_OF_CACHES : cache_id), cache_idx);
+        const Bitmap & bmp = (in_wait_list)
+            ? this->bmp_cache.get(BmpCache::MAXIMUM_NUMBER_OF_CACHES, cache_idx)
+            : this->bmp_cache.get(cache_id, cache_idx);
+
         if (!bmp.is_valid()) {
             //LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
             //    cache_id, cache_idx);
@@ -387,8 +341,8 @@ protected:
             this->bmp_cache.is_cache_persistent(cache_id), in_wait_list,
             this->ini.get<cfg::debug::secondary_orders>());
         this->reserve_order(cmd_cache.bmp.bmp_size() + 16);
-        cmd_cache.emit( this->bpp, this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
-                      , this->op2);
+        cmd_cache.emit( this->capture_bpp, this->stream_orders, this->bitmap_cache_version
+                      , this->use_bitmap_comp, this->use_compact_packets);
 
         if (this->ini.get<cfg::debug::secondary_orders>()) {
             cmd_cache.log(LOG_INFO);
@@ -423,10 +377,8 @@ public:
 
         if (this->verbose & 512) {
             LOG(LOG_INFO,
-                is_RDPMemBlt()
-                ? "RDPSerializer: draw MemBlt, cache_id=%u cache_index=%u in_wait_list=%s"
-                : "RDPSerializer: draw Mem3Blt, cache_id=%u cache_index=%u in_wait_list=%s",
-                cache_id, cache_idx, (in_wait_list ? "true" : "false"));
+                "RDPSerializer: draw %s, cache_id=%u cache_index=%u in_wait_list=%s",
+                is_RDPMemBlt() ? "MemBlt" : "Mem3Blt", cache_id, cache_idx, (in_wait_list ? "true" : "false"));
         }
 
         if ((res >> 24) == BmpCache::ADDED_TO_CACHE) {
@@ -443,38 +395,35 @@ public:
 
         this->reserve_order(is_RDPMemBlt() ? 30 : 60);
         RDPOrderCommon newcommon(is_RDPMemBlt() ? RDP::MEMBLT : RDP::MEM3BLT, clip);
-        newcmd.emit(this->stream_orders, newcommon, this->common, this_memblt);
-        this->common = newcommon;
+        newcmd.emit(this->stream_orders, newcommon, this->ssc.common, this_memblt);
+        this->ssc.common = newcommon;
         this_memblt = newcmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            newcmd.log(LOG_INFO, common.clip);
+            newcmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
 public:
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp) override {
-        this->draw_memblt(cmd, this->memblt, clip, oldbmp);
+        this->draw_memblt(cmd, this->ssc.memblt, clip, oldbmp);
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & oldbmp) override {
-        this->draw_memblt(cmd, this->mem3blt, clip, oldbmp);
+        this->draw_memblt(cmd, this->ssc.mem3blt, clip, oldbmp);
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip) override {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->lineto);
-        this->common = newcommon;
-        this->lineto = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.lineto);
+        this->ssc.common = newcommon;
+        this->ssc.lineto = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-        const GlyphCache * gly_cache) override {
-        REDASSERT(gly_cache);
-
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
         auto get_delta = [] (RDPGlyphIndex & cmd, uint8_t & i) -> uint16_t {
             uint16_t delta = cmd.data[i++];
             if (delta == 0x80) {
@@ -491,7 +440,7 @@ public:
         for (uint8_t i = 0; i < new_cmd.data_len; ) {
             if (new_cmd.data[i] <= 0xFD) {
                 //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
-                FontChar const & fc = gly_cache->glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                FontChar const & fc = gly_cache.glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
                 REDASSERT(fc);
 
                 int cacheIndex;
@@ -572,11 +521,11 @@ public:
 
         this->reserve_order(297);
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
-        new_cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
-        this->common = newcommon;
-        this->glyphindex = new_cmd;
+        new_cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.glyphindex);
+        this->ssc.common = newcommon;
+        this->ssc.glyphindex = new_cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            new_cmd.log(LOG_INFO, common.clip);
+            new_cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
@@ -593,43 +542,43 @@ public:
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYGONSC, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->polygonSC);
-        this->common    = newcommon;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonSC);
+        this->ssc.common    = newcommon;
         this->polygonSC = cmd;
     }
 
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYGONCB, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->polygonCB);
-        this->common    = newcommon;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->polygonCB);
+        this->ssc.common    = newcommon;
         this->polygonCB = cmd;
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYLINE, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->polyline);
-        this->common   = newcommon;
-        this->polyline = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.polyline);
+        this->ssc.common   = newcommon;
+        this->ssc.polyline = cmd;
         if (this->ini.get<cfg::debug::primary_orders>()) {
-            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
         this->reserve_order(26);
         RDPOrderCommon newcommon(RDP::ELLIPSESC, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->ellipseSC);
-        this->common = newcommon;
-        this->ellipseSC = cmd;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.ellipseSC);
+        this->ssc.common = newcommon;
+        this->ssc.ellipseSC = cmd;
     }
 
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
         this->reserve_order(54);
         RDPOrderCommon newcommon(RDP::ELLIPSECB, clip);
-        cmd.emit(this->stream_orders, newcommon, this->common, this->ellipseCB);
-        this->common = newcommon;
+        cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ellipseCB);
+        this->ssc.common = newcommon;
         this->ellipseCB = cmd;
     }
 
@@ -677,27 +626,26 @@ public:
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
         size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), this->max_bitmap_size + 300u);
-        TODO("QuickFix, should set a max packet size according to RDP compression version of client, proxy and server");
+        // TODO QuickFix, should set a max packet size according to RDP compression version of client, proxy and server
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.get<cfg::debug::primary_orders>() > 3) {
             LOG( LOG_INFO
-               , "<Serializer %p> RDPSerializer::reserve_bitmap[%u](%u) used=%u free=%u"
-               , this
+               , "<Serializer %p> RDPSerializer::reserve_bitmap[%zu](%zu) used=%zu free=%zu"
+               , static_cast<void*>(this)
                , this->bitmap_count
                , asked_size
                , used_size
-               , max_packet_size - used_size - 106
+               , max_packet_size - used_size - 106u
                );
         }
         if (asked_size + 106 > max_packet_size) {
             LOG( LOG_ERR
-               , "asked size (%u) > image batch capacity (%u)"
-               , asked_size + 106
+               , "asked size (%zu) > image batch capacity (%zu)"
+               , asked_size + 106u
                , max_packet_size
                );
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
-        REDASSERT(!this->order_count);
         if (this->order_count) { this->flush_orders(); }
         const size_t max_image_batch = 4096;
         if (   (this->bitmap_count >= max_image_batch)
@@ -707,18 +655,19 @@ public:
         this->bitmap_count++;
     }
 
-    void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) override {
-        this->reserve_bitmap(bitmap_data.struct_size() + size);
+    void draw( const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        REDASSERT(bmp.has_data_compressed());
+        auto data_compressed = bmp.data_compressed();
+        this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
 
         bitmap_data.emit(this->stream_bitmaps);
-        this->stream_bitmaps.out_copy_bytes(data, size);
+        this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
         if (this->ini.get<cfg::debug::bitmap_update>()) {
             bitmap_data.log(LOG_INFO, "RDPSerializer");
         }
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -736,6 +685,8 @@ public:
         break;
         }
     }
+
+    // TODO set_palette unimplemented
+    void set_palette(const BGRPalette&) override {}
 };
 
-#endif

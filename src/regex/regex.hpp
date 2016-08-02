@@ -18,12 +18,12 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_FTESTS_REGEX_REGEX_HPP
-#define REDEMPTION_FTESTS_REGEX_REGEX_HPP
+
+#pragma once
 
 #include "regex_automate.hpp"
 #include "regex_parser.hpp"
-#include "noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 struct Tracer;
 namespace re {
@@ -204,15 +204,20 @@ namespace re {
         template<bool exact>
         class BasicPartOfText
         {
-        protected:
-            Regex & re;
-            unsigned res;
+            Regex * re = nullptr;
+            unsigned res = 0;
 
         public:
+            BasicPartOfText() = default;
+
             BasicPartOfText(Regex & re, const char * s)
-            : re(re)
+            : re(&re)
             , res(re.sm.part_of_text_start(s, &re.pos))
             {}
+
+            bool valid() const {
+                return this->re;
+            }
 
             unsigned state() const
             {
@@ -222,19 +227,23 @@ namespace re {
             unsigned next(const char * s)
             {
                 if (exact) {
-                    this->res = this->re.sm.part_of_text_exact_search(s, this->re.step_limit,
-                                                                      &this->re.pos);
+                    this->res = this->re->sm.part_of_text_exact_search(
+                        s, this->re->step_limit, &this->re->pos
+                    );
                 }
                 else {
-                    this->res = this->re.sm.part_of_text_search(s, this->re.step_limit,
-                                                                &this->re.pos);
+                    this->res = this->re->sm.part_of_text_search(
+                        s, this->re->step_limit, &this->re->pos
+                    );
                 }
                 return this->res;
             }
 
             bool finish()
             {
-                this->res = this->re.sm.part_of_text_finish(&this->re.pos);
+                if (this->res == match_undetermined) {
+                  this->res = this->re->sm.part_of_text_finish(&this->re->pos);
+                }
                 return this->res;
             }
         };
@@ -402,6 +411,12 @@ namespace re {
             return this->sm.match_result(all);
         }
 
+        range_matches & match_result(range_matches & ranges, bool all = true) const
+        {
+            this->sm.append_match_result(ranges, all);
+            return ranges;
+        }
+
         void display() const
         {
             this->sm.display_states();
@@ -409,4 +424,3 @@ namespace re {
     };
 }
 
-#endif

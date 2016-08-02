@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYCOLORCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYCOLORCACHE_HPP_
+
+#pragma once
 
 /*****************************************************************************/
 // [MS-RDPGDI] 2.2.2.2.1.2.4 Cache Color Table (CACHE_COLOR_TABLE_ORDER)
@@ -72,7 +72,7 @@
 // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in this
 // field are arbitrary and MUST be ignored.
 
-#include "colors.hpp"
+#include "utils/colors.hpp"
 #include "RDPOrdersCommon.hpp"
 
 class RDPColCache {
@@ -132,7 +132,7 @@ public:
         }
     }
 
-    #define warning remove printf in operator== and show palette differences in test code
+    //TODO remove printf in operator== and show palette differences in test code
     bool operator==(const RDPColCache & other) const {
         if (this->cacheIndex != other.cacheIndex) {
             return false;
@@ -167,7 +167,7 @@ public:
     {
         char buffer[1024];
         this->str(buffer, 1024);
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print() const
@@ -178,4 +178,3 @@ public:
     }
 };
 
-#endif

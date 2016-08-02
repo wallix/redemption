@@ -18,19 +18,23 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
 
-#include "ssl_calls.hpp"
-#include "genrandom.hpp"
-#include "difftimeval.hpp"
-#include "utf.hpp"
+#pragma once
 
-#include "RDP/nla/ntlm/ntlm_message.hpp"
-#include "RDP/nla/ntlm/ntlm_message_negotiate.hpp"
-#include "RDP/nla/ntlm/ntlm_message_challenge.hpp"
-#include "RDP/nla/ntlm/ntlm_message_authenticate.hpp"
-#include "RDP/nla/sspi.hpp"
+//#include "system/ssl_calls.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/utf.hpp"
+
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_negotiate.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_challenge.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_authenticate.hpp"
+#include "core/RDP/nla/sspi.hpp"
+
+#include "system/ssl_md5.hpp"
+#include "system/ssl_rc4.hpp"
+#include "system/ssl_md4.hpp"
 
 enum NtlmState {
     NTLM_STATE_INITIAL,
@@ -50,19 +54,11 @@ static const uint8_t client_seal_magic[] =
 static const uint8_t server_seal_magic[] =
     "session key to server-to-client sealing key magic constant";
 
-struct NTLMContext {
+struct NTLMContext
+{
+    TimeObj & timeobj;
+    Random & rand;
 
-    UdevRandom randgen;
-    LCGRandom lcgrand;
-
-    TimeSystem timesys;
-    LCGTime lcgtime;
-
-    TimeObj * timeobj;
-    Random * rand;
-
-    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
-    bool hardcoded_tests;
     bool server;
     bool NTLMv2;
     bool UseMIC;
@@ -123,14 +119,9 @@ struct NTLMContext {
 
     uint32_t verbose;
 
-    NTLMContext()
-        : randgen()
-        , lcgrand(0)
-        , timesys()
-        , lcgtime()
-        , timeobj(&this->timesys)
-        , rand(&this->randgen)
-        , hardcoded_tests(false)
+    explicit NTLMContext(Random & rand, TimeObj & timeobj)
+        : timeobj(timeobj)
+        , rand(rand)
         , server(false)
         , NTLMv2(true)
         , UseMIC(false)
@@ -203,24 +194,11 @@ struct NTLMContext {
         }
     }
 
-    virtual ~NTLMContext() {
-    }
-
-    void set_tests() {
-        this->hardcoded_tests = true;
-        this->timeobj = &(this->lcgtime);
-        this->rand = &(this->lcgrand);
-    }
-
-    void unset_tests() {
-        this->hardcoded_tests = false;
-        this->timeobj = &(this->timesys);
-        this->rand = &(this->randgen);
-    }
+    NTLMContext(NTLMContext const &) = delete;
+    NTLMContext operator = (NTLMContext const &) = delete;
 
     /**
      * Generate timestamp for AUTHENTICATE_MESSAGE.
-     * @param NTLM context
      */
 
     void ntlm_generate_timestamp()
@@ -233,7 +211,7 @@ struct NTLMContext {
         if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0)
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
         else {
-            timeval tv = this->timeobj->get_time();
+            timeval tv = this->timeobj.get_time();
             struct {
                 uint32_t low;
                 uint32_t high;
@@ -246,7 +224,6 @@ struct NTLMContext {
 
     /**
      * Generate client challenge (8-byte nonce).
-     * @param NTLM context
      */
     // client method
     void ntlm_generate_client_challenge()
@@ -255,12 +232,11 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Generate Client Challenge");
         }
-        this->rand->random(this->ClientChallenge, 8);
+        this->rand.random(this->ClientChallenge, 8);
 
     }
     /**
      * Generate server challenge (8-byte nonce).
-     * @param NTLM context
      */
     // server method
     void ntlm_generate_server_challenge()
@@ -268,7 +244,7 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Generate Server Challenge");
         }
-        this->rand->random(this->ServerChallenge, 8);
+        this->rand.random(this->ServerChallenge, 8);
     }
     // client method
     void ntlm_get_server_challenge() {
@@ -277,7 +253,6 @@ struct NTLMContext {
 
     /**
      * Generate RandomSessionKey (16-byte nonce).
-     * @param NTLM context
      */
     // client method
     //void ntlm_generate_random_session_key()
@@ -285,7 +260,7 @@ struct NTLMContext {
     //    if (this->verbose & 0x400) {
     //        LOG(LOG_INFO, "NTLMContext Generate Random Session Key");
     //    }
-    //    this->rand->random(this->RandomSessionKey, 16);
+    //    this->rand.random(this->RandomSessionKey, 16);
     //}
 
     // client method ??
@@ -293,7 +268,7 @@ struct NTLMContext {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Generate Exported Session Key");
         }
-        this->rand->random(this->ExportedSessionKey, 16);
+        this->rand.random(this->ExportedSessionKey, 16);
     }
 
     // client method
@@ -401,8 +376,8 @@ struct NTLMContext {
         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
         size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
         if (this->verbose & 0x400) {
-            LOG(LOG_INFO, "NTLMContext Compute response: AvPairs size %d", AvPairsStream.size());
-            LOG(LOG_INFO, "NTLMContext Compute response: temp size %d", temp_size);
+            LOG(LOG_INFO, "NTLMContext Compute response: AvPairs size %zu", AvPairsStream.size());
+            LOG(LOG_INFO, "NTLMContext Compute response: temp size %zu", temp_size);
         }
 
         uint8_t * temp = new uint8_t[temp_size];
@@ -525,7 +500,6 @@ struct NTLMContext {
     /**
      * Generate signing key.\n
      * @msdn{cc236711}
-     * @param exported_session_key ExportedSessionKey
      * @param sign_magic Sign magic string
      * @param signing_key Destination signing key
      */
@@ -542,7 +516,6 @@ struct NTLMContext {
     /**
      * Generate client signing key (ClientSigningKey).\n
      * @msdn{cc236711}
-     * @param NTLM context
      */
 
     void ntlm_generate_client_signing_key()
@@ -554,7 +527,6 @@ struct NTLMContext {
     /**
      * Generate server signing key (ServerSigningKey).\n
      * @msdn{cc236711}
-     * @param NTLM context
      */
 
     void ntlm_generate_server_signing_key()
@@ -567,7 +539,6 @@ struct NTLMContext {
     /**
      * Generate sealing key.\n
      * @msdn{cc236712}
-     * @param exported_session_key ExportedSessionKey
      * @param seal_magic Seal magic string
      * @param sealing_key Destination sealing key
      */
@@ -583,7 +554,6 @@ struct NTLMContext {
     /**
      * Generate client sealing key (ClientSealingKey).\n
      * @msdn{cc236712}
-     * @param NTLM context
      */
 
     void ntlm_generate_client_sealing_key()
@@ -595,7 +565,6 @@ struct NTLMContext {
     /**
      * Generate server sealing key (ServerSealingKey).\n
      * @msdn{cc236712}
-     * @param NTLM context
      */
 
     void ntlm_generate_server_sealing_key()
@@ -647,7 +616,6 @@ struct NTLMContext {
 
     /**
      * Initialize RC4 stream cipher states for sealing.
-     * @param NTLM context
      */
 
     void ntlm_init_rc4_seal_states()
@@ -1008,19 +976,14 @@ struct NTLMContext {
         //     this->identity.Domain.size(),
         //     this->identity.Password.size());
 
-        // Hardcoded Tests
-        if (this->hardcoded_tests) {
-            uint8_t pass[] = "Pénélope";
-            this->identity.SetPasswordFromUtf8(pass);
-        }
-
         if (this->identity.Password.size() > 0) {
             // password is available
             this->hash_password(this->identity.Password.get_data(),
                                 this->identity.Password.size(),
                                 hash);
         }
-    };
+    }
+
     // SERVER PROCEED RESPONSE CHECKING
     SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t * hash) {
         if (!this->server) {
@@ -1219,4 +1182,3 @@ struct NTLMContext {
     }
 };
 
-#endif

@@ -20,23 +20,20 @@
  *
  */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET2_LAYOUT_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET2_LAYOUT_HPP_
-
+#pragma once
 #include "widget.hpp"
+#include "gdi/graphic_api.hpp"
 
 static const size_t LAYOUT_SIZE_MAX = 50;
 
 struct WidgetLayout : public Widget2 {
     Widget2 * items[LAYOUT_SIZE_MAX];
     size_t    nb_items;
-    int bgcolor;
 
-    WidgetLayout(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetLayout(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , nb_items(0)
-        , bgcolor(BLACK)
     {
     }
 
@@ -85,24 +82,13 @@ struct WidgetLayout : public Widget2 {
     }
 
     void remove_widget(Widget2 *w) {
-        bool found = false;
-        size_t removed = this->nb_items;
-        for (size_t i = 0; i < this->nb_items; ++i) {
-            if (!found) {
-                if (w == this->items[i]) {
-                    found = true;
-                    this->items[i] = nullptr;
-                    removed = i;
-                }
-            }
-            else {
-                this->items[i-1] = this->items[i];
-            }
-        }
-        if (found) {
-            this->items[this->nb_items] = nullptr;
+        auto last = this->items + this->nb_items;
+        auto it = std::find(&this->items[0], last, w);
+        if (it != last) {
+            auto new_last = std::copy(it+1, last, it);
+            *new_last = nullptr;
             this->nb_items--;
-            this->rearrange(removed);
+            this->rearrange(it - this->items);
         }
     }
 
@@ -182,4 +168,3 @@ struct WidgetLayout : public Widget2 {
 };
 
 
-#endif

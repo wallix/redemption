@@ -18,10 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
-#define _REDEMPTION_CAPTURE_RDPCHUNKEDDEVICE_HPP_
 
-#include "stream.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
 
 struct RDPChunkedDevice {
     virtual ~RDPChunkedDevice () {}
@@ -29,4 +29,3 @@ struct RDPChunkedDevice {
     virtual void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream data) = 0;
 };
 
-#endif

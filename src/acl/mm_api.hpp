@@ -18,10 +18,10 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_ACL_MM_API_HPP
-#define REDEMPTION_ACL_MM_API_HPP
 
-#include "mod_api.hpp"
+#pragma once
+
+#include "mod/mod_api.hpp"
 
 class auth_api;
 
@@ -42,25 +42,20 @@ public:
     virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
     virtual int next_module() = 0;
     // virtual int get_mod_from_protocol() = 0;
-    virtual void invoke_close_box(const char * auth_error_message,
-                                  BackEvent_t & signal, time_t now) {
+    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal, time_t now) {
+        (void)auth_error_message;
+        (void)signal;
+        (void)now;
         this->last_module = true;
-    };
-    //virtual bool is_last_module() {
-    //    return this->last_module;
-    //}
+    }
     virtual bool is_connected() {
         return this->connected;
     }
     virtual bool is_up_and_running() {
-        bool res = false;
-        if (this->mod) {
-            res = this->mod->is_up_and_running();
-        }
-        return res;
+        return this->mod && this->mod->is_up_and_running();
     }
-    virtual void record(auth_api * acl) {}
+    virtual void record(auth_api *) {}
+    virtual void stop_record() {}
     virtual void check_module() { }
 };
 
-#endif

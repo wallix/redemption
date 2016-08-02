@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_FTESTS_REGEX_REGEX_CONSUMER_HPP
-#define REDEMPTION_FTESTS_REGEX_REGEX_CONSUMER_HPP
+
+#pragma once
 
 #include <ostream>
 #include <stdint.h>
@@ -167,4 +167,3 @@ namespace re {
 
 }
 
-#endif

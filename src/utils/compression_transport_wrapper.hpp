@@ -18,75 +18,71 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_COMPRESSION_TRANSPORT_WRAPPER_HPP
-#define REDEMPTION_UTILS_COMPRESSION_TRANSPORT_WRAPPER_HPP
+#pragma once
 
-#include "gzip_compression_transport.hpp"
-#include "snappy_compression_transport.hpp"
-
-struct CompressionTransportBase
-{
-    enum class Algorithm : unsigned { None, Gzip, Snappy, NUNMBER };
-
-    static const unsigned min_algorithm = 0;
-    static const unsigned max_algorithm = static_cast<unsigned>(Algorithm::NUNMBER);
-
-    explicit CompressionTransportBase(unsigned compression_algorithm)
-    : algorithm(static_cast<Algorithm>(compression_algorithm < max_algorithm ? compression_algorithm : 0))
-    {}
-
-    Algorithm get_algorithm() const {
-        return this->algorithm;
-    }
-
-    unsigned get_index_algorithm() const {
-        return static_cast<unsigned>(this->algorithm);
-    }
-
-private:
-    Algorithm algorithm;
-};
+#include "transport/gzip_compression_transport.hpp"
+#include "transport/snappy_compression_transport.hpp"
+#include "configs/autogen/enums.hpp"
 
 template<class GZipTransport, class SnappyTransport>
-struct CompressionTransportWrapper :  CompressionTransportBase
+struct CompressionTransportWrapper
 {
-    CompressionTransportWrapper(Transport & trans, Algorithm compression_algorithm, uint32_t verbose = 0)
-    : CompressionTransportWrapper(trans, static_cast<unsigned>(compression_algorithm), verbose)
-    {}
-
-    CompressionTransportWrapper(Transport & trans, unsigned compression_algorithm, uint32_t verbose = 0)
-    : CompressionTransportBase(compression_algorithm)
+    CompressionTransportWrapper(
+        Transport & trans,
+        WrmCompressionAlgorithm compression_algorithm,
+        uint32_t verbose = 0)
+    : compression_algorithm(compression_algorithm)
     , compressors(trans)
     {
-        if (this->get_algorithm() == Algorithm::Gzip) {
-            new (&this->compressors.gzip_trans) GZipTransport(trans, verbose);
-        }
-        else if (this->get_algorithm() == Algorithm::Snappy) {
-            new (&this->compressors.snappy_trans) SnappyTransport(trans, verbose);
-        }
-    }
-
-    ~CompressionTransportWrapper() {
-        if (this->get_algorithm() == Algorithm::Gzip) {
-            this->compressors.gzip_trans.~GZipTransport();
-        }
-        else if (this->get_algorithm() == Algorithm::Snappy) {
-            this->compressors.snappy_trans.~SnappyTransport();
+        switch (this->get_algorithm()) {
+            case WrmCompressionAlgorithm::gzip:
+                new (&this->compressors.gzip_trans) GZipTransport(trans, verbose);
+                break;
+            case WrmCompressionAlgorithm::snappy:
+                new (&this->compressors.snappy_trans) SnappyTransport(trans, verbose);
+                break;
+            case WrmCompressionAlgorithm::no_compression:
+                break;
         }
     }
 
-    Transport & get() {
-        if (this->get_algorithm() == Algorithm::Gzip) {
-            return this->compressors.gzip_trans;
+    ~CompressionTransportWrapper()
+    {
+        switch (this->get_algorithm()) {
+            case WrmCompressionAlgorithm::gzip:
+                this->compressors.gzip_trans.~GZipTransport();
+                break;
+            case WrmCompressionAlgorithm::snappy:
+                this->compressors.snappy_trans.~SnappyTransport();
+                break;
+            case WrmCompressionAlgorithm::no_compression:
+                break;
         }
-        else if (this->get_algorithm() == Algorithm::Snappy) {
-            return this->compressors.snappy_trans;
+    }
+
+    Transport & get()
+    {
+        switch (this->get_algorithm()) {
+            case WrmCompressionAlgorithm::gzip:
+                return this->compressors.gzip_trans;
+            case WrmCompressionAlgorithm::snappy:
+                return this->compressors.snappy_trans;
+            case WrmCompressionAlgorithm::no_compression:
+                return *this->compressors.trans;
         }
+        assert(false && "unknown algorithm");
         return *this->compressors.trans;
     }
 
+    WrmCompressionAlgorithm get_algorithm() const
+    {
+        return this->compression_algorithm;
+    }
+
 private:
-    union CompressionTransport {
+    WrmCompressionAlgorithm compression_algorithm;
+    union CompressionTransport
+    {
         GZipTransport   gzip_trans;
         SnappyTransport snappy_trans;
         Transport *     trans;
@@ -102,5 +98,3 @@ private:
 
 typedef CompressionTransportWrapper<GZipCompressionOutTransport, SnappyCompressionOutTransport> CompressionOutTransportWrapper;
 typedef CompressionTransportWrapper<GZipCompressionInTransport, SnappyCompressionInTransport> CompressionInTransportWrapper;
-
-#endif

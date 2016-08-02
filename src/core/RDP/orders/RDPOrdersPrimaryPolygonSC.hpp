@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONSC_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONSC_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -227,7 +227,7 @@ public:
               const RDPPolygonSC & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
-        TODO("check that");
+        // TODO check that
         int16_t pointx = this->xStart;
         int16_t pointy = this->yStart;
         if (!common.clip.contains_pt(pointx, pointy)) {
@@ -401,7 +401,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -412,4 +412,3 @@ public:
     }
 };  // class RDPPolygonSC
 
-#endif

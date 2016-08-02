@@ -20,47 +20,48 @@
    rdp module process orders
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
+
+#pragma once
 
 #include <string.h>
 #include <string>
 
-#include "log.hpp"
-#include "defines.hpp"
-#include "in_file_transport.hpp"
-#include "out_file_transport.hpp"
-#include "stream.hpp"
-#include "fileutils.hpp"
+#include <cinttypes>
 
-#include "RDP/protocol.hpp"
+#include "utils/log.hpp"
+#include "core/defines.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "utils/stream.hpp"
+#include "utils/fileutils.hpp"
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/protocol.hpp"
 
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/bmpcachepersister.hpp"
-#include "RDP/caches/glyphcache.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
-class RDPGraphicDevice;
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/bmpcachepersister.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+
+#include "gdi/graphic_api.hpp"
 
 /* orders */
 class rdp_orders {
@@ -159,7 +160,7 @@ private:
         const char * persistent_path = PERSISTENT_PATH "/mod_rdp";
 
         // Ensures that the directory exists.
-        if (::recursive_create_directory( persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
+        if (::recursive_create_directory( persistent_path, S_IRWXU | S_IRWXG, -1) != 0) {
             LOG( LOG_ERR
                , "rdp_orders::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
                , persistent_path);
@@ -213,7 +214,8 @@ public:
     void create_cache_bitmap(const uint8_t bpp,
         uint16_t small_entries, uint16_t small_size, bool small_persistent,
         uint16_t medium_entries, uint16_t medium_size, bool medium_persistent,
-        uint16_t big_entries, uint16_t big_size, bool big_persistent, uint32_t verbose)
+        uint16_t big_entries, uint16_t big_size, bool big_persistent,
+        bool enable_waiting_list, uint32_t verbose)
     {
         if (this->bmp_cache) {
             if (this->bmp_cache->bpp == bpp) {
@@ -226,9 +228,9 @@ public:
         }
 
         this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, bpp, 3, false,
-                                       BmpCache::CacheOption(small_entries, small_size, small_persistent),
-                                       BmpCache::CacheOption(medium_entries, medium_size, medium_persistent),
-                                       BmpCache::CacheOption(big_entries, big_size, big_persistent),
+                                       BmpCache::CacheOption(small_entries + (enable_waiting_list ? 1 : 0), small_size, small_persistent),
+                                       BmpCache::CacheOption(medium_entries + (enable_waiting_list ? 1 : 0), medium_size, medium_persistent),
+                                       BmpCache::CacheOption(big_entries + (enable_waiting_list ? 1 : 0), big_size, big_persistent),
                                        BmpCache::CacheOption(),
                                        BmpCache::CacheOption(),
                                        verbose);
@@ -262,7 +264,7 @@ public:
 
 private:
     void process_framemarker( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
-                            , RDPGraphicDevice & gd) {
+                            , gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_framemarker");
         }
@@ -274,8 +276,8 @@ private:
         gd.draw(order);
     }
 
-    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & header
-                                   , RDPGraphicDevice & gd) {
+    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                   , gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");
         }
@@ -334,7 +336,8 @@ private:
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
         if (this->verbose & 64) {
             LOG( LOG_ERR
-               , "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u"
+               , "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
+                 " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
                , bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), bpp);
         }
     }
@@ -372,7 +375,7 @@ private:
         }
     }
 
-    void process_colormap(InStream & stream, const RDPSecondaryOrderHeader & header, RDPGraphicDevice & gd) {
+    void process_colormap(InStream & stream, const RDPSecondaryOrderHeader & header, gdi::GraphicApi & gd) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_colormap");
         }
@@ -388,7 +391,7 @@ private:
 
 public:
     /*****************************************************************************/
-    int process_orders(uint8_t bpp, InStream & stream, bool fast_path, RDPGraphicDevice & gd,
+    int process_orders(uint8_t bpp, InStream & stream, bool fast_path, gdi::GraphicApi & gd,
                        uint16_t front_width, uint16_t front_height) {
         if (this->verbose & 64) {
             LOG(LOG_INFO, "process_orders bpp=%u", bpp);
@@ -461,7 +464,7 @@ public:
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
                     //this->glyph_index.log(LOG_INFO, cmd_clip);
-                    gd.draw(this->glyph_index, cmd_clip, &this->gly_cache);
+                    gd.draw(this->glyph_index, cmd_clip, this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
@@ -514,8 +517,8 @@ public:
                         }
                         const Bitmap & bitmap =
                             this->bmp_cache->get(this->memblt.cache_id & 0x3, this->memblt.cache_idx);
-                        TODO("CGR: check if bitmap has the right palette...");
-                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
+                        // TODO CGR: check if bitmap has the right palette...
+                        // TODO CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps
                         if (bitmap.is_valid()) {
                             gd.draw(this->memblt, cmd_clip, bitmap);
                         }
@@ -537,8 +540,8 @@ public:
                         }
                         const Bitmap & bitmap =
                             this->bmp_cache->get(this->mem3blt.cache_id & 0x3, this->mem3blt.cache_idx);
-                        TODO("CGR: check if bitmap has the right palette...");
-                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
+                        // TODO CGR: check if bitmap has the right palette...
+                        // TODO CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps
                         if (bitmap.is_valid()) {
                             gd.draw(this->mem3blt, cmd_clip, bitmap);
                         }
@@ -575,7 +578,6 @@ public:
             LOG(LOG_INFO, "process_orders done");
         }
         return 0;
-    }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, RDPGraphicDevice & gd)
+    }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, gdi::GraphicApi & gd)
 };
 
-#endif

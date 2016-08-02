@@ -18,11 +18,11 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#ifndef REDEMPTION_UTILS_PARSE_IP_CONNTRACK_HPP
-#define REDEMPTION_UTILS_PARSE_IP_CONNTRACK_HPP
 
-#include "log.hpp"
-#include "regex.hpp"
+#pragma once
+
+#include "utils/log.hpp"
+#include "regex/regex.hpp"
 
 #include <unistd.h>
 #include <cstring>
@@ -162,4 +162,3 @@ static inline int parse_ip_conntrack(int fd, const char * source, const char * d
     return -1;
 }
 
-#endif

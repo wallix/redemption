@@ -18,8 +18,7 @@
    Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_SESSION_HPP_
-#define _REDEMPTION_CORE_SESSION_HPP_
+#pragma once
 
 #include <netinet/tcp.h>
 #include <unistd.h>
@@ -36,24 +35,23 @@
 
 #include <array>
 
-#include "server.hpp"
-#include "colors.hpp"
-#include "stream.hpp"
-#include "front.hpp"
-#include "ssl_calls.hpp"
-#include "rect.hpp"
-#include "netutils.hpp"
+#include "utils/invalid_socket.hpp"
 
-#include "config.hpp"
-#include "wait_obj.hpp"
-#include "transport.hpp"
-#include "bitmap.hpp"
+#include "core/server.hpp"
+#include "utils/colors.hpp"
+#include "utils/stream.hpp"
+#include "front/front.hpp"
+#include "system/ssl_calls.hpp"
+#include "utils/rect.hpp"
+#include "utils/netutils.hpp"
 
-#include "authentifier.hpp"
+#include "configs/config.hpp"
+#include "core/wait_obj.hpp"
+#include "transport/transport.hpp"
+#include "utils/bitmap.hpp"
 
-#include "socket_transport_utility.hpp"
+#include "acl/authentifier.hpp"
 
-using namespace std;
 
 enum {
     // before anything else : exchange of credentials
@@ -85,37 +83,37 @@ class Session {
     Front * front;
 
     UdevRandom gen;
+    TimeSystem timeobj;
 
     class Client {
         SocketTransport auth_trans;
-        TODO("Looks like acl and mod can be unified into a common class, where events can happen")
-        TODO("move auth_event to acl")
+        // TODO Looks like acl and mod can be unified into a common class, where events can happen
+        // TODO move auth_event to acl
         wait_obj        auth_event;
 
     public:
         SessionManager  acl;
 
-        Client( int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t start_time, time_t now )
+        Client(int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t now)
         : auth_trans( "Authentifier"
                     , client_sck
-                    , ini.get<cfg::globals::authip>()
-                    , ini.get<cfg::globals::authport>()
+                    , ini.get<cfg::globals::authfile>().c_str()
+                    , 0
                     , ini.get<cfg::debug::auth>()
         )
         , acl( ini
              , activity_checker
              , this->auth_trans
-             , start_time // proxy start time
              , now        // acl start time
         )
         {}
 
         bool is_set(fd_set & rfds) {
-            return ::is_set(this->auth_event, &this->auth_trans, rfds);
+            return this->auth_event.is_set(this->auth_trans.sck, rfds);
         }
 
         void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout) {
-            return ::add_to_fd_set(this->auth_event, &this->auth_trans, rfds, max, timeout);
+            return this->auth_event.add_to_fd_set(this->auth_trans.sck, rfds, max, timeout);
         }
     };
 
@@ -128,7 +126,7 @@ class Session {
     static const time_t select_timeout_tv_sec = 3;
 
 public:
-    Session(int sck, Inifile & ini)
+    Session(int sck, Inifile & ini, CryptoContext & cctx)
             : ini(ini)
             , perf_last_info_collect_time(0)
             , perf_pid(getpid())
@@ -137,7 +135,6 @@ public:
             TRANSLATIONCONF.set_ini(&ini);
 
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini.get<cfg::debug::front>());
-            wait_obj front_event;
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
 
@@ -145,14 +142,17 @@ public:
 
             const bool mem3blt_support = true;
 
-            this->front = new Front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, this->gen
-                                   , this->ini, this->ini.get<cfg::client::fast_path>(), mem3blt_support);
+            time_t now = time(nullptr);
 
-            ModuleManager mm(*this->front, this->ini);
+            this->front = new Front( front_trans, this->gen
+                                   , this->ini, cctx, this->ini.get<cfg::client::fast_path>(), mem3blt_support
+                                   , now);
+
+            ModuleManager mm(*this->front, this->ini, this->gen, this->timeobj);
             BackEvent_t signal = BACK_EVENT_NONE;
 
             // Under conditions (if this->ini.get<cfg::video::inactivity_pause>() == true)
-            PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>());
+            PauseRecord pause_record(this->ini.get<cfg::video::inactivity_timeout>(), *this->front, mm, ini);
 
             if (this->ini.get<cfg::debug::session>()) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -182,29 +182,37 @@ public:
                 FD_ZERO(&wfds);
                 timeval timeout = time_mark;
 
-                add_to_fd_set(front_event, &front_trans, rfds, max, timeout);
-                if (this->front->capture) {
-                    add_to_fd_set(this->front->capture->capture_event, nullptr, rfds, max, timeout);
+                if (mm.mod->is_up_and_running() || !this->front->up_and_running) {
+                    this->front->get_event().add_to_fd_set(front_trans.sck, rfds, max, timeout);
+                    if (this->front->capture) {
+                        this->front->capture->get_capture_event().add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
+                    }
                 }
                 if (this->client) {
                     this->client->add_to_fd_set(rfds, max, timeout);
                 }
-                add_to_fd_set(mm.mod->get_event(), mm.mod_transport, rfds, max, timeout);
+                mm.mod->get_event().add_to_fd_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET,
+                              rfds, max, timeout);
                 wait_obj * secondary_event = mm.mod->get_secondary_event();
                 if (secondary_event) {
-                    add_to_fd_set(*secondary_event, -1, rfds, max, timeout);
+                    secondary_event->add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
                 }
 
                 int        asynchronous_task_fd    = -1;
                 wait_obj * asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                 if (asynchronous_task_event) {
-                    add_to_fd_set(*asynchronous_task_event, asynchronous_task_fd, rfds, max, timeout);
+                    asynchronous_task_event->add_to_fd_set(asynchronous_task_fd, rfds, max, timeout);
                 }
 
-                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.allocated_ssl));
-                if (has_pending_data)
-                    memset(&timeout, 0, sizeof(timeout));
+                wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
+                if (session_probe_launcher_event) {
+                    session_probe_launcher_event->add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
+                }
 
+                const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
+                if (has_pending_data){
+                    memset(&timeout, 0, sizeof(timeout));
+                }
 
                 int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
@@ -222,17 +230,23 @@ public:
                     continue;
                 }
 
-                time_t now = time(nullptr);
+                now = time(nullptr);
                 if (this->ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now);
                 }
 
-                if (is_set(front_event, &front_trans, rfds) || (front_trans.tls && SSL_pending(front_trans.allocated_ssl))) {
+                if (this->front->get_event().is_set(front_trans.sck, rfds) || (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl))) {
                     try {
-                        this->front->incoming(*mm.mod);
+                        this->front->incoming(mm.get_callback(), now);
                     } catch (Error & e) {
-                        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
+                        if (
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_X224_RECV_ID_IS_RD_TPDU) &&
+                            // Can be caused by client disconnect.
+                            (e.id != ERR_MCS_APPID_IS_MCS_DPUM) &&
+                            (e.id != ERR_RDP_HANDSHAKE_TIMEOUT) &&
                             // Can be caused by wabwatchdog.
+                            (e.id != ERR_TRANSPORT_NO_MORE_DATA)) {
                             LOG(LOG_ERR, "Proxy data processing raised error %u : %s", e.id, e.errmsg(false));
                         }
                         run_session = false;
@@ -260,27 +274,83 @@ public:
                         asynchronous_task_fd    = -1;
                         asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                         const bool asynchronous_task_event_is_set = (asynchronous_task_event &&
-                                                                     is_set(*asynchronous_task_event,
-                                                                            asynchronous_task_fd,
+                                                                     asynchronous_task_event->is_set(asynchronous_task_fd,
                                                                             rfds));
                         if (asynchronous_task_event_is_set) {
                             mm.mod->process_asynchronous_task();
                         }
 
+                        session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
+                        const bool session_probe_launcher_event_is_set = (session_probe_launcher_event &&
+                                                                          session_probe_launcher_event->is_set(asynchronous_task_fd, rfds));
+                        if (session_probe_launcher_event_is_set) {
+                            mm.mod->process_session_probe_launcher();
+                        }
+
                         // Process incoming module trafic
                                    secondary_event        = mm.mod->get_secondary_event();
                         const bool secondary_event_is_set = (secondary_event &&
-                                                             is_set(*secondary_event, nullptr, rfds));
-                        if (is_set(mm.mod->get_event(), mm.mod_transport, rfds) ||
+                                                             secondary_event->is_set(INVALID_SOCKET, rfds));
+                        if (mm.mod->get_event().is_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET, rfds) ||
                             secondary_event_is_set) {
-                            mm.mod->draw_event(now);
+                            try
+                            {
+                                mm.mod->draw_event(now, mm.get_graphic_wrapper(*this->front));
 
-                            if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
-                                signal = mm.mod->get_event().signal;
-                                mm.mod->get_event().reset();
+                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
+                                    signal = mm.mod->get_event().signal;
+                                    mm.mod->get_event().reset();
+                                }
+                            }
+                            catch (Error const & e) {
+                                if ((e.id == ERR_SESSION_PROBE_LAUNCH) &&
+                                    (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
+                                     SessionProbeOnLaunchFailure::retry_without_session_probe)) {
+                                    this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
+
+                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    mm.mod->get_event().reset();
+                                }
+                                else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    mm.mod->get_event().reset();
+                                }
+                                else if (e.id == ERR_RDP_SERVER_REDIR) {
+                                    // SET new target in ini
+                                    const char * host = char_ptr_cast(
+                                        this->ini.get<cfg::mod_rdp::redir_info>().host);
+                                    const char * password = char_ptr_cast(
+                                        this->ini.get<cfg::mod_rdp::redir_info>().password);
+                                    const char * username = char_ptr_cast(
+                                        this->ini.get<cfg::mod_rdp::redir_info>().username);
+                                    const char * change_user = "";
+                                    if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username &&
+                                        (username[0] != 0)) {
+                                        LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                                        this->ini.set_acl<cfg::globals::target_user>(username);
+                                        change_user = username;
+                                    }
+                                    if (password[0] != 0) {
+                                        LOG(LOG_INFO, "SrvRedir: Change target password");
+                                        this->ini.set_acl<cfg::context::target_password>(password);
+                                    }
+                                    LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+                                    this->ini.set_acl<cfg::context::target_host>(host);
+                                    char message[768] = {};
+                                    sprintf(message, "%s@%s", change_user, host);
+                                    if (this->client) {
+                                        this->client->acl.report("SERVER_REDIRECTION", message);
+                                    }
+
+                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    mm.mod->get_event().reset();
+                                }
+                                else {
+                                    throw;
+                                }
                             }
                         }
-                        if (this->front->capture && is_set(this->front->capture->capture_event, nullptr, rfds)) {
+                        if (this->front->capture && this->front->capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {
                             this->front->periodic_snapshot();
                         }
                         // Incoming data from ACL, or opening acl
@@ -288,18 +358,19 @@ public:
                             if (!mm.last_module) {
                                 // acl never opened or closed by me (close box)
                                 try {
-                                    int client_sck = ip_connect(this->ini.get<cfg::globals::authip>(),
-                                                                this->ini.get<cfg::globals::authport>(),
-                                                                30,
-                                                                1000,
-                                                                this->ini.get<cfg::debug::auth>());
+                                    int client_sck = local_connect(
+                                        this->ini.get<cfg::globals::authfile>().c_str(),
+                                        30, 1000
+                                    );
 
                                     if (client_sck == -1) {
-                                        LOG(LOG_ERR, "Failed to connect to authentifier");
+                                        LOG(LOG_ERR,
+                                            "Failed to connect to authentifier (%s)",
+                                            this->ini.get<cfg::globals::authfile>().c_str());
                                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                                     }
 
-                                    this->client = new Client(client_sck, ini, *this->front, start_time, now);
+                                    this->client = new Client(client_sck, ini, *this->front, now);
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
@@ -316,34 +387,27 @@ public:
 
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-                            if (enddate &&
-                                mm.is_up_and_running()) {
+                            if (enddate && mm.is_up_and_running()) {
                                 if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
-                                    osd_state = [&](uint32_t enddata) -> unsigned {
-                                        if (!enddata || enddata <= static_cast<uint32_t>(now)) {
-                                            return OSD_STATE_INVALID;
-                                        }
-                                        unsigned i = (std::lower_bound(
-                                              timers.rbegin(), timers.rend(), enddata - start_time)
-                                            - timers.rbegin()) * (-1);
-                                        return i ? i : 0;
-                                    }(this->ini.get<cfg::context::end_date_cnx>());
+                                    osd_state = (enddate <= static_cast<uint32_t>(now))
+                                        ? OSD_STATE_INVALID
+                                        : timers.rbegin()
+                                            - std::lower_bound(
+                                                timers.rbegin(),
+                                                timers.rend(),
+                                                enddate - start_time);
                                 }
-                                else if (osd_state < OSD_STATE_INVALID &&
-                                         enddate - now <= timers[osd_state]) {
+                                else if (osd_state < OSD_STATE_INVALID
+                                     && enddate - now <= timers[osd_state]) {
                                     std::string mes;
                                     mes.reserve(128);
                                     const unsigned minutes = (enddate - now + 30) / 60;
                                     mes += std::to_string(minutes);
                                     mes += ' ';
                                     mes += TR("minute", language(this->ini));
-                                    if (minutes > 1) {
-                                        mes += "s ";
-                                    } else {
-                                        mes += ' ';
-                                    }
+                                    mes += (minutes > 1) ? "s " : " ";
                                     mes += TR("before_closing", language(this->ini));
-                                    mm.osd_message(std::move(mes), false);
+                                    mm.osd_message(std::move(mes), true);
                                     ++osd_state;
                                 }
                             }
@@ -379,10 +443,11 @@ public:
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
-        if (!this->ini.is_asked<cfg::globals::host>() && this->ini.get<cfg::globals::host>() == "127.0.0.1") {
+        if (!this->ini.is_asked<cfg::globals::host>()
+        && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
-        this->front->stop_capture();
+        this->front->must_be_stop_capture();
     }
 
     Session(Session const &) = delete;
@@ -481,5 +546,3 @@ private:
         while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
     }
 };
-
-#endif

@@ -89,8 +89,8 @@ class SesmanConfig(object):
               u'session_closed_at %s'   : u"Votre session sera fermée à %s."
             , u'licence_blocker'        : u"Connexion refusée (par rapport à votre licence)"
             , u'auth_failed_wab %s'     : u"Echec de l'authentification pour l'utilisateur du wab %s"
-            , u'error_creating_record_path'   : u"Impossible d'obtenir le répertoire d'enregistrement"
-            , u'error_creating_record_path %s': u"Impossible d'obtenir le répertoire d'enregistrement %s"
+            , u'error_getting_record_path'   : u"Impossible d'obtenir le répertoire d'enregistrement"
+            , u'error_getting_record_path %s': u"Impossible d'obtenir le répertoire d'enregistrement %s"
             , u'valid_authorisation'    : u"Veuillez valider l'autorisation sur votre navigateur"
             , u'not_display_message'    : u"Impossible d'afficher le message"
             , u'changepassword'         : u"Vous devez changer votre mot de passe<br>"
@@ -105,7 +105,7 @@ class SesmanConfig(object):
             , u"Too many login failures or selector orders, closing": u"Trop de login incorrect, fermeture"
             , u"Trace writer failed for %s": u"Echec de l'enregistrement des traces pour %s"
             , u"x509 browser authentication not validated by user": u"Authentification X509 via le navigateur non validée."
-            , u'not_accept_message': u"Echec d'affichage du mot de passe de confirmation"
+            , u'not_accept_message': u"Message de confirmation refusé."
             , u'selected_target': u'Cible sélectionnée'
             , u'Username_parse_error %s': u"Erreur de parsing du nom d'utilisateur %s"
             , u'Your password will expire in %s days. Please change it.': u'Votre mot de passe expirera dans %s jours. Vous devriez le changer.'
@@ -114,6 +114,11 @@ class SesmanConfig(object):
             , u'in_subnet %s'           : u"dans le sous-réseau %s."
             , u'no_match_subnet %s %s'  : u"%s n'appartient pas au sous-réseau %s."
             , u'error %s'               : u'Erreur: %s'
+            , u'authentication_failed' : u"Echec d'authentification."
+            , u'account_locked' : u"Compte verrouillé."
+            , u'start_session_failed' : u'Echec de démarage de session.'
+            , u'pattern_kill' : u' Motif interdit detecté, le gestionnaire de session a coupé la connexion.'
+            , u'session_probe_keepalive_missed' : u' Keepalive de Session Probe est manquant, le gestionnaire de session a coupé la connexion.'
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -172,8 +177,8 @@ class SesmanConfig(object):
               u'session_closed_at %s'   : u"Your session will close at %s."
             , u'licence_blocker'        : u"Connection rejected (due to licence limitation)"
             , u'auth_failed_wab %s'     : u"Authentication failed for wab user %s"
-            , u'error_creating_record_path'   : u"Failed to get recording path"
-            , u'error_creating_record_path %s': u"Failed to get recording path for %s"
+            , u'error_getting_record_path'   : u"Failed to get recording path"
+            , u'error_getting_record_path %s': u"Failed to get recording path for %s"
             , u'valid_authorisation'    : u"Validate your authorisation on your browser"
             , u'not_display_message'    : u"Unable to display message"
             , u'changepassword'         : u"You must change your password to login"
@@ -186,7 +191,7 @@ class SesmanConfig(object):
             , u"Too many login failures or selector orders, closing": u"Too many login failures or selector orders, closing"
             , u"Trace writer failed for %s": u"Trace writer failed for %s"
             , u"x509 browser authentication not validated by user": u"x509 browser authentication not validated by user"
-            , u'not_accept_message': u'Unable to display confirmation message'
+            , u'not_accept_message': u'Confirmation message refused.'
             , u'selected_target': u'Selected target'
             , u'Username_parse_error %s': u'Username_parse_error %s'
             , u'Your password will expire in %s days. Please change it.': u'Your password will expire in %s days. Please change it.'
@@ -195,6 +200,11 @@ class SesmanConfig(object):
             , u'in_subnet %s'           : u"in %s subnet."
             , u'no_match_subnet %s %s'  : u"%s not in %s subnet."
             , u'error %s'               : u'Error: %s'
+            , u'authentication_failed' : u'Authentication failed.'
+            , u'account_locked' : u"Account locked."
+            , u'start_session_failed' : u'Failed to start session.'
+            , u'pattern_kill' : u' Forbidden pattern detected, connection closed by manager.'
+            , u'session_probe_keepalive_missed' : u' Session Probe keepalive missed, connection closed by manager.'
             }
         }
 
@@ -210,4 +220,3 @@ class SesmanConfig(object):
 # END CLASS - sesmanConfigUnicode
 
 SESMANCONF = SesmanConfig()
-

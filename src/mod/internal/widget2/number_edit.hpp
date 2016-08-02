@@ -18,16 +18,15 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
  *              Meng Tan
  */
-
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_NUMBER_EDIT_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_NUMBER_EDIT_HPP
+#pragma once
 
 #include "edit.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetNumberEdit : public WidgetEdit
 {
 public:
-    WidgetNumberEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx, Widget2 & parent,
+    WidgetNumberEdit(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx, Widget2 & parent,
                      NotifyApi* notifier, const char* text, int group_id,
                      int fgcolor, int bgcolor, int focus_color, Font const & font, size_t edit_position = -1,
                      int xtext = 0, int ytext = 0)
@@ -62,4 +61,3 @@ public:
     }
 };
 
-#endif

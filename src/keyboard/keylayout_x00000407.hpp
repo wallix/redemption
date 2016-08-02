@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000407_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000407_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00000407 {    // German (Germany) // German
 
 const static int LCID = 0x00000407;
+
+const static char * const locale_name = "de-DE";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -250,6 +252,7 @@ const static uint8_t nbDeadkeys = 3;
 } // END NAMESPACE - x00000407
 
 static const Keylayout keylayout_x00000407( x00000407::LCID
+                                          , x00000407::locale_name
                                           , x00000407::noMod
                                           , x00000407::shift
                                           , x00000407::altGr
@@ -263,4 +266,3 @@ static const Keylayout keylayout_x00000407( x00000407::LCID
                                           , x00000407::nbDeadkeys
 );
 
-#endif

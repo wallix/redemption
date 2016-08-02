@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00010416_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00010416_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00010416 {    // Portuguese (Brazil) // Portuguese (Brazilian ABNT2)
 
 const static int LCID = 0x00010416;
+
+const static char * const locale_name = "pt-BR.abnt2";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x00010416
 
 static const Keylayout keylayout_x00010416( x00010416::LCID
+                                          , x00010416::locale_name
                                           , x00010416::noMod
                                           , x00010416::shift
                                           , x00010416::altGr
@@ -286,4 +289,3 @@ static const Keylayout keylayout_x00010416( x00010416::LCID
                                           , x00010416::nbDeadkeys
 );
 
-#endif

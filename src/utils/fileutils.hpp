@@ -20,8 +20,8 @@
    File related utility functions
 */
 
-#ifndef _REDEMPTION_UTILS_FILEUTILS_HPP_
-#define _REDEMPTION_UTILS_FILEUTILS_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -33,8 +33,31 @@
 
 #include <string>
 
-#include "log.hpp"
-#include "error.hpp"
+#include "utils/log.hpp"
+#include "core/error.hpp"
+
+// two flavors of basename_len to make it const agnostic
+static inline const char * basename_len(const char * path, size_t & len)
+{
+    const char * tmp = strrchr(path, '/');
+    if (tmp){
+        len = strlen(tmp+1);
+        return tmp+1;
+    }
+    len = strlen(path);
+    return path;
+}
+
+static inline char * basename_len(char * path, size_t & len)
+{
+    char * tmp = strrchr(path, '/');
+    if (tmp){
+        len = strlen(tmp+1);
+        return tmp+1;
+    }
+    len = strlen(path);
+    return path;
+}
 
 static inline int filesize(const char * path)
 {
@@ -239,7 +262,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
         }
 */
         if (file_len + path_len + 1 > sizeof(buffer)) {
-            LOG(LOG_WARNING, "Path len %u > %u", file_len + path_len + 1, sizeof(buffer));
+            LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
             return;
         }
         strncpy(buffer, path, file_len + path_len + 1);
@@ -247,7 +270,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
         }
 
-        TODO("size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?")
+        // TODO size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?
         const size_t len = offsetof(struct dirent, d_name) + file_len;
         struct E {
             dirent * entryp;
@@ -285,17 +308,17 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
             struct stat st;
             if (stat(buffer, &st) < 0){
                 if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to read file %s [%u: %s]", buffer, errno, strerror(errno));
+                    LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
                 }
                 continue;
             }
             if (unlink(buffer) < 0){
-                LOG(LOG_WARNING, "Failed to remove file %s [%u: %s]", buffer, errno, strerror(errno));
+                LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]", buffer, errno, strerror(errno));
             }
         }
     }
     else {
-        LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
+        LOG(LOG_WARNING, "Failed to open directory %s [%d: %s]", path, errno, strerror(errno));
     }
 }
 
@@ -309,13 +332,13 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
                 if (verbose >= 255) {
-                    LOG(LOG_ERR, "failed to create directory %s : %s [%u]", directory, strerror(errno), errno);
+                    LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
                 }
             }
-            if (groupid){
+            if (groupid >= 0) {
                 if (chown(directory, static_cast<uid_t>(-1), groupid) < 0){
                     if (verbose >= 255) {
-                        LOG(LOG_ERR, "can't set directory %s group to %u : %s [%u]", directory, groupid, strerror(errno), errno);
+                        LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
                     }
                 }
             }
@@ -324,7 +347,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
         else if (!S_ISDIR(st.st_mode)) {
             errno = ENOTDIR;
             if (verbose >= 255) {
-                LOG(LOG_ERR, "expecting directory name, got filename, for %s");
+                LOG(LOG_ERR, "expecting directory name, got filename, for %s", directory);
             }
             status = -1;
         }
@@ -333,7 +356,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
 }
 
 
-static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255) 
+static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255)
 {
     char * pTemp;
     char * pSearch;
@@ -373,6 +396,7 @@ static inline int recursive_delete_directory(const char * directory_path) {
 
     if (dir) {
         struct dirent * ent;
+        size_t const directory_path_len = strlen(directory_path);
 
         while (!return_value && (ent = readdir(dir)))
         {
@@ -381,11 +405,9 @@ static inline int recursive_delete_directory(const char * directory_path) {
                 continue;
             }
 
-            char * entry_path;
-            size_t entry_path_length;
-
-            entry_path_length = strlen(directory_path) + strlen(ent->d_name) + 2;
-            entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
+            size_t entry_path_length = directory_path_len + strlen(ent->d_name) + 2;
+            // TODO not used alloca !!!
+            char * entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
 
             if (entry_path) {
                 struct stat statbuf;
@@ -413,4 +435,3 @@ static inline int recursive_delete_directory(const char * directory_path) {
     return return_value;
 }
 
-#endif

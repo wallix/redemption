@@ -21,23 +21,23 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_BITFU_HPP_
-#define _REDEMPTION_UTILS_BITFU_HPP_
+
+#pragma once
 
 #include <cstdint>
 #include <cstddef>
 
-static inline uint16_t align4(int value) noexcept
+constexpr static inline uint16_t align4(uint16_t value) noexcept
 {
     return (value+3) & ~3;
 }
 
-static inline uint8_t nbbytes(unsigned value) noexcept
+constexpr static inline uint8_t nbbytes(unsigned value) noexcept
 {
     return static_cast<uint8_t>((value+7) / 8);
 }
 
-static inline uint32_t nbbytes_large(unsigned value) noexcept
+constexpr static inline uint32_t nbbytes_large(unsigned value) noexcept
 {
     return ((value+7) / 8);
 }
@@ -97,4 +97,3 @@ static inline void reverseit(uint8_t *buffer, size_t n) noexcept
     }
 }
 
-#endif

@@ -21,10 +21,10 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestColorCacheCaps
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "RDP/capabilities/colcache.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestColorCacheCaps)
 {

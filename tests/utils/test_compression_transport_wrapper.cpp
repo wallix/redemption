@@ -21,11 +21,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestSnappyCompressionTransport
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
-#include "compression_transport_wrapper.hpp"
+#include "utils/compression_transport_wrapper.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -35,26 +35,29 @@ BOOST_AUTO_TEST_CASE(TestCompressionTransportWrapper)
     std::stringbuf buf;
     auto * oldbuf = std::cout.rdbuf(&buf);
     struct NoneTransport : Transport {
-        virtual void flush() { std::cout << "none\n"; };
+        void flush() override { std::cout << "none\n"; }
     };
     struct GzipTransport : Transport {
         GzipTransport(Transport &, uint32_t) {}
-        virtual void flush() { std::cout << "gzip\n"; };
+        void flush() override { std::cout << "gzip\n"; }
     };
     struct SnappyTransport : Transport {
         SnappyTransport(Transport &, uint32_t) {}
-        virtual void flush() { std::cout << "snappy\n"; };
+        void flush() override { std::cout << "snappy\n"; }
     };
 
     NoneTransport trans;
 
     using CompressionTestTransportWrapper = CompressionTransportWrapper<GzipTransport, SnappyTransport>;
 
-    CompressionTestTransportWrapper(trans, 0).get().flush();
-    CompressionTestTransportWrapper(trans, 1).get().flush();
-    CompressionTestTransportWrapper(trans, 2).get().flush();
+    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::no_compression).get().flush();
+    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::gzip).get().flush();
+    CompressionTestTransportWrapper(trans, WrmCompressionAlgorithm::snappy).get().flush();
 
     std::cout.rdbuf(oldbuf);
 
     BOOST_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
+
+    CompressionTestTransportWrapper t(trans, WrmCompressionAlgorithm::gzip);
+    BOOST_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);
 }

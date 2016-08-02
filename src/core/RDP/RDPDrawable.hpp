@@ -19,22 +19,18 @@
               Martin Potier, Poelen Jonathan, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
-#define _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
+#pragma once
 
 #include <utility>
 
-#include "font.hpp"
-
-#include "CaptureDevice.hpp"
+#include "core/font.hpp"
 
 #include "bitmapupdate.hpp"
 #include "pointer.hpp"
-#include "RDPGraphicDevice.hpp"
 
 #include "caches/glyphcache.hpp"
 
-#include "capabilities/glyphcache.hpp"
+#include "capabilities/cap_glyphcache.hpp"
 
 #include "orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "orders/RDPOrdersPrimaryEllipseCB.hpp"
@@ -57,32 +53,35 @@
 #include "orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "orders/AlternateSecondaryWindowing.hpp"
 
-#include "drawable.hpp"
-#include "png.hpp"
-#include "text_metrics.hpp"
+#include "utils/drawable.hpp"
+#include "utils/png.hpp"
+
+#include "gdi/graphic_api.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
-class RDPDrawable : public RDPGraphicDevice, public RDPCaptureDevice
+class RDPDrawable
+: public gdi::GraphicApi
 {
     using Color = Drawable::Color;
 
     Drawable drawable;
     int frame_start_count;
-    int order_bpp;
     BGRPalette mod_palette_rgb;
 
     uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height, int order_bpp)
-    : drawable(width, height)
+    : GraphicApi(gdi::GraphicDepth::from_bpp(order_bpp))
+    , drawable(width, height)
     , frame_start_count(0)
-    , order_bpp(order_bpp)
     , mod_palette_rgb(BGRPalette::classic_332())
     {
-        REDASSERT(order_bpp);
+        REDASSERT(this->order_depth().is_defined());
     }
+
+    using gdi::GraphicApi::set_depths;
 
     const uint8_t * data() const noexcept {
         return this->drawable.data();
@@ -128,33 +127,56 @@ public:
     //@}
 
 private:
-    Color u32_to_color(uint32_t color) const
-    {
+    Color u32_to_color(uint32_t color) const {
         return this->drawable.u32bgr_to_color(color);
     }
 
-    Color u32rgb_to_color(BGRColor color) const
-    {
-        return this->u32_to_color((this->order_bpp == 24)
-            ? color
-            : ::color_decode_opaquerect(color, this->order_bpp, this->mod_palette_rgb)
-        );
+    Color u32rgb_to_color(BGRColor color) const {
+        using Depths = gdi::GraphicDepth;
+
+        switch (this->order_depth()){
+            case Depths::depth8():  color = decode_color8_opaquerect()(color, this->mod_palette_rgb); break;
+            case Depths::depth15(): color = decode_color15_opaquerect()(color); break;
+            case Depths::depth16(): color = decode_color16_opaquerect()(color); break;
+            case Depths::depth24(): break;
+            case Depths::unspecified(): default: REDASSERT(false);
+        }
+
+        return this->u32_to_color(color);
     }
 
-    std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const
-    {
-        if (this->order_bpp == 24) {
-            return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
+    std::pair<Color, Color> u32rgb_to_color(BGRColor color1, BGRColor color2) const {
+        using Depths = gdi::GraphicDepth;
+
+        switch (this->order_depth()) {
+            case Depths::depth8():
+                color1 = decode_color8_opaquerect()(color1, this->mod_palette_rgb);
+                color2 = decode_color8_opaquerect()(color2, this->mod_palette_rgb);
+                break;
+            case Depths::depth15():
+                color1 = decode_color15_opaquerect()(color1);
+                color2 = decode_color15_opaquerect()(color2);
+                break;
+            case Depths::depth16():
+                color1 = decode_color16_opaquerect()(color1);
+                color2 = decode_color16_opaquerect()(color2);
+                break;
+            case Depths::depth24(): break;
+            case Depths::unspecified(): default: REDASSERT(false);
         }
-        return std::pair<Color, Color>{
-            this->u32_to_color(::color_decode_opaquerect(color1, this->order_bpp, this->mod_palette_rgb)),
-            this->u32_to_color(::color_decode_opaquerect(color2, this->order_bpp, this->mod_palette_rgb))
-        };
+
+        return std::pair<Color, Color>{this->u32_to_color(color1), this->u32_to_color(color2)};
     }
 
 public:
     void set_row(size_t rownum, const uint8_t * data) override {
         this->drawable.set_row(rownum, data);
+    }
+
+    void draw(RDPColCache   const &) override {
+    }
+
+    void draw(RDPBrushCache const &) override {
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
@@ -163,11 +185,15 @@ public:
     }
 
     void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
+        // TODO clip is not used
+        (void)clip;
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, this->u32rgb_to_color(cmd.color));
     }
 
-    TODO("This will draw a standard ellipse without brush style")
+    // TODO This will draw a standard ellipse without brush style
     void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
+        // TODO clip is not used
+        (void)clip;
         this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, this->u32rgb_to_color(cmd.back_color));
     }
 
@@ -187,12 +213,27 @@ public:
     }
 
 private:
+    // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
+    //@{
+    static Rect to_rect(RDPMultiDstBlt const & cmd)
+    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
+    static Rect to_rect(RDPMultiOpaqueRect const & cmd)
+    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
+    static Rect const & to_rect(RDP::RDPMultiPatBlt const & cmd)
+    { return cmd.rect; }
+
+    static Rect const & to_rect(RDP::RDPMultiScrBlt const & cmd)
+    { return cmd.rect; }
+    //@}
+
     template<class RDPMulti, class FRect>
     void draw_multi(const RDPMulti & cmd, const Rect & clip, FRect f)
     {
         const Rect clip_drawable_cmd_intersect
           = clip.intersect(this->drawable.width(), this->drawable.height())
-          .intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+          .intersect(to_rect(cmd));
 
         Rect cmd_rect;
 
@@ -220,13 +261,13 @@ public:
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+        // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
         if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
             enum { BackColor, ForeColor };
             auto colors = this->u32rgb_to_color(cmd.BackColor, cmd.ForeColor);
             uint8_t brush_data[8];
-            memcpy(brush_data, cmd.BrushExtra, 7);
-            brush_data[7] = cmd.BrushHatch;
+            memcpy(brush_data, cmd.brush.extra, 7);
+            brush_data[7] = cmd.brush.hatch;
             this->draw_multi(cmd, clip, [&](const Rect & trect) {
                 this->drawable.patblt_ex(
                     trect, cmd.bRop,
@@ -253,7 +294,7 @@ public:
 
     void draw(const RDPPatBlt & cmd, const Rect & clip) override {
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
-        TODO("PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
+        // TODO PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.
 
         if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
             enum { BackColor, ForeColor };
@@ -344,123 +385,277 @@ public:
      *  Anyway, we base the line drawing on bresenham's algorithm
      */
     void draw(const RDPLineTo & lineto, const Rect & clip) override {
-        this->draw_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
-                        this->u32rgb_to_color(lineto.pen.color), clip);
+        this->drawable.draw_line(
+            lineto.back_mode,
+            lineto.startx, lineto.starty,
+            lineto.endx, lineto.endy,
+            lineto.rop2, this->u32rgb_to_color(lineto.pen.color), clip
+        );
     }
 
+// [MS-RDPEGDI] - 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
+// =============================================================
+
+// The GlyphIndex Primary Drawing Order encodes a set of glyph indices at a
+//  specified position.
+
+//  Encoding order number: 27 (0x1B)
+//  Negotiation order number: 27 (0x1B)
+//  Number of fields: 22
+//  Number of field encoding bytes: 3
+//  Maximum encoded field length: 297 bytes
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |    cacheId    |    flAccel    |   ulCharInc   |   BackColor   |
+// |   (optional)  |   (optional)  |   (optional)  |   (optional)  |
+// +---------------+---------------+---------------+---------------+
+// |            fOpRedundant (optional)            |   ForeColor   |
+// |                                               |   (optional)  |
+// +-----------------------------------------------+---------------+
+// |              ...              |       BkLeft (optional)       |
+// +-------------------------------+---------------+---------------+
+// |        BkTop (optional)       |       BkRight (optional)      |
+// +-------------------------------+-------------------------------+
+// |      BkBottom (optional)      |       OpLeft (optional)       |
+// +-------------------------------+-------------------------------+
+// |        OpTop (optional)       |       OpRight (optional)      |
+// +-------------------------------+---------------+---------------+
+// |      OpBottom (optional)      |   BrushOrgX   |   BrushOrgY   |
+// |                               |   (optional)  |   (optional)  |
+// +---------------+---------------+---------------+---------------+
+// |   BrushStyle  |   BrushHatch  |     BrushExtra (optional)     |
+// |   (optional)  |   (optional)  |                               |
+// +---------------+---------------+-------------------------------+
+// |                              ...                              |
+// +---------------+-------------------------------+---------------+
+// |      ...      |          X (optional)         |  Y (optional) |
+// +---------------+-------------------------------+---------------+
+// |      ...      |    VariableBytes (variable)   |
+// +---------------+-------------------------------+
+
+// cacheId (1 byte): An 8-bit, unsigned integer. The ID of the glyph cache in
+//  which the glyph data MUST be stored. This value MUST be in the range 0 to
+//  9 (inclusive).
+
+// flAccel (1 byte): An 8-bit, unsigned integer. Accelerator flags. For glyph
+//  related terminology, see [YUAN] figures 14-17 and 15-1. For information
+//  about string widths and heights, see [MSDN-SWH]. For information about
+//  character widths, see [MSDN-CW]. This field MUST contain a combination of
+//  the following flags.
+
+//  +---------------------------+----------------------------------------------+
+//  | Value                     | Meaning                                      |
+//  +---------------------------+----------------------------------------------+
+//  | SO_FLAG_DEFAULT_PLACEMENT | This flag MUST be set.                       |
+//  | 0x01                      |                                              |
+//  +---------------------------+----------------------------------------------+
+//  | SO_HORIZONTAL             | Text is horizontal, left-to-right or         |
+//  | 0x02                      | right-to-left, depending on SO_REVERSED.     |
+//  +---------------------------+----------------------------------------------+
+//  | SO_VERTICAL               | Text is vertical, top-to-bottom or           |
+//  | 0x04                      | bottom-to-top, depending on SO_REVERSED.     |
+//  +---------------------------+----------------------------------------------+
+//  | SO_REVERSED               | Set if horizontal text is right-to-left or   |
+//  | 0x08                      | vertical text is bottom-to-top.              |
+//  +---------------------------+----------------------------------------------+
+//  | SO_ZERO_BEARINGS          | For a given glyph in the font, the A-width   |
+//  | 0x10                      | (left-side bearing) and C-width (right-side  |
+//  |                           | bearing) associated with the glyph have a    |
+//  |                           | value of zero.                               |
+//  +---------------------------+----------------------------------------------+
+//  | SO_CHAR_INC_EQUAL_BM_BASE | For a given glyph in the font, the B-width   |
+//  | 0x20                      | associated with the glyph equals the advance |
+//  |                           | width of the glyph.                          |
+//  +---------------------------+----------------------------------------------+
+//  | SO_MAXEXT_EQUAL_BM_SIDE   | The height of the bitmap associated with a   |
+//  | 0x40                      | given glyph in the font is always equal to   |
+//  |                           | the sum of the ascent and descent. This      |
+//  |                           | implies that the tops and bottoms of all     |
+//  |                           | glyph bitmaps lie on the same line in the    |
+//  |                           | direction of writing.                        |
+//  +---------------------------+----------------------------------------------+
+
+// ulCharInc (1 byte): An 8-bit, unsigned integer. Specifies whether or not
+//  the font is a fixed-pitch (monospace) font. If so, this member is equal
+//  to the advance width of the glyphs in pixels (see [YUAN] figures 14-17);
+//  if not, this field is set to 0x00. The minimum value for this field is
+//  0x00 (inclusive), and the maximum value is 0xFF (inclusive).
+
+// fOpRedundant (1 byte): An 8-bit, unsigned integer. A Boolean value
+//  indicating whether or not the opaque rectangle is redundant. Redundant,
+//  in this context, means that the text background is transparent.
+
+//  +-------+-----------------------------+
+//  | Value | Meaning                     |
+//  +-------+-----------------------------+
+//  | FALSE | Rectangle is not redundant. |
+//  | 0x00  |                             |
+//  +-------+-----------------------------+
+//  | TRUE  | Rectangle is redundant.     |
+//  | 0x01  |                             |
+//  +-------+-----------------------------+
+
+// BackColor (3 bytes): The text color described by using a Generic Color
+//  (section 2.2.2.2.1.1.1.8) structure.
+
+// ForeColor (3 bytes): Color of the opaque rectangle described by using a
+//  Generic Color (section 2.2.2.2.1.1.1.8) structure.
+
+// BkLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the
+//  text background rectangle.
+
+// BkTop (2 bytes): A 16-bit, signed integer. The top coordinate of the text
+//  background rectangle.
+
+// BkRight (2 bytes): A 16-bit, signed integer. The right coordinate of the
+//  text background rectangle.
+
+// BkBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the
+//  text background rectangle.
+
+// OpLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// OpTop (2 bytes): A 16-bit, signed integer. The top coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// OpRight (2 bytes): A 16-bit, signed integer. The right coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// OpBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is
+//  set.
+
+// BrushOrgX (1 byte): An 8-bit, signed integer. The x-coordinate of the
+//  point where the top leftmost pixel of a brush pattern MUST be anchored.
+
+// BrushOrgY (1 byte): An 8-bit, signed integer. The y-coordinate of the
+//  point where the top leftmost pixel of a brush pattern MUST be anchored.
+
+// BrushStyle (1 byte): An 8-bit, unsigned integer. This field MUST be set to
+//  BS_SOLID (0x00), as the GlyphIndex Primary Drawing Order MUST only use
+//  solid color brushes to render the opaque rectangle.
+
+// BrushHatch (1 byte): An 8-bit, unsigned integer. This field MUST be set to
+//  0x00, as the GlyphIndex Primary Drawing Order MUST only use solid color
+//  brushes to render the opaque rectangle.
+
+// BrushExtra (7 bytes): This field is not used, as the GlyphIndex Primary
+//  Drawing Order MUST only use solid color brushes to render the opaque
+//  rectangle.
+
+// X (2 bytes): A 16-bit, signed integer. The x-coordinate of the point where
+//  the origin of the starting glyph MUST be positioned.
+
+// Y (2 bytes): A 16-bit, signed integer. The y-coordinate of the point where
+//  the origin of the starting glyph MUST be positioned.
+
+// VariableBytes (variable): A One-Byte Header Variable Field (section
+//  2.2.2.2.1.1.1.2) structure. This field MUST contain glyph fragments
+//  (which are composed of a series of one or more glyph cache indices) and
+//  instructions to use entries previously stored in the glyph fragment
+//  cache. Multiple glyph fragments can be contained in this field. The first
+//  byte of each fragment is either a USE (0xFE) operation byte or a glyph
+//  index (0x00 to 0x0FD) byte:
+
+//  * A value of 0xFE (USE) indicates that a previously stored fragment MUST
+//    be displayed. The byte following the USE byte is the index in the
+//    fragment cache where the fragment is located. This fragment MUST be
+//    read and displayed. If the ulCharInc field is set to 0 and the flAccel
+//    field does not contain the SO_CHAR_INC_EQUAL_BM_BASE (0x20) flag, then
+//    the index byte MUST be followed by a delta byte that indicates the
+//    distance between two consecutive fragments; this distance is measured
+//    in pixels from the beginning of the first fragment to the beginning of
+//    the next. If the distance is greater than 127 (0x7F), then the value
+//    0x80 MUST be used, and the following two bytes will be set to contain
+//    the actual distance formatted as an unsigned integer in little-endian
+//    order.
+
+//  * If not preceded by 0xFE, a value of 0x00 to 0xFD identifies a glyph
+//    stored at the given index in the glyph cache. Multiple glyphs can be
+//    sent at one time. If the ulCharInc field is set to 0 and the flAccel
+//    field does not contain the SO_CHAR_INC_EQUAL_BM_BASE (0x20) flag, then
+//    the index byte MUST be followed by a delta byte that indicates the
+//    distance between two consecutive glyphs; this distance is measured in
+//    pixels from the beginning of the first glyph to the beginning of the
+//    next. If the distance is greater than 127 (0x7F), then the value 0x80
+//    MUST be used, and the following two bytes will be set to contain the
+//    actual distance formatted as an unsigned integer in little-endian
+//    order.
+
+//  If a series of glyph indices ends with an ADD (0xFF) operation byte, the
+//   preceding glyph information MUST be collected, displayed, and then
+//   stored in the fragment cache. The byte following the ADD byte is the
+//   index of the cache where the fragment MUST be stored. A final byte that
+//   indicates the size of the fragment follows the index byte. (The ADD
+//   byte, index byte, and size byte MUST NOT be counted when calculating the
+//   value of the size byte.)
+
+//  All glyph cache indices MUST be greater than or equal to 0, and less than
+//   the maximum number of entries allowed in the glyph cache with the ID
+//   specified by the cacheId field. The maximum number of entries allowed in
+//   each of the ten glyph caches is specified in the GlyphCache field of the
+//   Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8).
+
+//  All fragment cache indices MUST be in the range 0 to 255 (inclusive).
+
+//                const int16_t px = x + fc.offset * use_offset;
+//                if (Rect(0,0,0,0) != screen_rect.intersect(Rect(x, y, fc.incby, fc.height))){
+//                    const uint8_t * fc_data            = fc.data.get();
+//                    for (int yy = 0 ; yy < fc.height; yy++) {
+//                        unsigned char fc_bit_mask = 128;
+//                        for (int xx = 0 ; xx < fc.width ; xx++) {
+//                            if (!fc_bit_mask) {
+//                                fc_bit_mask = 128;
+//                                fc_data++;
+//                            }
+//                            if (screen_rect.contains_pt(px + xx, y + yy)
+//                                && (*fc_data & fc_bit_mask)){
+//                                this->drawable.draw_pixel(px + xx, y + yy, fg_color);
+//                             }
+//                            fc_bit_mask >>= 1;
+//                         }
+//                         fc_data++;
+//                     }
+//                }
+
+
 private:
-    void draw_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
-                   int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
-                   Color color, const Rect & clip) {
-        LineEquation equa(nXStart, nYStart, nXEnd, nYEnd);
-        int startx = 0;
-        int starty = 0;
-        int endx = 0;
-        int endy = 0;
-        if (equa.resolve(clip)) {
-            startx = equa.segin.a.x;
-            starty = equa.segin.a.y;
-            endx = equa.segin.b.x;
-            endy = equa.segin.b.y;
-        }
-        else {
-            return;
-        }
-
-        if (startx == endx){
-            this->drawable.vertical_line(BackMode,
-                                         startx,
-                                         std::min(starty, endy),
-                                         std::max(starty, endy),
-                                         bRop2,
-                                         color);
-        }
-        else if (starty == endy){
-            this->drawable.horizontal_line(BackMode,
-                                           std::min(startx, endx),
-                                           starty,
-                                           std::max(startx, endx),
-                                           bRop2,
-                                           color);
-
-        }
-        else if (startx <= endx){
-            this->drawable.line(BackMode,
-                                startx,
-                                starty,
-                                endx,
-                                endy,
-                                bRop2,
-                                color);
-        }
-        else {
-            this->drawable.line(BackMode,
-                                endx,
-                                endy,
-                                startx,
-                                starty,
-                                bRop2,
-                                color);
-        }
-    }
-
-private:
-    void draw_glyph( FontChar const & fc, size_t draw_pos, int16_t offset_y, Color color
-                   , int16_t bmp_pos_x, int16_t bmp_pos_y, Rect const & clip)
+    void draw_glyph( FontChar const & fc, int16_t px, int16_t pos_y, Color fg_color, Rect const & clip)
     {
-        const int16_t   local_offset_x     = draw_pos + fc.offset;
-        const int16_t   local_offset_y     = offset_y + fc.baseline;
-
-              uint8_t   fc_bit_mask        = 128;
         const uint8_t * fc_data            = fc.data.get();
-        const bool      skip_padding_pixel = (fc.width % 8);
-
-        for (int y = 0; y < fc.height; y++)
+        for (int yy = 0 ; yy < fc.height; yy++)
         {
-            const int pt_y = bmp_pos_y + local_offset_y + y;
-//            if (!(clip.y <= pt_y && pt_y < clip.bottom())) {
-//                break;
-//            }
-
-            for (int x = 0; x < fc.width; x++)
+            uint8_t   fc_bit_mask        = 128;
+            for (int xx = 0 ; xx < fc.width; xx++)
             {
-                if (fc_bit_mask & (*fc_data))
-                {
-                    const int pt_x = bmp_pos_x + local_offset_x + x;
-                    if (clip.x <= pt_x && pt_x < clip.right() &&
-                        clip.y <= pt_y && pt_y < clip.bottom()) {
-                        this->drawable.draw_pixel(pt_x, pt_y, color);
-                    }
-                    //printf("X");
-                }
-                //else
-                //{
-                //    printf(".");
-                //}
-
-                fc_bit_mask >>= 1;
                 if (!fc_bit_mask)
                 {
                     fc_data++;
                     fc_bit_mask = 128;
                 }
+                if (clip.contains_pt(px + xx, pos_y + fc.baseline + yy)
+                && (fc_bit_mask & *fc_data))
+                {
+                    this->drawable.draw_pixel(px + xx, pos_y + fc.baseline + yy, fg_color);
+                }
+                fc_bit_mask >>= 1;
             }
-
-            if (skip_padding_pixel) {
-                fc_data++;
-                fc_bit_mask = 128;
-                //printf("_");
-            }
-            //printf("\n");
+            fc_data++;
         }
-        //printf("\n");
     }
 
 public:
     void draw_VariableBytes(uint8_t const * data, uint16_t size, bool has_delta_bytes,
             uint16_t & draw_pos_ref, int16_t offset_y, Color color,
             int16_t bmp_pos_x, int16_t bmp_pos_y, Rect const & clip,
-            uint8_t cache_id, const GlyphCache * gly_cache) {
+            uint8_t cache_id, const GlyphCache & gly_cache) {
         InStream variable_bytes(data, size);
 
         uint8_t const * fragment_begin_position = variable_bytes.get_current();
@@ -470,7 +665,7 @@ public:
             uint8_t data = variable_bytes.in_uint8();
             if (data <= 0xFD)
             {
-                FontChar const & fc = gly_cache->glyphs[cache_id][data].font_item;
+                FontChar const & fc = gly_cache.glyphs[cache_id][data].font_item;
                 if (!fc)
                 {
                     LOG( LOG_INFO
@@ -494,8 +689,11 @@ public:
 
                 if (fc)
                 {
-                    this->draw_glyph( fc, draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y
-                                    , clip);
+                    const int16_t x = draw_pos_ref + bmp_pos_x;
+                    const int16_t y = offset_y + bmp_pos_y;
+                    if (Rect(0,0,0,0) != clip.intersect(Rect(x, y, fc.incby, fc.height))){
+                        this->draw_glyph(fc, x + fc.offset, y, color, clip);
+                    }
                 }
             }
             else if (data == 0xFE)
@@ -554,8 +752,16 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        if (!cmd.bk.has_intersection(clip)) {
+
+
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache & gly_cache) override {
+        Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
+        if (screen_rect.isempty()){
+            return ;
+        }
+
+        Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(screen_rect);
+        if (clipped_glyph_fragment_rect.isempty()) {
             return;
         }
 
@@ -564,7 +770,7 @@ public:
             Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
             if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
                 ajusted.cy--;
-                this->drawable.opaquerect(ajusted.intersect(clip), this->u32rgb_to_color(cmd.fore_color));
+                this->drawable.opaquerect(ajusted.intersect(screen_rect), this->u32rgb_to_color(cmd.fore_color));
             }
         }
 
@@ -575,75 +781,9 @@ public:
 
         uint16_t draw_pos = 0;
 
-        Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(clip);
-
         this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
             draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
             clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
-    }
-
-    void draw(const RDPBrushCache & cmd) override {}
-    void draw(const RDPColCache & cmd) override {}
-
-    void flush() override {}
-
-    static const FontChar & get_font(const Font& font, uint32_t c)
-    {
-        if (!font.glyph_defined(c) || !font.font_items[c]) {
-            LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
-            return font.font_items[unsigned('?')];
-        }
-        return font.font_items[c];
-    }
-
-    // for testing purposes
-    void text_metrics(Font const & font, const char * text, int & width, int & height)
-    {
-        ::text_metrics(font, text, width, height);
-    }
-
-    // for testing purposes
-    void server_draw_text(Font const & font, int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor,
-                          const Rect& clip)
-    {
-        if (text[0] != 0) {
-            Rect screen_rect = clip.intersect(this->drawable.width(), this->drawable.height());
-            if (screen_rect.isempty()){
-                return ;
-            }
-
-            const Color fg_color = this->u32_to_color(fgcolor);
-
-            UTF8toUnicodeIterator unicode_iter(text);
-
-            for (; *unicode_iter; ++unicode_iter) {
-                const FontChar & font_item = this->get_font(font, *unicode_iter);
-                if (x + font_item.width > screen_rect.x) {
-                    break ;
-                }
-                x += font_item.incby;
-            }
-
-            for (; *unicode_iter && x < screen_rect.right(); ++unicode_iter) {
-                const FontChar & font_item = this->get_font(font, *unicode_iter);
-                int16_t cy = std::min<int16_t>(y + font_item.height, screen_rect.bottom()) - y;
-                int i = 0;
-                for (int yy = 0 ; yy < cy; yy++) {
-                    unsigned char oc = 1<<7;
-                    for (int xx = 0; xx < font_item.width; xx++) {
-                        if (!oc) {
-                            oc = 1 << 7;
-                            ++i;
-                        }
-                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item.data[i + yy] & oc) {
-                            this->drawable.draw_pixel(x + xx, y + yy, fg_color);
-                        }
-                        oc >>= 1;
-                    }
-                }
-                x += font_item.incby;
-            }
-        }
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) override {
@@ -659,15 +799,14 @@ public:
             endx = startx + cmd.deltaEncodedPoints[i].xDelta;
             endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
 
             startx = endx;
             starty = endy;
         }
     }
 
-    TODO("this functions only draw polygon borders but do not fill "
-         "them with solid color.")
+    // TODO this functions only draw polygon borders but do not fill them with solid color.
     void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
@@ -681,7 +820,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
 
             startx = endx;
             starty = endy;
@@ -689,11 +828,10 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
+        this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, BrushColor, clip);
     }
 
-    TODO("this functions only draw polygon borders but do not fill "
-         "them with brush color.")
+    // TODO this functions only draw polygon borders but do not fill them with brush color.
     void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
@@ -707,7 +845,7 @@ public:
             endx = startx + cmd.deltaPoints[i].xDelta;
             endy = starty + cmd.deltaPoints[i].yDelta;
 
-            this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+            this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
 
             startx = endx;
             starty = endy;
@@ -715,11 +853,10 @@ public:
         endx = cmd.xStart;
         endy = cmd.yStart;
 
-        this->draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
+        this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, foreColor, clip);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-            size_t size, const Bitmap & bmp) override {
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         const Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                           , bitmap_data.dest_right - bitmap_data.dest_left + 1
                           , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
@@ -735,25 +872,26 @@ public:
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {}
-    void draw(const RDP::RAIL::WindowIcon          & order) override {}
-    void draw(const RDP::RAIL::CachedIcon          & order) override {}
-    void draw(const RDP::RAIL::DeletedWindow       & order) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow &) override {}
+    void draw(const RDP::RAIL::WindowIcon          &) override {}
+    void draw(const RDP::RAIL::CachedIcon          &) override {}
+    void draw(const RDP::RAIL::DeletedWindow       &) override {}
 
-    void server_set_pointer(const Pointer & cursor) override {
+    void set_pointer(const Pointer & cursor) override {
         this->drawable.use_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
     }
 
-    void set_mod_palette(const BGRPalette & palette) override {
+    void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
     }
 
-    void dump_png24(Transport & trans, bool bgr) const {
-        ::transport_dump_png24(trans, this->drawable.data(),
-            this->drawable.width(), this->drawable.height(),
-            this->drawable.rowsize(),
-            bgr);
-    }
+
 };
 
-#endif
+inline void dump_png24(Drawable & drawable,  Transport & trans, bool bgr) {
+    ::transport_dump_png24(trans, drawable.data(),
+        drawable.width(), drawable.height(),
+        drawable.rowsize(),
+        bgr);
+}
+

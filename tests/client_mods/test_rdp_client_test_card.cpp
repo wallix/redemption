@@ -25,17 +25,15 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdpClientTestCard
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "error.hpp"
-#include "font.hpp"
-#include "internal/test_card_mod.hpp"
+#include "core/error.hpp"
+#include "core/font.hpp"
+#include "mod/internal/test_card_mod.hpp"
 
 #include "../front/fake_front.hpp"
 
@@ -58,12 +56,12 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     TestCardMod mod(front, info.width, info.height, ini.get<cfg::font>());
     BOOST_CHECK(true);
     try{
-        mod.draw_event(time(nullptr));
+        mod.draw_event(time(nullptr), front);
     }
     catch (const Error & e){
         // this test is not supposed to be executed
         // (there should be no exception in draw_event)
         // but if exception occurs, it is usefull to know which one
-        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL(0, e.id);
     };
 }

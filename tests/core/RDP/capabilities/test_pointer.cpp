@@ -24,11 +24,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestCapabilityPointer
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/capabilities/pointer.hpp"
+#include "core/RDP/capabilities/pointer.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
 {
@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
     BOOST_CHECK_EQUAL(pointer_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_POINTER));
     BOOST_CHECK_EQUAL(pointer_caps2.len, static_cast<uint16_t>(CAPLEN_POINTER));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_POINTER, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_POINTER, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_POINTER), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_POINTER), stream.in_uint16_le());
     pointer_caps2.recv(stream, CAPLEN_POINTER);
 
     BOOST_CHECK_EQUAL(pointer_caps2.colorPointerFlag, static_cast<uint16_t>(0));

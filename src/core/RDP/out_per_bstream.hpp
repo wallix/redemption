@@ -20,12 +20,12 @@
    out_per_bstream object, formatted buffering for entities expecting per format
 */
 
-#ifndef _REDEMPTION_CORE_RDP_OUT_PER_BSTREAM_HPP_
-#define _REDEMPTION_CORE_RDP_OUT_PER_BSTREAM_HPP_
 
-#include "log.hpp"
+#pragma once
 
-#include "stream.hpp"
+#include "utils/log.hpp"
+
+#include "utils/stream.hpp"
 
 class OutPerStream : public OutStream
 {
@@ -152,7 +152,7 @@ public:
             this->out_copy_bytes(oct_str, length);
         }
         else {
-            TODO("Check this length, looks dubious");
+            // TODO Check this length, looks dubious
             this->out_per_length(min);
             this->out_copy_bytes(oct_str, length);
             this->out_clear_bytes(min-length);
@@ -163,6 +163,4 @@ public:
 
 template<std::size_t N>
 using StaticOutPerStream = BasicStaticStream<N, OutPerStream>;
-
-#endif
 

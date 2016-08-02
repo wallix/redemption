@@ -22,13 +22,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestTestTransport
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "test_transport.hpp"
-#include "error.hpp"
+#include "transport/test_transport.hpp"
+#include "core/error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
 {
@@ -111,24 +111,25 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
         BOOST_CHECK_EQUAL(p-buffer, 12);
         BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
         BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));
-    };
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestCheckTransport)
 {
     CheckTransport gt("input", 5);
+    gt.disable_remaining_error();
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     try{
         gt.send("in", 2);
-    } catch (const Error & e){
+    } catch (const Error &){
         BOOST_CHECK(false);
-    };
+    }
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     try{
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
-    };
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
+    }
     BOOST_CHECK(!gt.get_status());
 }
 
@@ -140,8 +141,8 @@ BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
         gt.send("0123456789ABCDEFGHI", 19);
     } catch (const Error & e)
     {
-        BOOST_CHECK_EQUAL((uint32_t)ERR_TRANSPORT_DIFFERS, (uint32_t)e.id);
-    };
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
+    }
     BOOST_CHECK(!gt.get_status());
 }
 
@@ -154,7 +155,8 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     // if send fails, the difference between expected and actual data is showed
     // and status is set to false (and will stay so) to allow tests to fail.
     // inside Transport, the difference is shown in trace logs.
-    TestTransport gt("Test1", "OUTPUT", 6, "input", 5);
+    TestTransport gt("OUTPUT", 6, "input", 5);
+    gt.disable_remaining_error();
     BOOST_CHECK_EQUAL(gt.get_status(), true);
     char buf[128] = {};
     char * p = buf;
@@ -169,8 +171,8 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     try {
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
-    };
+        BOOST_CHECK_EQUAL(ERR_TRANSPORT_DIFFERS, e.id);
+    }
     BOOST_CHECK(!gt.get_status());
 }
 

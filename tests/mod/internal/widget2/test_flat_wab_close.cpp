@@ -22,20 +22,14 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatWabClose
-#include <boost/test/auto_unit_test.hpp>
-
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/flat_wab_close.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/flat_wab_close.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
 
 #include "fake_draw.hpp"
 
@@ -46,13 +40,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
-    int id = 0;
 
     try {
-        FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def", id, "rec", "rec",
+        FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+                                    "abc<br>def", "rec", "rec",
                                     false, font, Theme(), Translation::EN);
 
         // ask to widget to redraw at it's current position
@@ -61,12 +54,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
         // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
     } catch (Error & e) {
         LOG(LOG_INFO, "e=%u", e.id);
+        BOOST_CHECK(false);
     };
 
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xc3\x40\x75\x1e\x15\x45\xd9\x3b\x52\x70\xb7\xc1\x21\x69\x1d\x92\x52\xa8\x91\x36"
+        "\x5e\xce\xdf\xb3\x17\x60\x18\x8f\x0d\xdc\xf0\xa7\x16\x59\x60\x42\x1c\xf4\x96\x26"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -79,11 +73,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
     try {
-        FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
+        FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
             "Lorem ipsum dolor sit amet, consectetur<br>"
             "adipiscing elit. Nam purus lacus, luctus sit<br>"
             "amet suscipit vel, posuere quis turpis. Sed<br>"
@@ -98,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
             "erat ut ligula. Fusce sit amet mauris neque.<br>"
             "Sed orci augue, luctus in ornare sed,<br>"
             "adipiscing et arcu.",
-            0, nullptr, nullptr, false, font, Theme(), Translation::EN);
+            nullptr, nullptr, false, font, Theme(), Translation::EN);
 
         flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
     }
@@ -109,12 +103,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
 
     // ask to widget to redraw at it's current position
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close2.png");
+//    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close2.png");
 
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xbe\xfa\x1e\x30\xe1\x18\x09\x8e\x83\xa4\x46\x7e\xcd\x2e\x6f\x50\x49\x2c\xf0\x70"
+        "\x94\xa0\xce\xbc\x87\x28\x38\x2c\xf5\x84\x7f\xa3\x3b\xc7\x5d\xda\xde\x6c\x96\xe4"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -127,12 +121,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, nullptr, nullptr, false, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
@@ -142,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\xb6\xe8\xcd\x88\x8f\xb1\xdb\xc5\x0c\x44\x40\x79\x15\xe1\x33\xaf\x4b\xb9\xe5\x56"
+        "\x9d\x5b\x54\xd7\xd2\xa7\xce\x30\x3c\x69\x59\xb0\x28\xdb\xdf\x11\x37\x11\x0c\x92"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -155,12 +149,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, nullptr, nullptr, false, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect.offset(20,0));
@@ -170,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x36\x43\x1c\x13\xa6\x40\xe8\x4a\x3f\xbc\x6e\xa9\xd8\xb8\x24\x33\xd5\xd9\x68\x93"
+        "\x4c\xee\xb4\x3b\xcf\x09\x0e\x37\x56\xb3\xb0\x2f\x37\x7e\x9d\xdc\xd5\xba\xd5\x27"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -183,12 +177,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
 
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    0, nullptr, nullptr, false, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, font, Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.dx(),
@@ -201,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x12\x71\x2e\xd7\x8a\x95\x53\x23\x4c\x84\x0d\xce\xa2\x32\x3a\xc0\xc9\x48\x17\x4c"
+        "\xbd\x03\x58\xe9\xe7\xa2\x9e\xa2\x8c\x57\xee\x6e\xf8\x7e\xca\xfa\x7f\x46\x0c\xf4"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -213,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
         Widget2* sender = nullptr;
         notify_event_t event = 0;
 
-        virtual void notify(Widget2* sender, notify_event_t event)
+        void notify(Widget2* sender, notify_event_t event) override
         {
             this->sender = sender;
             this->event = event;
@@ -225,10 +219,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, &notifier,
-                                "abc<br>def", 0, "tartempion", "caufield",
+    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, &notifier,
+                                "abc<br>def", "tartempion", "caufield",
                                 true, font, Theme(), Translation::EN);
 
     flat_wab_close.refresh_timeleft(183);
@@ -241,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     char message[1024];
 
     if (!check_sig(drawable.gd.impl(), message,
-        "\x4b\x4f\xaf\x73\xce\xb5\x65\x14\xbf\xa2\xdd\x59\xc2\x23\x54\x8a\xdc\x03\xd4\xf8"
+        "\x81\x11\x46\x9c\xd1\x56\xba\xcb\xa4\xf0\xf3\xbc\xff\xe2\x7e\x70\x58\xaa\x9a\xb3"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -251,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit2.png");
     if (!check_sig(drawable.gd.impl(), message,
-        "\x31\xd8\xbc\x23\xb4\xc6\xac\xc1\x33\x44\x4b\x76\x93\x82\x3a\x90\x70\x11\x88\xca"
+        "\x26\x4b\x12\x3c\xcd\xa7\x44\xcb\xdb\x1b\x7e\x3a\x70\x54\x37\x3c\x8c\x28\x6a\x48"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -268,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit3.png");
     if (!check_sig(drawable.gd.impl(), message,
-        "\x31\xd8\xbc\x23\xb4\xc6\xac\xc1\x33\x44\x4b\x76\x93\x82\x3a\x90\x70\x11\x88\xca"
+        "\x26\x4b\x12\x3c\xcd\xa7\x44\xcb\xdb\x1b\x7e\x3a\x70\x54\x37\x3c\x8c\x28\x6a\x48"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

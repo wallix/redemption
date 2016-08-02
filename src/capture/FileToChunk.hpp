@@ -18,13 +18,13 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_FILETOCHUNK_HPP_
-#define _REDEMPTION_CAPTURE_FILETOCHUNK_HPP_
+
+#pragma once
 
 #include "FileToGraphic.hpp"
-#include "transport.hpp"
+#include "transport/transport.hpp"
 #include "RDPChunkedDevice.hpp"
-#include "compression_transport_wrapper.hpp"
+#include "utils/compression_transport_wrapper.hpp"
 
 class FileToChunk
 {
@@ -73,11 +73,11 @@ public:
     uint16_t info_cache_4_entries;
     uint16_t info_cache_4_size;
     bool     info_cache_4_persistent;
-    uint8_t  info_compression_algorithm;
+    WrmCompressionAlgorithm info_compression_algorithm;
 
     FileToChunk(Transport * trans, uint32_t verbose)
         : stream(this->stream_buf)
-        , compression_wrapper(*trans, CompressionTransportBase::Algorithm::None)
+        , compression_wrapper(*trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(trans)
         , trans(trans)
         // variables used to read batch of orders "chunks"
@@ -109,7 +109,7 @@ public:
         , info_cache_4_entries(0)
         , info_cache_4_size(0)
         , info_cache_4_persistent(false)
-        , info_compression_algorithm(0)
+        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
     {
         while (this->next_chunk()) {
             this->interpret_chunk();
@@ -145,7 +145,7 @@ public:
             if (this->chunk_size - FileToGraphic::HEADER_SIZE > 0) {
                 auto * p = this->stream_buf;
                 this->trans->recv(&p, this->chunk_size - FileToGraphic::HEADER_SIZE);
-                this->stream = InStream(this->stream_buf, this->stream_buf - p);
+                this->stream = InStream(this->stream_buf, p - this->stream_buf);
             }
         }
         catch (Error const & e) {
@@ -201,10 +201,14 @@ public:
                 this->info_cache_4_size          = this->stream.in_uint16_le();
                 this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
-                this->info_compression_algorithm = this->stream.in_uint8();
-                REDASSERT(this->info_compression_algorithm < CompressionTransportBase::max_algorithm);
+                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                }
 
                 // re-init
+                this->compression_wrapper.~CompressionTransportWrapper();
                 new (&this->compression_wrapper) CompressionInTransportWrapper(
                     *this->trans_source, this->info_compression_algorithm);
                 this->trans = &this->compression_wrapper.get();
@@ -217,7 +221,7 @@ public:
             }
             break;
         case RESET_CHUNK:
-            this->info_compression_algorithm = 0;
+            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
 
             this->trans = this->trans_source;
             break;
@@ -237,4 +241,3 @@ public:
     }
 };
 
-#endif

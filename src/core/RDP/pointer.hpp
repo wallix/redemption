@@ -18,21 +18,21 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_POINTER_HPP_
-#define _REDEMPTION_CORE_RDP_POINTER_HPP_
 
-#include "log.hpp"
-#include "bitfu.hpp"
+#pragma once
+
+#include "utils/log.hpp"
+#include "utils/bitfu.hpp"
 #include <cstring>
 #include <algorithm> // std:min
 
 struct Pointer {
-    enum {
-        POINTER_NULL,
-        POINTER_NORMAL,
-        POINTER_EDIT,
-        POINTER_DRAWABLE_DEFAULT,
-        POINTER_SYSTEM_DEFAULT
+    enum  {
+        POINTER_NULL             ,
+        POINTER_NORMAL           ,     
+        POINTER_EDIT             ,
+        POINTER_DRAWABLE_DEFAULT ,
+        POINTER_SYSTEM_DEFAULT   
     };
 
 public:
@@ -49,6 +49,7 @@ public:
     unsigned bpp;
     unsigned width;
     unsigned height;
+    uint8_t  pointer_type;
 
     /* hotspot */
     int x;
@@ -58,7 +59,9 @@ public:
     uint8_t mask[MASK_SIZE];
 
 public:
-    explicit Pointer(uint8_t pointer_type = POINTER_NULL) {
+    explicit Pointer(uint8_t pointer_type = POINTER_NULL) 
+    : pointer_type(pointer_type)
+    {
         switch (pointer_type) {
             default:
             case POINTER_NULL:
@@ -466,4 +469,3 @@ public:
     }
 };
 
-#endif

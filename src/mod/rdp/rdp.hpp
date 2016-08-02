@@ -22,90 +22,101 @@
   rdp module main header file
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_HPP_
-
-#include <queue>
-
-#include "rdp/rdp_orders.hpp"
+#pragma once
+#include "mod/rdp/rdp_orders.hpp"
 
 /* include "ther h files */
-#include "stream.hpp"
-#include "ssl_calls.hpp"
-#include "mod_api.hpp"
-#include "auth_api.hpp"
-#include "front_api.hpp"
+#include "utils/stream.hpp"
+#include "system/ssl_calls.hpp"
+#include "mod/mod_api.hpp"
+#include "acl/auth_api.hpp"
+#include "core/front_api.hpp"
 
-#include "RDP/x224.hpp"
-#include "RDP/nego.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/lic.hpp"
-#include "RDP/logon.hpp"
-#include "channel_list.hpp"
-#include "RDP/gcc.hpp"
-#include "RDP/sec.hpp"
-#include "colors.hpp"
-#include "RDP/autoreconnect.hpp"
-#include "RDP/ServerRedirection.hpp"
-#include "RDP/bitmapupdate.hpp"
-#include "RDP/clipboard.hpp"
-#include "RDP/fastpath.hpp"
-#include "RDP/PersistentKeyListPDU.hpp"
-#include "RDP/protocol.hpp"
-#include "RDP/RefreshRectPDU.hpp"
-#include "RDP/SaveSessionInfoPDU.hpp"
-#include "RDP/pointer.hpp"
-#include "RDP/mppc_unified_dec.hpp"
-#include "RDP/capabilities/cap_bitmap.hpp"
-#include "RDP/capabilities/order.hpp"
-#include "RDP/capabilities/bmpcache.hpp"
-#include "RDP/capabilities/bmpcache2.hpp"
-#include "RDP/capabilities/colcache.hpp"
-#include "RDP/capabilities/activate.hpp"
-#include "RDP/capabilities/control.hpp"
-#include "RDP/capabilities/pointer.hpp"
-#include "RDP/capabilities/cap_share.hpp"
-#include "RDP/capabilities/input.hpp"
-#include "RDP/capabilities/cap_sound.hpp"
-#include "RDP/capabilities/cap_font.hpp"
-#include "RDP/capabilities/glyphcache.hpp"
-#include "RDP/capabilities/rail.hpp"
-#include "RDP/capabilities/window.hpp"
-#include "RDP/channels/rdpdr.hpp"
-#include "RDP/remote_programs.hpp"
-#include "rdp_params.hpp"
-#include "transparentrecorder.hpp"
-#include "FSCC/FileInformation.hpp"
+#include "core/RDP/x224.hpp"
+#include "core/RDP/nego.hpp"
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/lic.hpp"
+#include "core/RDP/logon.hpp"
+#include "core/channel_list.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/sec.hpp"
+#include "utils/colors.hpp"
+#include "core/RDP/autoreconnect.hpp"
+#include "core/RDP/ServerRedirection.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "core/RDP/fastpath.hpp"
+#include "core/RDP/PersistentKeyListPDU.hpp"
+#include "core/RDP/protocol.hpp"
+#include "core/RDP/RefreshRectPDU.hpp"
+#include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "core/RDP/SuppressOutputPDU.hpp"
+#include "core/RDP/pointer.hpp"
+#include "core/RDP/mppc_unified_dec.hpp"
+#include "core/RDP/capabilities/cap_bitmap.hpp"
+#include "core/RDP/capabilities/order.hpp"
+#include "core/RDP/capabilities/cap_bmpcache.hpp"
+#include "core/RDP/capabilities/bmpcache2.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/capabilities/activate.hpp"
+#include "core/RDP/capabilities/control.hpp"
+#include "core/RDP/capabilities/pointer.hpp"
+#include "core/RDP/capabilities/cap_share.hpp"
+#include "core/RDP/capabilities/input.hpp"
+#include "core/RDP/capabilities/cap_sound.hpp"
+#include "core/RDP/capabilities/cap_font.hpp"
+#include "core/RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/rail.hpp"
+#include "core/RDP/capabilities/window.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
+#include "core/RDP/remote_programs.hpp"
+#include "capture/transparentrecorder.hpp"
 
-#include "cast.hpp"
-#include "client_info.hpp"
-#include "genrandom.hpp"
-#include "authorization_channels.hpp"
-#include "parser.hpp"
-#include "channel_names.hpp"
-#include "finally.hpp"
-#include "timeout.hpp"
+#include "core/client_info.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/authorization_channels.hpp"
+#include "utils/parser.hpp"
+#include "core/channel_names.hpp"
 
-#include "channels/cliprdr_channel.hpp"
-#include "channels/rdpdr_channel.hpp"
-#include "channels/rdpdr_file_system_drive_manager.hpp"
+#include "core/FSCC/FileInformation.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
+#include "mod/rdp/channels/sespro_channel.hpp"
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
+#include "mod/rdp/rdp_params.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/sugar/splitter.hpp"
+#include "utils/sugar/compiler_attributes.hpp"
+#include "utils/timeout.hpp"
 
-class RDPChannelManagerMod : public mod_api
+#include <cstdlib>
+
+class mod_rdp : public mod_api
 {
 private:
-    std::unique_ptr<VirtualChannelDataSender> file_system_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender> file_system_to_server_sender;
+    std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>   file_system_to_server_sender;
 
-    std::unique_ptr<FileSystemVirtualChannel> file_system_virtual_channel;
+    std::unique_ptr<FileSystemVirtualChannel>   file_system_virtual_channel;
 
-    std::unique_ptr<VirtualChannelDataSender> clipboard_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender> clipboard_to_server_sender;
+    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_server_sender;
 
-    std::unique_ptr<ClipboardVirtualChannel>  clipboard_virtual_channel;
+    std::unique_ptr<ClipboardVirtualChannel>    clipboard_virtual_channel;
+
+    std::unique_ptr<VirtualChannelDataSender>   session_probe_to_server_sender;
+
+    std::unique_ptr<SessionProbeVirtualChannel> session_probe_virtual_channel;
 
 protected:
     FileSystemDriveManager file_system_drive_manager;
 
+    uint16_t front_width;
+    uint16_t front_height;
     FrontAPI& front;
 
     class ToClientSender : public VirtualChannelDataSender
@@ -192,70 +203,6 @@ protected:
         }
     };
 
-    RDPChannelManagerMod(const uint16_t front_width,
-        const uint16_t front_height, FrontAPI& front)
-    : mod_api(front_width, front_height)
-    , front(front) {}
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-        const char* channel_name) const = 0;
-
-    virtual std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-        const char* channel_name) = 0;
-
-public:
-    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
-        if (!this->clipboard_virtual_channel) {
-            REDASSERT(!this->clipboard_to_client_sender &&
-                !this->clipboard_to_server_sender);
-
-            this->clipboard_to_client_sender =
-                this->create_to_client_sender(channel_names::cliprdr);
-            this->clipboard_to_server_sender =
-                this->create_to_server_sender(channel_names::cliprdr);
-
-            this->clipboard_virtual_channel =
-                std::make_unique<ClipboardVirtualChannel>(
-                    this->clipboard_to_client_sender.get(),
-                    this->clipboard_to_server_sender.get(),
-                    this->front,
-                    this->get_clipboard_virtual_channel_params());
-        }
-
-        return *this->clipboard_virtual_channel;
-    }
-
-    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
-        if (!this->file_system_virtual_channel) {
-            REDASSERT(!this->file_system_to_client_sender &&
-                !this->file_system_to_server_sender);
-
-            this->file_system_to_client_sender =
-                this->create_to_client_sender(channel_names::rdpdr);
-            this->file_system_to_server_sender =
-                this->create_to_server_sender(channel_names::rdpdr);
-
-            this->file_system_virtual_channel =
-                std::make_unique<FileSystemVirtualChannel>(
-                    this->file_system_to_client_sender.get(),
-                    this->file_system_to_server_sender.get(),
-                    this->file_system_drive_manager,
-                    this->front,
-                    this->get_file_system_virtual_channel_params());
-        }
-
-        return *this->file_system_virtual_channel;
-    }
-
-protected:
-    virtual const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const = 0;
-
-    virtual const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const = 0;
-};  // RDPChannelManagerMod
-
-class mod_rdp : public RDPChannelManagerMod {
     CHANNELS::ChannelDefArray mod_channel_list;
 
     const AuthorizationChannels authorization_channels;
@@ -277,9 +224,9 @@ class mod_rdp : public RDPChannelManagerMod {
     int      share_id;
     uint16_t userid;
 
-    char hostname[16];
+    char hostname[HOST_NAME_MAX + 1];
     char username[128];
-    char password[256];
+    char password[2048];
     char domain[256];
     char program[512];
     char directory[512];
@@ -297,10 +244,18 @@ class mod_rdp : public RDPChannelManagerMod {
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
+#ifdef __EMSCRIPTEN__
+    size_t num_channels_JS;
+    size_t index_JS;
+#endif
+
     enum {
           MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
+#ifdef __EMSCRIPTEN__
+        , MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS
+#endif
         , MOD_RDP_GET_LICENSE
         , MOD_RDP_CONNECTED
     };
@@ -319,9 +274,12 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
+    const ClientTimeZone client_time_zone;
     Random & gen;
     const uint32_t verbose;
     const uint32_t cache_verbose;
+
+    const bool enable_auth_channel;
 
     char auth_channel[8];
     int  auth_channel_flags;
@@ -338,8 +296,8 @@ class mod_rdp : public RDPChannelManagerMod {
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
-    const bool enable_wab_agent;
-    const bool enable_wab_agent_loading_mask;
+    const bool enable_session_probe;
+    const bool enable_session_probe_launch_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
@@ -350,12 +308,23 @@ class mod_rdp : public RDPChannelManagerMod {
     const bool disable_clipboard_log_wrm;
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
-    const int  rdp_compression;
+    const RdpCompression rdp_compression;
 
-    const unsigned    wab_agent_launch_timeout;
-    const unsigned    wab_agent_on_launch_failure;
-    const unsigned    wab_agent_keepalive_timeout;
-          std::string wab_agent_alternate_shell;
+    const std::chrono::milliseconds   session_probe_launch_timeout;
+    const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
+    const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
+    const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+    const std::chrono::milliseconds   session_probe_keepalive_timeout;
+    const bool                        session_probe_on_keepalive_timeout_disconnect_user;
+    const bool                        session_probe_end_disconnected_session;
+          std::string                 session_probe_alternate_shell;
+    const bool                        session_probe_use_clipboard_based_launcher;
+
+    std::string session_probe_target_informations;
+
+    SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
+
+    std::string outbound_connection_killing_rules;
 
     size_t recv_bmp_update;
 
@@ -363,18 +332,20 @@ class mod_rdp : public RDPChannelManagerMod {
 
     std::string * error_message;
 
-    const bool     disconnect_on_logon_user_change;
-    const uint32_t open_session_timeout;
+    const bool                 disconnect_on_logon_user_change;
+    const std::chrono::seconds open_session_timeout;
 
-    TimeoutT<time_t> open_session_timeout_checker;
+    Timeout open_session_timeout_checker;
 
     std::string output_filename;
 
     std::string end_session_reason;
     std::string end_session_message;
 
-    const unsigned certificate_change_action;
-    const char * certif_path;
+    const bool            server_cert_store;
+    const ServerCertCheck server_cert_check;
+
+    std::unique_ptr<char[]> certif_path;
 
     bool enable_polygonsc;
     bool enable_polygoncb;
@@ -402,18 +373,21 @@ class mod_rdp : public RDPChannelManagerMod {
     RedirectionInfo & redir_info;
 
     const bool bogus_sc_net_size;
+    const bool bogus_refresh_rect;
+
+    BogusLinuxCursor bogus_linux_cursor;
 
     std::string real_alternate_shell;
     std::string real_working_dir;
-
-    wait_obj    wab_agent_event;
-    bool        wab_agent_is_ready            = false;
-    bool        wab_agent_keep_alive_received = true;
 
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
     wait_obj                                      asynchronous_task_event;
 
     Translation::language_t lang;
+
+    const bool allow_using_multiple_monitors;
+
+    bool already_upped_and_running = false;
 
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
@@ -464,7 +438,72 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     };
 
-    TODO("duplicated code in front")
+    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
+        if (!this->clipboard_virtual_channel) {
+            REDASSERT(!this->clipboard_to_client_sender &&
+                !this->clipboard_to_server_sender);
+
+            this->clipboard_to_client_sender =
+                this->create_to_client_sender(channel_names::cliprdr);
+            this->clipboard_to_server_sender =
+                this->create_to_server_sender(channel_names::cliprdr);
+
+            this->clipboard_virtual_channel =
+                std::make_unique<ClipboardVirtualChannel>(
+                    this->clipboard_to_client_sender.get(),
+                    this->clipboard_to_server_sender.get(),
+                    this->front,
+                    this->get_clipboard_virtual_channel_params());
+        }
+
+        return *this->clipboard_virtual_channel;
+    }
+
+    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
+        if (!this->file_system_virtual_channel) {
+            REDASSERT(!this->file_system_to_client_sender &&
+                !this->file_system_to_server_sender);
+
+            this->file_system_to_client_sender =
+                this->create_to_client_sender(channel_names::rdpdr);
+            this->file_system_to_server_sender =
+                this->create_to_server_sender(channel_names::rdpdr);
+
+            this->file_system_virtual_channel =
+                std::make_unique<FileSystemVirtualChannel>(
+                    this->file_system_to_client_sender.get(),
+                    this->file_system_to_server_sender.get(),
+                    this->file_system_drive_manager,
+                    this->front,
+                    this->get_file_system_virtual_channel_params());
+        }
+
+        return *this->file_system_virtual_channel;
+    }
+
+    inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
+        if (!this->session_probe_virtual_channel) {
+            REDASSERT(!this->session_probe_to_server_sender);
+
+            this->session_probe_to_server_sender =
+                this->create_to_server_sender(channel_names::sespro);
+
+            FileSystemVirtualChannel& file_system_virtual_channel =
+                get_file_system_virtual_channel();
+
+            this->session_probe_virtual_channel =
+                std::make_unique<SessionProbeVirtualChannel>(
+                    this->session_probe_to_server_sender.get(),
+                    this->front,
+                    *this,
+                    file_system_virtual_channel,
+                    this->get_session_probe_virtual_channel_params());
+        }
+
+        return *this->session_probe_virtual_channel;
+    }
+
+    // TODO duplicated code in front
     struct write_x224_dt_tpdu_fn
     {
         void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
@@ -484,16 +523,118 @@ class mod_rdp : public RDPChannelManagerMod {
         }
     };
 
+    class RDPServerNotifier : public ServerNotifier {
+    private:
+        auth_api * acl;
+
+        const ServerNotification server_access_allowed_message;
+        const ServerNotification server_cert_create_message;
+        const ServerNotification server_cert_success_message;
+        const ServerNotification server_cert_failure_message;
+        const ServerNotification server_cert_error_message;
+
+        uint32_t verbose;
+
+        bool is_syslog_notification_enabled(ServerNotification server_notification) {
+            return ((server_notification & ServerNotification::syslog) == ServerNotification::syslog);
+        }
+
+    public:
+        RDPServerNotifier(
+                auth_api * acl,
+                ServerNotification server_access_allowed_message,
+                ServerNotification server_cert_create_message,
+                ServerNotification server_cert_success_message,
+                ServerNotification server_cert_failure_message,
+                ServerNotification server_cert_error_message,
+                uint32_t verbose
+            )
+        : acl(acl)
+        , server_access_allowed_message(server_access_allowed_message)
+        , server_cert_create_message(server_cert_create_message)
+        , server_cert_success_message(server_cert_success_message)
+        , server_cert_failure_message(server_cert_failure_message)
+        , server_cert_error_message(server_cert_error_message)
+        , verbose(verbose)
+        {}
+
+        void server_access_allowed() override {
+            if (is_syslog_notification_enabled(
+                    this->server_access_allowed_message) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "CERTIFICATE_CHECK_SUCCESS",
+                        "description='Connexion to server allowed'"
+                    );
+            }
+        }
+
+        void server_cert_create() override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_create_message) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "SERVER_CERTIFICATE_NEW",
+                        "description='New X.509 certificate created'"
+                    );
+            }
+        }
+
+        void server_cert_success() override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_success_message) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "SERVER_CERTIFICATE_MATCH_SUCCESS",
+                        "description='X.509 server certificate match'"
+                    );
+            }
+        }
+
+        void server_cert_failure() override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_failure_message) &&
+                this->acl) {
+                this->acl->log4((this->verbose & 1),
+                        "SERVER_CERTIFICATE_MATCH_FAILURE",
+                        "description='X.509 server certificate match failure'"
+                    );
+            }
+        }
+
+        void server_cert_error(const char * str_error) override {
+            if (is_syslog_notification_enabled(
+                    this->server_cert_error_message) &&
+                this->acl) {
+                char extra[512];
+                snprintf(extra, sizeof(extra),
+                        "description='X.509 server certificate internal error: \"%s\"'",
+                        (str_error ? str_error : "")
+                    );
+                this->acl->log4((this->verbose & 1),
+                        "SERVER_CERTIFICATE_ERROR",
+                        extra
+                    );
+            }
+        }
+    } server_notifier;
+
+    std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
+
+    GCC::UserData::CSMonitor cs_monitor;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
            , const ClientInfo & info
            , RedirectionInfo & redir_info
            , Random & gen
+           , TimeObj & timeobj
            , const ModRDPParams & mod_rdp_params
            )
-        : RDPChannelManagerMod(info.width - (info.width % 4), info.height,
-                               front)
+        : front_width(info.width - (info.width % 4))
+        , front_height(info.height)
+        , front(front)
         , authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -512,23 +653,27 @@ public:
         , state(MOD_RDP_NEGO)
         , console_session(info.console_session)
         , front_bpp(info.bpp)
-        , performanceFlags(info.rdp5_performanceflags)
+        , performanceFlags(info.rdp5_performanceflags &
+                           (~(mod_rdp_params.adjust_performance_flags_for_recording ?
+                              static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING) : 0)))
+        , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
+        , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         //, auth_channel_state(0) // 0 means unused
         , acl(mod_rdp_params.acl)
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
-              , mod_rdp_params.enable_krb, mod_rdp_params.verbose)
+              , mod_rdp_params.enable_krb, gen, timeobj, mod_rdp_params.verbose)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
-        , enable_wab_agent(mod_rdp_params.enable_wab_agent)
-        , enable_wab_agent_loading_mask(mod_rdp_params.enable_wab_agent_loading_mask)
+        , enable_session_probe(mod_rdp_params.enable_session_probe)
+        , enable_session_probe_launch_mask(mod_rdp_params.enable_session_probe_launch_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
@@ -540,17 +685,27 @@ public:
         , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , rdp_compression(mod_rdp_params.rdp_compression)
-        , wab_agent_launch_timeout(mod_rdp_params.wab_agent_launch_timeout)
-        , wab_agent_on_launch_failure(mod_rdp_params.wab_agent_on_launch_failure)
-        , wab_agent_keepalive_timeout(mod_rdp_params.wab_agent_keepalive_timeout)
-        , wab_agent_alternate_shell(mod_rdp_params.wab_agent_alternate_shell)
+        , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
+        , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
+        , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
+        , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
+        , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+        , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
+        , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
+        , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
+        , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
+                                                     (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
+                                                     (!mod_rdp_params.use_client_provided_alternate_shell ||
+                                                      !info.alternate_shell[0]))
+        , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , open_session_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
-        , certificate_change_action(mod_rdp_params.certificate_change_action)
+        , server_cert_store(mod_rdp_params.server_cert_store)
+        , server_cert_check(mod_rdp_params.server_cert_check)
         , certif_path([](const char * device_id){
             size_t lg_certif_path = strlen(CERTIF_PATH);
             size_t lg_dev_id = strlen(device_id);
@@ -573,7 +728,7 @@ public:
         , enable_multiopaquerect(false)
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
-        , remote_program(mod_rdp_params.remote_program)
+        , remote_program(info.remote_program)
         , server_redirection_support(mod_rdp_params.server_redirection_support)
         , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
@@ -582,7 +737,19 @@ public:
         , deactivation_reactivation_in_progress(false)
         , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
+        , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
+        , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , lang(mod_rdp_params.lang)
+        , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
+        , server_notifier(mod_rdp_params.acl,
+                          mod_rdp_params.server_access_allowed_message,
+                          mod_rdp_params.server_cert_create_message,
+                          mod_rdp_params.server_cert_success_message,
+                          mod_rdp_params.server_cert_failure_message,
+                          mod_rdp_params.server_cert_error_message,
+                          mod_rdp_params.verbose
+                         )
+        , cs_monitor(info.cs_monitor)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -602,8 +769,16 @@ public:
             mod_rdp_params.log();
         }
 
-        if (this->enable_wab_agent) {
-            this->file_system_drive_manager.EnableWABAgentDrive(this->verbose);
+        if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
+            GeneralCaps general_caps;
+            this->front.retrieve_client_capability_set(general_caps);
+            this->bogus_linux_cursor =
+                ((general_caps.os_major == OSMAJORTYPE_UNIX) ?
+                 BogusLinuxCursor::enable : BogusLinuxCursor::disable);
+        }
+
+        if (this->enable_session_probe) {
+            this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
         }
 
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
@@ -616,11 +791,10 @@ public:
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
-        this->event.object_and_time = (this->open_session_timeout > 0);
-
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel,
-                (!strncmp(mod_rdp_params.auth_channel, "*", 2) ? "wablnch"
+                ((!(*mod_rdp_params.auth_channel) ||
+                  !strncmp(mod_rdp_params.auth_channel, "*", 2)) ? "wablnch"
                                                                : mod_rdp_params.auth_channel),
                 sizeof(this->auth_channel) - 1);
 
@@ -629,7 +803,7 @@ public:
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
-        TODO("CGR: license loading should be done before creating protocol layers");
+        // TODO CGR: license loading should be done before creating protocol layers
         struct stat st;
         char path[256];
         snprintf(path, sizeof(path), LICENSE_PATH "/license.%s", info.hostname);
@@ -640,7 +814,7 @@ public:
                 if (this->lic_layer_license_data){
                     size_t lic_size = read(fd, this->lic_layer_license_data.get(), this->lic_layer_license_size);
                     if (lic_size != this->lic_layer_license_size){
-                        LOG(LOG_ERR, "license file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
+                        LOG(LOG_ERR, "license file truncated : expected %zu, got %zu", this->lic_layer_license_size, lic_size);
                     }
                 }
             }
@@ -659,10 +833,18 @@ public:
         this->encrypt.encryptionMethod = 2; /* 128 bits */
 
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_WARNING, "mod_rdp: hostname too long! %u >= %u", ::strlen(info.hostname), sizeof(this->hostname));
+            LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(info.hostname), sizeof(this->hostname));
         }
-        strncpy(this->hostname, info.hostname, 15);
-        this->hostname[15] = 0;
+        if (mod_rdp_params.hide_client_name) {
+            ::gethostname(this->hostname, sizeof(this->hostname));
+            this->hostname[sizeof(this->hostname) - 1] = 0;
+            char* separator = strchr(this->hostname, '.');
+            if (separator) *separator = 0;
+        }
+        else{
+            ::strncpy(this->hostname, info.hostname, sizeof(this->hostname) - 1);
+            this->hostname[sizeof(this->hostname) - 1] = 0;
+        }
 
 
         const char * domain_pos   = nullptr;
@@ -686,7 +868,7 @@ public:
                 domain_len   = strlen(domain_pos);
                 username_pos = mod_rdp_params.target_user;
                 username_len = separator - mod_rdp_params.target_user;
-                LOG(LOG_INFO, "mod_rdp: username_len=%u", username_len);
+                LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
             }
             else
             {
@@ -696,14 +878,14 @@ public:
         }
 
         if (username_len >= sizeof(this->username)) {
-            LOG(LOG_INFO, "mod_rdp: username too long! %u >= %u", username_len, sizeof(this->username));
+            LOG(LOG_INFO, "mod_rdp: username too long! %zu >= %zu", username_len, sizeof(this->username));
         }
         size_t count = std::min(sizeof(this->username) - 1, username_len);
         if (count > 0) strncpy(this->username, username_pos, count);
         this->username[count] = 0;
 
         if (domain_len >= sizeof(this->domain)) {
-            LOG(LOG_INFO, "mod_rdp: domain too long! %u >= %u", domain_len, sizeof(this->domain));
+            LOG(LOG_INFO, "mod_rdp: domain too long! %zu >= %zu", domain_len, sizeof(this->domain));
         }
         count = std::min(sizeof(this->domain) - 1, domain_len);
         if (count > 0) strncpy(this->domain, domain_pos, count);
@@ -713,12 +895,24 @@ public:
             this->domain, this->username, this->hostname);
 
 
-        strncpy(this->password, mod_rdp_params.target_password, sizeof(this->password) - 1);
-        this->password[sizeof(this->password) - 1] = 0;
+        // Password is a multi-sz!
+        // A multi-sz contains a sequence of null-terminated strings,
+        //  terminated by an empty string (\0) so that the last two
+        //  characters are both null terminators.
+        SOHSeparatedStringsToMultiSZ(this->password, sizeof(this->password), mod_rdp_params.target_password);
 
-        snprintf(this->client_name, sizeof(this->client_name), "%s", mod_rdp_params.client_name);
+        snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
-        std::string alternate_shell(mod_rdp_params.alternate_shell);
+        const char * tmp_alternate_shell =
+            (((mod_rdp_params.alternate_shell && (*mod_rdp_params.alternate_shell)) ||
+              !mod_rdp_params.use_client_provided_alternate_shell) ?
+             mod_rdp_params.alternate_shell : info.alternate_shell);
+        const char * tmp_working_dir     =
+            (((mod_rdp_params.working_dir && (*mod_rdp_params.working_dir)) ||
+              !mod_rdp_params.use_client_provided_alternate_shell) ?
+             mod_rdp_params.working_dir : info.working_dir);
+
+        std::string alternate_shell(tmp_alternate_shell);
         if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
             const char * user_marker = "${USER}";
             size_t pos = alternate_shell.find(user_marker, 0);
@@ -734,34 +928,95 @@ public:
             }
         }
 
-        if (this->enable_wab_agent) {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "enable_session_probe=%s",
+                (this->enable_session_probe ? "yes" : "no"));
+        }
+        if (this->enable_session_probe) {
             this->real_alternate_shell = std::move(alternate_shell);
-            this->real_working_dir     = mod_rdp_params.shell_working_directory;
+            this->real_working_dir     = tmp_working_dir;
 
-            char pid_str[16];
-            snprintf(pid_str, sizeof(pid_str), "%d", ::getpid());
-            const size_t pid_str_len = ::strlen(pid_str);
+            auto replace_tag = [](std::string & str, const char * tag,
+                                  const char * replacement_text) {
+                const size_t replacement_text_len = ::strlen(replacement_text);
+                const size_t tag_len              = ::strlen(tag);
 
-            const char * pid_tag ="{PID}";
-            const size_t pid_tag_len = ::strlen(pid_tag);
+                size_t pos = 0;
+                while ((pos = str.find(tag, pos)) != std::string::npos) {
+                    str.replace(pos, tag_len, replacement_text);
+                    pos += replacement_text_len;
+                }
+            };
 
-            size_t pos = 0;
-            while ((pos = this->wab_agent_alternate_shell.find(pid_tag, pos)) != std::string::npos) {
-                this->wab_agent_alternate_shell.replace(pos, pid_tag_len, pid_str);
-                pos += pid_str_len;
+            // Executable file name of SP.
+            char exe_var_str[16];
+            if (mod_rdp_params.session_probe_customize_executable_name) {
+                ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
+            }
+            else {
+                ::memset(exe_var_str, 0, sizeof(exe_var_str));
+            }
+            replace_tag(this->session_probe_alternate_shell, "${EXE_VAR}",
+                exe_var_str);
+
+            if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
+                (mod_rdp_params.target_application && (*mod_rdp_params.target_application))) {
+                REDASSERT(!this->session_probe_use_clipboard_based_launcher);
+
+                LOG(LOG_WARNING,
+                    "mod_rdp: "
+                        "Clipboard based Session Probe launcher is not compatible with application."
+                        "Falled back to using AlternateShell based launcher.");
             }
 
-            strncpy(this->program, this->wab_agent_alternate_shell.c_str(), sizeof(this->program) - 1);
-            this->program[sizeof(this->program) - 1] = 0;
+            // Target informations
+            this->session_probe_target_informations  = mod_rdp_params.target_application;
+            this->session_probe_target_informations += ":";
+            this->session_probe_target_informations += mod_rdp_params.auth_user;
 
-            const char * wab_agent_working_dir = "%TMP%";
-            strncpy(this->directory, wab_agent_working_dir, sizeof(this->directory) - 1);
-            this->directory[sizeof(this->directory) - 1] = 0;
+            if (this->session_probe_use_clipboard_based_launcher) {
+                replace_tag(this->session_probe_alternate_shell,
+                    " /${COOKIE_VAR}", "");
+
+                replace_tag(this->session_probe_alternate_shell,
+                    "${CBSPL_VAR} ", "CD %TMP%&");
+
+                this->session_probe_launcher =
+                    std::make_unique<SessionProbeClipboardBasedLauncher>(
+                        *this, this->session_probe_alternate_shell,
+                        this->verbose);
+            }
+            else {
+                char proxy_managed_connection_cookie[9];
+                get_proxy_managed_connection_cookie(
+                    this->session_probe_target_informations.c_str(),
+                    this->session_probe_target_informations.length(),
+                    proxy_managed_connection_cookie);
+                std::string param = " /#";
+                param += proxy_managed_connection_cookie;
+                replace_tag(this->session_probe_alternate_shell,
+                    " /${COOKIE_VAR}", param.c_str());
+
+                replace_tag(this->session_probe_alternate_shell,
+                    "${CBSPL_VAR} ", "");
+
+                strncpy(this->program, this->session_probe_alternate_shell.c_str(), sizeof(this->program) - 1);
+                this->program[sizeof(this->program) - 1] = 0;
+                //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                const char * session_probe_working_dir = "%TMP%";
+                strncpy(this->directory, session_probe_working_dir, sizeof(this->directory) - 1);
+                this->directory[sizeof(this->directory) - 1] = 0;
+
+                this->session_probe_launcher =
+                    std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                        this->verbose);
+            }
         }
         else {
             strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
             this->program[sizeof(this->program) - 1] = 0;
-            strncpy(this->directory, mod_rdp_params.shell_working_directory, sizeof(this->directory) - 1);
+            strncpy(this->directory, tmp_working_dir, sizeof(this->directory) - 1);
             this->directory[sizeof(this->directory) - 1] = 0;
         }
 
@@ -784,8 +1039,9 @@ public:
             }
         }
 
+/*
         while (UP_AND_RUNNING != this->connection_finalization_state){
-            this->draw_event(time(nullptr));
+            this->draw_event(time(nullptr), front);
             if (this->event.signal != BACK_EVENT_NONE){
                 char statestr[256];
                 switch (this->state) {
@@ -815,34 +1071,52 @@ public:
             }
         }
 
-        if (this->verbose & 1) {
-            LOG(LOG_INFO,
-                "enable_wab_agent=%s wab_agent_launch_timeout=%u wab_agent_on_launch_failure=%u",
-                (this->enable_wab_agent ? "yes" : "no"), this->wab_agent_launch_timeout,
-                this->wab_agent_on_launch_failure);
-        }
-        if (this->enable_wab_agent) {
-            this->wab_agent_event.object_and_time = true;
+        if (enable_session_probe) {
+            ClipboardVirtualChannel& cvc =
+                this->get_clipboard_virtual_channel();
+            cvc.set_session_probe_launcher(
+                this->session_probe_launcher.get());
 
-            if (this->wab_agent_launch_timeout > 0) {
-                if (this->verbose & 1) {
-                    LOG(LOG_INFO, "Enable agent launch timer");
-                }
-                this->wab_agent_event.set(this->wab_agent_launch_timeout * 1000);
+            FileSystemVirtualChannel& fsvc =
+                this->get_file_system_virtual_channel();
+            fsvc.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
+            this->file_system_drive_manager.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
+            SessionProbeVirtualChannel& spvc =
+                this->get_session_probe_virtual_channel();
+            spvc.set_session_probe_launcher(this->session_probe_launcher.get());
+            this->session_probe_virtual_channel_p = &spvc;
+            if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                spvc.start_launch_timeout_timer();
+            }
+
+            if (this->session_probe_launcher) {
+                this->session_probe_launcher->set_clipboard_virtual_channel(
+                    &cvc);
+
+                this->session_probe_launcher->set_session_probe_virtual_channel(
+                    this->session_probe_virtual_channel_p);
             }
         }
 
         if (this->acl) {
             this->acl->report("CONNECTION_SUCCESSFUL", "OK.");
         }
+*/
 
         // this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
         // this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
-            this->front.disable_input_event_and_graphics_update(false);
+        if (this->enable_session_probe) {
+            const bool disable_input_event     = false;
+            const bool disable_graphics_update = false;
+            this->front.disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
         }
 
         delete this->transparent_recorder;
@@ -861,12 +1135,11 @@ public:
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %zu",
                 this->recv_bmp_update);
         }
-        delete [] this->certif_path;
     }
 
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-            const char* channel_name) const override
+            const char* channel_name) const
     {
         if (!this->authorization_channels.is_authorized(channel_name))
         {
@@ -892,7 +1165,7 @@ protected:
     }
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-            const char* channel_name) override
+            const char* channel_name)
     {
         const CHANNELS::ChannelDef* channel =
             this->mod_channel_list.get_by_name(channel_name);
@@ -933,7 +1206,7 @@ protected:
     }
 
     const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const override
+        get_clipboard_virtual_channel_params() const
     {
         ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
@@ -960,7 +1233,7 @@ protected:
     }
 
     const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const override
+        get_file_system_virtual_channel_params() const
     {
         FileSystemVirtualChannel::Params file_system_virtual_channel_params;
 
@@ -1000,14 +1273,92 @@ protected:
         return file_system_virtual_channel_params;
     }
 
+    const SessionProbeVirtualChannel::Params
+        get_session_probe_virtual_channel_params() const
+    {
+        SessionProbeVirtualChannel::Params
+            session_probe_virtual_channel_params;
+
+        session_probe_virtual_channel_params.authentifier                           =
+            this->acl;
+        session_probe_virtual_channel_params.exchanged_data_limit                   =
+            static_cast<data_size_type>(-1);
+        session_probe_virtual_channel_params.verbose                                =
+            this->verbose;
+
+        session_probe_virtual_channel_params.session_probe_launch_timeout           =
+            this->session_probe_launch_timeout;
+        session_probe_virtual_channel_params.session_probe_launch_fallback_timeout  =
+            this->session_probe_launch_fallback_timeout;
+        session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
+            this->session_probe_keepalive_timeout;
+        session_probe_virtual_channel_params.session_probe_on_keepalive_timeout_disconnect_user =
+            this->session_probe_on_keepalive_timeout_disconnect_user;
+
+        session_probe_virtual_channel_params.session_probe_on_launch_failure        =
+            this->session_probe_on_launch_failure;
+
+        session_probe_virtual_channel_params.session_probe_end_disconnected_session =
+            this->session_probe_end_disconnected_session;
+
+        session_probe_virtual_channel_params.target_informations                    =
+            this->session_probe_target_informations.c_str();
+
+        session_probe_virtual_channel_params.front_width                            =
+            this->front_width;
+        session_probe_virtual_channel_params.front_height                           =
+            this->front_height;
+
+        session_probe_virtual_channel_params.real_alternate_shell                   =
+            this->real_alternate_shell.c_str();
+        session_probe_virtual_channel_params.real_working_dir                       =
+            this->real_working_dir.c_str();
+
+        session_probe_virtual_channel_params.outbound_connection_notifying_rules    =
+            "";
+        session_probe_virtual_channel_params.outbound_connection_killing_rules      =
+            this->outbound_connection_killing_rules.c_str();
+
+        session_probe_virtual_channel_params.lang                                   =
+            this->lang;
+
+        session_probe_virtual_channel_params.bogus_refresh_rect_ex                  =
+            (this->bogus_refresh_rect && this->allow_using_multiple_monitors &&
+             (this->cs_monitor.monitorCount > 1));
+
+        return session_probe_virtual_channel_params;
+    }
+
 public:
+    static void get_proxy_managed_connection_cookie(const char * target_informations,
+            size_t target_informations_length, char (&cookie)[9]) {
+        SslSha1 sha1;
+        sha1.update(byte_ptr_cast(target_informations), target_informations_length);
+        uint8_t sig[20];
+        sha1.final(sig, sizeof(sig));
+
+        static_assert(((sizeof(cookie) % 2) == 1), "Buffer size must be an odd number");
+
+        char * temp = cookie;
+        ::memset(cookie, 0, sizeof(cookie));
+        for (unsigned i = 0, c = std::min<unsigned>(sizeof(cookie) / 2, sizeof(sig) / 2);
+             i < c; ++i) {
+            snprintf(temp, 3, "%02X", sig[i]);
+            temp += 2;
+        }
+    }
+
     void configure_extra_orders(const char * extra_orders) {
         if (verbose) {
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
         }
 
-        apply_for_delim(extra_orders, ',', [this](const char * order) {
-            int const order_number = long_from_cstr(order);
+        char * end;
+        char const * p = extra_orders;
+        for (int order_number = std::strtol(p, &end, 0);
+            p != end;
+            order_number = std::strtol(p, &end, 0))
+        {
             if (verbose) {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
@@ -1072,7 +1423,12 @@ public:
                 }
                 break;
             }
-        }, [](char c) { return c == ' ' || c == '\t' || c == ','; });
+
+            p = end;
+            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
+                ++p;
+            }
+        }
     }   // configure_extra_orders
 
     void configure_proxy_managed_drives(const char * proxy_managed_drives) {
@@ -1080,35 +1436,42 @@ public:
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
-        const bool complete_item_extraction = true;
-        apply_for_delim(proxy_managed_drives,
-                        ',',
-                        [this](const char * drive) {
-                                if (verbose) {
-                                    LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
-                                }
-                                this->file_system_drive_manager.EnableDrive(drive, this->verbose);
-                            },
-                        is_blanck_fn(),
-                        complete_item_extraction
-                       );
+        std::string drive;
+        for (auto & r : get_line(proxy_managed_drives, ',')) {
+            auto trimmed_range = trim(r);
+
+            if (trimmed_range.empty()) continue;
+
+            drive.assign(begin(trimmed_range), end(trimmed_range));
+
+            if (verbose) {
+                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive.c_str());
+            }
+            this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
+        }
     }   // configure_proxy_managed_drives
 
-    void rdp_input_scancode( long param1, long param2, long device_flags, long time
-                                     , Keymap2 * keymap) override {
+    void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
     }
 
-    void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
-                                        , int16_t param2) override {
+    void rdp_input_unicode(uint16_t unicode, uint8_t flag) override {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
+        }
+    }
+
+    void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+        (void)time;
+        (void)param2;
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
         }
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
         }
@@ -1152,6 +1515,20 @@ public:
         }
     }
 
+    wait_obj * get_session_probe_launcher_event() override {
+        if (this->session_probe_launcher) {
+            return this->session_probe_launcher->get_event();
+        }
+
+        return nullptr;
+    }
+
+    void process_session_probe_launcher() override {
+        if (this->session_probe_launcher) {
+            this->session_probe_launcher->on_event();
+        }
+    }
+
     void send_to_mod_channel( const char * const front_channel_name
                                     , InStream & chunk
                                     , size_t length
@@ -1185,9 +1562,15 @@ public:
     }
 
 private:
-    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * cliprdr_channel,
+    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef *,
                                      InStream & chunk, size_t length, uint32_t flags) {
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
+
+        if (this->session_probe_launcher) {
+            if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
+                return;
+            }
+        }
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -1229,7 +1612,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1250,7 +1633,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1277,7 +1660,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1304,7 +1687,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1331,7 +1714,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1355,7 +1738,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1379,7 +1762,7 @@ private:
                         if (!chunk.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%u (0x%04X)",
+                                    "expected=%u remains=%zu (0x%04X)",
                                 expected, chunk.in_remain(),
                                 cspupdur.SystemParam());
                             throw Error(ERR_RAIL_PDU_TRUNCATED);
@@ -1463,6 +1846,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
+
     void send_auth_channel_data(const char * string_data) override {
         //if (strncmp("Error", string_data, 5)) {
         //    this->auth_channel_state = 1; // session started
@@ -1561,11 +1945,11 @@ private:
                     static_cast<OutPerStream&>(mcs_header), this->userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
+
                 (void)mcs;
             },
             write_x224_dt_tpdu_fn{}
         );
-
         if (this->verbose & 16) {
             LOG(LOG_INFO, "send data request done");
         }
@@ -1581,20 +1965,42 @@ private:
     }
 
 public:
-    void draw_event(time_t now) override {
-        if (!this->event.waked_up_by_time &&
-            (!this->enable_wab_agent || !this->wab_agent_event.set_state || !this->wab_agent_event.waked_up_by_time)) {
+    wait_obj& get_event() override {
+        if ((this->state == MOD_RDP_NEGO) &&
+            ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
+             (this->nego.state == RdpNego::NEGO_STATE_FINAL))) {
+            this->event.object_and_time = true;
+            this->event.set();
+        }
+        return this->event;
+    }
+
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        if ((!this->event.waked_up_by_time &&
+             (!this->session_probe_virtual_channel_p ||
+              !this->session_probe_virtual_channel_p->is_event_signaled())) ||
+            ((this->state == MOD_RDP_NEGO) &&
+             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
+              (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
                 char * hostname = this->hostname;
-
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
                     }
                     switch (this->nego.state){
+                    case RdpNego::NEGO_STATE_INITIAL:
+                    case RdpNego::NEGO_STATE_NLA:
+                    case RdpNego::NEGO_STATE_TLS:
+                    case RdpNego::NEGO_STATE_RDP:
                     default:
-                        this->nego.server_event(this->certificate_change_action == 1, this->certif_path);
+                        this->nego.server_event(
+                                this->server_cert_store,
+                                this->server_cert_check,
+                                this->server_notifier,
+                                this->certif_path.get()
+                            );
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         // Basic Settings Exchange
@@ -1622,9 +2028,16 @@ public:
                             [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
                                 // ------------------------------------------------------------
                                 GCC::UserData::CSCore cs_core;
+
+                                Rect primary_monitor_rect =
+                                    this->cs_monitor.get_primary_monitor_rect();
+
                                 cs_core.version = this->use_rdp5?0x00080004:0x00080001;
-                                cs_core.desktopWidth = this->front_width;
-                                cs_core.desktopHeight = this->front_height;
+                                const bool single_monitor =
+                                    (!this->allow_using_multiple_monitors ||
+                                     (this->cs_monitor.monitorCount < 2));
+                                cs_core.desktopWidth  = (single_monitor ? this->front_width : primary_monitor_rect.cx + 1);
+                                cs_core.desktopHeight = (single_monitor ? this->front_height : primary_monitor_rect.cy + 1);
                                 //cs_core.highColorDepth = this->front_bpp;
                                 cs_core.highColorDepth = ((this->front_bpp == 32)
                                     ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
@@ -1633,13 +2046,16 @@ public:
                                     cs_core.supportedColorDepths = 15;
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
                                 }
+                                if (!single_monitor) {
+                                    cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+                                }
 
                                 uint16_t hostlen = strlen(hostname);
                                 uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
                                 for (size_t i = 0; i < maxhostlen ; i++){
                                     cs_core.clientName[i] = hostname[i];
                                 }
-                                memset(&(cs_core.clientName[hostlen]), 0, 16-hostlen);
+                                memset(&(cs_core.clientName[maxhostlen]), 0, (16 - maxhostlen) * sizeof(uint16_t));
 
                                 if (this->nego.tls){
                                     cs_core.serverSelectedProtocol = this->nego.selected_protocol;
@@ -1651,7 +2067,7 @@ public:
                                 // ------------------------------------------------------------
 
                                 GCC::UserData::CSCluster cs_cluster;
-                                TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
+                                // TODO CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?
                                 if (this->server_redirection_support) {
                                     LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
                                     if (!this->nego.tls){
@@ -1699,23 +2115,31 @@ public:
 
                                 const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                                 size_t num_channels = channel_list.size();
-                                if ((num_channels > 0) || this->auth_channel[0] ||
+                                if ((num_channels > 0) || this->enable_auth_channel ||
                                     this->file_system_drive_manager.HasManagedDrive()) {
                                     /* Here we need to put channel information in order
                                     to redirect channel data
                                     from client to server passing through the "proxy" */
                                     GCC::UserData::CSNet cs_net;
                                     cs_net.channelCount = num_channels;
-                                    bool has_rdpdr_channel  = false;
-                                    bool has_rdpsnd_channel = false;
+                                    bool has_cliprdr_channel = false;
+                                    bool has_rdpdr_channel   = false;
+                                    bool has_rdpsnd_channel  = false;
                                     for (size_t index = 0; index < num_channels; index++) {
                                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                         if (this->authorization_channels.is_authorized(channel_item.name) ||
-                                            (!strcmp(channel_item.name, channel_names::rdpdr) &&
+                                            ((!strcmp(channel_item.name, channel_names::rdpdr) ||
+                                              !strcmp(channel_item.name, channel_names::rdpsnd)) &&
                                             this->file_system_drive_manager.HasManagedDrive())
                                         ) {
-                                            if (!strcmp(channel_item.name, channel_names::rdpdr)) {
+                                            if (!strcmp(channel_item.name, channel_names::cliprdr)) {
+                                                has_cliprdr_channel = true;
+                                            }
+                                            else if (!strcmp(channel_item.name, channel_names::rdpdr)) {
                                                 has_rdpdr_channel = true;
+                                            }
+                                            else if (!strcmp(channel_item.name, channel_names::rdpsnd)) {
+                                                has_rdpsnd_channel = true;
                                             }
                                             memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
                                         }
@@ -1738,7 +2162,7 @@ public:
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpdr);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                                         CHANNELS::ChannelDef def;
                                         ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
@@ -1750,15 +2174,34 @@ public:
                                         cs_net.channelCount++;
                                     }
 
+                                    // Inject a new channel for clipboard channel (cliprdr)
+                                    if (!has_cliprdr_channel && this->session_probe_use_clipboard_based_launcher) {
+                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                                "%s", channel_names::cliprdr);
+                                        cs_net.channelDefArray[cs_net.channelCount].options =
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                            | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
+                                        CHANNELS::ChannelDef def;
+                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::cliprdr);
+                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                                        if (this->verbose & 16){
+                                            def.log(cs_net.channelCount);
+                                        }
+                                        this->mod_channel_list.push_back(def);
+                                        cs_net.channelCount++;
+                                    }
+
                                     // The RDPDR channel advertised by the client is ONLY accepted by the RDP
                                     //  server 2012 if the RDPSND channel is also advertised.
-                                    if (this->file_system_drive_manager.HasManagedDrive() &&
-                                        !has_rdpsnd_channel) {
+                                    if (!has_rdpsnd_channel &&
+                                        this->file_system_drive_manager.HasManagedDrive()) {
                                         ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                                                 sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                                                 "%s", channel_names::rdpsnd);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                                             | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                                         CHANNELS::ChannelDef def;
                                         ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
@@ -1771,7 +2214,8 @@ public:
                                     }
 
                                     // Inject a new channel for auth_channel virtual channel (wablauncher)
-                                    if (this->auth_channel[0]) {
+                                    if (this->enable_auth_channel) {
+                                        REDASSERT(this->auth_channel[0]);
                                         memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
                                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
@@ -1785,13 +2229,13 @@ public:
                                         cs_net.channelCount++;
                                     }
 
-                                    if (this->enable_wab_agent) {
-                                        const char * wab_agent_channel_name = "wabagt\0\0";
-                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, wab_agent_channel_name, 8);
+                                    if (this->enable_session_probe) {
+                                        const char * session_probe_channel_name = "sespro\0\0";
+                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, session_probe_channel_name, 8);
                                         cs_net.channelDefArray[cs_net.channelCount].options =
                                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                                         CHANNELS::ChannelDef def;
-                                        memcpy(def.name, wab_agent_channel_name, 8);
+                                        memcpy(def.name, session_probe_channel_name, 8);
                                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                                         if (this->verbose & 16){
                                             def.log(cs_net.channelCount);
@@ -1804,6 +2248,13 @@ public:
                                         cs_net.log("Sending to server");
                                     }
                                     cs_net.emit(stream);
+                                }
+
+                                if (!single_monitor) {
+                                    if (this->verbose & 1) {
+                                        this->cs_monitor.log("Sending to server");
+                                    }
+                                    this->cs_monitor.emit(stream);
                                 }
                             },
                             [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
@@ -1821,6 +2272,7 @@ public:
 
                         this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                         break;
+
                     }
                     break;
 
@@ -1835,16 +2287,14 @@ public:
                         X224::RecvFactory f(this->nego.trans, &end, array_size);
                         InStream x224_data(array, end - array);
                         X224::DT_TPDU_Recv x224(x224_data);
-
                         MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
-
                         GCC::Create_Response_Recv gcc_cr(mcs.payload);
-
                         while (gcc_cr.payload.in_check_rem(4)) {
-
                             GCC::UserData::RecvFactory f(gcc_cr.payload);
+
                             switch (f.tag) {
                             case SC_CORE:
+//                            LOG(LOG_INFO, "=================== SC_CORE =============");
                                 {
                                     GCC::UserData::SCCore sc_core;
                                     sc_core.recv(f.payload);
@@ -1857,9 +2307,11 @@ public:
                                 }
                                 break;
                             case SC_SECURITY:
+                                LOG(LOG_INFO, "=================== SC_SECURITY =============");
                                 {
                                     GCC::UserData::SCSecurity sc_sec1;
                                     sc_sec1.recv(f.payload);
+
                                     if (this->verbose & 1) {
                                         sc_sec1.log("Received from server");
                                     }
@@ -1873,13 +2325,11 @@ public:
                                     else {
 
                                         uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
-                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
-                                        memset(modulus, 0, sizeof(modulus));
-                                        uint8_t exponent[SEC_EXPONENT_SIZE];
-                                        memset(exponent, 0, sizeof(exponent));
+                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
+                                        uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
                                         memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
-
+//                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
                                         // serverCertificate (variable): The variable-length certificate containing the
                                         //  server's public key information. The length in bytes is given by the
                                         // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
@@ -1887,6 +2337,8 @@ public:
 
                                         /* RSA info */
                                         if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
+//                                        LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_VERSION_1");
+
                                             memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
                                             memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
                                                    sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
@@ -1895,7 +2347,9 @@ public:
 
                                         }
                                         else {
+                                            #ifndef __EMSCRIPTEN__
 
+//                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
                                             uint32_t certcount = sc_sec1.x509.certCount;
                                             if (certcount < 2){
                                                 LOG(LOG_ERR, "Server didn't send enough X509 certificates");
@@ -1906,23 +2360,24 @@ public:
                                             X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
                                             (void)cert_len;
 
-                                            TODO("CGR: Currently, we don't use the CA Certificate, we should"
-                                                 "*) Verify the server certificate (server_cert) with the CA certificate."
-                                                 "*) Store the CA Certificate with the hostname of the server we are connecting"
-                                                 " to as key, and compare it when we connect the next time, in order to prevent"
-                                                 " MITM-attacks.")
+                                            // TODO CGR: Currently, we don't use the CA Certificate, we should
+                                            // TODO *) Verify the server certificate (server_cert) with the CA certificate.
+                                            // TODO *) Store the CA Certificate with the hostname of the server we are connecting to as key, and compare it when we connect the next time, in order to prevent MITM-attacks.
 
-                                                /* By some reason, Microsoft sets the OID of the Public RSA key to
-                                                   the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
+                                            /* By some reason, Microsoft sets the OID of the Public RSA key to
+                                                the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
 
-                                                   Kudos to Richard Levitte for the following (. intuitive .)
-                                                   lines of code that resets the OID and let's us extract the key. */
+                                                Kudos to Richard Levitte for the following (. intuitive .)
+                                                lines of code that resets the OID and let's us extract the key. */
 
-                                                int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-                                            if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption)){
+                                            int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
+                                            if ((nid == NID_md5WithRSAEncryption)
+                                                || (nid == NID_shaWithRSAEncryption)){
                                                 ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
                                                 cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
                                             }
+
+//                                            LOG(LOG_INFO, "================= SC_SECURITY X509_get_pubkey");
 
                                             EVP_PKEY * epk = X509_get_pubkey(cert);
                                             if (nullptr == epk){
@@ -1930,7 +2385,6 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
 
-                                            TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                                             RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
                                             EVP_PKEY_free(epk);
                                             this->server_public_key_len = RSA_size(server_public_key);
@@ -1940,8 +2394,8 @@ public:
                                                 throw Error(ERR_SEC);
                                             }
 
-                                            if ((this->server_public_key_len < SEC_MODULUS_SIZE) ||
-                                                (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                                            if ((this->server_public_key_len < SEC_MODULUS_SIZE)
+                                            ||  (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
                                                 LOG(LOG_ERR, "Wrong server public key size (%u bits)", this->server_public_key_len * 8);
                                                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                                             }
@@ -1951,11 +2405,14 @@ public:
                                                 LOG(LOG_ERR, "Failed to extract RSA exponent and modulus");
                                                 throw Error(ERR_SEC);
                                             }
+
                                             int len_e = BN_bn2bin(server_public_key->e, exponent);
-                                            reverseit(exponent, len_e);
                                             int len_n = BN_bn2bin(server_public_key->n, modulus);
+                                            reverseit(exponent, len_e);
                                             reverseit(modulus, len_n);
                                             RSA_free(server_public_key);
+
+                                            #endif
                                         }
 
                                         uint8_t client_random[SEC_RANDOM_SIZE];
@@ -1966,7 +2423,36 @@ public:
 
                                         ssllib ssl;
 
-                                        ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
+//                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
+//                                        hexdump(client_random, SEC_RANDOM_SIZE);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+//                                            static_cast<unsigned>(SEC_RANDOM_SIZE));
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len");
+//                                        hexdump(modulus, this->server_public_key_len);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len=%u",
+//                                            static_cast<unsigned>(this->server_public_key_len));
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent");
+//                                        hexdump(exponent, SEC_EXPONENT_SIZE);
+//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
+//                                            static_cast<unsigned>(SEC_EXPONENT_SIZE));
+
+                                        ssl.rsa_encrypt(
+                                            this->client_crypt_random,
+                                            SEC_RANDOM_SIZE,
+                                            client_random,
+                                            this->server_public_key_len,
+                                            modulus,
+                                            SEC_EXPONENT_SIZE,
+                                            exponent);
+
+//                                        LOG(LOG_INFO, "================= SC_SECURITY client_crypt_random");
+//                                        hexdump(this->client_crypt_random, sizeof(this->client_crypt_random));
+//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+//                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
+
                                         SEC::KeyBlock key_block(client_random, serverRandom);
                                         memcpy(encrypt.sign_key, key_block.blob0, 16);
                                         if (sc_sec1.encryptionMethod == 1){
@@ -1978,6 +2464,8 @@ public:
                                 }
                                 break;
                             case SC_NET:
+//                            LOG(LOG_INFO, "=================== SC_NET =============");
+
                                 {
                                     GCC::UserData::SCNet sc_net;
                                     sc_net.recv(f.payload, this->bogus_sc_net_size);
@@ -1986,7 +2474,7 @@ public:
                                        that it has been sent. If there are any channels not confirmed, they're
                                        going to be the last channels on the array sent in MCS Connect Initial */
                                     if (this->verbose & 16){
-                                        LOG(LOG_INFO, "server_channels_count=%u sent_channels_count=%u",
+                                        LOG(LOG_INFO, "server_channels_count=%" PRIu16 " sent_channels_count=%zu",
                                             sc_net.channelCount,
                                             mod_channel_list.size());
                                     }
@@ -2005,7 +2493,9 @@ public:
                                 LOG(LOG_ERR, "unsupported GCC UserData response tag 0x%x", f.tag);
                                 throw Error(ERR_GCC);
                             }
+
                         }
+
                         if (gcc_cr.payload.in_check_rem(1)) {
                             LOG(LOG_ERR, "Error while parsing GCC UserData : short header");
                             throw Error(ERR_GCC);
@@ -2066,6 +2556,7 @@ public:
                         },
                         write_x224_dt_tpdu_fn{}
                     );
+
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "Send MCS::AttachUserRequest");
                     }
@@ -2101,6 +2592,9 @@ public:
 
                         {
                             size_t num_channels = this->mod_channel_list.size();
+
+    #ifndef __EMSCRIPTEN__
+
                             uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
                             channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
                             channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
@@ -2110,7 +2604,7 @@ public:
 
                             for (size_t index = 0; index < num_channels+2; index++) {
                                 if (this->verbose & 16){
-                                    LOG(LOG_INFO, "cjrq[%u] = %u", index, channels_id[index]);
+                                    LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
                                 }
                                 write_packets(
                                     this->nego.trans,
@@ -2128,15 +2622,18 @@ public:
                                 uint8_t * end = array;
                                 X224::RecvFactory f(this->nego.trans, &end, array_size);
                                 InStream x224_data(array, end - array);
-
                                 X224::DT_TPDU_Recv x224(x224_data);
                                 InStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                                TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
+                                // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
                                 if (this->verbose & 16){
-                                    LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
+                                    LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
                                 }
                             }
+    #else
+                            this->index_JS = 0;
+                            this->num_channels_JS = num_channels + 2;
+    #endif
                         }
 
                         // RDP Security Commencement
@@ -2177,6 +2674,7 @@ public:
                                 LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
                                     this->server_public_key_len);
                             }
+
                             this->send_data_request(
                                 GCC::MCS_GLOBAL_CHANNEL,
                                 dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
@@ -2202,13 +2700,80 @@ public:
                             LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
                         }
 
-                        this->send_client_info_pdu(this->userid, this->password);
-
+                        this->send_client_info_pdu(now);
+    #ifndef __EMSCRIPTEN__
                         this->state = MOD_RDP_GET_LICENSE;
+    #else
+                        this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+    #endif
                     }
+                            break;
+
+    #ifdef __EMSCRIPTEN__
+
+                case MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS:
+                    {
+                        uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
+                        channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
+                        channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
+
+                        size_t index = this->index_JS;
+                        write_packets(
+                            this->nego.trans,
+                            [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
+                                MCS::ChannelJoinRequest_Send mcs(
+                                    mcs_cjrq_data, this->userid,
+                                    channels_id[index], MCS::PER_ENCODING
+                                );
+                                (void)mcs;
+                            },
+                            write_x224_dt_tpdu_fn{}
+                        );
+
+                        constexpr size_t array_size = AUTOSIZE;
+                        uint8_t array[array_size];
+                        uint8_t * end = array;
+                        X224::RecvFactory f(this->nego.trans, &end, array_size);
+                        InStream x224_data(array, end - array);
+                        X224::DT_TPDU_Recv x224(x224_data);
+                        InStream & mcs_cjcf_data = x224.payload;
+                        MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
+                        // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
+
+                        if (this->encryptionLevel){
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
+                                    this->server_public_key_len);
+                            }
+
+                            this->send_data_request(
+                                GCC::MCS_GLOBAL_CHANNEL,
+                                dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                                    SEC::SecExchangePacket_Send mcs(
+                                        stream, this->client_crypt_random, this->server_public_key_len
+                                    );
+                                    (void)mcs;
+                                })
+                            );
+                        }
+
+                        this->send_client_info_pdu(now);
+
+                        this->num_channels_JS--;
+                        this->index_JS++;
+
+                        if (this->num_channels_JS == 0) {
+                            this->state = MOD_RDP_GET_LICENSE;
+                        } else {
+                            this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+                        }
+                    }
+
                     break;
+    #endif
 
                 case MOD_RDP_GET_LICENSE:
+
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "mod_rdp::Licensing");
                     }
@@ -2306,7 +2871,7 @@ public:
                         X224::RecvFactory f(this->nego.trans, &end, array_size);
                         InStream stream(array, end - array);
                         X224::DT_TPDU_Recv x224(stream);
-                        TODO("Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here")
+                        // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
                         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -2350,7 +2915,7 @@ public:
                                             sign.update(lenhdr, sizeof(lenhdr));
                                             sign.update(hwid, sizeof(hwid));
 
-                                            assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                            static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                             sign.final(signature, sizeof(signature));
 
 
@@ -2414,7 +2979,7 @@ public:
                                     sign.update(lenhdr, sizeof(lenhdr));
                                     sign.update(sealed_buffer, sizeof(sealed_buffer));
 
-                                    assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                    static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
                                     sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */
@@ -2443,7 +3008,7 @@ public:
 
                                     LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                                    TODO("CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that");
+                                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that
                                         this->state = MOD_RDP_CONNECTED;
 
                                     LOG(LOG_WARNING, "New license not saved");
@@ -2574,78 +3139,89 @@ public:
                             while (su.payload.in_remain()) {
                                 FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 
-                                switch (upd.updateCode) {
-                                case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+                                using FU = FastPath::UpdateType;
+                                if (this->verbose & 8) {
+                                    const char * m = "UNKNOWN ORDER";
+                                    switch (static_cast<FastPath::UpdateType>(upd.updateCode))
+                                    {
+                                    case FU::ORDERS:      m = "ORDERS"; break;
+                                    case FU::BITMAP:      m = "BITMAP"; break;
+                                    case FU::PALETTE:     m = "PALETTE"; break;
+                                    case FU::SYNCHRONIZE: m = "SYNCHRONIZE"; break;
+                                    case FU::SURFCMDS:    m = "SYNCHRONIZE"; break;
+                                    case FU::PTR_NULL:    m = "PTR_NULL"; break;
+                                    case FU::PTR_DEFAULT: m = "PTR_DEFAULT"; break;
+                                    case FU::PTR_POSITION:m = "PTR_POSITION"; break;
+                                    case FU::COLOR:       m = "COLOR"; break;
+                                    case FU::CACHED:      m = "CACHED"; break;
+                                    case FU::POINTER:     m = "POINTER"; break;
+                                    }
+                                    LOG(LOG_INFO, "FastPath::UpdateType::%s", m);
+                                }
+
+                                switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
+                                case FastPath::UpdateType::ORDERS:
                                     this->front.begin_update();
-                                    this->orders.process_orders(this->bpp, upd.payload, true, *this->gd,
+                                    this->orders.process_orders(this->bpp, upd.payload, true, drawable,
                                                                 this->front_width, this->front_height);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                                case FastPath::UpdateType::BITMAP:
                                     this->front.begin_update();
-                                    this->process_bitmap_updates(upd.payload, true);
+                                    this->process_bitmap_updates(upd.payload, true, drawable);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                                case FastPath::UpdateType::PALETTE:
                                     this->front.begin_update();
                                     this->process_palette(upd.payload, true);
                                     this->front.end_update();
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE"); }
+                                case FastPath::UpdateType::SYNCHRONIZE:
+                                    // TODO: we should propagate SYNCHRONIZE to front
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                                case FastPath::UpdateType::SURFCMDS:
+                                    LOG( LOG_ERR
+                                       , "mod::rdp: received unsupported fast-path PUD, updateCode = %s"
+                                       , "FastPath::UPDATETYPE_SURFCMDS");
+                                    throw Error(ERR_RDP_FASTPATH);
+
+                                case FastPath::UpdateType::PTR_NULL:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL"); }
                                         struct Pointer cursor;
                                         memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                                        this->front.server_set_pointer(cursor);
+                                        this->front.set_pointer(cursor);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                                case FastPath::UpdateType::PTR_DEFAULT:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT"); }
                                         Pointer cursor(Pointer::POINTER_SYSTEM_DEFAULT);
-                                        this->front.server_set_pointer(cursor);
+                                        this->front.set_pointer(cursor);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                                case FastPath::UpdateType::PTR_POSITION:
                                     {
-                                        if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION"); }
                                         uint16_t xPos = upd.payload.in_uint16_le();
                                         uint16_t yPos = upd.payload.in_uint16_le();
                                         this->front.update_pointer_position(xPos, yPos);
                                     }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                                case FastPath::UpdateType::COLOR:
                                     this->process_color_pointer_pdu(upd.payload);
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_COLOR"); }
                                     break;
 
-                                case FastPath::FASTPATH_UPDATETYPE_POINTER:
-                                    this->process_new_pointer_pdu(upd.payload);
-
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_POINTER"); }
-                                    break;
-
-                                case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                                case FastPath::UpdateType::CACHED:
                                     this->process_cached_pointer_pdu(upd.payload);
+                                    break;
 
-                                    if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_CACHED"); }
+                                case FastPath::UpdateType::POINTER:
+                                    this->process_new_pointer_pdu(upd.payload);
                                     break;
 
                                 default:
@@ -2656,7 +3232,7 @@ public:
                                 }
                             }
 
-                            TODO("Chech all data in the PDU is consumed");
+                            // TODO Chech all data in the PDU is consumed
                             break;
                         }
 
@@ -2675,9 +3251,10 @@ public:
                                 this->end_session_reason.clear();
                                 this->end_session_message.clear();
 
+                                this->acl->disconnect_target();
                                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-                                this->acl->log("CNT event", "SESSION_DISCONNECTED");
+                                this->acl->log4(false, "SESSION_DISCONNECTED_BY_TARGET");
                             }
                             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
@@ -2685,7 +3262,6 @@ public:
 
                         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
-
                         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
                             if (this->verbose & 16) {
                                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
@@ -2707,12 +3283,12 @@ public:
                             size_t chunk_size = sec.payload.in_remain();
 
                             // If channel name is our virtual channel, then don't send data to front
-                                 if (  this->auth_channel[0] /*&& this->acl */
+                                 if (  this->enable_auth_channel
                                     && !strcmp(mod_channel.name, this->auth_channel)) {
                                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
-                            else if (!strcmp(mod_channel.name, "wabagt")) {
-                                this->process_wab_agent_event(mod_channel, sec.payload, length, flags, chunk_size);
+                            else if (!strcmp(mod_channel.name, "sespro")) {
+                                this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
                             }
                             // Clipboard is a Clipboard PDU
                             else if (!strcmp(mod_channel.name, channel_names::cliprdr)) {
@@ -2730,8 +3306,10 @@ public:
                                 );
                             }
                             sec.payload.in_skip_bytes(sec.payload.in_remain());
+
                         }
                         else {
+
                             uint8_t const * next_packet = sec.payload.get_current();
                             while (next_packet < sec.payload.get_data_end()) {
                                 sec.payload.rewind();
@@ -2752,6 +3330,7 @@ public:
                                     next_packet = sec.payload.get_current();
                                 }
                                 else {
+
                                     ShareControl_Recv sctrl(sec.payload);
                                     next_packet += sctrl.totalLength;
 
@@ -2769,21 +3348,52 @@ public:
                                             LOG(LOG_ERR, "Rdp::finalization is early");
                                             throw Error(ERR_SEC);
                                         case WAITING_SYNCHRONIZE:
+                                            std::cout << "WAITING_SYNCHRONIZE" <<  std::endl;
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
-                                            this->connection_finalization_state = WAITING_CTL_COOPERATE;
+
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
-                                                sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+
+                                                if (sdata.pdutype2 == PDUTYPE2_MONITOR_LAYOUT_PDU) {
+                                                    MonitorLayoutPDU monitor_layout_pdu;
+
+                                                    monitor_layout_pdu.recv(sdata.payload);
+                                                    monitor_layout_pdu.log(
+                                                        "Rdp::receiving the server-to-client Monitor Layout PDU");
+
+                                                    if (this->cs_monitor.monitorCount &&
+                                                        (monitor_layout_pdu.get_monitorCount() !=
+                                                         this->cs_monitor.monitorCount)) {
+                                                             std::cout << "loool " << monitor_layout_pdu.get_monitorCount() << std::endl;
+                                                        LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
+                                                        throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
+                                                    } else {
+                                                        std::cout << "it support " << monitor_layout_pdu.get_monitorCount() << std::endl;
+                                                    }
+                                                }
+                                                else {
+                                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
+                                                    if (this->transparent_recorder) {
+                                                        this->transparent_recorder->server_resize(this->front_width,
+                                                            this->front_height, this->bpp);
+                                                    }
+                                                    if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
+                                                        LOG(LOG_ERR, "Resize not available on older clients,"
+                                                            " change client resolution to match server resolution");
+                                                        throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+                                                    }
+
+                                                    this->connection_finalization_state = WAITING_CTL_COOPERATE;
+                                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                                }
                                             }
                                             break;
                                         case WAITING_CTL_COOPERATE:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -2794,7 +3404,6 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
                                             }
-                                            //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                                             this->connection_finalization_state = WAITING_FONT_MAP;
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
@@ -2805,11 +3414,10 @@ public:
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
                                             }
-                                            //this->check_data_pdu(PDUTYPE2_FONTMAP);
                                             this->connection_finalization_state = UP_AND_RUNNING;
 
                                             if (this->acl && !this->deactivation_reactivation_in_progress) {
-                                                this->acl->log("CNT event", "SESSION_ESTABLISHED_SUCCESSFULLY");
+                                                this->acl->log4(false, "SESSION_ESTABLISHED_SUCCESSFULLY");
                                             }
 
                                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -2821,6 +3429,25 @@ public:
                                             }
 
                                             this->deactivation_reactivation_in_progress = false;
+
+                                            if (!this->already_upped_and_running) {
+                                                this->do_enable_session_probe();
+
+                                                this->event.object_and_time = (this->open_session_timeout.count() > 0);
+
+                                                this->already_upped_and_running = true;
+                                            }
+
+                                            if (this->front.can_be_start_capture(this->acl)) {
+                                                if (this->bogus_refresh_rect
+                                                 && allow_using_multiple_monitors
+                                                 && this->cs_monitor.monitorCount > 1
+                                                ) {
+                                                    this->rdp_suppress_display_updates();
+                                                    this->rdp_allow_display_updates(0, 0, this->front_width, this->front_height);
+                                                }
+                                                this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+                                            }
                                             break;
                                         case UP_AND_RUNNING:
                                             if (this->enable_transparent_mode)
@@ -2854,6 +3481,7 @@ public:
 
                                             {
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+
                                                 switch (sdata.pdutype2) {
                                                 case PDUTYPE2_UPDATE:
                                                     {
@@ -2871,14 +3499,13 @@ public:
                                                         case RDP_UPDATE_ORDERS:
                                                             if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                                             this->front.begin_update();
-                                                            this->orders.process_orders(this->bpp, sdata.payload, false, *this->gd,
-                                                                                        this->front_width, this->front_height);
+                                                            this->orders.process_orders(this->bpp, sdata.payload, false, drawable,this->front_width, this->front_height);
                                                             this->front.end_update();
                                                             break;
                                                         case RDP_UPDATE_BITMAP:
                                                             if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
                                                             this->front.begin_update();
-                                                            this->process_bitmap_updates(sdata.payload, false);
+                                                            this->process_bitmap_updates(sdata.payload, false, drawable);
                                                             this->front.end_update();
                                                             break;
                                                         case RDP_UPDATE_PALETTE:
@@ -2899,28 +3526,28 @@ public:
                                                     break;
                                                 case PDUTYPE2_CONTROL:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SYNCHRONIZE:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_POINTER:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
-                                                    this->process_pointer_pdu(sdata.payload, this);
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    this->process_pointer_pdu(sdata.payload);
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_PLAY_SOUND:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                         sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 case PDUTYPE2_SAVE_SESSION_INFO:
                                                     if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                     this->process_save_session_info(sdata.payload);
                                                     break;
                                                 case PDUTYPE2_SET_ERROR_INFO_PDU:
@@ -2948,7 +3575,7 @@ public:
 
                                                 default:
                                                     LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
-                                                    TODO("CGR: Data should actually be consumed");
+                                                    // TODO CGR: Data should actually be consumed
                                                     sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                                     break;
                                                 }
@@ -2988,7 +3615,7 @@ public:
         //    sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see
         // [T128] section 8.4.1 for more information regarding source descriptors).
 
-                                            TODO("before skipping we should check we do not go outside current stream");
+                                            // TODO before skipping we should check we do not go outside current stream
                                             sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
@@ -3001,11 +3628,12 @@ public:
 
                                             this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
 
+
         // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
                                             uint32_t sessionId = sctrl.payload.in_uint32_le();
-                                            (void)sessionId;
 
+                                            (void)sessionId;
                                             this->send_confirm_active();
                                             this->send_synchronise();
                                             this->send_control(RDP_CTL_COOPERATE);
@@ -3030,6 +3658,7 @@ public:
 
                                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
 
+/*
                                             LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
                                             if (this->transparent_recorder) {
                                                 this->transparent_recorder->server_resize(this->front_width,
@@ -3040,18 +3669,16 @@ public:
                                                     " change client resolution to match server resolution");
                                                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                             }
-//                                            this->orders.reset();
+*/
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
-
-//                                            this->deactivation_reactivation_in_progress = false;
                                         }
                                         break;
                                     case PDUTYPE_DEACTIVATEALLPDU:
                                         if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
                                         LOG(LOG_INFO, "Deactivate All PDU");
                                         this->deactivation_reactivation_in_progress = true;
-                                        TODO("CGR: Data should actually be consumed");
-                                            TODO("CGR: Check we are indeed expecting Synchronize... dubious");
+                                        // TODO CGR: Data should actually be consumed
+                                            // TODO CGR: Check we are indeed expecting Synchronize... dubious
                                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                                         break;
                                     case PDUTYPE_SERVER_REDIR_PKT:
@@ -3078,7 +3705,8 @@ public:
                                         LOG(LOG_INFO, "unknown PDU %u", sctrl.pduType);
                                         break;
                                     }
-                                TODO("check sctrl.payload is completely consumed");
+                                // TODO check sctrl.payload is completely consumed
+
                                 }
                             }
                         }
@@ -3086,49 +3714,87 @@ public:
                 }
             }
             catch(Error const & e){
+                this->front.must_be_stop_capture();
+
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     throw;
                 }
+
+                if (this->session_probe_virtual_channel_p &&
+                    this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                    throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
+                }
+
                 if (this->acl &&
                     (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
                 {
                     char message[128];
                     snprintf(message, sizeof(message), "Code=%d", e.id);
-                    this->acl->report("SESSION_EXCEPTION", message);
+
+                    char const* reason =
+                        ((UP_AND_RUNNING == this->connection_finalization_state) ?
+                         "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
+
+                    this->acl->report(reason, message);
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
                 }
 
-                {
-                    StaticOutStream<256> stream;
-                    X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-                    try {
-                        this->nego.trans.send(stream.get_data(), stream.get_offset());
-                        LOG(LOG_INFO, "Connection to server closed");
-                    }
-                    catch(Error const & e){
-                        LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
-                    };
+                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
+                    (e.id == ERR_NLA_AUTHENTICATION_FAILED)) {
+                    throw;
                 }
+
+                StaticOutStream<256> stream;
+                X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+                try {
+                    this->nego.trans.send(stream.get_data(), stream.get_offset());
+                    LOG(LOG_INFO, "Connection to server closed");
+                }
+                catch(Error const & e){
+                    LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
+                };
 
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
+                if (this->enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->front.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
                 }
 
-                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
-                    (e.id == ERR_NLA_AUTHENTICATION_FAILED))
-                {
+                if ((e.id == ERR_LIC) ||
+                    (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT)) {
                     throw;
+                }
+
+
+                if (UP_AND_RUNNING != this->connection_finalization_state &&
+                    !this->already_upped_and_running) {
+                    char const * statestr = "UNKNOWN";
+                    switch (this->state) {
+                        #define CASE(e) case MOD_##e: statestr = #e; break
+                        CASE(RDP_NEGO);
+                        CASE(RDP_BASIC_SETTINGS_EXCHANGE);
+                        CASE(RDP_CHANNEL_CONNECTION_ATTACH_USER);
+                        CASE(RDP_GET_LICENSE);
+                        CASE(RDP_CONNECTED);
+                        #undef CASE
+                    }
+                    LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state", statestr);
+                    throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             switch(this->open_session_timeout_checker.check(now)) {
-            case TimeoutT<time_t>::TIMEOUT_REACHED:
+            case Timeout::TIMEOUT_REACHED:
                 if (this->error_message) {
                     *this->error_message = "Logon timer expired!";
                 }
@@ -3138,8 +3804,11 @@ public:
                     this->acl->report("CONNECTION_FAILED", "Logon timer expired.");
                 }
 
-                if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
+                if (this->enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->front.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
                 }
 
                 LOG(LOG_ERR,
@@ -3147,83 +3816,22 @@ public:
                     this->hostname);
                 throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
             break;
-            case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+            case Timeout::TIMEOUT_NOT_REACHED:
                 this->event.set(1000000);
             break;
-            case TimeoutT<time_t>::TIMEOUT_INACTIVE:
+            case Timeout::TIMEOUT_INACTIVE:
             break;
             }
         }
 
-        if (this->wab_agent_event.set_state && this->wab_agent_event.waked_up_by_time) {
-            REDASSERT(this->enable_wab_agent);
-
-            this->wab_agent_event.reset();
-            this->wab_agent_event.waked_up_by_time = false;
-
-            if (this->wab_agent_launch_timeout && !this->wab_agent_is_ready) {
-                LOG((this->wab_agent_on_launch_failure ? LOG_WARNING : LOG_ERR), "Agent is not ready yet!");
-
-                const bool need_full_screen_update =
-                    (this->enable_wab_agent_loading_mask ?
-                     this->front.disable_input_event_and_graphics_update(false) :
-                     false);
-
-                if (this->wab_agent_on_launch_failure) {
-                    if (need_full_screen_update) {
-                        LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->front_width, this->front_height);
-                        this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
-                    }
-                }
-                else {
-                    throw Error(ERR_AGENT_LAUNCH);
-                }
-            }
-
-            if (this->wab_agent_is_ready && this->wab_agent_keepalive_timeout) {
-                if (!this->wab_agent_keep_alive_received && this->enable_wab_agent_loading_mask) {
-                    this->front.disable_input_event_and_graphics_update(false);
-
-                    LOG(LOG_ERR, "No keep alive received from Agent!");
-                    throw Error(ERR_AGENT_KEEPALIVE);
-                }
-                else {
-                    if (this->verbose & 0x10000) {
-                        LOG(LOG_INFO, "Agent keep alive requested");
-                    }
-                    this->wab_agent_keep_alive_received = false;
-
-                    StaticOutStream<1024> out_s;
-
-                    const size_t message_length_offset = out_s.get_offset();
-                    out_s.out_clear_bytes(sizeof(uint16_t));
-
-                    {
-                        char string[] = "Request=Keep-Alive";
-                        out_s.out_copy_bytes(string, sizeof(string)-1u);
-                    }
-                    out_s.out_clear_bytes(1);   // Null character
-
-                    out_s.set_out_uint16_le(
-                        out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                        message_length_offset);
-
-                    InStream in_s(out_s.get_data(), out_s.get_offset());
-                    this->send_to_mod_channel(
-                        "wabagt", in_s, in_s.get_capacity(),
-                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                    );
-
-                    this->wab_agent_event.set(this->wab_agent_keepalive_timeout * 1000);
-                }
-            }
+        if (this->session_probe_virtual_channel_p) {
+            this->session_probe_virtual_channel_p->process_event();
         }
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
-        if (this->wab_agent_event.set_state) {
-            return &this->wab_agent_event;
+        if (this->session_probe_virtual_channel_p) {
+            return session_probe_virtual_channel_p->get_event();
         }
 
         return nullptr;
@@ -3269,7 +3877,6 @@ public:
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
-
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this](StreamSize<65536>, OutStream & stream) {
@@ -3298,7 +3905,7 @@ public:
                 confirm_active_pdu.emit_capability_set(general_caps);
 
                 BitmapCaps bitmap_caps;
-                TODO("Client SHOULD set this field to the color depth requested in the Client Core Data")
+                // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
                 bitmap_caps.preferredBitsPerPixel = this->bpp;
                 //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
                 bitmap_caps.desktopWidth          = this->front_width;
@@ -3357,29 +3964,40 @@ public:
 
                 // intersect with client order capabilities
                 // which may not be supported by clients.
-                this->front.intersect_order_caps(TS_NEG_DSTBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_PATBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_SCRBLT_INDEX,             order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_LINETO_INDEX,             order_caps.orderSupport);
 
-                this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTIOPAQUERECT_INDEX,    order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTIPATBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTISCRBLT_INDEX,        order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MEMBLT_INDEX,             order_caps.orderSupport);
+                enum OrdersIndexes idxs[] = {
+                      TS_NEG_DSTBLT_INDEX
+                    , TS_NEG_PATBLT_INDEX
+                    , TS_NEG_SCRBLT_INDEX
+                    , TS_NEG_MEMBLT_INDEX
+                    , TS_NEG_MEM3BLT_INDEX
+//                    , TS_NEG_DRAWNINEGRID_INDEX
+                    , TS_NEG_LINETO_INDEX
+//                    , TS_NEG_MULTI_DRAWNINEGRID_INDEX
+//                    , TS_NEG_SAVEBITMAP_INDEX
+                    , TS_NEG_MULTIDSTBLT_INDEX
+                    , TS_NEG_MULTIPATBLT_INDEX
+                    , TS_NEG_MULTISCRBLT_INDEX
+                    , TS_NEG_MULTIOPAQUERECT_INDEX
+//                    , TS_NEG_FAST_INDEX_INDEX
+                    , TS_NEG_POLYGON_SC_INDEX
+                    , TS_NEG_POLYGON_CB_INDEX
+                    , TS_NEG_POLYLINE_INDEX
+//                    , TS_NEG_FAST_GLYPH_INDEX
+                    , TS_NEG_ELLIPSE_SC_INDEX
+                    , TS_NEG_ELLIPSE_CB_INDEX
+                    , TS_NEG_INDEX_INDEX
+                };
+
+                for (auto idx : idxs){
+                    order_caps.orderSupport[idx] &= this->front.get_order_cap(idx);
+                }
+
                 if ((this->verbose & 1) && (!order_caps.orderSupport[TS_NEG_MEMBLT_INDEX])) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
-                this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,            order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX, order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,           order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX,         order_caps.orderSupport);
-                this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,              order_caps.orderSupport);
 
-                this->front.intersect_order_caps_ex(order_caps);
+                order_caps.orderSupportExFlags &= this->front.get_order_caps_ex_flags();
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
                 //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
@@ -3390,7 +4008,6 @@ public:
                     order_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(order_caps);
-
 
                 BmpCacheCaps bmpcache_caps;
                 bmpcache_caps.cache0Entries         = 0x258;
@@ -3430,6 +4047,7 @@ public:
                             120,   nbbytes(this->bpp) * 16 * 16, false,
                             120,   nbbytes(this->bpp) * 32 * 32, false,
                             2553,  nbbytes(this->bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
                 }
@@ -3444,6 +4062,7 @@ public:
                             0x258, nbbytes(this->bpp) * 0x100,   false,
                             0x12c, nbbytes(this->bpp) * 0x400,   false,
                             0x106, nbbytes(this->bpp) * 0x1000,  false,
+                            false,
                             this->cache_verbose);
                     }
                 }
@@ -3549,7 +4168,7 @@ public:
         }
     }   // send_confirm_active
 
-    void process_pointer_pdu(InStream & stream, mod_api * mod)
+    void process_pointer_pdu(InStream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
@@ -3591,6 +4210,7 @@ public:
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Process pointer system");
             }
+            CPP_FALLTHROUGH;
         case RDP_POINTER_MOVE:
             {
                 if (this->verbose & 4) {
@@ -3615,7 +4235,7 @@ public:
         }
 
         RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
-        this->front.set_mod_palette(this->orders.global_palette);
+        this->front.set_palette(this->orders.global_palette);
 
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_palette done");
@@ -4750,6 +5370,11 @@ public:
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
 
+        if (this->session_probe_virtual_channel_p &&
+            this->session_probe_start_launch_timeout_timer_only_after_logon) {
+            this->session_probe_virtual_channel_p->start_launch_timeout_timer();
+        }
+
         if (this->acl)
         {
             this->acl->report("OPEN_SESSION_SUCCESSFUL", "OK.");
@@ -4757,16 +5382,19 @@ public:
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.cancel_timeout();
 
             this->event.reset();
         }
 
-        if (this->enable_wab_agent && this->enable_wab_agent_loading_mask) {
-            this->front.disable_input_event_and_graphics_update(true);
+        if (this->enable_session_probe) {
+            const bool disable_input_event     = true;
+            const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+            this->front.disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
         }
-    }
+    }   // process_logon_info
 
     void process_save_session_info(InStream & stream) {
         RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
@@ -4794,6 +5422,18 @@ public:
         {
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
+
+            if (this->enable_session_probe) {
+                const bool disable_input_event     = true;
+                const bool disable_graphics_update = this->enable_session_probe_launch_mask;
+                this->front.disable_input_event_and_graphics_update(
+                    disable_input_event, disable_graphics_update);
+            }
+
+            if (this->session_probe_virtual_channel_p &&
+                this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                this->session_probe_virtual_channel_p->start_launch_timeout_timer();
+            }
         }
         break;
         case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
@@ -4820,8 +5460,10 @@ public:
         stream.in_skip_bytes(stream.in_remain());
     }
 
-    TODO("CGR: this can probably be unified with process_confirm_active in front")
+    // TODO CGR: this can probably be unified with process_confirm_active in front
     void process_server_caps(InStream & stream, uint16_t len) {
+        // TODO check stream consumed and len
+        (void)len;
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
@@ -4844,7 +5486,7 @@ public:
 
         unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -4855,7 +5497,7 @@ public:
         for (uint16_t n = 0; n < ncapsets; n++) {
             expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS_PDU_TRUNCATED);
             }
@@ -4865,7 +5507,7 @@ public:
 
             expected = capset_length - 4 /* capabilitySetType(2) + lengthCapability(2) */;
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS_PDU_TRUNCATED);
             }
@@ -5137,7 +5779,7 @@ public:
         }
     }
 
-    TODO("CGR: duplicated code in front")
+    // TODO CGR: duplicated code in front
     void send_synchronise() {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
@@ -5204,6 +5846,7 @@ public:
     }
 
     void send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2) {
+        (void)time;
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
         }
@@ -5214,6 +5857,10 @@ public:
                 switch (message_type) {
                 case RDP_INPUT_SCANCODE:
                     FastPath::KeyboardEvent_Send(stream, device_flags, param1);
+                    break;
+
+                case RDP_INPUT_UNICODE:
+                    FastPath::KeyboardEventUniCode_Send(stream, device_flags, param1);
                     break;
 
                 case RDP_INPUT_SYNCHRONIZE:
@@ -5273,7 +5920,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate2(const DArray<Rect> & vr) override {
+    void rdp_input_invalidate2(array_view<Rect const> vr) override {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
@@ -5283,9 +5930,9 @@ public:
                                       this->userid,
                                       this->encryptionLevel,
                                       this->encrypt);
-            for (size_t i = 0; i < vr.size() ; i++){
-                if (!vr[i].isempty()){
-                    rrpdu.addInclusiveRect(vr[i].x, vr[i].y, vr[i].x + vr[i].cx - 1, vr[i].y + vr[i].cy - 1);
+            for (Rect const & rect : vr) {
+                if (!rect.isempty()){
+                    rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
                 }
             }
             rrpdu.emit(this->nego.trans);
@@ -5293,8 +5940,50 @@ public:
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
         }
+    }
 
-    };
+    void rdp_allow_display_updates(uint16_t left, uint16_t top,
+            uint16_t right, uint16_t bottom) override {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates");
+        }
+
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_pdu_type2(
+                PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+                [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
+                    RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
+
+                    sopdud.emit(stream);
+                }
+            );
+        }
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_allow_display_updates done");
+        }
+    }
+
+    void rdp_suppress_display_updates() override {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates");
+        }
+
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_pdu_type2(
+                PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
+                [](StreamSize<32>, OutStream & stream) {
+                    RDP::SuppressOutputPDUData sopdud;
+
+                    sopdud.emit(stream);
+                }
+            );
+        }
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::rdp_suppress_display_updates done");
+        }
+    }
 
     // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
     // =========================================================================
@@ -5389,11 +6078,11 @@ public:
                 mlen, dlen);
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
-        TODO("this is modifiying cursor in place: we should not do that.");
+        // TODO this is modifiying cursor in place: we should not do that.
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
 
-        this->front.server_set_pointer(cursor);
+        this->front.set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
@@ -5418,7 +6107,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
         }
 
-        TODO("Add check that the idx transmitted is actually an used pointer")
+        // TODO Add check that the idx transmitted is actually an used pointer
         uint16_t pointer_idx = stream.in_uint16_le();
         if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_ERR,
@@ -5428,14 +6117,14 @@ public:
         }
         struct Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
-            this->front.server_set_pointer(cursor);
+            this->front.set_pointer(cursor);
         }
         else {
             LOG(LOG_WARNING,
                 "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u",
                 pointer_idx);
             Pointer cursor(Pointer::POINTER_NORMAL);
-            this->front.server_set_pointer(cursor);
+            this->front.set_pointer(cursor);
         }
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -5466,13 +6155,13 @@ public:
             {
                 Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
             }
             break;
         default:
             {
                 Pointer cursor(Pointer::POINTER_NORMAL);
-                this->front.server_set_pointer(cursor);
+                this->front.set_pointer(cursor);
             }
             break;
         }
@@ -5481,15 +6170,16 @@ public:
         }
     }
 
-    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask, size_t mask_size) {
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
 
-        TODO("check code below: why do we revert mask and pointer when pointer is 1 BPP and not with other color depth ?"
-             " Looks fishy, a mask and pointer should always be encoded in the same way, not depending on color depth"
-             "difficult to see for symmetrical pointers... check documentation");
-        TODO("it may be more efficient to revert cursor after creating it instead of doing it on the fly")
+        /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
+         * and not with other color depth ? Looks fishy, a mask and pointer should always
+         * be encoded in the same way, not depending on color depth difficult to see for
+         * symmetrical pointers... check documentation it may be more efficient to revert
+         * cursor after creating it instead of doing it on the fly */
         switch (bpp) {
         case 1 :
         {
@@ -5510,7 +6200,7 @@ public:
         }
     }
 
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len) {
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
@@ -5541,8 +6231,8 @@ public:
             for (unsigned i = 0; i < dlen ; i++) {
                 BGRColor px = indata[i];
                 // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(data[6 * i]),     3, color_decode((px >> 4) & 0xF, bpp, this->orders.global_palette));
-                ::out_bytes_le(&(data[6 * i + 3]), 3, color_decode(px        & 0xF, bpp, this->orders.global_palette));
+                ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF]);
+                ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF]);
             }
         }
         break;
@@ -5630,11 +6320,13 @@ public:
         }
 
         if (!stream.in_check_rem(dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%u remain=%u)", dlen, stream.in_remain());
+            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%" PRIu16 " remain=%zu)",
+                dlen, stream.in_remain());
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
         if (!stream.in_check_rem(mlen + dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor mask (need=%u remain=%u)", mlen, stream.in_remain() - dlen);
+            LOG(LOG_ERR, "Not enough data for cursor mask (need=%" PRIu16 " remain=%zu)",
+                mlen, stream.in_remain() - dlen);
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
@@ -5646,9 +6338,9 @@ public:
         if ((mlen > sizeof(cursor.mask)) ||
             (out_data_len > sizeof(cursor.data))) {
             LOG(LOG_ERR,
-                "mod_rdp::Bad length for color pointer mask_len=%u "
-                    "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
-                unsigned(mlen), unsigned(dlen), cursor.width, cursor.height,
+                "mod_rdp::Bad length for color pointer mask_len=%" PRIu16 " "
+                    "data_len=%" PRIu16 " Width = %u Height = %u bpp = %u out_data_len = %zu nbbytes=%" PRIu8,
+                mlen, dlen, cursor.width, cursor.height,
                 data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
@@ -5659,32 +6351,35 @@ public:
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
 
-            for (unsigned i = 0 ; i < mlen; i++) {
-                uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
-                uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
-                data_data[i]    = new_data_data;
-                mask_data[i]    = new_mask_data;
+            if (this->bogus_linux_cursor == BogusLinuxCursor::enable) {
+                for (unsigned i = 0 ; i < mlen; i++) {
+                    uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                    uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                    data_data[i]    = new_data_data;
+                    mask_data[i]    = new_mask_data;
+                }
             }
 
-            TODO("move that into cursor")
-            this->to_regular_pointer(data_data, dlen, 1, cursor.data, sizeof(cursor.data));
-            this->to_regular_mask(mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
+            // TODO move that into cursor
+            this->to_regular_pointer(data_data, dlen, 1, cursor.data);
+            this->to_regular_mask(mask_data, mlen, 1, cursor.mask);
         }
         else {
-            TODO("move that into cursor")
-            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data, sizeof(cursor.data));
+            // TODO move that into cursor
+            this->to_regular_pointer(stream.get_current(), dlen, data_bpp, cursor.data);
             stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+            this->to_regular_mask(stream.get_current(), mlen, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
 
-        this->front.server_set_pointer(cursor);
+        this->front.set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
     }   // process_new_pointer_pdu
 
-    void process_bitmap_updates(InStream & stream, bool fast_path) {
+private:
+    void process_bitmap_updates(InStream & stream, bool fast_path, gdi::GraphicApi & drawable) {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
@@ -5722,7 +6417,7 @@ public:
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
         if (this->verbose & 64){
-            LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
+            LOG(LOG_INFO, "/* ---------------- Sending %zu rectangles ----------------- */", numberRectangles);
         }
 
         for (size_t i = 0; i < numberRectangles; i++) {
@@ -5796,7 +6491,9 @@ public:
 
             if (this->verbose & 64) {
                 LOG( LOG_INFO
-                     , "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */"
+                     , "/* Rect [%zu] bpp=%" PRIu16
+                       " width=%" PRIu16 " height=%" PRIu16
+                       " b(%" PRId16 ", %" PRId16 ", %" PRIu16 ", %" PRIu16 ") */"
                      , i
                      , bmpdata.bits_per_pixel
                      , bmpdata.width
@@ -5819,7 +6516,8 @@ public:
             if (bmpdata.flags & BITMAP_COMPRESSION) {
                 if ((bmpdata.width <= 0) || (bmpdata.height <= 0)) {
                     LOG( LOG_WARNING
-                         , "Unexpected bitmap size: width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u"
+                         , "Unexpected bitmap size: width=%" PRIu16 " height=%" PRIu16 " size=%" PRIu16
+                           " left=%" PRIu16 ", top=%" PRIu16 ", right=%" PRIu16 ", bottom=%" PRIu16
                          , bmpdata.width
                          , bmpdata.height
                          , bmpdata.cb_comp_main_body_size
@@ -5831,7 +6529,7 @@ public:
                 }
             }
 
-            TODO("CGR: check which sanity checks should be done");
+            // TODO CGR: check which sanity checks should be done
                 //            if (bufsize != bitmap.bmp_size){
                 //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                 //                    bufsize, bitmap.bmp_size, width, height, bpp);
@@ -5850,7 +6548,7 @@ public:
             if (   bmpdata.cb_scan_width
                    && ((bmpdata.cb_scan_width - bitmap.line_size()) >= nbbytes(bitmap.bpp()))) {
                 LOG( LOG_WARNING
-                     , "Bad line size: line_size=%u width=%u height=%u bpp=%u"
+                     , "Bad line size: line_size=%" PRIu16 " width=%" PRIu16 " height=%" PRIu16 " bpp=%" PRIu16
                      , bmpdata.cb_scan_width
                      , bmpdata.width
                      , bmpdata.height
@@ -5861,7 +6559,8 @@ public:
             if (   bmpdata.cb_uncompressed_size
                    && (bmpdata.cb_uncompressed_size != bitmap.bmp_size())) {
                 LOG( LOG_WARNING
-                     , "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u"
+                     , "final_size should be size of decompressed bitmap [%" PRIu16 " != %zu]"
+                       " width=%" PRIu16 " height=%" PRIu16 " bpp=%" PRIu16
                      , bmpdata.cb_uncompressed_size
                      , bitmap.bmp_size()
                      , bmpdata.width
@@ -5870,38 +6569,37 @@ public:
                      );
             }
 
-            this->gd->draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+            drawable.draw(bmpdata, bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
         }
     }   // process_bitmap_updates
 
-    void send_client_info_pdu(int userid, const char * password) {
+    void send_client_info_pdu(const time_t & now) {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
-
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
                              , this->username
-                             , password
+                             , this->password
                              , this->program
                              , this->directory
                              , this->performanceFlags
                              , this->clientAddr
                              );
-
+        infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this, password, &infoPacket](StreamSize<1024>, OutStream & stream) {
-                if (this->rdp_compression) {
+            [this, &infoPacket](StreamSize<1024>, OutStream & stream) {
+                if (bool(this->rdp_compression)) {
                     infoPacket.flags |= INFO_COMPRESSION;
                     infoPacket.flags &= ~CompressionTypeMask;
-                    infoPacket.flags |= ((this->rdp_compression - 1) << 9);
+                    infoPacket.flags |= (static_cast<unsigned>(this->rdp_compression) - 1) << 9;
                 }
 
-                if (this->enable_wab_agent) {
+                if (this->enable_session_probe) {
                     infoPacket.flags &= ~INFO_MAXIMIZESHELL;
                 }
 
@@ -5910,146 +6608,30 @@ public:
                 }
 
                 infoPacket.emit(stream);
+
             },
             write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
         );
-
         if (this->verbose & 1) {
-            infoPacket.log("Send data request", this->password_printing_mode, !this->enable_wab_agent);
+            infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
         }
 
-        if (this->open_session_timeout) {
+        if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker.restart_timeout(
-                time(nullptr), this->open_session_timeout);
+                now, this->open_session_timeout.count());
             this->event.set(1000000);
         }
-
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
         }
     }
 
-    void begin_update() override {
-        this->front.begin_update();
-    }
-
-    void end_update() override {
-        this->front.end_update();
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip,
-                      const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip,
-                      const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-                      const GlyphCache * gly_cache) override {
-        this->front.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-
-    void draw(const RDPPolyline& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void server_set_pointer(const Pointer & cursor) override {
-        this->front.server_set_pointer(cursor);
-    }
-
-    void draw(const RDPColCache & cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-                      size_t size, const Bitmap & bmp) override {
-        this->front.draw(bitmap_data, data, size, bmp);
-    }
-
-    void draw(const RDPBrushCache & cmd) override {
-        this->front.draw(cmd);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->front.draw(order);
-    }
-
+public:
     bool is_up_and_running() override {
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
+private:
     void disconnect() override {
         if (this->is_up_and_running()) {
             if (this->verbose & 1){
@@ -6060,7 +6642,7 @@ public:
             this->send_disconnect_ultimatum();
         }
         if (this->acl) {
-            this->acl->log("CNT event", "SESSION_ENDED");
+            this->acl->log4(false, "SESSION_ENDED_BY_PROXY");
         }
     }
 
@@ -6108,8 +6690,12 @@ public:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    void process_auth_event(const CHANNELS::ChannelDef & auth_channel,
-            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+    void process_auth_event(
+        const CHANNELS::ChannelDef & auth_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)length;
+        (void)chunk_size;
         REDASSERT(stream.in_remain() == chunk_size);
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
@@ -6124,167 +6710,26 @@ public:
         }
     }
 
-    void process_wab_agent_event(const CHANNELS::ChannelDef & wab_agent_channel,
-            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
-        REDASSERT(stream.in_remain() == chunk_size);
+    void process_session_probe_event(
+        const CHANNELS::ChannelDef & session_probe_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)session_probe_channel;
+        BaseVirtualChannel& channel = this->get_session_probe_virtual_channel();
 
-        uint16_t message_length = stream.in_uint16_le();
-        REDASSERT(message_length == stream.in_remain());
-        (void)message_length; // disable -Wunused-variable if REDASSERT is disable
-        std::string wab_agent_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        while (wab_agent_channel_message.back() == '\0') wab_agent_channel_message.pop_back();
+        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
+            out_asynchronous_task);
 
-        if (!wab_agent_channel_message.compare("Request=Get startup application")) {
-            if (this->verbose & 1) {
-                LOG(LOG_INFO, "Agent channel data=\"%s\"", wab_agent_channel_message.c_str());
-            }
-
-            if (this->verbose & 1) {
-                LOG(LOG_INFO, "Agent is ready.");
-            }
-
-            if (this->enable_wab_agent_loading_mask && this->front.disable_input_event_and_graphics_update(false)) {
-                if (this->verbose & 1) {
-                    LOG(LOG_INFO, "Force full screen update. Rect=(0, 0, %u, %u)",
-                        this->front_width, this->front_height);
-                }
-                this->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
-            }
-
-            this->wab_agent_is_ready = true;
-
-            FileSystemVirtualChannel& file_system_virtual_channel =
-                this->get_file_system_virtual_channel();
-
-            this->file_system_drive_manager.DisableWABAgentDrive(
-                file_system_virtual_channel.to_server_sender,
-                this->verbose);
-
-            {
-                StaticOutStream<32768> out_s;
-
-                const size_t message_length_offset = out_s.get_offset();
-                out_s.out_clear_bytes(sizeof(uint16_t));
-
-                {
-                    char cstr[] = "StartupApplication=";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
-                }
-
-                if (this->real_alternate_shell.empty()) {
-                    char cstr[] = "[Windows Explorer]";
-                    out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
-                }
-                else {
-                    if (!this->real_working_dir.empty()) {
-                        out_s.out_copy_bytes(this->real_working_dir.data(), this->real_working_dir.size());
-                    }
-                    out_s.out_uint8('|');
-                    out_s.out_copy_bytes(this->real_alternate_shell.data(), this->real_alternate_shell.size());
-                }
-                out_s.out_clear_bytes(1);   // Null character
-
-                out_s.set_out_uint16_le(
-                    out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                    message_length_offset);
-
-                this->send_to_channel(
-                    wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
-                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                );
-            }
-
-
-            this->wab_agent_event.reset();
-
-            if (this->wab_agent_keepalive_timeout > 0) {
-                {
-                    StaticOutStream<1024> out_s;
-
-                    const size_t message_length_offset = out_s.get_offset();
-                    out_s.out_clear_bytes(sizeof(uint16_t));
-
-                    {
-                        char cstr[] = "Request=Keep-Alive";
-                        out_s.out_copy_bytes(cstr, sizeof(cstr)/sizeof(cstr[0]) - 1);
-                    }
-                    out_s.out_clear_bytes(1);   // Null character
-
-                    out_s.set_out_uint16_le(
-                        out_s.get_offset() - message_length_offset - sizeof(uint16_t),
-                        message_length_offset);
-
-                    this->send_to_channel(
-                        wab_agent_channel, out_s.get_data(), out_s.get_offset(), out_s.get_offset(),
-                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST
-                    );
-                }
-
-                this->wab_agent_event.set(this->wab_agent_keepalive_timeout * 1000);
-            }
-        }
-        else if (!wab_agent_channel_message.compare("KeepAlive=OK")) {
-            if (this->verbose & 0x10000) {
-                LOG(LOG_INFO, "Recevied Keep-Alive from Agent.");
-            }
-            this->wab_agent_keep_alive_received = true;
-        }
-        else {
-            const char * message   = wab_agent_channel_message.c_str();
-            const char * separator = ::strchr(message, '=');
-
-            if (separator) {
-                std::string order(message, separator - message);
-                std::string parameters(separator + 1);
-
-                if (this->verbose & 1) {
-                    LOG(LOG_INFO,
-                        "mod_rdp::process_wab_agent_event: order=\"%s\" parameters=\"%s\"",
-                        order.c_str(), parameters.c_str());
-                }
-
-                if (!order.compare("FocusOnPasswordTextBox")) {
-                    this->front.focus_changed(!parameters.compare("yes"));
-                }
-                else if (!order.compare("InputLanguage")) {
-                    this->front.set_keylayout(::strtol(parameters.c_str(), nullptr, 16));
-                }
-                else if (!order.compare("NewProcess")) {
-                }
-                else if (!order.compare("ProcessName")) {
-                }
-                else if (!order.compare("WindowText")) {
-                }
-                else if (!order.compare("WindowText")) {
-                }
-                else if (!order.compare("Button.Clicked")) {
-                }
-                else if (!order.compare("Edit.Changed")) {
-                }
-                else {
-                    LOG(LOG_WARNING, "mod_rdp::process_wab_agent_event: Unexpected order.");
-                }
-
-                bool contian_window_title = false;
-                this->front.session_update(wab_agent_channel_message.c_str(),
-                    contian_window_title);
-
-                if (!contian_window_title && this->acl) {
-                    this->acl->log2("AGT event", order.c_str(), parameters.c_str());
-                }
-            }
-            else {
-                LOG(LOG_WARNING,
-                    "mod_rdp::process_wab_agent_event: Invalid message format. Agent channel data=\"%s\"",
-                    message);
-            }
-        }
+        REDASSERT(!out_asynchronous_task);
     }
 
     void process_cliprdr_event(
-            const CHANNELS::ChannelDef & cliprdr_channel, InStream & stream,
-            uint32_t length, uint32_t flags, size_t chunk_size) {
+        const CHANNELS::ChannelDef & cliprdr_channel, InStream & stream,
+        uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)cliprdr_channel;
         BaseVirtualChannel& channel = this->get_clipboard_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
@@ -6318,7 +6763,7 @@ public:
         );
     }
 
-    void process_rdpdr_event(const CHANNELS::ChannelDef & rdpdr_channel,
+    void process_rdpdr_event(const CHANNELS::ChannelDef &,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
@@ -6351,6 +6796,39 @@ public:
             this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
         }
     }
+
+    void do_enable_session_probe() {
+        if (this->enable_session_probe) {
+            ClipboardVirtualChannel& cvc =
+                this->get_clipboard_virtual_channel();
+            cvc.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
+            FileSystemVirtualChannel& fsvc =
+                this->get_file_system_virtual_channel();
+            fsvc.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
+            this->file_system_drive_manager.set_session_probe_launcher(
+                this->session_probe_launcher.get());
+
+            SessionProbeVirtualChannel& spvc =
+                this->get_session_probe_virtual_channel();
+            spvc.set_session_probe_launcher(this->session_probe_launcher.get());
+            this->session_probe_virtual_channel_p = &spvc;
+            if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                spvc.start_launch_timeout_timer();
+            }
+
+            if (this->session_probe_launcher) {
+                this->session_probe_launcher->set_clipboard_virtual_channel(
+                    &cvc);
+
+                this->session_probe_launcher->set_session_probe_virtual_channel(
+                    this->session_probe_virtual_channel_p);
+            }
+        }
+    }
+
 };
 
-#endif

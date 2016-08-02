@@ -18,14 +18,17 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_CHUNKTOFILE_HPP_
-#define _REDEMPTION_CAPTURE_CHUNKTOFILE_HPP_
+
+#pragma once
 
 #include "RDPChunkedDevice.hpp"
-#include "compression_transport_wrapper.hpp"
-#include "config.hpp"
+#include "utils/compression_transport_wrapper.hpp"
+#include "configs/config.hpp"
 #include "wrm_label.hpp"
 #include "send_wrm_chunk.hpp"
+
+#include "utils/sugar/compiler_attributes.hpp"
+#include "capture/utils/save_state_chunk.hpp"
 
 struct ChunkToFile : public RDPChunkedDevice {
 private:
@@ -36,6 +39,8 @@ private:
     const Inifile & ini;
 
     const uint8_t wrm_format_version;
+
+    uint16_t info_version = 0;
 
 public:
     ChunkToFile(Transport * trans
@@ -70,11 +75,11 @@ public:
     , trans_target(*trans)
     , trans(this->compression_wrapper.get())
     , ini(ini)
-    , wrm_format_version(this->compression_wrapper.get_index_algorithm() ? 4 : 3)
+    , wrm_format_version(bool(this->compression_wrapper.get_algorithm()) ? 4 : 3)
     {
-        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_index_algorithm()) {
+        if (this->ini.get<cfg::video::wrm_compression_algorithm>() != this->compression_wrapper.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
-               , this->ini.get<cfg::video::wrm_compression_algorithm>());
+               , static_cast<unsigned>(this->ini.get<cfg::video::wrm_compression_algorithm>()));
         }
 
         send_meta_chunk(
@@ -105,7 +110,7 @@ public:
           , info_cache_4_size
           , info_cache_4_persistent
 
-          , this->compression_wrapper.get_index_algorithm()
+          , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
         );
     }
 
@@ -114,7 +119,7 @@ public:
         switch (chunk_type) {
         case META_FILE:
             {
-                uint16_t info_version               = stream.in_uint16_le();
+                this->info_version                  = stream.in_uint16_le();
                 uint16_t info_width                 = stream.in_uint16_le();
                 uint16_t info_height                = stream.in_uint16_le();
                 uint16_t info_bpp                   = stream.in_uint16_le();
@@ -139,7 +144,7 @@ public:
                 uint16_t info_cache_4_size          = 0;
                 bool     info_cache_4_persistent    = false;
 
-                if (info_version > 3) {
+                if (this->info_version > 3) {
                     info_number_of_cache            = stream.in_uint8();
                     info_use_waiting_list           = (stream.in_uint8() ? true : false);
 
@@ -188,8 +193,23 @@ public:
                   , info_cache_4_size
                   , info_cache_4_persistent
 
-                  , this->compression_wrapper.get_index_algorithm()
+                  , static_cast<unsigned>(this->compression_wrapper.get_algorithm())
                 );
+            }
+            break;
+
+        case SAVE_STATE:
+            {
+                SaveStateChunk ssc;
+
+                ssc.recv(stream, this->info_version);
+
+                StaticOutStream<65536> payload;
+
+                ssc.send(payload);
+
+                send_wrm_chunk(this->trans, SAVE_STATE, payload.get_offset(), chunk_count);
+                this->trans.send(payload.get_data(), payload.get_offset());
             }
             break;
 
@@ -206,6 +226,7 @@ public:
                 stream.in_timeval_from_uint64le_usec(record_now);
                 this->trans_target.timestamp(record_now);
             }
+            CPP_FALLTHROUGH;
         default:
             {
                 send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);
@@ -216,4 +237,3 @@ public:
     }
 };
 
-#endif

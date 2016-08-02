@@ -24,11 +24,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestCapabilityGeneral
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/capabilities/general.hpp"
+#include "core/RDP/capabilities/general.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
 {
@@ -69,8 +69,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     BOOST_CHECK_EQUAL(general_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_GENERAL));
     BOOST_CHECK_EQUAL(general_caps2.len, static_cast<uint16_t>(CAPLEN_GENERAL));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_GENERAL, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_GENERAL, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_GENERAL), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_GENERAL), stream.in_uint16_le());
 
     general_caps2.recv(stream, CAPLEN_GENERAL);
 

@@ -25,12 +25,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestLibPng
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 
 #define LOGNULL
 
-#include "png.hpp"
+#include "utils/png.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
 {
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
 
         uint8_t * row_pointers[128];
         for (uint32_t row = 0; row < height; row++){
-            row_pointers[row] = (uint8_t*)png_malloc(ppng, png_get_rowbytes(ppng, pinfo));
+            row_pointers[row] = static_cast<uint8_t*>(png_malloc(ppng, png_get_rowbytes(ppng, pinfo)));
         }
         png_read_image(ppng, row_pointers);
 

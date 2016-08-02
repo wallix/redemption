@@ -21,11 +21,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_SURFACECOMMANDS_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_SURFACECOMMANDS_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.7.2.9 Surface Commands Capability Set (TS_SURFCMDS_CAPABILITYSET)
 //======================================================================
@@ -92,11 +92,10 @@ struct SurfaceCommandsCaps : public Capability {
         this->reserved = stream.in_uint32_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg) override {
         LOG(LOG_INFO, "%s SurfaceCommands caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "SurfaceCommands caps::cmdFlags %u", this->cmdFlags);
         LOG(LOG_INFO, "SurfaceCommands caps::reserved %u", this->reserved);
     }
 };
 
-#endif

@@ -27,15 +27,20 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_GCC_HPP_
-#define _REDEMPTION_CORE_RDP_GCC_HPP_
 
-#include "stream.hpp"
-#include "RDP/out_per_bstream.hpp"
-#include "ssl_calls.hpp"
+#pragma once
+
+#include "core/RDP/out_per_bstream.hpp"
+#include "system/ssl_calls.hpp"
+#include "utils/crypto/ssl_lib.hpp"
+#include "utils/rect.hpp"
+#include "utils/stream.hpp"
+#include "core/error.hpp"
+
+#include <cinttypes>
 
 enum DATA_BLOCK_TYPE {
-    //  The data block that follows contains Client Core Data (section 2.2.1.3.2).
+    // The data block that follows contains Client Core Data (section 2.2.1.3.2).
     CS_CORE = 0xC001,
     // The data block that follows contains Client Security Data (section 2.2.1.3.3).
     CS_SECURITY = 0xC002,
@@ -45,6 +50,10 @@ enum DATA_BLOCK_TYPE {
     CS_CLUSTER = 0xC004,
     // The data block that follows contains Client Monitor Data (section 2.2.1.3.6).
     CS_MONITOR = 0xC005,
+    // The data block that follows contains Client Message Channel Data (section 2.2.1.3.7).
+    CS_MCS_MSGCHANNEL = 0xC006,
+    // The data block that follows contains Client Multitransport Channel Data (section 2.2.1.3.8).
+    CS_MULTITRANSPORT = 0xC00A,
     // The data block that follows contains Server Core Data (section 2.2.1.4.2).
     SC_CORE = 0x0C01,
     // The data block that follows contains Server Security Data (section 2.2.1.4.3).
@@ -244,7 +253,7 @@ namespace GCC
         explicit Create_Request_Recv(InStream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.get_capacity());
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %zu)", stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
 
@@ -271,7 +280,7 @@ namespace GCC
                 }
 
                 if (length != stream.in_remain()){
-                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.in_remain());
+                    LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %" PRIu16 " %zu", length, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
                 return InStream(stream.get_current(), stream.in_remain());
@@ -474,14 +483,14 @@ namespace GCC
         explicit Create_Response_Recv(InStream & stream)
             : payload([&stream](){
                 if (!stream.in_check_rem(23)){
-                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.get_capacity());
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %zu)", stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
-                TODO("We should actually read and decode data here. Merely skipping the block is evil")
+                // TODO We should actually read and decode data here. Merely skipping the block is evil
                 stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
                 size_t length = stream.in_2BUE();
                 if (length != stream.in_remain()){
-                    LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
+                    LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %zu %zu",
                         length, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -546,10 +555,10 @@ namespace GCC
             }())
             , length(stream.in_uint16_le())
             , payload([&stream, this](){
-                LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
+                LOG(LOG_INFO, "GCC::UserData tag=%.4x length=%u", tag, length);
                 if (!stream.in_check_rem(length - 4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
-                                     " tag=%u length=%u available_length=%u",
+                                     " tag=%" PRIu16 " length=%" PRIu16 " available_length=%zu",
                                      tag, length, stream.get_capacity() - 4);
                     throw Error(ERR_GCC);
                 }
@@ -1147,7 +1156,7 @@ namespace GCC
                 this->pad1octet = stream.in_uint8();
                 if (this->length < 216) { return; }
                 this->serverSelectedProtocol = stream.in_uint32_le();
-                TODO("Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2");
+                // TODO Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2
 
             }
 
@@ -1600,7 +1609,7 @@ namespace GCC
 
             void recv(InStream & stream) {
                 if (!stream.in_check_rem(4)) {
-                    LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%u",
+                    LOG(LOG_ERR, "CSMonitor::recv short header, need=4 remains=%zu",
                         stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -1608,8 +1617,8 @@ namespace GCC
                 this->userDataType = stream.in_uint16_le();
                 this->length       = stream.in_uint16_le();
 
-                if (!stream.in_check_rem(4)) {
-                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=4 remains=%u",
+                if (!stream.in_check_rem(8)) {
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=8 remains=%zu",
                         stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -1637,7 +1646,7 @@ namespace GCC
 
                 expected = this->monitorCount * 20;    // monitorCount * monitorDefArray(20)
                 if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=%u remains=%u",
+                    LOG(LOG_ERR, "GCC User Data CS_MONITOR truncated, need=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -1677,7 +1686,45 @@ namespace GCC
                 snprintf(buffer + lg, sizeof(buffer) - lg, ")");
 
                 buffer[sizeof(buffer) - 1] = 0;
-                LOG(LOG_INFO, buffer);
+                LOG(LOG_INFO, "%s", buffer);
+            }
+
+            Rect get_rect() const {
+                int32_t left   = 0;
+                int32_t top    = 0;
+                int32_t right  = 0;
+                int32_t bottom = 0;
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    if (left   > this->monitorDefArray[i].left) {
+                        left   = this->monitorDefArray[i].left;
+                    }
+                    if (top    > this->monitorDefArray[i].top) {
+                        top    = this->monitorDefArray[i].top;
+                    }
+                    if (right  < this->monitorDefArray[i].right) {
+                        right  = this->monitorDefArray[i].right;
+                    }
+                    if (bottom < this->monitorDefArray[i].bottom) {
+                        bottom = this->monitorDefArray[i].bottom;
+                    }
+                }
+
+                return Rect(left, top, right - left, bottom - top);
+            }
+
+            Rect get_primary_monitor_rect() const {
+                for (uint32_t i = 0; i < this->monitorCount; i++) {
+                    if (this->monitorDefArray[i].flags & TS_MONITOR_PRIMARY) {
+                        return Rect(this->monitorDefArray[i].left,
+                                    this->monitorDefArray[i].top,
+                                    this->monitorDefArray[i].right -
+                                        this->monitorDefArray[i].left,
+                                    this->monitorDefArray[i].bottom -
+                                        this->monitorDefArray[i].top);
+                    }
+                }
+
+                return Rect(0, 0, 0, 0);
             }
         };
 
@@ -1841,9 +1888,9 @@ namespace GCC
 
                 for (size_t i = 0; i < this->channelCount ; i++){
                     uint32_t options = channelDefArray[i].options;
-                    LOG(LOG_INFO, "cs_net::channel '%*s' [%u]%s%s%s%s%s%s%s%s"
+                    LOG(LOG_INFO, "cs_net::channel '%*s' [%zu]%s%s%s%s%s%s%s%s"
                         , 8
-                        , channelDefArray[i].name, GCC::MCS_GLOBAL_CHANNEL + i + 1
+                        , channelDefArray[i].name, GCC::MCS_GLOBAL_CHANNEL + i + 1u
                         , (options & CHANNEL_OPTION_INITIALIZED)?" INITIALIZED":""
                         , (options & CHANNEL_OPTION_PRI_HIGH)?" PRI_HIGH":""
                         , (options & CHANNEL_OPTION_PRI_MED)?" PRI_MED":""
@@ -1900,7 +1947,6 @@ namespace GCC
 
         struct SCNet {
             uint16_t userDataType;
-            uint16_t length;
             uint16_t MCSChannelId;
             uint16_t channelCount;
             struct {
@@ -1909,7 +1955,6 @@ namespace GCC
 
             SCNet()
             : userDataType(SC_NET)
-            , length(12)
             , MCSChannelId(GCC::MCS_GLOBAL_CHANNEL)
             , channelCount(0)
             {
@@ -1917,9 +1962,9 @@ namespace GCC
 
             void emit(OutStream & stream)
             {
-                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
+                uint16_t const length = 8 + 4 * ((this->channelCount+1) >> 1);
                 stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);
+                stream.out_uint16_le(length);
                 stream.out_uint16_le(this->MCSChannelId);
                 stream.out_uint16_le(this->channelCount);
                 for (size_t i = 0; i < this->channelCount ; i++){
@@ -1938,21 +1983,21 @@ namespace GCC
                 }
 
                 this->userDataType = stream.in_uint16_le();
-                this->length = stream.in_uint16_le();
+                uint16_t const length = stream.in_uint16_le();
 
-                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
-                    LOG(LOG_ERR, "SCNet::recv bad header length=%d size=%d", this->length, stream.get_capacity());
+                if (length < 8 || !stream.in_check_rem(length - 4)){
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%" PRIu16 " size=%zu", length, stream.get_capacity());
                     throw Error(ERR_GCC);
                 }
 
                 this->MCSChannelId = stream.in_uint16_le();
                 this->channelCount = stream.in_uint16_le();
 
-                if (!this->channelCount && (this->length == 10) && bogus_sc_net_size) {
+                if (!this->channelCount && (length == 10) && bogus_sc_net_size) {
                     LOG(LOG_WARNING, "SCNet::recv accepts VirtualBox bogus TS_UD_SC_NET data block.");
                 }
-                else if (this->length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
-                    LOG(LOG_ERR, "SCNet::recv bad header length=%d", this->length);
+                else if (length != (((this->channelCount + (this->channelCount & 1)) << 1) + 8)) {
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%d", length);
                     throw Error(ERR_GCC);
                 }
 
@@ -1971,13 +2016,13 @@ namespace GCC
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
-                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
-                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, this->length);
+                uint16_t const length = 8 + 4 * ((this->channelCount+1) >> 1);
+                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, length);
                 LOG(LOG_INFO, "sc_net::MCSChannelId   = %u", this->MCSChannelId);
                 LOG(LOG_INFO, "sc_net::channelCount   = %u", this->channelCount);
 
                 for (size_t i = 0; i < this->channelCount ; i++){
-                    LOG(LOG_INFO, "sc_net::channel[%u]::id = %u"
+                    LOG(LOG_INFO, "sc_net::channel[%zu]::id = %" PRIu16
                         , GCC::MCS_GLOBAL_CHANNEL + i + 1
                         , this->channelDefArray[i].id
                         );
@@ -2301,7 +2346,7 @@ namespace GCC
             };
             uint32_t encryptionLevel;
             uint32_t serverRandomLen;
-            uint8_t serverRandom[32];
+            uint8_t serverRandom[SEC_RANDOM_SIZE];
 
             uint32_t serverCertLen;
 
@@ -2429,7 +2474,7 @@ namespace GCC
             , length(236)
             , encryptionMethod(0)
             , encryptionLevel(0) // crypt level 0 = none, 1 = low 2 = medium, 3 = high
-            , serverRandomLen(32)
+            , serverRandomLen(SEC_RANDOM_SIZE)
             , serverCertLen(184)
             , dwVersion(CERT_CHAIN_VERSION_1)
             , temporary(false)
@@ -2561,7 +2606,7 @@ namespace GCC
                 }
 
                 if (!stream.in_check_rem(this->serverCertLen)) {
-                    LOG(LOG_ERR, "SCSecutity recv: serverCertLen %d, not enough data available (%u)",
+                    LOG(LOG_ERR, "SCSecutity recv: serverCertLen %" PRIu32 ", not enough data available (%zu)",
                          this->serverCertLen, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
@@ -2814,8 +2859,55 @@ namespace GCC
 // (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MCS_MSGCHANNEL
 // (0xC006).
 
-//   flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
+//    flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
 // future use. It MUST be set to zero.
+
+struct CSMCSMsgChannel {
+    uint16_t userDataType;
+    uint16_t length;
+
+    uint32_t flags;
+
+    CSMCSMsgChannel()
+    : userDataType(CS_MCS_MSGCHANNEL)
+    , length(8)
+    , flags(0)
+    {
+    }
+
+    void emit(OutStream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->flags);
+    }
+
+    void recv(InStream & stream)
+    {
+        //LOG(LOG_INFO, "CSMCSMsgChannel");
+        //hexdump_c(stream.get_current(), 8);
+        if (!stream.in_check_rem(8)){
+            LOG(LOG_ERR, "CS_MCS_MSGCHANNEL short header");
+            throw Error(ERR_GCC);
+        }
+        this->userDataType         = stream.in_uint16_le();
+        this->length               = stream.in_uint16_le();
+
+        if (this->length != 8){
+            LOG(LOG_ERR, "CS_MCS_MSGCHANNEL bad header length=%d", this->length);
+            throw Error(ERR_GCC);
+        }
+
+        this->flags = stream.in_uint32_le();
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_MCS_MSGCHANNEL (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "CSMCSMsgChannel::flags %u", this->flags);
+    }
+};
 
 // 2.2.1.3.8 Client Multitransport Channel Data (TS_UD_CS_MULTITRANSPORT)
 // ======================================================================
@@ -2842,6 +2934,60 @@ namespace GCC
 // |TRANSPORTTYPE_UDP_PREFERRED | Indicates that tunneling of static virtual channel traffic |
 // | 0x100                      | over UDP is supported.                                     |
 // +----------------------------+------------------------------------------------------------+
+
+struct CSMultiTransport {
+    enum {
+          TRANSPORTTYPE_UDPFECR       = 0x01
+        , TRANSPORTTYPE_UDPFECL       = 0x04
+        , TRANSPORTTYPE_UDP_PREFERRED = 0x100
+        , SOFTSYNC_TCP_TO_UDP         = 0x200
+    };
+
+    uint16_t userDataType;
+    uint16_t length;
+
+    uint32_t flags;
+
+    CSMultiTransport()
+    : userDataType(CS_MULTITRANSPORT)
+    , length(8)
+    , flags(0)
+    {
+    }
+
+    void emit(OutStream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->flags);
+    }
+
+    void recv(InStream & stream)
+    {
+        //LOG(LOG_INFO, "CSMultiTransport");
+        //hexdump_c(stream.get_current(), 8);
+        if (!stream.in_check_rem(8)){
+            LOG(LOG_ERR, "CS_MULTITRANSPORT short header");
+            throw Error(ERR_GCC);
+        }
+        this->userDataType         = stream.in_uint16_le();
+        this->length               = stream.in_uint16_le();
+
+        if (this->length != 8){
+            LOG(LOG_ERR, "CS_MULTITRANSPORT bad header length=%d", this->length);
+            throw Error(ERR_GCC);
+        }
+
+        this->flags = stream.in_uint32_le();
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_MULTITRANSPORT (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "CSMultiTransport::flags %u", this->flags);
+    }
+};
 
 // 2.2.1.3.9 Client Monitor Extended Data (TS_UD_CS_MONITOR_EX)
 // ============================================================
@@ -2873,5 +3019,3 @@ namespace GCC
 
     } /* namespace UserData */
 } /* namespace GCC */
-
-#endif

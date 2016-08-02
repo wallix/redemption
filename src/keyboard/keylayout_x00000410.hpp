@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000410_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000410_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00000410 {    // Italian (Italy) // Italian
 
 const static int LCID = 0x00000410;
+
+const static char * const locale_name = "it-IT";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00000410
 
 static const Keylayout keylayout_x00000410( x00000410::LCID
+                                          , x00000410::locale_name
                                           , x00000410::noMod
                                           , x00000410::shift
                                           , x00000410::altGr
@@ -221,4 +224,3 @@ static const Keylayout keylayout_x00000410( x00000410::LCID
                                           , x00000410::nbDeadkeys
 );
 
-#endif

@@ -18,11 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_TIMEOUT_HPP_
-#define _REDEMPTION_UTILS_TIMEOUT_HPP_
 
-template<typename T> class TimeoutT {
-    T timeout;
+#pragma once
+
+class Timeout {
+    time_t timeout;
 
 public:
     typedef enum {
@@ -31,10 +31,10 @@ public:
         TIMEOUT_INACTIVE
     } timeout_result_t;
 
-    explicit TimeoutT(T now, T length = 0)
-        : timeout(length ? (now + length) : static_cast<T>(0)) {}
+    explicit Timeout(time_t now, time_t length = 0)
+        : timeout(length ? (now + length) : static_cast<time_t>(0)) {}
 
-    timeout_result_t check(T now) const {
+    timeout_result_t check(time_t now) const {
         if (this->timeout) {
             if (now > this->timeout) {
                 return TIMEOUT_REACHED;
@@ -50,7 +50,7 @@ public:
     //    return (this->timeout == 0);
     //}
 
-    T timeleft(T now) const {
+    time_t timeleft(time_t now) const {
         return (this->timeout - now);
     }
 
@@ -58,7 +58,7 @@ public:
         this->timeout = 0;
     }
 
-    void restart_timeout(T now, T length) {
+    void restart_timeout(time_t now, time_t length) {
         this->timeout = now + length;
     }
 };
@@ -124,7 +124,7 @@ static inline timeval operator-(timeval const & endtime, timeval const & startti
         result.tv_usec = endtime.tv_usec - starttime.tv_usec;
     }
     else {
-        result.tv_usec--;
+        result.tv_sec--;
 
         result.tv_usec = 1000000LL - starttime.tv_usec + endtime.tv_usec;
     }
@@ -146,4 +146,3 @@ static inline timeval operator+(timeval const & a, timeval const & b) {
     return result;
 }
 
-#endif  // #ifndef _REDEMPTION_UTILS_TIMEOUT_HPP_

@@ -24,9 +24,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderScrBlt
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+//#define LOGPRINT
+#define LOGNULL
+
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 
 #include "test_orders.hpp"
 
@@ -65,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(0, 0, 10, 10), 0, 0, 0);
         cmd.receive(in_stream, header);
@@ -107,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(0, 0, 10, 10), 0, 0, 0);
         cmd.receive(in_stream, header);
@@ -148,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(310, 390, 10, 10), 0xFF, 110, 140);
         cmd.receive(in_stream, header);
@@ -188,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)SCREENBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(SCREENBLT), common_cmd.order);
 
         RDPScrBlt cmd(Rect(310, 390, 10, 10), 0xFF, 110, 140);
         cmd.receive(in_stream, header);

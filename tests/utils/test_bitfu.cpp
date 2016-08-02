@@ -24,13 +24,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitFu
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
+#include "utils/bitfu.hpp"
 
-#include "bitfu.hpp"
-
-//#include "rdtsc.hpp"
+//#include "utils/rdtsc.hpp"
 //long long ustime() {
 //    struct timeval now;
 //    gettimeofday(&now, nullptr);

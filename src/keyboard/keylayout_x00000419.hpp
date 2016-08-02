@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000419_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000419_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00000419 {    // Russian (Russia) // Russian
 
 const static int LCID = 0x00000419;
+
+const static char * const locale_name = "ru-RU";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -208,6 +210,7 @@ const static uint8_t nbDeadkeys = 0;
 } // END NAMESPACE - x00000419
 
 static const Keylayout keylayout_x00000419( x00000419::LCID
+                                          , x00000419::locale_name
                                           , x00000419::noMod
                                           , x00000419::shift
                                           , x00000419::altGr
@@ -221,4 +224,3 @@ static const Keylayout keylayout_x00000419( x00000419::LCID
                                           , x00000419::nbDeadkeys
 );
 
-#endif

@@ -22,17 +22,19 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestNego
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "log.hpp"
-#include "RDP/nego.hpp"
-#include "test_transport.hpp"
+//#define LOGPRINT
+
+#include "utils/log.hpp"
+#include "core/RDP/nego.hpp"
+#include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNego)
 {
     LOG(LOG_INFO, "============= Test Nego Client Side ===========");
-    const char client[65000] =
+    const char client[] =
 // RDP Negotiation Request
 /* 0000 */ "\x03\x00\x00\x2a\x25\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...*%......Cooki
 /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x74\x65\x73\x74" //e: mstshash=test
@@ -76,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
 
         ;
 
-    const char server[65000] =
+    const char server[] =
 // RDP Negotiation Response
 /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x02" //................
 /* 0010 */ "\x00\x00\x00"                                                     //...
@@ -98,17 +100,30 @@ BOOST_AUTO_TEST_CASE(TestNego)
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
 
         ;
-    TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
-    logtrans.set_public_key((const uint8_t*)"1245789652325415", 16);
+    TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
+    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";
-    char pass[] = "Pénélope";
+    char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
-    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false);
-    nego.test = true;
+    LCGRandom rand(0);
+    LCGTime timeobj;
+    NullServerNotifier null_server_notifier;
+    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand, timeobj);
     nego.set_identity(user, domain, pass, host);
-    nego.server_event(true, "/tmp/certif");
-    nego.server_event(true, "/tmp/certif");
+    const bool server_cert_store = true;
+    nego.server_event(
+            server_cert_store,
+            ServerCertCheck::always_succeed,
+            null_server_notifier,
+            "/tmp/certif"
+        );
+    nego.server_event(
+            server_cert_store,
+            ServerCertCheck::always_succeed,
+            null_server_notifier,
+            "/tmp/certif"
+        );
 }
 
 
@@ -124,8 +139,25 @@ BOOST_AUTO_TEST_CASE(TestNego)
 // /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x02" //................
 // /* 0010 */ "\x00\x00\x00"                                                     //...
 //         ;
-//     TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
+//     TestTransport logtrans(client, sizeof(client), server, sizeof(server));
 //     RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
 //     ClientInfo client_info(0, true);
 //     nego.recv_resquest(nullptr, client_info, true, true);
 // }
+
+
+BOOST_AUTO_TEST_CASE(TestSetIdentity) {
+    LogTransport null_transport;
+
+    LCGRandom rand(0);
+    LCGTime timeobj;
+    RdpNego nego(true, null_transport, "test", true, "127.0.0.1", false, rand, timeobj);
+
+    char pass[] = "Password\x00Pass\x00";
+
+    nego.set_identity("Administrateur", "QA", pass, "Server");
+
+    BOOST_CHECK_EQUAL(0, ::memcmp(pass, nego.password, sizeof(pass)));
+
+    hexdump(pass, sizeof(pass));
+}

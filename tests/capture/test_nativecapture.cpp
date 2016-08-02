@@ -23,18 +23,17 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestNativeCapture
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "out_filename_sequence_transport.hpp"
-#include "nativecapture.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "fileutils.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "capture/nativecapture.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "utils/fileutils.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
@@ -54,23 +53,28 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     Inifile ini;
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     RDPDrawable drawable(800, 600, 24);
-    NativeCapture consumer(now, trans, 800, 600, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
+    GraphicToFile graphic_to_file(
+        now, trans, 800, 600, 24,
+        bmp_cache, gly_cache, ptr_cache, dump_png, ini
+    );
+    NativeCapture consumer(graphic_to_file, now, ini);
 
     drawable.show_mouse_cursor(false);
 
-    ini.set<cfg::video::frame_interval>(100); // one snapshot by second
-    ini.set<cfg::video::break_interval>(5);   // one WRM file every 5 seconds
+    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+    ini.set<cfg::video::break_interval>(std::chrono::seconds{5});
     consumer.update_config(ini);
 
     bool ignore_frame_in_timeval = false;
-    bool requested_to_stop       = false;
 
-    consumer.draw(RDPOpaqueRect(scr, RED), scr);
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
+    graphic_to_file.draw(RDPOpaqueRect(scr, RED), scr);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
-    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval, requested_to_stop);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     trans.disconnect();
 
     const char * filename;

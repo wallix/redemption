@@ -20,13 +20,13 @@
     New RDP Orders Coder / Decoder : GlyphCache Secondary Drawing Order
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
+
+#pragma once
 
 #include <memory>
 
-#include "bitfu.hpp"
-#include "stream.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/stream.hpp"
 #include "RDPOrdersCommon.hpp"
 
 using std::size_t;
@@ -207,7 +207,7 @@ public:
         stream.out_copy_bytes(this->aj.get(), size);
     }
 
-    void receive(InStream & stream, const RDPSecondaryOrderHeader & header) {
+    void receive(InStream & stream, const RDPSecondaryOrderHeader &) {
         this->cacheId    = stream.in_uint8();
         this->cGlyphs    = stream.in_uint8();
         this->cacheIndex = stream.in_uint16_le();
@@ -244,7 +244,7 @@ public:
     void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print() const {
@@ -254,4 +254,3 @@ public:
     }
 };
 
-#endif

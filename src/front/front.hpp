@@ -22,94 +22,103 @@
     Front object (server), used to communicate with RDP client
 */
 
-#ifndef _REDEMPTION_FRONT_FRONT_HPP_
-#define _REDEMPTION_FRONT_FRONT_HPP_
+#pragma once
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "openssl_tls.hpp"
-#include "stream.hpp"
-#include "transport.hpp"
-#include "RDP/x224.hpp"
-#include "RDP/nego.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/lic.hpp"
-#include "channel_list.hpp"
-#include "RDP/gcc.hpp"
-#include "RDP/sec.hpp"
-#include "colors.hpp"
-#include "RDP/fastpath.hpp"
-#include "RDP/slowpath.hpp"
+#include "utils/stream.hpp"
+#include "transport/transport.hpp"
+#include "core/RDP/x224.hpp"
+#include "core/RDP/nego.hpp"
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/lic.hpp"
+#include "core/channel_list.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/sec.hpp"
+#include "utils/colors.hpp"
+#include "core/RDP/fastpath.hpp"
+#include "core/RDP/slowpath.hpp"
 
-#include "ssl_calls.hpp"
-#include "bitfu.hpp"
-#include "rect.hpp"
-#include "region.hpp"
-#include "capture.hpp"
-#include "font.hpp"
-#include "bitmap.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/bmpcachepersister.hpp"
-#include "RDP/caches/glyphcache.hpp"
-#include "RDP/caches/pointercache.hpp"
-#include "RDP/caches/brushcache.hpp"
-#include "channel_names.hpp"
-#include "client_info.hpp"
-#include "config.hpp"
-#include "error.hpp"
-#include "callback.hpp"
-#include "colors.hpp"
-#include "bitfu.hpp"
-#include "confdescriptor.hpp"
-#include "in_file_transport.hpp"
-#include "out_file_transport.hpp"
+#include "utils/crypto/ssl_lib.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/rect.hpp"
+#include "utils/region.hpp"
+#include "capture/capture.hpp"
+#include "core/font.hpp"
+#include "utils/bitmap.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/bmpcachepersister.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
+#include "core/RDP/caches/brushcache.hpp"
+#include "core/channel_names.hpp"
+#include "core/client_info.hpp"
+#include "configs/config.hpp"
+#include "core/error.hpp"
+#include "core/callback.hpp"
+#include "utils/colors.hpp"
+#include "utils/bitfu.hpp"
+#include "utils/confdescriptor.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "utils/pattutils.hpp"
 
-#include "RDP/GraphicUpdatePDU.hpp"
-#include "RDP/SaveSessionInfoPDU.hpp"
-#include "RDP/PersistentKeyListPDU.hpp"
-#include "RDP/remote_programs.hpp"
+#include "core/RDP/GraphicUpdatePDU.hpp"
+#include "core/RDP/PersistentKeyListPDU.hpp"
+#include "core/RDP/remote_programs.hpp"
+#include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "core/RDP/SuppressOutputPDU.hpp"
 
-#include "RDP/compress_and_draw_bitmap_update.hpp"
+#include "core/RDP/capabilities/cap_bmpcache.hpp"
+#include "core/RDP/capabilities/offscreencache.hpp"
+#include "core/RDP/capabilities/bmpcache2.hpp"
+#include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/capabilities/pointer.hpp"
+#include "core/RDP/capabilities/cap_share.hpp"
+#include "core/RDP/capabilities/cap_brushcache.hpp"
+#include "core/RDP/capabilities/input.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
+#include "core/RDP/capabilities/compdesk.hpp"
+#include "core/RDP/capabilities/cap_font.hpp"
+#include "core/RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/rail.hpp"
+#include "core/RDP/capabilities/window.hpp"
 
-#include "RDP/capabilities/bmpcache.hpp"
-#include "RDP/capabilities/offscreencache.hpp"
-#include "RDP/capabilities/bmpcache2.hpp"
-#include "RDP/capabilities/bitmapcachehostsupport.hpp"
-#include "RDP/capabilities/colcache.hpp"
-#include "RDP/capabilities/pointer.hpp"
-#include "RDP/capabilities/cap_share.hpp"
-#include "RDP/capabilities/cap_brushcache.hpp"
-#include "RDP/capabilities/input.hpp"
-#include "RDP/capabilities/multifragmentupdate.hpp"
-#include "RDP/capabilities/compdesk.hpp"
-#include "RDP/capabilities/cap_font.hpp"
-#include "RDP/capabilities/glyphcache.hpp"
-#include "RDP/capabilities/rail.hpp"
-#include "RDP/capabilities/window.hpp"
+#include "core/front_api.hpp"
+#include "core/activity_checker.hpp"
+#include "utils/genrandom.hpp"
 
-#include "front_api.hpp"
-#include "activity_checker.hpp"
-#include "genrandom.hpp"
+#include "acl/auth_api.hpp"
 
-#include "auth_api.hpp"
+#include "keyboard/keymap2.hpp"
 
-#include "keymap2.hpp"
+#include "core/RDP/mppc_40.hpp"
+#include "core/RDP/mppc_50.hpp"
+#include "core/RDP/mppc_60.hpp"
+#include "core/RDP/mppc_61.hpp"
 
-#include "RDP/mppc_40.hpp"
-#include "RDP/mppc_50.hpp"
-#include "RDP/mppc_60.hpp"
-#include "RDP/mppc_61.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
+#include "utils/timeout.hpp"
+#include "utils/sugar/underlying_cast.hpp"
+#include "utils/sugar/non_null_ptr.hpp"
+
+#include "gdi/clip_from_cmd.hpp"
 
 #include <memory>
 
 
-class Front final : public FrontAPI, public ActivityChecker{
+class Front : public gdi::GraphicBase<Front, FrontAPI>, public ActivityChecker {
     using FrontAPI::draw;
 
     bool has_activity = true;
+
+    // for printf with %p
+    using voidp = void const *;
 
 public:
     enum CaptureState {
@@ -128,11 +137,89 @@ private:
         BrushCache brush_cache;
         PointerCache pointer_cache;
         GlyphCache glyph_cache;
-        GraphicsUpdatePDU graphics_update_pdu;
+
+        struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU {
+            PrivateGraphicsUpdatePDU(
+                OrderCaps & client_order_caps
+              , Transport & trans
+              , uint16_t & userid
+              , int & shareid
+              , int & encryptionLevel
+              , CryptContext & encrypt
+              , const Inifile & ini
+              , const uint8_t bpp
+              , BmpCache & bmp_cache
+              , GlyphCache & gly_cache
+              , PointerCache & pointer_cache
+              , const int bitmap_cache_version
+              , const int use_bitmap_comp
+              , const int op2
+              , size_t max_bitmap_size
+              , bool fastpath_support
+              , rdp_mppc_enc * mppc_enc
+              , bool compression
+              , uint32_t verbose
+            )
+            : GraphicsUpdatePDU(
+                trans
+              , userid
+              , shareid
+              , encryptionLevel
+              , encrypt
+              , ini
+              , bpp
+              , bmp_cache
+              , gly_cache
+              , pointer_cache
+              , bitmap_cache_version
+              , use_bitmap_comp
+              , op2
+              , max_bitmap_size
+              , fastpath_support
+              , mppc_enc
+              , compression
+              , verbose
+            )
+            , client_order_caps(client_order_caps)
+            {
+                this->set_depths(gdi::GraphicDepth::from_bpp(bpp));
+            }
+
+            using GraphicsUpdatePDU::set_depths;
+
+            using GraphicsUpdatePDU::draw;
+
+            void draw(const RDP::FrameMarker & order) override {
+                if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
+                    GraphicsUpdatePDU::draw(order);
+                }
+            }
+
+            void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+                StaticOutStream<65535> bmp_stream;
+                Bitmap new_bmp(this->capture_bpp, bmp);
+
+                new_bmp.compress(this->capture_bpp, bmp_stream);
+
+                RDPBitmapData target_bitmap_data = bitmap_data;
+
+                target_bitmap_data.bits_per_pixel = new_bmp.bpp();
+                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+                GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
+            }
+
+            void set_palette(const BGRPalette&) override {
+            }
+
+            OrderCaps & client_order_caps;
+        } graphics_update_pdu;
 
         Graphics(
-            ClientInfo const & client_info
-          , Transport * trans
+            OrderCaps & client_order_caps
+          , ClientInfo const & client_info
+          , Transport & trans
           , uint16_t & userid
           , int & shareid
           , int & encryptionLevel
@@ -205,7 +292,8 @@ private:
         , pointer_cache(client_info.pointer_cache_entries)
         , glyph_cache(client_info.number_of_entries_in_glyph_cache)
         , graphics_update_pdu(
-            trans
+            client_order_caps
+          , trans
           , userid
           , shareid
           , encryptionLevel
@@ -221,18 +309,18 @@ private:
           , max_bitmap_size
           , fastpath_support
           , mppc_enc
-          , ini.get<cfg::client::rdp_compression>() ? client_info.rdp_compression : 0
+          , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
           , verbose
-          )
+        )
         {}
-
-        ~Graphics() = default;
     };
 
     struct GraphicsPointer
     {
         Graphics * p = nullptr;
         bool is_initialized = false;
+        gdi::GraphicApi * gd = nullptr;
+        std::unique_ptr<gdi::GraphicApi> gd_converted;
 
         ~GraphicsPointer() {
             if (this->is_initialized) {
@@ -242,8 +330,9 @@ private:
         }
 
         void initialize(
-            ClientInfo const & client_info
-          , Transport * trans
+            OrderCaps & client_order_caps
+          , ClientInfo const & client_info
+          , Transport & trans
           , uint16_t & userid
           , int & shareid
           , int & encryptionLevel
@@ -254,6 +343,9 @@ private:
           , rdp_mppc_enc * mppc_enc
           , uint32_t verbose
         ) {
+            this->gd_converted.reset();
+            this->gd = nullptr;
+
             if (this->p) {
                 this->is_initialized = false;
                 this->p->~Graphics();
@@ -263,7 +355,7 @@ private:
             }
 
             new (this->p) Graphics(
-                client_info, trans, userid, shareid, encryptionLevel, encrypt,
+                client_order_caps, client_info, trans, userid, shareid, encryptionLevel, encrypt,
                 ini, max_bitmap_size, fastpath_support, mppc_enc, verbose
             );
             this->is_initialized = true;
@@ -289,10 +381,116 @@ private:
         brush_item const & brush_at(int cache_idx) const
         { return this->p->brush_cache.brush_items[cache_idx]; }
 
-        GraphicsUpdatePDU & graphics_update_pdu()
+        Graphics::PrivateGraphicsUpdatePDU & graphics_update_pdu()
         { return this->p->graphics_update_pdu; }
 
-        GraphicsUpdatePDU * operator->() const { return &this->p->graphics_update_pdu; }
+        gdi::GraphicApi & get_graphics_api() {
+            if (this->gd) {
+                return *this->gd;
+            }
+            return this->graphics_update_pdu();
+        }
+
+        gdi::GraphicApi& initialize_drawable(uint8_t mod_bpp, uint8_t client_bpp, BGRPalette const & palette) {
+            using dec8 = with_color8_palette<decode_color8_opaquerect>;
+            using dec15 = decode_color15_opaquerect;
+            using dec16 = decode_color16_opaquerect;
+            using dec24 = decode_color24_opaquerect;
+            using enc8 = encode_color8;
+            using enc15 = encode_color15;
+            using enc16 = encode_color16;
+            using enc24 = encode_color24;
+
+            assert(this->is_initialized);
+
+            this->gd_converted.reset();
+
+            if ( (client_bpp == 24 && (mod_bpp == 24 || mod_bpp == 32))
+              || (client_bpp == 32 && (mod_bpp == 24 || mod_bpp == 32))
+              || (client_bpp == mod_bpp)
+            ) {
+                this->gd = &this->graphics_update_pdu();
+            }
+            else if (mod_bpp == 8) {
+                switch (client_bpp) {
+                    case 15: this->build_graphics(dec8{palette}, enc15{}); break;
+                    case 16: this->build_graphics(dec8{palette}, enc16{}); break;
+                    case 24:
+                    case 32: this->build_graphics(dec8{palette}, enc24{}); break;
+                }
+
+            }
+            else if (mod_bpp == 15) {
+                switch (client_bpp) {
+                    case 8 : this->build_graphics(dec15{}, enc8{}); break;
+                    case 16: this->build_graphics(dec15{}, enc16{}); break;
+                    case 24:
+                    case 32: this->build_graphics(dec15{}, enc24{}); break;
+                }
+
+            }
+            else if (mod_bpp == 16) {
+                switch (client_bpp) {
+                    case 8 : this->build_graphics(dec16{}, enc8{}); break;
+                    case 15: this->build_graphics(dec16{}, enc15{}); break;
+                    case 24:
+                    case 32: this->build_graphics(dec16{}, enc24{}); break;
+                }
+
+            }
+            else if (mod_bpp == 24 || mod_bpp == 32) {
+                switch (client_bpp) {
+                    case 8 : this->build_graphics(dec24{}, enc8{}); break;
+                    case 15: this->build_graphics(dec24{}, enc15{}); break;
+                    case 16: this->build_graphics(dec24{}, enc16{}); break;
+                }
+            }
+
+            assert(this->gd);
+            return *this->gd;
+        }
+
+        template<class ColorConverter>
+        struct GraphicConverter : gdi::GraphicProxyBase<
+            GraphicConverter<ColorConverter>,
+            gdi::GraphicApi,
+            gdi::GraphicColorConverterAccess
+        > {
+            friend gdi::GraphicCoreAccess;
+
+            GraphicConverter(
+                gdi::GraphicDepth depth,
+                Graphics::PrivateGraphicsUpdatePDU & graphics,
+                ColorConverter const & color_converter
+            )
+            : GraphicConverter::base_type(depth)
+            , color_converter(color_converter)
+            , graphics(graphics)
+            {}
+
+            ColorConverter const & get_color_converter() const {
+                return this->color_converter;
+            }
+
+            Graphics::PrivateGraphicsUpdatePDU & get_graphic_proxy() {
+                return this->graphics;
+            }
+
+            ColorConverter color_converter;
+            Graphics::PrivateGraphicsUpdatePDU & graphics;
+        };
+
+        template<class Dec, class Enc>
+        void build_graphics(Dec const & dec, Enc const & enc) {
+            using color_converter_t = color_converter<Dec, Enc>;
+            using Drawable = GraphicConverter<color_converter_t>;
+            this->gd_converted = std::make_unique<Drawable>(
+                gdi::GraphicDepth::from_bpp(Dec::bpp),
+                this->graphics_update_pdu(),
+                color_converter_t(dec, enc)
+            );
+            this->gd = this->gd_converted.get();
+        }
     } orders;
 
     struct write_x224_dt_tpdu_fn
@@ -330,10 +528,27 @@ private:
         );
     }
 
+    static gdi::GraphicApi & null_gd() {
+        static gdi::BlackoutGraphic gd;
+        return gd;
+    }
+
+    non_null_ptr<gdi::GraphicApi> gd = &null_gd();
+    non_null_ptr<gdi::GraphicApi> graphics_update = &null_gd();
+
+    void set_gd(gdi::GraphicApi * new_gd) {
+        this->gd = new_gd;
+        this->graphics_update = this->graphics_update_disabled ? &null_gd() : new_gd;
+    }
+
+    void set_gd(gdi::GraphicApi & new_gd) {
+        this->set_gd(&new_gd);
+    }
+
 public:
     Keymap2 keymap;
 
-private:
+protected:
     CHANNELS::ChannelDefArray channel_list;
 
 public:
@@ -359,17 +574,14 @@ private:
 
 private:
     Inifile & ini;
+    CryptoContext & cctx;
     uint32_t verbose;
 
-    Font font;
-
-    bool palette_sent;
     bool palette_memblt_sent[6];
 
-    BGRPalette palette332_rgb = BGRPalette::classic_332_rgb();
+    BGRPalette mod_palette_rgb {BGRPalette::classic_332_rgb()};
 
 public:
-    BGRPalette mod_palette_rgb {BGRPalette::no_init()};
     uint8_t mod_bpp;
 
 private:
@@ -414,20 +626,31 @@ private:
     size_t max_bitmap_size = 1024 * 64;
 
     bool focus_on_password_textbox = false;
+    bool consent_ui_is_visible     = false;
 
-    bool input_event_and_graphics_update_disabled = false;
+    bool input_event_disabled     = false;
+    bool graphics_update_disabled = false;
+
+    bool session_probe_started_ = false;
+
+    Timeout timeout;
+
+    bool is_client_disconnected = false;
+
+    bool client_support_monitor_layout_pdu = false;
 
 public:
-    Front ( Transport & trans
-          , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
+    Front(  Transport & trans
           , Random & gen
           , Inifile & ini
+          , CryptoContext & cctx
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
+          , time_t now
           , const char * server_capabilities_filename = ""
           , Transport * persistent_key_list_transport = nullptr
           )
-    : FrontAPI(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
+    : Front::base_type(ini.get<cfg::globals::notimestamp>(), ini.get<cfg::globals::nomouse>())
     , capture_state(CAPTURE_STATE_UNKNOWN)
     , capture(nullptr)
     , up_and_running(0)
@@ -437,8 +660,8 @@ public:
     , userid(0)
     , order_level(0)
     , ini(ini)
+    , cctx(cctx)
     , verbose(this->ini.get<cfg::debug::front>())
-    , font(default_font_name)
     , mod_bpp(0)
     , capture_bpp(0)
     , state(CONNECTION_INITIATION)
@@ -454,7 +677,8 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , mppc_enc(nullptr)
     , authentifier(nullptr)
-    , auth_info_sent(false) {
+    , auth_info_sent(false)
+    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count()) {
         // init TLS
         // --------------------------------------------------------
 
@@ -489,7 +713,6 @@ public:
 
         // --------------------------------------------------------
 
-        this->palette_sent = false;
         for (size_t i = 0; i < 6 ; i++) {
             this->palette_memblt_sent[i] = false;
         }
@@ -516,6 +739,9 @@ public:
             this->encrypt.encryptionMethod = 2; /* 128 bits */
         break;
         }
+
+        this->event.set(500000);
+        this->event.object_and_time = true;
     }
 
     ~Front() override {
@@ -543,10 +769,24 @@ public:
         uint32_t res = 0;
 
         this->mod_bpp = bpp;
+
+        {
+            gdi::GraphicApi & gd_orders = this->orders.initialize_drawable(
+                this->mod_bpp, this->client_info.bpp, this->mod_palette_rgb
+            );
+
+            if (this->capture) {
+                this->capture->set_order_bpp(this->mod_bpp);
+            }
+            else {
+                this->set_gd(gd_orders);
+            }
+        }
+
         if (bpp == 8) {
             this->palette_sent = false;
-            for (size_t i = 0; i < 6 ; i++) {
-                this->palette_memblt_sent[i] = false;
+            for (bool & b : this->palette_memblt_sent) {
+                b = false;
             }
         }
 
@@ -565,9 +805,8 @@ public:
                 {
                     CaptureState original_capture_state = this->capture_state;
 
-                    auth_api * authentifier = this->authentifier;
-                    this->stop_capture();
-                    this->start_capture(width, height, this->ini, authentifier);
+                    this->must_be_stop_capture();
+                    this->can_be_start_capture(this->authentifier);
 
                     this->capture_state = original_capture_state;
                 }
@@ -575,9 +814,9 @@ public:
                 this->client_info.width = width;
                 this->client_info.height = height;
 
-                TODO("Why are we not calling this->flush() instead ? Looks dubious.")
+                // TODO Why are we not calling this->flush() instead ? Looks dubious.
                 // send buffered orders
-                this->orders->flush();
+                this->orders.graphics_update_pdu().sync();
 
                 // clear all pending orders, caches data, and so on and
                 // start a send_deactive, send_deman_active process with
@@ -587,6 +826,7 @@ public:
                 this->send_deactive();
                 /* this should do the actual resizing */
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
                 state = ACTIVATE_AND_PROCESS_DATA;
@@ -598,44 +838,50 @@ public:
         return res;
     }
 
-    void server_set_pointer(const Pointer & cursor) override {
-        this->orders->server_set_pointer(cursor);
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->server_set_pointer(cursor);
-        }
+    void set_pointer(const Pointer & cursor) override {
+        this->graphics_update->set_pointer(cursor);
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override
     {
-        this->orders->update_pointer_position(xPos, yPos);
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->update_pointer_position(xPos, yPos);
-        }
-    }
-
-    void text_metrics(Font const & font, const char * text, int & width, int & height) override {
-        REDASSERT(false);
-    }
-
-    void server_draw_text(Font const & font, int16_t x, int16_t y, const char * text, uint32_t fgcolor,
-                                  uint32_t bgcolor, const Rect & clip) override {
-        REDASSERT(false);
+        this->orders.graphics_update_pdu().update_pointer_position(xPos, yPos);
+        //if (  this->capture
+        //   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+        //    this->capture->update_pointer_position(xPos, yPos);
+        //}
     }
 
     // ===========================================================================
-    void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
+    bool can_be_start_capture(auth_api * authentifier) override
     {
+        LOG(LOG_INFO, "Starting Capture");
         // Recording is enabled.
-        if (!ini.get<cfg::globals::movie>()) {
-            return;
+        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
+
+        if (!ini.get<cfg::globals::is_rec>() &&
+            bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
+//            ini.get<cfg::context::pattern_kill>().empty() &&
+//            ini.get<cfg::context::pattern_notify>().empty()
+            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
+            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
+        ) {
+            LOG(LOG_INFO, "No Capture 1");
+            return false;
         }
 
         if (this->capture) {
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
 
-            return;
+            LOG(LOG_INFO, "No Capture 2");
+            return false;
+        }
+
+        if (!ini.get<cfg::globals::is_rec>()) {
+            ini.set<cfg::video::capture_flags>(
+                (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
+                 ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())) ?
+                CaptureFlags::ocr : CaptureFlags::none);
+            ini.set<cfg::video::png_limit>(0);
         }
 
         LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
@@ -649,61 +895,65 @@ public:
             LOG(LOG_INFO, "target_user   = %s\n", ini.get<cfg::globals::target_user>().c_str());
         }
 
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, "redemption"); // default value actual one should come from movie_path
-        strcpy(extension, "");          // extension is currently ignored
-        const bool res = canonical_path(ini.get<cfg::globals::movie_path>().c_str(), path,
-                                        sizeof(path), basename, sizeof(basename), extension,
-                                        sizeof(extension));
-        if (!res) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
-        this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == 1) ? 16 : 24);
-        this->capture = new Capture( now, width, height, this->capture_bpp, this->capture_bpp
-                                   , ini.get<cfg::video::record_path>()
-                                   , ini.get<cfg::video::record_tmp_path>()
-                                   , ini.get<cfg::video::hash_path>(), basename
-                                   , true
-                                   , false
-                                   , authentifier
-                                   , ini
-                                   );
+        this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
+        // TODO remove this after unifying capture interface
+        bool full_video = false;
+        this->capture = new Capture(
+            now,
+            this->client_info.width, this->client_info.height,
+            this->mod_bpp, this->capture_bpp
+          , true, false, authentifier
+          , ini, this->gen, this->cctx
+          , full_video
+        );
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
-        this->capture->capture_event.set();
+        this->capture->get_capture_event().set();
         this->capture_state = CAPTURE_STATE_STARTED;
+        if (this->capture->get_graphic_api()) {
+            this->set_gd(this->capture->get_graphic_api());
+            this->capture->add_graphic(this->orders.graphics_update_pdu());
+        }
+
+        this->update_keyboard_input_mask_state();
 
         this->authentifier = authentifier;
+
+        return true;
     }
 
-    void pause_capture() {
+    bool can_be_pause_capture() override
+    {
         LOG(LOG_INFO, "---<>  Front::pause_capture  <>---");
         if (this->capture_state != CAPTURE_STATE_STARTED) {
-            return;
+            return false;
         }
 
-        this->capture->pause();
-        this->capture->capture_event.reset();
+        timeval now = tvtime();
+        this->capture->pause_capture(now);
         this->capture_state = CAPTURE_STATE_PAUSED;
+        this->set_gd(this->orders.graphics_update_pdu());
+        return true;
     }
 
-    void resume_capture() {
+    bool can_be_resume_capture() override
+    {
         LOG(LOG_INFO, "---<>  Front::resume_capture <>---");
         if (this->capture_state != CAPTURE_STATE_PAUSED) {
-            return;
+            return false;
         }
 
-        this->capture->resume();
-        this->capture->capture_event.set();
+        timeval now = tvtime();
+        this->capture->resume_capture(now);
         this->capture_state = CAPTURE_STATE_STARTED;
+        if (this->capture->get_graphic_api()) {
+            this->set_gd(this->capture->get_graphic_api());
+        }
+        return true;
     }
 
-    void stop_capture()
+    bool must_be_stop_capture() override
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
@@ -712,7 +962,11 @@ public:
             this->capture = nullptr;
 
             this->capture_state = CAPTURE_STATE_STOPED;
+
+            this->set_gd(this->orders.get_graphics_api());
+            return true;
         }
+        return false;
     }
 
     void update_config(Inifile & ini) {
@@ -724,14 +978,14 @@ public:
 
     void periodic_snapshot()
     {
+        //LOG(LOG_INFO, "periodic snapshot");
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
-            bool requested_to_stop = false;
-            this->capture->snapshot( now, this->mouse_x, this->mouse_y
-                                   , false  // ignore frame in time interval
-                                   , requested_to_stop
-                                   );
+            this->capture->snapshot(
+                now, this->mouse_x, this->mouse_y
+              , false  // ignore frame in time interval
+            );
         }
     }
     // ===========================================================================
@@ -759,7 +1013,7 @@ public:
         const char * persistent_path = PERSISTENT_PATH "/client";
 
         // Ensures that the directory exists.
-        if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, 0) != 0) {
+        if (::recursive_create_directory(persistent_path, S_IRWXU | S_IRWXG, -1) != 0) {
             LOG( LOG_ERR
                , "front::save_persistent_disk_bitmap_cache: failed to create directory \"%s\"."
                , persistent_path);
@@ -822,7 +1076,7 @@ private:
 
         this->max_bitmap_size = 1024 * 64;
 
-        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini.get<cfg::client::rdp_compression>() - 1))
+        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, static_cast<int>(this->ini.get<cfg::client::rdp_compression>()) - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
             if (this->verbose & 1) {
@@ -855,9 +1109,11 @@ private:
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
+
         this->orders.initialize(
-            this->client_info
-          , &this->trans
+            this->client_order_caps
+          , this->client_info
+          , this->trans
           , this->userid
           , this->share_id
           , this->encryptionLevel
@@ -868,6 +1124,7 @@ private:
           , this->mppc_enc
           , this->verbose
         );
+        this->set_gd(this->orders.graphics_update_pdu());
     }
 
 public:
@@ -888,7 +1145,7 @@ public:
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }
         if (this->order_level == 0) {
-            this->flush();
+            this->sync();
         }
     }
 
@@ -898,13 +1155,15 @@ public:
             LOG(LOG_INFO, "Front::disconnect");
         }
 
-        write_packets(
-            this->trans,
-            [](StreamSize<256>, OutStream & mcs_data) {
-                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-            },
-            write_x224_dt_tpdu_fn{}
-        );
+        if (!this->is_client_disconnected) {
+            write_packets(
+                this->trans,
+                [](StreamSize<256>, OutStream & mcs_data) {
+                    MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+                },
+                write_x224_dt_tpdu_fn{}
+            );
+        }
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -918,8 +1177,8 @@ public:
                                 , int flags) override {
         if (this->verbose & 16) {
             LOG( LOG_INFO
-               , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%u, chunk_size=%u, flags=%x)"
-               , channel.name, channel.chanid, chunk, length, chunk_size, flags);
+               , "Front::send_to_channel(channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)"
+               , channel.name, channel.chanid, voidp(chunk), length, chunk_size, flags);
         }
 
         if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
@@ -934,72 +1193,25 @@ public:
                                           , length, flags, chunk, chunk_size);
     }
 
-private:
-    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
-    // -------------------------------------------------------------------
-
-    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
-    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
-
-    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
-    // Values in this field are ignored.
-
-    // numberColors (4 bytes): A 32-bit, unsigned integer.
-    // The number of RGB triplets in the paletteData field.
-    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
-
-    void GeneratePaletteUpdateData(OutStream & stream) {
-        const BGRPalette & palette = (this->mod_bpp == 8) ? this->mod_palette_rgb : this->palette332_rgb;
-
-        // Payload
-        stream.out_uint16_le(RDP_UPDATE_PALETTE);
-        stream.out_uint16_le(0);
-
-        stream.out_uint32_le(256); /* # of colors */
-        for (int i = 0; i < 256; i++) {
-            int color = palette[i];
-            // Palette entries is in BGR triplet format.
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
-            stream.out_uint8(b);
-        }
-    }
-
-public:
-    void send_global_palette() override {
-        if (!this->palette_sent && (this->client_info.bpp == 8)) {
-            if (this->verbose & 4) {
-                LOG(LOG_INFO, "Front::send_global_palette");
-            }
-
-            this->flush();
-
-            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-            GeneratePaletteUpdateData(stream.get_data_stream());
-
-            ::send_server_update( this->trans
-                                , this->server_fastpath_update_support
-                                , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
-                                , this->mppc_enc
-                                , this->share_id
-                                , this->encryptionLevel
-                                , this->encrypt
-                                , this->userid
-                                , SERVER_UPDATE_GRAPHICS_PALETTE
-                                , 0
-                                , stream
-                                , this->verbose
-                                );
-
-            this->palette_sent = true;
-        }
-    }
-
-    void incoming(Callback & cb)
+    void incoming(Callback & cb, time_t now)
     {
+        switch(this->timeout.check(now)) {
+        case Timeout::TIMEOUT_REACHED:
+            LOG(LOG_ERR, "RDP handshake timeout reached!");
+            throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+            break;
+        case Timeout::TIMEOUT_NOT_REACHED:
+            this->event.set(500000);
+            break;
+        default:
+        case Timeout::TIMEOUT_INACTIVE:
+            this->event.reset();
+            this->event.object_and_time = false;
+            break;
+        }
+
+        if (this->event.waked_up_by_time) return;
+
         unsigned expected;
 
         if (this->verbose & 4) {
@@ -1036,9 +1248,13 @@ public:
                 X224::CR_TPDU_Recv x224(stream, this->ini.get<cfg::client::bogus_neg_request>());
                 if (x224._header_size != stream.get_capacity()) {
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-                                 " %d bytes remains", stream.get_capacity() - x224._header_size);
+                                 " %zu bytes remains", stream.get_capacity() - x224._header_size);
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+
+                if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+                    LOG(LOG_WARNING, "tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
+                }
 
                 if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
                     (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
@@ -1046,6 +1262,10 @@ public:
                     && this->ini.get<cfg::client::tls_fallback_legacy>()) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
                     this->tls_client_active = false;
+                }
+                else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) &&
+                         !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+                    LOG(LOG_WARNING, "TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
                 }
             }
 
@@ -1077,7 +1297,8 @@ public:
                 this->trans.send(stream.get_data(), stream.get_offset());
 
                 if (this->tls_client_active) {
-                    this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>());
+                    this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>(),
+                        this->ini.get<cfg::client::ssl_cipher_list>().c_str());
 
             // 2.2.10.2 Early User Authorization Result PDU
             // ============================================
@@ -1133,7 +1354,7 @@ public:
             // GCC User Data
             // -------------
             GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
-            TODO("ensure gcc_data substream is fully consumed")
+            // TODO ensure gcc_data substream is fully consumed
 
             while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
@@ -1183,6 +1404,9 @@ public:
                             this->client_info.bpp = std::min(
                                 this->client_info.bpp, static_cast<int>(this->ini.get<cfg::client::max_color_depth>()));
                         }
+                        this->client_support_monitor_layout_pdu =
+                            (cs_core.earlyCapabilityFlags &
+                             GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU);
                     }
                     break;
                     case CS_SECURITY:
@@ -1229,10 +1453,41 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-                        GCC::UserData::CSMonitor cs_monitor;
+                        GCC::UserData::CSMonitor & cs_monitor =
+                            this->client_info.cs_monitor;
                         cs_monitor.recv(f.payload);
                         if (this->verbose & 1) {
                             cs_monitor.log("Receiving from Client");
+                        }
+
+                        Rect client_monitors_rect = this->client_info.cs_monitor.get_rect();
+                        if (this->verbose & 1) {
+                            LOG(LOG_INFO, "MonitorsRect=(%d, %d, %d, %d)",
+                                client_monitors_rect.x, client_monitors_rect.y,
+                                client_monitors_rect.cx, client_monitors_rect.cy);
+                        }
+
+                        if (this->ini.get<cfg::globals::allow_using_multiple_monitors>()) {
+                            this->client_info.width     = client_monitors_rect.cx + 1;
+                            this->client_info.height    = client_monitors_rect.cy + 1;
+                        }
+                    }
+                    break;
+                    case CS_MCS_MSGCHANNEL:
+                    {
+                        GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+                        cs_mcs_msgchannel.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_mcs_msgchannel.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MULTITRANSPORT:
+                    {
+                        GCC::UserData::CSMultiTransport cs_multitransport;
+                        cs_multitransport.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_multitransport.log("Receiving from Client");
                         }
                     }
                     break;
@@ -1466,11 +1721,12 @@ public:
             for (size_t i = 0 ; i < this->channel_list.size(); ++i) {
                 this->channel_join_request_transmission([this,i](MCS::ChannelJoinRequest_Recv & mcs) {
                     if (this->verbose & 16) {
-                        LOG(LOG_INFO, "cjrq[%u] = %u -> cjcf", i, mcs.channelId);
+                        LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16 " -> cjcf", i, mcs.channelId);
                     }
 
                     if (mcs.initiator != this->userid) {
-                        LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                        LOG(LOG_ERR, "MCS error bad userid, expecting %" PRIu16 " got %" PRIu16,
+                            this->userid, mcs.initiator);
                         throw Error(ERR_MCS_BAD_USERID);
                     }
 
@@ -1499,7 +1755,7 @@ public:
             // subsequent RDP traffic.
 
             // From this point, all subsequent RDP traffic can be encrypted and a security
-            // header is include " with the data if encryption is in force (the Client Info
+            // header is included with the data if encryption is in force (the Client Info
             // and licensing PDUs are an exception in that they always have a security
             // header). The Security Header follows the X.224 and MCS Headers and indicates
             // whether the attached data is encrypted.
@@ -1530,47 +1786,26 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::SecExchangePacket_Recv sec(mcs.payload);
 
-                TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
-                uint8_t client_random[64];
-                memset(client_random, 0, 64);
+                uint8_t client_random[64] = {};
                 {
-                    uint8_t l_out[64]; memset(l_out, 0, 64);
-                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
-                    uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
-                    uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
-
-                    BN_CTX* ctx = BN_CTX_new();
-                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn(l_mod, 64, &lmod);
-                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn(l_exp, 64, &lexp);
-                    BIGNUM lin; BN_init(&lin);  BN_bin2bn(l_in, 64, &lin);
-                    BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-
-                    int rv = BN_bn2bin(&lout, l_out);
-                    if (rv <= 64) {
-                        reverseit(l_out, rv);
-                        memcpy(client_random, l_out, 64);
-                    }
-                    BN_free(&lin);
-                    BN_free(&lout);
-                    BN_free(&lexp);
-                    BN_free(&lmod);
-                    BN_CTX_free(ctx);
+                ssllib ssl;
+                ssl.ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
                 }
-
-                // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+                // beware order of parameters for key generation (decrypt/encrypt)
+                // is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
-                ssllib ssl;
                 if (this->encrypt.encryptionMethod == 1) {
+                    ssllib ssl;
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
-
                 this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
                 this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
             }
@@ -1604,7 +1839,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1687,6 +1923,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::incoming::ACTIVATED (mce)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
@@ -1799,7 +2036,8 @@ public:
                 MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 const char * reason = MCS::get_reason(mcs.reason);
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                throw Error(ERR_MCS);
+                this->is_client_disconnected = true;
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -1836,7 +2074,7 @@ public:
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "Front::ERROR_ALERT");
                     }
-                    TODO("We should check what is actually returned by this message, as it may be an error")
+                    // TODO We should check what is actually returned by this message, as it may be an error
                     LIC::ErrorAlert_Recv lic(sec.payload);
                     LOG(LOG_ERR, "Front::License Alert: error=%u transition=%u",
                         lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
@@ -1849,22 +2087,22 @@ public:
                         LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     }
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
-                    TODO("Instead of returning a license we return a message saying that no license is OK")
+                    // TODO Instead of returning a license we return a message saying that no license is OK
                     this->send_valid_client_license_data();
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
-                    TODO("As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE")
+                    // TODO As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     }
                     break;
                 case LIC::LICENSE_INFO:
-                    TODO("As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO")
+                    // TODO As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "Front::LICENSE_INFO");
                     }
-                    TODO("Instead of returning a license we return a message saying that no license is OK")
+                    // TODO Instead of returning a license we return a message saying that no license is OK
                     this->send_valid_client_license_data();
                     break;
                 default:
@@ -1890,6 +2128,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
+                this->send_monitor_layout();
 
                 LOG(LOG_INFO, "Front::incoming::ACTIVATED (new license request)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
@@ -1913,7 +2152,7 @@ public:
                     {
                         expected = 6; /* shareId(4) + originatorId(2) */
                         if (!sctrl.payload.in_check_rem(expected)) {
-                            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
+                            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
                                 expected, sctrl.payload.in_remain());
                             throw Error(ERR_MCS_PDU_TRUNCATED);
                         }
@@ -1924,7 +2163,7 @@ public:
                         (void)originatorId;
                     }
                     if (!sctrl.payload.check_end()) {
-                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u",
+                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%zu",
                             sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
                     }
@@ -1940,25 +2179,25 @@ public:
                     // also processing this is a problem because input data packets are broken
 //                    this->process_data(sctrl.payload, cb);
 
-                    TODO("check all payload data is consumed")
+                    // TODO check all payload data is consumed
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
                     }
-                    TODO("check all payload data is consumed")
+                    // TODO check all payload data is consumed
                     break;
                 case PDUTYPE_SERVER_REDIR_PKT:
                     if (this->verbose & 2) {
                         LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
                     }
-                    TODO("check all payload data is consumed")
+                    // TODO check all payload data is consumed
                     break;
                 default:
                     LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pduType);
                     break;
                 }
-                TODO("Check why this is necessary when using loop connection ?")
+                // TODO Check why this is necessary when using loop connection ?
             }
             sec.payload.in_skip_bytes(sec.payload.in_remain());
         }
@@ -2015,7 +2254,7 @@ public:
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++) {
                     if (!cfpie.payload.in_check_rem(1)) {
-                        LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%u",
+                        LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%zu",
                             cfpie.payload.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -2051,10 +2290,20 @@ public:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_and_graphics_update_disabled) {
+                                if (!this->input_event_disabled) {
                                     cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 }
                                 this->has_activity = true;
+                            }
+
+                            if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                                    SlowPath::PTRFLAGS_BUTTON2 |
+                                                    SlowPath::PTRFLAGS_BUTTON3)) &&
+                                !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                                if (  this->capture
+                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                    this->capture->possible_active_window_change();
+                                }
                             }
                         }
                         break;
@@ -2094,19 +2343,20 @@ public:
                 }
 
                 if (cfpie.payload.in_remain() != 0) {
-                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u",
+                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%zu",
                         cfpie.payload.in_remain());
                 }
                 break;
             }
             else {
 //                X224::RecvFactory fx224(this->trans, stream);
-                TODO("We shall put a specific case when we get Disconnect Request")
+                // TODO We shall put a specific case when we get Disconnect Request
                 if (fx224.type == X224::DR_TPDU) {
-                    TODO("What is the clean way to actually disconnect ?")
+                    // TODO What is the clean way to actually disconnect ?
                     X224::DR_TPDU_Recv x224(stream);
                     LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
-                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
                 }
                 else if (fx224.type != X224::DT_TPDU) {
                     LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
@@ -2121,7 +2371,8 @@ public:
                     MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
                     const char * reason = MCS::get_reason(mcs.reason);
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                    throw Error(ERR_MCS);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -2160,7 +2411,7 @@ public:
 
                     expected = 8; /* length(4) + flags(4) */
                     if (!sec.payload.in_check_rem(expected)) {
-                        LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
+                        LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%zu",
                             expected, sec.payload.in_remain());
                         throw Error(ERR_MCS);
                     }
@@ -2204,7 +2455,7 @@ public:
                                 expected = 6;   /* shareId(4) + originatorId(2) */
                                 if (!sctrl.payload.in_check_rem(expected)) {
                                     LOG(LOG_ERR,
-                                        "Truncated Confirm active PDU data, need=%u remains=%u",
+                                        "Truncated Confirm active PDU data, need=%u remains=%zu",
                                         expected, sctrl.payload.in_remain());
                                     throw Error(ERR_RDP_DATA_TRUNCATED);
                                 }
@@ -2220,7 +2471,7 @@ public:
                             // resizing done
                             {
                                 RDPColCache cmd(0, BGRPalette::classic_332());
-                                this->orders->draw(cmd);
+                                this->orders.graphics_update_pdu().draw(cmd);
                             }
                             if (this->verbose & 1) {
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
@@ -2243,7 +2494,7 @@ public:
                             if (!sctrl.payload.check_end())
                             {
                                 LOG(LOG_ERR,
-                                    "Trailing data after DATAPDU: remains=%u",
+                                    "Trailing data after DATAPDU: remains=%zu",
                                     sctrl.payload.in_remain());
                                 throw Error(ERR_MCS_PDU_TRAILINGDATA);
                             }
@@ -2263,7 +2514,7 @@ public:
                             break;
                         }
 
-                        TODO("check all sctrl.payload data is consumed")
+                        // TODO check all sctrl.payload data is consumed
                         sec.payload.in_skip_bytes(sctrl.payload.get_current() - sec.payload.get_current());
                     }
                 }
@@ -2271,7 +2522,7 @@ public:
                 if (!sec.payload.check_end())
                 {
                     LOG(LOG_ERR,
-                        "Trailing data after SEC: remains=%u",
+                        "Trailing data after SEC: remains=%zu",
                         sec.payload.in_remain());
                     throw Error(ERR_SEC_TRAILINGDATA);
                 }
@@ -2419,38 +2670,62 @@ private:
         return true;
     }
 
+    void session_probe_started(bool started) override {
+        this->session_probe_started_ = started;
+
+        this->update_keyboard_input_mask_state();
+
+        if (!started) {
+            this->session_update("Probe.Status=Unknown");
+        }
+    }
+
     void set_keylayout(int LCID) override {
         this->keymap.init_layout(LCID);
     }
 
-    void focus_changed(bool on_password_textbox) override {
-        this->focus_on_password_textbox = on_password_textbox;
+    int get_keylayout() const override {
+        return this->keymap.layout_id();
     }
 
-    void session_update(const char * message, bool & out__contian_window_title) override {
+    void set_focus_on_password_textbox(bool set) override {
+        this->focus_on_password_textbox = set;
+
+        this->update_keyboard_input_mask_state();
+    }
+
+    void set_consent_ui_visible(bool set) override {
+        this->consent_ui_is_visible = set;
+
+        this->update_keyboard_input_mask_state();
+    }
+
+    void session_update(array_view_const_char message) override {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)) {
             struct timeval now = tvtime();
 
-            this->capture->session_update(now, message,
-                out__contian_window_title);
-
-            return;
+            this->capture->session_update(now, message);
         }
-
-        out__contian_window_title = false;
     }
 
-    bool disable_input_event_and_graphics_update(bool disable) override {
+    bool disable_input_event_and_graphics_update(bool disable_input_event,
+            bool disable_graphics_update) override {
         bool need_full_screen_update =
-            (this->input_event_and_graphics_update_disabled && !disable);
+            (this->graphics_update_disabled && !disable_graphics_update);
 
-            if (this->input_event_and_graphics_update_disabled != disable) {
-                LOG(LOG_INFO, "Front: %s graphics update.",
-                    (disable ? "Disable" : "Enable"));
-            }
+        if (this->input_event_disabled != disable_input_event) {
+            LOG(LOG_INFO, "Front: %s input event.",
+                (disable_input_event ? "Disable" : "Enable"));
+        }
+        if (this->graphics_update_disabled != disable_graphics_update) {
+            LOG(LOG_INFO, "Front: %s graphics update.",
+                (disable_graphics_update ? "Disable" : "Enable"));
+        }
 
-        this->input_event_and_graphics_update_disabled = disable;
+        this->input_event_disabled     = disable_input_event;
+        this->graphics_update_disabled = disable_graphics_update;
+        this->set_gd(this->gd.get());
 
         return need_full_screen_update;
     }
@@ -2466,7 +2741,7 @@ private:
 
         ::send_server_update( this->trans
                             , this->server_fastpath_update_support
-                            , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
+                            , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
                             , this->mppc_enc
                             , this->share_id
                             , this->encryptionLevel
@@ -2662,6 +2937,10 @@ private:
                 }
             }
         );
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "Front::send_demand_active done");
+        }
     }   // send_demand_active
 
     void process_confirm_active(InStream & stream)
@@ -2669,12 +2948,12 @@ private:
         if (this->verbose & 1) {
             LOG(LOG_INFO, "process_confirm_active");
         }
-        TODO("We should separate the parts relevant to caps processing and the part relevant to actual confirm active")
-        TODO("Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)")
+        // TODO We should separate the parts relevant to caps processing and the part relevant to actual confirm active
+        // TODO Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)
 
         unsigned expected = 4; /* lengthSourceDescriptor(2) + lengthCombinedCapabilities(2) */
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2683,7 +2962,7 @@ private:
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
 
         if (!stream.in_check_rem(lengthSourceDescriptor)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%zu",
                 lengthSourceDescriptor, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2701,7 +2980,7 @@ private:
 
         expected = 4; /* numberCapabilities(2) + pad(2) */
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -2714,13 +2993,15 @@ private:
                 LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
             }
             if (stream.get_current() + 4 > theoricCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d",
+                LOG(LOG_ERR, "Incomplete capabilities received (bad length):"
+                    " expected length=%" PRIu16 " need=%" PRIdPTR " available=%zu",
                     lengthCombinedCapabilities,
                     stream.get_current()-start,
                     stream.in_remain());
             }
             if (stream.get_current() + 4 > actualCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d",
+                LOG(LOG_ERR, "Incomplete capabilities received (need more data):"
+                    " expected length=%" PRIu16 " need=%" PRIdPTR " available=%zu",
                     lengthCombinedCapabilities,
                     stream.get_current()-start,
                     stream.in_remain());
@@ -2885,7 +3166,7 @@ private:
                         this->client_bmpcache2_caps.log("Receiving from client");
                     }
 
-                    TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
+                    // TODO We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2
                     this->client_info.number_of_cache = this->client_bmpcache2_caps.numCellCaches;
                     int Bpp = nbbytes(this->client_info.bpp);
                     if (this->client_bmpcache2_caps.numCellCaches > 0) {
@@ -3017,7 +3298,8 @@ private:
             stream.in_skip_bytes(4); /* Session Id */
         }
         if (this->verbose & 1) {
-            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.get_current(), stream.get_data_end());
+            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p",
+                voidp(stream.get_current()), voidp(stream.get_data_end()));
         }
     }
 
@@ -3081,7 +3363,6 @@ private:
 // targetUser (2 bytes): A 16-bit, unsigned integer. The MCS channel ID of the
 //   target user.
 
-    TODO(" duplicated code in mod/rdp")
     void send_synchronize()
     {
         if (this->verbose & 1) {
@@ -3221,6 +3502,46 @@ private:
         }
     }
 
+    void send_monitor_layout() {
+        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||
+            !this->client_info.cs_monitor.monitorCount ||
+            !this->client_support_monitor_layout_pdu) {
+            return;
+        }
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_monitor_layout");
+        }
+
+        MonitorLayoutPDU monitor_layout_pdu;
+
+        monitor_layout_pdu.set(this->client_info.cs_monitor);
+        monitor_layout_pdu.log("Send to client");
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+        // Payload
+        monitor_layout_pdu.emit(stream.get_data_stream());
+
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_MONITOR_LAYOUT_PDU
+                            , false
+                            , this->mppc_enc
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , this->verbose
+                            );
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_monitor_layout done");
+        }
+    }
+
     /* PDUTYPE_DATAPDU */
     void process_data(InStream & stream, Callback & cb)
     {
@@ -3230,16 +3551,16 @@ private:
         }
         ShareData_Recv sdata_in(stream, nullptr);
         if (this->verbose & 8) {
-            LOG(LOG_INFO, "sdata_in.pdutype2=%u"
-                          " sdata_in.len=%u"
-                          " sdata_in.compressedLen=%u"
-                          " remains=%u"
-                          " payload_len=%u",
-                unsigned(sdata_in.pdutype2),
-                unsigned(sdata_in.len),
-                unsigned(sdata_in.compressedLen),
-                unsigned(stream.in_remain()),
-                unsigned(sdata_in.payload.get_capacity())
+            LOG(LOG_INFO, "sdata_in.pdutype2=%" PRIu8
+                          " sdata_in.len=%" PRIu16
+                          " sdata_in.compressedLen=%" PRIu16
+                          " remains=%zu"
+                          " payload_len=%zu",
+                sdata_in.pdutype2,
+                sdata_in.len,
+                sdata_in.compressedLen,
+                stream.in_remain(),
+                sdata_in.payload.get_capacity()
             );
         }
 
@@ -3248,7 +3569,7 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_UPDATE");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
@@ -3258,7 +3579,7 @@ private:
             {
                 expected = 8;   /* action(2) + grantId(2) + controlId(4) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Control PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Control PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3282,7 +3603,7 @@ private:
             if (this->verbose & 4) {
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
@@ -3296,8 +3617,8 @@ private:
                 for (int index = 0; index < cie.numEvents; index++) {
                     SlowPath::InputEvent_Recv ie(cie.payload);
 
-                    TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
-                    TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
+                    // TODO we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it
+                    // TODO with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.
                     switch (ie.messageType) {
                         case SlowPath::INPUT_EVENT_SYNC:
                         {
@@ -3327,10 +3648,20 @@ private:
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
                             if (this->up_and_running) {
-                                if (!this->input_event_and_graphics_update_disabled) {
+                                if (!this->input_event_disabled) {
                                     cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 }
                                 this->has_activity = true;
+                            }
+
+                            if ((me.pointerFlags & (SlowPath::PTRFLAGS_BUTTON1 |
+                                                    SlowPath::PTRFLAGS_BUTTON2 |
+                                                    SlowPath::PTRFLAGS_BUTTON3)) &&
+                                !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                                if (  this->capture
+                                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                                    this->capture->possible_active_window_change();
+                                }
                             }
                         }
                         break;
@@ -3365,7 +3696,7 @@ private:
             {
                 expected = 4;   /* messageType(2) + targetUser(4) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Synchronize PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Synchronize PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3407,7 +3738,7 @@ private:
             {
                 expected = 4;   /* numberOfAreas(1) + pad3Octects(3) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -3417,26 +3748,25 @@ private:
 
                 expected = numberOfAreas * 8;   /* numberOfAreas * (left(2) + top(2) + right(2) + bottom(2)) */
                 if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%zu",
                         expected, sdata_in.payload.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
 
-                DArray<Rect> rects(numberOfAreas);
-                for (size_t i = 0; i < numberOfAreas ; i++) {
-
+                auto rects_raw = std::make_unique<Rect[]>(numberOfAreas);
+                array_view<Rect> rects(rects_raw.get(), numberOfAreas);
+                for (Rect & rect : rects) {
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();
                     int right = sdata_in.payload.in_uint16_le();
                     int bottom = sdata_in.payload.in_uint16_le();
-                    Rect rect(left, top, (right - left) + 1, (bottom - top) + 1);
-                    rects[i] = rect;
+                    rect = Rect(left, top, (right - left) + 1, (bottom - top) + 1);
                     if (this->verbose & (64|4)) {
                         LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                             " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
-                            left, top, right, bottom, rect.x, rect.cy);
+                            left, top, right, bottom, rect.cx, rect.cy);
                     }
-                    // TODO("we should consider adding to API some function to refresh several rects at once")
+                    // // TODO we should consider adding to API some function to refresh several rects at once
                     // if (this->up_and_running) {
                     //     cb.rdp_input_invalidate(rect);
                     // }
@@ -3448,20 +3778,33 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
-            sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
-
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
             // to catch up so minimized apps don't take bandwidth
+            {
+                RDP::SuppressOutputPDUData sopdud;
+
+                sopdud.receive(sdata_in.payload);
+                //sopdud.log(LOG_INFO);
+
+                if (this->ini.get<cfg::client::enable_suppress_output>()) {
+                    if (RDP::ALLOW_DISPLAY_UPDATES == sopdud.get_allowDisplayUpdates()) {
+                        cb.rdp_allow_display_updates(sopdud.get_left(), sopdud.get_top(),
+                            sopdud.get_right(), sopdud.get_bottom());
+                    }
+                    else {
+                        cb.rdp_suppress_display_updates();
+                    }
+                }
+            }
             break;
 
         break;
@@ -3479,7 +3822,7 @@ private:
                 const uint32_t log_condition = (128 | 8);
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
-                                    , (this->ini.get<cfg::client::rdp_compression>() ? this->client_info.rdp_compression : 0)
+                                    , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
                                     , this->mppc_enc
                                     , this->share_id
                                     , this->encryptionLevel
@@ -3495,14 +3838,14 @@ private:
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
@@ -3537,7 +3880,7 @@ private:
 
             expected = 8;   /* numberFonts(2) + totalNumFonts(2) + listFlags(2) + entrySize(2) */
             if (!sdata_in.payload.in_check_rem(expected)) {
-                LOG(LOG_ERR, "Truncated Font list PDU data, need=%u remains=%u",
+                LOG(LOG_ERR, "Truncated Font list PDU data, need=%u remains=%zu",
                     expected, sdata_in.payload.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -3557,15 +3900,16 @@ private:
 
                 if (this->client_info.bpp == 8) {
                     RDPColCache cmd(0, BGRPalette::classic_332());
-                    this->orders->draw(cmd);
+                    this->orders.graphics_update_pdu().draw(cmd);
                 }
 
                 if (this->verbose & (8|1)) {
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
                 this->up_and_running = 1;
+                this->timeout.cancel_timeout();
                 cb.rdp_input_up_and_running();
-                TODO("we should use accessors to set that, also not sure it's the right place to set it")
+                // TODO we should use accessors to set that, also not sure it's the right place to set it
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
                 this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
                 this->ini.set_acl<cfg::context::opt_bpp>(this->client_info.bpp);
@@ -3594,6 +3938,10 @@ private:
 
                     this->auth_info_sent = true;
                 }
+
+                if (8 != this->mod_bpp) {
+                    this->send_palette();
+                }
             }
         }
         break;
@@ -3601,14 +3949,14 @@ private:
             if (this->verbose & (8 | 1)) {
                 LOG(LOG_INFO, "PDUTYPE2_FONTMAP");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
             if (this->verbose & (4 | 8)) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
@@ -3625,7 +3973,7 @@ private:
                     pklpdud.log(LOG_INFO, "Receiving from client");
                 }
 
-                TODO("mutable and static is a bad idea")
+                // TODO mutable and static is a bad idea
                 static uint16_t cache_entry_index[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
                 RDP::BitmapCachePersistentListEntry * entries = pklpdud.entries;
@@ -3663,56 +4011,56 @@ private:
                 }
             }
 
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_IME_STATUS");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
         case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
             if (this->verbose & 8) {
                 LOG(LOG_INFO, "PDUTYPE2_ARC_STATUS_PDU");
             }
-            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
             sdata_in.payload.in_skip_bytes(sdata_in.payload.in_remain());
         break;
 
@@ -3757,202 +4105,86 @@ private:
         this->keymap.toggle_num_lock(LedFlags & SlowPath::TS_SYNC_NUM_LOCK);
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
+protected:
+    friend gdi::GraphicCoreAccess;
 
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPOpaqueRect new_cmd = cmd;
-
-                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.color = color_encode(color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPOpaqueRect capture_cmd = cmd;
-
-                        const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.color = color_encode(color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
+    template<class Cmd>
+    void draw_impl(Cmd const & cmd, Rect const & clip) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            this->graphics_update->draw(cmd, clip);
         }
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
+    void draw_impl(RDPMemBlt const& cmd, Rect const & clip, Bitmap const & bitmap) {
+        this->priv_draw_memblt(cmd, clip, bitmap);
+    }
 
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
-            }
+    void draw_impl(RDPMem3Blt const & cmd, Rect const & clip, Bitmap const & bitmap) {
+        this->priv_draw_memblt(cmd, clip, bitmap);
+    }
+
+    void draw_impl(RDPPatBlt const & cmd, Rect const & clip) {
+        this->priv_draw_and_update_cache_brush(cmd, clip);
+    }
+
+    void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect const & clip) {
+        this->priv_draw_and_update_cache_brush(cmd, clip);
+    }
+
+    void draw_impl(RDPGlyphIndex const & cmd, Rect const & clip, GlyphCache const & gly_cache) {
+        this->priv_draw_and_update_cache_brush(cmd, clip, gly_cache);
+    }
+
+    void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
+        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
+
+        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
+            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
+            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
+            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
+           ) {
+            Rect boundary(bitmap_data.dest_left,
+                          bitmap_data.dest_top,
+                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
+                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
+                         );
+
+            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
+        }
+        else {
+            this->graphics_update->draw(bitmap_data, bmp);
         }
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
-            }
-        }
+    template<class Cmd>
+    void draw_impl(Cmd const & cmd) {
+        this->graphics_update->draw(cmd);
     }
 
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() &&
-            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
-            }
-        }
+    void draw_impl(RDP::FrameMarker const & order) {
+        this->gd->draw(order);
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        if (!clip.isempty() &&
-            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPMultiOpaqueRect new_cmd = cmd;
-
-                    const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd._Color = color_encode(color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPMultiOpaqueRect capture_cmd = cmd;
-
-                        const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd._Color = color_encode(color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
+    void draw_impl(RDPColCache const & cmd) {
+        this->orders.graphics_update_pdu().draw(cmd);
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                RDP::RDPMultiPatBlt new_cmd = cmd;
-                if (this->client_info.bpp != this->mod_bpp) {
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.BackColor = color_encode(back_color24, this->client_info.bpp);
-                    new_cmd.ForeColor = color_encode(fore_color24, this->client_info.bpp);
-                    // this may change the brush add send it to to remote cache
-                }
-                this->cache_brush(new_cmd.brush);
-                this->orders->draw(new_cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDP::RDPMultiPatBlt capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.BackColor, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.ForeColor, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.BackColor = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.ForeColor = color_encode(fore_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
+    void draw_impl(RDPBrushCache const &) {
+        // TODO unimplemented
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    this->capture->draw(cmd, clip);
-                }
+private:
+    template<class Cmd, class... Args>
+    void priv_draw_and_update_cache_brush(Cmd const & cmd, Rect const & clip, Args const & ... args) {
+        if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
+            if (this->updatable_cache_brush(cmd.brush)) {
+                Cmd new_cmd = cmd;
+                // this change the brush and send it to to remote cache
+                this->update_cache_brush(new_cmd.brush);
+                this->graphics_update->draw(new_cmd, clip, args...);
             }
-        }
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                RDPPatBlt new_cmd = cmd;
-                if (this->client_info.bpp != this->mod_bpp) {
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-                    // this may change the brush add send it to to remote cache
-                }
-                this->cache_brush(new_cmd.brush);
-                this->orders->draw(new_cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPatBlt capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
+            else {
+              this->graphics_update->draw(cmd, clip, args...);
             }
         }
     }
@@ -3968,17 +4200,9 @@ private:
         const Bitmap tiled_bmp(bitmap, src_tile);
         const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
 
-        if (!this->input_event_and_graphics_update_disabled) {
-            this->orders->draw(cmd2, clip, tiled_bmp);
-
-            if (  this->capture
-                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                this->capture->draw(cmd2, clip, Bitmap(this->capture_bpp, tiled_bmp));
-            }
-        }
+        this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-private:
     void priv_draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
@@ -3996,13 +4220,11 @@ private:
             return;
         }
 
-        this->send_global_palette();
-
         const uint8_t palette_id = 0;
         if (this->client_info.bpp == 8) {
             if (!this->palette_memblt_sent[palette_id]) {
                 RDPColCache cmd(palette_id, bitmap.palette());
-                this->orders->draw(cmd);
+                this->orders.graphics_update_pdu().draw(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
         }
@@ -4052,11 +4274,6 @@ private:
         }
     }
 
-public:
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        this->priv_draw_memblt(cmd, clip, bitmap);
-    }
-
     void draw_tile3(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
         if (this->verbose & 64) {
@@ -4074,478 +4291,128 @@ public:
 
             cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
             cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
-            // this may change the brush add send it to to remote cache
         }
 
-        if (!this->input_event_and_graphics_update_disabled) {
-            this->orders->draw(cmd2, clip, tiled_bmp);
+        // this may change the brush add send it to to remote cache
+        //this->cache_brush(cmd2.brush);
 
-            if (  this->capture
-                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                if (this->capture_bpp != this->mod_bpp) {
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                    cmd2.back_color= color_encode(back_color24, this->capture_bpp);
-                    cmd2.fore_color= color_encode(fore_color24, this->capture_bpp);
-                    // this may change the brush add send it to to remote cache
-                }
-                else {
-                    cmd2.back_color= cmd.back_color;
-                    cmd2.fore_color= cmd.fore_color;
-                }
-                this->capture->draw(cmd2, clip, tiled_bmp);
-            }
-        }
+        this->graphics_update->draw(cmd2, clip, tiled_bmp);
     }
 
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
-        this->priv_draw_memblt(cmd, clip, bitmap);
-    }
-
-    void draw(const RDPLineTo & cmd, const Rect & clip) override {
-        const uint16_t minx = std::min(cmd.startx, cmd.endx);
-        const uint16_t miny = std::min(cmd.starty, cmd.endy);
-        const Rect rect(minx, miny,
-                        std::max(cmd.startx, cmd.endx) - minx + 1,
-                        std::max(cmd.starty, cmd.endy) - miny + 1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPLineTo new_cmd = cmd;
-
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor pen_color24  = color_decode_opaquerect(cmd.pen.color,  this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                    new_cmd.pen.color  = color_encode(pen_color24,  this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPLineTo capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor pen_color24 = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.pen.color = color_encode(pen_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()) {
-            this->send_global_palette();
-
-            RDPGlyphIndex new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp) {
-                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-                new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-            }
-
-            // this may change the brush and send it to to remote cache
-            this->cache_brush(new_cmd.brush);
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                this->orders->draw(new_cmd, clip, gly_cache);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-                        new_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        new_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
-                    }
-                    else {
-                        new_cmd.back_color = cmd.back_color;
-                        new_cmd.fore_color = cmd.fore_color;
-                    }
-                    this->capture->draw(new_cmd, clip, gly_cache);
-                }
-            }
-        }
-    }
-
-    void draw(const RDPPolygonSC & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaPoints[i].xDelta;
-            previousy += cmd.deltaPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                RDPPolygonSC new_cmd = cmd;
-                if (this->client_info.bpp != this->mod_bpp) {
-                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.BrushColor = color_encode(pen_color24, this->client_info.bpp);
-                }
-
-                this->orders->draw(new_cmd, clip);
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPolygonSC capture_cmd = cmd;
-                        const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.BrushColor = color_encode(pen_color24, this->capture_bpp);
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPPolygonCB & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaPoints[i].xDelta;
-            previousy += cmd.deltaPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPPolygonCB new_cmd = cmd;
-
-                    const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.foreColor = color_encode(fore_pen_color24, this->client_info.bpp);
-                    new_cmd.backColor = color_encode(back_pen_color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPolygonCB capture_cmd = cmd;
-
-                        const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.foreColor = color_encode(fore_pen_color24, this->capture_bpp);
-                        capture_cmd.backColor = color_encode(back_pen_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPPolyline & cmd, const Rect & clip) override {
-        int16_t minx, miny, maxx, maxy, previousx, previousy;
-
-        minx = maxx = previousx = cmd.xStart;
-        miny = maxy = previousy = cmd.yStart;
-
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            previousx += cmd.deltaEncodedPoints[i].xDelta;
-            previousy += cmd.deltaEncodedPoints[i].yDelta;
-
-            minx = std::min(minx, previousx);
-            miny = std::min(miny, previousy);
-
-            maxx = std::max(maxx, previousx);
-            maxy = std::max(maxy, previousy);
-        }
-        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPPolyline new_cmd = cmd;
-
-                    const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.PenColor = color_encode(pen_color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPPolyline capture_cmd = cmd;
-
-                        const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.PenColor = color_encode(pen_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPEllipseSC & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPEllipseSC new_cmd = cmd;
-                    const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                    new_cmd.color = color_encode(color24, this->client_info.bpp);
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPEllipseSC capture_cmd = cmd;
-
-                        const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette_rgb);
-                        capture_cmd.color = color_encode(color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void draw(const RDPEllipseCB & cmd, const Rect & clip) override {
-        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()) {
-            this->send_global_palette();
-
-            if (!this->input_event_and_graphics_update_disabled) {
-                if (this->client_info.bpp != this->mod_bpp) {
-                    RDPEllipseCB new_cmd = cmd;
-                    const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                    const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                    new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-                    new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-
-                    this->orders->draw(new_cmd, clip);
-                }
-                else {
-                    this->orders->draw(cmd, clip);
-                }
-
-                if (  this->capture
-                   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                    if (this->capture_bpp != this->mod_bpp) {
-                        RDPEllipseCB capture_cmd = cmd;
-
-                        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette_rgb);
-                        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette_rgb);
-
-                        capture_cmd.back_color = color_encode(back_color24, this->capture_bpp);
-                        capture_cmd.fore_color = color_encode(fore_color24, this->capture_bpp);
-
-                        this->capture->draw(capture_cmd, clip);
-                    }
-                    else {
-                        this->capture->draw(cmd, clip);
-                    }
-                }
-            }
-        }
-    }
-
-    void flush() override {
-        this->orders->flush();
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->flush();
-        }
+    bool updatable_cache_brush(RDPBrush const & brush) const {
+        return brush.style == 3 && this->client_info.brush_cache_code == 1;
     }
 
     void cache_brush(RDPBrush & brush)
     {
-        if ((brush.style == 3) && (this->client_info.brush_cache_code == 1)) {
-            uint8_t pattern[8];
-            pattern[0] = brush.hatch;
-            memcpy(pattern+1, brush.extra, 7);
-            int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->orders.add_brush(pattern, cache_idx)) {
-                RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
-                    sizeof(this->orders.brush_at(cache_idx).pattern),
-                    this->orders.brush_at(cache_idx).pattern);
-                this->orders->draw(cmd);
-            }
-            brush.hatch = cache_idx;
-            brush.style = 0x81;
+        if (this->updatable_cache_brush(brush)) {
+            this->update_cache_brush(brush);
         }
     }
 
-    void draw(const RDPColCache & cmd) override {
-        this->orders->draw(cmd);
+    void update_cache_brush(RDPBrush & brush)
+    {
+        uint8_t pattern[8];
+        pattern[0] = brush.hatch;
+        memcpy(pattern+1, brush.extra, 7);
+        int cache_idx = 0;
+        if (BRUSH_TO_SEND == this->orders.add_brush(pattern, cache_idx)) {
+            RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
+                sizeof(this->orders.brush_at(cache_idx).pattern),
+                this->orders.brush_at(cache_idx).pattern);
+            this->orders.graphics_update_pdu().draw(cmd);
+        }
+        brush.hatch = cache_idx;
+        brush.style = 0x81;
     }
 
-    void set_mod_palette(const BGRPalette & palette) override {
+    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
+    // -------------------------------------------------------------------
+
+    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
+    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
+
+    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
+    // Values in this field are ignored.
+
+    // numberColors (4 bytes): A 32-bit, unsigned integer.
+    // The number of RGB triplets in the paletteData field.
+    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
+
+    void GeneratePaletteUpdateData(OutStream & stream) {
+        // Payload
+        stream.out_uint16_le(RDP_UPDATE_PALETTE);
+        stream.out_uint16_le(0);
+
+        stream.out_uint32_le(256); /* # of colors */
+        for (auto color : this->mod_palette_rgb) {
+            // Palette entries is in BGR triplet format.
+            uint8_t r = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t b = color;
+            stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
+        }
+    }
+
+    bool palette_sent = false;
+
+    void send_palette() {
+        if (8 != this->client_info.bpp || this->palette_sent) {
+            return ;
+        }
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "Front::send_palette");
+        }
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        GeneratePaletteUpdateData(stream.get_data_stream());
+
+        ::send_server_update(
+            this->trans
+          , this->server_fastpath_update_support
+          , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
+          , this->mppc_enc
+          , this->share_id
+          , this->encryptionLevel
+          , this->encrypt
+          , this->userid
+          , SERVER_UPDATE_GRAPHICS_PALETTE
+          , 0
+          , stream
+          , this->verbose
+        );
+
+        this->sync();
+
+        this->palette_sent = true;
+    }
+
+public:
+    void sync() override {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "Front::flush");
+        }
+        this->gd->sync();
+    }
+
+    void set_palette(const BGRPalette & palette) override {
         this->mod_palette_rgb = palette;
+
+        this->gd->set_palette(palette);
+
         this->palette_sent = false;
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->set_mod_palette(palette);
-        }
+        this->send_palette();
     }
 
-    void draw(const RDP::FrameMarker & order) override {
-        if (this->client_order_caps.orderSupportExFlags & ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT) {
-            this->orders->draw(order);
-        }
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
+    uint8_t get_order_cap(int idx) const override {
+        return this->client_order_caps.orderSupport[idx];
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->orders->draw(order);
-
-        if (  this->capture
-           && (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->draw(order);
-        }
-    }
-
-    void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const override {
-        proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
-    }
-
-    void intersect_order_caps_ex(OrderCaps & order_caps) const override {
-        order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) override {
-        //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
-
-        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()
-            // This is to protect rdesktop different color depth works with mstsc and xfreerdp.
-            || (bitmap_data.bits_per_pixel != this->client_info.bpp)
-            || (bitmap_data.bitmap_size() > this->max_bitmap_size)
-           ) {
-            Rect boundary(bitmap_data.dest_left,
-                          bitmap_data.dest_top,
-                          bitmap_data.dest_right - bitmap_data.dest_left + 1,
-                          bitmap_data.dest_bottom - bitmap_data.dest_top + 1
-                         );
-
-            this->draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
-            return;
-        }
-
-        if (!this->input_event_and_graphics_update_disabled) {
-            ::compress_and_draw_bitmap_update(bitmap_data,
-                                              Bitmap(this->client_info.bpp, bmp),
-                                              this->client_info.bpp,
-                                              this->orders.p->graphics_update_pdu);
-
-            //bitmap_data.log(LOG_INFO, "Front");
-            //hexdump_d(data, size);
-
-            if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                if ((bmp.bpp() > this->capture_bpp) || (bmp.bpp() == 8)) {
-                    Bitmap capture_bmp(this->capture_bpp, bmp);
-
-                    ::compress_and_draw_bitmap_update(bitmap_data, capture_bmp, this->capture_bpp, *this->capture);
-                }
-                else {
-                    if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
-                        ::compress_and_draw_bitmap_update(bitmap_data, bmp, this->capture_bpp, *this->capture);
-                    }
-                    else {
-                        this->capture->draw(bitmap_data, data, size, bmp);
-                    }
-                }
-            }
-        }
+    uint16_t get_order_caps_ex_flags() const override {
+        return this->client_order_caps.orderSupportExFlags;
     }
 
     bool check_and_reset_activity() override {
@@ -4557,7 +4424,6 @@ public:
 private:
     template<class KeyboardEvent_Recv>
     void input_event_scancode(KeyboardEvent_Recv & ke, Callback & cb, long event_time) {
-        StaticOutStream<256> decoded_data;
         bool    tsk_switch_shortcuts;
 
         struct KeyboardFlags {
@@ -4569,39 +4435,58 @@ private:
             }
         };
 
-        this->keymap.event(KeyboardFlags::get(ke), ke.keyCode, decoded_data, tsk_switch_shortcuts);
+        Keymap2::DecodedKeys decoded_keys = this->keymap.event(
+            KeyboardFlags::get(ke), ke.keyCode, tsk_switch_shortcuts);
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
-        bool send_to_mod = true;
-
-        if (  this->capture
-            && (this->capture_state == CAPTURE_STATE_STARTED)
-            && decoded_data.get_offset()) {
-            if (this->focus_on_password_textbox) {
-                unsigned char_count = decoded_data.get_offset() / sizeof(uint32_t);
-                decoded_data.rewind();
-                for (; char_count > 0; char_count--) {
-                    decoded_data.out_uint32_le('*');
-                }
-            }
-
-            send_to_mod = this->capture->input(tvtime(), decoded_data.get_data(), decoded_data.get_offset());
-        }
+        bool const send_to_mod = this->capture && this->capture_state == CAPTURE_STATE_STARTED
+        ? (  0 == decoded_keys.count
+         || (1 == decoded_keys.count
+            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[0]))
+         || (2 == decoded_keys.count
+            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[0])
+            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[1]))
+        ) : true;
 
         if (this->up_and_running) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                 LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                if (!this->input_event_and_graphics_update_disabled &&
-                    send_to_mod) {
+                if (!this->input_event_disabled && send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
+
                 }
                 this->has_activity = true;
             }
         }
+
+        if (this->keymap.is_application_switching_shortcut_pressed) {
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->possible_active_window_change();
+            }
+        }
+    }
+
+    void update_keyboard_input_mask_state() {
+        const ::KeyboardInputMaskingLevel keyboard_input_masking_level =
+            this->ini.get<cfg::session_log::keyboard_input_masking_level>();
+
+        if (keyboard_input_masking_level == ::KeyboardInputMaskingLevel::unmasked) return;
+
+        const bool mask_unidentified_data =
+            ((keyboard_input_masking_level ==
+                  ::KeyboardInputMaskingLevel::password_and_unidentified) ?
+             (!this->session_probe_started_) : false);
+
+        if (this->capture) {
+            this->capture->enable_kbd_input_mask(
+                    this->focus_on_password_textbox ||
+                    this->consent_ui_is_visible || mask_unidentified_data
+                );
+        }
     }
 };
 
-#endif

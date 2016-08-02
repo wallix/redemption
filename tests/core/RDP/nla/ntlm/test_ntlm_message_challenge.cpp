@@ -21,12 +21,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestNtlmMessageChallenge
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/nla/credssp.hpp"
-#include "RDP/nla/ntlm/ntlm_message_challenge.hpp"
+#include "core/RDP/nla/credssp.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_challenge.hpp"
 
 #include "check_sig.hpp"
 
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
     char message[1024];
-    if (!check_sig(to_send2, message, (const char *)sig)){
+    if (!check_sig(to_send2, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

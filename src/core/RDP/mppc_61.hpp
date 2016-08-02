@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_61_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_61_HPP_
+
+#pragma once
 
 #include "mppc_50.hpp"
 
@@ -197,7 +197,7 @@ private:
         if (compressed) {
             unsigned expected = 2; // MatchCount(2)
             if (!compressed_data_stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
                     expected, compressed_data_stream.in_remain());
                 throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
             }
@@ -205,7 +205,7 @@ private:
 
             expected = MatchCount * 8; // MatchCount(2) * (MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4))
             if (!compressed_data_stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
                     expected, compressed_data_stream.in_remain());
                 throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
             }
@@ -224,6 +224,7 @@ private:
 public:
     int decompress(uint8_t const * compressed_data, int compressed_data_size,
         int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size) override {
+        (void)compressionFlags;
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
         //    this->historyOffset, compressed_data_size, compressionFlags);
 
@@ -234,7 +235,7 @@ public:
 
         unsigned expected = 2; // Level1ComprFlags(1) + Level2ComprFlags(1)
         if (!compressed_data_stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%u",
+            LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
                 expected, compressed_data_stream.in_remain());
             throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
         }
@@ -297,7 +298,7 @@ public:
         for (uint16_t match_index = 0; match_index < MatchCount; match_index++) {
             expected = 8;   // MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4)
             if (!match_details_stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%u",
+                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
                     expected, match_details_stream.in_remain());
                 throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
             }
@@ -309,7 +310,7 @@ public:
             if (MatchOutputOffset > current_output_offset) {
                 expected = MatchOutputOffset - current_output_offset;
                 if (!literals_stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%u",
+                    LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
                         expected, literals_stream.in_remain());
                     throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
                 }
@@ -377,6 +378,7 @@ struct rdp_mppc_enc_match_finder {
 struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
 {
     void dump(bool mini_dump) const override {
+        (void)mini_dump;
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder sequential search match finder");
     }
 
@@ -595,7 +597,7 @@ public:
 private:
     void compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size) {
         if (this->verbose & 512) {
-            LOG(LOG_INFO, "compress_61: uncompressed_data_size=%u historyOffset=%u",
+            LOG(LOG_INFO, "compress_61: uncompressed_data_size=%" PRIu16 " historyOffset=%" PRIu32,
                 uncompressed_data_size, this->historyOffset);
         }
 
@@ -644,7 +646,7 @@ private:
                                    0);
             unsigned expected = 2 + match_details_data_size; /* MatchCount(2) + MatchDetails (variable) */
             if (!level_1_output_stream.has_room(expected)) {
-                LOG(LOG_ERR, "RDP 6.1 bulk compressor: output stream memory too small, need=%u remains=%u",
+                LOG(LOG_ERR, "RDP 6.1 bulk compressor: output stream memory too small, need=%u remains=%zu",
                     expected, level_1_output_stream.tailroom());
                 throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
             }
@@ -662,7 +664,7 @@ private:
                 if (match_output_offset > current_output_offset) {
                     expected = match_output_offset - current_output_offset;
                     if (!level_1_output_stream.has_room(expected)) {
-                        LOG(LOG_ERR, "RDP 6.1 bulk compressor: output stream memory too small, need=%u remains=%u",
+                        LOG(LOG_ERR, "RDP 6.1 bulk compressor: output stream memory too small, need=%u remains=%zu",
                             expected, level_1_output_stream.tailroom());
                         throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
                     }
@@ -675,7 +677,7 @@ private:
             if (uncompressed_data_size > current_output_offset) {
                 expected = uncompressed_data_size - current_output_offset;
                 if (!level_1_output_stream.has_room(expected)) {
-                    LOG(LOG_ERR, "RDP 6.1 bulk compressor: output stream memory too small, need=%u remains=%u",
+                    LOG(LOG_ERR, "RDP 6.1 bulk compressor: output stream memory too small, need=%u remains=%zu",
                         expected, level_1_output_stream.tailroom());
                     throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
                 }
@@ -739,12 +741,13 @@ private:
 
         if (this->verbose & 512) {
             LOG(LOG_INFO, "Level1ComprFlags=0x%02X Level2ComprFlags=0x%02X",
-                this->Level1ComprFlags, this->Level2ComprFlags);
+                static_cast<unsigned>(this->Level1ComprFlags),
+                static_cast<unsigned>(this->Level2ComprFlags));
         }
     }
 
     void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t reserved) override {
+        uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t /*reserved*/) override {
         this->compress_61(uncompressed_data, uncompressed_data_size);
 
         if (this->bytes_in_output_buffer) {
@@ -792,4 +795,3 @@ public:
 
 typedef rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> rdp_mppc_61_enc_hash_based;
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_61_HPP_

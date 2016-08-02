@@ -21,16 +21,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWidgetTestMod
-#include <boost/test/auto_unit_test.hpp>
-
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "internal/widget_test_mod.hpp"
+#include "mod/internal/widget_test_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDialogMod)

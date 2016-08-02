@@ -18,12 +18,15 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_
-#define _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_
 
-#include "stream.hpp"
+#pragma once
 
 #include <cinttypes>
+
+#include "core/error.hpp"
+
+#include "utils/sugar/cast.hpp"
+#include "utils/stream.hpp"
 
 namespace fscc {
 
@@ -319,7 +322,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileAttributeTagInformation: expected=%u remains=%u",
+                    "Truncated FileAttributeTagInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -346,7 +349,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -476,7 +479,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileBasicInformation: expected=%u remains=%u",
+                    "Truncated FileBasicInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -517,7 +520,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // FileBasicInformation
 
@@ -724,40 +727,23 @@ public:
 
         stream.out_uint32_le(this->FileAttributes);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
+        uint8_t FileName_unicode_data[65536];
+        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
         stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
-        const size_t maximum_length_of_ShortName_in_bytes = (this->short_name.length() + 1) * 2;
-
-        uint8_t * const ShortName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_ShortName_in_bytes));
+        uint8_t ShortName_unicode_data[24]; // ShortName(24)
         size_t size_of_ShortName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->short_name.c_str()), ShortName_unicode_data,
-            maximum_length_of_ShortName_in_bytes);
-        if (size_of_ShortName_unicode_data > 0) {
-            // Writes null terminator.
-            ShortName_unicode_data[size_of_ShortName_unicode_data    ] =
-            ShortName_unicode_data[size_of_ShortName_unicode_data + 1] = 0;
-            size_of_ShortName_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->short_name.c_str()),
+            ShortName_unicode_data, sizeof(ShortName_unicode_data));
 
-            REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
-        }
+        REDASSERT(size_of_ShortName_unicode_data <= 24 /* ShortName(24) */);
 
-        stream.out_sint8(size_of_ShortName_unicode_data);   // ShortNameLength(1)
+        stream.out_sint8(size_of_ShortName_unicode_data);  // ShortNameLength(1)
 
         // Reserved(1), MUST NOT be transmitted.
 
@@ -780,7 +766,7 @@ public:
                                             //     ShortName(24)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileBothDirectoryInformation (0): expected=%u remains=%u",
+                    "Truncated FileBothDirectoryInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -804,42 +790,36 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        uint8_t ShortName[24];
-
-        stream.in_copy_bytes(ShortName, sizeof(ShortName));
-
-        const size_t size_of_ShortName_utf8_string =
-            ShortNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const ShortName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_ShortName_utf8_string));
+        uint8_t const * const ShortName = stream.get_current();
+        uint8_t ShortName_utf8_string[24 /*ShortName(24)*/ * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_ShortName_utf8_string = ::UTF16toUTF8(
-            ShortName, ShortNameLength / 2, ShortName_utf8_string, size_of_ShortName_utf8_string);
+            ShortName, ShortNameLength / 2, ShortName_utf8_string,
+            sizeof(ShortName_utf8_string));
         this->short_name.assign(::char_ptr_cast(ShortName_utf8_string),
             length_of_ShortName_utf8_string);
+
+        stream.in_skip_bytes(24);   // ShortName(24)
 
         {
             const unsigned expected = FileNameLength;   // FileName(variable)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileBothDirectoryInformation (1): expected=%u remains=%u",
+                    "Truncated FileBothDirectoryInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
-
-        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
-
-        const size_t size_of_FileName_utf8_string =
-            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_FileName_utf8_string));
+        uint8_t const * const FileName_unicode_data = stream.get_current();
+        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string, size_of_FileName_utf8_string);
+            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+            sizeof(FileName_utf8_string));
         this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
             length_of_FileName_utf8_string);
+
+        stream.in_skip_bytes(FileNameLength);
     }
 
     inline size_t size() const {
@@ -853,18 +833,10 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -888,7 +860,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // FileBothDirectoryInformation
 
@@ -1151,24 +1123,17 @@ public:
 
         stream.out_uint32_le(this->FileAttributes);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
-        size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
+        uint8_t FileName_unicode_data[65536];
+        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
         stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
         stream.out_uint32_le(this->EaSize);
 
-        stream.out_copy_bytes(FileName_unicode_data, size_of_FileName_unicode_data);
+        stream.out_copy_bytes(FileName_unicode_data,
+            size_of_FileName_unicode_data);
     }
 
     inline void receive(InStream & stream) {
@@ -1181,7 +1146,7 @@ public:
                                             //     EaSize(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFullDirectoryInformation (0): expected=%u remains=%u",
+                    "Truncated FileFullDirectoryInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1206,24 +1171,21 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFullDirectoryInformation (1): expected=%u remains=%u",
+                    "Truncated FileFullDirectoryInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
-
-        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
-
-        const size_t size_of_FileName_utf8_string =
-            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_FileName_utf8_string));
+        uint8_t const * const FileName_unicode_data = stream.get_current();
+        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
-            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string, size_of_FileName_utf8_string);
+            FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
+            sizeof(FileName_utf8_string));
         this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
             length_of_FileName_utf8_string);
+
+        stream.in_skip_bytes(FileNameLength);
     }
 
     inline size_t size() const {
@@ -1234,18 +1196,10 @@ public:
                             //     FileAttributes(4) + FileNameLength(4) +
                             //     EaSize(4)
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -1253,7 +1207,7 @@ public:
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
-            "FileBothDirectoryInformation: NextEntryOffset=%u FileIndex=%u CreationTime=%" PRIu64
+            "FileFullDirectoryInformation: NextEntryOffset=%u FileIndex=%u CreationTime=%" PRIu64
                 " LastAccessTime=%" PRIu64 " LastWriteTime=%" PRIu64 " ChangeTime=%" PRIu64
                 " EndOfFile=%" PRId64 " AllocationSize=%" PRId64 " FileAttributes=0x%X "
                 "EaSize=%u FileName=\"%s\"",
@@ -1269,7 +1223,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // FileFullDirectoryInformation
 
@@ -1358,18 +1312,10 @@ public:
         stream.out_uint32_le(this->NextEntryOffset);
         stream.out_uint32_le(this->FileIndex);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t FileName_unicode_data[65536];
         size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), FileName_unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        FileName_unicode_data[size_of_FileName_unicode_data    ] =
-        FileName_unicode_data[size_of_FileName_unicode_data + 1] = 0;
-        size_of_FileName_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
         stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
 
@@ -1381,7 +1327,7 @@ public:
             const unsigned expected = 8;    // NextEntryOffset(4) + FileIndex(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileNamesInformation (0): expected=%u remains=%u",
+                    "Truncated FileNamesInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1397,42 +1343,30 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileNamesInformation (1): expected=%u remains=%u",
+                    "Truncated FileNamesInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
-        uint8_t * const FileName_unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
-
-        stream.in_copy_bytes(FileName_unicode_data, FileNameLength);
-
-        const size_t size_of_FileName_utf8_string =
-            FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const FileName_utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_FileName_utf8_string));
+        uint8_t const * const FileName_unicode_data = stream.get_current();
+        uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
         const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
             FileName_unicode_data, FileNameLength / 2, FileName_utf8_string,
-            size_of_FileName_utf8_string);
+            sizeof(FileName_utf8_string));
         this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
             length_of_FileName_utf8_string);
+
+        stream.in_skip_bytes(FileNameLength);
     }
 
     inline size_t size() const {
         size_t size = 12;    // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_FileName_in_bytes = (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileName_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_name.c_str()), unicode_data,
-            maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -1450,7 +1384,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1599,7 +1533,7 @@ public:
                                             //     Directory(1)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileStandardInformation: expected=%u remains=%u",
+                    "Truncated FileStandardInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1634,7 +1568,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // FileStandardInformation
 
@@ -1826,13 +1760,10 @@ public:
         stream.out_uint32_le(this->FileSystemAttributes_);
         stream.out_sint32_le(this->MaximumComponentNameLength);
 
-        const size_t maximum_length_of_FileSystemName_in_bytes = this->file_system_name.length() * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileSystemName_in_bytes));
+        uint8_t unicode_data[65536];
         const size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()), unicode_data,
-            maximum_length_of_FileSystemName_in_bytes);
+            reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         stream.out_uint32_le(size_of_unicode_data); // FileSystemNameLength(4)
 
@@ -1845,7 +1776,7 @@ public:
                                             //     FileSystemNameLength(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsAttributeInformation (0): expected=%u remains=%u",
+                    "Truncated FileFsAttributeInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -1861,38 +1792,32 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsAttributeInformation (1): expected=%u remains=%u",
+                    "Truncated FileFsAttributeInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileSystemNameLength));
+        uint8_t const * const FileSystemName = stream.get_current();
+        uint8_t FileSystemName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-        stream.in_copy_bytes(unicode_data, FileSystemNameLength);
+        const size_t length_of_FileSystemName_utf8_string = ::UTF16toUTF8(
+            FileSystemName, FileSystemNameLength / 2, FileSystemName_utf8_string,
+            sizeof(FileSystemName_utf8_string));
+        this->file_system_name.assign(::char_ptr_cast(FileSystemName_utf8_string),
+            length_of_FileSystemName_utf8_string);
 
-        const size_t size_of_utf8_string =
-            FileSystemNameLength / 2 * maximum_length_of_utf8_character_in_bytes;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            unicode_data, FileSystemNameLength / 2, utf8_string, size_of_utf8_string);
-        this->file_system_name.assign(::char_ptr_cast(utf8_string),
-            length_of_utf8_string);
+        stream.in_skip_bytes(FileSystemNameLength);
     }
 
     inline size_t size() const {
         const size_t size = 12; // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
                                 //     FileSystemNameLength(4)
 
-        const size_t maximum_length_of_FileSystemName_in_bytes =
-            this->file_system_name.length() * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_FileSystemName_in_bytes));
+        uint8_t unicode_data[65536];
         const size_t size_of_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->file_system_name.c_str()),
-            unicode_data, maximum_length_of_FileSystemName_in_bytes);
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -1918,7 +1843,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // FileFsAttributeInformation
 
@@ -2023,7 +1948,7 @@ public:
                                             //     BytesPerSector(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsFullSizeInformation: expected=%u remains=%u",
+                    "Truncated FileFsFullSizeInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -2060,7 +1985,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -2152,7 +2077,7 @@ public:
                                             //     BytesPerSector(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsSizeInformation: expected=%u remains=%u",
+                    "Truncated FileFsSizeInformation: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -2185,7 +2110,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -2280,26 +2205,19 @@ public:
         stream.out_uint64_le(this->VolumeCreationTime);
         stream.out_uint32_le(this->VolumeSerialNumber);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_VolumeLabel_in_bytes = (this->volume_label.length() + 1) * 2;
+        uint8_t VolumeLabel_unicode_data[65536];
+        size_t size_of_VolumeLabel_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()),
+            VolumeLabel_unicode_data, sizeof(VolumeLabel_unicode_data));
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_VolumeLabel_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()), unicode_data,
-            maximum_length_of_VolumeLabel_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
-
-        stream.out_uint32_le(size_of_unicode_data); // VolumeLabelLength(4)
+        stream.out_uint32_le(size_of_VolumeLabel_unicode_data); // VolumeLabelLength(4)
 
         stream.out_uint8(this->SupportsObjects);
 
         // Reserved(1), MUST NOT be transmitted.
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.out_copy_bytes(VolumeLabel_unicode_data,
+            size_of_VolumeLabel_unicode_data);
     }
 
     inline void receive(InStream & stream) {
@@ -2308,7 +2226,7 @@ public:
                                             //     VolumeLabelLength(4) + SupportsObjects(1)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsVolumeInformation (0): expected=%u remains=%u",
+                    "Truncated FileFsVolumeInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -2328,29 +2246,29 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsVolumeInformation (1): expected=%u remains=%u",
+                    "Truncated FileFsVolumeInformation (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(VolumeLabelLength));
+        uint8_t const * const VolumeLabel_unicode_data = stream.get_current();
+        uint8_t VolumeLabel_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes + 1];
 
-        stream.in_copy_bytes(unicode_data, VolumeLabelLength);
+        const size_t length_of_VolumeLabel_utf8_string = ::UTF16toUTF8(
+            VolumeLabel_unicode_data, VolumeLabelLength / 2,
+            VolumeLabel_utf8_string, sizeof(VolumeLabel_utf8_string) - 1);
 
-        const size_t size_of_utf8_string =
-            VolumeLabelLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        uint8_t * const utf8_string = static_cast<uint8_t *>(
-            ::alloca(size_of_utf8_string));
-        const size_t length_of_utf8_string = ::UTF16toUTF8(
-            unicode_data, VolumeLabelLength / 2, utf8_string, size_of_utf8_string);
+        stream.in_skip_bytes(VolumeLabelLength);
 
-        for (uint8_t * c = utf8_string + length_of_utf8_string - 1;
-             (c >= utf8_string) && ((*c) == ' '); c--) {
+        VolumeLabel_utf8_string[length_of_VolumeLabel_utf8_string] = '\0';
+        for (uint8_t * c =
+                 VolumeLabel_utf8_string + length_of_VolumeLabel_utf8_string - 1;
+             (c >= VolumeLabel_utf8_string) && ((*c) == ' '); c--) {
             *c = '\0';
         }
 
-        this->volume_label = ::char_ptr_cast(utf8_string);
+        this->volume_label = ::char_ptr_cast(VolumeLabel_utf8_string);
     }
 
     inline size_t size() const {
@@ -2359,18 +2277,10 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_VolumeLabel_in_bytes = (this->volume_label.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                    maximum_length_of_VolumeLabel_in_bytes));
+        uint8_t unicode_data[65536];
         size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()), unicode_data,
-            maximum_length_of_VolumeLabel_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            reinterpret_cast<const uint8_t *>(this->volume_label.c_str()),
+            unicode_data, sizeof(unicode_data));
 
         return size + size_of_unicode_data;
     }
@@ -2390,7 +2300,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // FileFsVolumeInformation
 
@@ -2546,7 +2456,7 @@ public:
             const unsigned expected = 8;    // DeviceType(4) + Characteristics(4)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated FileFsDeviceInformation (0): expected=%u remains=%u",
+                    "Truncated FileFsDeviceInformation (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_FSCC_DATA_TRUNCATED);
             }
@@ -2583,7 +2493,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -2715,4 +2625,3 @@ enum {
 
 }   // namespace fscc
 
-#endif  // #ifndef _REDEMPTION_CORE_FSCC_FILEINFORMATION_HPP_

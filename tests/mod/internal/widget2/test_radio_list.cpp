@@ -22,12 +22,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWidgetRadioList
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "internal/widget2/radio_list.hpp"
-#include "internal/widget2/screen.hpp"
+#include "mod/internal/widget2/radio_list.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 
 #ifndef FIXTURES_PATH
@@ -43,17 +43,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
     TestDraw drawable(800, 600);
 
     // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     Font font;
 
 
-    WidgetRadioButton radio0(drawable, 10, 300, parent, nullptr,
+    WidgetRadioButton radio0(drawable.gd, 10, 300, parent, nullptr,
                              "Alphabetical", true, 0, WHITE, DARK_BLUE_BIS);
 
-    WidgetRadioButton radio1(drawable, radio0.lx() + 10, 300, parent, nullptr,
+    WidgetRadioButton radio1(drawable.gd, radio0.lx() + 10, 300, parent, nullptr,
                             "Most Used First", true, 0, WHITE, DARK_BLUE_BIS);
 
-    WidgetRadioButton radio2(drawable, radio1.lx() + 10, 300, parent, nullptr,
+    WidgetRadioButton radio2(drawable.gd, radio1.lx() + 10, 300, parent, nullptr,
                             "Last Used First", true, 0, WHITE, DARK_BLUE_BIS);
     // ask to widget to redraw at it's current position
     parent.add_widget(&radio0);
@@ -103,10 +103,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     TestDraw drawable(800, 600);
 
     // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
 
 
-    WidgetRadioList radiolist(drawable, 50, 70, parent, nullptr, 0, WHITE, DARK_BLUE_BIS);
+    WidgetRadioList radiolist(drawable.gd, 50, 70, parent, nullptr, 0, WHITE, DARK_BLUE_BIS);
 
     parent.add_widget(&radiolist);
 
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     TestDraw drawable(800, 600);
 
     // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable.gd, 800, 600);
     struct Notify : public NotifyApi {
         Widget2* sender;
         notify_event_t event;
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
         }
     } notifier;
 
-    WidgetRadioList radiolist(drawable, 50, 30, parent, &notifier, 0, WHITE, DARK_BLUE_BIS);
+    WidgetRadioList radiolist(drawable.gd, 50, 30, parent, &notifier, 0, WHITE, DARK_BLUE_BIS);
 
     parent.add_widget(&radiolist);
 

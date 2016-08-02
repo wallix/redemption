@@ -15,38 +15,50 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan,
+ *              Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
 
-#include "version.hpp"
-#include "front_api.hpp"
+#pragma once
+
+#include "main/version.hpp"
+#include "core/front_api.hpp"
 #include "widget2/flat_login.hpp"
 #include "internal_mod.hpp"
 #include "widget2/notify_api.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "copy_paste.hpp"
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
+#include "widget2/language_button.hpp"
+
+#include "utils/timeout.hpp"
+
+# include <chrono>
 
 
 using FlatLoginModVariables = vcfg::variables<
-    vcfg::var<cfg::context::password,   vcfg::write>,
-    vcfg::var<cfg::globals::auth_user,  vcfg::write>,
-    vcfg::var<cfg::context::selector,           vcfg::ask | vcfg::write>,
-    vcfg::var<cfg::context::target_protocol,    vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_device,      vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::globals::target_user,        vcfg::ask | vcfg::read>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::target_protocol,            vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>
 >;
 
 
 class FlatLoginMod : public InternalMod, public NotifyApi
 {
+    LanguageButton language_button;
+
     FlatLogin login;
+    Timeout timeout;
 
     CopyPaste copy_paste;
 
@@ -56,17 +68,28 @@ public:
     FlatLoginMod(
         FlatLoginModVariables vars,
         char const * username, char const * password,
-        FrontAPI & front, uint16_t width, uint16_t height
+        FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now
     )
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , login(*this, width, height, this->screen, this, "Redemption " VERSION,
-                username[0] != 0,
-                0, nullptr, nullptr,
-                TR("login", language(vars)),
-                TR("password", language(vars)),
-                this->font(), Translator(language(vars)), this->theme())
+        , language_button(
+            vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
+            this->login, front, front, this->font(), this->theme())
+        , login(
+            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this, "Redemption " VERSION,
+            nullptr, nullptr,
+            TR("login", language(vars)),
+            TR("password", language(vars)),
+            vars.get<cfg::context::opt_message>().c_str(),
+            &this->language_button,
+            this->font(), Translator(language(vars)), this->theme())
+        , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())
         , vars(vars)
     {
+        if (vars.get<cfg::globals::authentication_timeout>().count()) {
+            LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
+                static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));
+        }
         this->screen.add_widget(&this->login);
 
         this->login.login_edit.set_text(username);
@@ -111,18 +134,33 @@ public:
         }
     }
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
-        this->event.reset();
+
+        switch(this->timeout.check(now)) {
+        case Timeout::TIMEOUT_REACHED:
+            this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
+            break;
+        case Timeout::TIMEOUT_NOT_REACHED:
+            this->event.set(200000);
+            break;
+        case Timeout::TIMEOUT_INACTIVE:
+            this->event.reset();
+            break;
+        }
     }
 
+    bool is_up_and_running() override { return true; }
+
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        (void)length;
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
 };
 
-#endif

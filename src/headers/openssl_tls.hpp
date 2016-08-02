@@ -23,8 +23,8 @@
 
 */
 
-#ifndef _REDEMPTION_HEADERS_OPENSSL_TLS_HPP_
-#define _REDEMPTION_HEADERS_OPENSSL_TLS_HPP_
+
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +35,4 @@ extern "C" {
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

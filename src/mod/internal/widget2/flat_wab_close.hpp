@@ -19,8 +19,7 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAB_CLOSE_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAB_CLOSE_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "flat_button.hpp"
@@ -28,10 +27,11 @@
 #include "edit.hpp"
 #include "label.hpp"
 #include "multiline.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
 #include "widget2_rect.hpp"
-#include "theme.hpp"
-#include "defines.hpp"
+#include "utils/theme.hpp"
+#include "core/defines.hpp"
+#include "gdi/graphic_api.hpp"
 
 #include <vector>
 
@@ -47,6 +47,7 @@ public:
     WidgetLabel target_label_value;
     WidgetLabel connection_closed_label;
     WidgetFlatButton cancel;
+    WidgetFlatButton * back;
     WidgetLabel diagnostic;
     WidgetMultiLine diagnostic_lines;
     WidgetLabel timeleft_label;
@@ -61,11 +62,13 @@ private:
     Translation::language_t lang;
 
 public:
-    FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
-                 NotifyApi* notifier, const char * diagnostic_text, int group_id,
+    FlatWabClose(gdi::GraphicApi & drawable,
+                 int16_t left, int16_t top, int16_t width, int16_t height, Widget2& parent,
+                 NotifyApi* notifier, const char * diagnostic_text,
                  const char * username, const char * target,
-                 bool showtimer, Font const & font, Theme const & theme, Translation::language_t lang)
-    : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+                 bool showtimer, Font const & font, Theme const & theme,
+                 Translation::language_t lang, bool back_selector = false)
+    : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
     , bg_color(theme.global.bgcolor)
     // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
     , img(drawable, 0, 0,
@@ -85,6 +88,12 @@ public:
     , cancel(drawable, 0, 0, *this, this, TR("close", lang), true, -14,
              theme.global.fgcolor, theme.global.bgcolor,
              theme.global.focus_color, font, 6, 2)
+    , back(back_selector ? new WidgetFlatButton(drawable, 0, 0, *this, this,
+                                                TR("back_selector", lang), true, -14,
+                                                theme.global.fgcolor,
+                                                theme.global.bgcolor,
+                                                theme.global.focus_color, font,
+                                                6, 2) : nullptr)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, nullptr, "Diagnostic:", true, -15,
                  theme.global.fgcolor, theme.global.bgcolor, font)
     , diagnostic_lines(drawable, 0, 0, *this, nullptr, diagnostic_text, true, -16,
@@ -111,10 +120,11 @@ public:
         this->timeleft_label.set_text(label);
 
         // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
-        this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
-        this->connection_closed_label.rect.x = (this->cx() - this->connection_closed_label.cx()) / 2;
+        int back_width = this->back ? this->back->cx() + 10 : 0;
+        this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+        this->connection_closed_label.rect.x = left + (this->cx() - this->connection_closed_label.cx()) / 2;
 
-        this->separator.rect.x = (this->cx() - 600) / 2;
+        this->separator.rect.x = left + (this->cx() - 600) / 2;
         this->separator.rect.cx = 600;
 
         this->add_widget(&this->connection_closed_label);
@@ -125,14 +135,14 @@ public:
 
         uint16_t px = this->diagnostic.cx() + 10;
 
-        int y = this->dy() + 10;
+        int y = this->dy() + 10 - top;
         // this->img.rect.y = y;
         // y += this->img.cy() + 20;
 
-        this->connection_closed_label.rect.y = y;
+        this->connection_closed_label.rect.y = top + y;
         y += this->connection_closed_label.cy();
 
-        this->separator.rect.y = y + 3;
+        this->separator.rect.y = top + y + 3;
         y += 30;
 
         if (username && *username) {
@@ -146,21 +156,21 @@ public:
             this->username_label_value.rect.x = this->username_label.dx() + px;
             this->target_label_value.rect.x = this->username_label.dx() + px;
 
-            this->username_label.rect.y = y;
-            this->username_label_value.rect.y = y;
+            this->username_label.rect.y = top + y;
+            this->username_label_value.rect.y = top + y;
             y += this->username_label.cy() + 10;
-            this->target_label.rect.y = y;
-            this->target_label_value.rect.y = y;
+            this->target_label.rect.y = top + y;
+            this->target_label_value.rect.y = top + y;
             y += this->target_label.cy() + 20;
         }
-        this->diagnostic.rect.y = y;
+        this->diagnostic.rect.y = top + y;
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;
-            this->diagnostic_lines.rect.y = y;
+            this->diagnostic_lines.rect.y = top + y;
             y += this->diagnostic_lines.cy() + 20;
         }
         else {
-            this->diagnostic_lines.rect.y = y;
+            this->diagnostic_lines.rect.y = top + y;
             y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
             this->diagnostic_lines.rect.x = this->username_label.dx() + px;
         }
@@ -168,8 +178,8 @@ public:
         if (showtimer) {
             this->add_widget(&this->timeleft_label);
             this->add_widget(&this->timeleft_value);
-            this->timeleft_label.rect.y = y;
-            this->timeleft_value.rect.y = y;
+            this->timeleft_label.rect.y = top + y;
+            this->timeleft_value.rect.y = top + y;
             if (this->timeleft_label.cx() + 10 > px) {
                 px = this->timeleft_label.cx() + 10;
                 this->diagnostic_lines.rect.x = this->username_label.dx() + px;
@@ -179,19 +189,26 @@ public:
             y += this->timeleft_label.cy() + 20;
         }
 
-        this->cancel.set_button_y(y);
+        if (this->back) {
+            this->add_widget(this->back);
+            this->back->set_button_x(this->cancel.dx() + this->cancel.cx() + 10);
+            this->back->set_button_y(top + y);
+        }
+
+        this->cancel.set_button_y(top + y);
         y += this->cancel.cy();
 
         this->move_xy(0, (height - y) / 2);
 
-        this->img.rect.x = (this->cx() - this->img.cx()) / 2;
-        this->img.rect.y = (3*(height - y) / 2 - this->img.cy()) / 2 + y;
+        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
+        this->img.rect.y = top + (3*(height - y) / 2 - this->img.cy()) / 2 + y;
         this->add_widget(&this->img);
 
         this->set_widget_focus(&this->cancel, focus_reason_tabkey);
     }
 
     ~FlatWabClose() override {
+        delete this->back;
         this->clear();
     }
 
@@ -230,6 +247,9 @@ public:
         if (widget == &this->cancel && event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_CANCEL);
         }
+        else if (this->back && widget == this->back && event == NOTIFY_SUBMIT) {
+            this->send_notify(NOTIFY_SUBMIT);
+        }
         else {
             WidgetParent::notify(widget, event);
         }
@@ -250,4 +270,3 @@ public:
     }
 };
 
-#endif

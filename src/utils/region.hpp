@@ -22,11 +22,11 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_REGION_HPP_
-#define _REDEMPTION_UTILS_REGION_HPP_
+
+#pragma once
 
 #include <vector>
-#include "rect.hpp"
+#include "utils/rect.hpp"
 
 /* region */
 struct Region {
@@ -75,4 +75,3 @@ struct Region {
     }
 };
 
-#endif

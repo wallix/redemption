@@ -19,10 +19,10 @@
 
    DiffieHellman module
 */
-#ifndef _REDEMPTION_UTILS_DIFFIEHELLMAN_HPP_
-#define _REDEMPTION_UTILS_DIFFIEHELLMAN_HPP_
 
-#include "genrandom.hpp"
+#pragma once
+
+#include "utils/genrandom.hpp"
 
 #include <cstdint>
 
@@ -108,4 +108,3 @@ public:
 };
 
 
-#endif

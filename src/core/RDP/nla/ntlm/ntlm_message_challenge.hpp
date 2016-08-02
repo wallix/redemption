@@ -18,11 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGECHALLENGE_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGECHALLENGE_HPP_
 
-#include "RDP/nla/ntlm/ntlm_message.hpp"
-#include "RDP/nla/ntlm/ntlm_avpair.hpp"
+#pragma once
+
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm/ntlm_avpair.hpp"
 
 // [MS-NLMP]
 
@@ -179,7 +179,8 @@
 //      irrespective of what character set was negotiated (section 2.2.2.1).
 
 
-struct NTLMChallengeMessage : public NTLMMessage {
+struct NTLMChallengeMessage {
+    NTLMMessage message;
 
     NtlmField TargetName;          /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
@@ -194,13 +195,11 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
 
     NTLMChallengeMessage()
-        : NTLMMessage(NtlmChallenge)
+        : message(NtlmChallenge)
         , serverChallenge()
         , PayloadOffset(12+8+4+8+8+8+8)
     {
     }
-
-    ~NTLMChallengeMessage() override {}
 
     void emit(OutStream & stream) {
         this->TargetInfo.buffer.reset();
@@ -214,7 +213,7 @@ struct NTLMChallengeMessage : public NTLMMessage {
         else {
             currentOffset -= 8;
         }
-        NTLMMessage::emit(stream);
+        this->message.emit(stream);
         currentOffset += this->TargetName.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
         stream.out_copy_bytes(this->serverChallenge, 8);
@@ -231,9 +230,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
     void recv(InStream & stream) {
         uint8_t const * pBegin = stream.get_current();
         bool res;
-        res = NTLMMessage::recv(stream);
+        res = this->message.recv(stream);
         if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->message.msgType);
         }
         this->TargetName.recv(stream);
         this->negoFlags.recv(stream);
@@ -261,4 +260,3 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
 
 
-#endif

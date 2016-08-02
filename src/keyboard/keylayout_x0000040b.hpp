@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000040B_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000040B_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x0000040b {    // Finnish (Finland) // Finnish
 
 const static int LCID = 0x0000040b;
+
+const static char * const locale_name = "fi-FI.finnish";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -273,6 +275,7 @@ const static uint8_t nbDeadkeys = 5;
 } // END NAMESPACE - x0000040b
 
 static const Keylayout keylayout_x0000040b( x0000040b::LCID
+                                          , x0000040b::locale_name
                                           , x0000040b::noMod
                                           , x0000040b::shift
                                           , x0000040b::altGr
@@ -286,4 +289,3 @@ static const Keylayout keylayout_x0000040b( x0000040b::LCID
                                           , x0000040b::nbDeadkeys
 );
 
-#endif

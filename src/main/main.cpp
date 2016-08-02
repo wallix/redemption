@@ -22,34 +22,52 @@
    main program
 */
 
-#include "version.hpp"
+#include "main/version.hpp"
 
-#include "parameters_holder.hpp"
-
-#include "apps/app_proxy.hpp"
+#include "utils/apps/app_proxy.hpp"
 
 #include "program_options/program_options.hpp"
 
-#include "write_python_spec.hpp"
+#include "utils/apps/cryptofile.hpp"
 
 namespace po = program_options;
 
 int main(int argc, char** argv)
 {
-    return app_proxy<parameters_holder>(
+    std::string config_filename = CFG_PATH "/" RDPPROXY_INI;
+    Inifile ini;
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
+
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+
+    static constexpr char const * opt_print_spec = "print-config-spec";
+    static constexpr char const * opt_print_ini = "print-default-ini";
+
+    return app_proxy(
         argc, argv
       , "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
-        "Copyright (C) Wallix 2010-2015.\n"
+        "Copyright (C) Wallix 2010-2016.\n"
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
         "and Meng Tan."
-      , extra_option_list{{"print-config-spec", "Configuration file spec for rdpproxy.ini"}}
+      , cctx
+      , extra_option_list{
+          {opt_print_spec, "Configuration file spec for rdpproxy.ini"},
+          {opt_print_ini, "rdpproxy.ini by default"}
+      }
       , [argv](po::variables_map const & options, bool * quit) {
-            if (options.count("print-config-spec")) {
+            if (options.count(opt_print_spec)) {
                 *quit = true;
-                if (int err = write_python_spec(argv[0], "/dev/stdout")) {
-                    return err;
-                }
+                std::cout <<
+                  #include "configs/autogen/str_python_spec.hpp"
+                ;
+            }
+            if (options.count(opt_print_ini)) {
+                *quit = true;
+                std::cout <<
+                  #include "configs/autogen/str_ini.hpp"
+                ;
             }
             return 0;
         }

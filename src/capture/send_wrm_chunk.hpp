@@ -18,11 +18,11 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_SRC_CAPTURE_SEND_WRM_CHUNK_HPP
-#define REDEMPTION_SRC_CAPTURE_SEND_WRM_CHUNK_HPP
 
-#include "stream.hpp"
-#include "transport.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
+#include "transport/transport.hpp"
 #include "wrm_label.hpp"
 
 
@@ -102,4 +102,3 @@ inline void send_meta_chunk(
     t.send(payload.get_data(), payload.get_offset());
 }
 
-#endif

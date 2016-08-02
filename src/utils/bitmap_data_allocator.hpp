@@ -27,8 +27,8 @@
    color model.
 */
 
-#ifndef _REDEMPTION_UTILS_BITMAP_DATA_ALLOCATOR_HPP__
-#define _REDEMPTION_UTILS_BITMAP_DATA_ALLOCATOR_HPP__
+
+#pragma once
 
 #include <new>
 
@@ -47,7 +47,7 @@ namespace aux_ {
         public:
             Memory() = default;
 
-            void init(char * * beg, char * * end, size_t sz) {
+            void init(char * * beg, char * * end, size_t sz) noexcept {
                 this->mem_first = *beg;
                 this->mem_last = *(end-1) + sz;
                 this->first = beg;
@@ -56,23 +56,23 @@ namespace aux_ {
                 this->size = sz;
             }
 
-            bool contains(void const * p) const {
+            bool contains(void const * p) const noexcept {
                 return this->mem_first <= p && p < this->mem_last;
             }
 
-            bool empty() const {
+            bool empty() const noexcept {
                 return this->pos == this->first;
             }
 
-            size_t size_element() const {
+            size_t size_element() const noexcept {
                 return this->size;
             }
 
-            void * pop() {
+            void * pop() noexcept {
                 return *--this->pos;
             }
 
-            void push(void * p) {
+            void push(void * p) noexcept {
                 *this->pos = static_cast<char*>(p);
                 ++this->pos;
             }
@@ -105,7 +105,7 @@ namespace aux_ {
             return ::operator new(n);
         }
 
-        void dealloc(void * p) {
+        void dealloc(void * p) noexcept {
             for (Memory & mem : this->mems) {
                 if (mem.contains(p)) {
                     mem.push(p);
@@ -154,4 +154,3 @@ namespace aux_ {
     } bitmap_data_allocator;
 }
 
-#endif

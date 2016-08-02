@@ -18,11 +18,13 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_PARSER_HPP_
-#define _REDEMPTION_UTILS_PARSER_HPP_
+
+#pragma once
 
 #include <string.h>
 #include <stdlib.h>
+
+// TODO: there are equivalent functions in parse.hpp, use those from parse
 
 // 10 = 10, 0x10 = 16
 static inline unsigned ulong_from_cstr(const char * str) noexcept
@@ -58,4 +60,3 @@ static inline bool bool_from_cstr(const char * str) noexcept
         || (0 == strcasecmp("true",str));
 }
 
-#endif

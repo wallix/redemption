@@ -21,11 +21,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_FRAMEWORKACKNOWLEDGE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_FRAMEWORKACKNOWLEDGE_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.1.3 TS_FRAME_ACKNOWLEDGE_CAPABILITYSET
 //===========================================
@@ -84,4 +84,3 @@ struct FrameAcknowledgeCaps : public Capability {
     }
 };
 
-#endif

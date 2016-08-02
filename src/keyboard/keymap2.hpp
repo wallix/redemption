@@ -21,11 +21,13 @@
    header file. Keymap2 object, used to manage key stroke events
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
-#define _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
 
-#include "log.hpp"
-#include "stream.hpp"
+#pragma once
+
+#include <cinttypes>
+
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
 #include "keylayouts.hpp"
 
 static const Keylayout * keylayouts[] = { &keylayout_x00000405, &keylayout_x00000406, &keylayout_x00000407
@@ -91,13 +93,15 @@ struct Keymap2
          , F12         = 0x58
     };
 
-    TODO("we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events."
-         " These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar"
-         " to the way X11 manage inputs (hence easier to unify with keymapSym)")
+private:
+    /* TODO we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events.
+     * These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar
+     * to the way X11 manage inputs (hence easier to unify with keymapSym) */
 
     // keyboard info
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
 
+public:
     int key_flags; // scroll_lock = 1, num_lock = 2, caps_lock = 4,
                    // shift = 8, ctrl = 16, Alt = 32,
                    // Windows = 64, AltGr = 128
@@ -132,6 +136,7 @@ struct Keymap2
         , KEVENT_INSERT = 0x13
     };
 
+private:
     uint32_t ibuf; // first free position in char buffer
     uint32_t nbuf; // number of char in char buffer
     uint32_t buffer[SIZE_KEYBUF]; // actual char buffer
@@ -157,7 +162,10 @@ struct Keymap2
 
     uint32_t verbose;
 
+public:
+    bool is_application_switching_shortcut_pressed = false;
 
+public:
     // Constructor
     //==============================================================================
     explicit Keymap2(uint32_t verbose = 0)
@@ -185,8 +193,7 @@ struct Keymap2
     {
         this->key_flags = param1 & 0x07;
         // non sticky keys are forced to be UP
-        TODO("Non sticky keys are forced in up state. Is it what we should do ? We have up and down events for these key anyway"
-             "hence up is not likelier than down (really it should be 'unknown', but we do not have this state")
+        // TODO Non sticky keys are forced in up state. Is it what we should do ? We have up and down events for these key anyway hence up is not likelier than down (really it should be 'unknown', but we do not have this state")
         this->keys_down[LEFT_SHIFT] = 0;
         this->keys_down[RIGHT_SHIFT] = 0;
         this->keys_down[LEFT_CTRL] = 0;
@@ -226,11 +233,23 @@ struct Keymap2
 
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
 // triggered the event.
+    struct DecodedKeys
+    {
+        uint32_t uchars[2]{};
+        unsigned count = 0;
+
+        void set_uhar(uint32_t uchar) {
+            REDASSERT(this->count < 2);
+            this->uchars[this->count++] = uchar;
+        }
+    };
 
     //==============================================================================
-    void event(const uint16_t keyboardFlags, const uint16_t keyCode, OutStream & decoded_data, bool & tsk_switch_shortcuts)
+    DecodedKeys event(const uint16_t keyboardFlags, const uint16_t keyCode, bool & tsk_switch_shortcuts)
     //==============================================================================
     {
+        DecodedKeys decoded_key;
+
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
@@ -244,6 +263,11 @@ struct Keymap2
             (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
             (this->keys_down[LEFT_SHIFT] || this->keys_down[RIGHT_SHIFT]) &&    // Shift
             this->keys_down[0x01];                                              // Escape
+
+        this->is_application_switching_shortcut_pressed =
+            (!this->keys_down[LEFT_CTRL] && !this->keys_down[RIGHT_CTRL] &&
+             this->keys_down[LEFT_ALT] && !this->keys_down[RIGHT_ALT] &&
+             this->keys_down[0x0F]);                                            // Tab
 
         if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
@@ -274,11 +298,22 @@ struct Keymap2
         // Modifier keys
         //----------------
             case LEFT_SHIFT:  // left shift
+                this->key_flags ^= FLG_SHIFT;
+                break;
             case RIGHT_SHIFT: // right shift
+                this->key_flags ^= FLG_SHIFT;
+                break;
             case LEFT_CTRL:   // left ctrl
+                this->key_flags ^= FLG_CTRL;
+                break;
             case RIGHT_CTRL:  // right ctrl
+                this->key_flags ^= FLG_CTRL;
+                break;
             case LEFT_ALT:    // left alt
+                this->key_flags ^= FLG_ALT;
+                break;
             case RIGHT_ALT:   // right alt
+                this->key_flags ^= FLG_ALTGR;
                 break;
         //----------------
         // All other keys
@@ -327,7 +362,7 @@ struct Keymap2
                 // if event is a Make
                 if (this->keys_down[extendedKeyCode]){
                     if (this->verbose){
-                        LOG(LOG_INFO, "Event is Make for key: Ox%#02x", extendedKeyCode);
+                        LOG(LOG_INFO, "Event is Make for key: Ox%#02x", static_cast<unsigned>(extendedKeyCode));
                     }
 
                     //this->last_char_key = extendedKeyCode;
@@ -340,7 +375,7 @@ struct Keymap2
                       || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
                        ){
                         if (this->verbose){
-                            LOG(LOG_INFO, "Key from keypad: 0x%02x", extendedKeyCode);
+                            LOG(LOG_INFO, "Key from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
                         }
 
                         // if numlock is activated AND shift is up, keys are printable characters
@@ -357,7 +392,7 @@ struct Keymap2
                             uint8_t sym = map[extendedKeyCode];
                             // Translate the X11 scancode to an unicode code point
                             uint32_t uchar = (*layout)[sym];
-                            if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                            decoded_key.set_uhar(uchar);
                             this->push(uchar);
                         }
                         // if numlock is not activated OR shift is down, keys are NOT printable characters
@@ -366,27 +401,27 @@ struct Keymap2
                             switch (extendedKeyCode){
                                /* kEYPAD LEFT ARROW */
                                 case 0x4b:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2190); }
+                                    decoded_key.set_uhar(0x2190);
                                     this->push_kevent(KEVENT_LEFT_ARROW);
                                     break;
                                 /* kEYPAD UP ARROW */
                                 case 0x48:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2191); }
+                                    decoded_key.set_uhar(0x2191);
                                     this->push_kevent(KEVENT_UP_ARROW);
                                     break;
                                 /* kEYPAD RIGHT ARROW */
                                 case 0x4d:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2192); }
+                                    decoded_key.set_uhar(0x2192);
                                     this->push_kevent(KEVENT_RIGHT_ARROW);
                                     break;
                                 /* kEYPAD DOWN ARROW */
                                 case 0x50:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2193); }
+                                    decoded_key.set_uhar(0x2193);
                                     this->push_kevent(KEVENT_DOWN_ARROW);
                                     break;
                                 /* kEYPAD HOME */
                                 case 0x47:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2196); }
+                                    decoded_key.set_uhar(0x2196);
                                     this->push_kevent(KEVENT_HOME);
                                     break;
                                 /* kEYPAD PGUP */
@@ -399,7 +434,7 @@ struct Keymap2
                                     break;
                                 /* kEYPAD END */
                                 case 0x4F:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2198); }
+                                    decoded_key.set_uhar(0x2198);
                                     this->push_kevent(KEVENT_END);
                                     break;
                                 /* kEYPAD INSERT */
@@ -408,8 +443,9 @@ struct Keymap2
                                     break;
                                 /* kEYPAD DELETE */
                                 case 0x53:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
+                                    decoded_key.set_uhar(0x007F);
                                     this->push_kevent(KEVENT_DELETE);
+                                    break;
                                 default:
                                     break;
                             }
@@ -421,7 +457,7 @@ struct Keymap2
                     else {
 
                         if (this->verbose){
-                            LOG(LOG_INFO, "Key not from keypad: 0x%02x", extendedKeyCode);
+                            LOG(LOG_INFO, "Key not from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
                         }
 
                         // Set the layout block to be used, depending on active modifier keys and capslock status
@@ -467,7 +503,7 @@ struct Keymap2
                         uint32_t uchar = (*layout)[sym];
 
                         if (this->verbose){
-                            LOG(LOG_INFO, "uchar=0x%02x", uchar);
+                            LOG(LOG_INFO, "uchar=0x%02" PRIx32, uchar);
                         }
                         //----------------------------------------------
                         // uchar is in Printable unicode character range
@@ -498,7 +534,7 @@ struct Keymap2
                                      if (this->deadkey_pending_def.secondKeys[i].secondKey == uchar) {
 
                                         // push the translation into keyboard buffer
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.secondKeys[i].modifiedKey); }
+                                        decoded_key.set_uhar(this->deadkey_pending_def.secondKeys[i].modifiedKey);
                                         this->push(this->deadkey_pending_def.secondKeys[i].modifiedKey);
                                         deadkeyTranslated = true;
                                         break;
@@ -507,9 +543,9 @@ struct Keymap2
                                 // If that second key is not associated with that deadkey,
                                 // push both deadkey uchar and unmodified second key uchar in keyboard buffer
                                 if (not deadkeyTranslated) {
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.uchar); }
+                                    decoded_key.set_uhar(this->deadkey_pending_def.uchar);
                                     this->push(this->deadkey_pending_def.uchar);
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                                    decoded_key.set_uhar(uchar);
                                     this->push(uchar);
                                 }
                                 this->deadkey = DEADKEY_NONE;
@@ -519,7 +555,7 @@ struct Keymap2
                                 if (this->verbose){
                                     LOG(LOG_INFO, "not dead key - so pushing char %02x", uchar);
                                 }
-                                if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                                decoded_key.set_uhar(uchar);
                                 this->push(uchar);
                             }
                         }
@@ -528,7 +564,7 @@ struct Keymap2
                         //--------------------------------------------------
                         else {
                             if (this->verbose) {
-                                LOG(LOG_INFO, "pushing event extendedKeyCode = >0x%02x<", extendedKeyCode);
+                                LOG(LOG_INFO, "pushing event extendedKeyCode = >0x%02x<", static_cast<unsigned>(extendedKeyCode));
                             }
 
                             // Test if the extendedKeyCode is a deadkey in the current keyboard layout
@@ -540,9 +576,9 @@ struct Keymap2
                                 {
                                     if (this->deadkey == DEADKEY_FOUND) {
                                         check_extendedkey = false;
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.uchar); }
+                                        decoded_key.set_uhar(this->deadkey_pending_def.uchar);
                                         this->push(this->deadkey_pending_def.uchar);
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                                        decoded_key.set_uhar(uchar);
                                         this->push(uchar);
                                         this->deadkey = DEADKEY_NONE;
                                     }
@@ -560,32 +596,32 @@ struct Keymap2
                                 switch (extendedKeyCode){
                                 // ESCAPE
                                 case 0x01:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x001B); }
+                                    decoded_key.set_uhar(0x001B);
                                     this->push_kevent(KEVENT_ESC);
                                     break;
                                 // LEFT ARROW
                                 case 0xCB:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2190); }
+                                    decoded_key.set_uhar(0x2190);
                                     this->push_kevent(KEVENT_LEFT_ARROW);
                                     break;
                                 // UP ARROW
                                 case 0xC8:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2191); }
+                                    decoded_key.set_uhar(0x2191);
                                     this->push_kevent(KEVENT_UP_ARROW);
                                     break;
                                 // RIGHT ARROW
                                 case 0xCD:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2192); }
+                                    decoded_key.set_uhar(0x2192);
                                     this->push_kevent(KEVENT_RIGHT_ARROW);
                                     break;
                                 // DOWN ARROW
                                 case 0xD0:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2193); }
+                                    decoded_key.set_uhar(0x2193);
                                     this->push_kevent(KEVENT_DOWN_ARROW);
                                     break;
                                 // HOME
                                 case 0xC7:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2196); }
+                                    decoded_key.set_uhar(0x2196);
                                     this->push_kevent(KEVENT_HOME);
                                     break;
                                 // PGUP
@@ -598,7 +634,7 @@ struct Keymap2
                                     break;
                                 // END
                                 case 0xCF:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2198); }
+                                    decoded_key.set_uhar(0x2198);
                                     this->push_kevent(KEVENT_END);
                                     break;
                                 // TAB
@@ -607,7 +643,7 @@ struct Keymap2
                                         this->push_kevent(KEVENT_BACKTAB);
                                     }
                                     else {
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0009); }
+                                        decoded_key.set_uhar(0x0009);
                                         this->push_kevent(KEVENT_TAB);
                                     }
                                     break;
@@ -615,7 +651,7 @@ struct Keymap2
                                 case 0x0E:
                                     // Windows(c) behavior for backspace following a Deadkey
                                     if (this->deadkey == DEADKEY_NONE) {
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0008); }
+                                        decoded_key.set_uhar(0x0008);
                                         this->push_kevent(KEVENT_BACKSPACE);
                                     }
                                     else {
@@ -628,15 +664,15 @@ struct Keymap2
                                     break;
                                 case 0xD3: // delete
                                 case 0x53: // numpad delete
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
+                                    decoded_key.set_uhar(0x007F);
                                     this->push_kevent(KEVENT_DELETE);
                                     break;
                                 case 0x1C: // enter
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x000D); }
+                                    decoded_key.set_uhar(0x000D);
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 case 0x9C: // numpad enter
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x000D); }
+                                    decoded_key.set_uhar(0x000D);
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 case 45: // ctrl+x
@@ -657,6 +693,8 @@ struct Keymap2
                 } // IF event is a Make
             break;
         } // END SWITCH : extendedKeyCode
+
+        return decoded_key;
     } // END METHOD : event
 
 
@@ -850,7 +888,7 @@ struct Keymap2
 
 
     bool is_ctrl_alt_pressed() const {
-        TODO("This is a hack to know if there is a Altgr map defined or not. It should be set through map generator... not reading map content like here")
+        // TODO This is a hack to know if there is a Altgr map defined or not. It should be set through map generator... not reading map content like here
         bool has_AltGr = (this->keylayout_WORK->altGr[0x12] | this->keylayout_WORK->altGr[2]) != 0;
         return ((this->is_ctrl_pressed() && this->is_alt_pressed())
             || (this->is_right_alt_pressed() && has_AltGr));
@@ -923,12 +961,20 @@ struct Keymap2
             }
         }
         if (!found){
-            LOG(LOG_INFO, "Unknown keyboard layout #0x%02x. Reverting to default (English - United States)", LCID);
+            LOG(LOG_INFO, "Unknown keyboard layout #0x%02x. Reverting to default (English - United States)", static_cast<unsigned>(LCID));
         }
 
     } // END METHOD - init_layout
 
+    unsigned layout_id() const {
+        for (auto & k : keylayouts) {
+            if (this->keylayout_WORK == k) {
+                return k->LCID;
+            }
+        }
+        return 0;
+    }
+
 
 }; // END STRUCT - Keymap2
 
-#endif

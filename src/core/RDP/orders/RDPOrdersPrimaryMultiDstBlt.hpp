@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -345,7 +345,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -356,4 +356,3 @@ public:
     }
 };  // class RDPMultiDstBlt
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_

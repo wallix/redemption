@@ -20,8 +20,8 @@
    New RDP Orders Coder / Decoder : Primary Order Mem 3 Blt
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEM3BLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEM3BLT_HPP_
+
+#pragma once
 
 // MS-RDPEGDI 2.2.2.2.1.1.2.10 Mem3Blt (MEM3BLT_ORDER)
 // ---------------------------------------------------
@@ -350,7 +350,7 @@ class RDPMem3Blt {
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
-        TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions");
+        // TODO remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions
         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));
         lg  += snprintf(
             buffer+lg,
@@ -380,7 +380,7 @@ class RDPMem3Blt {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -391,4 +391,3 @@ class RDPMem3Blt {
     }
 };
 
-#endif

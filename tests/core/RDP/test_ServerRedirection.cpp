@@ -23,11 +23,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestServerRedirection
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 // #define LOGPRINT
-#include "RDP/ServerRedirection.hpp"
+#include "core/RDP/ServerRedirection.hpp"
 
 BOOST_AUTO_TEST_CASE(TestServerRedirectionPDU)
 {
@@ -64,10 +64,10 @@ BOOST_AUTO_TEST_CASE(TestServerRedirectionPDU)
     BOOST_CHECK_EQUAL(rinfo_init.host_is_fqdn, rinfo_target.host_is_fqdn);
     BOOST_CHECK_EQUAL(rinfo_init.smart_card_logon, rinfo_target.smart_card_logon);
 
-    BOOST_CHECK_EQUAL(0, strcmp((char*)rinfo_init.host,
-                                (char*)rinfo_target.host));
-    BOOST_CHECK_EQUAL(0, strcmp((char*)rinfo_init.username,
-                                (char*)rinfo_target.username));
-    BOOST_CHECK_EQUAL(0, strcmp((char*)rinfo_init.domain,
-                                (char*)rinfo_target.domain));
+    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.host),
+                                reinterpret_cast<char*>(rinfo_target.host)));
+    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.username),
+                                reinterpret_cast<char*>(rinfo_target.username)));
+    BOOST_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.domain),
+                                reinterpret_cast<char*>(rinfo_target.domain)));
 }

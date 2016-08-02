@@ -22,18 +22,17 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRDPDRAsynchronousTask
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "fdbuf.hpp"
-#include "in_file_transport.hpp"
-#include "log.hpp"
-#include "make_unique.hpp"
-#include "rdp/channels/rdpdr_asynchronous_task.hpp"
-#include "socket_transport_utility.hpp"
-#include "test_transport.hpp"
+#include "utils/fdbuf.hpp"
+#include "transport/in_file_transport.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/make_unique.hpp"
+#include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
+#include "transport/test_transport.hpp"
 
 class TestToServerSender : public VirtualChannelDataSender {
     Transport & transport;
@@ -44,7 +43,7 @@ public:
     virtual void operator() (uint32_t total_length, uint32_t flags,
         const uint8_t * chunk_data, uint32_t chunk_data_length) override {
         LOG(LOG_INFO, "total_length=%u flags=0x%X chunk_data=<%p> chunk_data_length=%u",
-            total_length, flags, chunk_data, chunk_data_length);
+            total_length, flags, static_cast<void const *>(chunk_data), chunk_data_length);
         StaticOutStream<8> stream;
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
@@ -58,20 +57,23 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 {
     uint32_t verbose = 1;
 
-    int fd = ::open("tests/fixtures/rfc959.txt", O_RDONLY);
-    if (fd == -1) { throw Error(ERR_TRANSPORT_OPEN_FAILED); }
+    int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
+    if (fd == -1) {
+        BOOST_CHECK(false);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
 
     io::posix::fdbuf fd_wrapper(fd);
 
-    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
 
     fd_wrapper.release();
 
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
-    #include "fixtures/test_rdpdr_drive_read_task.hpp"
-    CheckTransport check_transport(outdata, sizeof(outdata), verbose);
+    #include "../../../fixtures/test_rdpdr_drive_read_task.hpp"
+    CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
     TestToServerSender test_to_server_sender(check_transport);
 
     const uint32_t DeviceId = 0;
@@ -98,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
         timeval timeout = { 3, 0 };
 
-        add_to_fd_set(event, rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
+        event.add_to_fd_set(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -111,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
             run_task = false;
         }
         else {
-            if (is_set(event, rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
+            if (event.is_set(rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
                 if (!rdpdr_drive_read_task.run(event)) {
                     run_task = false;
                 }
@@ -125,12 +127,15 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
     uint32_t verbose = 1;
 
-    int fd = ::open("tests/fixtures/sample.bmp", O_RDONLY);
-    if (fd == -1) { throw Error(ERR_TRANSPORT_OPEN_FAILED); }
+    int fd = ::open(FIXTURES_PATH "/sample.bmp", O_RDONLY);
+    if (fd == -1) {
+        BOOST_CHECK(false);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
 
     io::posix::fdbuf fd_wrapper(fd);
 
-    std::unique_ptr<InFileTransport> transport = std::make_unique<InFileTransport>(fd);
+    std::unique_ptr<InFileSeekableTransport> transport = std::make_unique<InFileSeekableTransport>(fd);
 
     fd_wrapper.release();
 
@@ -151,8 +156,8 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     //LogTransport log_transport;
     //TestToServerSender test_to_server_sender(log_transport);
 
-    #include "fixtures/test_rdpdr_send_drive_io_response_task.hpp"
-    CheckTransport check_transport(outdata, sizeof(outdata), verbose);
+    #include "../../../fixtures/test_rdpdr_send_drive_io_response_task.hpp"
+    CheckTransport check_transport(outdata, sizeof(outdata)-1, verbose);
     TestToServerSender test_to_server_sender(check_transport);
 
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
@@ -177,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
         timeval timeout = { 3, 0 };
 
-        add_to_fd_set(event, rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
+        event.add_to_fd_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -190,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
             run_task = false;
         }
         else {
-            if (is_set(event, rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
+            if (event.is_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
                 if (!rdpdr_send_drive_io_response_task.run(event)) {
                     run_task = false;
                 }

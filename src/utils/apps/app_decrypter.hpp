@@ -6,8 +6,8 @@
    redrec video converter program
 */
 
-#ifndef REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
-#define REDEMPTION_UTILS_APPS_APP_DECRYPTER_HPP
+
+#pragma once
 
 #include <type_traits>
 #include <iostream>
@@ -15,22 +15,16 @@
 #include <string>
 #include <cerrno>
 
-#include "crypto_in_filename_transport.hpp"
-#include "out_file_transport.hpp"
-#include "fdbuf.hpp"
+#include "transport/in_filename_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "utils/fdbuf.hpp"
+#include "utils/fileutils.hpp"
 
 #include "program_options/program_options.hpp"
 
 
-template<class F>
-// crypto_context_initializer = int(CryptoContext&)
-int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypto_context_initializer)
+inline int app_decrypter(int argc, char const * const * argv, const char * copyright_notice, CryptoContext & cctx)
 {
-    static_assert(
-        std::is_same<int, decltype(crypto_context_initializer(std::declval<CryptoContext&>()))>::value
-      , "crypto_context_initializer result type may be 'int'"
-    );
-
     openlog("decrypter", LOG_CONS | LOG_PERROR, LOG_USER);
 
     std::string input_filename;
@@ -71,42 +65,27 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
         return -1;
     }
 
-
-    bool infile_is_encrypted = false;
-
-    if (io::posix::fdbuf file {open(input_filename.c_str(), O_RDONLY)}) {
-        uint32_t magic_test;
-        // Reads file header (4 bytes).
-        int res_test = file.read(&magic_test, sizeof(magic_test));
-        if ((res_test == sizeof(magic_test)) &&
-            (magic_test == WABCRYPTOFILE_MAGIC)) {
-            infile_is_encrypted = true;
-        }
-    }
-    else {
-        std::cerr << "Input file is absent.\n\n";
+    int fd  = open(input_filename.c_str(), O_RDONLY);
+    if (fd == -1) {
+        std::cerr << "can't open file " << input_filename << "\n\n";
         return -1;
-    }
-
-    if (infile_is_encrypted == false) {
-        std::cout << "Input file is unencrypted.\n\n";
-        return 0;
-    }
-
-    CryptoContext cctx;
-    memset(&cctx, 0, sizeof(cctx));
-    if (int status = crypto_context_initializer(cctx)) {
-        return status;
     }
 
     OpenSSL_add_all_digests();
 
-    CryptoInFilenameTransport in_t(&cctx, input_filename.c_str());
+    size_t base_len = 0;
+    const uint8_t * base = reinterpret_cast<const uint8_t *>(
+                    basename_len(input_filename.c_str(), base_len));
 
-    const int fd = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
-    if (fd != -1) {
-        io::posix::fdbuf file(fd); // auto-close
-        OutFileTransport out_t(fd);
+    InFilenameTransport in_t(&cctx, fd, base, base_len);
+    if (!in_t.is_encrypted()){
+        std::cout << "Input file is unencrypted.\n\n";
+        return 0;
+    }
+
+    const int fd1 = open(output_filename.c_str(), O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+    if (fd1 != -1) {
+        OutFileTransport out_t(fd1);
 
         char mem[4096];
         char *buf;
@@ -115,8 +94,7 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
             while (1) {
                 buf = mem;
                 in_t.recv(&buf, sizeof(mem));
-
-                out_t.send(mem, sizeof(mem));
+                out_t.send(mem, buf-mem);
             }
         }
         catch (Error const & e) {
@@ -127,14 +105,11 @@ int app_decrypter(int argc, char ** argv, const char * copyright_notice, F crypt
                 out_t.send(mem, buf - mem);
             }
         }
-
         close(fd);
     }
     else {
         std::cerr << strerror(errno) << std::endl << std::endl;
     }
-
     return 0;
 }
 
-#endif

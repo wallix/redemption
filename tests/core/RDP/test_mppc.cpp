@@ -25,12 +25,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestMPPC
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
 #include <sys/time.h>
-#include "RDP/mppc_unified_dec.hpp"
+#include "core/RDP/mppc_unified_dec.hpp"
 
 BOOST_AUTO_TEST_CASE(TestMPPC)
 {

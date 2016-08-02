@@ -18,16 +18,16 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#ifndef _REDEMPTION_UTILS_PNG_HPP_
-#define _REDEMPTION_UTILS_PNG_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include <png.h>
 
 #include <cassert>
 
-#include "transport.hpp"
-#include "bitfu.hpp"
+#include "transport/transport.hpp"
+#include "utils/bitfu.hpp"
 
 namespace detail {
 
@@ -159,6 +159,7 @@ inline void read_png24(FILE * fd, const uint8_t * data,
                       const size_t height,
                       const size_t rowsize)
 {
+    (void)width;
     png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     png_info * pinfo = png_create_info_struct(ppng);
     png_init_io(ppng, fd);
@@ -183,6 +184,7 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
                       const size_t height,
                       const size_t rowsize)
 {
+    (void)width;
     png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     png_set_read_fn(ppng, trans, &png_read_data_fn);
     png_info * pinfo = png_create_info_struct(ppng);
@@ -196,4 +198,3 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
     png_destroy_read_struct(&ppng, &pinfo, nullptr);
 }
 
-#endif

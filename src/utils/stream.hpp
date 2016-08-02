@@ -22,14 +22,14 @@
    entities
 */
 
-#ifndef _REDEMPTION_UTILS_STREAM_HPP_
-#define _REDEMPTION_UTILS_STREAM_HPP_
+#pragma once
 
-#include "log.hpp" // REDASSERT
-#include "bitfu.hpp"
-#include "utf.hpp"
-#include "parse.hpp"
-#include "make_unique.hpp"
+#include "utils/log.hpp" // REDASSERT
+#include "utils/bitfu.hpp"
+#include "utils/utf.hpp"
+#include "utils/parse.hpp"
+#include "utils/sugar/make_unique.hpp"
+#include "utils/sugar/bytes_t.hpp"
 
 #include <memory>
 #include <initializer_list>
@@ -64,20 +64,7 @@ public:
     {
     }
 
-    template<std::size_t N>
-    explicit InStream(char const (&array)[N])
-    : InStream(reinterpret_cast<uint8_t const *>(array), N)
-    {
-    }
-
-    template<std::size_t N>
-    explicit InStream(uint8_t const (&array)[N])
-    : InStream(array, N)
-    {
-    }
-
-    template<class T>
-    explicit InStream(T const & array)
+    explicit InStream(const_bytes_array array)
     : InStream(array.data(), array.size())
     {
     }
@@ -183,12 +170,12 @@ public:
         return this->p.in_uint16_be();
     }
 
-    unsigned int in_uint32_le(void) {
+    uint32_t in_uint32_le(void) {
         REDASSERT(this->in_check_rem(4));
         return this->p.in_uint32_le();
     }
 
-    unsigned int in_uint32_be(void) {
+    uint32_t in_uint32_be(void) {
         REDASSERT(this->in_check_rem(4));
         return this->p.in_uint32_be();
     }
@@ -226,12 +213,12 @@ public:
         return this->p.in_uint64_be();
     }
 
-    unsigned in_bytes_le(const uint8_t nb){
+    uint32_t in_bytes_le(const uint8_t nb){
         REDASSERT(this->in_check_rem(nb));
         return this->p.in_bytes_le(nb);
     }
 
-    unsigned in_bytes_be(const uint8_t nb){
+    uint32_t in_bytes_be(const uint8_t nb){
         REDASSERT(this->in_check_rem(nb));
         return this->p.in_bytes_be(nb);
     }
@@ -389,21 +376,8 @@ public:
     {
     }
 
-    template<std::size_t N>
-    explicit OutStream(char (&array)[N])
-    : OutStream(reinterpret_cast<uint8_t*>(array), N)
-    {
-    }
-
-    template<std::size_t N>
-    explicit OutStream(uint8_t (&array)[N])
-    : OutStream(array, N)
-    {
-    }
-
-    template<class T>
-    explicit OutStream(T & array)
-    : OutStream(&array[0], array.size())
+    explicit OutStream(bytes_array array)
+    : OutStream(array.data(), array.size())
     {
     }
 
@@ -781,23 +755,23 @@ public:
         this->p = this->begin + offset;
     }
 
-    void out_copy_bytes(const uint8_t * v, size_t n) {
+    void out_copy_bytes(const void * v, size_t n) {
         REDASSERT(this->has_room(n));
         memcpy(this->p, v, n);
         this->p += n;
     }
 
+    void out_copy_bytes(const char * v, size_t n) {
+        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
+    }
+
     // Output zero terminated string, non including trailing 0
     void out_string(const char * v) {
-        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), strlen(v));
+        this->out_copy_bytes(v, strlen(v));
     }
 
     void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
         memcpy(this->get_data()+offset, v, n);
-    }
-
-    void out_copy_bytes(const char * v, size_t n) {
-        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
     }
 
     void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
@@ -862,7 +836,7 @@ struct BasicStaticStream : StreamBase
 
     using array_type = uint8_t[N];
 
-    constexpr std::size_t original_capacity() const {
+    static constexpr std::size_t original_capacity() {
         return N;
     }
 
@@ -1098,7 +1072,7 @@ namespace details_ {
     /// @{
     template<class T, class U>
     std::integral_constant<std::size_t, T::value + U::value>
-    packet_size_add(T const & a, U const & b) {
+    packet_size_add(T const &, U const &) {
         return {};
     }
 
@@ -1173,7 +1147,7 @@ namespace details_ {
     }
 
     template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>
-    void write_packets_mpl(
+    void write_packets_impl(
         DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, uint8_t * buf,
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
@@ -1194,11 +1168,11 @@ namespace details_ {
     {
         if (data_buf_sz + header_buf_sz < 65536) {
             uint8_t buf[65536];
-            write_packets_mpl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
+            write_packets_impl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
         }
         else {
             auto u = std::make_unique<uint8_t[]>(data_buf_sz + header_buf_sz);
-            write_packets_mpl(data_buf_sz, header_buf_sz, u.get(), trans, data_writer, header_writers...);
+            write_packets_impl(data_buf_sz, header_buf_sz, u.get(), trans, data_writer, header_writers...);
         }
     }
 
@@ -1211,7 +1185,7 @@ namespace details_ {
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
         uint8_t buf[TotalSz::value];
-        write_packets_mpl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
+        write_packets_impl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
     }
 }
 
@@ -1243,4 +1217,3 @@ dynamic_packet(std::size_t stream_sz, Writer writer) {
     return {std::move(writer), stream_sz};
 }
 
-#endif

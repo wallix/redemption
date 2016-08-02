@@ -23,11 +23,11 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/capabilities/frameacknowledge.hpp"
+#include "core/RDP/capabilities/frameacknowledge.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
 {
@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE));
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.len, static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_FRAME_ACKNOWLEDGE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_FRAME_ACKNOWLEDGE, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSETTYPE_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_FRAME_ACKNOWLEDGE), stream.in_uint16_le());
     frameacknowledge_caps2.recv(stream, CAPLEN_FRAME_ACKNOWLEDGE);
 
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.maxUnacknowledgedFrameCount, static_cast<uint32_t>(65536));

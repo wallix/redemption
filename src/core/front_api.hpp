@@ -21,27 +21,36 @@
    used to communicate with RDP client or other drawing backends
 */
 
-#ifndef _REDEMPTION_CORE_FRONT_API_HPP_
-#define _REDEMPTION_CORE_FRONT_API_HPP_
 
-#include "draw_api.hpp"
+#pragma once
 
-class Capability;
+#include "gdi/graphic_api.hpp"
+#include "gdi/input_pointer_api.hpp"
+
+#include "core/wait_obj.hpp"
+#include "utils/sugar/array_view.hpp"
+
+struct Capability;
 class InStream;
-class OrderCaps;
+struct OrderCaps;
+class auth_api;
 
 namespace CHANNELS {
     class ChannelDefArray;
-    class ChannelDef;
+    struct ChannelDef;
 }
 
-class FrontAPI : public DrawApi {
-    public:
+class FrontAPI : public gdi::GraphicApi, public gdi::MouseInputApi
+{
+public:
+    virtual bool can_be_start_capture(auth_api * auth) = 0;
+    virtual bool can_be_pause_capture() = 0;
+    virtual bool can_be_resume_capture() = 0;
+    virtual bool must_be_stop_capture() = 0;
+
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
                                 , std::size_t length, std::size_t chunk_size, int flags) = 0;
-
-    virtual void send_global_palette() = 0;
 
     virtual int server_resize(int width, int height, int bpp) = 0;
     //virtual void update_config(const timeval & now, const Inifile & ini) {}
@@ -51,36 +60,50 @@ class FrontAPI : public DrawApi {
     bool notimestamp;
     bool nomouse;
 
+protected:
+    wait_obj event;
+
     FrontAPI(bool notimestamp, bool nomouse)
         : mouse_x(0)
         , mouse_y(0)
         , notimestamp(notimestamp)
         , nomouse(nomouse) {}
 
-    TODO("RZ : Move these methods in OrderCaps class.")
-    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) const {}
-    virtual void intersect_order_caps_ex(OrderCaps & order_caps) const {}
+public:
+    virtual wait_obj& get_event() { return this->event; }
+
+    // TODO RZ : Move these methods in OrderCaps class, give more generic access to front order caps?
+    virtual uint8_t get_order_cap(int idx) const { (void)idx; return 0xFF; }
+    virtual uint16_t get_order_caps_ex_flags() const { return 0xFFFF; }
 
     ////////////////////////////////
     // Used by transparent proxy.
 
-    virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size) {}
-    virtual void send_fastpath_data(InStream & data) {}
-    virtual bool retrieve_client_capability_set(Capability & caps) { return true; }
+    // TODO uint16_t -> CHannelId ; (data + size) -> array_view
+    virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size)
+    { (void)channelId; (void)data; (void)size; }
+    virtual void send_fastpath_data(InStream &) {}
+    virtual bool retrieve_client_capability_set(Capability &) { return true; }
 
-    virtual void set_keyboard_indicators(uint16_t LedFlags) {}
+    virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
 
     ////////////////////////////////
-    // Agent.
+    // Session Probe.
 
-    virtual void set_keylayout(int LCID) {}
-    virtual void focus_changed(bool on_password_textbox) {}
-    virtual void session_update(const char * message,
-            bool & out__contian_window_title) {
-        out__contian_window_title = false;
+    virtual void session_probe_started(bool) {}
+    virtual void set_keylayout(int LCID) { (void)LCID; }
+    virtual void set_focus_on_password_textbox(bool) {}
+    virtual void set_consent_ui_visible(bool) {}
+    virtual void session_update(array_view_const_char message) { (void)message; }
+
+    virtual bool disable_input_event_and_graphics_update(
+            bool disable_input_event, bool disable_graphics_update) {
+        (void)disable_input_event;
+        (void)disable_graphics_update;
+        return false;
     }
 
-    virtual bool disable_input_event_and_graphics_update(bool disable) { return false; }
+    /// \return  -1 is an error
+    virtual int get_keylayout() const { return -1; }
 };
 
-#endif

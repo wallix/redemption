@@ -18,17 +18,15 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
  *              Meng Tan
  */
-
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_
+#pragma once
 
 #include <vector>
 
 #include "notify_api.hpp"
-#include "mod_api.hpp"
-#include "rect.hpp"
-#include "callback.hpp"
-#include "RDP/pointer.hpp"
+#include "utils/rect.hpp"
+#include "core/callback.hpp"
+#include "core/RDP/pointer.hpp"
+#include "gdi/graphic_api.hpp"
 
 struct Keymap2;
 
@@ -47,7 +45,7 @@ enum NotifyEventType {
 class Widget2 : public RdpInput, public NotifyApi
 {
 public:
-    TODO("using several booleans may be easier to read than flags")
+    // TODO using several booleans may be easier to read than flags
     enum OptionTab {
         IGNORE_TAB = 0x00,
         NORMAL_TAB = 0x02
@@ -61,7 +59,7 @@ public:
 
 public:
     Widget2 & parent;
-    DrawApi & drawable;
+    gdi::GraphicApi & drawable;
     NotifyApi * notifier;
     Rect rect;
     int group_id;
@@ -72,7 +70,8 @@ public:
     int notify_value;
 
 public:
-    Widget2(DrawApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
+    Widget2(gdi::GraphicApi & drawable,
+            const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
@@ -87,8 +86,6 @@ public:
     , pointer_flag(Pointer::POINTER_NORMAL)
     , has_focus(false)
     , notify_value(0) {}
-
-    ~Widget2() override {}
 
     virtual bool next_focus()
     {
@@ -146,15 +143,26 @@ public:
 
     // External world can generate 4 kind of events
     // - keyboard event (scancode)
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 *) override {
+        (void)param1;
+        (void)param2;
+        (void)param3;
+        (void)param4;
     }
 
     // - mouve event (mouse moves or a button went up or down)
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+        (void)device_flags;
+        (void)x;
+        (void)y;
     }
 
     // - synchronisation of capslock, numlock, etc state.
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+        (void)time;
+        (void)device_flags;
+        (void)param1;
+        (void)param2;
     }
 
     // - part of screen should be redrawn
@@ -168,7 +176,7 @@ public:
             this->notifier->notify(this, event);
     }
 
-    void notify(Widget2 * w, NotifyApi::notify_event_t event) override {
+    void notify(Widget2 *, NotifyApi::notify_event_t event) override {
         if (this->notifier)
             this->notifier->notify(this, event);
     }
@@ -193,6 +201,8 @@ public:
     }
 
     virtual void set_color(uint32_t bg_color, uint32_t fg_color) {
+        (void)bg_color;
+        (void)fg_color;
     }
 
     enum {
@@ -202,6 +212,7 @@ public:
     };
     virtual void focus(int reason)
     {
+        (void)reason;
         if (!this->has_focus){
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
@@ -281,4 +292,3 @@ public:
     }
 };
 
-#endif

@@ -25,28 +25,26 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFrontRdesktopClient
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
 //#define LOGPRINT
 
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
 
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#include "font.hpp"
-#include "null/null.hpp"
-#include "internal/test_card_mod.hpp"
-#include "test_transport.hpp"
-#include "config.hpp"
-#include "front.hpp"
+#include "core/font.hpp"
+#include "mod/null/null.hpp"
+#include "mod/internal/test_card_mod.hpp"
+#include "transport/test_transport.hpp"
+#include "configs/config.hpp"
+#include "front/front.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "listen.hpp"
-//#include "session.hpp"
+//#include "core/listen.hpp"
+//#include "core/session.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {
@@ -80,14 +78,14 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //listener.run();
 
     Inifile ini;
+    ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
-    ini.set<cfg::mod_rdp::certificate_change_action>(0);
     ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::video::png_interval>(3000);
-    ini.set<cfg::video::wrm_color_depth_selection_strategy>(0);
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
+    ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
@@ -96,39 +94,40 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     //}
     //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-    //                           , ini.get<cfg::debug::front,>() 0);
+    //                           , ini.get<cfg::debug::front>(), 0);
 
     LCGRandom gen(0);
 
+    CryptoContext cctx(gen, ini);
+
     // Comment the code block below to generate testing data.
-    #include "fixtures/trace_rdesktop_client.hpp"
+    #include "../fixtures/trace_rdesktop_client.hpp"
 
     // Comment the code block below to generate testing data.
     uint32_t     verbose = 511;
-    const char * name    = "Test Front Transport";
-    TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata),
-        verbose);
+    TestTransport front_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
     ini.set<cfg::client::bogus_user_id>(false);
-    ini.set<cfg::client::rdp_compression>(0);
+    ini.set<cfg::client::rdp_compression>(RdpCompression::none);
+
+    time_t now = 1450864840;
 
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
-    Front front( front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini
-               , fastpath_support, mem3blt_support);
+    Front front( front_trans, gen, ini, cctx, fastpath_support, mem3blt_support, now);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod);
+        front.incoming(no_mod, now);
     }
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     BOOST_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.get<cfg::font>());
-    mod.draw_event(time(nullptr));
+    mod.draw_event(time(nullptr), front);
 
     // Uncomment the code block below to generate testing data.
     //sleep(5);

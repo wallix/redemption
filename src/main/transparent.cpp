@@ -26,12 +26,12 @@
 //#define LOGNULL
 #define LOGPRINT
 
-#include "listen.hpp"
-#include "session.hpp"
-#include "socket_transport.hpp"
-#include "out_file_transport.hpp"
-#include "socket_transport_utility.hpp"
-#include "internal/transparent_replay_mod.hpp"
+#include "core/listen.hpp"
+#include "core/session.hpp"
+#include "transport/socket_transport.hpp"
+#include "utils/invalid_socket.hpp"
+#include "transport/out_file_transport.hpp"
+#include "mod/internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 
 void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
@@ -84,55 +84,55 @@ int main(int argc, char * argv[]) {
     if (options.count("help") > 0) {
         std::cout << copyright_notice;
         std::cout << "Usage: rdptproxy [options]\n\n";
-        std::cout << desc << endl;
-        exit(0);
+        std::cout << desc << std::endl;
+        return 0;
     }
 
     if (options.count("version") > 0) {
         std::cout << copyright_notice;
-        exit(0);
+        return 0;
     }
 
     if (   target_device.empty()
         && play_filename.empty()) {
         std::cerr << "Missing target device or play file name: use -t target or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !target_device.empty()
         && !play_filename.empty()) {
         std::cerr << "Use -t target or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !output_filename.empty()
         && !play_filename.empty()) {
         std::cerr << "Use -o filename or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !record_filename.empty()
         && !play_filename.empty()) {
         std::cerr << "Use -r filename or -d filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (   !input_filename.empty()
         && !output_filename.empty()) {
         std::cerr << "Use -i filename or -o filename\n\n";
-        exit(-1);
+        return 1;
     }
 
     if (!target_device.empty()) {
         size_t pos = target_device.find(':');
-        if (pos != string::npos) {
+        if (pos != std::string::npos) {
             target_port = atoi(target_device.substr(pos + 1).c_str());
             target_device.resize(pos);
         }
 
         if (username.c_str()[0] == 0) {
             std::cerr << "Missing username : use -u username\n\n";
-            exit(-1);
+            return 1;
         }
     }
 
@@ -170,7 +170,8 @@ int main(int argc, char * argv[]) {
     listener.run();
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
+    ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char *>(&nodelay)
@@ -181,7 +182,10 @@ int main(int argc, char * argv[]) {
                                , ini.get<cfg::debug::front>(), nullptr);
     wait_obj front_event;
 
-    LCGRandom gen(0);
+    UdevRandom gen;
+    TimeSystem timeobj;
+
+    CryptoContext cctx(gen, ini);
 
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
@@ -199,14 +203,17 @@ int main(int argc, char * argv[]) {
             persistent_key_list_filename.c_str());
     }
 
+    time_t now = time(nullptr);
+
     const bool fastpath_support = true;
     const bool mem3blt_support  = true;
-    Front front(front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, gen, ini,
-        fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
+    Front front(front_trans, gen, ini, cctx,
+        fastpath_support, mem3blt_support, now, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod);
+        now = time(nullptr);
+        front.incoming(no_mod, now);
     }
 
     LOG(LOG_INFO, "hostname=\"%s\"", front.client_info.hostname);
@@ -247,7 +254,7 @@ int main(int argc, char * argv[]) {
                     persistent_key_list_filename.c_str());
             }
 
-            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.get<cfg::debug::mod_rdp>());
+            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, {});
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
                                      , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
 
@@ -271,13 +278,12 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.output_filename                     = (output_filename.empty() ? "" : output_filename.c_str());
             mod_rdp_params.persistent_key_list_transport       = persistent_key_list_ift;
             mod_rdp_params.transparent_recorder_transport      = record_oft;
-            mod_rdp_params.auth_channel                        = ini.get<cfg::globals::auth_channel>();
-            mod_rdp_params.alternate_shell                     = ini.get<cfg::globals::alternate_shell>().c_str();
-            mod_rdp_params.shell_working_directory             = ini.get<cfg::globals::shell_working_directory>().c_str();
+            mod_rdp_params.auth_channel                        = ini.get<cfg::mod_rdp::auth_channel>();
+            mod_rdp_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
+            mod_rdp_params.working_dir                         = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
             mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
             mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
             mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
-            mod_rdp_params.certificate_change_action           = ini.get<cfg::mod_rdp::certificate_change_action>();
             mod_rdp_params.extra_orders                        = ini.get<cfg::mod_rdp::extra_orders>().c_str();
             mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();
             mod_rdp_params.enable_cache_waiting_list           = ini.get<cfg::mod_rdp::cache_waiting_list>();
@@ -288,7 +294,7 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-                        gen, mod_rdp_params);
+                        gen, timeobj, mod_rdp_params);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
 
@@ -346,10 +352,10 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             FD_ZERO(&wfds);
             struct timeval timeout = time_mark;
 
-            add_to_fd_set(front_event, st_front, rfds, max, timeout);
-            add_to_fd_set(mod.get_event(), st_mod, rfds, max, timeout);
+            front_event.add_to_fd_set(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
+            mod.get_event().add_to_fd_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
-            if (is_set(mod.get_event(), st_mod, rfds)) {
+            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 0;
                 timeout.tv_usec = 0;
             }
@@ -365,9 +371,11 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
                 break;
             }
 
-            if (is_set(front_event, st_front, rfds)) {
+            if (front_event.is_set(st_front?st_front->sck:INVALID_SOCKET, rfds)) {
+                time_t now = time(nullptr);
+
                 try {
-                    front.incoming(mod);
+                    front.incoming(mod, now);
                 }
                 catch (...) {
                     run_session = false;
@@ -376,9 +384,9 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             }
 
             if (front.up_and_running) {
-                if (is_set(mod.get_event(), st_mod, rfds)) {
+                if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                     mod.get_event().reset();
-                    mod.draw_event(time(nullptr));
+                    mod.draw_event(time(nullptr), front);
                     if (mod.get_event().signal != BACK_EVENT_NONE) {
                         mod_event_signal = mod.get_event().signal;
                     }

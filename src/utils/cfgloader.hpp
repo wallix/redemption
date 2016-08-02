@@ -18,22 +18,25 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_UTILS_CFG_LOADER_HPP_
-#define _REDEMPTION_UTILS_CFG_LOADER_HPP_
+
+#pragma once
 
 #include <istream>
 #include <fstream>
 
-#include "log.hpp"
+#include "utils/log.hpp"
+#include "sugar/noncopyable.hpp"
 
-struct ConfigurationHolder {
-    virtual ~ConfigurationHolder() {}
+struct ConfigurationHolder : private noncopyable
+{
     virtual void set_value(const char * section, const char * key, const char * value) = 0;
+
+    virtual ~ConfigurationHolder() = default;
 };
 
 
 struct ConfigurationLoader {
-    explicit ConfigurationLoader(ConfigurationHolder & configuration_holder) {
+    explicit ConfigurationLoader(ConfigurationHolder &) {
     }
 
     ConfigurationLoader(ConfigurationHolder & configuration_holder, const char * filename) {
@@ -111,7 +114,7 @@ struct ConfigurationLoader {
             char value[512];
             for (--endkey; endkey >= startkey ; endkey--) {
                 if (!isspace(*endkey)) {
-                    TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes");
+                    // TODO RZ: Possible buffer overflow if length of key is larger than 128 bytes
                     memcpy(key, startkey, endkey - startkey + 1);
                     key[endkey - startkey + 1] = 0;
 
@@ -137,4 +140,3 @@ struct ConfigurationLoader {
         //               , ConfigurationHolder & configuration_holder)
 };  // struct ConfigurationLoader
 
-#endif  // #ifndef _REDEMPTION_UTILS_CFG_LOADER_HPP_

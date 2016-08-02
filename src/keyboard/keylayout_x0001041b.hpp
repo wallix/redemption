@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0001041B_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0001041B_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x0001041b {    // Slovak (Slovakia) // Slovak (QWERTY)
 
 const static int LCID = 0x0001041b;
+
+const static char * const locale_name = "sk-SK.qwerty";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x002B, 0x013E, 0x0161, 0x010D, 0x0165, 0x017E,
@@ -315,6 +317,7 @@ const static uint8_t nbDeadkeys = 10;
 } // END NAMESPACE - x0001041b
 
 static const Keylayout keylayout_x0001041b( x0001041b::LCID
+                                          , x0001041b::locale_name
                                           , x0001041b::noMod
                                           , x0001041b::shift
                                           , x0001041b::altGr
@@ -328,4 +331,3 @@ static const Keylayout keylayout_x0001041b( x0001041b::LCID
                                           , x0001041b::nbDeadkeys
 );
 
-#endif

@@ -18,13 +18,13 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_CREDSSP_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_CREDSSP_HPP_
 
-#include "RDP/nla/asn1/ber.hpp"
-#include "RDP/nla/sspi.hpp"
+#pragma once
 
-#include "RDP/nla/ntlm/ntlm_message_challenge.hpp"
+#include "core/RDP/nla/asn1/ber.hpp"
+#include "core/RDP/nla/sspi.hpp"
+
+#include "core/RDP/nla/ntlm/ntlm_message_challenge.hpp"
 /**
  * TSRequest ::= SEQUENCE {
  *     version    [0] INTEGER,
@@ -69,13 +69,13 @@
 
 namespace CredSSP {
 
-    int sizeof_nego_token(int length) {
+    inline int sizeof_nego_token(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
 
-    int sizeof_nego_tokens(int length) {
+    inline int sizeof_nego_tokens(int length) {
         length = sizeof_nego_token(length);
         length += BER::sizeof_sequence_tag(length);
         length += BER::sizeof_sequence_tag(length);
@@ -83,13 +83,13 @@ namespace CredSSP {
         return length;
     }
 
-    int sizeof_pub_key_auth(int length) {
+    inline int sizeof_pub_key_auth(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
 
-    int sizeof_auth_info(int length) {
+    inline int sizeof_auth_info(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
         return length;
@@ -97,7 +97,7 @@ namespace CredSSP {
 
 }
 
-struct TSRequest {
+struct TSRequest final {
     /* TSRequest */
 
     /* [0] version */
@@ -129,9 +129,6 @@ struct TSRequest {
     {
         this->recv(stream);
         // LOG(LOG_INFO, "TSRequest recv %d", res);
-    }
-
-    virtual ~TSRequest() {
     }
 
     int ber_sizeof(int length) {
@@ -184,6 +181,7 @@ struct TSRequest {
                                                        this->negoTokens.size());
 
             assert(length == 0);
+            (void)length;
         }
 
         /* [2] authInfo (OCTET STRING) */
@@ -194,6 +192,7 @@ struct TSRequest {
                                                        this->authInfo.get_data(),
                                                        this->authInfo.size());
             assert(length == 0);
+            (void)length;
         }
 
         /* [3] pubKeyAuth (OCTET STRING) */
@@ -204,6 +203,7 @@ struct TSRequest {
                                                        this->pubKeyAuth.get_data(),
                                                        this->pubKeyAuth.size());
             assert(length == 0);
+            (void)length;
         }
     }
 
@@ -314,8 +314,6 @@ struct TSPasswordCreds {
     // TSPasswordCreds(InStream & stream) {
     //     this->recv(stream);
     // }
-
-    virtual ~TSPasswordCreds() {}
 
 
     int ber_sizeof() {
@@ -482,4 +480,3 @@ struct TSCredentials {
 // };
 
 
-#endif

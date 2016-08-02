@@ -19,8 +19,7 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_FORM_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_FORM_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "flat_button.hpp"
@@ -29,10 +28,12 @@
 #include "widget2_rect.hpp"
 #include "edit.hpp"
 #include "password.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 #include "group_box.hpp"
-#include "translation.hpp"
-#include "regex.hpp"
+#include "utils/translation.hpp"
+#include "regex/regex.hpp"
+#include "gdi/graphic_api.hpp"
+
 
 class FlatForm : public WidgetParent
 {
@@ -70,7 +71,7 @@ enum {
     CompositeArray composite_array;
     int flags;
 
-    FlatForm(DrawApi& drawable, int16_t width, int16_t height,
+    FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
              int flags = 0)
@@ -137,10 +138,10 @@ enum {
         int labelmaxwidth = std::max(this->comment_label.cx(),
                                      std::max(this->ticket_label.cx(),
                                               this->duration_label.cx()));
-        this->warning_msg.rect.x = labelmaxwidth + 20;
-        this->comment_edit.set_edit_x(labelmaxwidth + 20);
-        this->ticket_edit.set_edit_x(labelmaxwidth + 20);
-        this->duration_edit.set_edit_x(labelmaxwidth + 20);
+        this->warning_msg.rect.x = left + labelmaxwidth + 20;
+        this->comment_edit.set_edit_x(left + labelmaxwidth + 20);
+        this->ticket_edit.set_edit_x(left + labelmaxwidth + 20);
+        this->duration_edit.set_edit_x(left + labelmaxwidth + 20);
         this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
         this->duration_edit.set_edit_cx((width - labelmaxwidth - 20) -
@@ -148,41 +149,41 @@ enum {
         this->duration_format.rect.x = labelmaxwidth + 20;
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
             this->add_widget(&this->notes);
-            this->notes.rect.x = labelmaxwidth + 20;
+            this->notes.rect.x = left + labelmaxwidth + 20;
         }
 
         int y = 20;
         if (this->flags & DURATION_DISPLAY) {
-            this->duration_label.set_xy(this->duration_label.dx(), y);
-            this->duration_edit.set_edit_y(y);
-            this->duration_format.set_xy(this->duration_edit.lx() + 10, y + 2);
+            this->duration_label.set_xy(this->duration_label.dx(), top + y);
+            this->duration_edit.set_edit_y(top + y);
+            this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
             y += 30;
         }
         if (this->flags & TICKET_DISPLAY) {
-            this->ticket_label.set_xy(this->ticket_label.dx(), y);
-            this->ticket_edit.set_edit_y(y);
+            this->ticket_label.set_xy(this->ticket_label.dx(), top + y);
+            this->ticket_edit.set_edit_y(top + y);
             y += 30;
         }
         if (this->flags & COMMENT_DISPLAY) {
-            this->comment_label.set_xy(this->comment_label.dx(), y);
-            this->comment_edit.set_edit_y(y);
+            this->comment_label.set_xy(this->comment_label.dx(), top + y);
+            this->comment_edit.set_edit_y(top + y);
             y += 30;
         }
 
         if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
-            this->notes.set_xy(this->notes.dx(), y);
+            this->notes.set_xy(this->notes.dx(), top + y);
         }
 
         this->add_widget(&this->confirm);
-        this->confirm.set_button_x(width - this->confirm.cx());
-        this->confirm.set_button_y(y + 10);
+        this->confirm.set_button_x(left + width - this->confirm.cx());
+        this->confirm.set_button_y(top + y + 10);
     }
 
     ~FlatForm() override {
         this->clear();
     }
 
-    virtual void move_xy(int16_t x, int16_t y) {
+    void move_xy(int16_t x, int16_t y) {
         this->rect.x += x;
         this->rect.y += y;
         this->WidgetParent::move_xy(x,y);
@@ -213,10 +214,9 @@ enum {
         unsigned long res = 0;
         unsigned long hours = 0;
         unsigned long minutes = 0;
-        long d = 0;
         char * end_p = nullptr;
         try {
-            d = strtoul(duration, &end_p, 10);
+            long d = strtoul(duration, &end_p, 10);
             if (*end_p == 'h') {
                 res = (d > 0);
                 hours = d;
@@ -312,4 +312,3 @@ enum {
     }
 };
 
-#endif

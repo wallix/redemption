@@ -16,48 +16,58 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_DIALOG_MOD_HPP
 
-#include "translation.hpp"
-#include "front_api.hpp"
-#include "config.hpp"
+#pragma once
+
+#include "utils/translation.hpp"
+#include "core/front_api.hpp"
+#include "configs/config.hpp"
+#include "widget2/language_button.hpp"
 #include "widget2/flat_dialog.hpp"
 #include "widget2/screen.hpp"
+#include "configs/config_access.hpp"
 #include "internal_mod.hpp"
-#include "timeout.hpp"
-#include "config_access.hpp"
+#include "utils/timeout.hpp"
+
 
 
 using FlatDialogModVariables = vcfg::variables<
-    vcfg::var<cfg::context::accept_message,     vcfg::write>,
-    vcfg::var<cfg::context::display_message,    vcfg::write>,
-    vcfg::var<cfg::context::password,           vcfg::write>,
-    vcfg::var<cfg::debug::pass_dialog_box>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::context::accept_message,             vcfg::accessmode::set>,
+    vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
+    vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::debug::pass_dialog_box,              vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
 class FlatDialogMod : public InternalMod, public NotifyApi
 {
+    LanguageButton language_button;
     FlatDialog dialog_widget;
 
     FlatDialogModVariables vars;
-    TimeoutT<time_t>   timeout;
+    Timeout   timeout;
 
 public:
-    FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+    FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect,
                   const char * caption, const char * message, const char * cancel_text,
                   time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , dialog_widget(*this, width, height, this->screen, this, caption, message,
-                        0, vars.get<cfg::theme>(), vars.get<cfg::font>(),
-                        TR("OK", language(vars)),
-                        cancel_text, has_challenge)
+        , language_button(
+            vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget,
+            front, front, this->font(), this->theme())
+        , dialog_widget(
+            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this, caption, message,
+            &this->language_button,
+            vars.get<cfg::theme>(), vars.get<cfg::font>(),
+            TR("OK", language(vars)),
+            cancel_text, has_challenge)
         , vars(vars)
         , timeout(now, vars.get<cfg::debug::pass_dialog_box>())
     {
@@ -77,6 +87,7 @@ public:
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
+        (void)sender;
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -85,31 +96,31 @@ public:
     }
 
 private:
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void accepted()
     {
         if (this->dialog_widget.challenge) {
             this->vars.set_acl<cfg::context::password>(this->dialog_widget.challenge->get_text());
         }
         else if (this->dialog_widget.cancel) {
-            this->vars.set_acl<cfg::context::accept_message>("True");
+            this->vars.set_acl<cfg::context::accept_message>(true);
         }
         else {
-            this->vars.set_acl<cfg::context::display_message>("True");
+            this->vars.set_acl<cfg::context::display_message>(true);
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void refused()
     {
         if (!this->dialog_widget.challenge) {
             if (this->dialog_widget.cancel) {
-                this->vars.set_acl<cfg::context::accept_message>("False");
+                this->vars.set_acl<cfg::context::accept_message>(false);
             }
             else {
-                this->vars.set_acl<cfg::context::display_message>("False");
+                this->vars.set_acl<cfg::context::display_message>(false);
             }
         }
         this->event.signal = BACK_EVENT_NEXT;
@@ -117,20 +128,20 @@ private:
     }
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->accepted();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
-        default:
+        case Timeout::TIMEOUT_INACTIVE:
             this->event.reset();
             break;
         }
     }
 
+    bool is_up_and_running() override { return true; }
 };
 
-#endif

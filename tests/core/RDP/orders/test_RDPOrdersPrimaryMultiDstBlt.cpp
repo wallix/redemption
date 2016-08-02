@@ -24,12 +24,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderMultiDstBlt
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 
 #include "test_orders.hpp"
 
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
 
         multidstblt.emit(out_stream, newcommon, state_common, state_multidstblt);
 
-        BOOST_CHECK_EQUAL((uint8_t)MULTIDSTBLT, newcommon.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MULTIDSTBLT), newcommon.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
 
         uint8_t datas[] = {
@@ -93,9 +93,9 @@ BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
-        BOOST_CHECK_EQUAL((uint32_t)0x7F, header.fields);
-        BOOST_CHECK_EQUAL((uint8_t)MULTIDSTBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
+        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x7F), header.fields);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MULTIDSTBLT), common_cmd.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPMultiDstBlt cmd = state_multidstblt;

@@ -21,16 +21,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatWabCloseMod
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
 
 #define LOGNULL
 
-#include "internal/flat_wab_close_mod.hpp"
+#include "mod/internal/flat_wab_close_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestWabCloseMod)
@@ -51,9 +47,30 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    FlatWabCloseMod d(ini, front, 800, 600, (time_t)100000, true);
-    d.draw_event(100001);
+    FlatWabCloseMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), true);
+    d.draw_event(100001, front);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
 }
 
+BOOST_AUTO_TEST_CASE(TestWabCloseMod2)
+{
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 2048;
+    info.height = 1536;
+
+    FakeFront front(info, 0);
+
+    Inifile ini;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_ESC);
+
+    FlatWabCloseMod d(ini, front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), true);
+    d.draw_event(100001, front);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+}

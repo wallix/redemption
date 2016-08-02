@@ -20,11 +20,13 @@
    New RDP Orders Coder / Decoder : Common parts and constants
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
 
-#include "stream.hpp"
-#include "rect.hpp"
+#pragma once
+
+#include <assert.h>
+
+#include "utils/stream.hpp"
+#include "utils/rect.hpp"
 
 // MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
 // ====================================================================
@@ -753,7 +755,7 @@ class RDPPrimaryOrderHeader
 
     void emit_pen(OutStream & stream, uint32_t base,
                   const RDPPen & pen,
-                  const RDPPen & old_pen) const {
+                  const RDPPen & /*old_pen*/) const {
 
         using namespace RDP;
         if (this->fields & base) {
@@ -791,7 +793,7 @@ class RDPPrimaryOrderHeader
 
     void emit_brush(OutStream & stream, uint32_t base,
                   const RDPBrush & brush,
-                  const RDPBrush & old_brush) const {
+                  const RDPBrush & /*old_brush*/) const {
 
         using namespace RDP;
         if (this->fields & base) {
@@ -1127,7 +1129,7 @@ public:
         return header;
     }
 
-    TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions")
+    // TODO remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions
     size_t str(char * buffer, size_t sz, bool showclip = true) const
     {
         size_t lg = sz;
@@ -1233,4 +1235,3 @@ class RDPSecondaryOrderHeader {
     }
 };
 
-#endif

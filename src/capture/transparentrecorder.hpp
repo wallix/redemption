@@ -18,11 +18,13 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_
-#define _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_
 
-#include "transport.hpp"
+#pragma once
+
+#include "transport/transport.hpp"
 #include "transparentchunk.hpp"
+#include "utils/stream.hpp"
+#include "utils/difftimeval.hpp"
 
 class TransparentRecorder {
 private:
@@ -107,4 +109,3 @@ private:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_CAPTURE_TRANSPARENTRECORDER_HPP_

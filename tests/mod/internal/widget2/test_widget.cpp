@@ -22,10 +22,10 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestXXX
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 // #define LOGNULL
-// #include "log.hpp"
+// #include "utils/log.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestXXX)

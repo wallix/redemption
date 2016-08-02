@@ -19,17 +19,17 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_BRUSHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_BRUSHCACHE_HPP_
+
+#pragma once
 
 #include <string.h>
-#include <log.hpp>
+#include "utils/log.hpp"
 
 struct brush_item {
     int stamp;
     /* expand this to a structure to handle more complicated brushes
        for now its 8x8 1bpp brushes only */
-    TODO(" use RDPBrush")
+    // TODO use RDPBrush
     uint8_t pattern[8];
     brush_item() {
         this->stamp = 0;
@@ -85,4 +85,3 @@ struct BrushCache {
 };
 
 
-#endif

@@ -23,11 +23,11 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/capabilities/offscreencache.hpp"
+#include "core/RDP/capabilities/offscreencache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
 {
@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
     BOOST_CHECK_EQUAL(offscreencache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE));
     BOOST_CHECK_EQUAL(offscreencache_caps2.len, static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_OFFSCREENCACHE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_OFFSCREENCACHE, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE), stream.in_uint16_le());
     offscreencache_caps2.recv(stream, CAPLEN_OFFSCREENCACHE);
 
     BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenSupportLevel, static_cast<uint16_t>(1));

@@ -25,15 +25,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestVncClientSimple
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
-#include "test_transport.hpp"
-#include "client_info.hpp"
-#include "vnc/vnc.hpp"
+#include "transport/test_transport.hpp"
+#include "core/client_info.hpp"
+#include "mod/vnc/vnc.hpp"
 #include "front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
@@ -236,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 // Socket VNC Target (3) : closing connection
     };
 
-    TestTransport t("test_vnc_client_simple", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
     const bool is_socket_transport = false;
 
     // To always get the same client random, in tests
@@ -248,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     Font font;
 
-    const bool bogus_clipboard_infinite_loop = false;
+    const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
 
     mod_vnc mod(
           t
@@ -278,20 +276,20 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
 //    BOOST_CHECK(t.status);
 
-    mod.draw_event(time(nullptr));
+    mod.draw_event(time(nullptr), front);
     mod.rdp_input_up_and_running();
-    mod.draw_event(time(nullptr));
+    mod.draw_event(time(nullptr), front);
 
-    BOOST_CHECK_EQUAL(mod.get_front_width(), 1024);
-    BOOST_CHECK_EQUAL(mod.get_front_height(), 768);
+    BOOST_CHECK_EQUAL(front.info.width, 800);
+    BOOST_CHECK_EQUAL(front.info.height, 600);
 
-//    mod.draw_event(time(nullptr));
+//    mod.draw_event(time(nullptr), front);
 ////    BOOST_CHECK(t.status);
 
-//    mod.draw_event(time(nullptr));
+//    mod.draw_event(time(nullptr), front);
 ////    BOOST_CHECK(t.status);
 
-//    mod.draw_event(time(nullptr));
+//    mod.draw_event(time(nullptr), front);
 ////    BOOST_CHECK(t.status);
 
 }

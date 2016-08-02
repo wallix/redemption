@@ -18,18 +18,18 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_
 
-#include "asynchronous_task_manager.hpp"
-#include "channel_list.hpp"
-#include "virtual_channel_data_sender.hpp"
-#include "RDP/channels/rdpdr.hpp"
-#include "transport.hpp"
-#include "wait_obj.hpp"
+#pragma once
+
+#include "transport/in_file_transport.hpp"
+#include "utils/asynchronous_task_manager.hpp"
+#include "core/channel_list.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
+#include "core/wait_obj.hpp"
 
 class RdpdrDriveReadTask : public AsynchronousTask {
-    Transport * transport;
+    InFileSeekableTransport * transport;
 
     const int file_descriptor;
 
@@ -48,7 +48,7 @@ class RdpdrDriveReadTask : public AsynchronousTask {
     const uint32_t verbose;
 
 public:
-    RdpdrDriveReadTask(Transport * transport,
+    RdpdrDriveReadTask(InFileSeekableTransport * transport,
                        int file_descriptor,
                        uint32_t DeviceId,
                        uint32_t CompletionId,
@@ -201,7 +201,7 @@ public:
         wait_object.set(1000);  // 1 ms
     }
 
-    bool run(const wait_obj & wait_object) override {
+    bool run(const wait_obj &) override {
         if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             this->to_server_sender(this->data_length, this->flags, this->data.get(), this->data_length);
 
@@ -268,7 +268,7 @@ public:
         wait_object.set(1000);  // 1 ms
     }
 
-    bool run(const wait_obj & wait_object) override {
+    bool run(const wait_obj &) override {
         REDASSERT(this->chunked_data_length <=
             CHANNELS::CHANNEL_CHUNK_LENGTH);
 
@@ -279,4 +279,3 @@ public:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_MOD_RDP_RDP_ASYNCHRONOUS_TASK_HPP_

@@ -18,10 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_SMB2_MESSAGESYNTAX_HPP_
-#define _REDEMPTION_CORE_SMB2_MESSAGESYNTAX_HPP_
 
-#include "stream.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
 
 namespace smb2 {
 
@@ -617,4 +617,3 @@ bool write_access_is_required(uint32_t DesiredAccess, bool strict_check) {
 
 }   // namespace smb2
 
-#endif  // #ifndef _REDEMPTION_CORE_SMB2_MESSAGESYNTAX_HPP_

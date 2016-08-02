@@ -24,13 +24,14 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitmapPerf
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "bitmap.hpp"
-#include "difftimeval.hpp"
-#include "rdtsc.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/rdtsc.hpp"
 
 #include <cinttypes>
 
@@ -42,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {
     {
         BOOST_CHECK(true);
-        Bitmap bigbmp(FIXTURES_PATH "/color_image.bmp");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.bmp");
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
@@ -68,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
     {
         int bpp = 24;
-        Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.bmp");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.bmp");
         // make it large enough to hold any image
         auto sz = 2u*bigbmp.bmp_size();
         auto uptr = std::make_unique<uint8_t[]>(sz);
@@ -94,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 {
     {
         BOOST_CHECK(true);
-        Bitmap bigbmp(FIXTURES_PATH "/color_image.png");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/color_image.png");
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
@@ -120,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformancePNG)
 
     {
         int bpp = 24;
-        Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.png");
+        Bitmap bigbmp = bitmap_from_file(FIXTURES_PATH "/logo-redemption.png");
         // make it large enough to hold any image
         auto sz = 2u*bigbmp.bmp_size();
         auto uptr = std::make_unique<uint8_t[]>(sz);

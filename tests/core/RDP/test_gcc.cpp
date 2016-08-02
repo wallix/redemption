@@ -23,13 +23,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestGCC
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
-#include "test_transport.hpp"
-#include "RDP/gcc.hpp"
+#include "transport/test_transport.hpp"
+#include "core/RDP/gcc.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 {
@@ -81,10 +81,10 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     "\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
 
 
-    TestTransport t("test_gcc",
+    TestTransport t(
         "", 0,
         gcc_conference_create_request_expected,
-        sizeof(gcc_conference_create_request_expected),
+        sizeof(gcc_conference_create_request_expected) - sizeof(gcc_user_data),
         256);
 
     StaticOutStream<65536> stream;
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     try {
         InStream in_stream(buf);
         GCC::Create_Request_Recv header(in_stream);
-    } catch(Error & e) {
+    } catch (Error const &) {
         BOOST_CHECK(false);
     };
 
@@ -154,7 +154,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     uint8_t buf[16];
     OutStream out_stream(buf);
     GCC::UserData::SCNet sc_net;
-    sc_net.length = 16;
     sc_net.MCSChannelId = 1003;
     sc_net.channelCount = 3;
     sc_net.channelDefArray[0].id = 1004;
@@ -171,7 +170,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
         InStream in_stream(buf);
         sc_net2.recv(in_stream, bogus_sc_net_size);
         BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-        BOOST_CHECK_EQUAL(16, sc_net2.length);
         BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
         BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
         BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
@@ -180,7 +178,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
 
         sc_net2.log("Server Received");
     }
-    catch (const Error & e){
+    catch (const Error &){
         BOOST_CHECK(false);
     };
 
@@ -390,7 +388,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
                         "\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6\xce\xea\xd9\x07"
                         "\x58\x2f\x66\x6c\xd6\xa4\x32\x45\x1e\x61\x7a\xba\x95\x8c\xfd\x23"
                      , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL((uint32_t)GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2, sc_sec1.dwVersion);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2), sc_sec1.dwVersion);
     BOOST_CHECK_EQUAL(true, sc_sec1.temporary);
 
     sc_sec1.log("Server Received");
@@ -437,7 +435,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
                     "\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83\xbd\xb4\xde\x56"
                     "\xc4\x61\xb9\x5b\x05\x3d\xd9\xc6\x84\xe9\x83\x69\x25\xd4\x82\x3f"
                              , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL((uint32_t)GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1, sc_sec1.dwVersion);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
     BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
     BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
@@ -615,7 +613,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
                     "\xd0\x33\x1c\x1c\xd1\x2e\xc6\xe0\xd2\xcf\x8f\x64\x15\x44\x44\xed"
                     "\x5a\x56\x1b\xd5\x26\xb7\xce\x38\x9b\xe1\x76\xe4\x3b\x35\x37\x9f"
                              , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
-    BOOST_CHECK_EQUAL((uint32_t)GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1, sc_sec1.dwVersion);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
     BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
     BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
@@ -624,7 +622,59 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
     OutStream out_stream(buf);
     sc_sec1.emit(out_stream);
 
-    CheckTransport ct(indata, sizeof(indata));
+    CheckTransport ct(indata, sizeof(indata) - 1);
 
     ct.send(out_stream.get_data(), out_stream.get_offset());
+}
+
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
+{
+    const char indata[] =
+        "\x06\xc0"         // CS_MCS_MSGCHANNEL
+        "\x08\x00"         // 8 bytes user Data
+
+        "\x00\x00\x00\x00" // TS_UD_CS_MCS_MSGCHANNEL::flags
+    ;
+
+    constexpr auto sz = sizeof(indata) - 1u;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+    InStream stream(buf);
+    cs_mcs_msgchannel.recv(stream);
+    BOOST_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
+    BOOST_CHECK_EQUAL(8, cs_mcs_msgchannel.length);
+    BOOST_CHECK_EQUAL(0, cs_mcs_msgchannel.flags);
+
+    cs_mcs_msgchannel.log("Client Received");
+}
+
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
+{
+    const char indata[] =
+        "\x0a\xc0"         // CS_MULTITRANSPORT
+        "\x08\x00"         // 8 bytes user Data
+
+        "\x05\x03\x00\x00" // TS_UD_CS_MULTITRANSPORT::flags
+    ;
+
+    constexpr auto sz = sizeof(indata) - 1u;
+    GeneratorTransport gt(indata, sz);
+    uint8_t buf[sz];
+    auto end = buf;
+    gt.recv(&end, sz);
+    GCC::UserData::CSMultiTransport cs_multitransport;
+    InStream stream(buf);
+    cs_multitransport.recv(stream);
+    BOOST_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
+    BOOST_CHECK_EQUAL(8, cs_multitransport.length);
+    BOOST_CHECK_EQUAL(GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
+                      GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECL |
+                      GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDP_PREFERRED |
+                      GCC::UserData::CSMultiTransport::SOFTSYNC_TCP_TO_UDP,
+                      cs_multitransport.flags);
+
+    cs_multitransport.log("Client Received");
 }

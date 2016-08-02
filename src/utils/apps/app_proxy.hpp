@@ -18,8 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_UTILS_APPS_APP_PROXY_HPP
-#define REDEMPTION_UTILS_APPS_APP_PROXY_HPP
+
+#pragma once
 
 #include <signal.h>
 #include <sys/un.h>
@@ -37,16 +37,16 @@
 
 #include "openssl_crypto.hpp"
 
-#include "config.hpp"
-#include "check_files.hpp"
-#include "mainloop.hpp"
-#include "log.hpp"
-#include "fdbuf.hpp"
-#include "fdbuf.hpp"
+#include "configs/config.hpp"
+#include "core/check_files.hpp"
+#include "core/mainloop.hpp"
+#include "utils/log.hpp"
+#include "utils/fdbuf.hpp"
+#include "utils/fdbuf.hpp"
 
 #include "program_options/program_options.hpp"
 
-#include "version.hpp"
+#include "main/version.hpp"
 
 inline void daemonize(const char * pid_file)
 {
@@ -163,13 +163,13 @@ inline int shutdown(const char * pid_file)
             strcpy(buffer + path_len, entryp->d_name);
             struct stat st;
             if (stat(buffer, &st) < 0){
-                LOG(LOG_ERR, "Failed to read pid directory %s [%u: %s]",
+                LOG(LOG_ERR, "Failed to read pid directory %s [%d: %s]",
                     buffer, errno, strerror(errno));
                 continue;
             }
             LOG(LOG_INFO, "removing old pid file %s", buffer);
             if (unlink(buffer) < 0){
-                LOG(LOG_ERR, "Failed to remove old session pid file %s [%u: %s]",
+                LOG(LOG_ERR, "Failed to remove old session pid file %s [%d: %s]",
                     buffer, errno, strerror(errno));
             }
         }
@@ -178,7 +178,7 @@ inline int shutdown(const char * pid_file)
         free(buffer);
     }
     else {
-        LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%u: %s]",
+        LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%d: %s]",
             "/var/run/redemption" , errno, strerror(errno));
     }
 
@@ -197,9 +197,10 @@ struct EmptyPreLoopFn { void operator()(Inifile &) const {} };
 // ExtraOptions = extra_option container
 // ExtracOptionChecker = int(po::variables_map &, bool * quit)
 // PreLoopFn = void(Inifile &)
-template<class ParametersHldr, class ExtraOptions, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
+template<class ExtraOptions, class ExtracOptionChecker, class PreLoopFn = EmptyPreLoopFn>
 int app_proxy(
-    int argc, char** argv, const char * copyright_notice
+    int argc, char const * const * argv, const char * copyright_notice
+  , CryptoContext & cctx
   , ExtraOptions const & extrax_options, ExtracOptionChecker extrac_options_checker
   , PreLoopFn pre_loop_fn = PreLoopFn()
 ) {
@@ -240,12 +241,12 @@ int app_proxy(
         desc.add({extra.option_long, extra.description});
     }
 
-    auto options = program_options::parse_command_line(argc, argv, desc);
+    auto options = program_options::parse_command_line(argc, const_cast<char**>(argv), desc);
 
     if (options.count("kill")) {
         int status = shutdown(PID_PATH "/redemption/" LOCKFILE);
         if (status){
-            TODO("check the real error that occured")
+            // TODO check the real error that occured
             std::clog << "problem opening " << PID_PATH "/redemption/" LOCKFILE  << "."
             " Maybe rdpproxy is not running\n";
         }
@@ -301,7 +302,7 @@ int app_proxy(
             }
             CheckFile::ShowErrors(euser_check_file_list, euid, egid);
 
-            LOG(LOG_INFO,
+            LOG(LOG_INFO, "%s",
                 "Please verify that all tests passed. If not, "
                     "you may need to remove " PID_PATH "/redemption/"
                     LOCKFILE " or reinstall rdpproxy if some configuration "
@@ -311,7 +312,7 @@ int app_proxy(
     }
 
     if (options.count("inetd")) {
-        redemption_new_session(config_filename.c_str());
+        redemption_new_session(cctx, config_filename.c_str());
         return 0;
     }
 
@@ -322,7 +323,7 @@ int app_proxy(
     // and try to continue normal start process afterward
 
     if (mkdir(PID_PATH "/redemption", 0700) < 0){
-        TODO("check only for relevant errors (exists with expected permissions is OK)");
+        // TODO check only for relevant errors (exists with expected permissions is OK)
     }
 
     if (chown(PID_PATH "/redemption", euid, egid) < 0){
@@ -367,27 +368,25 @@ int app_proxy(
     }
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini, config_filename.c_str()); }
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename.c_str()); }
 
     OpenSSL_add_all_digests();
 
     if (!ini.get<cfg::globals::enable_ip_transparent>()) {
         if (setgid(egid) != 0){
-            LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
+            LOG(LOG_ERR, "Changing process group to %u failed with error: %s\n", egid, strerror(errno));
             return 1;
         }
         if (setuid(euid) != 0){
-            LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
+            LOG(LOG_ERR, "Changing process user to %u failed with error: %s\n", euid, strerror(errno));
             return 1;
         }
     }
 
     pre_loop_fn(ini);
 
-    ParametersHldr parametersHldr;
-
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, euid, egid, parametersHldr, std::move(config_filename));
+    redemption_main_loop(ini, cctx, euid, egid, std::move(config_filename));
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */
@@ -398,4 +397,3 @@ int app_proxy(
     return 0;
 }
 
-#endif

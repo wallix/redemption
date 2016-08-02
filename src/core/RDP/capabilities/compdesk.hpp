@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COMPDESK_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_COMPDESK_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
-#include "error.hpp"
+#include "utils/stream.hpp"
+#include "core/error.hpp"
 
 // 2.2.7.2.8 Desktop Composition Capability Set (TS_COMPDESK_CAPABILITYSET)
 // ========================================================================
@@ -72,7 +72,7 @@ struct CompDeskCaps : public Capability {
         this->len = len;
 
         if (!stream.in_check_rem(2)){
-            LOG(LOG_ERR, "Truncated CompDeskCaps, need=2 remains=%u",
+            LOG(LOG_ERR, "Truncated CompDeskCaps, need=2 remains=%zu",
                 stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -86,4 +86,3 @@ struct CompDeskCaps : public Capability {
     }
 };
 
-#endif

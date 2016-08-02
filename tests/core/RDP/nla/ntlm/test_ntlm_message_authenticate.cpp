@@ -21,12 +21,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestNtlmMessageAuthenticate
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/nla/credssp.hpp"
-#include "RDP/nla/ntlm/ntlm_message_authenticate.hpp"
+#include "core/RDP/nla/credssp.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message_authenticate.hpp"
 
 #include "check_sig.hpp"
 
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
     char message[1024];
-    if (!check_sig(to_send3, message, (const char *)sig)){
+    if (!check_sig(to_send3, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

@@ -18,19 +18,23 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_TRANSPORT_GZIP_COMPRESSION_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_GZIP_COMPRESSION_TRANSPORT_HPP
+
+#pragma once
 
 #include <zlib.h>
 
 #include "transport.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 static const size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 
 /*****************************
 * GZipCompressionInTransport
 */
+
+// TODO -Wold-style-cast is ignored
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 
 class GZipCompressionInTransport : public Transport {
     Transport & source_transport;
@@ -108,7 +112,7 @@ private:
 
                     const size_t compressed_data_length = compressed_data.in_uint32_le();
                     if (this->verbose) {
-                        LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: compressed_data_length=%u"
+                        LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: compressed_data_length=%zu"
                            , compressed_data_length);
                     }
 
@@ -133,12 +137,12 @@ private:
 (void)ret;
 
                 if (this->verbose & 0x2) {
-                    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_capacity=%u avail_out=%u"
+                    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_capacity=%zu avail_out=%u"
                        , uncompressed_data_capacity, this->compression_stream.avail_out);
                 }
                 this->uncompressed_data_length = uncompressed_data_capacity - this->compression_stream.avail_out;
                 if (this->verbose) {
-                    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_length=%u"
+                    LOG( LOG_INFO, "GZipCompressionInTransport::do_recv: uncompressed_data_length=%zu"
                        , this->uncompressed_data_length);
                 }
 
@@ -203,7 +207,7 @@ public:
 private:
     void compress(const uint8_t * const data, size_t data_length, bool end) {
         if (this->verbose) {
-            LOG(LOG_INFO, "GZipCompressionOutTransport::compress: uncompressed_data_length=%u", data_length);
+            LOG(LOG_INFO, "GZipCompressionOutTransport::compress: uncompressed_data_length=%zu", data_length);
         }
         if (this->verbose & 0x4) {
             LOG(LOG_INFO, "GZipCompressionOutTransport::compress: end=%s", (end ? "true" : "false"));
@@ -229,14 +233,14 @@ private:
 
             if (this->verbose & 0x2) {
                 LOG( LOG_INFO
-                   , "GZipCompressionOutTransport::compress: compressed_data_capacity=%u avail_out=%u"
+                   , "GZipCompressionOutTransport::compress: compressed_data_capacity=%zu avail_out=%u"
                    , sizeof(temp_compressed_data), this->compression_stream.avail_out);
             }
             const size_t temp_compressed_data_length =
                 sizeof(temp_compressed_data) - this->compression_stream.avail_out;
             if (this->verbose) {
                 LOG( LOG_INFO
-                   , "GZipCompressionOutTransport::compress: temp_compressed_data_length=%u"
+                   , "GZipCompressionOutTransport::compress: temp_compressed_data_length=%zu"
                    , temp_compressed_data_length);
             }
 
@@ -263,7 +267,7 @@ private:
 
     void do_send(const char * const buffer, size_t len) override {
         if (this->verbose & 0x4) {
-            LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: len=%u", len);
+            LOG(LOG_INFO, "GZipCompressionOutTransport::do_send: len=%zu", len);
         }
 
         const uint8_t * temp_data        = reinterpret_cast<const uint8_t *>(buffer);
@@ -307,7 +311,7 @@ private:
         }
 
         if (this->verbose & 0x4) {
-            LOG( LOG_INFO, "GZipCompressionOutTransport::do_send: uncompressed_data_length=%u"
+            LOG( LOG_INFO, "GZipCompressionOutTransport::do_send: uncompressed_data_length=%zu"
                , this->uncompressed_data_length);
         }
     }
@@ -356,7 +360,7 @@ private:
         buffer_stream.out_uint32_le(this->compressed_data_length);
         if (this->verbose) {
             LOG( LOG_INFO
-               , "GZipCompressionOutTransport::send_to_target: compressed_data_length=%u"
+               , "GZipCompressionOutTransport::send_to_target: compressed_data_length=%zu"
                , this->compressed_data_length);
         }
 
@@ -373,4 +377,5 @@ public:
     }
 };  // class GZipCompressionOutTransport
 
-#endif  // #ifndef REDEMPTION_TRANSPORT_GZIP_COMPRESSION_TRANSPORT_HPP
+#pragma GCC diagnostic pop
+

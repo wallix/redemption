@@ -22,19 +22,16 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWidgetLabelGrid
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "font.hpp"
-#include "internal/widget2/grid.hpp"
-#include "internal/widget2/labelgrid.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/grid.hpp"
+#include "mod/internal/widget2/labelgrid.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "./"
 
 #include "fake_draw.hpp"
 
@@ -45,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int id = 0;
     int16_t x = 10;
@@ -57,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     const uint16_t column_number = 4;
     const uint16_t grid_border   = 2;
 
-    WidgetLabelGrid wgrid(drawable, Rect(x, y, 640, 480), parent, notifier,
+    WidgetLabelGrid wgrid(drawable.gd, Rect(x, y, 640, 480), parent, notifier,
                           line_number, column_number,
                           PALE_BLUE, BLACK, LIGHT_BLUE, BLACK,
                           WINBLUE, WHITE, MEDIUM_BLUE, WHITE, font,
@@ -69,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);
-    wgrid.set_selection(2, static_cast<uint16_t>(-1));
+    wgrid.set_selection(2);
 
     ColumnWidthStrategy column_width_strategies[] = {
         { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }
@@ -88,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid.png");
+    // drawable.save_to_png("/tmp/labelgrid.png");
     // char message[1024];
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x47\x86\xd6\xd2\x1d\x47\xa2\x4e\xcf\x7b"
@@ -103,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "labelgrid2.png");
+    // drawable.save_to_png("/tmp/labelgrid2.png");
     // if (!check_sig(drawable.gd.drawable, message,
     //                "\x0f\xf6\x9f\xa5\xfb\x38\x4c\xb4\x8e\x66"
     //                "\x8e\x6d\x99\x64\x4e\x3c\x9c\x7b\xb6\xca")){

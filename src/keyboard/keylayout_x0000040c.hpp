@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000040C_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000040C_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x0000040c {    // French (France) // French
 
 const static int LCID = 0x0000040c;
+
+const static char * const locale_name = "fr-FR";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0026, 0x00E9, 0x0022, 0x0027, 0x0028, 0x002D,
@@ -258,6 +260,7 @@ const static uint8_t nbDeadkeys = 4;
 } // END NAMESPACE - x0000040c
 
 static const Keylayout keylayout_x0000040c( x0000040c::LCID
+                                          , x0000040c::locale_name
                                           , x0000040c::noMod
                                           , x0000040c::shift
                                           , x0000040c::altGr
@@ -271,4 +274,3 @@ static const Keylayout keylayout_x0000040c( x0000040c::LCID
                                           , x0000040c::nbDeadkeys
 );
 
-#endif

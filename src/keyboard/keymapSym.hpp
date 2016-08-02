@@ -20,10 +20,10 @@
    header file. KeymapSym object for keymap translation from RDP to X (VNC)
 */
 
-#ifndef _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
-#define _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
 
-#include "log.hpp"
+#pragma once
+
+#include "utils/log.hpp"
 #include <string.h>
 
 
@@ -1229,6 +1229,7 @@ struct KeymapSym {
                             /* kEYPAD DELETE */
                             case 0x53:
                                 this->push_sym(0xFFFF);
+                                break;
                             default:
                                 break;
                         }
@@ -3088,4 +3089,3 @@ struct KeymapSym {
 }; // STRUCT - KeymapSym
 
 
-#endif

@@ -18,10 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
-#define _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
 
-#include "stream.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
 
 namespace RDP {
 
@@ -114,7 +114,7 @@ struct SaveSessionInfoPDUData_Recv {
     infoType([&stream](){
         if (!stream.in_check_rem(4)) {
             LOG(LOG_ERR,
-                "Truncated Save Session Info PDU (data): expected=4 remains=%u",
+                "Truncated Save Session Info PDU (data): expected=4 remains=%zu",
                  stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -225,7 +225,7 @@ struct LogonInfoVersion1_Recv {
         unsigned expected = 4;  // cbDomain(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Version 1 (data): expected=%u remains=%u",
+                "Truncated Logon Info Version 1 (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -236,7 +236,7 @@ struct LogonInfoVersion1_Recv {
                    4;   // cbUserName(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Version 1 (data): expected=%u remains=%u",
+                "Truncated Logon Info Version 1 (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -253,7 +253,7 @@ struct LogonInfoVersion1_Recv {
                    4;       // SessionId(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Version 1 (data): expected=%u remains=%u",
+                "Truncated Logon Info Version 1 (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -405,7 +405,7 @@ struct LogonInfoVersion2_Recv {
                             558;    // Pad(558)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Version 2 (data): expected=%u remains=%u",
+                "Truncated Logon Info Version 2 (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -422,7 +422,7 @@ struct LogonInfoVersion2_Recv {
                    this->cbUserName;    // SessionId(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Version 2 (data): expected=%u remains=%u",
+                "Truncated Logon Info Version 2 (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -478,7 +478,7 @@ struct PlainNotify_Recv {
         const unsigned expected = 576;  // Pad(576)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Plain Notify (data): expected=%u remains=%u",
+                "Truncated Plain Notify (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -576,7 +576,7 @@ struct LogonInfoExtended_Recv {
                                   4;    // FieldsPresent(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Extended (data): expected=%u remains=%u",
+                "Truncated Logon Info Extended (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -623,7 +623,7 @@ struct LogonInfoField_Recv {
         const unsigned expected = 4;    // cbFieldData(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Field (data): expected=%u remains=%u",
+                "Truncated Logon Info Field (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -740,7 +740,7 @@ struct LogonErrorsInfo_Recv {
                                   4;    // ErrorNotificationType(4)
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_ERR,
-                "Truncated Logon Info Field (data): expected=%u remains=%u",
+                "Truncated Logon Info Field (data): expected=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -843,4 +843,3 @@ struct LogonErrorsInfo_Recv {
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_

@@ -21,8 +21,8 @@
    Error exception object
 */
 
-#ifndef REDEMPTION_CORE_ERROR_HPP
-#define REDEMPTION_CORE_ERROR_HPP
+
+#pragma once
 
 #include <stdio.h>
 
@@ -62,6 +62,9 @@ enum error_type {
 
     ERR_TRANSPORT_TLS_CONNECT_FAILED = 1600,
     ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED,
+    ERR_TRANSPORT_TLS_CERTIFICATE_MISSED,
+    ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED,
+    ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE,
 
     ERR_ACL_UNEXPECTED_IN_ITEM_OUT = 1700,
     ERR_ACL_MESSAGE_TOO_BIG,
@@ -74,6 +77,7 @@ enum error_type {
     ERR_X224_SENDING_UNKNOWN_PDU_TYPE,
     ERR_X224_EXPECTED_DATA_PDU,
     ERR_X224_EXPECTED_CONNECTION_CONFIRM,
+    ERR_X224_RECV_ID_IS_RD_TPDU,    // Disconnect Request - Transport Protocol Data Unit
 
     ERR_ISO_INCOMING_CODE_NOT_PDU_CR = 4000,
     ERR_ISO_INCOMING_BAD_PDU_CR_LENGTH,
@@ -113,6 +117,7 @@ enum error_type {
     ERR_MCS_PDU_TRUNCATED,
     ERR_MCS_INFOPACKET_TRUNCATED,
     ERR_MCS_PDU_TRAILINGDATA,
+    ERR_MCS_SYSTEM_TIME_TRUNCATED,
 
     ERR_GCC = 5500,
 
@@ -180,6 +185,8 @@ enum error_type {
     ERR_RDP_PROTOCOL,
     ERR_RDP_SERVER_REDIR,
     ERR_RDP_OPEN_SESSION_TIMEOUT,
+    ERR_RDP_HANDSHAKE_TIMEOUT,
+    ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT,
 
     ERR_WM_PASSWORD = 9000,
     ERR_WM_USERNAME,
@@ -239,6 +246,7 @@ enum error_type {
     ERR_RECORDER_FILE_CRYPTED,
 
     ERR_RECORDER_SNAPSHOT_FAILED,
+    ERR_RECORDER_FAILED_TO_ENCODE_FRAME,
 
     ERR_BITMAP_LOAD_FAILED = 17000,
     ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE,
@@ -300,8 +308,10 @@ enum error_type {
     ERR_PDBC_LOAD = 24100,
     ERR_PDBC_SAVE,
 
-    ERR_AGENT_LAUNCH = 24200,
-    ERR_AGENT_KEEPALIVE,
+    ERR_SESSION_PROBE_LAUNCH = 24200,
+    ERR_SESSION_PROBE_KEEPALIVE,
+    ERR_SESSION_PROBE_ENDING_IN_PROGRESS,
+    ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION,
 
     ERR_SSL_CALL_FAILED = 25000,
     ERR_SSL_CALL_HMAC_INIT_FAILED,
@@ -309,7 +319,10 @@ enum error_type {
     ERR_SSL_CALL_HMAC_FINAL_FAILED,
     ERR_SSL_CALL_SHA1_INIT_FAILED,
     ERR_SSL_CALL_SHA1_UPDATE_FAILED,
-    ERR_SSL_CALL_SHA1_FINAL_FAILED
+    ERR_SSL_CALL_SHA1_FINAL_FAILED,
+
+    ERR_SSH_PARSE_PRIVATE_DSA_KEY,
+    ERR_SSH_PARSE_PRIVATE_RSA_KEY
 };
 
 struct Error {
@@ -344,10 +357,30 @@ public:
             return "Open file failed";
         case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
             return "TLS certificate changed";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+            return "TLS certificate missed";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+            return "TLS certificate corrupted";
+        case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+            return "TLS certificate is inaccessible";
         case ERR_VNC_CONNECTION_ERROR:
             return "VNC connection error.";
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
-            return "Composite Widget Destroyed without child list not empty.";
+            return "Composite Widget Destroyed without child list not empty";
+
+        case ERR_SESSION_PROBE_LAUNCH:
+            return "Could not launch Session Probe";
+        case ERR_SESSION_PROBE_KEEPALIVE:
+            return "Keep alive has been missed, connection may be dead or slow";
+        case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
+            return "Session logoff in progress";
+
+        case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
+            return "Unsupported client display monitor layout";
+
+        case ERR_LIC:
+            return "An error occurred during the licensing protocol";
+
         default:
             {
                 int requested_message_type = (with_id ? MSG_WITH_ID : MSG_WITHOUT_ID);
@@ -371,4 +404,3 @@ public:
     }
 };
 
-#endif

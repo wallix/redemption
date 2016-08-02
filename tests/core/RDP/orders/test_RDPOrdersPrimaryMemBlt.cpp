@@ -24,9 +24,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderMemBlt
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+//#define LOGPRINT
+#define LOGNULL
+
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
 #include "test_orders.hpp"
 
@@ -66,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)MEMBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MEMBLT), common_cmd.order);
 
 
         RDPMemBlt cmd(cache_id, Rect(310, 390, 10, 10), 0xFF, 0, 0, cache_idx);
@@ -115,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)MEMBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MEMBLT), common_cmd.order);
 
 
         RDPMemBlt cmd(0, Rect(), 0, 0, 0, 0);

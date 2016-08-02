@@ -23,10 +23,10 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "RDP/capabilities/bitmapcachehostsupport.hpp"
+#include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
@@ -51,8 +51,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE_HOSTSUPPORT));
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.len, static_cast<uint16_t>(CAPLEN_BITMAPCACHE_HOSTSUPPORT));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BITMAPCACHE_HOSTSUPPORT, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BITMAPCACHE_HOSTSUPPORT, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE_HOSTSUPPORT), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_BITMAPCACHE_HOSTSUPPORT), stream.in_uint16_le());
     bitmapcachehostsupport_caps2.recv(stream, CAPLEN_BITMAPCACHE_HOSTSUPPORT);
 
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.cacheVersion, static_cast<uint8_t>(255));

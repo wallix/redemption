@@ -19,35 +19,39 @@
  *
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAB_CLOSE_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_WAB_CLOSE_MOD_HPP
 
-#include "front_api.hpp"
-#include "mod_api.hpp"
+#pragma once
+
+#include "core/front_api.hpp"
+#include "mod/mod_api.hpp"
 #include "widget2/flat_wab_close.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
-#include "timeout.hpp"
-#include "config_access.hpp"
+#include "utils/timeout.hpp"
+#include "configs/config_access.hpp"
 
+#include <chrono>
 
 using FlatWabCloseModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,      vcfg::wait | vcfg::read>,
-    vcfg::var<cfg::globals::target_device,  vcfg::wait | vcfg::read>,
-    vcfg::var<cfg::globals::close_timeout>,
-    vcfg::var<cfg::globals::target_application>,
-    vcfg::var<cfg::globals::target_user>,
-    vcfg::var<cfg::context::auth_error_message>,
-    vcfg::var<cfg::context::module>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::globals::auth_user,          vcfg::accessmode::get | vcfg::accessmode::is_asked>,
+    vcfg::var<cfg::globals::target_device,      vcfg::accessmode::get | vcfg::accessmode::ask | vcfg::accessmode::is_asked>,
+    vcfg::var<cfg::globals::target_user,        vcfg::accessmode::get | vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::selector,           vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::target_protocol,    vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::close_timeout,      vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::target_application, vcfg::accessmode::get>,
+    vcfg::var<cfg::context::auth_error_message, vcfg::accessmode::get>,
+    vcfg::var<cfg::context::module,             vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language,       vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                        vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                       vcfg::accessmode::get>
 >;
 
 class FlatWabCloseMod : public InternalMod, public NotifyApi
 {
     FlatWabClose     close_widget;
-    TimeoutT<time_t> timeout;
+    Timeout timeout;
+    FlatWabCloseModVariables vars;
 
 private:
     bool showtimer;
@@ -60,7 +64,7 @@ private:
                 snprintf(text, sizeof(text), "%s", TR("selector", language(vars)));
             }
             else {
-                TODO("target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman")
+                // TODO target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman
                 if (!vars.get<cfg::globals::target_application>().empty()) {
                     snprintf(text, sizeof(text), "%s",
                              vars.get<cfg::globals::target_application>().c_str());
@@ -76,25 +80,33 @@ private:
 
 public:
     FlatWabCloseMod(FlatWabCloseModVariables vars,
-                    FrontAPI & front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
+                    FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now,
+                    bool showtimer = false, bool back_selector = false)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , close_widget(*this, width, height, this->screen, this,
-                       vars.get<cfg::context::auth_error_message>().c_str(), 0,
-                       (vars.is_asked<cfg::globals::auth_user>()
-                        || vars.is_asked<cfg::globals::target_device>()) ?
-                       nullptr : vars.get<cfg::globals::auth_user>().c_str(),
-                       (vars.is_asked<cfg::globals::auth_user>()
-                        || vars.is_asked<cfg::globals::target_device>()) ?
-                       nullptr : temporary_text(vars).text,
-                       showtimer,
-                       vars.get<cfg::font>(),
-                       vars.get<cfg::theme>(),
-                       language(vars))
-        , timeout(now, vars.get<cfg::globals::close_timeout>())
+        , close_widget(
+            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this,
+            vars.get<cfg::context::auth_error_message>().c_str(),
+            (vars.is_asked<cfg::globals::auth_user>()
+            || vars.is_asked<cfg::globals::target_device>()) ?
+            nullptr : vars.get<cfg::globals::auth_user>().c_str(),
+            (vars.is_asked<cfg::globals::auth_user>()
+            || vars.is_asked<cfg::globals::target_device>()) ?
+            nullptr : temporary_text(vars).text,
+            showtimer,
+            vars.get<cfg::font>(),
+            vars.get<cfg::theme>(),
+            language(vars),
+            back_selector)
+        , timeout(now, vars.get<cfg::globals::close_timeout>().count())
+        , vars(vars)
         , showtimer(showtimer)
     {
-        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", vars.get<cfg::globals::close_timeout>());
-        this->front.set_mod_palette(BGRPalette::classic_332());
+        if (vars.get<cfg::globals::close_timeout>().count()) {
+            LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
+                static_cast<unsigned>(vars.get<cfg::globals::close_timeout>().count()));
+        }
+        this->front.set_palette(BGRPalette::classic_332());
 
         this->screen.add_widget(&this->close_widget);
         this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget2::focus_reason_tabkey);
@@ -108,29 +120,40 @@ public:
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
+        (void)sender;
         if (NOTIFY_CANCEL == event) {
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
         }
+        else if (NOTIFY_SUBMIT == event) {
+            LOG(LOG_INFO, "asking for selector");
+            this->vars.ask<cfg::context::selector>();
+            this->vars.ask<cfg::globals::target_user>();
+            this->vars.ask<cfg::globals::target_device>();
+            this->vars.ask<cfg::context::target_protocol>();
+            this->event.signal = BACK_EVENT_NEXT;
+            this->event.set();
+        }
     }
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             if (this->showtimer) {
                 this->close_widget.refresh_timeleft(this->timeout.timeleft(now));
             }
             this->event.set(200000);
             break;
-        default:
+        case Timeout::TIMEOUT_INACTIVE:
             this->event.reset();
             break;
         }
     }
+
+    bool is_up_and_running() override { return true; }
 };
 
-#endif

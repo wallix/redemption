@@ -22,16 +22,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatLoginMod
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
 
 #define LOGNULL
+//#define LOGPRINT
 
-#include "internal/flat_login_mod.hpp"
+#include "mod/internal/flat_login_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDialogMod)
@@ -52,9 +49,69 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 800, 600);
+    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000));
+    d.draw_event(100001, front);
+
+    BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
+
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     BOOST_CHECK_EQUAL(ini.get<cfg::globals::auth_user>(), "user");
     BOOST_CHECK_EQUAL(ini.get<cfg::context::password>(), "pass");
+}
+
+BOOST_AUTO_TEST_CASE(TestDialogMod1)
+{
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+
+    FakeFront front(info, 0);
+
+    Inifile ini;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+
+    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000));
+    d.draw_event(100001, front);
+
+    BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
+
+    d.draw_event(100601, front);
+
+    BOOST_CHECK_EQUAL(BACK_EVENT_STOP, d.get_event().signal);
+}
+
+BOOST_AUTO_TEST_CASE(TestDialogMod2)
+{
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 2048;
+    info.height = 1536;
+
+    FakeFront front(info, 0);
+
+    Inifile ini;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+
+    FlatLoginMod d(ini, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000));
+    d.draw_event(100001, front);
+
+    BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
+
+    d.draw_event(100601, front);
+
+    BOOST_CHECK_EQUAL(BACK_EVENT_STOP, d.get_event().signal);
 }

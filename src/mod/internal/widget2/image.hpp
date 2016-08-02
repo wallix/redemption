@@ -18,22 +18,21 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
  *              Meng Tan
  */
-
-#if !defined(REDEMPTION_MOD_WIDGET2_IMAGE_HPP)
-#define REDEMPTION_MOD_WIDGET2_IMAGE_HPP
+#pragma once
 
 #include "widget.hpp"
-#include "bitmap.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "utils/bitmap_with_png.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetImage : public Widget2
 {
     Bitmap bmp;
 
 public:
-    WidgetImage(DrawApi& drawable, int x, int y, const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)
+    WidgetImage(gdi::GraphicApi & drawable, int x, int y, const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , bmp(filename)
+    , bmp(bitmap_from_file(filename))
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
@@ -62,4 +61,3 @@ public:
     }
 };
 
-#endif

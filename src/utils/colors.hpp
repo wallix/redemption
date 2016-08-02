@@ -21,18 +21,22 @@
    Colors object. Contains generic colors
 */
 
-#ifndef _REDEMPTION_UTILS_COLORS_HPP_
-#define _REDEMPTION_UTILS_COLORS_HPP_
 
-#include <stdint.h>
-#include <assert.h>
-#include <stdlib.h>
+#pragma once
+
+#include <iterator>
+
+#include <cstdint>
+#include <cassert>
+#include <cstdlib>
 #include <cstddef>
-#include "log.hpp"
+#include <cstring> // memcpy
+
 
 typedef uint32_t BGRColor;
+typedef uint32_t RGBColor;
 
-inline BGRColor RGBtoBGR(const BGRColor & c){
+inline BGRColor RGBtoBGR(const BGRColor & c) noexcept {
     return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }
 
@@ -65,6 +69,12 @@ struct BGRPalette
 
     BGRColor operator[](std::size_t i) const noexcept
     { return this->palette[i]; }
+
+    BGRColor const * begin() const
+    { using std::begin; return begin(this->palette); }
+
+    BGRColor const * end() const
+    { using std::end; return end(this->palette); }
 
     void set_color(std::size_t i, BGRColor c) noexcept
     { this->palette[i] = c; }
@@ -200,6 +210,48 @@ inline unsigned color_from_cstr(const char * str) {
     return res;
 }
 
+
+struct decode_color8 {
+    static constexpr const uint8_t bpp = 8;
+
+    RGBColor operator()(BGRColor c, BGRPalette const & palette) const noexcept {
+        return palette[static_cast<uint8_t>(c)];
+    }
+};
+
+struct decode_color15 {
+    static constexpr const uint8_t bpp = 15;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
+        const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
+        const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
+        const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        return (r << 16) | (g << 8) | b;
+    }
+};
+
+struct decode_color16 {
+    static constexpr const uint8_t bpp = 16;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
+        const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
+        const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
+        const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        return (r << 16) | (g << 8) | b;
+    }
+};
+
+struct decode_color24 {
+    static constexpr const uint8_t bpp = 24;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        return c & 0xFFFFFF;
+    }
+};
+
+
 // colorN (variable): an index into the current palette or an RGB triplet
 //                    value; the actual interpretation depends on the color
 //                    depth of the bitmap data.
@@ -221,114 +273,192 @@ inline unsigned color_from_cstr(const char * str) {
 
 inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
     switch (in_bpp){
-    case 1:
-    {
-        uint32_t res = 0;
-        if (c) res = 0x00FFFFFF;
-        return res;
-    }
-    break;
-    case 8:
-        return palette[static_cast<uint8_t>(c)] & 0xFFFFFF;
-    case 15:
-    {
-        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
-        const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
-        const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
-        const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-        return (r << 16) | (g << 8) | b;
-    }
-    break;
-    case 16:
-    {
-        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
-        const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
-        const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
-        const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-        return (r << 16) | (g << 8) | b;
-    }
-    case 32:
-    case 24:
-      return c & 0xFFFFFF;
-    default:
-        LOG(LOG_ERR, "in_bpp = %d", in_bpp);
-        exit(0);
+        case 8:  return decode_color8()(c, palette);
+        case 15: return decode_color15()(c);
+        case 16: return decode_color16()(c);
+        case 24:
+        case 32: return decode_color24()(c);
+        default:
+            assert(!"unknown bpp");
     }
     return 0;
 }
 
 
-inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
-    switch (in_bpp){
-    case 8:
-      return RGBtoBGR(palette[static_cast<uint8_t>(c)]);
-    case 15:
-    {
-        //  b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
+struct decode_color8_opaquerect {
+    static constexpr const uint8_t bpp = 8;
+
+    RGBColor operator()(BGRColor c, BGRPalette const & palette) const noexcept {
+        return RGBtoBGR(palette[static_cast<uint8_t>(c)]);
+    }
+};
+
+struct decode_color15_opaquerect {
+    static constexpr const uint8_t bpp = 15;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         const BGRColor b = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
         const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
         const BGRColor r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
         return (r << 16) | (g << 8) | b;
     }
-    break;
-    case 16:
-    {
-        //  b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
+};
+
+struct decode_color16_opaquerect {
+    static constexpr const uint8_t bpp = 16;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         const BGRColor b = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
         const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
         const BGRColor r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
         return (r << 16) | (g << 8) | b;
     }
-    case 32:
-    case 24:
-      return c & 0xFFFFFF;
-    default:
-        LOG(LOG_ERR, "in_bpp = %d", in_bpp);
-        exit(0);
+};
+
+struct decode_color24_opaquerect {
+    static constexpr const uint8_t bpp = 24;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        return c & 0xFFFFFF;
+    }
+};
+
+
+inline RGBColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, const BGRPalette & palette){
+    switch (in_bpp){
+        case 8:  return decode_color8_opaquerect()(c, palette);
+        case 15: return decode_color15_opaquerect()(c);
+        case 16: return decode_color16_opaquerect()(c);
+        case 24:
+        case 32: return decode_color24_opaquerect()(c);
+        default:
+            assert(!"unknown bpp");
     }
     return 0;
 }
+
+template<class Converter>
+struct with_color8_palette
+{
+    static constexpr const uint8_t bpp = Converter::bpp;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        return Converter()(c, this->palette);
+    }
+    BGRPalette const & palette;
+};
+using decode_color8_with_palette = with_color8_palette<decode_color8>;
+using decode_color8_opaquerect_with_palette = with_color8_palette<decode_color8_opaquerect>;
+
+
+struct encode_color8 {
+    static constexpr const uint8_t bpp = 8;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        // rrrgggbb
+        return
+            (((c >> 16) & 0xFF)       & 0xE0)
+          | ((((c >> 8) & 0xFF) >> 3) & 0x1C)
+          | (((c        & 0xFF) >> 6) & 0x03);
+        //// bbgggrrr
+        // return
+        //    (((c      ) & 0xFF)       & 0xC0)
+        //  | ((((c >> 8) & 0xFF) >> 2) & 0x38)
+        //  | (((c >> 16  & 0xFF) >> 5) & 0x03);
+    }
+};
+
+struct encode_color15 {
+    static constexpr const uint8_t bpp = 15;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        // 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
+        return
+            // b1 b2 b3 b4 b5 b6 b7 b8 --> 0 b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0
+            (((c         & 0xFF) << 7) & 0x7C00)
+            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 0 g1 g2 g3 g4 g5 0 0 0 0 0
+          | ((((c >>  8) & 0xFF) << 2) & 0x03E0)
+            // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
+          |  (((c >> 16) & 0xFF) >> 3);
+    }
+};
+
+struct encode_color16 {
+    static constexpr const uint8_t bpp = 16;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
+        return
+            // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
+            (((c         & 0xFF) << 8) & 0xF800)
+            // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
+          | ((((c >>  8) & 0xFF) << 3) & 0x07E0)
+            // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
+          |  (((c >> 16) & 0xFF) >> 3);
+    }
+};
+
+struct encode_color24 {
+    static constexpr const uint8_t bpp = 24;
+
+    RGBColor operator()(BGRColor c) const noexcept {
+        return c;
+    }
+};
+
 
 inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
     switch (out_bpp){
-    case 8:
-    // rrrgggbb
-        return
-        (((c >> 16) & 0xFF)       & 0xE0)
-       |((((c >> 8) & 0xFF) >> 3) & 0x1C)
-       |(((c        & 0xFF) >> 6) & 0x03);
-//    // bbgggrrr
-//        return
-//        (((c      ) & 0xFF)       & 0xC0)
-//       |((((c >> 8) & 0xFF) >> 2) & 0x38)
-//       |(((c >> 16  & 0xFF) >> 5) & 0x03);
-    case 15:
-    // --> 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
-        return
-        // b1 b2 b3 b4 b5 b6 b7 b8 --> 0 b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0
-        (((c         & 0xFF) << 7) & 0x7C00)
-        // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 0 g1 g2 g3 g4 g5 0 0 0 0 0
-       |((((c >>  8) & 0xFF) << 2) & 0x03E0)
-        // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
-       | (((c >> 16) & 0xFF) >> 3);
-    case 16:
-    // --> b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
-        return
-        // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
-        (((c         & 0xFF) << 8) & 0xF800)
-        // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
-       |((((c >>  8) & 0xFF) << 3) & 0x07E0)
-        // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
-       | (((c >> 16) & 0xFF) >> 3);
-    case 32:
-    case 24:
-        return c;
-    default:
-        assert(false);
-    break;
+        case 8:  return encode_color8()(c);
+        case 15: return encode_color15()(c);
+        case 16: return encode_color16()(c);
+        case 32:
+        case 24: return encode_color24()(c);
+        default:
+            assert(false);
+        break;
     }
     return 0;
 }
 
 
-#endif
+template<class Dec, class Enc>
+struct color_converter : Dec, Enc
+{
+    color_converter() = default;
+
+    color_converter(Dec const & dec, Enc const & enc)
+    : Dec(dec)
+    , Enc(enc)
+    {}
+
+    BGRColor operator()(BGRColor c) const noexcept {
+        return static_cast<Enc const&>(*this)(static_cast<Dec const&>(*this)(c));
+    }
+};
+
+namespace shortcut_encode
+{
+    using enc8 = encode_color8;
+    using enc15 = encode_color15;
+    using enc16 = encode_color16;
+    using enc24 = encode_color24;
+}
+
+namespace shortcut_decode
+{
+    using dec8 = decode_color8;
+    using dec15 = decode_color15;
+    using dec16 = decode_color16;
+    using dec24 = decode_color24;
+}
+
+namespace shortcut_decode_with_palette
+{
+    using dec8 = decode_color8_with_palette;
+    using dec15 = decode_color15;
+    using dec16 = decode_color16;
+    using dec24 = decode_color24;
+}

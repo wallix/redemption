@@ -26,29 +26,37 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFont
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
+#define LOGPRINT
 
-#include "log.hpp"
-#include "font.hpp"
-
-#ifndef FIXTURES_PATH
-#define FIXTURES_PATH ""
-#endif
+#include "utils/log.hpp"
+#include "core/font.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCreateFont)
 {
-    // test loading a font from default file
-    openlog("redemption", LOG_CONS | LOG_PERROR, LOG_USER);
-    setlogmask(LOG_MASK(LOG_DEBUG));
-    LOG(LOG_DEBUG, "reading fonts\n");
+    {
+        Font f;
+        BOOST_CHECK(!f.is_loaded());
+    }
 
     Font f(FIXTURES_PATH "/dejavu-sans-10.fv1");
-    BOOST_CHECK_EQUAL("DejaVu Sans", f.name);
-    BOOST_CHECK_EQUAL(1, f.style);
-    BOOST_CHECK_EQUAL(10, f.size);
-    BOOST_CHECK(!f.font_items[31]);
-    BOOST_CHECK(f.font_items[32]);
-    BOOST_CHECK(f.font_items[0x4dff]);
+    BOOST_CHECK(f.is_loaded());
+
+    BOOST_CHECK_EQUAL("DejaVu Sans", f.name());
+    BOOST_CHECK_EQUAL(1, f.style());
+    BOOST_CHECK_EQUAL(10, f.size());
+
+    BOOST_CHECK(!f.glyph_defined(31));
+    BOOST_CHECK(f.glyph_defined(32));
+    BOOST_CHECK(f.glyph_defined(0x4dff));
+    BOOST_CHECK(!f.glyph_defined(0x4dff+1));
+
+    BOOST_CHECK(f.glyph_defined('?'));
+    BOOST_CHECK_EQUAL(f.glyph_at('?'), &f.unknown_glyph());
+
+    BOOST_CHECK_EQUAL(&f.glyph_or_unknown(31), &f.unknown_glyph());
+    BOOST_CHECK_EQUAL(f.glyph_at(31), static_cast<FontChar*>(nullptr));
+    BOOST_CHECK_EQUAL(f.glyph_at(32), &f.glyph_or_unknown(32));
+    BOOST_CHECK_NE(f.glyph_at(32), static_cast<FontChar*>(nullptr));
 }

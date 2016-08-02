@@ -2,31 +2,26 @@
 
 cd "$(dirname "$0")"/../..
 
-exec cppcheck -v --enable=all --std=posix --std=c++11 "$@" \
-src/main/*.cpp \
--DCERTIF_PATH='"/etc/rdpproxy/cert/rdp"' \
--DCFG_PATH='"/etc/rdpproxy"' \
--DFIXTURES_PATH='"./tests/fixtures"' \
--DFLV_PATH='"/var/rdpproxy/tmp"' \
--DHASH_PATH='"/var/rdpproxy/hash"' \
--DLICENSE_PATH='"/etc/rdpproxy/cert/rdplicense"' \
--DNDEBUG \
--DOCR_PATH='"/var/rdpproxy/tmp"' \
--DPERSISTENT_PATH='"/var/lib/redemption/cache"' \
--DPNG_PATH='"/var/rdpproxy/tmp"' \
--DPUBLIC \
--DRECORD_PATH='"/var/rdpproxy/recorded"' \
--DRECORD_TMP_PATH='"/var/rdpproxy/tmp"' \
--DSHARE_PATH='"/usr/local/share/rdpproxy"' \
--DWRM_PATH='"/var/rdpproxy/recorded"' \
--I"src/capture" \
--I"src/core" \
--I"src/front" \
--I"src/headers" \
--I"src/keyboard" \
--I"src/main" \
--I"src/mod" \
--I"src/regex" \
--I"src/transport" \
--I"src/utils" \
--I"src/acl" \
+find \
+src/acl \
+src/capture \
+src/core \
+src/front \
+src/gdi \
+src/main \
+src/mod \
+src/system \
+src/transport \
+src/utils \
+projects/redemption_configs/include/autogen \
+projects/redemption_configs/include/variant \
+projects/redemption_configs/redemption_src \
+src/system/linux \
+-name '*.?pp' \
+ -exec cppcheck -v --enable=all --std=posix --std=c++11 \
+   "$@" \
+   src/keyboard/keylayout.hpp \
+   src/keyboard/keylayouts.hpp \
+   src/keyboard/keymap2.hpp \
+   src/keyboard/keymapSym.hpp \
+   '{}' +

@@ -1,0 +1,160 @@
+include ../../cxxflags.jam ;
+
+import os ;
+
+# Returns environment value if it exists or default otherwise.
+# Allow us to customize install path with shell variables like $PREFIX...
+# (this is bad practice and should be replaced by a site configuration file
+# but I until now I miserably failed creating a clean separate configuration file)
+rule setvar ( env : default * )
+{
+    if [ os.environ $(env) ]
+    {
+        return [ os.environ $(env) ] ;
+    }
+    else
+    {
+        return $(default) ;
+    }
+}
+
+
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ../../tests/fixtures ] ;
+constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
+constant PREFIX : [ setvar PREFIX : /usr/local ] ;
+constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
+constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
+constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
+constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
+constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
+constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
+constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
+constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
+constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
+constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
+
+
+rule defines ( properties * )
+{
+    local defs ;
+    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+    defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
+    defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>WRM_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>HASH_PATH='\"$(HASH_PATH)\"' ;
+    defs += <define>LICENSE_PATH='\"$(CERT_PREFIX)/rdplicense\"' ;
+    defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)/rdp\"' ;
+    defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
+    defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
+    defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
+    if [ os.environ VERBOSE ]
+    {
+        defs += <define>VERBOSE ;
+    }
+    return $(defs) ;
+}
+
+
+project configs
+    : requirements
+    <include>src
+    <include>include/autogen
+    <include>include/variant
+    <include>../../src/
+    <include>../../src/core
+    <include>../../src/system/linux
+
+    <conditional>@defines
+
+    <cxxflags>-std=c++14
+
+    $(CXXFLAGS)
+    <toolset>clang:<cxxflags>-Wno-class-varargs
+
+    <define>PUBLIC
+
+   : default-build release
+;
+
+lib libasan : : <name>asan ;
+
+constant AUTOGENDIR : include/autogen/configs/autogen ;
+constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
+constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
+constant FILEGEN_INI : $(AUTOGENDIR)/str_ini.hpp ;
+constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
+
+actions generate_cpp_configs {
+    $(>[0]) \
+        $(AUTOGENDIR)/authid.hpp \
+        $(FILEGEN_CONF) \
+        $(AUTOGENDIR)/set_value.tcc
+}
+
+actions generate_python_spec {
+    $(>[0]) $(FILEGEN_SPEC)
+}
+
+actions generate_ini {
+    $(>[0]) $(FILEGEN_INI)
+}
+
+actions generate_enum {
+    $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
+}
+
+make $(FILEGEN_CONF) : make_cpp_config generate_enum : @generate_cpp_configs : <location>. ;
+make $(FILEGEN_SPEC) : make_python_spec generate_enum : @generate_python_spec : <location>. ;
+make $(FILEGEN_ENUM) : make_cpp_enum : @generate_enum : <location>. ;
+make $(FILEGEN_INI) : make_ini : @generate_ini : <location>. ;
+
+alias generate_cpp_configs : $(FILEGEN_CONF) ;
+alias generate_python_spec : $(FILEGEN_SPEC) ;
+alias generate_enum : $(FILEGEN_ENUM) ;
+alias generate_ini : $(FILEGEN_INI) ;
+
+exe make_cpp_config : src/configs/write_cpp_config.cpp : ;
+exe make_python_spec : src/configs/write_python_spec.cpp : ;
+exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : ;
+exe make_ini : src/configs/write_ini.cpp : ;
+
+
+alias generate_types :
+    generate_enum
+;
+
+alias generate_descs :
+    generate_ini
+    generate_python_spec
+    generate_cpp_configs
+;
+
+alias generate : generate_types generate_descs ;
+
+
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+
+import testing ;
+
+constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
+
+constant TEST_DEPENDENCIES :
+    $(LIB_TEST_DEPENDENCY)
+    <implicit-dependency>generate_cpp_configs
+    <implicit-dependency>generate_python_spec
+    <implicit-dependency>generate_enum
+    <include>redemption_src
+    <include>include/autogen
+    <include>include/variant
+    <cxxflags>-frtti
+;
+
+## Tests
+## @{
+unit-test test_config : tests/test_config.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_config_assign : tests/test_config_assign.cpp : $(TEST_DEPENDENCIES) ;
+## }

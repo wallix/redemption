@@ -18,10 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSESC_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSESC_HPP_
 
-#include "ellipse.hpp"
+#pragma once
+
+#include "utils/ellipse.hpp"
 #include "RDPOrdersCommon.hpp"
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================
@@ -235,7 +235,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -245,4 +245,3 @@ public:
         printf("%s", buffer);
     }
 };
-#endif

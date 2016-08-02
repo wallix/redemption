@@ -24,10 +24,10 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestCapabilityActivation
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "RDP/capabilities/activate.hpp"
+#include "core/RDP/capabilities/activate.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
 {
@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
     BOOST_CHECK_EQUAL(activation_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_ACTIVATION));
     BOOST_CHECK_EQUAL(activation_caps2.len, static_cast<uint16_t>(CAPLEN_ACTIVATION));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_ACTIVATION, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_ACTIVATION, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_ACTIVATION), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_ACTIVATION), stream.in_uint16_le());
     activation_caps2.recv(stream, CAPLEN_ACTIVATION);
 
     BOOST_CHECK_EQUAL(activation_caps2.helpKeyFlag, static_cast<uint16_t>(0));

@@ -21,13 +21,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestTheme
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 #include <stdio.h>
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "theme.hpp"
+#include "utils/theme.hpp"
 BOOST_AUTO_TEST_CASE(TestColorFromFile)
 {
     // test we can read from a file (and not only from a stream)

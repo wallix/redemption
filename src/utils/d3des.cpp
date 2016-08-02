@@ -26,7 +26,7 @@
  * (GEnie : OUTER; CIS : [71755,204]) Graven Imagery, 1992.
  */
 
-#include "d3des.hpp"
+#include "utils/d3des.hpp"
 
 extern "C" {
 
@@ -116,13 +116,12 @@ void rfbDesKey(unsigned char *key, int edf)
 
 static void cookey(unsigned long *raw1)
 {
-    unsigned long *cook, *raw0;
     unsigned long dough[32];
     int i;
 
-    cook = dough;
+    unsigned long * cook = dough;
     for ( i = 0; i < 16; i++, raw1++ ) {
-        raw0 = raw1++;
+        unsigned long * raw0 = raw1++;
         *cook	 = (*raw0 & 0x00fc0000L) << 6;
         *cook	|= (*raw0 & 0x00000fc0L) << 10;
         *cook	|= (*raw1 & 0x00fc0000L) >> 10;
@@ -194,14 +193,14 @@ static void scrunch(unsigned char *outof, unsigned long *into)
 
 static void unscrun(unsigned long *outof, unsigned char *into)
 {
-    *into++ = (unsigned char)((*outof >> 24) & 0xffL);
-    *into++ = (unsigned char)((*outof >> 16) & 0xffL);
-    *into++ = (unsigned char)((*outof >>  8) & 0xffL);
-    *into++ = (unsigned char)( *outof++	 & 0xffL);
-    *into++ = (unsigned char)((*outof >> 24) & 0xffL);
-    *into++ = (unsigned char)((*outof >> 16) & 0xffL);
-    *into++ = (unsigned char)((*outof >>  8) & 0xffL);
-    *into	= (unsigned char)( *outof	 & 0xffL);
+    *into++ = ((*outof >> 24) & 0xffuL);
+    *into++ = ((*outof >> 16) & 0xffuL);
+    *into++ = ((*outof >>  8) & 0xffuL);
+    *into++ = ( *outof++	 & 0xffuL);
+    *into++ = ((*outof >> 24) & 0xffuL);
+    *into++ = ((*outof >> 16) & 0xffuL);
+    *into++ = ((*outof >>  8) & 0xffuL);
+    *into	= ( *outof	 & 0xffuL);
     return;
 }
 
@@ -360,7 +359,6 @@ static unsigned long SP8[64] = {
 static void desfunc(unsigned long* block, unsigned long *keys)
 {
     unsigned long fval, work, right, leftt;
-    int round;
 
     leftt = block[0];
     right = block[1];
@@ -382,7 +380,7 @@ static void desfunc(unsigned long* block, unsigned long *keys)
     right ^= work;
     leftt = ((leftt << 1) | ((leftt >> 31) & 1L)) & 0xffffffffL;
 
-    for ( round = 0; round < 8; round++ ) {
+    for (int round = 0; round < 8; round++ ) {
         work  = (right << 28) | (right >> 4);
         work ^= *keys++;
         fval  = SP7[ work		 & 0x3fL];

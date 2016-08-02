@@ -22,11 +22,21 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestXXX
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
+//#define LOGNULL
+#define LOGPRINT
 
+#include "core/check_files.hpp"
 
 BOOST_AUTO_TEST_CASE(TestXXX)
 {
+    (void)user_check_file_list;
+    (void)euser_check_file_list;
+
+    //BOOST_CHECK(CheckFile::check(user_check_file_list));
+    // BOOST_CHECK(CheckFile::check(euser_check_file_list));
+
+    // CheckFile::ShowErrors(user_check_file_list, 0, 0);
+    // CheckFile::ShowErrors(euser_check_file_list, 0, 0);
 }

@@ -21,19 +21,20 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_LISTEN_HPP_
-#define _REDEMPTION_CORE_LISTEN_HPP_
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h> // for sockaddr_in
 #include <errno.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "log.hpp"
-#include "server.hpp"
+#include "utils/log.hpp"
+#include "core/server.hpp"
 
 #if !defined(IP_TRANSPARENT)
 #define IP_TRANSPARENT 19
@@ -87,8 +88,11 @@ struct Listen {
           struct sockaddr_in6 s6;
         } u;
         memset(&u, 0, sizeof(u));
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
         u.s4.sin_family = AF_INET;
         u.s4.sin_port = htons(this->port);
+# pragma GCC diagnostic pop
 //        u.s4.sin_addr.s_addr = INADDR_ANY;
         u.s4.sin_addr.s_addr = this->s_addr;
 
@@ -115,10 +119,7 @@ struct Listen {
             goto end_of_listener;
         }
 
-        TODO("We should find a way to generalize the select loop concept "
-             "say select is waiting on a bunch of transport objects or such "
-             "and whenever one of those wake-up it should get a chance to act "
-             "read data, write data, accept incoming connections, perform some task, etc.")
+        // TODO We should find a way to generalize the select loop concept say select is waiting on a bunch of transport objects or such and whenever one of those wake-up it should get a chance to act read data, write data, accept incoming connections, perform some task, etc.
 
         return;
 
@@ -137,12 +138,15 @@ struct Listen {
         }
     }
 
-    TODO("Some values (server, timeout) become only necessary when calling check")
+    // TODO Some values (server, timeout) become only necessary when calling check
     void run() {
         while (1) {
             fd_set rfds;
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
             FD_ZERO(&rfds);
             FD_SET(this->sck, &rfds);
+# pragma GCC diagnostic pop
             struct timeval timeout;
             timeout.tv_sec = this->timeout_sec;
             timeout.tv_usec = 0;
@@ -176,4 +180,3 @@ struct Listen {
     }
 };
 
-#endif

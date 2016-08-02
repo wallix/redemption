@@ -17,11 +17,15 @@
 
 #include "openssl_tls.hpp"
 
-#include "socket_transport.hpp"
+#include "transport/socket_transport.hpp"
+
+// TODO -Wold-style-cast is ignored
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 
 static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {
-    TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL");
+    // TODO test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL
 
     SocketTransport sockettransport("TestTLSServer", sock, "", 0, 0xFFFFFFF);
 
@@ -36,6 +40,8 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 
     printf("received plain text HELLO, going TLS\n");
 
+    sockettransport.tls = new TLSContext();
+
     BIO * sbio = BIO_new_socket(sock, BIO_NOCLOSE);
     SSL * ssl = SSL_new(ctx);
     SSL_set_bio(ssl, sbio, sbio);
@@ -48,10 +54,10 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
         exit(0);
     }
 
-    sockettransport.allocated_ctx = ctx;
-    sockettransport.allocated_ssl = ssl;
-    sockettransport.tls = true;
-    sockettransport.io = ssl;
+
+    sockettransport.tls->allocated_ctx = ctx;
+    sockettransport.tls->allocated_ssl = ssl;
+    sockettransport.tls->io = ssl;
 
     sockettransport.send("Server: Redemption Server\r\n\r\n", 29);
     sockettransport.send("Server test page\r\n", 18);
@@ -69,7 +75,7 @@ static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
     return(0);
 }
 
-int main(int argc, char **argv)
+int main()
 {
     SSL_library_init();
     SSL_load_error_strings();
@@ -120,10 +126,10 @@ int main(int argc, char **argv)
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+        struct sockaddr s;
+        struct sockaddr_storage ss;
+        struct sockaddr_in s4;
+        struct sockaddr_in6 s6;
     } ucs;
     memset(&ucs, 0, sizeof(ucs));
 
@@ -148,23 +154,26 @@ int main(int argc, char **argv)
     }
     listen(sock,5);
 
-    while(1){
-      int s = accept(sock,nullptr,nullptr);
-      if(s < 0){
-        fprintf(stderr,"Problem accepting\n");
-        exit(0);
-      }
+    for (;;) {
+        int s = accept(sock,nullptr,nullptr);
+        if(s < 0){
+            fprintf(stderr,"Problem accepting\n");
+            break;
+        }
 
-     pid_t pid = fork();
+        pid_t pid = fork();
 
-     if(pid){
-       close(s);
-     }
-     else {
-        rdp_serve(ctx, s, bio_err);
-        exit(0);
-      }
+        if(pid){
+            close(s);
+        }
+        else {
+            rdp_serve(ctx, s, bio_err);
+            break;
+        }
     }
     SSL_CTX_free(ctx);
-    exit(0);
-  }
+
+    return 0;
+}
+
+#pragma GCC diagnostic pop

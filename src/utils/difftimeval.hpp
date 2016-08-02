@@ -19,12 +19,12 @@
    Martin Potier, Jonathan Poelen, Meng Tan
 */
 
-#ifndef _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
-#define _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
+
+#pragma once
 
 #include "timeval_ops.hpp"
 
-//#include "log.hpp"
+//#include "utils/log.hpp"
 
 class TimeObj {
 public:
@@ -76,7 +76,7 @@ static inline uint64_t ustime() {
     return ustime(tvtime());
 }
 
-// TODO REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.")
+// As gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.
 static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
 {
     uint64_t d = ustime(endtime) - ustime(starttime);
@@ -168,4 +168,3 @@ static inline timeval how_long_to_wait(const timeval & alarm, const timeval & no
  * @}
  */
 
-#endif

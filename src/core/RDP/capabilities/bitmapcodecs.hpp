@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
+
+#pragma once
 
 #include <string.h>
 #include "common.hpp"
@@ -485,20 +485,22 @@ struct BitmapCodecCaps : public Capability {
         delete this->supportedBitmapCodecs;
     }
 
-    void emit(OutStream & stream) override {
+    void emit(OutStream &) override {
+        // TODO BitmapCodec::emit unimplemented
         LOG(LOG_INFO, "BitmapCodec caps emit not implemented");
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream &, uint16_t len) override {
+        (void)len;
+        // TODO BitmapCodec::recv unimplemented
         LOG(LOG_INFO, "BitmapCodec caps recv not implemented");
     }
 
     void log(const char * msg) override {
         LOG(LOG_INFO, "%s BitmapCodec caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %u", this->supportedBitmapCodecs);
+        LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %p", static_cast<void*>(this->supportedBitmapCodecs));
     }
 };
 
 
 
-#endif

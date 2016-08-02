@@ -24,29 +24,24 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitmap
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "bitmap.hpp"
-#include "drawable.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
+#include "utils/drawable.hpp"
+#include "check_sig.hpp"
+#include "dump_png.hpp"
+#include <cstdio>
+#include <iostream>
+
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {
     const unsigned white = 0xFF;
     const BGRPalette & palette332 = BGRPalette::classic_332();
-
-    // test COLOR COUNT EMPTY
-    {
-        BOOST_CHECK(1);
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        BOOST_CHECK_EQUAL(0, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data(), 0xFF));
-    }
 
     // test COLOR COUNT
     {
@@ -81,15 +76,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         BOOST_CHECK_EQUAL(2, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data() + 1, 0x02));
     }
 
-    // test BICOLOR COUNT EMPTY
-    {
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmax = bmp.data() + bmp.bmp_size();
-        BOOST_CHECK_EQUAL(0, bmp.get_bicolor_count(::nbbytes(bpp), pmax, bmp.data(), 0xEF, 0xFE));
-    }
-
     // test BICOLOR COUNT
     {
         int bpp = 8;
@@ -121,16 +107,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         const uint8_t * pmax = pmin + bmp.bmp_size();
         BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x01, 0x05));
         BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin + 1, 0x05, 0x01));
-    }
-
-    // test FILL COUNT
-    {
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()));
     }
 
     // test FILL COUNT
@@ -176,17 +152,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         // until the end
         BOOST_CHECK_EQUAL(8, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+8));
 
-    }
-
-    // test MIX COUNT
-    {
-        int bpp = 8;
-        const uint8_t * const data = nullptr;
-        Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-
-        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data(), white));
     }
 
     // test MIX COUNT
@@ -252,30 +217,30 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         unsigned color = white;
         BOOST_CHECK_EQUAL(1, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+15, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FILL, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FILL), flags);
         BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+14, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+14, masks, 2);
         BOOST_CHECK_EQUAL(0x01, masks[0]);
 
 
         BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+12, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+12, masks, 4);
         BOOST_CHECK_EQUAL(0x07, masks[0]);
 
         BOOST_CHECK_EQUAL(5, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+11, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
 
         BOOST_CHECK_EQUAL(6, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+10, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         BOOST_CHECK_EQUAL(12, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+4, color, flags));
         BOOST_CHECK_EQUAL(white, color);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+4, masks, 12);
         BOOST_CHECK_EQUAL(0xA5, masks[0]);
         BOOST_CHECK_EQUAL(0x07, masks[1]);
@@ -301,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         foreground = white;
         BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(0x04, foreground);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_MIX, flags);
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_MIX), flags);
     }
 
 
@@ -326,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         unsigned flags = 0;
         BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(4, foreground);
-        BOOST_CHECK_EQUAL((unsigned)Bitmap::FLAG_FOM, flags); // MIX then FILL
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags); // MIX then FILL
     }
 }
 
@@ -3983,66 +3948,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
-    const BGRPalette & palette332 = BGRPalette::classic_332();
-
-    int bpp = 8;
-    const uint8_t * const data = nullptr;
-    Bitmap bmp(bpp, bpp, &palette332, 0, 4, data, 0);
-
-    Bitmap::openfile_t res;
-
-    // const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
-    const char * filename = "tests/fixtures/xrdp24b.bmp";
-    res = bmp.check_file_type(filename);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_BMP);
-
-    // const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
-    const char * filename2 = "tests/fixtures/xrdp24b.jpg";
-    res = bmp.check_file_type(filename2);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
-
-    // const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
-    const char * filename3 = "tests/fixtures/xrdp24b.png";
-    res = bmp.check_file_type(filename3);
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_PNG);
-
-    res = bmp.check_file_type("wrong/access/directory/image.png");
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
-
-    // res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
-    res = bmp.check_file_type("tests/fixtures/cursor1.cur");
-    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
-
-
-    bool boolres = bmp.open_png_file(filename3);
-    BOOST_CHECK_EQUAL(boolres, true);
-
-    try {
-        Bitmap file(filename);
-    }
-    catch (const Error & e){
-        // this test is not supposed to be executed
-        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
-    }
-
-    try {
-        Bitmap file(filename2);
-    }
-    catch (const Error & e){
-        // this test is supposed to be executed
-        BOOST_CHECK_EQUAL((uint32_t)ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, (uint32_t)e.id);
-    }
-    try {
-        Bitmap file(filename3);
-    }
-    catch (const Error & e){
-        // this test is not supposed to be executed
-        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
-    }
-}
-
-
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapGetRun) {
     uint32_t run_length;
     uint32_t raw_bytes;
@@ -4240,14 +4145,14 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
     BOOST_CHECK_EQUAL(0, memcmp(outbuffer.get_data(), result, outbuffer.get_offset()));
 }
 
-/*
+
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
 
-    const char * filename = "tests/fixtures/color_image_160x120.png";
 
-    Bitmap bmp(filename);
+    const char * filename = FIXTURES_PATH "/color_image_160x120.png";
+
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4258,12 +4163,12 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
 
-    const char * filename = "tests/fixtures/color_image_40x30.png";
 
-    Bitmap bmp(filename);
+    const char * filename = FIXTURES_PATH "/color_image_40x30.png";
+
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4274,12 +4179,12 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
 
-    const char * filename = "tests/fixtures/red_box.png";
 
-    Bitmap bmp(filename);
+    const char * filename = FIXTURES_PATH "/red_box.png";
+
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4290,12 +4195,12 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
-    BGRPalette palette332;
-    init_palette332(palette332);
+    BGRPalette const & palette332 = BGRPalette::classic_332();
 
-    const char * filename = "tests/fixtures/wablogoblue_220x76.png";
 
-    Bitmap bmp(filename);
+    const char * filename = FIXTURES_PATH "/wablogoblue_220x76.png";
+
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4304,14 +4209,14 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
 
     BOOST_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
-*/
+
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
     const BGRPalette & palette332 = BGRPalette::classic_332();
 
-    const char * filename = "tests/fixtures/red_box_20x20.png";
+    const char * filename = FIXTURES_PATH "/red_box_20x20.png";
 
-    Bitmap bmp(filename);
+    Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
     bmp.compress(32, compressed_bitmap_data);
@@ -4514,6 +4419,189 @@ BOOST_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Bitmap bmp2(bpp, bpp, &palette332, 368, 10, compressed, sizeof(compressed), true);
     Drawable gd(368, 10);
     gd.mem_blt(Rect(0, 0, 368, 10), bmp2, 0, 0);
+
+    Bitmap bitmap_0_;
+
+    Bitmap bitmap_1_(bitmap_0_);
+
+    Bitmap bitmap_2_ = bitmap_1_;
 }
 
 
+// to see last result file, remove unlink
+// and do something like:
+// eog `ls -1tr /tmp/test_* | tail -n 1`
+// (or any other variation you like)
+
+
+BOOST_AUTO_TEST_CASE(TestConvertBitmap)
+{
+    BGRPalette palette332(BGRPalette::classic_332());
+
+    const uint8_t source_bpp = 16;
+    const uint16_t cx = 2;
+    const uint16_t cy = 3;
+    const uint8_t data[] = {
+        0xFF, 0xFF,   0xFF, 0xFF,
+        0xFF, 0xFF,   0xFF, 0xFF,
+        0xFF, 0xFF,   0xFF, 0xFF,
+    };
+
+    Bitmap bmp16(16, source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false);
+    BOOST_CHECK_EQUAL(24, bmp16.bmp_size());
+
+    // TODO Check that: cx is now forced to be a multiple of 4 when creating bitmap, previous behaviour was only forcing line size to be aligned as a multiple of 4 (RDP constraint). See it has not effect on provided data and not other unwanted effect
+    BOOST_CHECK_EQUAL(8, bmp16.line_size());
+    BOOST_CHECK_EQUAL(4, bmp16.cx());
+    BOOST_CHECK_EQUAL(cy, bmp16.cy());
+    BOOST_CHECK_EQUAL(16, bmp16.bpp());
+
+    uint16_t target_bpp = 24;
+    Bitmap bmp24(target_bpp, bmp16);
+    BOOST_CHECK_EQUAL(36, bmp24.bmp_size());
+    BOOST_CHECK_EQUAL(12, bmp24.line_size());
+    BOOST_CHECK_EQUAL(4, bmp24.cx());
+    BOOST_CHECK_EQUAL(cy, bmp24.cy());
+    BOOST_CHECK_EQUAL(24, bmp24.bpp());
+
+    const uint8_t * outbuf = bmp24.data();
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[2]);
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[3]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[4]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[5]);
+
+    // TODO We should force to black uninitialized parts of bitmap. For now it is random
+    BOOST_CHECK_EQUAL(outbuf[6], outbuf[6]);
+    BOOST_CHECK_EQUAL(outbuf[7], outbuf[7]);
+    BOOST_CHECK_EQUAL(outbuf[8], outbuf[8]);
+
+    BOOST_CHECK_EQUAL(outbuf[9], outbuf[9]);
+    BOOST_CHECK_EQUAL(outbuf[10], outbuf[10]);
+    BOOST_CHECK_EQUAL(outbuf[11], outbuf[11]);
+
+    // ---------------------------------
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[12]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[13]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[14]);
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[15]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[16]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[17]);
+
+    // TODO We should force to black uninitialized parts of bitmap. For now it is random
+    BOOST_CHECK_EQUAL(outbuf[18], outbuf[18]);
+    BOOST_CHECK_EQUAL(outbuf[19], outbuf[19]);
+    BOOST_CHECK_EQUAL(outbuf[20], outbuf[20]);
+
+    BOOST_CHECK_EQUAL(outbuf[21], outbuf[21]);
+    BOOST_CHECK_EQUAL(outbuf[22], outbuf[22]);
+    BOOST_CHECK_EQUAL(outbuf[23], outbuf[23]);
+
+    // ---------------------------------
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[24]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[25]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[26]);
+
+    BOOST_CHECK_EQUAL(0xFF, outbuf[27]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[28]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[29]);
+
+    // TODO We should force to black uninitialized parts of bitmap. For now it is random
+    BOOST_CHECK_EQUAL(outbuf[30], outbuf[30]);
+    BOOST_CHECK_EQUAL(outbuf[31], outbuf[31]);
+    BOOST_CHECK_EQUAL(outbuf[32], outbuf[32]);
+
+    BOOST_CHECK_EQUAL(outbuf[33], outbuf[33]);
+    BOOST_CHECK_EQUAL(outbuf[34], outbuf[34]);
+    BOOST_CHECK_EQUAL(outbuf[35], outbuf[35]);
+
+}
+
+
+BOOST_AUTO_TEST_CASE(TestConvertBitmap2)
+{
+    //const char * filename = FIXTURES_PATH "/win2008capture10.png";
+
+    //Bitmap bmp24 = bitmap_from_file(filename);
+
+    BGRPalette palette332(BGRPalette::classic_332());
+
+    uint8_t raw24[60] = {
+        0x22, 0x17, 0x48,   0xc7, 0xcd, 0xc4,   0xad, 0xf8, 0x61,   0x6f, 0x32, 0xd6,   0x13, 0x61, 0xee,
+        0xb2, 0x7b, 0x81,   0x0f, 0x66, 0x22,   0x17, 0x48, 0xc7,   0xcd, 0xc4, 0xad,   0xf8, 0x61, 0x6f,
+        0x32, 0xd6, 0x13,   0x61, 0xee, 0xb2,   0x7b, 0x81, 0x0f,   0x66, 0x22, 0x17,   0x48, 0xc7, 0xcd,
+        0xc4, 0xad, 0xf8,   0x61, 0x6f, 0x32,   0xd6, 0x13, 0x61,   0xee, 0xb2, 0x7b,   0x81, 0x0f, 0x66
+    };
+
+    Bitmap bmp24(24, 24, &palette332, 4, 5, raw24, sizeof(raw24));
+
+
+
+    BOOST_CHECK_EQUAL(bmp24.bpp(), 24);
+
+    Bitmap bmp_24_to_24(24, bmp24);
+    Bitmap bmp_24_to_16(16, bmp24);
+    Bitmap bmp_24_to_15(15, bmp24);
+    Bitmap bmp_24_to_8(8, bmp24);
+
+    Bitmap bmp_16_to_24(24, bmp_24_to_16);
+    Bitmap bmp_16_to_16(16, bmp_24_to_16);
+    Bitmap bmp_16_to_15(15, bmp_24_to_16);
+    Bitmap bmp_16_to_8(8, bmp_24_to_16);
+
+    Bitmap bmp_15_to_24(24, bmp_24_to_15);
+    Bitmap bmp_15_to_16(16, bmp_24_to_15);
+    Bitmap bmp_15_to_15(15, bmp_24_to_15);
+    Bitmap bmp_15_to_8(8, bmp_24_to_15);
+
+    Bitmap bmp_8_to_24(24, bmp_24_to_8);
+    Bitmap bmp_8_to_16(16, bmp_24_to_8);
+    Bitmap bmp_8_to_15(15, bmp_24_to_8);
+    Bitmap bmp_8_to_8(8, bmp_24_to_8);
+
+    CHECK_SIG(bmp_24_to_24, "\xaa\x33\x05\x87\x63\x66\xc0\x9d\x89\x78\x00\xe7\x9b\x8f\x09\x2e\xbf\x06\x64\x74");
+    CHECK_SIG(bmp_24_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");
+    CHECK_SIG(bmp_24_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
+    CHECK_SIG(bmp_24_to_8,  "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+    CHECK_SIG(bmp_16_to_24, "\xfc\x0b\xbd\xe2\x01\x89\x05\x96\x88\xc2\x13\xd1\xb6\x14\xe9\x85\xf6\xa3\x5a\xd4");
+    CHECK_SIG(bmp_16_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");
+    CHECK_SIG(bmp_16_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
+    CHECK_SIG(bmp_16_to_8,  "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+    CHECK_SIG(bmp_15_to_24, "\xe9\x84\xe3\x49\x01\x2c\x2e\xff\xf0\x60\x6b\x18\x14\xce\x54\x8f\x2a\xae\x9a\x22");
+    CHECK_SIG(bmp_15_to_16, "\x69\xb9\x98\x9d\x6e\xd6\x7d\xc1\xd0\x0e\x8b\x58\xaa\x6a\x6e\x8c\xa6\xc4\xe4\x2b");
+    CHECK_SIG(bmp_15_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
+    CHECK_SIG(bmp_15_to_8,  "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+    CHECK_SIG(bmp_8_to_24,  "\x3d\x92\x0a\x5f\x62\x97\xd2\xa9\xe4\x16\x1b\xa7\xcb\xb9\x77\xb4\x4f\xaf\x5d\xe3");
+    CHECK_SIG(bmp_8_to_16,  "\xbe\x5d\x4c\x63\x36\x2e\x01\x82\x0a\x65\xf1\xd5\x33\x3c\xb0\x04\x67\x7e\x24\x35");
+    CHECK_SIG(bmp_8_to_15,  "\x19\x66\xa2\xcd\xfd\x77\x1b\xe4\xab\xf8\x6e\x03\x77\xf5\xa9\xa6\xe4\x85\x2b\x39");
+    CHECK_SIG(bmp_8_to_8,   "\xbe\x71\x06\x2a\x49\xc9\x89\xea\x64\x9d\x26\xe8\xbb\xf5\x7c\xd0\x0d\x11\xe9\x69");
+
+//     dump_png("/tmp/rawdisk/24_24.png", bmp_24_to_24);
+//     dump_png("/tmp/rawdisk/24_16.png", bmp_24_to_16);
+//     dump_png("/tmp/rawdisk/24_15.png", bmp_24_to_15);
+//     dump_png("/tmp/rawdisk/24_8.png", bmp_24_to_8);
+//
+//     dump_png("/tmp/rawdisk/16_24.png", bmp_16_to_24);
+//     dump_png("/tmp/rawdisk/16_16.png", bmp_16_to_16);
+//     dump_png("/tmp/rawdisk/16_15.png", bmp_16_to_15);
+//     dump_png("/tmp/rawdisk/16_8.png", bmp_16_to_8);
+//
+//     dump_png("/tmp/rawdisk/15_24.png", bmp_15_to_24);
+//     dump_png("/tmp/rawdisk/15_16.png", bmp_15_to_16);
+//     dump_png("/tmp/rawdisk/15_15.png", bmp_15_to_15);
+//     dump_png("/tmp/rawdisk/15_8.png", bmp_15_to_8);
+//
+//     dump_png("/tmp/rawdisk/8_24.png", bmp_8_to_24);
+//     dump_png("/tmp/rawdisk/8_16.png", bmp_8_to_16);
+//     dump_png("/tmp/rawdisk/8_15.png", bmp_8_to_15);
+//     dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
+}

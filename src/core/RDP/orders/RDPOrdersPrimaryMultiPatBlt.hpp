@@ -18,8 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIPATBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIPATBLT_HPP_
+
+#pragma once
+
+#include "RDPOrdersCommon.hpp"
+#include "utils/rect.hpp"
 
 namespace RDP {
 
@@ -135,69 +138,33 @@ namespace RDP {
 //  Delta-Encoded Rectangles structure is specified by the nDeltaEntries
 //  field.
 
-#include "RDPOrdersCommon.hpp"
-#include "rect.hpp"
-
 class RDPMultiPatBlt {
 public:
-    Rect       rect;
-    int16_t  & nLeftRect;
-    int16_t  & nTopRect;
-    uint16_t & nWidth;
-    uint16_t & nHeight;
-    uint8_t    bRop;
-    uint32_t   BackColor;
-    uint32_t   ForeColor;
-    RDPBrush   brush;
-    int8_t   & BrushOrgX;
-    int8_t   & BrushOrgY;
-    uint8_t  & BrushStyle;
-    uint8_t  & BrushHatch;
-    uint8_t  (&BrushExtra)[7];
-    uint8_t    nDeltaEntries;
+    Rect       rect {}; //nLeftRect, nTopRect, nWidth, nHeight
+    uint8_t    bRop {};
+    uint32_t   BackColor {};
+    uint32_t   ForeColor {};
+    RDPBrush   brush {}; // BrushOrgX , BrushOrgY , BrushStyle , BrushHatch , BrushExtra
+    uint8_t    nDeltaEntries {};
 
-    struct DeltaEncodedRectangle deltaEncodedRectangles[45];
+    DeltaEncodedRectangle deltaEncodedRectangles[45] {};
 
     static uint8_t id(void) {
         return MULTIPATBLT;
     }
 
-    RDPMultiPatBlt()
-    : rect(0, 0, 0, 0)
-    , nLeftRect(rect.x)
-    , nTopRect(rect.y)
-    , nWidth(rect.cx)
-    , nHeight(rect.cy)
-    , bRop(0)
-    , BackColor(0)
-    , ForeColor(0)
-    , brush(0, 0, 0, 0)
-    , BrushOrgX(brush.org_x)
-    , BrushOrgY(brush.org_y)
-    , BrushStyle(brush.style)
-    , BrushHatch(brush.hatch)
-    , BrushExtra(brush.extra)
-    , nDeltaEntries(0) {
-        ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
-    }
+    RDPMultiPatBlt() = default;
+
+    RDPMultiPatBlt(RDPMultiPatBlt const &) = default;
 
     RDPMultiPatBlt( const Rect & _rect, uint8_t bRop, uint32_t BackColor, uint32_t ForeColor, const RDPBrush & _brush
                   , uint8_t nDeltaEntries, InStream & deltaEncodedRectangles)
     : rect(_rect)
-    , nLeftRect(rect.x)
-    , nTopRect(rect.y)
-    , nWidth(rect.cx)
-    , nHeight(rect.cy)
     , bRop(bRop)
     , BackColor(BackColor)
     , ForeColor(ForeColor)
     , brush(_brush)
-    , BrushOrgX(brush.org_x)
-    , BrushOrgY(brush.org_y)
-    , BrushStyle(brush.style)
-    , BrushHatch(brush.hatch)
-    , BrushExtra(brush.extra)
-    , nDeltaEntries(0) {
+    , nDeltaEntries(nDeltaEntries) {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
         for (int i = 0; i < this->nDeltaEntries; i++) {
             this->deltaEncodedRectangles[i].leftDelta = deltaEncodedRectangles.in_sint16_le();
@@ -207,29 +174,14 @@ public:
         }
     }
 
-    RDPMultiPatBlt & operator=(const RDPMultiPatBlt & other) {
-        this->rect          = other.rect;
-        this->bRop          = other.bRop;
-        this->BackColor     = other.BackColor;
-        this->ForeColor     = other.ForeColor;
-        this->brush         = other.brush;
-        this->nDeltaEntries = other.nDeltaEntries;
-        ::memcpy(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries);
-
-        return *this;
-    }
+    RDPMultiPatBlt & operator=(const RDPMultiPatBlt & other) = default;
 
     bool operator==(const RDPMultiPatBlt & other) const {
         return (this->rect          == other.rect)
             && (this->bRop          == other.bRop)
             && (this->BackColor     == other.BackColor)
             && (this->ForeColor     == other.ForeColor)
-            && (this->brush.org_x   == other.brush.org_x)
-            && (this->brush.org_y   == other.brush.org_y)
-            && (this->brush.style   == other.brush.style)
-            && (this->brush.hatch   == other.brush.hatch)
-            && (   (this->brush.style != 0x03)
-                || (0 == memcmp(this->brush.extra, other.brush.extra, 7)))
+            && (this->brush         == other.brush)
             && (this->nDeltaEntries == other.nDeltaEntries)
             && !memcmp(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries)
             ;
@@ -440,14 +392,14 @@ public:
                         "BrushExtra=[%.2x %.2x %.2x %.2x %.2x %.2x %.2x] "
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
-                      , this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight, unsigned(this->bRop)
+                      , this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, unsigned(this->bRop)
                       , this->BackColor, this->ForeColor
-                      , this->BrushOrgX, this->BrushOrgY
-                      , unsigned(this->BrushStyle), unsigned(this->BrushHatch)
-                      , unsigned(this->BrushExtra[0]), unsigned(this->BrushExtra[1])
-                      , unsigned(this->BrushExtra[2]), unsigned(this->BrushExtra[3])
-                      , unsigned(this->BrushExtra[4]), unsigned(this->BrushExtra[5])
-                      , unsigned(this->BrushExtra[6]), this->nDeltaEntries);
+                      , this->brush.org_x, this->brush.org_y
+                      , unsigned(this->brush.style), unsigned(this->brush.hatch)
+                      , unsigned(this->brush.extra[0]), unsigned(this->brush.extra[1])
+                      , unsigned(this->brush.extra[2]), unsigned(this->brush.extra[3])
+                      , unsigned(this->brush.extra[4]), unsigned(this->brush.extra[5])
+                      , unsigned(this->brush.extra[6]), this->nDeltaEntries);
         for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
@@ -467,7 +419,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -480,4 +432,3 @@ public:
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIPATBLT_HPP_

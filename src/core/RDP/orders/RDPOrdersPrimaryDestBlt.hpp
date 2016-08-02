@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYDESTBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYDESTBLT_HPP_
+
+#pragma once
 
 #include "RDPOrdersCommon.hpp"
 
@@ -154,7 +154,7 @@ class RDPDestBlt {
     void log(int level, const Rect & clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -166,4 +166,3 @@ class RDPDestBlt {
 };
 
 
-#endif

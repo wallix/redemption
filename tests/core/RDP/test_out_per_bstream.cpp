@@ -24,13 +24,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOutPerStream
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+// #define LOGPRINT
 
-#include "stream.hpp"
-#include "RDP/out_per_bstream.hpp"
+#include "utils/stream.hpp"
+#include "core/RDP/out_per_bstream.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOutPerStream)
 {
@@ -81,13 +81,13 @@ BOOST_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
     BOOST_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.get_offset()));
 }
 
-#include "test_transport.hpp"
-#include "RDP/gcc.hpp"
+#include "transport/test_transport.hpp"
+#include "core/RDP/gcc.hpp"
 
 
-TODO("For now we are testing out_per primitive through gcc object,"
-     " true unit test should do that at a lower level"
-     " for every out_per primitive defined")
+/* TODO For now we are testing out_per primitive through gcc object,
+ * true unit test should do that at a lower level
+ * for every out_per primitive defined */
 BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 {
     const char gcc_user_data[] =
@@ -138,22 +138,18 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     "\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
 
 
-    TestTransport t("test_gcc",
+    constexpr std::size_t sz = sizeof(gcc_conference_create_request_expected)-1; // -1 to ignore final 0
+    TestTransport t(
         "", 0,
-        gcc_conference_create_request_expected,
-        sizeof(gcc_conference_create_request_expected),
+        gcc_conference_create_request_expected, sz - (sizeof(gcc_user_data) - 1),
         256);
 
     StaticOutPerStream<65536> gcc_header;
     GCC::Create_Request_Send(gcc_header, sizeof(gcc_user_data)-1);
     t.send(gcc_header.get_data(), gcc_header.get_offset());
 
-    constexpr std::size_t sz = sizeof(gcc_conference_create_request_expected)-1; // -1 to ignore final 0
-    uint8_t buf[sz];
-    OutStream(buf).out_copy_bytes(gcc_conference_create_request_expected, sz);
-
     try {
-        InStream in_stream(buf);
+        InStream in_stream(gcc_conference_create_request_expected, sz);
         GCC::Create_Request_Recv header(in_stream);
     } catch(Error const &) {
         BOOST_CHECK(false);

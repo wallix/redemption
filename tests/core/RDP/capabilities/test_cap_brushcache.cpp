@@ -24,10 +24,10 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestCapabilityBrushCache
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "RDP/capabilities/cap_brushcache.hpp"
+#include "core/RDP/capabilities/cap_brushcache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)
 {
@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)
     BOOST_CHECK_EQUAL(brushcache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_BRUSH));
     BOOST_CHECK_EQUAL(brushcache_caps2.len, static_cast<uint16_t>(CAPLEN_BRUSH));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BRUSH, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BRUSH, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_BRUSH), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_BRUSH), stream.in_uint16_le());
     brushcache_caps2.recv(stream, CAPLEN_BRUSH);
 
     BOOST_CHECK_EQUAL(brushcache_caps2.brushSupportLevel, static_cast<uint32_t>(BRUSH_COLOR_8X8));

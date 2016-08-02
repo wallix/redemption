@@ -23,11 +23,11 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "RDP/capabilities/window.hpp"
+#include "core/RDP/capabilities/window.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
 {
@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
     BOOST_CHECK_EQUAL(windowslist_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
     BOOST_CHECK_EQUAL(windowslist_caps2.len, static_cast<uint16_t>(CAPLEN_WINDOW));
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_WINDOW, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_WINDOW, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPSTYPE_WINDOW), stream.in_uint16_le());
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_WINDOW), stream.in_uint16_le());
     windowslist_caps2.recv(stream, CAPLEN_WINDOW);
 
     BOOST_CHECK_EQUAL(windowslist_caps2.WndSupportLevel, static_cast<uint32_t>(2));

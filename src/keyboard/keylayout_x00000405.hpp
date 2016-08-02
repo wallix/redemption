@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00000405_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00000405_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00000405 {    // Czech (Czech Republic) // Czech
 
 const static int LCID = 0x00000405;
+
+const static char * const locale_name = "cs-CZ";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x002B, 0x011B, 0x0161, 0x010D, 0x0159, 0x017E,
@@ -358,6 +360,7 @@ const static uint8_t nbDeadkeys = 11;
 } // END NAMESPACE - x00000405
 
 static const Keylayout keylayout_x00000405( x00000405::LCID
+                                          , x00000405::locale_name
                                           , x00000405::noMod
                                           , x00000405::shift
                                           , x00000405::altGr
@@ -371,4 +374,3 @@ static const Keylayout keylayout_x00000405( x00000405::LCID
                                           , x00000405::nbDeadkeys
 );
 
-#endif

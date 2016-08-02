@@ -21,15 +21,15 @@
    rdp module main header file
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SHARE_HPP_
-#define _REDEMPTION_CORE_RDP_SHARE_HPP_
+
+#pragma once
 
 #include <stdlib.h>
 
-#include "log.hpp"
-#include "stream.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
 
-#include "RDP/mppc.hpp"
+#include "core/RDP/mppc.hpp"
 
 
 /* RDP PDU codes */
@@ -133,7 +133,7 @@ struct ShareFlow_Recv
                 "[1: ShareFlow PDU type]"
                 "[1: flow Identifier]"
                 "[1: flow number]"
-                "[2: ShareFlow PDU packet] , remains=%u", stream.in_remain());
+                "[2: ShareFlow PDU packet] , remains=%zu", stream.in_remain());
             throw Error(ERR_SEC);
         }
         return stream.in_uint16_le();
@@ -144,15 +144,15 @@ struct ShareFlow_Recv
     , flowNumber(stream.in_uint8())
     , mcs_channel(stream.in_uint16_le())
     {
-        LOG(LOG_INFO, "Flow control packet %0.4x (offset=%u)", this->flowMarker, stream.get_offset());
+        LOG(LOG_INFO, "Flow control packet %.4x (offset=%zu)", this->flowMarker, stream.get_offset());
         if (this->flowMarker != 0x8000) {
-            LOG(LOG_ERR, "Expected flow control packet, got %0.4x", this->flowMarker);
+            LOG(LOG_ERR, "Expected flow control packet, got %.4x", this->flowMarker);
             throw Error(ERR_SEC);
         }
 
         LOG(LOG_INFO, "PDUTypeFlow=%u", this->pduTypeFlow);
         if (stream.in_remain()) {
-            LOG(LOG_INFO, "trailing bytes in FlowPDU, remains %u bytes", stream.in_remain());
+            LOG(LOG_INFO, "trailing bytes in FlowPDU, remains %zu bytes", stream.in_remain());
         }
     }
 }; // END CLASS ShareFlow_Recv
@@ -233,7 +233,7 @@ struct ShareControl_Recv
     : totalLength([&stream]() {
         if (!stream.in_check_rem(2+2)){
             LOG(LOG_ERR,
-                "Truncated [4: ShareControl packet] , remains=%u", stream.in_remain());
+                "Truncated [4: ShareControl packet] , remains=%zu", stream.in_remain());
             throw Error(ERR_SEC);
         }
         return stream.in_uint16_le();
@@ -261,7 +261,7 @@ struct ShareControl_Recv
         }
 
         if (!stream.in_check_rem(this->totalLength - 6)) {
-            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%zu",
                 this->totalLength - 6,
                 stream.in_remain());
             throw Error(ERR_SEC);
@@ -494,7 +494,7 @@ struct CheckShareData_Recv {
         // + compressedLen(2)
         const unsigned expected = 12;
         if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
+            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_SEC);
         }
@@ -553,7 +553,7 @@ struct ShareData_Recv : private CheckShareData_Recv
     ~ShareData_Recv() noexcept(false) {
         if (!this->payload.check_end()) {
             LOG( LOG_INFO
-               , "~ShareData_Recv: some payload data were not consumed len=%u compressedLen=%u remains=%u"
+               , "~ShareData_Recv: some payload data were not consumed len=%u compressedLen=%u remains=%zu"
                , this->len, this->compressedLen, payload.in_remain());
             throw Error(ERR_SEC);
         }
@@ -657,4 +657,3 @@ struct FlowPDU_Send
 // -- MCS User ID of sending ASCE
 // }
 
-#endif

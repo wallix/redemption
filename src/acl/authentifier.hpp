@@ -22,15 +22,15 @@
   find out the next module to run from context reading
 */
 
-#ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
-#define _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 
-#include "log.hpp"
-#include "config.hpp"
-#include "activity_checker.hpp"
+#pragma once
+
+#include "utils/log.hpp"
+#include "configs/config.hpp"
+#include "core/activity_checker.hpp"
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
-#include "front.hpp"
+#include "front/front.hpp"
 
 class KeepAlive {
     // Keep alive Variables
@@ -44,8 +44,8 @@ class KeepAlive {
     bool connected;
 
 public:
-    KeepAlive(int _grace_delay, uint32_t verbose)
-        : grace_delay(_grace_delay)
+    KeepAlive(std::chrono::seconds _grace_delay, uint32_t verbose)
+        : grace_delay(_grace_delay.count())
         , timeout(0)
         , renew_time(0)
         , wait_answer(false)
@@ -66,6 +66,7 @@ public:
     bool is_started() {
         return this->connected;
     }
+
     void start(time_t now) {
         this->connected = true;
         if (this->verbose & 0x10) {
@@ -73,6 +74,10 @@ public:
         }
         this->timeout    = now + 2 * this->grace_delay;
         this->renew_time = now + this->grace_delay;
+    }
+
+    void stop() {
+        this->connected = false;
     }
 
     bool check(time_t now, Inifile & ini) {
@@ -128,8 +133,8 @@ class Inactivity {
     uint32_t verbose;
 
 public:
-    Inactivity(ActivityChecker & checker, uint32_t timeout, time_t start, uint32_t verbose)
-    : inactivity_timeout((timeout>30)?timeout:30)
+    Inactivity(ActivityChecker & checker, std::chrono::seconds timeout, time_t start, uint32_t verbose)
+    : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
     , last_activity_time(start)
     , checker(checker)
     , verbose(verbose)
@@ -174,20 +179,17 @@ class SessionManager : public auth_api {
     KeepAlive keepalive;
     Inactivity inactivity;
 
-    bool wait_for_capture;
+    mutable std::string session_type;
 
 public:
-    SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
+    SessionManager(Inifile & ini, ActivityChecker & activity_checker, Transport & auth_trans, time_t acl_start_time)
         : ini(ini)
-        , acl_serial(ini, _auth_trans, ini.get<cfg::debug::auth>())
+        , acl_serial(ini, auth_trans, ini.get<cfg::debug::auth>())
         , remote_answer(false)
-        //, start_time(start_time)
-        //, acl_start_time(acl_start_time)
         , verbose(ini.get<cfg::debug::auth>())
         , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), ini.get<cfg::debug::auth>())
         , inactivity(activity_checker, ini.get<cfg::globals::session_timeout>(),
                      acl_start_time, ini.get<cfg::debug::auth>())
-        , wait_for_capture(true)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
@@ -260,21 +262,27 @@ public:
                 this->ask_acl();
             }
         }
-        else if (this->remote_answer) {
+        else if (this->remote_answer || (signal == BACK_EVENT_RETRY_CURRENT)) {
             this->remote_answer = false;
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
-                TODO("signal management (refresh/next) should go to ModuleManager, "
-                     "it's basically the same behavior. It could be implemented by "
-                     "closing module then opening another one of the same kind");
+                // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
                 mm.mod->refresh_context(this->ini);
                 mm.mod->get_event().signal = BACK_EVENT_NONE;
                 mm.mod->get_event().set();
             }
-            else if (signal == BACK_EVENT_NEXT) {
-                LOG(LOG_INFO, "===========> MODULE_NEXT");
-                int next_state = mm.next_module();
+            else if ((signal == BACK_EVENT_NEXT) || (signal == BACK_EVENT_RETRY_CURRENT)) {
+                if (signal == BACK_EVENT_NEXT) {
+                    LOG(LOG_INFO, "===========> MODULE_NEXT");
+                }
+                else {
+                    REDASSERT(signal == BACK_EVENT_RETRY_CURRENT);
+
+                    LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
+                }
+
+                int next_state = ((signal == BACK_EVENT_NEXT) ? mm.next_module() : MODULE_RDP);
 
                 if (next_state == MODULE_TRANSITORY) {
                     this->remote_answer = false;
@@ -286,6 +294,9 @@ public:
                 if (next_state == MODULE_INTERNAL_CLOSE) {
                     mm.invoke_close_box(nullptr, signal, now);
                     return true;
+                }
+                if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
+                    this->keepalive.stop();
                 }
                 mm.remove_mod();
                 try {
@@ -340,11 +351,16 @@ public:
                     this->keepalive.start(now);
                 }
             }
-        }
-        if (this->wait_for_capture && mm.is_up_and_running()) {
-            this->ini.check_record_config();
-            mm.record(this);
-            this->wait_for_capture = false;
+            else
+            {
+                if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
+                    this->ini.set<cfg::context::manager_disconnect_reason>(
+                        this->ini.get<cfg::context::disconnect_reason>().c_str());
+                    this->ini.get_ref<cfg::context::disconnect_reason>().clear();
+
+                    this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+                }
+            }
         }
 
         // LOG(LOG_INFO, "connect=%s ini.check=%s", this->connected?"Y":"N", this->ini.check()?"Y":"N");
@@ -352,8 +368,8 @@ public:
         // AuthCHANNEL CHECK
         // if an answer has been received, send it to
         // rdp serveur via mod (should be rdp module)
-        TODO("Check if this->mod is RDP MODULE");
-        if (mm.connected && this->ini.get<cfg::globals::auth_channel>()[0]) {
+        // TODO Check if this->mod is RDP MODULE
+        if (mm.connected && this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
                 // If set, transmit to auth_channel channel
@@ -366,30 +382,44 @@ public:
     }
 
     void receive() {
-        LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
+        }
         try {
             this->acl_serial.incoming();
+
+            if (!this->ini.get<cfg::context::module>().compare("RDP") ||
+                !this->ini.get<cfg::context::module>().compare("VNC")) {
+                this->session_type = this->ini.get<cfg::context::module>().c_str();
+            }
+
             this->remote_answer = true;
         } catch (...) {
             // acl connection lost
             this->ini.set_acl<cfg::context::authenticated>(false);
-            this->ini.set_acl<cfg::context::rejected>(TR("manager_close_cnx", language(this->ini)));
+
+            if (this->ini.get<cfg::context::manager_disconnect_reason>().empty()) {
+                this->ini.set_acl<cfg::context::rejected>(
+                    TR("manager_close_cnx", language(this->ini)));
+            }
+            else {
+                this->ini.set_acl<cfg::context::rejected>(
+                    this->ini.get<cfg::context::manager_disconnect_reason>().c_str());
+                this->ini.get_ref<cfg::context::manager_disconnect_reason>().clear();
+            }
         }
     }
 
     void ask_acl() {
-        LOG(LOG_INFO, "Ask acl\n");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "Ask acl\n");
+        }
         this->acl_serial.send_acl_data();
     }
 
     void set_auth_channel_target(const char * target) override {
         this->ini.set_acl<cfg::context::auth_channel_target>(target);
     }
-
-    //void set_auth_channel_result(const char * result) override
-    //{
-    //    this->ini.get<cfg::context::auth_channel_result>().set_from_cstr(result);
-    //}
 
     void set_auth_error_message(const char * error_message) override {
         this->ini.set<cfg::context::auth_error_message>(error_message);
@@ -406,60 +436,35 @@ public:
         this->ask_acl();
     }
 
-    void log(const char * type, const char * data) const override {
-        const char * session_type = "Neutral";
-
-        if (!this->ini.get<cfg::context::module>().compare("RDP") ||
-            !this->ini.get<cfg::context::module>().compare("VNC"))
-            session_type = this->ini.get<cfg::context::module>().c_str();
-
-        LOG( LOG_INFO
-           , "[%s Session] "
-             "type='%s' "
-             "sesion_id='%s' "
-             "user='%s' "
-             "device='%s' "
-             "service='%s' "
-             "account='%s' "
-             "data='%s'"
-           , session_type
-           , type
-           , this->ini.get<cfg::context::session_id>().c_str()
-           , this->ini.get<cfg::globals::auth_user>().c_str()
-           , this->ini.get<cfg::globals::target_device>().c_str()
-           , this->ini.get<cfg::context::target_service>().c_str()
-           , this->ini.get<cfg::globals::target_user>().c_str()
-           , data
-           );
+    void disconnect_target() override {
+        this->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
     }
 
-    void log2(const char * type, const char * data, const char * info) const override {
-        const char * session_type = "Neutral";
+    void log4(bool duplicate_with_pid, const char * type,
+            const char * extra = nullptr) const override {
+        const bool session_log =
+            this->ini.get<cfg::session_log::enable_session_log>();
+        if (!duplicate_with_pid && !session_log) return;
 
-        if (!this->ini.get<cfg::context::module>().compare("RDP") ||
-            !this->ini.get<cfg::context::module>().compare("VNC"))
-            session_type = this->ini.get<cfg::context::module>().c_str();
+        LOG_SESSION( duplicate_with_pid
+                   , session_log
 
-        LOG( LOG_INFO
-           , "[%s Session] "
-             "type='%s' "
-             "sesion_id='%s' "
-             "user='%s' "
-             "device='%s' "
-             "service='%s' "
-             "account='%s' "
-             "data='%s' "
-             "info='%s'"
-           , session_type
-           , type
-           , this->ini.get<cfg::context::session_id>().c_str()
-           , this->ini.get<cfg::globals::auth_user>().c_str()
-           , this->ini.get<cfg::globals::target_device>().c_str()
-           , this->ini.get<cfg::context::target_service>().c_str()
-           , this->ini.get<cfg::globals::target_user>().c_str()
-           , data
-           , info
-           );
+                   , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
+                   , type
+                   , this->ini.get<cfg::context::session_id>().c_str()
+                   , this->ini.get<cfg::globals::host>().c_str()
+                   , (isdigit(*this->ini.get<cfg::context::target_host>().c_str()) ?
+                      this->ini.get<cfg::context::target_host>().c_str() :
+                      this->ini.get<cfg::context::ip_target>().c_str())
+                   , this->ini.get<cfg::globals::auth_user>().c_str()
+                   , this->ini.get<cfg::globals::target_device>().c_str()
+                   , this->ini.get<cfg::context::target_service>().c_str()
+                   , this->ini.get<cfg::globals::target_user>().c_str()
+
+                   , LOG_INFO
+                   , "%s"
+                   , (extra ? extra : "")
+                   );
     }
 };
 
@@ -471,14 +476,22 @@ class PauseRecord {
     time_t last_record_activity_time;
     uint64_t last_total_received;
     uint64_t last_total_sent;
+    Front & front;
+    MMApi & mm;
+    Inifile & ini;
 
 public:
-    explicit PauseRecord(time_t timeout)
-        : stop_record_inactivity(false)
-        , stop_record_time((timeout > 30)?timeout:30)
-        , last_record_activity_time(0)
-        , last_total_received(0)
-        , last_total_sent(0)
+    explicit PauseRecord(
+        std::chrono::seconds timeout,
+        Front & front, MMApi & mm, Inifile & ini)
+    : stop_record_inactivity(false)
+    , stop_record_time(std::max<time_t>(timeout.count(), 30))
+    , last_record_activity_time(0)
+    , last_total_received(0)
+    , last_total_sent(0)
+    , front(front)
+    , mm(mm)
+    , ini(ini)
     {
     }
 
@@ -490,7 +503,7 @@ public:
             if (!this->stop_record_inactivity &&
                 (now > this->last_record_activity_time + this->stop_record_time)) {
                 this->stop_record_inactivity = true;
-                front.pause_capture();
+                front.can_be_pause_capture();
             }
         }
         else {
@@ -503,11 +516,18 @@ public:
             // quantum received when checking for inactivity
             if (this->stop_record_inactivity) {
                 this->stop_record_inactivity = false;
-                front.resume_capture();
-                // resume capture
+                if (front.can_be_resume_capture()) {
+                    if (this->ini.get<cfg::globals::bogus_refresh_rect>() &&
+                        this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                        (this->front.client_info.cs_monitor.monitorCount > 1)) {
+                        this->mm.mod->rdp_suppress_display_updates();
+                        this->mm.mod->rdp_allow_display_updates(0, 0,
+                            this->front.client_info.width, this->front.client_info.height);
+                    }
+                    this->mm.mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+                }
             }
         }
     }
 };
 
-#endif

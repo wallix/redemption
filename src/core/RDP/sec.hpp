@@ -21,17 +21,16 @@
    common sec layer at core module
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SEC_HPP_
-#define _REDEMPTION_CORE_RDP_SEC_HPP_
+
+#pragma once
 
 #include <assert.h>
 #include <stdint.h>
+#include <cinttypes>
 
-#include "RDP/share.hpp"
-
-
-TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
-#include "ssl_calls.hpp"
+#include "core/RDP/share.hpp"
+#include "system/ssl_sha1.hpp"
+#include "utils/crypto/cryptcontext.hpp"
 
 namespace SEC
 {
@@ -663,7 +662,7 @@ enum {
             : basicSecurityHeader([&stream](){
                 const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
                 if (!stream.in_check_rem(expected)){
-                    LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %u",
+                    LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %zu",
                        expected, stream.in_remain());
                     throw Error(ERR_SEC);
                 }
@@ -678,14 +677,14 @@ enum {
             , length([&stream](){
                 uint32_t length = stream.in_uint32_le();
                 if (length != stream.in_remain()){
-                    LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, stream.in_remain());
+                    LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%" PRIu32 " available=%zu", length, stream.in_remain());
                 }
                 return length;
             }())
             , payload(stream.get_current(), stream.in_remain() - 8)
         {
             if (this->payload.get_capacity() != 64){
-                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.get_capacity());
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %zu", this->payload.get_capacity());
                 throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
             }
             // Skip payload and 8 bytes trailing padding
@@ -710,11 +709,11 @@ enum {
         InStream signature;
         InStream payload;
 
-        SecInfoPacket_Recv(InStream & stream, uint16_t available_len, CryptContext & crypt)
+        SecInfoPacket_Recv(InStream & stream, CryptContext & crypt)
         : basicSecurityHeader([&stream](){
             const unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
             if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated SEC_INFO_PKT, expected=%u remains %u",
+                LOG(LOG_ERR, "Truncated SEC_INFO_PKT, expected=%u remains %zu",
                    expected, stream.in_remain());
                 throw Error(ERR_SEC);
             }
@@ -735,8 +734,8 @@ enum {
         }())
         // Body of constructor
         {
-            TODO("We should not decrypt inplace, it's a bad idea for optimisations");
-            TODO("Signature should be checked");
+            // TODO We should not decrypt inplace, it's a bad idea for optimisations
+            // TODO Signature should be checked
             stream.in_skip_bytes(this->payload.get_capacity());
         }
     };
@@ -755,7 +754,7 @@ enum {
             , flags([&stream](){
                 const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need)){
-                    LOG(LOG_ERR, "flags expected: need=%u remains=%u", need, stream.in_remain());
+                    LOG(LOG_ERR, "flags expected: need=%u remains=%zu", need, stream.in_remain());
                     throw Error(ERR_SEC);
                 }
                 return stream.in_uint32_le();
@@ -769,11 +768,11 @@ enum {
                     }
                     const unsigned need = 8; /* signature(8) */
                     if (!stream.in_check_rem(need)){
-                        LOG(LOG_ERR, "signature expected: need=%u remains=%u", need, stream.in_remain());
+                        LOG(LOG_ERR, "signature expected: need=%u remains=%zu", need, stream.in_remain());
                         throw Error(ERR_SEC);
                     }
 
-                    TODO("we should check signature");
+                    // TODO we should check signature
                     stream.in_skip_bytes(8); /* signature */
                     if (this->verbose >= 0x200){
                         LOG(LOG_INFO, "Receiving encrypted TPDU");
@@ -781,7 +780,7 @@ enum {
                     }
                     crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
                     if (this->verbose >= 0x80){
-                        LOG(LOG_INFO, "Decrypted %u bytes", stream.in_remain());
+                        LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
                         hexdump_c(stream.get_current(), stream.in_remain());
                     }
                 }
@@ -808,7 +807,7 @@ enum {
                     const unsigned need = 4; /* flags(4) */
                     if (!stream.in_check_rem(need))
                     {
-                        LOG(LOG_ERR, "flags expected: need=%u remains=%u",
+                        LOG(LOG_ERR, "flags expected: need=%u remains=%zu",
                             need, stream.in_remain());
                         throw Error(ERR_SEC);
                     }
@@ -817,12 +816,12 @@ enum {
                         const unsigned need = 8; /* signature(8) */
                         if (!stream.in_check_rem(need))
                         {
-                            LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                            LOG(LOG_ERR, "signature expected: need=%u remains=%zu",
                                 need, stream.in_remain());
                             throw Error(ERR_SEC);
                         }
 
-                        TODO("shouldn't we check signature ?");
+                        // TODO shouldn't we check signature ?
                         stream.in_skip_bytes(8); /* signature */
                         if (this->verbose >= 0x200){
                             LOG(LOG_INFO, "Receiving encrypted TPDU");
@@ -830,7 +829,7 @@ enum {
                         }
                         crypt.decrypt(const_cast<uint8_t *>(stream.get_current()), stream.in_remain());
                         if (this->verbose >= 0x80){
-                            LOG(LOG_INFO, "Decrypted %u bytes", stream.get_capacity());
+                            LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
                             hexdump_c(stream.get_current(), stream.in_remain());
                         }
                     }
@@ -909,110 +908,103 @@ enum {
             uint8_t master_secret[48];
             const int master_secret_size = sizeof(master_secret);
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "A", 1);
-                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t A[1] = {0x41U}; // "A"
+                sha1.update(A, sizeof(A));
+                sha1.update(pre_master_secret, pre_master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(master_secret, &md5);
+                SslMd5 md5;
+                md5.update(pre_master_secret, pre_master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "BB", 2);
-                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
+                sha1.update(BB, sizeof(BB));
+                sha1.update(pre_master_secret, pre_master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(master_secret + 16, &md5);
+                SslMd5 md5;
+                md5.update(pre_master_secret, pre_master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "CCC", 3);
-                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
+                sha1.update(CCC, sizeof(CCC));
+                sha1.update(pre_master_secret, pre_master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(master_secret + 32, &md5);
+                SslMd5 md5;
+                md5.update(pre_master_secret, pre_master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
             }
 
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "A", 1);
-                SHA1_Update(&sha1, master_secret, master_secret_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t A[1] = {0x41U}; // "A"
+                sha1.update(A, sizeof(A));
+                sha1.update(master_secret, master_secret_size);
+                sha1.update(server_random, server_random_size);
+                sha1.update(client_random, client_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, master_secret, master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(this->blob0, &md5);
+                SslMd5 md5;
+                md5.update(master_secret, master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "BB", 2);
-                SHA1_Update(&sha1, master_secret, master_secret_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
+                sha1.update(BB, sizeof(BB));
+                sha1.update(master_secret, master_secret_size);
+                sha1.update(server_random, server_random_size);
+                sha1.update(client_random, client_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, master_secret, master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(this->blob1, &md5);
+                SslMd5 md5;
+                md5.update(master_secret, master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "CCC", 3);
-                SHA1_Update(&sha1, master_secret, master_secret_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
+                sha1.update(CCC, sizeof(CCC));
+                sha1.update(master_secret, master_secret_size);
+                sha1.update(server_random, server_random_size);
+                sha1.update(client_random, client_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, master_secret, master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(this->blob2, &md5);
+                SslMd5 md5;
+                md5.update(master_secret, master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
             }
 
             {
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, this->blob1, sizeof(this->blob1));
-                MD5_Update(&md5, client_random, client_random_size);
-                MD5_Update(&md5, server_random, server_random_size);
-                MD5_Final(this->licensingEncryptionKey, &md5);
+                SslMd5 md5;
+                md5.update(this->blob1, sizeof(this->blob1));
+                md5.update(client_random, client_random_size);
+                md5.update(server_random, server_random_size);
+                md5.final(this->licensingEncryptionKey, SslMd5::DIGEST_LENGTH);
             }
         }
 
@@ -1386,137 +1378,132 @@ enum {
 
     struct KeyBlock
     {
-        uint8_t blob0[16];
-        uint8_t blob1[16];
-        uint8_t blob2[16];
-        uint8_t key1[16];
-        uint8_t key2[16];
+        uint8_t blob0[SslMd5::DIGEST_LENGTH];
+        uint8_t blob1[SslMd5::DIGEST_LENGTH];
+        uint8_t blob2[SslMd5::DIGEST_LENGTH];
+        uint8_t key1[SslMd5::DIGEST_LENGTH];
+        uint8_t key2[SslMd5::DIGEST_LENGTH];
 
         KeyBlock(const uint8_t * client_random, const uint8_t * server_random)
         {
-            const size_t client_random_size = 32;
-            const size_t server_random_size = 32;
+            const size_t client_random_size = SEC_RANDOM_SIZE;
+            const size_t server_random_size = SEC_RANDOM_SIZE;
             uint8_t pre_master_secret[48];
             const int pre_master_secret_size = sizeof(pre_master_secret);
-            /* Construct pre-master secret (session key) we get 24 bytes on 32 from client_random and server_random */
+            // Construct pre-master secret (session key)
+            // we get 24 bytes on 32 from
+            // client_random and server_random
             memcpy(pre_master_secret, client_random, 24);
             memcpy(pre_master_secret + 24, server_random, 24);
 
-            uint8_t master_secret[48];
+            uint8_t master_secret[SslMd5::DIGEST_LENGTH*3];
             const int master_secret_size = sizeof(master_secret);
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "A", 1);
-                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t A[1] = {0x41U}; // "A"
+                sha1.update(A, sizeof(A));
+                sha1.update(pre_master_secret, pre_master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(master_secret, &md5);
+                SslMd5 md5;
+                md5.update(pre_master_secret, pre_master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "BB", 2);
-                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
+                sha1.update(BB, sizeof(BB));
+                sha1.update(pre_master_secret, pre_master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(master_secret + 16, &md5);
+                SslMd5 md5;
+                md5.update(pre_master_secret, pre_master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "CCC", 3);
-                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
+                sha1.update(CCC, sizeof(CCC));
+                sha1.update(pre_master_secret, pre_master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(master_secret + 32, &md5);
+                SslMd5 md5;
+                md5.update(pre_master_secret, pre_master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
             }
 
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "X", 1);
-                SHA1_Update(&sha1, master_secret, master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t X[1] = {0x58U}; // "X"
+                sha1.update(X, sizeof(X));
+                sha1.update(master_secret, master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, master_secret, master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(this->blob0, &md5);
+                SslMd5 md5;
+                md5.update(master_secret, master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "YY", 2);
-                SHA1_Update(&sha1, master_secret, master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t YY[2] = {0x59U, 0x59U}; // "YY"
+                sha1.update(YY, sizeof(YY));
+                sha1.update(master_secret, master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, master_secret, master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(this->blob1, &md5);
+                SslMd5 md5;
+                md5.update(master_secret, master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
             }
             {
-                uint8_t shasig[20];
-                SHA_CTX sha1;
-                SHA1_Init(&sha1);
-                SHA1_Update(&sha1, "ZZZ", 3);
-                SHA1_Update(&sha1, master_secret, master_secret_size);
-                SHA1_Update(&sha1, client_random, client_random_size);
-                SHA1_Update(&sha1, server_random, server_random_size);
-                SHA1_Final(shasig, &sha1);
 
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, master_secret, master_secret_size);
-                MD5_Update(&md5, shasig, sizeof(shasig));
-                MD5_Final(this->blob2, &md5);
+                uint8_t shasig[SslSha1::DIGEST_LENGTH];
+                SslSha1 sha1;
+                uint8_t ZZZ[3] = {0x5AU, 0x5AU, 0x5AU}; // "ZZZ"
+                sha1.update(ZZZ, sizeof(ZZZ));
+                sha1.update(master_secret, master_secret_size);
+                sha1.update(client_random, client_random_size);
+                sha1.update(server_random, server_random_size);
+                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+
+                SslMd5 md5;
+                md5.update(master_secret, master_secret_size);
+                md5.update(shasig, sizeof(shasig));
+                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
             }
 
             {
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, this->blob1, sizeof(this->blob1));
-                MD5_Update(&md5, client_random, client_random_size);
-                MD5_Update(&md5, server_random, server_random_size);
-                MD5_Final(this->key1, &md5);
+                SslMd5 md5;
+                md5.update(this->blob1, sizeof(this->blob1));
+                md5.update(client_random, client_random_size);
+                md5.update(server_random, server_random_size);
+                md5.final(this->key1, SslMd5::DIGEST_LENGTH);
             }
             {
-                MD5_CTX md5;
-                MD5_Init(&md5);
-                MD5_Update(&md5, this->blob2, sizeof(this->blob2));
-                MD5_Update(&md5, client_random, client_random_size);
-                MD5_Update(&md5, server_random, server_random_size);
-                MD5_Final(this->key2, &md5);
+                SslMd5 md5;
+                md5.update(this->blob2, sizeof(this->blob2));
+                md5.update(client_random, client_random_size);
+                md5.update(server_random, server_random_size);
+                md5.final(this->key2, SslMd5::DIGEST_LENGTH);
             }
         }
     };
@@ -1892,4 +1879,3 @@ enum {
 
 }
 
-#endif

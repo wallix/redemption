@@ -25,12 +25,10 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestDfaRegexParser
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
-#include "regex_parser.hpp"
-#include "regex_states_value.hpp"
+#include "regex/regex_parser.hpp"
+#include "regex/regex_states_value.hpp"
 
 using namespace re;
 

@@ -25,13 +25,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestStream
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "stream.hpp"
-#include "test_transport.hpp"
+#include "utils/stream.hpp"
+#include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestStream_uint8)
 {

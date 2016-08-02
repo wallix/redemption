@@ -18,17 +18,13 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP
 
-#include "asynchronous_task_manager.hpp"
-#include "virtual_channel_data_sender.hpp"
+#pragma once
 
-#define MODRDP_LOGLEVEL_CLIPRDR      0x04000000
-#define MODRDP_LOGLEVEL_RDPDR        0x08000000
-
-#define MODRDP_LOGLEVEL_CLIPRDR_DUMP 0x40000000
-#define MODRDP_LOGLEVEL_RDPDR_DUMP   0x80000000
+#include "utils/asynchronous_task_manager.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
+#include "mod/rdp/rdp_log.hpp"
+#include "acl/auth_api.hpp"
 
 typedef int_fast32_t data_size_type;
 
@@ -37,7 +33,10 @@ class BaseVirtualChannel
     VirtualChannelDataSender* to_client_sender;
     VirtualChannelDataSender* to_server_sender;
 
-          auth_api*      authentifier;
+protected:
+    auth_api*      authentifier;
+
+private:
     const data_size_type exchanged_data_limit;
           data_size_type exchanged_data                        = 0;
           bool           exchanged_data_limit_reached_reported = false;
@@ -67,6 +66,10 @@ protected:
 public:
     virtual ~BaseVirtualChannel() = default;
 
+    void disable_to_client_sender() {
+        this->to_client_sender = nullptr;
+    }
+
     virtual const char * get_reporting_reason_exchanged_data_limit_reached()
         const = 0;
 
@@ -79,7 +82,13 @@ protected:
 public:
     virtual void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length) = 0;
+        uint32_t chunk_data_length
+    ) {
+        (void)total_length;
+        (void)flags;
+        (void)chunk_data;
+        (void)chunk_data_length;
+    }
 
     virtual void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
@@ -92,65 +101,25 @@ protected:
     {
         if (this->to_client_sender)
         {
-/*
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-*/
-
             (*this->to_client_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }
     }
 
+public:
     inline void send_message_to_server(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_server_sender)
         {
-/*
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = false;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-*/
-
             (*this->to_server_sender)(total_length, flags, chunk_data,
                 chunk_data_length);
         }
     }
 
-/*
-    inline void send_message(bool to_client, uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
+protected:
+    inline void update_exchanged_data(uint32_t data_length)
     {
-        VirtualChannelDataSender* sender =
-            (to_client ? this->to_client_sender : this->to_server_sender);
-
-        if (sender)
-        {
-            if ((this->verbose & MODRDP_LOGLEVEL_CLIPRDR_DUMP) ||
-                (this->verbose & MODRDP_LOGLEVEL_RDPDR_DUMP)) {
-                const bool send              = true;
-                const bool from_or_to_client = to_client;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-
-            (*sender)(total_length, flags, chunk_data,
-                chunk_data_length);
-        }
-    }
-*/
-
-    inline void update_exchanged_data(uint32_t data_length) {
         this->exchanged_data += data_length;
 
         if (this->exchanged_data_limit &&
@@ -167,4 +136,3 @@ protected:
     }
 };  // class BaseVirtualChannel
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_BASECHANNEL_HPP

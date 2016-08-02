@@ -18,89 +18,76 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP
+
+#pragma once
 
 #include "internal_mod.hpp"
-#include "widget2/edit.hpp"
+
 #include "widget2/flat_button.hpp"
-#include "widget2/tab.hpp"
+
+
+class LanguagePicker : public NotifyApi
+{
+    std::vector<std::string> texts = {"fr", "encffvg", "ru"};
+    int selected_index = 0;
+    WidgetLabel * label = nullptr;
+
+public:
+    LanguagePicker() = default;
+
+    void attach_label(WidgetLabel * label) {
+        if ((this->label = label)) {
+            this->selected_index = 0;
+            this->label->set_text(this->texts[this->selected_index].c_str());
+        }
+    }
+
+    void notify(Widget2 * sender, notify_event_t event) override {
+        (void)sender;
+        if (event == NOTIFY_SUBMIT) {
+            this->selected_index = (this->selected_index +1) % texts.size();
+            if (this->label) {
+                this->label->set_text(this->texts[this->selected_index].c_str());
+            }
+        }
+    }
+
+
+};
+
+
+//void set_text(const char * text)
+
 
 class WidgetTestMod : public InternalMod, public NotifyApi {
-    WidgetTabDPDefault drawing_policy;
-    WidgetTab          tab;
 
-    WidgetEdit        * wedit_on_first_tab;
-    WidgetFlatButton  * wbutton_on_first_tab;
-
-    WidgetEdit        * wedit_on_screen;
+    LanguagePicker language_picker;
+    WidgetFlatButton wbutton_selector_language;
 
 public:
     WidgetTestMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, Theme const & theme)
     : InternalMod(front, width, height, font, theme)
-    , drawing_policy(*this, font)
-    , tab(*this, drawing_policy, 30, 30, width - 60, height - 260, this->screen, this, 0,
-          theme.global.fgcolor, theme.global.bgcolor)
-    , wedit_on_first_tab(nullptr)
-    , wbutton_on_first_tab(nullptr) {
-        this->screen.add_widget(&this->tab);
-
-        const size_t tab_0_index = this->tab.add_item("First tab");
-        const size_t tab_1_index = this->tab.add_item("Second tab");
-        (void)tab_1_index;
-
-        NotifyApi * notifier = nullptr;
-        int         group_id = 0;
-        int         fg_color = RED;
-        int         bg_color = YELLOW;
-
-        bool auto_resize = true;
-        int  focuscolor  = LIGHT_YELLOW;
-        int  xtext       = 4;
-        int  ytext       = 1;
-
-        WidgetParent & parent_item = this->tab.get_item(tab_0_index);
-
-        notifier = &parent_item;
-
-        this->wedit_on_first_tab = new WidgetEdit(*this, 11, 20, 30, parent_item,
-            notifier, "", group_id, BLACK, WHITE, WHITE, font);
-        this->tab.add_widget(tab_0_index, wedit_on_first_tab);
-
-        this->wbutton_on_first_tab = new WidgetFlatButton(*this, 10, 42, parent_item,
-            notifier, "Button on First tab", auto_resize, group_id, fg_color, bg_color,
-            focuscolor, font, xtext, ytext);
-        this->tab.add_widget(tab_0_index, wbutton_on_first_tab);
-
-
-        this->wedit_on_screen = new WidgetEdit(*this, 11, 620, 30, this->screen,
-            this, "", group_id, BLACK, WHITE, WHITE, font);
-        this->screen.add_widget(this->wedit_on_screen);
-
-        this->screen.set_widget_focus(&this->tab, Widget2::focus_reason_tabkey);
-
-        WidgetParent & wp = this->tab.get_item(tab_0_index);
-        wp.set_widget_focus(this->wedit_on_first_tab, Widget2::focus_reason_tabkey);
-        this->tab.child_has_focus = true;
-
+    , wbutton_selector_language(front, 300, 300, this->screen, &this->language_picker, "ab", true, 5, YELLOW, RED, GREEN, font){
+        this->screen.add_widget(&this->wbutton_selector_language);
+        this->language_picker.attach_label(&this->wbutton_selector_language.label);
+        this->screen.set_widget_focus(&this->wbutton_selector_language, Widget2::focus_reason_tabkey);
         this->screen.refresh(this->screen.rect);
     }
 
     ~WidgetTestMod() override {
         this->screen.clear();
 
-        delete this->wedit_on_screen;
 
-        delete this->wbutton_on_first_tab;
-        delete this->wedit_on_first_tab;
     }
 
-    void notify(Widget2 * sender, notify_event_t event) override {}
+    void notify(Widget2 *, notify_event_t) override {}
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         this->event.reset();
     }
+
+    bool is_up_and_running() override { return true; }
 };
 
-#endif  // #ifndef REDEMPTION_MOD_INTERNAL_WIDGETTESTMOD_HPP

@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X0000081A_HPP_
-#define _REDEMPTION_KEYLAYOUT_X0000081A_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x0000081a {    // Serbian (Latin, Serbia) // Serbian (Latin)
 
 const static int LCID = 0x0000081a;
+
+const static char * const locale_name = "sr-La";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -320,6 +322,7 @@ const static uint8_t nbDeadkeys = 11;
 } // END NAMESPACE - x0000081a
 
 static const Keylayout keylayout_x0000081a( x0000081a::LCID
+                                          , x0000081a::locale_name
                                           , x0000081a::noMod
                                           , x0000081a::shift
                                           , x0000081a::altGr
@@ -333,4 +336,3 @@ static const Keylayout keylayout_x0000081a( x0000081a::LCID
                                           , x0000081a::nbDeadkeys
 );
 
-#endif

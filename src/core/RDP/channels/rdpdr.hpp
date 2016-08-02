@@ -18,16 +18,16 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
-#define REDEMPTION_CORE_RDP_CHANNELS_RDPDR_HPP
+
+#pragma once
 
 #include <cinttypes>
 
-#include "cast.hpp"
-#include "error.hpp"
-#include "noncopyable.hpp"
-#include "stream.hpp"
-#include "utf.hpp"
+#include "utils/sugar/cast.hpp"
+#include "core/error.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "utils/stream.hpp"
+#include "utils/utf.hpp"
 
 namespace rdpdr {
 
@@ -139,18 +139,18 @@ struct SharedHeader {
     : component(component)
     , packet_id(packet_id) {}
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(static_cast<uint16_t>(this->component));
         stream.out_uint16_le(static_cast<uint16_t>(this->packet_id));
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 4;  // Component(2) + PacketId(2)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated SharedHeader: expected=%u remains=%u",
+                    "Truncated SharedHeader: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -160,7 +160,7 @@ struct SharedHeader {
         this->packet_id = static_cast<PacketId>(stream.in_uint16_le());
     }
 
-    inline static const char * get_Component_name(Component component) {
+    static const char * get_Component_name(Component component) {
         switch (component) {
             case Component::RDPDR_CTYP_CORE: return "RDPDR_CTYP_CORE";
             case Component::RDPDR_CTYP_PRT:  return "RDPDR_CTYP_PRT";
@@ -169,7 +169,7 @@ struct SharedHeader {
         return "<unknown>";
     }
 
-    inline static const char * get_PacketId_name(PacketId packet_id) {
+    static const char * get_PacketId_name(PacketId packet_id) {
         switch (packet_id) {
             case PacketId::PAKID_CORE_SERVER_ANNOUNCE:     return "PAKID_CORE_SERVER_ANNOUNCE";
             case PacketId::PAKID_CORE_CLIENTID_CONFIRM:    return "PAKID_CORE_CLIENTID_CONFIRM";
@@ -194,7 +194,7 @@ struct SharedHeader {
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "SharedHeader: Component=%s(0x%X) PacketId=%s(0x%X)",
             this->get_Component_name(this->component),
@@ -205,11 +205,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -440,19 +440,14 @@ public:
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
     , device_data{device_data_p, device_data_size} {
-        ::memcpy(this->PreferredDosName_, preferred_dos_name,
-                 std::min<size_t>( 8 // PreferredDosName(8)
-                                 , ::strlen(preferred_dos_name))
-                 );
-        for (size_t i = ::strlen(::char_ptr_cast(this->PreferredDosName_));
-             i < sizeof(this->PreferredDosName_); ++i) {
-            this->PreferredDosName_[i] = '\0';
-        }
+        memcpy(
+            this->PreferredDosName_, preferred_dos_name,
+            strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
     }
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceType_);
         stream.out_uint32_le(this->DeviceId_);
 
@@ -463,13 +458,13 @@ public:
         stream.out_copy_bytes(this->device_data.p, this->device_data.sz);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 20;  // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceAnnounceHeader (0): expected=%u remains=%u",
+                    "Truncated DeviceAnnounceHeader (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -488,7 +483,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceAnnounceHeader (1): expected=%u remains=%u",
+                    "Truncated DeviceAnnounceHeader (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -498,22 +493,22 @@ public:
         stream.in_skip_bytes(DeviceDataLength);
     }
 
-    inline uint32_t DeviceType() const { return this->DeviceType_; }
+    uint32_t DeviceType() const { return this->DeviceType_; }
 
-    inline uint32_t DeviceId() const { return this->DeviceId_; }
+    uint32_t DeviceId() const { return this->DeviceId_; }
 
-    inline const char * PreferredDosName() const {
+    const char * PreferredDosName() const {
         return ::char_ptr_cast(this->PreferredDosName_);
     }
 
-    inline size_t size() const {
+    size_t size() const {
         return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
                     // DeviceDataLength(4)
             this->device_data.sz /* DeviceData(variable) */
             ;
     }
 
-    inline static const char * get_DeviceType_name(uint32_t DeviceType) {
+    static const char * get_DeviceType_name(uint32_t DeviceType) {
         switch (DeviceType) {
             case RDPDR_DTYP_SERIAL:     return "RDPDR_DTYP_SERIAL";
             case RDPDR_DTYP_PARALLEL:   return "RDPDR_DTYP_PARALLEL";
@@ -526,7 +521,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceAnnounceHeader: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
             this->get_DeviceType_name(this->DeviceType_),
@@ -535,11 +530,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
         if (level == LOG_INFO) {
             hexdump(this->device_data.p, this->device_data.sz);
         }
@@ -667,7 +662,7 @@ class DeviceIORequest {
     uint32_t MinorFunction_ = 0;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->FileId_);
         stream.out_uint32_le(this->CompletionId_);
@@ -675,14 +670,14 @@ public:
         stream.out_uint32_le(this->MinorFunction_);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 20;  // DeviceId(4) + FileId(4) + CompletionId(4) +
                                            //     MajorFunction(4) + MinorFunction(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceIORequest: expected=%u remains=%u",
+                    "Truncated DeviceIORequest: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -695,17 +690,17 @@ public:
         this->MinorFunction_ = stream.in_uint32_le();
     }
 
-    inline uint32_t DeviceId() const { return this->DeviceId_; }
+    uint32_t DeviceId() const { return this->DeviceId_; }
 
-    inline uint32_t FileId() const { return this->FileId_; }
+    uint32_t FileId() const { return this->FileId_; }
 
-    inline uint32_t CompletionId() const { return this->CompletionId_; }
+    uint32_t CompletionId() const { return this->CompletionId_; }
 
-    inline uint32_t MajorFunction() const { return this->MajorFunction_; }
+    uint32_t MajorFunction() const { return this->MajorFunction_; }
 
-    inline uint32_t MinorFunction() const { return this->MinorFunction_; }
+    uint32_t MinorFunction() const { return this->MinorFunction_; }
 
-    inline static const char * get_MajorFunction_name(uint32_t MajorFunction) {
+    static const char * get_MajorFunction_name(uint32_t MajorFunction) {
         switch (MajorFunction)
         {
             case IRP_MJ_CREATE:                   return "IRP_MJ_CREATE";
@@ -724,7 +719,7 @@ public:
         return "<unknown>";
     }
 
-    inline static const char * get_MinorFunction_name(uint32_t MinorFunction) {
+    static const char * get_MinorFunction_name(uint32_t MinorFunction) {
         switch (MinorFunction)
         {
             case IRP_MN_QUERY_DIRECTORY:         return "IRP_MN_QUERY_DIRECTORY";
@@ -735,7 +730,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIORequest: "
                 "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=%s(0x%X) MinorFunction=%s(0x%X)",
@@ -746,11 +741,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -842,7 +837,7 @@ class DeviceCreateRequest {
     std::string path;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DesiredAccess_);
         stream.out_uint64_le(this->AllocationSize);
         stream.out_uint32_le(this->FileAttributes);
@@ -850,25 +845,29 @@ public:
         stream.out_uint32_le(this->CreateDisposition_);
         stream.out_uint32_le(this->CreateOptions_);
 
-        // The null-terminator is included.
-        const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_Path_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
-            maximum_length_of_Path_in_bytes);
+        uint8_t Path_unicode_data[65536];
+        size_t size_of_Path_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->path.c_str()),
+            Path_unicode_data, sizeof(Path_unicode_data));
         // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+        Path_unicode_data[size_of_Path_unicode_data    ] =
+        Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
+        size_of_Path_unicode_data += 2;
 
-        stream.out_uint32_le(size_of_unicode_data);
+        uint8_t * temp_p = Path_unicode_data;
+        for (size_t i = 0; i < size_of_Path_unicode_data; i += 2) {
+            if (('/' == temp_p[0]) && (0 == temp_p[1])) {
+                temp_p[0] = '\\';
+            }
+            temp_p += 2;
+        }
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.out_uint32_le(size_of_Path_unicode_data);
+
+        stream.out_copy_bytes(Path_unicode_data, size_of_Path_unicode_data);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // DesiredAccess(4) + AllocationSize(8) +
                                            //     FileAttributes(4) + SharedAccess(4) +
@@ -877,7 +876,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceCreateRequest (0): expected=%u remains=%u",
+                    "Truncated DeviceCreateRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -898,24 +897,22 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated DeviceCreateRequest (1): expected=%u remains=%u",
+                        "Truncated DeviceCreateRequest (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }
             }
 
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
+            uint8_t const * const Path_unicode_data = stream.get_current();
+            uint8_t Path_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-            stream.in_copy_bytes(unicode_data, PathLength);
+            ::UTF16toUTF8(Path_unicode_data, PathLength / 2, Path_utf8_string,
+                sizeof(Path_utf8_string));
+            // The null-terminator is included.
+            this->path = ::char_ptr_cast(Path_utf8_string);
 
-            const size_t size_of_utf8_string =
-                PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            const size_t length_of_utf8_string = ::UTF16toUTF8(
-                unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
-            this->path.assign(::char_ptr_cast(utf8_string),
-                length_of_utf8_string);
+            stream.in_skip_bytes(PathLength);
+
             std::replace(this->path.begin(), this->path.end(), '\\', '/');
         }
         else {
@@ -923,16 +920,16 @@ public:
         }
     }
 
-    inline uint32_t DesiredAccess() const { return this->DesiredAccess_; }
+    uint32_t DesiredAccess() const { return this->DesiredAccess_; }
 
-    inline uint32_t CreateDisposition() const { return this->CreateDisposition_; }
+    uint32_t CreateDisposition() const { return this->CreateDisposition_; }
 
-    inline uint32_t CreateOptions() const { return this->CreateOptions_; }
+    uint32_t CreateOptions() const { return this->CreateOptions_; }
 
-    inline const char * Path() const { return this->path.c_str(); }
+    const char * Path() const { return this->path.c_str(); }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceCreateRequest: DesiredAccess=0x%X AllocationSize=%" PRIu64 " "
                 "FileAttributes=0x%X SharedAccess=0x%X CreateDisposition=0x%X "
@@ -944,11 +941,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // DeviceCreateRequest
 
@@ -998,40 +995,40 @@ public:
 // Padding (32 bytes): An array of 32 bytes. Reserved. This field can be set
 //  to any value, and MUST be ignored on receipt.
 
-class DeviceCloseRequest {
-    inline void emit(OutStream & stream) const {
-        stream.out_clear_bytes(32); // Padding(32)
-    }
-
-    inline void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // Padding(32)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCloseRequest: expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-
-        stream.in_skip_bytes(32);   // Padding(32)
-    }
-
-private:
-    inline size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    inline void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
-    }
-};
+// class DeviceCloseRequest {
+//     void emit(OutStream & stream) const {
+//         stream.out_clear_bytes(32); // Padding(32)
+//     }
+//
+//     void receive(InStream & stream) {
+//         {
+//             const unsigned expected = 32;  // Padding(32)
+//
+//             if (!stream.in_check_rem(expected)) {
+//                 LOG(LOG_ERR,
+//                     "Truncated DeviceCloseRequest: expected=%u remains=%zu",
+//                     expected, stream.in_remain());
+//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
+//             }
+//         }
+//
+//         stream.in_skip_bytes(32);   // Padding(32)
+//     }
+//
+// private:
+//     size_t str(char * buffer, size_t size) const {
+//         size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
+//         return ((length < size) ? length : size - 1);
+//     }
+//
+// public:
+//     void log(int level) const {
+//         char buffer[2048];
+//         this->str(buffer, sizeof(buffer));
+//         buffer[sizeof(buffer) - 1] = 0;
+//         LOG(level, "%s", buffer);
+//     }
+// };
 
 // [MS-RDPEFS] - 2.2.1.4.3 Device Read Request (DR_READ_REQ)
 // =========================================================
@@ -1090,18 +1087,18 @@ class DeviceReadRequest {
     uint64_t Offset_ = 0LLU;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length_);
         stream.out_uint64_le(this->Offset_);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 12;  // Length(4) + Offset(8)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceReadRequest: expected=%u remains=%u",
+                    "Truncated DeviceReadRequest: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1111,12 +1108,12 @@ public:
         this->Offset_ = stream.in_uint64_le();
     }
 
-    inline uint32_t Length() const { return this->Length_; }
+    uint32_t Length() const { return this->Length_; }
 
-    inline uint32_t Offset() const { return this->Offset_; }
+    uint64_t Offset() const { return this->Offset_; }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceReadRequest: Length=%u Offset=%" PRIu64,
             this->Length_, this->Offset_);
@@ -1124,11 +1121,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1267,7 +1264,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(DeviceControlRequest);
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->OutputBufferLength);
 
         stream.out_uint32_le(this->input_buffer.sz);    // InputBufferLength(4)
@@ -1279,7 +1276,7 @@ public:
         stream.out_copy_bytes(this->input_buffer.p, this->input_buffer.sz);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // OutputBufferLength(4) + InputBufferLength(4) +
                                            //     IoControlCode(4) + Padding(20)
@@ -1287,7 +1284,7 @@ public:
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated DeviceControlRequest (0): "
-                        "expected=%u remains=%u",
+                        "expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1306,7 +1303,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceControlRequest (1): expected=%u remains=%u",
+                    "Truncated DeviceControlRequest (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1319,7 +1316,7 @@ public:
     //uint32_t IoControlCode() const { return this->IoControlCode_; }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceControlRequest: OutputBufferLength=%u InputBufferLength=%zu "
                 "IoControlCode=0x%X",
@@ -1329,11 +1326,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // DeviceControlRequest
 
@@ -1378,6 +1375,7 @@ public:
 class DeviceIOResponse {
     uint32_t DeviceId_     = 0;
     uint32_t CompletionId_ = 0;
+    // TODO enum NTSTATUS
     uint32_t IoStatus_     = 0;
 
 public:
@@ -1388,19 +1386,19 @@ public:
     , CompletionId_(CompletionId)
     , IoStatus_(IoStatus) {}
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->CompletionId_);
         stream.out_uint32_le(this->IoStatus_);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // DeviceId(4) + CompletionId(4) + IoStatus(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceIOResponse: expected=%u remains=%u",
+                    "Truncated DeviceIOResponse: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1411,18 +1409,18 @@ public:
         this->IoStatus_     = stream.in_uint32_le();
     }
 
-    inline uint32_t DeviceId() const { return this->DeviceId_; }
+    uint32_t DeviceId() const { return this->DeviceId_; }
 
-    inline uint32_t CompletionId() const { return this->CompletionId_; }
+    uint32_t CompletionId() const { return this->CompletionId_; }
 
-    inline uint32_t IoStatus() const { return this->IoStatus_; }
+    uint32_t IoStatus() const { return this->IoStatus_; }
 
-    inline static size_t size() {
+    static size_t size() {
         return 12;  // DeviceId(4) + CompletionId(4) + IoStatus(4)
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceIOResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
             this->DeviceId_, this->CompletionId_, this->IoStatus_);
@@ -1430,11 +1428,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1526,31 +1524,34 @@ public:
     : FileId_(FileId)
     , Information(Information) {}
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileId_);
         stream.out_uint8(this->Information);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream, uint32_t IoStatus) {
         {
-            const unsigned expected = 5;   // FileId(4) + Information(1)
+            const unsigned expected =
+                    4 +                 // FileId(4)
+                    (IoStatus ? 1 : 0)  // Information(1)
+                ;
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceCreateResponse: expected=%u remains=%u",
+                    "Truncated DeviceCreateResponse: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
 
         this->FileId_     = stream.in_uint32_le();
-        this->Information = stream.in_uint8();
+        this->Information = (IoStatus ? stream.in_uint8() : 0x00);
     }
 
-    inline uint32_t FileId() const { return this->FileId_; }
+    uint32_t FileId() const { return this->FileId_; }
 
 private:
-    inline static const char * get_Information_name(uint8_t Information) {
+    static const char * get_Information_name(uint8_t Information) {
         switch (Information) {
             case FILE_SUPERSEDED:  return "FILE_SUPERSEDED";
             case FILE_OPENED:      return "FILE_OPENED";
@@ -1560,7 +1561,7 @@ private:
         return "<unknown>";
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
             this->FileId_, this->get_Information_name(this->Information),
@@ -1569,11 +1570,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1714,6 +1715,7 @@ public:
 
 class ServerDeviceAnnounceResponse {
     uint32_t DeviceId_   = 0;
+    // TODO enum NTSTATUS
     uint32_t ResultCode_ = 0;
 
 public:
@@ -1722,18 +1724,18 @@ public:
     ServerDeviceAnnounceResponse(uint32_t device_id, uint32_t result_code) :
         DeviceId_(device_id), ResultCode_(result_code) {}
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DeviceId_);
         stream.out_uint32_le(this->ResultCode_);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 8;   // DeviceId(4) + ResultCode(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDeviceAnnounceResponse: expected=%u remains=%u",
+                    "Truncated ServerDeviceAnnounceResponse: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1743,12 +1745,12 @@ public:
         this->ResultCode_ = stream.in_uint32_le();
     }
 
-    inline uint32_t DeviceId() const { return this->DeviceId_; }
+    uint32_t DeviceId() const { return this->DeviceId_; }
 
-    inline uint32_t ResultCode() const { return this->ResultCode_; }
+    uint32_t ResultCode() const { return this->ResultCode_; }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDeviceAnnounceResponse: DeviceId=%u ResultCode=0x%08X",
             this->DeviceId_, this->ResultCode_);
@@ -1756,11 +1758,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1801,19 +1803,19 @@ class ServerAnnounceRequest {
     uint16_t ClientId_     = 0;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->VersionMajor);
         stream.out_uint16_le(this->VersionMinor_);
         stream.out_uint16_le(this->ClientId_);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerAnnounceRequest: expected=%u remains=%u",
+                    "Truncated ServerAnnounceRequest: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -1824,12 +1826,12 @@ public:
         this->ClientId_     = stream.in_uint32_le();
     }
 
-    inline uint16_t VersionMinor() const { return this->VersionMinor_; }
+    uint16_t VersionMinor() const { return this->VersionMinor_; }
 
-    inline uint16_t ClientId() const { return this->ClientId_; }
+    uint16_t ClientId() const { return this->ClientId_; }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerAnnounceRequest: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
             unsigned(this->VersionMajor), unsigned(this->VersionMinor_), unsigned(this->ClientId_));
@@ -1837,11 +1839,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1902,19 +1904,19 @@ public:
     , VersionMinor(VersionMinor)
     , ClientId(ClientId) {}
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->VersionMajor);
         stream.out_uint16_le(this->VersionMinor);
         stream.out_uint32_le(this->ClientId);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ClientAnnounceReply: expected=%u remains=%u",
+                    "Truncated ClientAnnounceReply: expected=%u remains=%zu",
                     expected, stream.in_remain());
 
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
@@ -1927,7 +1929,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ClientAnnounceReply: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
             unsigned(this->VersionMajor), unsigned(this->VersionMinor), unsigned(this->ClientId));
@@ -1935,11 +1937,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -2005,29 +2007,26 @@ public:
     explicit ClientNameRequest(const char * computer_name)
     : computer_name(computer_name) {}
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->UnicodeFlag);
         stream.out_uint32_le(this->CodePage);
 
-        if (this->UnicodeFlag !=
-            0x00000000 /* ComputerName is in ASCII characters. */) {
+        if (this->UnicodeFlag & 0x00000001) {
+            // ComputerName is in Unicode characters.
+
             // The null-terminator is included.
-            const size_t maximum_length_of_ComputerName_in_bytes =
-                (this->computer_name.length() + 1) * 2;
-
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                maximum_length_of_ComputerName_in_bytes));
-            size_t size_of_unicode_data = ::UTF8toUTF16(
+            uint8_t ComputerName_unicode_data[65536];
+            size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
                 reinterpret_cast<const uint8_t *>(this->computer_name.c_str()),
-                unicode_data, maximum_length_of_ComputerName_in_bytes);
+                ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
             // Writes null terminator.
-            unicode_data[size_of_unicode_data    ] =
-            unicode_data[size_of_unicode_data + 1] = 0;
-            size_of_unicode_data += 2;
+            ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
+            ComputerName_unicode_data[size_of_ComputerName_unicode_data + 1] = 0;
+            size_of_ComputerName_unicode_data += 2;
 
-            stream.out_uint32_le(size_of_unicode_data);
+            stream.out_uint32_le(size_of_ComputerName_unicode_data);
 
-            stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+            stream.out_copy_bytes(ComputerName_unicode_data, size_of_ComputerName_unicode_data);
         }
         else {
             // The null-terminator is included.
@@ -2046,7 +2045,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ClientNameRequest (0): expected=%u remains=%u",
+                    "Truncated ClientNameRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2056,14 +2055,13 @@ public:
         this->CodePage    = stream.in_uint32_le();
 
         const uint32_t ComputerNameLen = stream.in_uint32_le();
-
         if (ComputerNameLen) {
             {
                 const unsigned expected = ComputerNameLen;  // ComputerName(variable)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated ClientNameRequest (1): expected=%u remains=%u",
+                        "Truncated ClientNameRequest (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }
@@ -2072,25 +2070,20 @@ public:
             // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
             //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
             //  contains inconsistent data.
-            if (this->UnicodeFlag !=
-                0x00000000 /* ComputerName is in ASCII characters. */) {
-                uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
+            if (this->UnicodeFlag & 0x00000001) {
+                // ComputerName is in Unicode characters.
 
-                stream.in_copy_bytes(unicode_data, ComputerNameLen);
+                uint8_t const * const ComputerName_unicode_data = stream.get_current();
+                uint8_t ComputerName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
 
-                const size_t size_of_utf8_string =
-                            ComputerNameLen / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-                uint8_t * const utf8_string = static_cast<uint8_t *>(
-                    ::alloca(size_of_utf8_string));
-                ::UTF16toUTF8(unicode_data, ComputerNameLen / 2, utf8_string, size_of_utf8_string);
+                ::UTF16toUTF8(ComputerName_unicode_data, ComputerNameLen / 2, ComputerName_utf8_string, sizeof(ComputerName_utf8_string));
                 // The null-terminator is included.
-                this->computer_name = ::char_ptr_cast(utf8_string);
+                this->computer_name = ::char_ptr_cast(ComputerName_utf8_string);
+
+                stream.in_skip_bytes(ComputerNameLen);
             } else {
-                uint8_t * const ascii_data = static_cast<uint8_t *>(::alloca(ComputerNameLen));
-
-                stream.in_copy_bytes(ascii_data, ComputerNameLen);
-
-                this->computer_name = ::char_ptr_cast(ascii_data);
+                // The null-terminator is included.
+                this->computer_name = ::char_ptr_cast(stream.get_current());
             }
         }
         else {
@@ -2099,7 +2092,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u ComputerName=\"%s\"",
             this->UnicodeFlag, this->CodePage, this->computer_name.c_str());
@@ -2107,11 +2100,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // ClientNameRequest
 
@@ -2316,7 +2309,7 @@ public:
     , extraFlags2(extraFlags2)
     , SpecialTypeDeviceCap(SpecialTypeDeviceCap) {}
 
-    inline void emit(OutStream & stream, uint32_t version) const {
+    void emit(OutStream & stream, uint32_t version) const {
         stream.out_uint32_le(this->osType);
         stream.out_uint32_le(this->osVersion);
         stream.out_uint16_le(this->protocolMajorVersion);
@@ -2331,7 +2324,7 @@ public:
         }
     }
 
-    inline void receive(InStream & stream, uint32_t version) {
+    void receive(InStream & stream, uint32_t version) {
         {
             const unsigned expected = 32 +  // osType(4) + osVersion(4) + protocolMajorVersion(2) +
                                             // protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) +
@@ -2340,7 +2333,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated GeneralCapabilitySet: expected=%u remains=%u",
+                    "Truncated GeneralCapabilitySet: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2360,19 +2353,19 @@ public:
         }
     }
 
-    inline uint32_t extendedPDU() const { return this->extendedPDU_; }
+    uint32_t extendedPDU() const { return this->extendedPDU_; }
 
-    inline void set_extendedPDU(uint32_t extendedPDU) {
+    void set_extendedPDU(uint32_t extendedPDU) {
         this->extendedPDU_ = extendedPDU;
     }
 
-    inline uint32_t extraFlags1() const { return this->extraFlags1_; }
+    uint32_t extraFlags1() const { return this->extraFlags1_; }
 
-    inline void set_extraFlags1(uint32_t extraFlags1) {
+    void set_extraFlags1(uint32_t extraFlags1) {
         this->extraFlags1_ = extraFlags1;
     }
 
-    inline static size_t size(uint32_t version) {
+    static size_t size(uint32_t version) {
         return 32 + // osType(4) + osVersion(4) + protocolMajorVersion(2) +
                     // protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) +
                     // extendedPDU(4) + extraFlags1(4) + extraFlags2(4)
@@ -2380,7 +2373,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "GeneralCapabilitySet: osType=0x%X osVersion=0x%X "
                 "protocolMajorVersion=0x%X protocolMinorVersion=0x%X "
@@ -2394,11 +2387,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // GeneralCapabilitySet
 
@@ -2612,7 +2605,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
         stream.out_uint32_le(this->query_buffer.sz);    // Length(4)
@@ -2622,13 +2615,13 @@ public:
         stream.out_copy_bytes(this->query_buffer.p, this->query_buffer.sz);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryInformationRequest (0): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryInformationRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2646,7 +2639,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryInformationRequest (1): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryInformationRequest (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2656,9 +2649,9 @@ public:
         stream.in_skip_bytes(Length);
     }
 
-    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+    static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileBasicInformation:        return "FileBasicInformation";
             case FileStandardInformation:     return "FileStandardInformation";
@@ -2669,7 +2662,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             this->get_FsInformationClass_name(this->FsInformationClass_),
@@ -2678,11 +2671,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // ServerDriveQueryInformationRequest
 
@@ -2844,7 +2837,7 @@ public:
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryVolumeInformationRequest);
 
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
 
         stream.out_uint32_le(this->query_volume_buffer.sz); // Length(4)
@@ -2855,14 +2848,14 @@ public:
             this->query_volume_buffer.sz);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated ServerDriveQueryVolumeInformationRequest (0): "
-                        "expected=%u remains=%u",
+                        "expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2880,7 +2873,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryVolumeInformationRequest (1): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryVolumeInformationRequest (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2890,9 +2883,9 @@ public:
         stream.in_skip_bytes(Length);
     }
 
-    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+    static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileFsVolumeInformation:    return "FileFsVolumeInformation";
             case FileFsSizeInformation:      return "FileFsSizeInformation";
@@ -2905,7 +2898,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             this->get_FsInformationClass_name(this->FsInformationClass_),
@@ -2914,11 +2907,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // ServerDriveQueryVolumeInformationRequest
 
@@ -3038,21 +3031,21 @@ class ServerDriveSetInformationRequest {
     uint32_t Length_             = 0;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint32_le(this->Length_);
 
         stream.out_clear_bytes(24); // Padding(24)
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + Length(4) +
                                            //     Padding(24)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveSetInformationRequest (0): expected=%u remains=%u",
+                    "Truncated ServerDriveSetInformationRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -3064,11 +3057,11 @@ public:
         stream.in_skip_bytes(24);   // Padding(24)
     }
 
-    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    inline uint32_t Length() const { return this->Length_; }
+    uint32_t Length() const { return this->Length_; }
 
-    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+    static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileBasicInformation:       return "FileBasicInformation";
             case FileEndOfFileInformation:   return "FileEndOfFileInformation";
@@ -3081,7 +3074,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveSetInformationRequest: FsInformationClass=%s(0x%X) "
                 "Length=%u",
@@ -3091,11 +3084,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -3140,26 +3133,27 @@ class RDPFileRenameInformation {
     std::string file_name;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint8(this->replace_if_exists_ ? static_cast<uint8_t>(-1) : static_cast<uint8_t>(0));
         stream.out_uint8(this->RootDirectory_);
 
-        const size_t maximum_length_of_FileName_in_bytes =
-            (this->file_name.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_FileName_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
+        uint8_t FileName_unicode_data[65536];
+        const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(this->file_name.c_str()),
-            unicode_data, maximum_length_of_FileName_in_bytes);
-        // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+            FileName_unicode_data, sizeof(FileName_unicode_data));
 
-        stream.out_uint32_le(size_of_unicode_data); // FileNameLength(4)
+        uint8_t * temp_p = FileName_unicode_data;
+        for (size_t i = 0; i < size_of_FileName_unicode_data; i += 2) {
+            if (('/' == temp_p[0]) && (0 == temp_p[1])) {
+                temp_p[0] = '\\';
+            }
+            temp_p += 2;
+        }
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);  // FileName(variable)
+        stream.out_uint32_le(size_of_FileName_unicode_data);    // FileNameLength(4)
+
+        stream.out_copy_bytes(FileName_unicode_data,    // FileName(variable)
+            size_of_FileName_unicode_data);
     }
 
     void receive(InStream & stream) {
@@ -3169,7 +3163,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated RDP_FILE_RENAME_INFORMATION (0): expected=%u remains=%u",
+                    "Truncated RDP_FILE_RENAME_INFORMATION (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -3186,23 +3180,22 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated RDP_FILE_RENAME_INFORMATION (1): expected=%u remains=%u",
+                        "Truncated RDP_FILE_RENAME_INFORMATION (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }
             }
 
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(FileNameLength));
+            uint8_t const * const FileName_unicode_data = stream.get_current();
+            uint8_t FileName_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+            const size_t length_of_FileName_utf8_string = ::UTF16toUTF8(
+                FileName_unicode_data, FileNameLength / 2,
+                FileName_utf8_string, sizeof(FileName_utf8_string));
+            this->file_name.assign(::char_ptr_cast(FileName_utf8_string),
+                length_of_FileName_utf8_string);
 
-            stream.in_copy_bytes(unicode_data, FileNameLength);
+            stream.in_skip_bytes(FileNameLength);
 
-            const size_t size_of_utf8_string =
-                FileNameLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            ::UTF16toUTF8(unicode_data, FileNameLength / 2, utf8_string, size_of_utf8_string);
-            // The null-terminator is included.
-            this->file_name = ::char_ptr_cast(utf8_string);
             std::replace(this->file_name.begin(), this->file_name.end(), '\\', '/');
         }
         else {
@@ -3210,14 +3203,14 @@ public:
         }
     }
 
-    inline bool replace_if_exists() const { return this->replace_if_exists_; }
+    bool replace_if_exists() const { return this->replace_if_exists_; }
 
-    inline uint8_t RootDirectory() const { return this->RootDirectory_; }
+    uint8_t RootDirectory() const { return this->RootDirectory_; }
 
-    inline const char * FileName() const { return this->file_name.c_str(); }
+    const char * FileName() const { return this->file_name.c_str(); }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "RDP_FILE_RENAME_INFORMATION: ReplaceIfExists=%s RootDirectory=%u FileName=\"%s\"",
             (this->replace_if_exists_ ? "yes" : "no"),
@@ -3226,11 +3219,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -3340,38 +3333,43 @@ class ServerDriveQueryDirectoryRequest {
     std::string path;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint8(this->InitialQuery_);
 
         // The null-terminator is included.
-        const size_t maximum_length_of_Path_in_bytes = (this->path.length() + 1) * 2;
-
-        uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-            maximum_length_of_Path_in_bytes));
-        size_t size_of_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->path.c_str()), unicode_data,
-            maximum_length_of_Path_in_bytes);
+        uint8_t Path_unicode_data[65536];
+        size_t size_of_Path_unicode_data = ::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->path.c_str()),
+            Path_unicode_data, sizeof(Path_unicode_data));
         // Writes null terminator.
-        unicode_data[size_of_unicode_data    ] =
-        unicode_data[size_of_unicode_data + 1] = 0;
-        size_of_unicode_data += 2;
+        Path_unicode_data[size_of_Path_unicode_data    ] =
+        Path_unicode_data[size_of_Path_unicode_data + 1] = 0;
+        size_of_Path_unicode_data += 2;
 
-        stream.out_uint32_le(size_of_unicode_data);
+        uint8_t * temp_p = Path_unicode_data;
+        for (size_t i = 0; i < size_of_Path_unicode_data; i += 2) {
+            if (('/' == temp_p[0]) && (0 == temp_p[1])) {
+                temp_p[0] = '\\';
+            }
+            temp_p += 2;
+        }
+
+        stream.out_uint32_le(size_of_Path_unicode_data);
 
         stream.out_clear_bytes(23); // Padding(23)
 
-        stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+        stream.out_copy_bytes(Path_unicode_data, size_of_Path_unicode_data);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 32;  // FsInformationClass(4) + InitialQuery(1) +
                                            //     PathLength(4) + Padding(23)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryDirectoryRequest (0): expected=%u remains=%u",
+                    "Truncated ServerDriveQueryDirectoryRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -3391,23 +3389,21 @@ public:
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
                         "Truncated ServerDriveQueryDirectoryRequest (1): "
-                            "expected=%u remains=%u",
+                            "expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RDPDR_PDU_TRUNCATED);
                 }
             }
 
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(PathLength));
-
-            stream.in_copy_bytes(unicode_data, PathLength);
-
-            const size_t size_of_utf8_string =
-                        PathLength / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            ::UTF16toUTF8(unicode_data, PathLength / 2, utf8_string, size_of_utf8_string);
+            uint8_t const * const Path_unicode_data = stream.get_current();
+            uint8_t Path_utf8_string[1024 * 64 / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
+            ::UTF16toUTF8(Path_unicode_data, PathLength / 2, Path_utf8_string,
+                sizeof(Path_utf8_string));
             // The null-terminator is included.
-            this->path = ::char_ptr_cast(utf8_string);
+            this->path = ::char_ptr_cast(Path_utf8_string);
+
+            stream.in_skip_bytes(PathLength);
+
             std::replace(this->path.begin(), this->path.end(), '\\', '/');
         }
         else {
@@ -3415,14 +3411,13 @@ public:
         }
     }
 
-    inline uint32_t FsInformationClass() const { return this->FsInformationClass_; }
+    uint32_t FsInformationClass() const { return this->FsInformationClass_; }
 
-    inline uint8_t  InitialQuery() const { return this->InitialQuery_; }
+    uint8_t  InitialQuery() const { return this->InitialQuery_; }
 
-    inline const char * Path() const { return this->path.c_str(); }
+    const char * Path() const { return this->path.c_str(); }
 
-private:
-    inline static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
+    static const char * get_FsInformationClass_name(uint32_t FsInformationClass) {
         switch (FsInformationClass) {
             case FileDirectoryInformation:     return "FileDirectoryInformation";
             case FileFullDirectoryInformation: return "FileFullDirectoryInformation";
@@ -3433,7 +3428,8 @@ private:
         return "<unknown>";
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+private:
+    size_t str(char * buffer, size_t size) const {
         size_t length = ::snprintf(buffer, size,
             "ServerDriveQueryDirectoryRequest: FsInformationClass=%s(0x%X) "
                 "InitialQuery=%u Path=\"%s\"",
@@ -3443,11 +3439,11 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // ServerDriveQueryDirectoryRequest
 
@@ -3557,4 +3553,3 @@ public:
 
 }   // namespace rdpdr
 
-#endif

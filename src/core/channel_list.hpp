@@ -21,15 +21,15 @@
   Channels descriptors
 */
 
-#ifndef _REDEMPTION_CORE_CHANNEL_LIST_HPP_
-#define _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 
-#include "stream.hpp"
-#include "transport.hpp"
+#pragma once
 
-#include "RDP/mcs.hpp"
-#include "RDP/sec.hpp"
-#include "RDP/x224.hpp"
+#include "utils/stream.hpp"
+#include "transport/transport.hpp"
+
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/x224.hpp"
 
 namespace CHANNELS {
     enum {
@@ -69,6 +69,17 @@ namespace CHANNELS {
             this->name[0] = 0;
         }
 
+        ChannelDef(const char * name, uint32_t flags, int chanid)
+        : flags(flags)
+        , chanid(chanid)
+        {
+            size_t i = 0;
+            for (; i < max_size_name && name[i]; i++) {
+                this->name[i] = name[i];
+            }
+            this->name[i] = 0;
+        }
+
         void log(unsigned index) const {
             LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = 0x%8X, chanid = %u)",
                 index, this->name, static_cast<unsigned>(this->flags),
@@ -83,6 +94,11 @@ namespace CHANNELS {
 
     public:
         ChannelDefArray() : channelCount(0) {}
+
+        void clear_channels()
+        {
+            this->channelCount = 0;
+        }
 
         const ChannelDef & operator[](size_t index) const {
             return this->items[index];
@@ -137,7 +153,7 @@ namespace CHANNELS {
         }
 
         void log(char * name) const {
-            LOG(LOG_INFO, "%s channels %u channels defined", name, this->channelCount);
+            LOG(LOG_INFO, "%s channels %zu channels defined", name, this->channelCount);
             for (unsigned index = 0 ; index < this->channelCount ; index++) {
                 this->items[index].log(index);
             }
@@ -394,4 +410,3 @@ namespace CHANNELS {
     };  // struct VirtualChannelPDU
 }   // namespace CHANNELS
 
-#endif

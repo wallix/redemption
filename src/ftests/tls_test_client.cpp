@@ -18,11 +18,19 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
-#include "socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 
 #include "openssl_tls.hpp"
 
-static void rdp_request(SocketTransport & sockettransport)
+
+// TODO -Wold-style-cast is ignored
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
+namespace
+{
+
+void rdp_request(SocketTransport & sockettransport)
 {
     const char *request = "REDEMPTION\r\n\r\n";
 
@@ -34,6 +42,9 @@ static void rdp_request(SocketTransport & sockettransport)
     sockettransport.send(request, request_len);
 
     printf("HELLO sent, going TLS\n");
+
+    sockettransport.tls = new TLSContext();
+
 
     BIO *bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
     SSL_CTX *ctx = SSL_CTX_new(SSLv23_method());
@@ -48,12 +59,24 @@ static void rdp_request(SocketTransport & sockettransport)
         exit(0);
     }
 
-    sockettransport.allocated_ctx = ctx;
-    sockettransport.allocated_ssl = ssl;
-    sockettransport.tls = true;
-    sockettransport.io = ssl;
+    sockettransport.tls->allocated_ctx = ctx;
+    sockettransport.tls->allocated_ssl = ssl;
+    sockettransport.tls->io = ssl;
 
-    sockettransport.enable_client_tls(false, CERTIF_PATH);
+    NullServerNotifier null_server_notifier;
+
+    const bool server_cert_store = true;
+    sockettransport.tls->enable_client_tls(
+            sockettransport.sck,
+            server_cert_store,
+            true,
+            false,
+            null_server_notifier,
+            CERTIF_PATH,
+            nullptr,
+            "127.0.0.1",
+            331
+        );
 
     char * pbuf = buf;
     sockettransport.recv(&pbuf, 29);
@@ -61,83 +84,6 @@ static void rdp_request(SocketTransport & sockettransport)
 
     pbuf = buf;
     sockettransport.recv(&pbuf, 18);
-}
-
-static X509 *load_cert(const char *file)
-{
-    X509 *x = nullptr;
-    BIO *cert;
-
-    if ((cert=BIO_new(BIO_s_file())) == nullptr)
-        goto end;
-
-    if (BIO_read_filename(cert, const_cast<void *>(static_cast<void const *>(file))) <= 0)
-        goto end;
-
-    x = PEM_read_bio_X509_AUX(cert, nullptr, nullptr, nullptr);
-end:
-    if (cert != nullptr) BIO_free(cert);
-    return(x);
-}
-
-static int check(X509_STORE *ctx, const char *file)
-{
-    X509 *x=nullptr;
-    int i=0,ret=0;
-    X509_STORE_CTX *csc;
-
-    x = load_cert(file);
-    if (x == nullptr)
-        goto end;
-
-    csc = X509_STORE_CTX_new();
-    if (csc == nullptr)
-        goto end;
-    X509_STORE_set_flags(ctx, 0);
-    if(!X509_STORE_CTX_init(csc,ctx,x,nullptr))
-        goto end;
-    i=X509_verify_cert(csc);
-    X509_STORE_CTX_free(csc);
-
-    ret=0;
-end:
-    ret = (i > 0);
-    if (x != nullptr)
-        X509_free(x);
-
-    return(ret);
-}
-
-
-int verify(const char* certfile, const char* CAfile)
-{
-    int ret=0;
-    X509_STORE *cert_ctx=nullptr;
-    X509_LOOKUP *lookup=nullptr;
-
-    cert_ctx=X509_STORE_new();
-    if (cert_ctx == nullptr) goto end;
-
-    OpenSSL_add_all_algorithms();
-
-    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
-    if (lookup == nullptr)
-        goto end;
-
-    if(!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM))
-        goto end;
-
-    lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_hash_dir());
-    if (lookup == nullptr)
-        goto end;
-
-    X509_LOOKUP_add_dir(lookup,nullptr,X509_FILETYPE_DEFAULT);
-
-    ret = check(cert_ctx, certfile);
-end:
-    if (cert_ctx != nullptr) X509_STORE_free(cert_ctx);
-
-    return ret;
 }
 
 int tcp_connect(const char *host, int port)
@@ -188,8 +134,9 @@ int tcp_connect(const char *host, int port)
     return sock;
 }
 
+}
 
-int main(int argc, char ** argv)
+int main()
 {
     const char *host = "localhost";
     int port = 4433;
@@ -217,3 +164,4 @@ int main(int argc, char ** argv)
     return 0;
 }
 
+#pragma GCC diagnostic pop

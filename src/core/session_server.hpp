@@ -18,37 +18,36 @@
   Author(s): Christophe Grosjean
 */
 
-#ifndef _REDEMPTION_CORE_SESSION_SERVER_HPP_
-#define _REDEMPTION_CORE_SESSION_SERVER_HPP_
 
-#include "config.hpp"
-#include "server.hpp"
-#include "session.hpp"
-#include "parameters_holder.hpp"
-#include "parse_ip_conntrack.hpp"
+#pragma once
+
+#include "configs/config.hpp"
+#include "core/server.hpp"
+#include "core/session.hpp"
+#include "utils/parse_ip_conntrack.hpp"
 
 class SessionServer : public Server
 {
+    CryptoContext & cctx;
+
     // Used for enable transparent proxying on accepted socket (ini.get<cfg::globals::enable_ip_transparent>() = true).
     unsigned uid;
     unsigned gid;
     bool debug_config;
 
-    parameters_holder & parametersHldr;
-
     std::string config_filename;
 
 public:
-    SessionServer(unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename, bool debug_config = true)
-        : uid(uid)
+    SessionServer(CryptoContext & cctx, unsigned uid, unsigned gid, std::string config_filename, bool debug_config = true)
+        : cctx(cctx)
+        , uid(uid)
         , gid(gid)
         , debug_config(debug_config)
-        , parametersHldr(parametersHldr)
         , config_filename(config_filename)
     {
     }
 
-    virtual Server_status start(int incoming_sck)
+    Server_status start(int incoming_sck) override
     {
         union
         {
@@ -67,8 +66,11 @@ public:
         }
 
         char source_ip[256];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
         const int source_port = ntohs(u.s4.sin_port);
+#pragma GCC diagnostic pop
         /* start new process */
         const pid_t pid = fork();
         switch (pid) {
@@ -77,17 +79,9 @@ public:
                 close(incoming_sck);
 
                 Inifile ini;
+                ini.set<cfg::font>(Font(SHARE_PATH "/" DEFAULT_FONT_NAME));
                 ini.set<cfg::debug::config>(this->debug_config);
-                { ConfigurationLoader cfg_loader(ini, this->config_filename.c_str()); }
-
-                if (ini.get<cfg::globals::wab_agent_alternate_shell>().empty()) {
-                    ini.set<cfg::globals::wab_agent_alternate_shell>(
-                        this->parametersHldr.get_agent_alternate_shell()
-                    );
-                }
-
-                ini.get_ref<cfg::crypto::key0>().setmem(this->parametersHldr.get_crypto_key_0());
-                ini.get_ref<cfg::crypto::key1>().setmem(this->parametersHldr.get_crypto_key_1());
+                { ConfigurationLoader cfg_loader(ini.configuration_holder(), this->config_filename.c_str()); }
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
@@ -109,7 +103,10 @@ public:
                 }
 
                 char target_ip[256];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
                 const int target_port = ntohs(localAddress.s4.sin_port);
+#pragma GCC diagnostic pop
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
@@ -130,11 +127,11 @@ public:
                     close(fd);
 
                     if (setgid(this->gid) != 0){
-                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        LOG(LOG_ERR, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
                         _exit(1);
                     }
                     if (setuid(this->uid) != 0){
-                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        LOG(LOG_ERR, "Changing process user to %u failed with error: %s\n", this->uid, strerror(errno));
                         _exit(1);
                     }
 
@@ -145,14 +142,14 @@ public:
                 }
 
                 int nodelay = 1;
-                if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
+                if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))){
                     // Create session file
                     int child_pid = getpid();
                     char session_file[256];
                     sprintf(session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
                     int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
                     if (fd == -1) {
-                        LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%d\n", errno, strerror(errno));
+                        LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%s\n", errno, strerror(errno));
                         _exit(1);
                     }
                     char text[256];
@@ -167,8 +164,8 @@ public:
                     if (0 != strcmp(source_ip, "127.0.0.1")){
                         // do not log early messages for localhost (to avoid tracing in watchdog)
                         LOG(LOG_INFO,
-                            "New session on %u (pid=%u) from %s to %s",
-                            (unsigned)sck, (unsigned)child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
+                            "New session on %d (pid=%d) from %s to %s",
+                            sck, child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                     }
                     ini.set_acl<cfg::globals::host>(source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
@@ -177,7 +174,7 @@ public:
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
-                    Session session(sck, ini);
+                    Session session(sck, ini, this->cctx);
 
                     // Suppress session file
                     unlink(session_file);
@@ -209,4 +206,3 @@ public:
     }
 };
 
-#endif

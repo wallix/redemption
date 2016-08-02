@@ -19,17 +19,16 @@
  *              Meng Tan, Raphael Zhou
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_)
-#define REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_
+#pragma once 
 
 #include "widget.hpp"
-#include "keymap2.hpp"
-#include "region.hpp"
-#include "draw_api.hpp"
-#include "colors.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "keyboard/keymap2.hpp"
+#include "utils/region.hpp"
+#include "utils/colors.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 
-inline void fill_region(DrawApi & drawable, const Region & region, int bg_color) {
+inline void fill_region(gdi::GraphicApi & drawable, const Region & region, int bg_color) {
     for (const Rect & rect : region.rects) {
         drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
     }
@@ -83,21 +82,12 @@ public:
     void remove(const Widget2 * w) override {
         REDASSERT(w);
         REDASSERT(this->children_count);
-        bool children_found = false;
-        for (size_t i = 0; i < this->children_count; i++) {
-            if (!children_found) {
-                if (this->child_table[i] == w) {
-                    children_found = true;
-                    this->child_table[i] = nullptr;
-                }
-            }
-            else {
-                this->child_table[i - 1] = this->child_table[i];
-            }
-        }
-        REDASSERT(children_found);
-        if (children_found) {
-            this->child_table[this->children_count] = nullptr;
+        auto last = this->child_table + this->children_count;
+        auto it = std::find(&this->child_table[0], last, w);
+        REDASSERT(it != last);
+        if (it != last) {
+            auto new_last = std::copy(it+1, last, it);
+            *new_last = nullptr;
             this->children_count--;
         }
     }
@@ -174,7 +164,7 @@ protected:
 public:
     Widget2 * current_focus;
 
-    WidgetParent(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetParent(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , pressed(nullptr)
@@ -537,7 +527,7 @@ class WidgetComposite: public WidgetParent {
     CompositeArray composite_array;
 
 public:
-    WidgetComposite(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetComposite(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                     NotifyApi * notifier, int group_id = 0)
     : WidgetParent(drawable, rect, parent, notifier, group_id) {
         this->impl = & composite_array;
@@ -551,4 +541,3 @@ public:
     }
 };
 
-#endif

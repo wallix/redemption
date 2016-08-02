@@ -16,30 +16,31 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_INTERACTIVE_TARGET_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_INTERACTIVE_TARGET_MOD_HPP
 
-#include "translation.hpp"
-#include "front_api.hpp"
-#include "config.hpp"
+#pragma once
+
+#include "utils/translation.hpp"
+#include "core/front_api.hpp"
+#include "configs/config.hpp"
 #include "widget2/flat_interactive_target.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
-#include "config_access.hpp"
-
+#include "configs/config_access.hpp"
+#include "widget2/language_button.hpp"
 
 using InteractiveTargetModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::target_user,     vcfg::wait | vcfg::write | vcfg::read>,
-    vcfg::var<cfg::context::target_password, vcfg::wait | vcfg::write>,
-    vcfg::var<cfg::context::target_host,     vcfg::wait | vcfg::write>,
-    vcfg::var<cfg::globals::target_device,   vcfg::read>,
-    vcfg::var<cfg::context::display_message, vcfg::write>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::globals::target_user,                vcfg::accessmode::is_asked | vcfg::accessmode::set | vcfg::accessmode::get>,
+    vcfg::var<cfg::context::target_password,            vcfg::accessmode::is_asked | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::target_host,                vcfg::accessmode::is_asked | vcfg::accessmode::set>,
+    vcfg::var<cfg::globals::target_device,              vcfg::accessmode::get>,
+    vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>
 >;
 
 class InteractiveTargetMod : public InternalMod, public NotifyApi
@@ -48,26 +49,29 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
     bool ask_login;
     bool ask_password;
 
+    LanguageButton language_button;
     FlatInteractiveTarget challenge;
 
     InteractiveTargetModVariables vars;
 
 public:
-    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height)
+    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , ask_device(vars.is_asked<cfg::context::target_host>())
         , ask_login(vars.is_asked<cfg::globals::target_user>())
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-        , challenge(*this, width, height, this->screen, this, 0,
-                    this->ask_device, this->ask_login, this->ask_password,
-                    vars.get<cfg::theme>(),
-                    TR("target_info_required", language(vars)),
-                    TR("device", language(vars)),
-                    vars.get<cfg::globals::target_device>().c_str(),
-                    TR("login", language(vars)),
-                    vars.get<cfg::globals::target_user>().c_str(),
-                    TR("password", language(vars)),
-                    vars.get<cfg::font>())
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, front, front, this->font(), this->theme())
+        , challenge(
+            front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
+            this->screen, this,
+            this->ask_device, this->ask_login, this->ask_password,
+            vars.get<cfg::theme>(),
+            TR("target_info_required", language(vars)),
+            TR("device", language(vars)), vars.get<cfg::globals::target_device>().c_str(),
+            TR("login", language(vars)), vars.get<cfg::globals::target_user>().c_str(),
+            TR("password", language(vars)),
+            vars.get<cfg::font>(),
+            &this->language_button)
         , vars(vars)
     {
         this->screen.add_widget(&this->challenge);
@@ -94,6 +98,7 @@ public:
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
+        (void)sender;
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
@@ -102,7 +107,7 @@ public:
     }
 
 private:
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void accepted()
     {
         if (this->ask_device) {
@@ -114,25 +119,26 @@ private:
         if (this->ask_password) {
             this->vars.set_acl<cfg::context::target_password>(this->challenge.password_edit.get_text());
         }
-        this->vars.set_acl<cfg::context::display_message>("True");
+        this->vars.set_acl<cfg::context::display_message>(true);
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void refused()
     {
         this->vars.set_acl<cfg::context::target_password>("");
-        this->vars.set_acl<cfg::context::display_message>("False");
+        this->vars.set_acl<cfg::context::display_message>(false);
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         this->event.reset();
     }
 
+    bool is_up_and_running() override { return true; }
 };
 
-#endif

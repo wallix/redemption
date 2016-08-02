@@ -22,8 +22,8 @@
 */
 
 
-#ifndef _REDEMPTION_KEYLAYOUT_HPP_
-#define _REDEMPTION_KEYLAYOUT_HPP_
+
+#pragma once
 
 //====================================
 // SCANCODES PHYSICAL LAYOUT REFERENCE
@@ -52,7 +52,7 @@ struct Keylayout
     enum {
           MAX_DEADKEYS = 35
         , MAX_SECOND_KEYS = 35
-        , MAX_LAYOUT_CHARS = 128
+        , MAX_LAYOUT_CHARS = 256
     };
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
@@ -61,15 +61,17 @@ struct Keylayout
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
-    KeyLayout_t noMod;
-    KeyLayout_t shift;
-    KeyLayout_t altGr;
-    KeyLayout_t shiftAltGr;
-    KeyLayout_t ctrl;
-    KeyLayout_t capslock_noMod;
-    KeyLayout_t capslock_shift;
-    KeyLayout_t capslock_altGr;
-    KeyLayout_t capslock_shiftAltGr;
+    KeyLayout_t const & noMod;
+    KeyLayout_t const & shift;
+    KeyLayout_t const & altGr;
+    KeyLayout_t const & shiftAltGr;
+    KeyLayout_t const & ctrl;
+    KeyLayout_t const & capslock_noMod;
+    KeyLayout_t const & capslock_shift;
+    KeyLayout_t const & capslock_altGr;
+    KeyLayout_t const & capslock_shiftAltGr;
+
+    char const * locale_name;
 
     typedef struct dkk {
         uint16_t secondKey;
@@ -83,7 +85,8 @@ struct Keylayout
          dkey_key_t secondKeys[MAX_SECOND_KEYS]; // the couples second key/modified key
     } dkey_t;
 
-    dkey_t deadkeys[MAX_DEADKEYS];
+    //dkey_t deadkeys[MAX_DEADKEYS];
+    dkey_t const * deadkeys;
     uint8_t nbDeadkeys;  // Effective number of deadkeys for the locale
 
     uint32_t verbose;
@@ -92,57 +95,39 @@ struct Keylayout
     // Constructor
     //==============================================================================
     Keylayout( int LCID
-             , const KeyLayout_t LCID_noMod
-             , const KeyLayout_t LCID_shift
-             , const KeyLayout_t LCID_altGr
-             , const KeyLayout_t LCID_shiftAltGr
-             , const KeyLayout_t LCID_ctrl
-             , const KeyLayout_t LCID_capslock_noMod
-             , const KeyLayout_t LCID_capslock_shift
-             , const KeyLayout_t LCID_capslock_altGr
-             , const KeyLayout_t LCID_capslock_shiftAltGr
+             , char const * LCID_locale_name
+             , const KeyLayout_t & LCID_noMod
+             , const KeyLayout_t & LCID_shift
+             , const KeyLayout_t & LCID_altGr
+             , const KeyLayout_t & LCID_shiftAltGr
+             , const KeyLayout_t & LCID_ctrl
+             , const KeyLayout_t & LCID_capslock_noMod
+             , const KeyLayout_t & LCID_capslock_shift
+             , const KeyLayout_t & LCID_capslock_altGr
+             , const KeyLayout_t & LCID_capslock_shiftAltGr
              , const dkey_t LCID_deadkeys[MAX_DEADKEYS]
              , uint8_t nbDeadkeys
              , uint32_t verbose = 0
              )
         : LCID(LCID)
+        , noMod(LCID_noMod)
+        , shift(LCID_shift)
+        , altGr(LCID_altGr)
+        , shiftAltGr(LCID_shiftAltGr)
+        , ctrl(LCID_ctrl)
+        , capslock_noMod(LCID_capslock_noMod)
+        , capslock_shift(LCID_capslock_shift)
+        , capslock_altGr(LCID_capslock_altGr)
+        , capslock_shiftAltGr(LCID_capslock_shiftAltGr)
+        , locale_name(LCID_locale_name)
+        , deadkeys(LCID_deadkeys)
         , nbDeadkeys(nbDeadkeys)
         , verbose(verbose)
     //==============================================================================
-    {
-        memset(&this->noMod,               0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->shift,               0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->altGr,               0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->shiftAltGr,          0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->ctrl,                0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->capslock_noMod,      0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->capslock_shift,      0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->capslock_altGr,      0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->capslock_shiftAltGr, 0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->deadkeys, 0, sizeof(this->deadkeys));
+    {} // END Constructor
 
-        //-----------------------------------------------------
-        // INIT KEYMAP with values SPECIFIC to the GIVEN LOCALE
-        //-----------------------------------------------------
-
-        // Intialize the WORK tables with client LOCALE
-        for(int i=0 ; i < MAX_LAYOUT_CHARS ; i++) {
-            this->noMod[i]               = LCID_noMod[i];
-            this->shift[i]               = LCID_shift[i];
-            this->altGr[i]               = LCID_altGr[i];
-            this->shiftAltGr[i]          = LCID_shiftAltGr[i];
-            this->ctrl[i]                = LCID_ctrl[i];
-            this->capslock_noMod[i]      = LCID_capslock_noMod[i];
-            this->capslock_shift[i]      = LCID_capslock_shift[i];
-            this->capslock_altGr[i]      = LCID_capslock_altGr[i];
-            this->capslock_shiftAltGr[i] = LCID_capslock_shiftAltGr[i];
-        }
-
-        for(size_t i = 0 ; i < this->nbDeadkeys ; i++) {
-            deadkeys[i] = LCID_deadkeys[i];
-        }
-
-    } // END Constructor
+    Keylayout(Keylayout const &) = delete;
+    Keylayout& operator=(Keylayout const &) = delete;
 
 
     //==============================================================================
@@ -169,4 +154,3 @@ struct Keylayout
 }; // END STRUCT - Keylayout
 
 
-#endif

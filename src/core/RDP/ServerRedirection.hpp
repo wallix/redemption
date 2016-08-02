@@ -19,13 +19,15 @@
                Meng Tan, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SERVERREDIRECTION_HPP_
-#define _REDEMPTION_CORE_RDP_SERVERREDIRECTION_HPP_
 
-#include "log.hpp"
-#include "error.hpp"
-#include "stream.hpp"
-#include "redirection_info.hpp"
+#pragma once
+
+#include <cinttypes>
+
+#include "utils/log.hpp"
+#include "core/error.hpp"
+#include "utils/stream.hpp"
+#include "utils/redirection_info.hpp"
 
 
 // [MS-RDPBCGR] - 2.2.13.1 Server Redirection Packet
@@ -316,7 +318,7 @@ struct ServerRedirectionPDU {
         offset += 4;
         if ((field_length > field_size) ||
             !stream.in_check_rem(field_length)) {
-            LOG(LOG_INFO, "error recv_field_process field_length=%u, sizeof(field)=%u",
+            LOG(LOG_INFO, "error recv_field_process field_length=%" PRIu32 ", sizeof(field)=%zu",
                 field_length, field_size);
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -332,7 +334,7 @@ struct ServerRedirectionPDU {
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_ERR
                , "ServerRedirection::receive RDP_SERVER_REDIRECTION_PACKET"
-                 " - Truncated data, need=%u, remains=%u"
+                 " - Truncated data, need=%u, remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -533,7 +535,7 @@ struct ServerRedirectionPDU {
         if (this->RedirFlags & LB_SERVER_TSV_CAPABLE) {
             LOG(level, "LB_SERVER_TSV_CAPABLE,");
         }
-        LOG(level, "}");
+        LOG(level, "%s", "}");
     }
     void export_to_redirection_info(RedirectionInfo & rinfo) {
 
@@ -637,4 +639,3 @@ struct ServerRedirectionPDU {
 
 };
 
-#endif

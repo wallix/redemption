@@ -18,37 +18,35 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_ACL_AUTH_API_HPP_
-#define _REDEMPTION_ACL_AUTH_API_HPP_
+
+#pragma once
 
 class auth_api {
 public:
     virtual ~auth_api() = default;
 
     virtual void set_auth_channel_target(const char * target) = 0;
-    //virtual void set_auth_channel_result(const char * result) = 0;
 
     virtual void set_auth_error_message(const char * error_message) = 0;
 
     virtual void report(const char * reason, const char * message) = 0;
 
-    virtual void log(const char * type, const char * data) const = 0;
-    virtual void log2(const char * type, const char * data, const char * info)
-        const = 0;
+    virtual void log4(bool duplicate_with_pid, const char * type,
+        const char * extra = nullptr) const = 0;
+
+    virtual void disconnect_target() {}
 };
 
 
 class NullAuthentifier : public auth_api {
-    void set_auth_channel_target(const char * target) override {}
-    //virtual void set_auth_channel_result(const char * result) {}
+    void set_auth_channel_target(const char * target) override { (void)target; }
 
-    void set_auth_error_message(const char * error_message) override {}
+    void set_auth_error_message(const char * error_message) override { (void)error_message; }
 
-    void report(const char * reason, const char * message) override {}
+    void report(const char * reason, const char * message) override { (void)reason; (void)message; }
 
-    void log(const char * type, const char * data) const override {}
-    void log2(const char * type, const char * data, const char * info)
-        const override {}
+    void log4(bool duplicate_with_pid, const char * type,
+        const char * extra = nullptr) const override { (void)duplicate_with_pid; (void)type; (void)extra; }
 };
 
 
@@ -58,4 +56,3 @@ inline NullAuthentifier * get_null_authentifier() {
     return &auth;
 }
 
-#endif  // #ifndef _REDEMPTION_ACL_AUTH_API_HPP_

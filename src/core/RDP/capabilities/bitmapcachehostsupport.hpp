@@ -21,11 +21,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCACHEHOSTSUPPORT_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCACHEHOSTSUPPORT_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.7.2.1 Bitmap Cache Host Support Capability Set (TS_BITMAPCACHE_HOSTSUPPORT_CAPABILITYSET)
 // =============================================================================================
@@ -90,4 +90,3 @@ struct BitmapCacheHostSupportCaps : public Capability {
 };
 
 
-#endif

@@ -24,13 +24,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderGlyphCache
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "stream.hpp"
-#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "utils/stream.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGlyphCache)
 {

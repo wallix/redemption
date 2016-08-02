@@ -18,12 +18,12 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_60_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include "mppc.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 static uint8_t HuffLenLEC[] = {
     0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8, // 0
@@ -246,8 +246,8 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
         hexdump_d(this->history_buf, 16);
         LOG(LOG_INFO, "offsetCache");
         hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
     void dump() override {
@@ -256,8 +256,8 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec {
         hexdump_d(this->history_buf, RDP_60_HIST_BUF_LEN);
         LOG(LOG_INFO, "offsetCache");
         hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
 protected:
@@ -865,7 +865,7 @@ private:
                     REDASSERT((offsetCacheIndex >= 0) && (offsetCacheIndex <= 3));
 
                     if (this->verbose & 512) {
-                        LOG(LOG_INFO, "offsetCacheIndex=%u", offsetCacheIndex);
+                        LOG(LOG_INFO, "offsetCacheIndex=%d", offsetCacheIndex);
                     }
 
                     if (offsetCacheIndex != 0) {
@@ -874,7 +874,7 @@ private:
 
                     LUTIndex = offsetCacheIndex + 289;
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                        LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
                     }
 
                     ::insert_n_bits_60(HuffLenLEC[LUTIndex], HuffCodeLEC[LUTIndex],
@@ -889,7 +889,7 @@ private:
                         ((CopyOffsetBaseLUT[LUTIndex] < (copy_offset + 1)) &&
                          (CopyOffsetBaseLUT[LUTIndex + 1] > (copy_offset + 1))));
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                        LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
                     }
                     int HuffmanIndex = LUTIndex + 257;
                     ::insert_n_bits_60(HuffLenLEC[HuffmanIndex], HuffCodeLEC[HuffmanIndex],
@@ -898,11 +898,11 @@ private:
                     int ExtraBitsLength = CopyOffsetBitsLUT[LUTIndex];
                     if (ExtraBitsLength) {
                         if (this->verbose & 256) {
-                            LOG(LOG_INFO, "ExtraBitsLength=%u", ExtraBitsLength);
+                            LOG(LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
                         }
                         int ExtraBits   = copy_offset & ((1 << ExtraBitsLength) - 1);
                         if (this->verbose & 256) {
-                            LOG(LOG_INFO, "ExtraBits=%u", ExtraBits);
+                            LOG(LOG_INFO, "ExtraBits=%d", ExtraBits);
                         }
                         ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
                             bits_left, opb_index, this->verbose);
@@ -914,7 +914,7 @@ private:
                 REDASSERT((LOMBaseLUT[LUTIndex] == lom) ||
                     ((LOMBaseLUT[LUTIndex] < lom) && (LOMBaseLUT[LUTIndex + 1] > lom)));
                 if (this->verbose & 256) {
-                    LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                    LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
                 }
                 ::insert_n_bits_60(HuffLenLOM[LUTIndex], HuffCodeLOM[LUTIndex],
                     this->outputBuffer, bits_left, opb_index, this->verbose);
@@ -922,11 +922,11 @@ private:
                 int ExtraBitsLength = LOMBitsLUT[LUTIndex];
                 if (ExtraBitsLength) {
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "ExtraBitsLength=%u", ExtraBitsLength);
+                        LOG(LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
                     }
                     int ExtraBits   = (lom - 2) & ((1 << ExtraBitsLength) - 1);
                     if (this->verbose & 256) {
-                        LOG(LOG_INFO, "ExtraBits=%u", ExtraBits);
+                        LOG(LOG_INFO, "ExtraBits=%d", ExtraBits);
                     }
                     ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
                         bits_left, opb_index, this->verbose);
@@ -983,7 +983,7 @@ private:
     }   // void compress_60(const uint8_t * uncompressed_data, int uncompressed_data_size)
 
     void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved) override {
+        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t /*reserved*/) override {
         this->compress_60(uncompressed_data, uncompressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
             compressedType       = this->flags;
@@ -1005,6 +1005,4 @@ public:
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
     }
 };  // struct rdp_mppc_60_enc
-
-#endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
 

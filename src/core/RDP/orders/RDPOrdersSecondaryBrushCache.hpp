@@ -21,10 +21,10 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBRUSHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBRUSHCACHE_HPP_
 
-#include "stream.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
 #include "RDPOrdersCommon.hpp"
 
 // MS-RDPEGDI 2.2.2.2.1.2.7 Cache Brush (CACHE_BRUSH_ORDER)
@@ -230,7 +230,7 @@ public:
     {
         char buffer[1024];
         this->str(buffer, 1024);
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print() const
@@ -241,4 +241,3 @@ public:
     }
 };
 
-#endif

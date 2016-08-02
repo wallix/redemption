@@ -21,12 +21,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestNLA
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "RDP/nla/nla.hpp"
+#include "core/RDP/nla/nla.hpp"
 
-#include "test_transport.hpp"
+#include "transport/test_transport.hpp"
 
 // BOOST_AUTO_TEST_CASE(TestNla)
 // {
@@ -38,7 +38,6 @@
 
 BOOST_AUTO_TEST_CASE(TestNlaclient)
 {
-
     const char client[65000] =
         // negotiate
 /* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
@@ -98,14 +97,16 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
 
     LOG(LOG_INFO, "TEST CLIENT SIDE");
 
-    TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
-    logtrans.set_public_key((const uint8_t*)"1245789652325415", 16);
+    TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
+    logtrans.disable_remaining_error();
+    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";
     uint8_t host[] = "Télémaque";
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false);
-    credssp.hardcodedtests = true;
+    LCGRandom rand(0);
+    LCGTime timeobj;
+    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
     int res = credssp.credssp_client_authenticate();
     BOOST_CHECK_EQUAL(res, 1);
 }
@@ -173,14 +174,17 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
         ;
 
     LOG(LOG_INFO, "TEST SERVER SIDE");
-    TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
-    logtrans.set_public_key((const uint8_t*)"1245789652325415", 16);
+    TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
+    logtrans.disable_remaining_error();
+    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";
     uint8_t host[] = "Télémaque";
-    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false);
-    credssp.hardcodedtests = true;
+    LCGRandom rand(0);
+    LCGTime timeobj;
+    rdpCredssp credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj);
+    credssp.hardcoded_tests = true;
     int res = credssp.credssp_server_authenticate();
     BOOST_CHECK_EQUAL(res, 1);
 }

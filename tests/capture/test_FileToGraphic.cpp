@@ -22,31 +22,26 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFileToGraphic
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "out_filename_sequence_transport.hpp"
-#include "in_file_transport.hpp"
-#include "nativecapture.hpp"
-#include "FileToGraphic.hpp"
-#include "image_capture.hpp"
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/in_file_transport.hpp"
+#include "capture/nativecapture.hpp"
+#include "capture/FileToGraphic.hpp"
+#include "capture/drawable_to_file.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
-    const char * input_filename = "./tests/fixtures/sample0.wrm";
-    char path[1024];
-    size_t len = strlen(input_filename);
-    memcpy(path, input_filename, len);
-    path[len] = 0;
+    const char * input_filename = FIXTURES_PATH "/sample0.wrm";
 
-    int fd = ::open(path, O_RDONLY);
+    int fd = ::open(input_filename, O_RDONLY);
     if (fd == -1){
-        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
+        LOG(LOG_INFO, "open '%s' failed with error : %s", input_filename, strerror(errno));
         BOOST_CHECK(false);
         return;
     }
@@ -61,19 +56,19 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     Inifile ini;
     ini.set<cfg::debug::primary_orders>(0);
     ini.set<cfg::debug::secondary_orders>(0);
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
 //    png_recorder.update_config(ini);
-    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    ini.set<cfg::video::frame_interval>(10);
-    ini.set<cfg::video::break_interval>(20);
+    ini.set<cfg::video::frame_interval>(cfg::video::frame_interval::type{10});
+    ini.set<cfg::video::break_interval>(cfg::video::break_interval::type{20});
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -97,26 +92,30 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     PointerCache ptr_cache;
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    NativeCapture wrm_recorder(
+    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
+    GraphicToFile graphic_to_file(
         player.record_now,
         out_wrm_trans,
         player.screen_rect.cx,
         player.screen_rect.cy,
         24,
-        bmp_cache, gly_cache, ptr_cache, drawable, ini);
+        bmp_cache, gly_cache, ptr_cache, dump_png, ini
+    );
+    NativeCapture wrm_recorder(graphic_to_file, player.record_now, ini);
 
     wrm_recorder.update_config(ini);
-    player.add_consumer(&wrm_recorder, &wrm_recorder);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder);
 
     bool requested_to_stop = false;
 
-    BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
+    BOOST_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
     player.play(requested_to_stop);
 
     png_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
+    BOOST_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
 
-    wrm_recorder.flush();
+    graphic_to_file.sync();
     const char * filename;
 
     out_png_trans.disconnect();
@@ -141,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
 //BOOST_AUTO_TEST_CASE(TestSecondPart)
 //{
-//    const char * input_filename = "./tests/fixtures/sample1.wrm";
+//    const char * input_filename = FIXTURES_PATH "/sample1.wrm";
 //    char path[1024];
 //    size_t len = strlen(input_filename);
 //    memcpy(path, input_filename, len);
@@ -168,10 +167,10 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //    const int groupid = 0;
 //    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
 //    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-//    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
+//    DrawableToFile png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
 //    png_recorder.update_config(ini);
-//    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
+//    player.add_consumer(&drawable1, &drawable1);
 
 //    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
 //    ini.set<cfg::video::frame_interval>(10);
@@ -207,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 //        bmp_cache, drawable, ini);
 
 //    wrm_recorder.update_config(ini);
-//    player.add_consumer((RDPGraphicDevice *)&wrm_recorder, (RDPCaptureDevice *)&wrm_recorder);
+//    player.add_consumer(&wrm_recorder, &wrm_recorder);
 
 //    bool requested_to_stop = false;
 
@@ -217,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
 //    png_recorder.flush();
 
-//    TODO("check RGB/BGR: fixed test replacing 47483 with 47553")
+//    // TODO "check RGB/BGR: fixed test replacing 47483 with 47553"
 //    BOOST_CHECK_EQUAL((unsigned)47553, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
 //    sq_outfilename_unlink(&(out_png_trans.seq), 0);
 

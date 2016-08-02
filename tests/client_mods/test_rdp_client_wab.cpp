@@ -24,25 +24,24 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdpClientWab
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 // Comment the code block below to generate testing data.
 #define LOGNULL
 // Uncomment the code block below to generate testing data.
-// #define LOGPRINT
+//#define LOGPRINT
 
 #include "check_sig.hpp"
-#include "config.hpp"
-#include "test_transport.hpp"
-#include "client_info.hpp"
-#include "rdp/rdp.hpp"
+#include "configs/config.hpp"
+// Comment the code block below to generate testing data.
+#include "transport/test_transport.hpp"
+#include "core/client_info.hpp"
+#include "mod/rdp/rdp.hpp"
 #include "../front/fake_front.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "netutils.hpp"
-//#include "socket_transport.hpp"
+//#include "utils/netutils.hpp"
+//#include "transport/socket_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -57,24 +56,27 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.height                = 768;
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
-    FakeFront front(info, verbose);
-
-    const char * name = "RDP Wab Target";
 
     // Uncomment the code block below to generate testing data.
-    //int             client_sck = ip_connect("10.10.47.86", 3389, 3, 1000, verbose);
+    //SSL_library_init();
+
+    FakeFront front(info, verbose);
+
+    // const char * name = "RDP Wab Target";
+    // Uncomment the code block below to generate testing data.
+    //int             client_sck = ip_connect("10.10.47.154", 3389, 3, 1000, {}, verbose);
     //std::string     error_message;
     //SocketTransport t( name
-    //                , client_sck
-    //                , "10.10.47.86"
-    //                , 3389
-    //                , verbose
-    //                , &error_message
-    //                );
+    //                 , client_sck
+    //                 , "10.10.47.154"
+    //                 , 3389
+    //                 , verbose
+    //                 , &error_message
+    //                 );
 
     // Comment the code block below to generate testing data.
-    #include "fixtures/dump_wab.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    #include "../fixtures/dump_wab.hpp"
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -86,13 +88,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     ModRDPParams mod_rdp_params( "x"
                                , "x"
-                               , "10.10.47.86"
+                               , "10.10.47.154"
                                , "192.168.1.100"
                                , 7
                                , 511
                                );
     mod_rdp_params.device_id                       = "device_id";
-    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_tls                      = true;
     mod_rdp_params.enable_nla                      = false;
     //mod_rdp_params.enable_krb                      = false;
     //mod_rdp_params.enable_clipboard                = true;
@@ -110,7 +112,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp   mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    LCGTime timeobj;
+    mod_rdp   mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2) {
@@ -118,20 +121,25 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
     BOOST_CHECK(t.get_status());
 
-    BOOST_CHECK_EQUAL(mod->get_front_width(),  1024);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 768);
+    BOOST_CHECK_EQUAL(front.info.width, 1024);
+    BOOST_CHECK_EQUAL(front.info.height, 768);
+
+    time_t now = 1450864840;
+
+    while (!mod->is_up_and_running())
+            mod->draw_event(now, front);
 
     uint32_t    count = 0;
     BackEvent_t res   = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 8) break;
-        mod->draw_event(time(nullptr));
+        mod->draw_event(time(nullptr), front);
     }
 
     char message[1024];
     if (!check_sig( front.gd.impl(), message
-                  , "\x05\x18\x38\x7d\xec\xe7\x1d\xf9\x84\xca\x28\x45\xda\x6b\x66\x35\x72\xab\x04\x77"
+                  , "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29"
                   )) {
         BOOST_CHECK_MESSAGE(false, message);
     }

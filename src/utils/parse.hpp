@@ -20,8 +20,8 @@
    wrapper class around byte pointer used to parse
 */
 
-#ifndef _REDEMPTION_UTILS_PARSE_HPP_
-#define _REDEMPTION_UTILS_PARSE_HPP_
+
+#pragma once
 
 #include <stdint.h> // for sized types
 #include <string.h> // for memcpy
@@ -62,7 +62,7 @@ public:
         return static_cast<uint16_t>(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
-    unsigned int in_uint32_le(void) {
+    uint32_t in_uint32_le(void) {
         this->p += 4;
         return  this->p[-4]
              | (this->p[-3] << 8)
@@ -71,7 +71,7 @@ public:
              ;
     }
 
-    unsigned int in_uint32_be(void) {
+    uint32_t in_uint32_be(void) {
         this->p += 4;
         return  this->p[-1]
              | (this->p[-2] << 8)
@@ -144,6 +144,56 @@ public:
     void in_skip_bytes(unsigned int n) {
         this->p+=n;
     }
+
+
+    // 10 = 10, 0x10 = 16
+    unsigned long ulong_from_cstr() noexcept
+    {
+        uint8_t * endptr = nullptr;
+        unsigned long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
+            ? strtoul(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 16)
+            : strtoul(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 10);
+        this->p = endptr;
+        return res;
+    }
+
+    // 10 = 10, 0x10 = 16
+    long long_from_cstr() noexcept
+    {
+        uint8_t * endptr = nullptr;
+        long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
+            ? strtol(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 16)
+            : strtol(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 10);
+        this->p = endptr;
+        return res;
+    }
+
+    // 1, yes, on, true
+    bool bool_from_cstr() noexcept
+    {
+        if (0 == strncasecmp("1", reinterpret_cast<const char*>(this->p), 1))
+        {
+            this->p += 1;
+            return true;
+        }
+        else if (0 == strncasecmp("yes", reinterpret_cast<const char*>(this->p), 3))
+        {
+            this->p += 3;
+            return true;
+        }
+        else if (0 == strncasecmp("on", reinterpret_cast<const char*>(this->p), 2))
+        {
+            this->p += 2;
+            return true;
+        }
+        else if (0 == strncasecmp("true", reinterpret_cast<const char*>(this->p), 4))
+        {
+            this->p += 4;
+            return true;
+        }
+        return false;
+    }
+
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
     // =======================================================
@@ -289,6 +339,4 @@ public:
     }
 
 };
-
-#endif
 

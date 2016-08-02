@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_VNC_AUTHENTIFICATION_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_VNC_AUTHENTIFICATION_HPP
+#pragma once
 
 #include "edit.hpp"
 #include "edit_valid.hpp"
@@ -29,9 +28,10 @@
 #include "image.hpp"
 #include "composite.hpp"
 #include "flat_button.hpp"
-#include "translation.hpp"
-#include "theme.hpp"
-#include "defines.hpp"
+#include "utils/translation.hpp"
+#include "utils/theme.hpp"
+#include "core/defines.hpp"
+#include "gdi/graphic_api.hpp"
 
 class FlatVNCAuthentification : public WidgetParent
 {
@@ -46,9 +46,8 @@ public:
 
     CompositeArray composite_array;
 
-    FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
-                            Widget2 & parent, NotifyApi* notifier, const char* caption,
-                            int group_id, const char * password,
+    FlatVNCAuthentification(gdi::GraphicApi & drawable, uint16_t width, uint16_t height,
+                            Widget2 & parent, NotifyApi* notifier, const char * password,
                             Theme const & theme, const char * label_text_message,
                             const char * label_text_password, Font const & font)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
@@ -58,7 +57,7 @@ public:
                          theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, font,  -1u, 1, 1, true)
+                        theme.edit.focus_color, font, -1u, 1, 1, true)
         // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
@@ -129,4 +128,4 @@ public:
     }
 };
 
-#endif
+

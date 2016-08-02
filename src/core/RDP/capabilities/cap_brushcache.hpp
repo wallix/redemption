@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BRUSHCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_BRUSHCACHE_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
-#include "error.hpp"
+#include "utils/stream.hpp"
+#include "core/error.hpp"
 
 // 2.2.7.1.7 Brush Capability Set (TS_BRUSH_CAPABILITYSET)
 // ======================================================
@@ -84,7 +84,7 @@ struct BrushCacheCaps : public Capability {
         this->len = len;
 
         if (!stream.in_check_rem(4)){
-            LOG(LOG_ERR, "Truncated BrushCacheCaps, need=4 remains=%u",
+            LOG(LOG_ERR, "Truncated BrushCacheCaps, need=4 remains=%zu",
                 stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -98,4 +98,3 @@ struct BrushCacheCaps : public Capability {
     }
 };
 
-#endif

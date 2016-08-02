@@ -22,14 +22,14 @@
    entities
 */
 
-#ifndef _REDEMPTION_UTILS_UTF_HPP_
-#define _REDEMPTION_UTILS_UTF_HPP_
+
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
 // #include <wctype.h>
 
-#include "log.hpp"
+#include "utils/log.hpp"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -103,8 +103,7 @@ enum {
 //    return i;
 //}
 
-
-REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
+// UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 static inline size_t UTF8Len(const uint8_t * source)
 {
     size_t len = 0;
@@ -175,9 +174,8 @@ static inline void UTF16Upper(uint8_t * source, size_t max_len)
 //     }
 // }
 
-
-REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
-      " It assumes input is valid utf8, zero terminated (that has been checked before).")
+// UTF8GetLen find the number of bytes of the len first characters of input.
+// It assumes input is valid utf8, zero terminated (that has been checked before).
 static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -192,7 +190,7 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
     return i;
 }
 
-// REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
+// // UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).
 // static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
 // {
 //     size_t    len = 0;
@@ -228,15 +226,14 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 //     return len;
 // }
 
-// REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
+// // UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.
 // static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
 // {
 //     source[UTF8GetPos(source, len)] = 0;
 // }
 
-REDOC(
-    "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
-    "UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+// UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
+// UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
 static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)
 {
     len += 1;
@@ -260,8 +257,6 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
     return true;
 }
 
-
-
 // UTF8CharNbBytes:
 // ----------------
 // input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
@@ -274,7 +269,24 @@ static inline size_t UTF8CharNbBytes(const uint8_t * source)
     return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
 }
 
-REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before")
+// UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
+static inline size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len)
+{
+    size_t adjust_len = 0;
+    while (*source) {
+        const size_t char_nb_bytes = UTF8CharNbBytes(source);
+        if (adjust_len + char_nb_bytes >= max_len) {
+            break;
+        }
+
+        adjust_len += char_nb_bytes;
+        source += char_nb_bytes;
+    }
+
+    return adjust_len;
+}
+
+// UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
 static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -293,10 +305,8 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
     return;
 }
 
-
-REDOC(
-    "UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before"
-    "UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+// UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
+// UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
 static inline bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source)
 {
     uint8_t lo = to_insert_char & 0xFF;
@@ -355,8 +365,8 @@ static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_
                 i+=2;
             break;
             case 0xF:
-                TODO("Value stored to 'c' is never read")
-                c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                // TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
+                ucode = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:
@@ -406,8 +416,7 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
                 i+=2;
             break;
             case 0xF:
-                TODO("Value stored to 'c' is never read")
-                c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                ucode = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:
@@ -430,10 +439,19 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
             continue;
         }
 
-        if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
-        target[i_t] = ucode & 0xFF;
-        target[i_t + 1] = (ucode >> 8) & 0xFF;
-        i_t += 2;
+        if (ucode > 0xFFFF) {
+            // TODO:We should choose a behavior for ucodes larger than 16 bits:
+            //      ignore char, replace by generic char, support multiwords UTF16,
+            //      or raise an error if we are really dealing with UCS-2 and
+            //      those chars are not allowed.
+            //      For now what we do is ignoring that char.
+        }
+        else {
+            if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
+            target[i_t] = ucode & 0xFF;
+            target[i_t + 1] = (ucode >> 8) & 0xFF;
+            i_t += 2;
+        }
     }
     // write final 0
 UTF8toUTF16_exit:
@@ -487,7 +505,6 @@ class UTF8toUnicodeIterator
 {
     const uint8_t * source;
     uint32_t ucode = 0;
-
 
 public:
     explicit UTF8toUnicodeIterator(const uint8_t * str)
@@ -580,6 +597,45 @@ static inline size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len,
     return i_t;
 }
 
+// Return number of UTF8 bytes used to encode UTF16 input
+// do not write trailing 0
+static inline size_t UTF16toUTF8(const uint16_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len)
+{
+    size_t i_t = 0;
+    for (size_t i = 0 ; i < utf16_len ; i++){
+        uint8_t lo = utf16_source[i*2];
+        uint8_t hi  = utf16_source[i*2+1];
+        if (lo == 0 && hi == 0){
+            if ((i_t + 1) > target_len) { break; }
+            utf8_target[i_t] = 0;
+            i_t++;
+            break;
+        }
+
+        if (hi & 0xF8){
+            // 3 bytes
+            if ((i_t + 3) > target_len) { break; }
+            utf8_target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
+            utf8_target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+            utf8_target[i_t + 2] = 0x80 | (lo & 0x3F);
+            i_t += 3;
+        }
+        else if (hi || (lo & 0x80)) {
+            // 2 bytes
+            if ((i_t + 2) > target_len) { break; }
+            utf8_target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+            utf8_target[i_t + 1] = 0x80 | (lo & 0x3F);
+            i_t += 2;
+        }
+        else {
+            if ((i_t + 1) > target_len) { break; }
+            utf8_target[i_t] = lo;
+            i_t++;
+        }
+    }
+    return i_t;
+}
+
 // Return number of UTF8 bytes used to encode UTF32 input
 // do not write trailing 0
 static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len, uint8_t * utf8_target, size_t target_len)
@@ -617,6 +673,43 @@ static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len,
             utf8_target[i_t] = lo;
             i_t++;
         }
+    }
+    return i_t;
+}
+
+// Return number of UTF8 bytes used to encode UTF32 input
+// do not write trailing 0
+static inline size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, size_t target_len)
+{
+    size_t i_t = 0;
+    uint8_t lo = (utf32_char & 0xffu);
+    uint8_t hi = (utf32_char & 0xff00u) >> 8;
+    if (lo == 0 && hi == 0){
+        if ((i_t + 1) > target_len) { return i_t; }
+        utf8_target[i_t] = 0;
+        i_t++;
+        return i_t;
+    }
+
+    if (hi & 0xF8){
+        // 3 bytes
+        if ((i_t + 3) > target_len) { return i_t; }
+        utf8_target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
+        utf8_target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+        utf8_target[i_t + 2] = 0x80 | (lo & 0x3F);
+        i_t += 3;
+    }
+    else if (hi || (lo & 0x80)) {
+        // 2 bytes
+        if ((i_t + 2) > target_len) { return i_t; }
+        utf8_target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+        utf8_target[i_t + 1] = 0x80 | (lo & 0x3F);
+        i_t += 2;
+    }
+    else {
+        if ((i_t + 1) > target_len) { return i_t; }
+        utf8_target[i_t] = lo;
+        i_t++;
     }
     return i_t;
 }
@@ -728,7 +821,6 @@ static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
 }
 
 static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * latin1_target, size_t latin1_len) {
-    const uint16_t * utf16_source = reinterpret_cast<const uint16_t *>(utf16_source_);
 
     utf16_len &= ~1;
 
@@ -769,11 +861,10 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
         return false;
     };
 
-    const uint16_t * current_utf16_source  = utf16_source;
-          uint8_t  * current_latin1_target = latin1_target;
+    uint8_t  * current_latin1_target = latin1_target;
     for (size_t remaining_utf16_len = utf16_len / 2, remaining_latin1_len = latin1_len;
-         remaining_utf16_len && remaining_latin1_len; current_utf16_source++, remaining_utf16_len--) {
-        if (converter(*current_utf16_source, current_latin1_target)) {
+         remaining_utf16_len && remaining_latin1_len; utf16_source_+=2, remaining_utf16_len--) {
+        if (converter(utf16_source_[1]*256+utf16_source_[0], current_latin1_target)) {
             current_latin1_target++;
             remaining_latin1_len--;
         }
@@ -783,7 +874,7 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
 }
 
 static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len,
-        uint8_t * utf16_target_, size_t utf16_len, bool LfToCrLf = false) {
+        uint8_t * utf16_target_, size_t utf16_len) {
     uint16_t * utf16_target = reinterpret_cast<uint16_t *>(utf16_target_);
 
     auto converter = [](uint8_t src, uint16_t *& dst, size_t & remaining_dst_len) -> bool {
@@ -842,4 +933,3 @@ static inline size_t UTF16StrLen(const uint8_t * utf16_s) {
     return length;
 }
 
-#endif

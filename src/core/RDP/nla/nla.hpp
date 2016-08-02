@@ -18,14 +18,18 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NLA_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NLA_HPP_
 
-#include "RDP/nla/sspi.hpp"
-#include "RDP/nla/credssp.hpp"
-#include "RDP/nla/ntlm/ntlm.hpp"
-#include "RDP/nla/kerberos/kerberos.hpp"
-#include "transport.hpp"
+#pragma once
+
+#include "core/RDP/nla/sspi.hpp"
+#include "core/RDP/nla/credssp.hpp"
+#include "core/RDP/nla/ntlm/ntlm.hpp"
+
+#ifndef __EMSCRIPTEN__
+#include "core/RDP/nla/kerberos/kerberos.hpp"
+#endif
+
+#include "transport/transport.hpp"
 
 #define NLA_PKG_NAME NTLMSP_NAME
 
@@ -55,10 +59,11 @@ struct rdpCredssp
     SecInterface sec_interface;
 
     const char * target_host;
+    Random & rand;
+    TimeObj & timeobj;
     const uint32_t verbose;
 
-    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static")
-    bool hardcodedtests;
+    bool hardcoded_tests = false;
 
     rdpCredssp(Transport & transport,
                uint8_t * user,
@@ -68,6 +73,8 @@ struct rdpCredssp
                const char * target_host,
                const bool krb,
                const bool restricted_admin_mode,
+               Random & rand,
+               TimeObj & timeobj,
                const uint32_t verbose = 0)
         : server(false)
         , send_seq_num(0)
@@ -80,8 +87,9 @@ struct rdpCredssp
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_host(target_host)
+        , rand(rand)
+        , timeobj(timeobj)
         , verbose(verbose)
-        , hardcodedtests(false)
     {
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "rdpCredssp:: Initialization");
@@ -144,11 +152,18 @@ public:
         }
         if (secInter == NTLM_Interface) {
             LOG(LOG_INFO, "Credssp: NTLM Authentication");
-            this->table = new Ntlm_SecurityFunctionTable;
+            auto table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
+            if (this->hardcoded_tests) {
+                table->hardcoded_tests = true;
+            }
+            this->table = table;
         }
         if (secInter == Kerberos_Interface) {
             LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
+
+            #ifndef __EMSCRIPTEN__
             this->table = new Kerberos_SecurityFunctionTable;
+            #endif
         }
         else if (this->table == nullptr) {
             this->table = new SecurityFunctionTable;
@@ -527,7 +542,7 @@ public:
             this->InitSecurityInterface(this->sec_interface);
 
             if (this->table == nullptr) {
-                LOG(LOG_ERR, "Could not Initiate %s Security Interface!", this->sec_interface);
+                LOG(LOG_ERR, "Could not Initiate %d Security Interface!", this->sec_interface);
                 return 0;
             }
             status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
@@ -578,7 +593,6 @@ public:
          * ISC_REQ_ALLOCATE_MEMORY
          */
 
-        unsigned long pfContextAttr;
         unsigned long fContextReq = 0;
         fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
@@ -594,13 +608,11 @@ public:
                                                             reinterpret_cast<char*>(
                                                                 this->ServicePrincipalName.get_data()),
                                                             fContextReq,
-                                                            this->hardcodedtests?1:0,
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : nullptr,
                                                             this->verbose, &this->context,
                                                             &output_buffer_desc,
-                                                            &pfContextAttr,
                                                             &expiration);
             if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
                 (status != SEC_I_COMPLETE_NEEDED) &&
@@ -622,7 +634,7 @@ public:
                 // have_pub_key_auth = true;
                 if (this->table->QueryContextAttributes(&this->context, SECPKG_ATTR_SIZES,
                                                         &this->ContextSizes) != SEC_E_OK) {
-                    LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+                    LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
                     return 0;
                 }
                 encrypted = this->credssp_encrypt_public_key_echo();
@@ -706,7 +718,7 @@ public:
         this->credssp_buffer_free();
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "Could not verify public key echo!\n");
+            LOG(LOG_ERR, "Could not verify public key echo!");
             this->credssp_buffer_free();
             return -1;
         }
@@ -784,7 +796,6 @@ public:
         * ASC_REQ_ALLOCATE_MEMORY
         */
 
-       unsigned long pfContextAttr = this->hardcodedtests?1:0;
        unsigned long fContextReq = 0;
        fContextReq |= ASC_REQ_MUTUAL_AUTH;
        fContextReq |= ASC_REQ_CONFIDENTIALITY;
@@ -813,7 +824,7 @@ public:
                                     input_buffer.Buffer.size());
 
            if (this->negoToken.size() < 1) {
-               LOG(LOG_ERR, "CredSSP: invalid negoToken!\n");
+               LOG(LOG_ERR, "CredSSP: invalid negoToken!");
                return -1;
            }
 
@@ -827,8 +838,7 @@ public:
                                                        have_context? &this->context: nullptr,
                                                        &input_buffer_desc, fContextReq,
                                                        SECURITY_NATIVE_DREP, &this->context,
-                                                       &output_buffer_desc, &pfContextAttr,
-                                                       &expiration);
+                                                       &output_buffer_desc, &expiration);
 
            this->negoToken.init(output_buffer.Buffer.size());
            this->negoToken.copy(output_buffer.Buffer.get_data(),
@@ -848,12 +858,12 @@ public:
                if (this->table->QueryContextAttributes(&this->context,
                                                        SECPKG_ATTR_SIZES,
                                                        &this->ContextSizes) != SEC_E_OK) {
-                   LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+                   LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
                    return 0;
                }
 
                if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
-                   LOG(LOG_ERR, "Error: could not verify client's public key echo\n");
+                   LOG(LOG_ERR, "Error: could not verify client's public key echo");
                    return -1;
                }
 
@@ -913,4 +923,3 @@ public:
 
 
 
-#endif

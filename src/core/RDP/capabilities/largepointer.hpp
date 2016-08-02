@@ -21,11 +21,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_LARGEPOINTER_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_LARGEPOINTER_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.7.2.7 Large Pointer Capability Set (TS_LARGE_POINTER_CAPABILITYSET)
 // =======================================================================
@@ -73,21 +73,20 @@ struct LargePointerCaps : public Capability {
     {
     }
 
-    void emit(OutStream & stream){
+    void emit(OutStream & stream) override {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->largePointerSupportFlags);
     }
 
-    void recv(InStream & stream, uint16_t len){
+    void recv(InStream & stream, uint16_t len) override {
         this->len = len;
         this->largePointerSupportFlags = stream.in_uint16_le();
     }
 
-    void log(const char * msg){
+    void log(const char * msg) override {
         LOG(LOG_INFO, "%s LargePointer caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "LargePointer caps::largePointerSupportFlags %u", this->largePointerSupportFlags);
     }
 };
 
-#endif

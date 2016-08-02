@@ -22,10 +22,10 @@
 
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
 
-#include "front_api.hpp"
+#pragma once
+
+#include "core/front_api.hpp"
 #include "internal_mod.hpp"
 
 class Bouncer2Mod : public InternalMod
@@ -99,7 +99,8 @@ public:
     }
 
     // This should come from BACK!
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        (void)now;
         this->interaction();
         // Calculating new speedx and speedy
         if (this->dancing_rect.x <= 0 && this->speedx < 0) {
@@ -120,17 +121,19 @@ public:
         this->dancing_rect.x += this->speedx;
         this->dancing_rect.y += this->speedy;
 
-        this->front.begin_update();
+        drawable.begin_update();
         // Drawing the RECT
-        this->front.draw(RDPOpaqueRect(this->dancing_rect, 0x0000FF), this->screen.rect);
+        drawable.draw(RDPOpaqueRect(this->dancing_rect, 0x0000FF), this->screen.rect);
 
         // And erase
         this->wipe(oldrect, this->dancing_rect, 0x00FF00, this->screen.rect);
-        this->front.end_update();
+        drawable.end_update();
 
         // Final with setting next idle time
         this->event.set(33333); // 0.3s is 30fps
     }
+
+    bool is_up_and_running() override { return true; }
 
     void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip) {
         oldrect.difference(newrect, [&](const Rect & a) {
@@ -139,4 +142,3 @@ public:
     }
 };
 
-#endif

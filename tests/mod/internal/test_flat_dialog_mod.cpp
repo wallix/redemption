@@ -22,16 +22,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFlatDialogMod
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef FIXTURES_PATH
-#define FIXTURES_PATH "./tests/fixtures"
-#undef SHARE_PATH
-#define SHARE_PATH "./tests/fixtures"
 
 #define LOGNULL
+//#define LOGPRINT
 
-#include "internal/flat_dialog_mod.hpp"
+#include "mod/internal/flat_dialog_mod.hpp"
 #include "../../front/fake_front.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDialogMod)
@@ -51,11 +48,11 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL("True", ini.get<cfg::context::accept_message>());
+    BOOST_CHECK_EQUAL(true, ini.get<cfg::context::accept_message>());
 }
 
 
@@ -76,11 +73,11 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    BOOST_CHECK_EQUAL("False", ini.get<cfg::context::accept_message>());
+    BOOST_CHECK_EQUAL(false, ini.get<cfg::context::accept_message>());
 }
 
 BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
@@ -100,26 +97,69 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
 
 
-    StaticOutStream<256> decoded_data;
     bool    ctrl_alt_del;
 
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 16; // key is 'a'
 
-    keymap.event(keyboardFlags, keyCode + 1, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    BOOST_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::password>());
+}
+
+BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
+{
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 1600;
+    info.height = 1200;
+
+    FakeFront front(info, 0);
+
+    Inifile ini;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+
+    FlatDialogMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+
+
+    bool    ctrl_alt_del;
+
+    uint16_t keyboardFlags = 0 ;
+    uint16_t keyCode = 16; // key is 'a'
+
+    keymap.event(keyboardFlags, keyCode + 1, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode + 2, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     keymap.push_kevent(Keymap2::KEVENT_ENTER);

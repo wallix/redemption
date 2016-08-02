@@ -19,11 +19,12 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_LABEL_HPP)
-#define REDEMPTION_MOD_WIDGET2_LABEL_HPP
+#pragma once
 
-#include "widget.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "mod/internal/widget2/widget.hpp"
+#include "utils/sugar/cast.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetLabel : public Widget2
 {
@@ -45,7 +46,7 @@ public:
     Font const & font;
 
 public:
-    WidgetLabel(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
+    WidgetLabel(gdi::GraphicApi & drawable, int16_t x, int16_t y, Widget2& parent,
                 NotifyApi* notifier, const char * text, bool auto_resize,
                 int group_id, uint32_t fgcolor, uint32_t bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0)
@@ -73,14 +74,16 @@ public:
     {
         this->buffer[0] = 0;
         if (text) {
-            const size_t max = std::min(buffer_size - 1, strlen(text));
+            const size_t remain_n = buffer_size - 1;
+            const size_t n = strlen(text);
+            const size_t max = ((remain_n >= n) ? n :
+                                ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize) {
-                int w, h;
-                this->drawable.text_metrics(this->font, this->buffer, w, h);
-                this->rect.cx = this->x_text * 2 + w;
-                this->rect.cy = this->y_text * 2 + h;
+                gdi::TextMetrics tm(this->font, this->buffer);
+                this->rect.cx = this->x_text * 2 + tm.width;
+                this->rect.cy = this->y_text * 2 + tm.height;
             }
         }
     }
@@ -92,20 +95,20 @@ public:
 
     void draw(const Rect& clip) override {
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        this->drawable.server_draw_text(this->font,
-                                        this->x_text + this->dx(),
-                                        this->y_text + this->dy(),
-                                        this->get_text(),
-                                        this->fg_color,
-                                        this->bg_color,
-                                        this->rect.intersect(clip)
-                                        );
+        gdi::server_draw_text(this->drawable,
+                              this->font,
+                              this->x_text + this->dx(),
+                              this->y_text + this->dy(),
+                              this->get_text(),
+                              this->fg_color,
+                              this->bg_color,
+                              this->rect.intersect(clip)
+                              );
     }
 
     Dimension get_optimal_dim() override {
-        int w, h;
-        this->drawable.text_metrics(this->font, this->buffer, w, h);
-        return Dimension(w + this->x_text * 2, h + this->y_text * 2);
+        gdi::TextMetrics tm(this->font, this->buffer);
+        return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
     }
 
     bool shift_text(int pos_x) {
@@ -127,13 +130,12 @@ public:
         this->fg_color = fg_color;
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2*) override {
         if (this->tool) {
             if (device_flags == MOUSE_FLAG_MOVE) {
-                int w = 0;
-                int h = 0;
-                this->drawable.text_metrics(this->font, this->buffer, w, h);
-                if (w > this->rect.cx) {
+                // TODO: tm.height unused ?
+                gdi::TextMetrics tm(this->font, this->buffer);
+                if (tm.width > this->rect.cx) {
                     this->show_tooltip(this, this->buffer, x, y);
                 }
             }
@@ -142,4 +144,3 @@ public:
 
 };
 
-#endif

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cmd="$1"
+[ -z "$cmd"] && cmd="$(dirname "$0")"/cppcheck
+
+"$cmd" \
+  --template='cppcheck [{file}:{line}]: ({severity}) [{id}] {message}' \
+  --suppress=unusedFunction \
+  --suppress=unusedStructMember \
+  --suppress=uninitMemberVar \
+  --suppress=selfInitialization \
+  --suppress=noExplicitConstructor \
+  --suppress=CastIntegerToAddressAtReturn

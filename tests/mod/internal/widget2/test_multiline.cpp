@@ -22,20 +22,14 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWidgetMultiLine
-#include <boost/test/auto_unit_test.hpp>
-
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/multiline.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/multiline.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
 
 #include "fake_draw.hpp"
 
@@ -46,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -57,10 +51,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     int xtext = 4;
     int ytext = 1;
 
-    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
-         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
-         "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    /* TODO
+     * I believe users of this widget may wish to control text position and behavior inside rectangle
+     * ie: text may be centered, aligned left, aligned right, or even upside down, etc
+     * these possibilities (and others) are supported in RDPGlyphIndex */
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -78,8 +73,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x79\x04\xc6\xe6\x88\x42\xfc\x31\xb5\x18"
-        "\xf9\xb8\xce\xca\x8b\x75\xb6\xf0\xee\x96"
+        "\x72\x15\x18\x3f\xdf\xc5\x0c\xce\xb5\x7e\x35\xc7\xee\xee\xd6\x9b\x6a\xd0\x7b\xe4"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -92,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -101,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -119,8 +113,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xc6\x2e\xbe\xa7\xa6\x8b\x95\x65\x10\xc4"
-        "\x4d\x8c\x25\x54\xcf\xd9\x7e\x0a\x19\xc9"
+        "\x40\x55\x16\x14\x94\xe6\x87\xe4\xe9\xda\xe9\x4a\x1e\x7a\x9a\x9f\x37\x95\x83\x8a"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -133,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -142,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -160,8 +153,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x7b\x75\x7c\x63\x30\x5c\x76\xb8\x48\xa7"
-        "\xaa\x60\xee\x6b\x6a\x42\xcb\x56\xa4\xec"
+        "\xe4\x4e\x51\x1a\xfc\x29\xf8\x6e\xb5\xf1\xb4\x5e\x6a\xb5\x27\xad\x10\x57\x28\xc5"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -174,7 +166,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -183,7 +175,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -201,8 +193,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x39\xf3\xcb\x87\x56\x8a\x6e\xe1\xd2\xc4"
-        "\xab\x2a\x52\x12\xb2\xbf\x16\x53\x0f\xf6"
+        "\x9a\x2d\xc2\x29\xac\x20\xa1\xa4\x08\xea\x94\x51\x7d\x67\x84\xf9\x7d\x28\x29\xb7"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -215,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -224,7 +215,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -242,8 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xc3\x12\x01\x1b\x1b\xa3\x51\xc6\x79\x05"
-        "\xa9\x89\x30\xda\x24\xe9\x49\x9d\x27\x06"
+        "\xd6\xb8\x09\x56\xfa\xde\xd0\xd4\xe0\x14\xe1\x5e\x2a\x3c\x8d\x79\x65\xee\xc3\xcf"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -256,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -265,7 +255,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -283,8 +273,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x86\x81\xe2\x98\x84\xae\xdb\xa1\xf6\xf0"
-        "\xf6\x89\x5a\x18\x28\x61\x35\xac\x13\xa9"
+        "\x4b\xcc\xd8\xb0\x23\x6d\xa6\x2e\x79\x2b\xab\x81\x20\x82\x8e\x8c\x68\x94\x10\x8f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -297,7 +286,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -306,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -324,8 +313,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xb3\xe6\x76\x89\x65\x50\xc0\x73\x86\xcd"
-        "\x27\x3d\x5a\xe2\x46\x23\xb2\x39\xd4\xa5"
+        "\x6e\xd9\xe7\x6d\x10\x0b\x6f\x62\x93\xd0\x55\xf3\xb1\x20\x06\x57\xdb\x27\x25\x78"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -338,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -347,7 +335,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -365,8 +353,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\x14\xe3\x00\xef\xb0\xe4\x12\x06\xf1\xbf"
-        "\x3a\x59\xe0\x57\x6d\xea\x71\x97\xd3\xd3"
+        "\xc5\x52\xb0\x08\x97\xa8\x7b\x4c\x83\x8f\x57\xb9\xdd\xde\xf4\x4f\x4b\xcf\x54\x4e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -379,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -388,7 +375,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable, x, y, parent, notifier,
+    WidgetMultiLine wmultiline(drawable.gd, x, y, parent, notifier,
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                                "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                                "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -404,8 +391,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
     char message[1024];
     if (!check_sig(drawable.gd.impl(), message,
-        "\xa6\x30\xe2\xd0\xa4\x03\xd1\x30\xdc\xdb"
-        "\x2b\xa2\xf8\xa3\xe8\x40\xad\x7c\xb8\x18"
+        "\x2f\xbb\xe7\xbc\xd2\xcb\x0d\x46\xb6\x27\x24\xd4\x61\x9a\xd4\xc3\x2c\x37\x82\x0c"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

@@ -23,20 +23,20 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWrmImageChunk
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
+//#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
-#include "test_transport.hpp"
-#include "out_filename_sequence_transport.hpp"
-#include "FileToGraphic.hpp"
-#include "GraphicToFile.hpp"
-#include "image_capture.hpp"
+#include "transport/test_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "capture/FileToGraphic.hpp"
+#include "capture/GraphicToFile.hpp"
+#include "capture/drawable_to_file.hpp"
 
+#include "utils/dump_png24_from_rdp_drawable_adapter.hpp"
 
 BOOST_AUTO_TEST_CASE(TestImageChunk)
 {
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         Rect scr(0, 0, 20, 10);
         CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
         Inifile ini;
-        ini.set<cfg::video::wrm_compression_algorithm>(0);
+        ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
         BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                            BmpCache::CacheOption(600, 256, false),
                            BmpCache::CacheOption(300, 1024, false),
@@ -91,14 +91,18 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         PointerCache ptr_cache;
         GlyphCache gly_cache;
         RDPDrawable drawable(scr.cx, scr.cy, 24);
-        GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+        DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
+        GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+        drawable.draw(RDPOpaqueRect(scr, RED), scr);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
+        drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
         consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+        drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
         consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-        consumer.flush();
+        consumer.sync();
         consumer.send_image_chunk();
     }
-    catch (Error const & e){
+    catch (Error const &){
         BOOST_CHECK(false);
     };
 }
@@ -159,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -167,16 +171,21 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush();
+    consumer.sync();
 
     OutChunkedBufferingTransport<100> png_trans(trans);
     try {
         consumer.dump_png24(png_trans, true);
-    } catch (Error const & e) {
+//        DumpPng24FromRDPDrawableAdapter(consumer).dump_png24(png_trans, true);
+    } catch (Error const &) {
         BOOST_CHECK(false);
     };
 }
@@ -245,7 +254,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
@@ -253,15 +262,19 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, drawable, ini);
+    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
+    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, ini);
+    drawable.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush();
+    consumer.sync();
 
     OutChunkedBufferingTransport<16> png_trans(trans);
-
     consumer.dump_png24(png_trans, true);
+//    DumpPng24FromRDPDrawableAdapter(consumer).dump_png24(png_trans, true);
 
 }
 
@@ -290,7 +303,8 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                 );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    d.dump_png24(png_trans, true);
+    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
+//    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 
@@ -352,7 +366,8 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    d.dump_png24(png_trans, true);
+    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
+//    d.dump_png24(png_trans, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 
@@ -413,10 +428,9 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
-    BOOST_CHECK_EQUAL(1, player.nbconsumers);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -485,13 +499,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
-    ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.impl());
+    DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable1, (RDPCaptureDevice *)&drawable1);
-    BOOST_CHECK_EQUAL(1, player.nbconsumers);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -568,14 +581,14 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     const int groupid = 0;
     OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, 24);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.impl());
+    DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer((RDPGraphicDevice *)&drawable, (RDPCaptureDevice *)&drawable);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.record_now.tv_sec);
+    BOOST_CHECK_EQUAL(1004u, static_cast<unsigned>(player.record_now.tv_sec));
 
     const char * filename = out_png_trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(107, ::filesize(filename));

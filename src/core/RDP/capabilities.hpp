@@ -20,15 +20,15 @@
    RDP Capabilities :
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_HPP_
+
+#pragma once
 
 #include "capabilities/common.hpp"
 
 #include "capabilities/activate.hpp"
 #include "capabilities/cap_bitmap.hpp"
 //#include "capabilities/bitmapcodecs.hpp"
-#include "capabilities/bmpcache.hpp"
+#include "capabilities/cap_bmpcache.hpp"
 #include "capabilities/bmpcache2.hpp"
 #include "capabilities/cap_brushcache.hpp"
 #include "capabilities/colcache.hpp"
@@ -39,7 +39,7 @@
 #include "capabilities/cap_font.hpp"
 // #include "capabilities/frameacknowledge.hpp"
 #include "capabilities/general.hpp"
-#include "capabilities/glyphcache.hpp"
+#include "capabilities/cap_glyphcache.hpp"
 #include "capabilities/input.hpp"
 // #include "capabilities/largepointer.hpp"
 #include "capabilities/multifragmentupdate.hpp"
@@ -54,4 +54,3 @@
 // #include "capabilities/virchan.hpp"
 // #include "capabilities/window.hpp"
 
-#endif

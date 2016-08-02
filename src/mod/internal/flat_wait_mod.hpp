@@ -16,48 +16,53 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2014
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_FLAT_WAIT_MOD_HPP
 
-#include "front_api.hpp"
-#include "config.hpp"
+#pragma once
+
+#include "core/front_api.hpp"
+#include "configs/config.hpp"
+#include "widget2/language_button.hpp"
 #include "widget2/flat_wait.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 #include "copy_paste.hpp"
-#include "timeout.hpp"
+#include "utils/timeout.hpp"
 
-#include "config_access.hpp"
+#include "configs/config_access.hpp"
 
 
 using FlatWaitModVariables = vcfg::variables<
-    vcfg::var<cfg::context::comment,        vcfg::write>,
-    vcfg::var<cfg::context::duration,       vcfg::write>,
-    vcfg::var<cfg::context::ticket,         vcfg::write>,
-    vcfg::var<cfg::context::waitinforeturn, vcfg::write>,
-    vcfg::var<cfg::translation::language>,
-    vcfg::var<cfg::font>,
-    vcfg::var<cfg::theme>
+    vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
+    vcfg::var<cfg::context::comment,                    vcfg::accessmode::set>,
+    vcfg::var<cfg::context::duration,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::context::ticket,                     vcfg::accessmode::set>,
+    vcfg::var<cfg::context::waitinforeturn,             vcfg::accessmode::set>,
+    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
+    vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
 class FlatWaitMod : public InternalMod, public NotifyApi
 {
+    LanguageButton language_button;
     FlatWait wait_widget;
 
     FlatWaitModVariables vars;
-    TimeoutT<time_t>   timeout;
+    Timeout timeout;
 
     CopyPaste copy_paste;
 
 public:
-    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+    FlatWaitMod(FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect,
                 const char * caption, const char * message, time_t now,
                 bool showform = false, uint32_t flag = 0)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
-        , wait_widget(*this, width, height, this->screen, this, caption, message, 0,
+        , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
+        , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1, this->screen, this, caption, message, 0,
+                      &this->language_button,
                       vars.get<cfg::font>(),
                       vars.get<cfg::theme>(),
                       language(vars),
@@ -102,7 +107,7 @@ private:
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void accepted()
     {
         this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
@@ -110,7 +115,7 @@ private:
         this->event.set();
     }
 
-    TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod")
+    // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
     void refused()
     {
         this->vars.set_acl<cfg::context::waitinforeturn>("exit");
@@ -119,15 +124,15 @@ private:
     }
 
 public:
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
         switch(this->timeout.check(now)) {
-        case TimeoutT<time_t>::TIMEOUT_REACHED:
+        case Timeout::TIMEOUT_REACHED:
             this->refused();
             break;
-        case TimeoutT<time_t>::TIMEOUT_NOT_REACHED:
+        case Timeout::TIMEOUT_NOT_REACHED:
             this->event.set(1000000);
             break;
-        default:
+        case Timeout::TIMEOUT_INACTIVE:
             if (!this->copy_paste && event.waked_up_by_time) {
                 this->copy_paste.ready(this->front);
             }
@@ -136,11 +141,13 @@ public:
         }
     }
 
+    bool is_up_and_running() override { return true; }
+
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        (void)length;
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
 };
 
-#endif

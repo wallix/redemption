@@ -18,13 +18,13 @@
  *   Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_TRANSLATION_HPP
-#define REDEMPTION_TRANSLATION_HPP
+
+#pragma once
 
 #include <array>
 #include <algorithm>
-#include "config.hpp"
-#include "log.hpp"
+#include "configs/config.hpp"
+#include "utils/log.hpp"
 
 struct Translation
 {
@@ -61,7 +61,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 54> trans_t;
+    typedef std::array<value_type, 55> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -166,12 +166,15 @@ private:
                                   "Informations Cible Requises"}},
         {"device", {"Device",
                     "Machine"}},
-        {"disable_osd", {"(hidden with insert or left click)",
-                         "(cacher avec insert ou clic gauche)"}},
+        {"disable_osd", {"(insert key or left click to hide)",
+                         "(cacher avec touche insert ou clic gauche)"}},
         {"disconnected_by_otherconnection",
             {"Another user connected to the resource, so your connection was lost.",
              "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."}},
-        }}
+        {"process_interrupted_security_policies",
+            {"The process '%s' was interrupted in accordance with security policies.",
+             "Le processus '%s' a été interrompu conformément aux politiques de sécurité."}},
+    }}
     {
         std::sort(this->trans.begin(), this->trans.end());
     }
@@ -248,8 +251,7 @@ inline Translation::language_t language(Inifile const & ini) {
     return static_cast<Translation::language_t>(ini.get<cfg::translation::language>());
 }
 
-inline Translation::language_t language(configs::Language lang) {
+inline Translation::language_t language(Language lang) {
     return static_cast<Translation::language_t>(lang);
 }
 
-#endif

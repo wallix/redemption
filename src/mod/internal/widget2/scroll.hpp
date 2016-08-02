@@ -19,10 +19,11 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCROLLBAR_HPP_)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_SCROLLBAR_HPP_
+#pragma once
+
 #include "widget.hpp"
-#include "region.hpp"
+#include "utils/region.hpp"
+#include "gdi/graphic_api.hpp"
 
 class WidgetFrame : public Widget2 {
 public:
@@ -33,7 +34,7 @@ public:
 
     // LAMBDA = (widget_y - frame_y) / (frame_height - widget_height)
 
-    WidgetFrame(DrawApi & drawable, const Rect& rect, Widget2 & parent,
+    WidgetFrame(gdi::GraphicApi & drawable, const Rect& rect, Widget2 & parent,
                 NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
         , wid(nullptr)
@@ -187,7 +188,7 @@ public:
     int16_t y_click;
     int step;
 
-    WidgetVScrollBar(DrawApi & drawable, Widget2 & parent, NotifyApi * notifier,
+    WidgetVScrollBar(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier,
                      int fg_color, int bg_color, int focus_color, int group_id = 0)
         : Widget2(drawable, Rect(0, 0, 14, 1), parent, notifier, group_id)
         , frame(nullptr)
@@ -370,7 +371,7 @@ public:
     int16_t x_click;
     int step;
 
-    WidgetHScrollBar(DrawApi & drawable, Widget2 & parent, NotifyApi * notifier,
+    WidgetHScrollBar(gdi::GraphicApi & drawable, Widget2 & parent, NotifyApi * notifier,
                      int fg_color, int bg_color, int focus_color, int group_id = 0)
         : Widget2(drawable, Rect(0, 0, 1, 14), parent, notifier, group_id)
         , frame(nullptr)
@@ -539,5 +540,3 @@ public:
 };
 
 
-
-#endif

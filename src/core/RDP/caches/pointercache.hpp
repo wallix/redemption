@@ -18,13 +18,13 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_
+
+#pragma once
 
 
-#include "noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
-#include "RDP/pointer.hpp"
+#include "core/RDP/pointer.hpp"
 
 
 enum {
@@ -37,7 +37,7 @@ enum {
 };
 
 /* difference caches */
-class PointerCache {
+class PointerCache : noncopyable {
     int pointer_cache_entries;
 
     /* pointer */
@@ -50,8 +50,6 @@ public:
     Pointer Pointers[MAX_POINTER_COUNT];
 
 public:
-    REDEMPTION_NON_COPYABLE(PointerCache);
-
     explicit PointerCache(int pointer_cache_entries = 0)
     : pointer_cache_entries(pointer_cache_entries)
     {}
@@ -117,4 +115,3 @@ public:
     }
 };  // struct PointerCache
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_CACHES_POINTERCACHE_HPP_

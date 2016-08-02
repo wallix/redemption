@@ -18,13 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_
 
-#include "log.hpp"
-#include "translation.hpp"
+#pragma once
+
+#include "utils/log.hpp"
+#include "utils/translation.hpp"
 
 #include <string>
+#include <chrono>
 
 class Transport;
 class auth_api;
@@ -35,77 +36,101 @@ struct ModRDPParams {
     const char * target_host;
     const char * client_address;
 
-    const char * client_name;
+    const char * auth_user = "";
+    const char * target_application = "";
 
-    bool enable_tls;
-    bool enable_nla;
-    bool enable_krb;
-    bool enable_fastpath;           // If true, fast-path must be supported.
-    bool enable_mem3blt;
-    bool enable_bitmap_update;
-    bool enable_new_pointer;
-    bool enable_glyph_cache;
-    bool enable_wab_agent;
-    bool enable_wab_agent_loading_mask;
+    bool enable_tls = true;
+    bool enable_nla = true;
+    bool enable_krb = false;
+    bool enable_fastpath = true;           // If true, fast-path must be supported.
+    bool enable_mem3blt = true;
+    bool enable_bitmap_update = false;
+    bool enable_new_pointer = true;
+    bool enable_glyph_cache = false;
+    bool enable_session_probe = false;
+    bool enable_session_probe_launch_mask = true;
 
-    bool disable_clipboard_log_syslog;
-    bool disable_clipboard_log_wrm;
-    bool disable_file_system_log_syslog;
-    bool disable_file_system_log_wrm;
+    bool disable_clipboard_log_syslog = false;
+    bool disable_clipboard_log_wrm = false;
+    bool disable_file_system_log_syslog = false;
+    bool disable_file_system_log_wrm = false;
 
-    unsigned     wab_agent_launch_timeout;
-    unsigned     wab_agent_on_launch_failure;
-    unsigned     wab_agent_keepalive_timeout;
-    const char * wab_agent_alternate_shell;
+    bool                         session_probe_use_clipboard_based_launcher = false;
+    std::chrono::milliseconds    session_probe_launch_timeout {};
+    std::chrono::milliseconds    session_probe_launch_fallback_timeout {};
+    bool                         session_probe_start_launch_timeout_timer_only_after_logon = true;
+    SessionProbeOnLaunchFailure  session_probe_on_launch_failure = SessionProbeOnLaunchFailure::disconnect_user;
+    std::chrono::milliseconds    session_probe_keepalive_timeout {};
+    bool                         session_probe_on_keepalive_timeout_disconnect_user = true;
+    bool                         session_probe_end_disconnected_session = false;
+    bool                         session_probe_customize_executable_name = false;
+    const char *                 session_probe_alternate_shell = "";
 
-    bool         enable_transparent_mode;
-    const char * output_filename;
-    Transport  * persistent_key_list_transport;
-    Transport  * transparent_recorder_transport;
+    bool         enable_transparent_mode = false;
+    const char * output_filename = "";
+    Transport  * persistent_key_list_transport = nullptr;
+    Transport  * transparent_recorder_transport = nullptr;
 
     int key_flags;
 
-    auth_api * acl;
+    auth_api * acl = nullptr;
 
-    const char * auth_channel;
-    const char * alternate_shell;
-    const char * shell_working_directory;
-    const char * target_application_account;
-    const char * target_application_password;
+    const char * outbound_connection_blocking_rules = "";
 
-    int rdp_compression;
+    bool         ignore_auth_channel = false;
+    const char * auth_channel = "";
 
-    std::string * error_message;
-    bool          disconnect_on_logon_user_change;
-    uint32_t      open_session_timeout;
+    const char * alternate_shell = "";
+    const char * working_dir = "";
+    bool         use_client_provided_alternate_shell = false;
+    const char * target_application_account = "";
+    const char * target_application_password = "";
 
-    unsigned certificate_change_action;
-    const char * device_id;
+    RdpCompression rdp_compression = RdpCompression::none;
 
-    const char * extra_orders;
+    std::string *        error_message = nullptr;
+    bool                 disconnect_on_logon_user_change = false;
+    std::chrono::seconds open_session_timeout {};
 
-    bool enable_persistent_disk_bitmap_cache;
-    bool enable_cache_waiting_list;
-    bool persist_bitmap_cache_on_disk;
+    bool               server_cert_store = true;
+    ServerCertCheck    server_cert_check = ServerCertCheck::fails_if_no_match_and_succeed_if_no_know;
+    ServerNotification server_access_allowed_message = ServerNotification::syslog;
+    ServerNotification server_cert_create_message = ServerNotification::syslog;
+    ServerNotification server_cert_success_message = ServerNotification::syslog;
+    ServerNotification server_cert_failure_message = ServerNotification::syslog;
+    ServerNotification server_cert_error_message = ServerNotification::syslog;
 
-    uint32_t password_printing_mode;
+    bool hide_client_name = false;
 
-    const std::string * allow_channels;
-    const std::string * deny_channels;
+    const char * device_id = "";
 
-    bool remote_program;
-    bool server_redirection_support;
+    const char * extra_orders = "";
 
-    bool bogus_sc_net_size;
+    bool enable_persistent_disk_bitmap_cache = false;
+    bool enable_cache_waiting_list = false;
+    bool persist_bitmap_cache_on_disk = false;
 
-    unsigned client_device_announce_timeout;
+    uint32_t password_printing_mode = 0;
 
-    const char * proxy_managed_drives;
+    const std::string * allow_channels = nullptr;
+    const std::string * deny_channels = nullptr;
 
-    Translation::language_t lang;
+    bool server_redirection_support = false;
+
+    bool bogus_sc_net_size = true;
+    BogusLinuxCursor bogus_linux_cursor = BogusLinuxCursor::smart;
+    bool bogus_refresh_rect = true;
+
+    const char * proxy_managed_drives = "";
+
+    Translation::language_t lang = Translation::EN;
+
+    bool allow_using_multiple_monitors = false;
+
+    bool adjust_performance_flags_for_recording = false;
 
     uint32_t verbose;
-    uint32_t cache_verbose;
+    uint32_t cache_verbose = 0;
 
     ModRDPParams( const char * target_user
                 , const char * target_password
@@ -118,213 +143,133 @@ struct ModRDPParams {
         , target_password(target_password)
         , target_host(target_host)
         , client_address(client_address)
-
-        , client_name(nullptr)
-
-        , enable_tls(true)
-        , enable_nla(true)
-        , enable_krb(false)
-        , enable_fastpath(true)
-        , enable_mem3blt(true)
-        , enable_bitmap_update(false)
-        , enable_new_pointer(true)
-        , enable_glyph_cache(false)
-        , enable_wab_agent(false)
-        , enable_wab_agent_loading_mask(true)
-
-        , disable_clipboard_log_syslog(false)
-        , disable_clipboard_log_wrm(false)
-
-        , disable_file_system_log_syslog(false)
-        , disable_file_system_log_wrm(false)
-
-        , wab_agent_launch_timeout(0)
-        , wab_agent_on_launch_failure(0)
-        , wab_agent_keepalive_timeout(0)
-        , wab_agent_alternate_shell("")
-
-        , enable_transparent_mode(false)
-        , output_filename("")
-        , persistent_key_list_transport(nullptr)
-        , transparent_recorder_transport(nullptr)
-
         , key_flags(key_flags)
-
-        , acl(nullptr)
-
-        , auth_channel("")
-        , alternate_shell("")
-        , shell_working_directory("")
-        , target_application_account("")
-        , target_application_password("")
-
-        , rdp_compression(0)
-
-        , error_message(nullptr)
-        , disconnect_on_logon_user_change(false)
-        , open_session_timeout(0)
-
-        , certificate_change_action(0)
-        , device_id("")
-        , extra_orders("")
-
-        , enable_persistent_disk_bitmap_cache(false)
-        , enable_cache_waiting_list(false)
-        , persist_bitmap_cache_on_disk(false)
-
-        , password_printing_mode(0)
-
-        , allow_channels(nullptr)
-        , deny_channels(nullptr)
-
-        , remote_program(false)
-        , server_redirection_support(false)
-
-        , bogus_sc_net_size(true)
-
-        , client_device_announce_timeout(1000)
-
-        , proxy_managed_drives("")
-
-        , lang(Translation::EN)
-
         , verbose(verbose)
-        , cache_verbose(0)
     {}
-    
-    ~ModRDPParams()
+
+    void log() const
     {
-        TODO("Making it a unique_ptr would avoid need for delete");
-    }
+        auto yes_or_no = [](bool x) -> char const * { return x ? "yes" : "no"; };
+        auto hidden_or_null = [](bool x) -> char const * { return x ? "<hidden>" : "<null>"; };
+        auto s_or_null = [](char const * s) -> char const * { return s ? s : "<null>"; };
+        auto s_or_none = [](char const * s) -> char const * { return s ? s : "<none>"; };
+        auto str_or_none = [](std::string const * str) -> char const * { return str ? str->c_str() : "<none>"; };
+        auto from_sec = [](std::chrono::seconds sec) -> unsigned { return sec.count(); };
+        auto from_millisec = [](std::chrono::milliseconds millisec) -> unsigned { return millisec.count(); };
 
-    void log() const {
-        LOG(LOG_INFO,
-            "ModRDPParams target_user=\"%s\"",                     this->target_user);
-        LOG(LOG_INFO,
-            "ModRDPParams target_password=\"%s\"",                 (this->target_password ? "<hidden>" : "<null>"));
-        LOG(LOG_INFO,
-            "ModRDPParams target_host=\"%s\"",                     this->target_host);
-        LOG(LOG_INFO,
-            "ModRDPParams client_address=\"%s\"",                  this->client_address);
+#define RDP_PARAMS_LOG(format, get, member) \
+    LOG(LOG_INFO, "ModRDPParams " #member "=" format, get (this->member))
+#define RDP_PARAMS_LOG_GET
 
-        LOG(LOG_INFO,
-            "ModRDPParams client_name=\"%s\"",                     (this->client_name ? this->client_name : "<null>"));
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    target_user);
+        RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        target_password);
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    target_host);
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    client_address);
 
-        LOG(LOG_INFO,
-            "ModRDPParams enable_tls=%s",                          (this->enable_tls ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_nla=%s",                          (this->enable_nla ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_krb=%s",                          (this->enable_krb ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_fastpath=%s",                     (this->enable_fastpath ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_mem3blt=%s",                      (this->enable_mem3blt ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_bitmap_update=%s",                (this->enable_bitmap_update ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_new_pointer=%s",                  (this->enable_new_pointer ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_glyph_cache=%s",                  (this->enable_glyph_cache ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_wab_agent=%s",                    (this->enable_wab_agent ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_wab_agent_loading_mask=%s",       (this->enable_wab_agent_loading_mask ? "yes" : "no"));
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_user);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             target_application);
 
-        LOG(LOG_INFO,
-            "ModRDPParams wab_agent_launch_timeout=%u",            this->wab_agent_launch_timeout);
-        LOG(LOG_INFO,
-            "ModRDPParams wab_agent_on_launch_failure=%u",         this->wab_agent_on_launch_failure);
-        LOG(LOG_INFO,
-            "ModRDPParams wab_agent_keepalive_timeout=%u",         this->wab_agent_keepalive_timeout);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_tls);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_nla);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_krb);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_fastpath);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_mem3blt);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_bitmap_update);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe_launch_mask);
 
-        LOG(LOG_INFO,
-            "ModRDPParams dsiable_clipboard_log_syslog=%s",        this->disable_clipboard_log_syslog ? "yes" : "no");
-        LOG(LOG_INFO,
-            "ModRDPParams dsiable_clipboard_log_wrm=%s",           this->disable_clipboard_log_wrm ? "yes" : "no");
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_use_clipboard_based_launcher);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_launch_timeout);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_launch_fallback_timeout);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_start_launch_timeout_timer_only_after_logon);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_on_launch_failure);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_keepalive_timeout);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_on_keepalive_timeout_disconnect_user);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_end_disconnected_session);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_customize_executable_name);
 
-        LOG(LOG_INFO,
-            "ModRDPParams dsiable_file_system_log_syslog=%s",      this->disable_file_system_log_syslog ? "yes" : "no");
-        LOG(LOG_INFO,
-            "ModRDPParams dsiable_file_system_log_wrm=%s",         this->disable_file_system_log_wrm ? "yes" : "no");
+        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);
 
-        LOG(LOG_INFO,
-            "ModRDPParams enable_transparent_mode=%s",             (this->enable_transparent_mode ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams output_filename=\"%s\"",                 (this->output_filename ? this->output_filename : "<null>"));
-        LOG(LOG_INFO,
-            "ModRDPParams persistent_key_list_transport=<%p>",     this->persistent_key_list_transport);
-        LOG(LOG_INFO,
-            "ModRDPParams transparent_recorder_transport=<%p>",    this->transparent_recorder_transport);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_syslog);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_wrm);
 
-        LOG(LOG_INFO,
-            "ModRDPParams key_flags=%d",                           this->key_flags);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_transparent_mode);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             output_filename);
+        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
+        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    transparent_recorder_transport);
 
-        LOG(LOG_INFO,
-            "ModRDPParams acl=<%p>",                               this->acl);
+        RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
 
-        LOG(LOG_INFO,
-            "ModRDPParams auth_channel=\"%s\"",                    (this->auth_channel ? this->auth_channel : "<null>"));
-        LOG(LOG_INFO,
-            "ModRDPParams alternate_shell=\"%s\"",                 (this->alternate_shell ? this->alternate_shell : "<null>"));
-        LOG(LOG_INFO,
-            "ModRDPParams shell_working_directory=\"%s\"",         (this->shell_working_directory ? this->shell_working_directory : "<null>"));
-        LOG(LOG_INFO,
-            "ModRDPParams target_application_account=\"%s\"",      (this->target_application_account ? this->target_application_account : "<null>"));
-        LOG(LOG_INFO,
-            "ModRDPParams target_application_password=\"%s\"",     (this->target_application_password ? "<hidden>" : "<null>"));
+        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    acl);
 
-        LOG(LOG_INFO,
-            "ModRDPParams rdp_compression=%d",                     this->rdp_compression);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             outbound_connection_blocking_rules);
 
-        LOG(LOG_INFO,
-            "ModRDPParams error_message=<%p>",                     this->error_message);
-        LOG(LOG_INFO,
-            "ModRDPParams disconnect_on_logon_user_change=%s",     (this->disconnect_on_logon_user_change ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams open_session_timeout=%d",                this->open_session_timeout);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel);
 
-        LOG(LOG_INFO,
-            "ModRDPParams certificate_change_action=%d",           this->certificate_change_action);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             alternate_shell);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             working_dir);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_alternate_shell);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             target_application_account);
+        RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        target_application_password);
 
-        LOG(LOG_INFO, "ModRDPParams extra_orders=%s",              (this->extra_orders ? this->extra_orders : "<none>"));
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, rdp_compression);
 
-        LOG(LOG_INFO,
-            "ModRDPParams enable_persistent_disk_bitmap_cache=%s", (this->enable_persistent_disk_bitmap_cache ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams enable_cache_waiting_list=%s",           (this->enable_cache_waiting_list ? "yes" : "no"));
-        LOG(LOG_INFO,
-            "ModRDPParams persist_bitmap_cache_on_disk=%s",        (this->persist_bitmap_cache_on_disk ? "yes" : "no"));
+        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    error_message);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             disconnect_on_logon_user_change);
+        RDP_PARAMS_LOG("%u",     from_sec,              open_session_timeout);
 
-        LOG(LOG_INFO,
-            "ModRDPParams password_printing_mode=%u",              this->password_printing_mode);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             server_cert_store);
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, server_cert_check);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      server_access_allowed_message);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      server_cert_create_message);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      server_cert_success_message);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      server_cert_failure_message);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      server_cert_error_message);
 
-        LOG(LOG_INFO,
-            "ModRDPParams allow_channels=%s",                      (this->allow_channels ? this->allow_channels->c_str() : "<none>"));
-        LOG(LOG_INFO,
-            "ModRDPParams deny_channels=%s",                       (this->deny_channels ? this->deny_channels->c_str() : "<none>"));
+        RDP_PARAMS_LOG("%s",     yes_or_no,             hide_client_name);
 
-        LOG(LOG_INFO,
-            "ModRDPParams remote_program=%s",                      (this->remote_program ? "yes" : "no"));
+        RDP_PARAMS_LOG("%s",     s_or_none,             extra_orders);
 
-        LOG(LOG_INFO,
-            "ModRDPParams server_redirection_support=%s",          (this->server_redirection_support ? "yes" : "no"));
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_persistent_disk_bitmap_cache);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_cache_waiting_list);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             persist_bitmap_cache_on_disk);
 
-        LOG(LOG_INFO,
-            "ModRDPParams bogus_sc_net_size=%s",                   (this->bogus_sc_net_size ? "yes" : "no"));
+        RDP_PARAMS_LOG("%u",     RDP_PARAMS_LOG_GET,    password_printing_mode);
 
-        LOG(LOG_INFO,
-            "ModRDPParams client_device_announce_timeout=%u",      this->client_device_announce_timeout);
+        RDP_PARAMS_LOG("%s",     str_or_none,           allow_channels);
+        RDP_PARAMS_LOG("%s",     str_or_none,           deny_channels);
 
-        LOG(LOG_INFO, "ModRDPParams proxy_managed_drives=%s",      (this->proxy_managed_drives ? this->proxy_managed_drives : "<none>"));
+        RDP_PARAMS_LOG("%s",     yes_or_no,             server_redirection_support);
 
-        LOG(LOG_INFO, "ModRDPParams lang=%s",                      ((this->lang == Translation::EN) ? "EN" : ((this->lang == Translation::FR) ? "FR" : "<unknown>")));
+        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_sc_net_size);
 
-        LOG(LOG_INFO,
-            "ModRDPParams verbose=0x%08X",                         this->verbose);
-        LOG(LOG_INFO,
-            "ModRDPParams cache_verbose=0x%08X",                   this->cache_verbose);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      bogus_linux_cursor);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_refresh_rect);
+
+        RDP_PARAMS_LOG("%s",     s_or_none,             proxy_managed_drives);
+
+        auto to_lang = [](Translation::language_t lang) {
+            return
+                lang == Translation::EN ? "EN" :
+                lang == Translation::FR ? "FR" :
+                "<unknown>";
+        };
+        RDP_PARAMS_LOG("%s",     to_lang,            lang);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,          allow_using_multiple_monitors);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,          adjust_performance_flags_for_recording);
+
+        RDP_PARAMS_LOG("0x%08X", RDP_PARAMS_LOG_GET, verbose);
+        RDP_PARAMS_LOG("0x%08X", RDP_PARAMS_LOG_GET, cache_verbose);
+
+#undef RDP_PARAMS_LOG
+#undef RDP_PARAMS_LOG_GET
     }   // void log() const
 };  // struct ModRDPParams
 
-#endif  // #ifndef _REDEMPTION_MOD_RDP_RDP_PARAMS_HPP_

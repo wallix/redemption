@@ -21,12 +21,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestMPPC61
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 // #define LOGPRINT
 
-#include "RDP/mppc_61.hpp"
+#include "core/RDP/mppc_61.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRDP61BlukCompression)
 {

@@ -25,9 +25,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderPolygonCB
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+//#define LOGPRINT
+#define LOGNULL
+
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 
 #include "test_orders.hpp"
 
@@ -64,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)POLYGONCB, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), common_cmd.order);
         BOOST_CHECK_EQUAL(0, common_cmd.clip.x);
         BOOST_CHECK_EQUAL(400, common_cmd.clip.y);
         BOOST_CHECK_EQUAL(800, common_cmd.clip.cx);
@@ -114,13 +117,13 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         InStream deltaPoints_in(deltaPoints.get_data(), deltaPoints.get_offset());
 
         RDPPolygonCB polygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
-                               RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
+                               RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7")),
                                7, deltaPoints_in);
 
 
         polygonCB.emit(out_stream, newcommon, state_common, state_polygonCB);
 
-        BOOST_CHECK_EQUAL((uint8_t)POLYGONCB, newcommon.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), newcommon.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
 
         uint8_t datas[] = {
@@ -151,9 +154,9 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
-        BOOST_CHECK_EQUAL((uint32_t)0x1FF7, header.fields);
-        BOOST_CHECK_EQUAL((uint8_t)POLYGONCB, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
+        BOOST_CHECK_EQUAL(static_cast<uint32_t>(0x1FF7), header.fields);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(POLYGONCB), common_cmd.order);
         BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPPolygonCB cmd = state_polygonCB;
@@ -187,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TestPolygonCB)
         check<RDPPolygonCB>(common_cmd, cmd,
                             RDPOrderCommon(POLYGONCB, Rect(0, 0, 0, 0)),
                             RDPPolygonCB(158, 230, 0x0D, 0, 0x0D080F, 0xD41002,
-                                         RDPBrush(3, 4, 3, 0xDD, (const uint8_t*)"\1\2\3\4\5\6\7"),
+                                         RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7")),
                                          7, deltaPoints_in),
                             "PolygonSC 1");
     }

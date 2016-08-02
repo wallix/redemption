@@ -18,15 +18,15 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_COPY_PASTE_UTILITY_HPP
-#define REDEMPTION_MOD_INTERNAL_COPY_PASTE_UTILITY_HPP
 
-#include "RDP/clipboard.hpp"
-#include "channel_list.hpp"
-#include "front_api.hpp"
-#include "stream.hpp"
+#pragma once
+
+#include "core/RDP/clipboard.hpp"
+#include "core/channel_list.hpp"
+#include "core/front_api.hpp"
+#include "utils/stream.hpp"
 #include "widget2/edit.hpp"
-#include "channel_names.hpp"
+#include "core/channel_names.hpp"
 
 #include <utility>
 #include <algorithm>
@@ -59,7 +59,8 @@ class CopyPaste
         }
 
         void assign(char const * s, size_t n) {
-            this->size_ = std::min(n, this->max_size());
+            this->size_ = ((this->max_size() >= n) ? n :
+                           ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(s), this->max_size()));
             memcpy(this->buf_, s, this->size_);
             this->buf_[this->size_] = 0;
         }
@@ -199,7 +200,7 @@ public:
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen())) {
                             LOG( LOG_ERR
-                               , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
+                               , "selector::send_to_selector truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%" PRIu32 " remains=%zu"
                                , format_data_response_pdu.dataLen(), stream.in_remain());
                             throw Error(ERR_RDP_PROTOCOL);
                         }
@@ -250,6 +251,7 @@ private:
 };
 
 
+inline
 void copy_paste_process_event(CopyPaste & copy_paste, WidgetEdit & widget_edit, NotifyApi::notify_event_t event) {
     switch(event) {
         case NOTIFY_PASTE:
@@ -267,4 +269,3 @@ void copy_paste_process_event(CopyPaste & copy_paste, WidgetEdit & widget_edit, 
     }
 }
 
-#endif

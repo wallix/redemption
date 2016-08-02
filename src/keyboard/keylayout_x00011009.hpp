@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00011009_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00011009_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00011009 {    // English (Canada) // Canadian Multilingual Standard
 
 const static int LCID = 0x00011009;
+
+const static char * const locale_name = "en-CA.multilingual";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -277,6 +279,7 @@ const static uint8_t nbDeadkeys = 4;
 } // END NAMESPACE - x00011009
 
 static const Keylayout keylayout_x00011009( x00011009::LCID
+                                          , x00011009::locale_name
                                           , x00011009::noMod
                                           , x00011009::shift
                                           , x00011009::altGr
@@ -290,4 +293,3 @@ static const Keylayout keylayout_x00011009( x00011009::LCID
                                           , x00011009::nbDeadkeys
 );
 
-#endif

@@ -18,13 +18,14 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET_GRID_HPP_
+#pragma once
 
-#include "log.hpp"
-#include "widget.hpp"
-#include "keymap2.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "utils/log.hpp"
+#include "mod/internal/widget2/widget.hpp"
+#include "keyboard/keymap2.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
+#include "utils/difftimeval.hpp"
 
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
 static const uint16_t GRID_NB_ROWS_MAX    = 50;
@@ -62,6 +63,7 @@ public:
 protected:
     uint16_t selection_y;   // Index of seleted row.
 
+    // TODO: see why grid object need a difftimer ?
     struct difftimer {
         uint64_t t;
 
@@ -81,7 +83,7 @@ protected:
     } click_interval;
 
 public:
-    WidgetGrid(DrawApi & drawable, const Rect & rect, Widget2 & parent,
+    WidgetGrid(gdi::GraphicApi & drawable, const Rect & rect, Widget2 & parent,
                NotifyApi * notifier, uint16_t nb_rows, uint16_t nb_columns,
                uint32_t bg_color_1, uint32_t fg_color_1,
                uint32_t bg_color_2, uint32_t fg_color_2,
@@ -264,7 +266,8 @@ public:
         row_index    = this->selection_y;
         column_index = static_cast<uint16_t>(-1);
     }
-    void set_selection(uint16_t row_index, uint16_t column_index = static_cast<uint16_t>(-1)) {
+
+    void set_selection(uint16_t row_index) {
         if (this->focus_flag == Widget2::IGNORE_FOCUS) {
             return;
         }
@@ -293,6 +296,7 @@ public:
     }
 
     void focus(int reason) override {
+        (void)reason;
         if (!this->has_focus){
             this->has_focus = true;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
@@ -318,7 +322,7 @@ public:
                 if (rectRow.contains_pt(mouse_x, mouse_y)) {
                     if (row_index != this->selection_y) {
                         this->click_interval.update();
-                        this->set_selection(row_index, static_cast<uint16_t>(-1));
+                        this->set_selection(row_index);
                     }
                     else {
                         if (this->click_interval.tick() <= uint64_t(700000L)) {
@@ -348,28 +352,26 @@ public:
                 case Keymap2::KEVENT_UP_ARROW:
                     keymap->get_kevent();
                     if (this->nb_rows > 1) {
-                        this->set_selection(((this->selection_y > 0) ? this->selection_y - 1 : this->nb_rows - 1),
-                                            static_cast<uint16_t>(-1));
+                        this->set_selection((this->selection_y > 0) ? this->selection_y - 1 : this->nb_rows - 1);
                     }
                 break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
                     keymap->get_kevent();
                     if (this->nb_rows > 1) {
-                        this->set_selection(((this->selection_y + 1 != this->nb_rows) ? this->selection_y + 1 : 0),
-                                            static_cast<uint16_t>(-1));
+                        this->set_selection((this->selection_y + 1 != this->nb_rows) ? this->selection_y + 1 : 0);
                     }
                 break;
                 case Keymap2::KEVENT_END:
                     keymap->get_kevent();
                     if ((this->nb_rows > 1) && (this->nb_rows - 1 != this->selection_y)) {
-                        this->set_selection(this->nb_rows - 1, static_cast<uint16_t>(-1));
+                        this->set_selection(this->nb_rows - 1);
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
                     keymap->get_kevent();
                     if ((this->nb_rows > 1) && this->selection_y) {
-                        this->set_selection(0, static_cast<uint16_t>(-1));
+                        this->set_selection(0);
                     }
                     break;
                 case Keymap2::KEVENT_ENTER:
@@ -391,6 +393,7 @@ struct ColumnWidthStrategy {
     uint16_t max;
 };
 
+inline
 void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strategies, uint16_t * row_height, uint16_t * column_width) {
     uint16_t column_width_optimal[GRID_NB_COLUMNS_MAX] = { 0 };
 
@@ -413,7 +416,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     }
 
 
-    TODO("Optiomize this");
+    // TODO Optiomize this
     uint16_t unsatisfied_column_count = 0;
     // min
     uint16_t unused_width = static_cast<int16_t>(grid.rect.cx - grid.border * 2 * grid.nb_columns);
@@ -472,6 +475,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     }
 }
 
+inline
 void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_width) {
     uint16_t height = 0;
     for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
@@ -485,6 +489,3 @@ void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_wi
 
 }
 
-
-
-#endif

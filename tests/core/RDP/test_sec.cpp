@@ -24,13 +24,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestSec
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "stream.hpp"
-#include "test_transport.hpp"
-#include "RDP/sec.hpp"
+#include "utils/stream.hpp"
+#include "transport/test_transport.hpp"
+#include "core/RDP/sec.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 {
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 
     InStream stream(buf, length);
     SEC::SecExchangePacket_Recv sec(stream);
-    BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_EXCHANGE_PKT, sec.basicSecurityHeader);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(SEC::SEC_EXCHANGE_PKT), sec.basicSecurityHeader);
     BOOST_CHECK_EQUAL(length - 16, sec.payload.get_capacity());
     BOOST_CHECK_EQUAL(64, sec.payload.get_capacity());
     // We won't compare padding
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
     decrypt.rc4.set_key(decrypt.key, (decrypt.encryptionMethod==1)?8:16);
 
-    SEC::SecInfoPacket_Recv sec(stream, length, decrypt);
+    SEC::SecInfoPacket_Recv sec(stream, decrypt);
 
     const char expected[] =
         /* 0000 */ "\x0c\x04\x0c\x04\xb3\x47\x03\x00\x00\x00\x02\x00\x00\x00\x00\x00" //.....G..........

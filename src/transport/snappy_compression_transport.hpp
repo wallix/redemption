@@ -18,13 +18,15 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP
+
+#pragma once
+
+#include <cinttypes>
 
 #include <snappy-c.h>
 
-#include "transport.hpp"
-#include "stream.hpp"
+#include "transport/transport.hpp"
+#include "utils/stream.hpp"
 
 static const size_t SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 
@@ -76,7 +78,7 @@ private:
 
                 const uint16_t compressed_data_length = Parse(data_buf).in_uint16_le();
                 if (this->verbose) {
-                    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%u", compressed_data_length);
+                    LOG(LOG_INFO, "SnappyCompressionInTransport::do_recv: compressed_data_length=%" PRIu16, compressed_data_length);
                 }
 
                 end = data_buf;
@@ -93,7 +95,7 @@ private:
                        , "SnappyCompressionInTransport::do_recv: snappy_uncompress return %d", status);
                 }
                 if (this->verbose) {
-                    LOG( LOG_INFO, "SnappyCompressionInTransport::do_recv: uncompressed_data_length=%u"
+                    LOG( LOG_INFO, "SnappyCompressionInTransport::do_recv: uncompressed_data_length=%zu"
                        , this->uncompressed_data_length);
                 }
             }
@@ -141,7 +143,7 @@ public:
 private:
     void compress(const uint8_t * const data, size_t data_length) const {
         if (this->verbose) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: data_length=%u", data_length);
+            LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: data_length=%zu", data_length);
         }
 
         StaticOutStream<SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH> data_stream;
@@ -158,7 +160,7 @@ private:
                , "SnappyCompressionOutTransport::compress: snappy_compress return %d", status);
         }
         if (this->verbose) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: compressed_data_length=%u", compressed_data_length);
+            LOG(LOG_INFO, "SnappyCompressionOutTransport::compress: compressed_data_length=%zu", compressed_data_length);
         }
 
         data_stream.out_skip_bytes(compressed_data_length);
@@ -170,7 +172,7 @@ private:
 
     void do_send(const char * const buffer, size_t len) override {
         if (this->verbose & 0x4) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: len=%u", len);
+            LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: len=%zu", len);
         }
 
         const uint8_t * temp_data        = reinterpret_cast<const uint8_t *>(buffer);
@@ -213,7 +215,7 @@ private:
         }
 
         if (this->verbose & 0x4) {
-            LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: uncompressed_data_length=%u", this->uncompressed_data_length);
+            LOG(LOG_INFO, "SnappyCompressionOutTransport::do_send: uncompressed_data_length=%zu", this->uncompressed_data_length);
         }
     }
 
@@ -236,4 +238,3 @@ public:
     }
 };  // class SnappyCompressionOutTransport
 
-#endif  // #ifndef REDEMPTION_TRANSPORT_SNAPPY_COMPRESSION_TRANSPORT_HPP

@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#include "noncopyable.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 #include <iostream>
 
@@ -44,7 +44,7 @@ public:
     , stop_record(end_capture ? end_capture : end_record)
     , processing_start_time(::time(nullptr))
     , last_written_time_percentage(0) {
-        this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+        this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP);
         if (this->fd != -1) {
             int write_result = ::write(this->fd, "0 -1", 4);
 (void)write_result;
@@ -59,7 +59,6 @@ public:
             if (!this->error_raised) {
                 ::lseek(this->fd, 0, SEEK_SET);
                 int write_result = ::write(this->fd, "100 0", 5);
-(void)write_result;
                 if (write_result != -1) {
                     int truncate_result = ::ftruncate(this->fd, write_result);
 (void)truncate_result;

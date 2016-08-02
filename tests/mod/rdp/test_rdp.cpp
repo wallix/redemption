@@ -24,19 +24,17 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdp
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "config.hpp"
-//#include "socket_transport.hpp"
-#include "test_transport.hpp"
-#include "client_info.hpp"
-#include "rdp/rdp.hpp"
+#include "configs/config.hpp"
+//#include "transport/socket_transport.hpp"
+#include "transport/test_transport.hpp"
+#include "core/client_info.hpp"
+#include "mod/rdp/rdp.hpp"
 
 #include "../../front/fake_front.hpp"
 
@@ -126,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     //        if (count == 20){
     //            front.dump_png("trace_xp_20_");
     //        }
-            mod->draw_event(time(nullptr));
+            mod->draw_event(time(nullptr), front);
         }
     }
     catch (const Error & e) {
@@ -151,8 +149,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     FakeFront front(info, verbose);
 
-    const char * name = "RDP W2008 Target";
-
+    // const char * name = "RDP W2008 Target";
     // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
     // std::string error_message;
     // SocketTransport t( name
@@ -163,8 +160,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //                  , &error_message
     //                  );
 
-    #include "fixtures/dump_w2008.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    #include "../../fixtures/dump_w2008.hpp"
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -198,25 +195,26 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+    LCGTime timeobj;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
     BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->get_front_width(), 800);
-    BOOST_CHECK_EQUAL(mod->get_front_height(), 600);
+    BOOST_CHECK_EQUAL(front.info.width, 800);
+    BOOST_CHECK_EQUAL(front.info.height, 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 38) break;
-        mod->draw_event(time(nullptr));
+        mod->draw_event(time(nullptr), front);
     }
 
-//    front.dump_png("trace_w2008_");
+    //front.dump_png("trace_w2008_");
 }
 
 /*
@@ -248,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     //                  );
 
 
-    #include "fixtures/dump_w2003_mem3blt.hpp"
+    #include "../../fixtures/dump_w2003_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     if (verbose > 2){
@@ -305,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2003_20_");
 //        }
-        mod->draw_event(time(nullptr));
+        mod->draw_event(time(nullptr), front);
     }
 
 
@@ -339,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     //                  , &error_message
     //                  );
 
-    #include "fixtures/dump_w2000_mem3blt.hpp"
+    #include "../../fixtures/dump_w2000_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     if (verbose > 2){
@@ -396,7 +394,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2000_20_");
 //        }
-        mod->draw_event(time(nullptr));
+        mod->draw_event(time(nullptr), front);
     }
 
 //    front.dump_png("trace_w2000_");

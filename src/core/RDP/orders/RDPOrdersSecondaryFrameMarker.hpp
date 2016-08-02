@@ -18,10 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_
 
-#include "log.hpp"
+#pragma once
+
+#include "utils/log.hpp"
 #include "RDPOrdersCommon.hpp"
 
 namespace RDP {
@@ -83,7 +83,7 @@ public:
         stream.out_uint32_le(this->action);
     }
 
-    void receive(InStream & stream, const AltsecDrawingOrderHeader & header) {
+    void receive(InStream & stream, const AltsecDrawingOrderHeader & /*header*/) {
         this->action = stream.in_uint32_le();
     }
 
@@ -108,7 +108,7 @@ public:
     void log(int level) const {
         char buffer[1024];
         this->str(buffer, 1024);
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print() const {
@@ -120,4 +120,3 @@ public:
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYFRAMEMARKER_HPP_

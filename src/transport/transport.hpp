@@ -20,17 +20,21 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_TRANSPORT_HPP
+
+#pragma once
 
 #include <sys/time.h>
 #include <stdint.h>
 #include <cstddef>
 
-#include "log.hpp"
-#include "error.hpp"
-#include "auth_api.hpp"
-#include "noncopyable.hpp"
+#include "utils/log.hpp"
+#include "core/error.hpp"
+#include "acl/auth_api.hpp"
+#include "utils/sugar/noncopyable.hpp"
+
+#include "configs/autogen/enums.hpp"
+
+#include "core/server_notifier_api.hpp"
 
 using std::size_t;
 
@@ -66,7 +70,7 @@ public:
     virtual ~Transport()
     {}
 
-    //virtual const SequenceGenerator * seqgen() const noexcept
+    //virtual const FilenameGenerator * seqgen() const noexcept
     //{ return this->pseq; }
 
     uint32_t get_seqno() const
@@ -84,7 +88,7 @@ public:
     uint64_t get_last_quantum_sent() const
     { return this->last_quantum_sent; }
 
-    bool get_status() const
+    virtual bool get_status() const
     { return this->status; }
 
     void set_authentifier(auth_api * authentifier)
@@ -105,14 +109,26 @@ public:
         this->last_quantum_sent = 0;
     }
 
-    virtual void enable_client_tls(bool ignore_certificate_change, const char * certif_path)
+    virtual void enable_client_tls(
+            bool server_cert_store,
+            ServerCertCheck server_cert_check,
+            ServerNotifier & server_notifier,
+            const char * certif_path
+        )
     {
         // default enable_tls do nothing
+        (void)server_cert_store;
+        (void)server_cert_check;
+        (void)server_notifier;
+        (void)certif_path;
     }
 
-    virtual void enable_server_tls(const char * certificate_password)
+    virtual void enable_server_tls(const char * certificate_password,
+        const char * ssl_cipher_list)
     {
         // default enable_tls do nothing
+        (void)certificate_password;
+        (void)ssl_cipher_list;
     }
 
     virtual const uint8_t * get_public_key() const
@@ -150,15 +166,21 @@ public:
 
     virtual void seek(int64_t offset, int whence)
     {
+        (void)offset;
+        (void)whence;
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
 private:
     virtual void do_recv(char ** pbuffer, size_t len) {
+        (void)pbuffer;
+        (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
     virtual void do_send(const char * const buffer, size_t len) {
+        (void)buffer;
+        (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
@@ -174,13 +196,13 @@ public:
     }
 
     virtual void timestamp(timeval now)
-    {}
+    { (void)now; }
 
+    /* Some transports are splitted between sequential discrete units
+     * (it may be block, chunk, numbered files, directory entries, whatever).
+     * Calling next means flushing the current unit and start the next one.
+     * seqno countains the current sequence number, starting from 0. */
     virtual bool next()
-    REDOC("Some transports are splitted between sequential discrete units"
-          "(it may be block, chunk, numbered files, directory entries, whatever)."
-          "Calling next means flushing the current unit and start the next one."
-          "seqno countains the current sequence number, starting from 0.")
     {
         this->seqno++;
         return true;
@@ -194,4 +216,3 @@ private:
     Transport& operator=(const Transport &) = delete;
 };
 
-#endif

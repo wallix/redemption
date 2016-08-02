@@ -21,13 +21,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRemotePrograms
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "log.hpp"
-#include "RDP/remote_programs.hpp"
+#include "utils/log.hpp"
+#include "core/RDP/remote_programs.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 {

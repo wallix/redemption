@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_ORDER_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_ORDER_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
-#include "error.hpp"
+#include "utils/stream.hpp"
+#include "core/error.hpp"
 
 // 2.2.7.1.3 Order Capability Set (TS_ORDER_CAPABILITYSET)
 // =======================================================
@@ -281,7 +281,7 @@ enum {
 };
 
 
-enum {
+enum OrdersIndexes {
       TS_NEG_DSTBLT_INDEX = 0x00
     , TS_NEG_PATBLT_INDEX = 0x01
     , TS_NEG_SCRBLT_INDEX = 0x02
@@ -397,7 +397,7 @@ struct OrderCaps : public Capability {
          */
         const unsigned expected = 32 + NB_ORDER_SUPPORT + 20;
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated OrderCaps, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated OrderCaps, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -540,4 +540,3 @@ struct OrderCaps : public Capability {
        }
 };
 
-#endif

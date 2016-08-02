@@ -18,13 +18,15 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__TEST_CHECK_SIG_HPP__)
-#define __TEST_CHECK_SIG_HPP__
+#pragma once
 
-#include "drawable.hpp"
+#include <cstdio>
+#include <cstring>
+
+#include "system/ssl_sha1.hpp"
 
 inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
-                     char * message, const char * shasig)
+                     char * message, const void * shasig)
 {
    uint8_t sig[20];
    SslSha1 sha1;
@@ -50,20 +52,34 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
    return true;
 }
 
-inline bool check_sig(Drawable & data, char * message, const char * shasig)
-{
-   return check_sig(data.data(), data.height(), data.rowsize(), message, shasig);
-}
+template<class Drawable>
+inline auto check_sig(Drawable const & data, char * message, const void * shasig)
+-> decltype(check_sig(data.data(), data.height(), data.rowsize(), message, shasig))
+{  return check_sig(data.data(), data.height(), data.rowsize(), message, shasig); }
 
-inline bool check_sig(OutStream & stream, char * message, const char * shasig)
-{
-   return check_sig(stream.get_data(), 1, stream.get_offset(), message, shasig);
-}
+template<class Bitmap>
+inline auto check_sig(Bitmap const & data, char * message, const void * shasig)
+-> decltype(check_sig(data.data(), data.cy(), data.line_size(), message, shasig))
+{  return check_sig(data.data(), data.cy(), data.line_size(), message, shasig); }
 
-inline bool check_sig(const uint8_t * data, size_t length, char * message, const char * shasig)
+template<class Stream>
+inline auto check_sig(Stream const & stream, char * message, const void * shasig)
+-> decltype(check_sig(stream.get_data(), 1, stream.get_offset(), message, shasig))
+{  return check_sig(stream.get_data(), 1, stream.get_offset(), message, shasig); }
+
+
+inline bool check_sig(const uint8_t * data, size_t length, char * message, const void * shasig)
 {
    return check_sig(data, 1, length, message, shasig);
 }
+
+#define CHECK_SIG(obj, sig)                      \
+    {                                            \
+        char message[1024];                      \
+        if (!check_sig(obj, message, sig)) {     \
+            BOOST_CHECK_MESSAGE(false, message); \
+        }                                        \
+    }
 
 
 inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig, size_t sig_length)
@@ -73,11 +89,10 @@ inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig, size_t s
    sha1.final(sig, sig_length);
 }
 
-inline void get_sig(OutStream & stream, uint8_t * sig, size_t sig_length)
+template<class Stream>
+inline void get_sig(Stream const & stream, uint8_t * sig, size_t sig_length)
 {
    SslSha1 sha1;
    sha1.update(stream.get_data(), stream.get_offset());
    sha1.final(sig, sig_length);
 }
-
-#endif

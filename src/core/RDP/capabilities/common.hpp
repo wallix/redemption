@@ -20,11 +20,11 @@
    RDP Capabilities : Common code for all capabilities
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COMMON_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_COMMON_HPP_
+
+#pragma once
 
 #include <stdint.h>
-#include "log.hpp"
+#include "utils/log.hpp"
 
 class InStream;
 class OutStream;
@@ -271,4 +271,3 @@ struct Capability {
     }*/
 };
 
-#endif

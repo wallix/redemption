@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_WINDOW_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_WINDOW_HPP_
+
+#pragma once
 
 #include "common.hpp"
 #include "virchan.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 // 2.2.1.1.2  Window List Capability Set
 // =====================================
@@ -116,4 +116,3 @@ struct WindowListCaps : public Capability {
 
 
 
-#endif

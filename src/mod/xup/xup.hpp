@@ -21,10 +21,9 @@
    xup module main header file
 */
 
-#if !defined(__XUP_HPP__)
-#define __XUP_HPP__
+#pragma once
 
-#include "mod_api.hpp"
+#include "mod/mod_api.hpp"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -32,14 +31,15 @@
 #include <errno.h>
 
 /* include "ther h files */
-#include "RDP/pointer.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "front_api.hpp"
-#include "transport.hpp"
-#include "stream.hpp"
-#include "bitmap.hpp"
+#include "core/RDP/pointer.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/front_api.hpp"
+#include "transport/transport.hpp"
+#include "utils/stream.hpp"
+#include "utils/bitmap.hpp"
 
 struct xup_mod : public mod_api {
 
@@ -76,14 +76,13 @@ enum {
 
     xup_mod( Transport & t
            , FrontAPI & front
-           , uint16_t front_width
-           , uint16_t front_height
+           , uint16_t /*front_width*/
+           , uint16_t /*front_height*/
            , int context_width
            , int context_height
            , int context_bpp
            )
-    : mod_api(front_width, front_height)
-    , front(front)
+    : front(front)
     , width(context_width)
     , height(context_height)
     , bpp(context_bpp)
@@ -112,7 +111,7 @@ enum {
         XUPWM_INVALIDATE = 200
     };
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
         LOG(LOG_INFO, "input mouse");
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
@@ -143,7 +142,13 @@ enum {
         }
     }
 
-    void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap)override {
+    void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap) override {
+        // TODO xup_mod::rdp_input_scancode: unimplemented
+        (void)param1;
+        (void)param2;
+        (void)device_flags;
+        (void)param4;
+        (void)keymap;
         LOG(LOG_INFO, "scan code");
         /*
         if (ki != 0) {
@@ -154,6 +159,11 @@ enum {
     }
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+        // TODO xup_mod::rdp_input_scancode: unimplemented
+        (void)time;
+        (void)device_flags;
+        (void)param1;
+        (void)param2;
         LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
@@ -183,7 +193,8 @@ enum {
         this->t.send(stream.get_data(), len);
     }
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        (void)now;
         try{
             uint8_t buf[32768];
             {
@@ -226,7 +237,7 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->gd->draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         drawable.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa,
                             reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
                             ), r);
@@ -242,7 +253,7 @@ enum {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->gd->draw(scrblt, r);
+                        drawable.draw(scrblt, r);
                     }
                     break;
                     case 5:
@@ -259,7 +270,7 @@ enum {
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
                         Bitmap bmp(this->bpp, bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
-                        this->gd->draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
+                        drawable.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -269,12 +280,12 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                          TODO(" see clip management");
+                          // TODO see clip management
 //                        this->server_set_clip(r);
                     }
                     break;
                     case 11: /* server_reset_clip */
-                          TODO(" see clip management");
+                          // TODO see clip management
 //                        this->server_reset_clip();
                     break;
                     case 12: /* server_set_fgcolor */
@@ -302,7 +313,7 @@ enum {
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
                                                RDPPen(this->pen.style, this->pen.width, this->fgcolor));
-                        this->gd->draw(lineto, Rect(0,0,1,1));
+                        drawable.draw(lineto, Rect(0,0,1,1));
                     }
                     break;
                     case 19:
@@ -312,7 +323,7 @@ enum {
                         cursor.y = stream.in_sint16_le();
                         stream.in_copy_bytes(cursor.data, 32 * (32 * 3));
                         stream.in_copy_bytes(cursor.mask, 32 * (32 / 8));
-                        this->front.server_set_pointer(cursor);
+                        this->front.set_pointer(cursor);
                     }
                     break;
                     default:
@@ -323,118 +334,16 @@ enum {
         }
         catch(...){
             this->event.signal = BACK_EVENT_NEXT;
+            this->front.must_be_stop_capture();
         }
     }
 
-    void begin_update() override {
-        this->front.begin_update();
-    }
-
-    void end_update() override {
-        this->front.end_update();
-    }
-
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPScrBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPDestBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPatBlt & cmd, const Rect &clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) override {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    void draw(const RDPLineTo& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) override {
-        this->front.draw(cmd, clip, gly_cache);
-    }
-
-    void draw(const RDPPolygonSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolygonCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPPolyline& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseSC& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDPEllipseCB& cmd, const Rect & clip) override {
-        this->front.draw(cmd, clip);
-    }
-
-    void draw(const RDP::FrameMarker & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::WindowIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::CachedIcon & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDP::RAIL::DeletedWindow & order) override {
-        this->front.draw(order);
-    }
-
-    void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
-        size_t size, const Bitmap & bmp) override {
-        this->front.draw(bitmap_data, data, size, bmp);
-    }
-
-    void server_set_pointer(const Pointer & cursor) override {
-        this->front.server_set_pointer(cursor);
-    }
-
-    using RDPGraphicDevice::draw;
-
     void send_to_front_channel(const char * const mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
+        // TODO xup_mod::send_to_front_channel: unimplemented
+        (void)mod_channel_name;
+        (void)data;
+        (void)length;
+        (void)chunk_size;
+        (void)flags;
     }
 };
-
-#endif

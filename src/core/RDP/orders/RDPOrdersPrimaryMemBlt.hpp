@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEMBLT_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMEMBLT_HPP_
+
+#pragma once
 
 //  MS-RDPEGDI 2.2.2.2.1.1.2.9 MemBlt (MEMBLT_ORDER)
 // -------------------------------------------------
@@ -92,13 +92,11 @@
 
 class RDPMemBlt {
     public:
-    TODO("Change to cache_id")
     uint16_t cache_id;
     Rect rect;
     uint8_t rop;
     uint16_t srcx;
     uint16_t srcy;
-    TODO("Change to cache_idx")
     uint16_t cache_idx;
 
     static uint8_t id(void)
@@ -215,7 +213,7 @@ class RDPMemBlt {
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
-        TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions");
+        // TODO remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions
         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));
         lg  += snprintf(
             buffer+lg,
@@ -235,7 +233,7 @@ class RDPMemBlt {
     void log(int level, const Rect & clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 
     void print(const Rect & clip) const {
@@ -247,4 +245,3 @@ class RDPMemBlt {
 };
 
 
-#endif

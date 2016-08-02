@@ -21,23 +21,22 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestNtlm_context
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "RDP/nla/ntlm/ntlm_context.hpp"
-#include "RDP/nla/ntlm/ntlm.hpp"
+#include "core/RDP/nla/ntlm/ntlm_context.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNtlmContext)
 {
+    LCGRandom rand(0);
+    LCGTime timeobj;
 
-
-    NTLMContext context;
+    NTLMContext context(rand, timeobj);
     // context.init();
     context.NTLMv2 = true;
     context.confidentiality = true;
     context.ntlm_set_negotiate_flags();
-    context.set_tests();
     context.verbose = 0x400;
     // context.hardcoded_tests = true;
 
@@ -186,7 +185,10 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
 }
 BOOST_AUTO_TEST_CASE(TestNTOWFv2)
 {
-    NTLMContext context;
+    LCGRandom rand(0);
+    LCGTime timeobj;
+
+    NTLMContext context(rand, timeobj);
     uint8_t buff[16];
 
     uint8_t password[] = "Password";
@@ -213,7 +215,10 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
 
 BOOST_AUTO_TEST_CASE(TestSetters)
 {
-    NTLMContext context;
+    LCGRandom rand(0);
+    LCGTime timeobj;
+
+    NTLMContext context(rand, timeobj);
     // context.init();
 
     uint8_t work[] = "Carpe Diem";
@@ -235,23 +240,23 @@ BOOST_AUTO_TEST_CASE(TestSetters)
 
 BOOST_AUTO_TEST_CASE(TestOutputs)
 {
-    LOG(LOG_INFO, "SebBuffer size : %u", sizeof(SecBuffer));
-    LOG(LOG_INFO, "Array size : %u", sizeof(Array));
-    LOG(LOG_INFO, "size_t size : %u", sizeof(size_t));
-    LOG(LOG_INFO, "unsigned long size : %u", sizeof(unsigned long));
-    LOG(LOG_INFO, "unsigned int size : %u", sizeof(unsigned int));
-    LOG(LOG_INFO, "int size : %u", sizeof(int));
-    LOG(LOG_INFO, "uint8_t size : %u", sizeof(uint8_t));
-    LOG(LOG_INFO, "uint8_t* size : %u", sizeof(uint8_t*));
+    LOG(LOG_INFO, "SebBuffer size : %zu", sizeof(SecBuffer));
+    LOG(LOG_INFO, "Array size : %zu", sizeof(Array));
+    LOG(LOG_INFO, "size_t size : %zu", sizeof(size_t));
+    LOG(LOG_INFO, "unsigned long size : %zu", sizeof(unsigned long));
+    LOG(LOG_INFO, "unsigned int size : %zu", sizeof(unsigned int));
+    LOG(LOG_INFO, "int size : %zu", sizeof(int));
+    LOG(LOG_INFO, "uint8_t size : %zu", sizeof(uint8_t));
+    LOG(LOG_INFO, "uint8_t* size : %zu", sizeof(uint8_t*));
     uint8_t autobuffer[AUTOSIZE];
-    LOG(LOG_INFO, "autobuffer size : %u", sizeof(autobuffer));
+    LOG(LOG_INFO, "autobuffer size : %zu", sizeof(autobuffer));
 
 
     uint8_t head[2];
     head[0] = 1;
     head[1] = 0xFF;
     size_t length = (head[0] << 8) | head[1];
-    LOG(LOG_INFO, "size length : %x", length);
+    LOG(LOG_INFO, "size length : %zx", length);
 
 //     const char ccd_r[] = {
 // // Client Core Data
@@ -298,9 +303,11 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
 
 BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 {
+    LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext client_context;
-    NTLMContext server_context;
+    NTLMContext client_context(rand, timeobj);
+    NTLMContext server_context(rand, timeobj);
     client_context.verbose = 0x400;
     server_context.verbose = 0x400;
     const uint8_t password[] = {
@@ -480,9 +487,11 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 
 BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 {
+    LCGRandom rand(0);
+    LCGTime timeobj;
 
-    NTLMContext client_context;
-    NTLMContext server_context;
+    NTLMContext client_context(rand, timeobj);
+    NTLMContext server_context(rand, timeobj);
 
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
@@ -641,10 +650,13 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 
 BOOST_AUTO_TEST_CASE(TestWrittersReaders)
 {
-    NTLMContext context_write;
+    LCGRandom rand(0);
+    LCGTime timeobj;
+
+    NTLMContext context_write(rand, timeobj);
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-    NTLMContext context_read;
+    NTLMContext context_read(rand, timeobj);
     context_read.verbose = 0x400;
     context_write.verbose = 0x400;
     context_read.server = true;

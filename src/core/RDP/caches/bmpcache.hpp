@@ -18,22 +18,29 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
+
+#pragma once
 
 #include <set>
 #include <memory>
 #include <algorithm>
 
-#include "bitmap.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include <cinttypes>
+
+#include "utils/bitmap.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
 using std::size_t;
 
 struct BmpCache {
-    static const uint8_t  MAXIMUM_NUMBER_OF_CACHES = 5;
 
-    static const uint8_t IN_WAIT_LIST = 0x80;
+    enum {
+        MAXIMUM_NUMBER_OF_CACHES = 5
+    };
+
+    enum {
+        IN_WAIT_LIST = 0x80
+    };
 
     enum {
         FOUND_IN_CACHE
@@ -45,6 +52,9 @@ private:
 
     // For Persistent Disk Bitmap Cache's Wait List.
     struct cache_lite_element {
+        #ifndef NDEBUG
+        Bitmap bmp;
+        #endif
         uint_fast32_t stamp;
         uint8_t sha1[20];
         bool is_valid;
@@ -289,6 +299,20 @@ private:
             return &it->elem - this->first;
         }
 
+        #ifndef NDEBUG
+        void check_uniq_bmp(uint8_t const * sig, Bitmap const & bmp) const {
+            auto pred = [sig, &bmp](const T & e) {
+                return e
+                    && (*reinterpret_cast<uint64_t const *>(&sig[0]) == *reinterpret_cast<uint64_t const *>(&e.sha1[0]))
+                    ? (bmp.cx() != e.bmp.cx() || bmp.cy() != e.bmp.cy() || memcmp(bmp.data(), e.bmp.data(), bmp.bmp_size()))
+                    : false;
+            };
+            if (std::count_if(this->first, this->last, pred) > 1) {
+                assert(false && "bitmap duplicated");
+            }
+        }
+        #endif
+
         void remove(T const & e) {
             this->sorted_elements.erase(e);
         }
@@ -331,6 +355,7 @@ public:
             return this->bmp_size_;
         }
 
+        // TODO renamed to is_persistent()
         bool persistent() const {
             return this->is_persistent_;
         }
@@ -423,9 +448,9 @@ public:
 
         if (this->verbose) {
             LOG( LOG_INFO
-                , "BmpCache: %s bpp=%u number_of_cache=%u use_waiting_list=%s "
-                    "cache_0(%u, %u, %s) cache_1(%u, %u, %s) cache_2(%u, %u, %s) "
-                    "cache_3(%u, %u, %s) cache_4(%u, %u, %s)"
+                , "BmpCache: %s bpp=%" PRIu8 " number_of_cache=%" PRIu8 " use_waiting_list=%s "
+                    "cache_0(%zu, %" PRIu16 ", %s) cache_1(%zu, %" PRIu16 ", %s) cache_2(%zu, %" PRIu16 ", %s) "
+                    "cache_3(%zu, %" PRIu16 ", %s) cache_4(%zu, %" PRIu16 ", %s)"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
                 , this->caches[0].size(), this->caches[0].bmp_size(), (caches[0].persistent() ? "yes" : "no")
@@ -440,7 +465,7 @@ public:
             LOG( LOG_ERR, "BmpCache: %s number_of_cache(%u) > %u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , this->number_of_cache
-                , MAXIMUM_NUMBER_OF_CACHES);
+                , unsigned(MAXIMUM_NUMBER_OF_CACHES));
             throw Error(ERR_RDP_PROTOCOL);
         }
 
@@ -588,7 +613,8 @@ private:
 public:
     void log() const {
         LOG( LOG_INFO
-            , "BmpCache: %s (0=>%u, %u%s) (1=>%u, %u%s) (2=>%u, %u%s) (3=>%u, %u%s) (4=>%u, %u%s)"
+            , "BmpCache: %s (0=>%" PRIu16 ", %zu%s) (1=>%" PRIu16 ", %zu%s)"
+              " (2=>%" PRIu16 ", %zu%s) (3=>%" PRIu16 ", %zu%s) (4=>%" PRIu16 ", %zu%s)"
             , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
             , get_cache_usage(0), this->caches[0].size(), (this->caches[0].persistent() ? ", persistent" : "")
             , get_cache_usage(1), this->caches[1].size(), (this->caches[1].persistent() ? ", persistent" : "")
@@ -597,7 +623,7 @@ public:
             , get_cache_usage(4), this->caches[4].size(), (this->caches[4].persistent() ? ", persistent" : ""));
     }
 
-    TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
+    // TODO palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap
     uint32_t cache_bitmap(const Bitmap & oldbmp) {
         REDASSERT(this->owner != Mod_rdp);
 
@@ -628,14 +654,14 @@ public:
 
         if (id_real == this->number_of_cache) {
             LOG( LOG_ERR
-                , "BmpCache: %s bitmap size(%u) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
+                , "BmpCache: %s bitmap size(%zu) too big: cache_0=%u cache_1=%u cache_2=%u cache_3=%u cache_4=%u"
                 , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
                 , bmp.bmp_size()
-                , (this->caches[0].size() ? this->caches[0].bmp_size() : 0)
-                , (this->caches[1].size() ? this->caches[1].bmp_size() : 0)
-                , (this->caches[2].size() ? this->caches[2].bmp_size() : 0)
-                , (this->caches[3].size() ? this->caches[3].bmp_size() : 0)
-                , (this->caches[4].size() ? this->caches[4].bmp_size() : 0)
+                , (this->caches[0].size() ? this->caches[0].bmp_size() : 0u)
+                , (this->caches[1].size() ? this->caches[1].bmp_size() : 0u)
+                , (this->caches[2].size() ? this->caches[2].bmp_size() : 0u)
+                , (this->caches[3].size() ? this->caches[3].bmp_size() : 0u)
+                , (this->caches[4].size() ? this->caches[4].bmp_size() : 0u)
                 );
             REDASSERT(0);
             throw Error(ERR_BITMAP_CACHE_TOO_BIG);
@@ -715,12 +741,17 @@ public:
             if (e) {
                 cache_real.remove(e);
             }
-           ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
+            ::memcpy(e.sig.sig_8, e_compare.sha1, sizeof(e.sig.sig_8));
             ::memcpy(e.sha1, e_compare.sha1, 20);
             e.bmp = bmp;
             e.stamp = ++this->stamp;
             e.cached = true;
             cache_real.add(e);
+            #ifndef NDEBUG
+            if (cache_real.persistent()) {
+                cache_real.check_uniq_bmp(e.sig.sig_8, bmp);
+            }
+            #endif
         }
         else {
             cache_lite_element & e = this->waiting_list[oldest_cidx];
@@ -729,9 +760,17 @@ public:
             }
             ::memcpy(e.sha1, e_compare.sha1, 20);
             e.is_valid = true;
+            #ifndef NDEBUG
+            e.bmp = e_compare.bmp;
+            #endif
             this->waiting_list_bitmap = std::move(e_compare.bmp);
             e.stamp = ++this->stamp;
             this->waiting_list.add(e);
+            #ifndef NDEBUG
+            if (this->waiting_list.persistent()) {
+                this->waiting_list.check_uniq_bmp(e.sha1, e.bmp);
+            }
+            #endif
         }
 
         // Generating source code for unit test.
@@ -754,5 +793,5 @@ public:
         return this->caches[cache_id];
     }
 };
+//const uint8_t BmpCache::MAXIMUM_NUMBER_OF_CACHES;
 
-#endif

@@ -18,11 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
-#define _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
 
-#include "stream.hpp"
-#include "colors.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
+#include "utils/colors.hpp"
 #include "capabilities/common.hpp"
 #include <cassert>
 
@@ -254,12 +254,10 @@ struct UpdatePaletteData_Recv {
         uint32_t numberColors = stream.in_uint32_le();
         assert(numberColors == 256);
 
-        uint8_t r, g, b;
-
         for (uint32_t i = 0; i < numberColors; i++) {
-            r = stream.in_uint8();
-            g = stream.in_uint8();
-            b = stream.in_uint8();
+            uint8_t const r = stream.in_uint8();
+            uint8_t const g = stream.in_uint8();
+            uint8_t const b = stream.in_uint8();
             palette.set_color(i, (r << 16) | (g << 8) | b);
         }
     }
@@ -681,4 +679,3 @@ struct ConfirmActivePDU_Send {
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_PROTOCOL_HPP_

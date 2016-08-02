@@ -18,11 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP
 
-#include "in_file_transport.hpp"
-#include "transparentplayer.hpp"
+#pragma once
+
+#include "transport/in_file_transport.hpp"
+#include "capture/transparentplayer.hpp"
 #include "internal_mod.hpp"
 
 class TransparentReplayMod : public InternalMod {
@@ -57,7 +57,8 @@ public:
         close(this->fd);
     }
 
-    void draw_event(time_t now) override {
+    void draw_event(time_t now, gdi::GraphicApi &) override {
+        (void)now;
         try {
             if (!this->player.interpret_chunk()) {
                 this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
@@ -79,6 +80,7 @@ public:
             }
         }
     }
+
+    bool is_up_and_running() override { return true; }
 };
 
-#endif  // #ifndef REDEMPTION_MOD_INTERNAL_TRANSPARENT_REPLAY_MOD_HPP

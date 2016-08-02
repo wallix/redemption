@@ -21,14 +21,17 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestSocketTransport
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "socket_transport.hpp"
-#include "listen.hpp"
-#include "server.hpp"
+#include "transport/socket_transport.hpp"
+#include "core/listen.hpp"
+#include "core/server.hpp"
 
+// TODO "-Wold-style-cast is ignored"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 
 // This test is somewhat tricky
 // The goal is to check that SocketTransport objects are working as expected
@@ -47,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     class ServerOnce : public Server
     {
         public:
-        virtual Server_status start(int incoming_sck) { return START_WANT_STOP; }
+        Server_status start(int) override { return START_WANT_STOP; }
     } dummy;
 
     Listen listener(dummy, inet_addr("127.0.0.1"), 4444, true, 25, false); // 25 seconds to connect, or timeout
@@ -210,3 +213,5 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     }
     delete client_trans;
 }
+
+#pragma GCC diagnostic pop

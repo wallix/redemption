@@ -23,15 +23,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWrmCapture
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
-#include "capture.hpp"
+#include "capture/capture.hpp"
 #include "check_sig.hpp"
 #include "get_file_contents.hpp"
 
@@ -39,9 +37,10 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(0);
-    const int groupid = 0;
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
     {
+        LCGRandom rnd(0);
+
         // Timestamps are applied only when flushing
         timeval now;
         now.tv_usec = 0;
@@ -49,54 +48,67 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         Rect scr(0, 0, 800, 600);
 
-        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
-        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
 
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::wrm | configs::CaptureFlags::png);
-        ini.set_acl<cfg::globals::enable_file_encryption>(false);
+        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+        ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
+        ini.set<cfg::video::record_tmp_path>("./");
+        ini.set<cfg::video::record_path>("./");
+        ini.set<cfg::video::hash_path>("/tmp");
+        ini.set<cfg::globals::movie_path>("capture");
+
+        CryptoContext cctx(rnd, ini);
+
+        // TODO remove this after unifying capture interface
+        bool full_video = false;
+        // TODO remove this after unifying capture interface
+        bool clear_png = false;
+        // TODO remove this after unifying capture interface
+        bool no_timestamp = false;
+        // TODO remove this after unifying capture interface
+        auth_api * authentifier = nullptr;
         Capture capture(
-            now, scr.cx, scr.cy, 24, 24, "./", "./", "/tmp/", "capture", false, false, nullptr, ini
-        );
-
+            now, scr.cx, scr.cy, 24, 24
+            , clear_png, no_timestamp, authentifier
+            , ini, rnd, cctx, full_video);
         bool ignore_frame_in_timeval = false;
-        bool requested_to_stop       = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
-
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
 
@@ -104,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator png_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".png", ini.get<cfg::video::capture_groupid>()
+          , "./" , "capture", ".png"
         );
 
         const char * filename;
@@ -138,50 +150,51 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator wrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-        , "./" , "capture", ".wrm", ini.get<cfg::video::capture_groupid>()
+          , "./" , "capture", ".wrm"
         );
+
+        struct {
+            size_t len = 0;
+            ssize_t write(char const *, size_t len) {
+                this->len += len;
+                return len;
+            }
+        } meta_len_writer;
+        detail::write_meta_headers(meta_len_writer, nullptr, 800, 600, nullptr, false);
 
         const char * filename;
 
         filename = wrm_seq.get(0);
         BOOST_CHECK_EQUAL(1646, ::filesize(filename));
+        detail::write_meta_file(meta_len_writer, filename, 1000, 1004);
         ::unlink(filename);
         filename = wrm_seq.get(1);
         BOOST_CHECK_EQUAL(3508, ::filesize(filename));
+        detail::write_meta_file(meta_len_writer, filename, 1003, 1007);
         ::unlink(filename);
         filename = wrm_seq.get(2);
         BOOST_CHECK_EQUAL(3484, ::filesize(filename));
+        detail::write_meta_file(meta_len_writer, filename, 1006, tvtime().tv_sec);
         ::unlink(filename);
         filename = wrm_seq.get(3);
         BOOST_CHECK_EQUAL(false, file_exist(filename));
-    }
 
-    {
         FilenameGenerator mwrm_seq(
 //            FilenameGenerator::PATH_FILE_PID_EXTENSION
             FilenameGenerator::PATH_FILE_EXTENSION
-          , "./", "capture", ".mwrm", groupid
+          , "./", "capture", ".mwrm"
         );
-        const char * filename = mwrm_seq.get(0);
-        timeval now = tvtime();
-        BOOST_CHECK_EQUAL(99 + std::to_string(now.tv_sec).size(), ::filesize(filename));
-        ::unlink(filename);
-    }
-
-    if (ini.get<cfg::globals::enable_file_encryption>()) {
-        FilenameGenerator mwrm_seq(
-//            FilenameGenerator::PATH_FILE_PID_EXTENSION
-            FilenameGenerator::PATH_FILE_EXTENSION
-          , "/tmp/", "capture", ".mwrm", groupid
-        );
-        const char * filename = mwrm_seq.get(0);
-        BOOST_CHECK_EQUAL(32, ::filesize(filename));
+        filename = mwrm_seq.get(0);
+        BOOST_CHECK_EQUAL(meta_len_writer.len, ::filesize(filename));
         ::unlink(filename);
     }
 }
 
 BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
+    try {
+
+    LCGRandom rnd(0);
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
     {
@@ -192,27 +205,45 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         Rect scr(0, 0, 12, 10);
 
-        ini.set<cfg::video::frame_interval>(100); // one timestamp every second
-        ini.set<cfg::video::break_interval>(3);   // one WRM file every 5 seconds
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
 
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::capture_flags>(configs::CaptureFlags::png);
-        ini.set_acl<cfg::globals::enable_file_encryption>(false);
-        Capture capture(now, scr.cx, scr.cy, 16, 16, "./", "/tmp/", "/tmp/", "capture", false, false, nullptr, ini);
+        ini.set<cfg::video::capture_flags>(CaptureFlags::png);
+        ini.set<cfg::globals::trace_type>(TraceType::localfile);
+
+        ini.set<cfg::video::record_tmp_path>("./");
+        ini.set<cfg::video::record_path>("./");
+        ini.set<cfg::video::hash_path>("/tmp");
+        ini.set<cfg::globals::movie_path>("capture");
+
+        CryptoContext cctx(rnd, ini);
+
+        // TODO remove this after unifying capture interface
+        bool full_video = false;
+        // TODO remove this after unifying capture interface
+        bool clear_png = false;
+        // TODO remove this after unifying capture interface
+        bool no_timestamp = false;
+        // TODO remove this after unifying capture interface
+        auth_api * authentifier = nullptr;
+
+        Capture capture(now, scr.cx, scr.cy, 16, 16
+                        , clear_png, no_timestamp, authentifier
+                        , ini, rnd, cctx, full_video);
 
         Pointer pointer1(Pointer::POINTER_EDIT);
-        capture.server_set_pointer(pointer1);
+        capture.set_pointer(pointer1);
 
         bool ignore_frame_in_timeval = true;
-        bool requested_to_stop       = false;
 
         capture.draw(RDPOpaqueRect(scr, color_encode(BLUE, 16)), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        const char * filename = capture.png_trans->seqgen()->get(0);
+        const char * filename = "./capture-000000.png";
 
         auto s = get_file_contents<std::string>(filename);
         char message[1024];
@@ -223,4 +254,8 @@ BOOST_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         }
         ::unlink(filename);
     }
+
+    } catch (...) {
+        BOOST_CHECK(false);
+    };
 }

@@ -1,5 +1,7 @@
 Master branch: [![Build Status from master](https://travis-ci.org/wallix/redemption.svg?branch=master)](https://travis-ci.org/wallix/redemption)
+
 Future branch: [![Build Status from future](https://travis-ci.org/wallix/redemption.svg?branch=future)](https://travis-ci.org/wallix/redemption)
+
 
 Dependencies
 ------------
@@ -14,9 +16,11 @@ To compile ReDemPtion you need the following packages:
 - libgssglue-dev
 - libsnappy-dev
 - libpng12-dev
+- python2.7-dev or python2.6-dev
+- g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
 Optionally:
-- python
+- python (python-dev)
 
 Submodule (`$ git submodule init && git submodule update`):
 - https://github.com/wallix/program_options.git
@@ -96,23 +100,23 @@ Well, that's pretty easy once you installed the required dependencies.
 
 Just run (as user):
 
-`$ bjam`
+$ `bjam` or `bjam toolset=compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
 
 Compile executables without tests (as user):
 
-`$ bjam exe`
+$ `bjam exe`
 
 and install (as administrator):
 
-`# bjam install`
+\# `bjam install`
 
 Binaries are located in /usr/local/bin.
 
 To test it, executes:
 
-`$ python tools/passthrough/passthrough.py`
+$ `python tools/passthrough/passthrough.py`
 
-`# /usr/local/bin/rdpproxy -nf`
+\# `/usr/local/bin/rdpproxy -nf`
 
 Now, at that point you'll just have two servers waiting for connections
 not much fun. You still have to run some RDP client to connect to proxy. Choose
@@ -122,7 +126,7 @@ occurs just report it to us so that we can correct it.
 
 Example with freerdp when the proxy runs on the same host as the client:
 
-`$ xfreerdp 127.0.0.1`
+$ `xfreerdp 127.0.0.1`
 
 A dialog box should open in which you can type a username and a password.
 With default authhook at least internal services should work. Try login: bouncer
@@ -135,32 +139,7 @@ to current authhook.py, please contribute it, it will be much appreciated.
 You can also bypass login dialog box and go directly to the RDP server by
 providing a login and a password from command line.
 
-`$ xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
-
-
-Q - Why are there so many #pragma messages when compiling ReDemPtion ?
--------------------------------------------------------------
-
-Because we put them there to avoid forgetting foreseen troubles. It also
-avoid stopping current coding to fix every bit of suspicious code on the fly,
-but to keep some physical trace (and show to readers) that some parts of the
-code or of the design are indeed suspicious.
-
-The final goal is to remove them all, but we strongly believe that potential
-problems or architecture defects should not go unnoticed, even when compiler
-can't detect them.
-
-Our code contains more or less 250 of such warnings, inserted by hand.
-When compiling you see them several times as we choose a special "headers only"
-coding style. Why we did so is another question.
-
-You only see those messages if environment variable `VERBOSE` is defined. If not,
-then the compiling process will be quite silent (default mode used to be the
-other way, but now that has changed).
-
-If you want to see internal warnings, just define `VERBOSE` or compile using:
-
-`$ VERBOSE=1 bjam`
+$ `xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
 
 
 Q - Why did you choose this special "headers only" coding style ?

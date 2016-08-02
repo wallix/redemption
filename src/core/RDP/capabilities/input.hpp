@@ -21,11 +21,13 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
+
+#pragma once
+
+#include <cinttypes>
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 //2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET)
 //=======================================================
@@ -129,15 +131,19 @@ struct InputCaps : public Capability {
     }
 
     void log(const char * msg)override {
-        LOG(LOG_INFO, "%s Input caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Input caps::inputFlags 0x%X", this->inputFlags);
-        LOG(LOG_INFO, "Input caps::pad2octetsA %u", this->pad2octetsA);
-        LOG(LOG_INFO, "Input caps::keyboardLayout %u", this->keyboardLayout);
-        LOG(LOG_INFO, "Input caps::keyboardType %u", this->keyboardType);
-        LOG(LOG_INFO, "Input caps::keyboardSubType %u", this->keyboardSubType);
-        LOG(LOG_INFO, "Input caps::keyboardFunctionKey %u", this->keyboardFunctionKey);
-        LOG(LOG_INFO, "Input caps::imeFileName %u", this->imeFileName);
+        LOG(LOG_INFO, "%s Input caps (%" PRIu16 " bytes)", msg, this->len);
+        LOG(LOG_INFO, "Input caps::inputFlags 0x%" PRIX16, this->inputFlags);
+        LOG(LOG_INFO, "Input caps::pad2octetsA %" PRIu16, this->pad2octetsA);
+        LOG(LOG_INFO, "Input caps::keyboardLayout %" PRIu32, this->keyboardLayout);
+        LOG(LOG_INFO, "Input caps::keyboardType %" PRIu32, this->keyboardType);
+        LOG(LOG_INFO, "Input caps::keyboardSubType %" PRIu32, this->keyboardSubType);
+        LOG(LOG_INFO, "Input caps::keyboardFunctionKey %" PRIu32, this->keyboardFunctionKey);
+        uint8_t imeFileName_utf8[sizeof(this->imeFileName) * 2 + 4];
+        imeFileName_utf8[UTF16toUTF8(
+            this->imeFileName, sizeof(this->imeFileName) / sizeof(this->imeFileName[0]),
+            imeFileName_utf8, sizeof(imeFileName_utf8) / sizeof(imeFileName_utf8[0])
+        )] = 0;
+        LOG(LOG_INFO, "Input caps::imeFileName %s", imeFileName_utf8);
     }
 };
 
-#endif

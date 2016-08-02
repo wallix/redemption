@@ -19,15 +19,15 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP
+#pragma once
 
-#include "font.hpp"
+#include "core/font.hpp"
 #include "composite.hpp"
 #include "tooltip.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 
 #include <typeinfo>
+#include "gdi/graphic_api.hpp"
 
 class WidgetScreen : public WidgetParent
 {
@@ -43,7 +43,7 @@ public:
 
     Font const & font;
 
-    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, Font const & font,
+    WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
                  NotifyApi * notifier = nullptr, Theme const & theme = Theme())
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme)
@@ -136,10 +136,10 @@ public:
         Widget2 * w = this->last_widget_at_pos(x, y);
         if (this->current_over != w) {
             if (((w != nullptr) ? w->pointer_flag : Pointer::POINTER_NORMAL) == Pointer::POINTER_EDIT) {
-                this->drawable.server_set_pointer(edit_pointer);
+                this->drawable.set_pointer(edit_pointer);
             }
             else {
-                this->drawable.server_set_pointer(normal_pointer);
+                this->drawable.set_pointer(normal_pointer);
             }
             this->current_over = w;
         }
@@ -164,4 +164,3 @@ public:
     }
 };
 
-#endif

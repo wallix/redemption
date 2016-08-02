@@ -18,12 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_MPPC_40_HPP_
-#define _REDEMPTION_CORE_RDP_MPPC_40_HPP_
+
+#pragma once
+
+#include <cinttypes>
 
 #define RDP_40_HIST_BUF_LEN (1024 * 8)  /* RDP 4.0 uses 8K history buf */
 #include "mppc.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 struct rdp_mppc_40_dec : public rdp_mppc_dec {
     uint8_t    history_buf[RDP_40_HIST_BUF_LEN];
@@ -49,16 +51,16 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
         LOG(LOG_INFO, "Type=RDP 4.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf,               16);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
     void dump() override {
         LOG(LOG_INFO, "Type=RDP 4.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf,               RDP_40_HIST_BUF_LEN);
-        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
     /**
@@ -204,7 +206,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
                 if (cur_bits_left < tmp2) {
                     /* we have less bits than we need */
                     uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
-                    d32       |= i32 << ((32 - bits_left) - cur_bits_left);
+                    d32       |= static_cast<uint64_t>(i32) << ((32 - bits_left) - cur_bits_left);
                     bits_left += cur_bits_left;
                     tmp2      -= cur_bits_left;
                     if (cptr < cbuf + len) {
@@ -440,7 +442,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
     typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
     typedef hash_table_manager::hash_type                hash_type;
 
-    TODO("making it static and large enough should be good for both RDP4 and RDP5")
+    // TODO making it static and large enough should be good for both RDP4 and RDP5
     uint8_t    historyBuffer[RDP_40_HIST_BUF_LEN];       /* contains uncompressed data */
     uint8_t  * outputBuffer;        /* contains compressed data */
     uint8_t    outputBufferPlus[RDP_40_HIST_BUF_LEN + 64 + 8];
@@ -709,7 +711,7 @@ private:
     }
 
     void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
-        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved) override {
+        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t /*reserved*/) override {
         this->compress_40(uncompressed_data, uncompressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
             compressedType       = this->flags;
@@ -732,4 +734,3 @@ public:
     }
 };
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_40_HPP_

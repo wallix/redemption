@@ -24,11 +24,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestX224
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
-#include "test_transport.hpp"
-#include "RDP/x224.hpp"
+#include "transport/test_transport.hpp"
+#include "core/RDP/x224.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
 {
@@ -50,21 +50,21 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     X224::RecvFactory fac_x224(t, &end, array_size);
 
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
     X224::CR_TPDU_Recv x224(stream, false, true);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(0x50, x224.tpdu_hdr.LI);
 
     BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie));
-    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CORRELATION_INFO_PRESENT, x224.rdp_neg_flags);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CORRELATION_INFO_PRESENT), x224.rdp_neg_flags);
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL((uint32_t)((X224::PROTOCOL_TLS | X224::PROTOCOL_HYBRID) | X224::PROTOCOL_HYBRID_EX), x224.rdp_neg_requestedProtocols);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(X224::PROTOCOL_TLS | X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX), x224.rdp_neg_requestedProtocols);
 
     BOOST_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(x224._header_size, stream.get_capacity());
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(0, strlen(x224.cookie));
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
@@ -275,14 +275,14 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)11, fac_x224.length);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
+    BOOST_CHECK_EQUAL(size_t(11), fac_x224.length);
 
     X224::CR_TPDU_Recv x224(stream, false);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(0, strlen(x224.cookie));
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
     try {
@@ -322,14 +322,14 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 
         BOOST_CHECK_EQUAL(3, x224.tpkt.version);
         BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
-        BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
         BOOST_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
 
         BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
-        BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
         BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
         BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-        BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
+        BOOST_CHECK_EQUAL(static_cast<uint32_t>(X224::PROTOCOL_TLS), x224.rdp_neg_requestedProtocols);
 
         BOOST_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
         BOOST_CHECK_EQUAL(x224._header_size, stream.get_capacity());
@@ -375,14 +375,14 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)11, fac_x224.length);
+    BOOST_CHECK_EQUAL(static_cast<int>(X224::CC_TPDU), fac_x224.type);
+    BOOST_CHECK_EQUAL(11u, fac_x224.length);
 
     X224::CC_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CC_TPDU), x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
 
@@ -427,22 +427,22 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL(static_cast<int>(X224::CC_TPDU), fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
     X224::CC_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::CC_TPDU), x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(0, x224.tpdu_hdr.dst_ref);
     BOOST_CHECK_EQUAL(0, x224.tpdu_hdr.src_ref);
     BOOST_CHECK_EQUAL(14, x224.tpdu_hdr.LI);
 
-    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_RSP, x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_RSP), x224.rdp_neg_type);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_code);
+    BOOST_CHECK_EQUAL(static_cast<uint32_t>(X224::PROTOCOL_TLS), x224.rdp_neg_code);
 
     BOOST_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(x224._header_size, stream.get_capacity());
@@ -466,15 +466,15 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)11, fac_x224.length);
+    BOOST_CHECK_EQUAL(static_cast<int>(X224::DR_TPDU), fac_x224.type);
+    BOOST_CHECK_EQUAL(11u, fac_x224.length);
 
     X224::DR_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, x224.tpdu_hdr.code);
-    BOOST_CHECK_EQUAL((uint8_t)X224::REASON_NOT_SPECIFIED, x224.tpdu_hdr.reason);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::DR_TPDU), x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::REASON_NOT_SPECIFIED), x224.tpdu_hdr.reason);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
 
     BOOST_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
@@ -518,16 +518,16 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)13, fac_x224.length);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::ER_TPDU), fac_x224.type);
+    BOOST_CHECK_EQUAL(13u, fac_x224.length);
 
     X224::ER_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(13, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::ER_TPDU), x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(8, x224.tpdu_hdr.LI);
-    BOOST_CHECK_EQUAL((uint8_t)X224::REASON_INVALID_TPDU_TYPE, x224.tpdu_hdr.reject_cause);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::REASON_INVALID_TPDU_TYPE), x224.tpdu_hdr.reject_cause);
     BOOST_CHECK_EQUAL(0xC1, x224.tpdu_hdr.invalid_tpdu_var);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.invalid_tpdu_vl);
 
@@ -574,14 +574,14 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, fac_x224.type);
-    BOOST_CHECK_EQUAL((size_t)12, fac_x224.length);
+    BOOST_CHECK_EQUAL(static_cast<int>(X224::DT_TPDU), fac_x224.type);
+    BOOST_CHECK_EQUAL(12u, fac_x224.length);
 
     X224::DT_TPDU_Recv x224(stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(12, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(X224::DT_TPDU), x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
 
     BOOST_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);

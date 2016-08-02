@@ -18,22 +18,21 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
-#define REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP
+
+#pragma once
+
+#include "core/front_api.hpp"
+#include "mod/rdp/channels/base_channel.hpp"
+#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/channels/sespro_launcher.hpp"
+#include "utils/sugar/strutils.hpp"
 
 #include <deque>
 
-#include "apply_for_delim.hpp"
-#include "base_channel.hpp"
-#include "front_api.hpp"
-#include "rdpdr_file_system_drive_manager.hpp"
-
 class FileSystemVirtualChannel : public BaseVirtualChannel
 {
-public:
     VirtualChannelDataSender& to_server_sender;
 
-private:
     rdpdr::SharedHeader client_message_header;
     rdpdr::SharedHeader server_message_header;
 
@@ -41,16 +40,28 @@ private:
 
     FileSystemDriveManager& file_system_drive_manager;
 
-    // DeviceId, FileId, CompletionId, MajorFunction, (extra data), Path.
-    typedef std::vector<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t,
-                                   uint32_t, std::unique_ptr<std::string>>>
-        device_io_request_info_inventory_type;
+    struct device_io_request_info_type
+    {
+        uint32_t device_id;
+        uint32_t file_id;
+        uint32_t completion_id;
+        // TODO IRP_MAJOR
+        uint32_t major_function;
+        uint32_t extra_data;
+        std::string path;
+    };
+    using device_io_request_info_inventory_type = std::vector<device_io_request_info_type>;
     device_io_request_info_inventory_type device_io_request_info_inventory;
 
-    // DeviceId, FileId, file_path, for_reading, for_writing.
-    typedef std::vector<std::tuple<uint32_t, uint32_t,
-                                   std::unique_ptr<std::string>, bool, bool>>
-        device_io_target_info_inventory_type;
+    struct device_io_target_info_type
+    {
+        uint32_t device_id;
+        uint32_t file_id;
+        std::string file_path;
+        bool for_reading;
+        bool for_writing;
+    };
+    using device_io_target_info_inventory_type = std::vector<device_io_target_info_type>;
     device_io_target_info_inventory_type device_io_target_info_inventory;
 
     bool device_capability_version_02_supported = false;
@@ -63,19 +74,29 @@ private:
     const bool        param_dont_log_data_into_syslog;
     const bool        param_dont_log_data_into_wrm;
 
-    bool proxy_managed_drives_announced = false;
+    bool user_logged_on = false;
 
-    class DeviceRedirectionManager {
-        // (Virtual Channel) data_length, (Virtual Channel) data.
-        typedef std::deque<std::tuple<uint32_t, std::unique_ptr<uint8_t[]>>>
-            device_announce_collection_type;
+    class DeviceRedirectionManager
+    {
+        struct virtual_channel_data_type
+        {
+            std::size_t length;
+            std::unique_ptr<uint8_t[]> data;
+        };
+        using device_announce_collection_type = std::deque<virtual_channel_data_type>;
         device_announce_collection_type device_announces;
 
-        // DeviceId, PreferredDosName.
-        typedef std::vector<std::tuple<uint32_t,
-                            std::unique_ptr<std::string>>>
-            device_info_inventory_type;
+        struct device_info_type
+        {
+            uint32_t device_id;
+            std::string preferred_dos_name;
+        };
+        using device_info_inventory_type = std::vector<device_info_type>;
         device_info_inventory_type device_info_inventory;
+
+        FileSystemDriveManager& file_system_drive_manager;
+
+        bool& user_logged_on;
 
     public:
         class ToDeviceAnnounceCollectionSender :
@@ -87,7 +108,7 @@ private:
             OutStream                  device_announce_stream;
 
         public:
-            ToDeviceAnnounceCollectionSender(
+            explicit ToDeviceAnnounceCollectionSender(
                 device_announce_collection_type& device_announces)
             : device_announces(device_announces) {}
 
@@ -112,10 +133,10 @@ private:
                     chunk_data_length);
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    this->device_announces.push_back(
-                        std::make_tuple(
-                            this->device_announce_stream.get_offset(),
-                            std::move(this->device_announce_data)));
+                    this->device_announces.push_back({
+                        this->device_announce_stream.get_offset(),
+                        std::move(this->device_announce_data)
+                    });
 
                     this->device_announce_stream = OutStream();
                 }
@@ -147,10 +168,14 @@ private:
             ];
         OutStream remaining_device_announce_request_header_stream;
 
+        bool session_probe_drive_should_be_disable = false;
+
         const uint32_t verbose;
 
     public:
         DeviceRedirectionManager(
+            FileSystemDriveManager& file_system_drive_manager,
+            bool& user_logged_on,
             VirtualChannelDataSender* to_client_sender_,
             VirtualChannelDataSender* to_server_sender_,
             bool file_system_authorized,
@@ -160,7 +185,9 @@ private:
             bool smart_card_authorized,
             uint32_t channel_chunk_length,
             uint32_t verbose)
-        : to_device_announce_collection_sender(device_announces)
+        : file_system_drive_manager(file_system_drive_manager)
+        , user_logged_on(user_logged_on)
+        , to_device_announce_collection_sender(device_announces)
         , to_client_sender(to_client_sender_)
         , to_server_sender(to_server_sender_)
         , param_file_system_authorized(file_system_authorized)
@@ -171,48 +198,97 @@ private:
         , remaining_device_announce_request_header_stream(
               this->remaining_device_announce_request_header_data)
         , verbose(verbose) {
+            (void)channel_chunk_length;
         }
 
     private:
-        void add_known_device(uint32_t DeviceId,
-                              const char* PreferredDosName) {
-            this->device_info_inventory.push_back(
-                std::make_tuple(DeviceId,
-                    std::make_unique<std::string>(PreferredDosName)));
+        bool add_known_device(uint32_t DeviceId, const char* PreferredDosName) {
+            for (device_info_type const & info : this->device_info_inventory) {
+                if (info.device_id == DeviceId) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        LOG(LOG_INFO,
+                            "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
+                                "\"%s\"(DeviceId=%u) is already in the device list. "
+                                "Old=\"%s\"",
+                            PreferredDosName, DeviceId,
+                            info.preferred_dos_name.c_str());
+                    }
+
+                    return false;
+                }
+            }
+
+            this->device_info_inventory.push_back({DeviceId, PreferredDosName});
             if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                        "Add \"%s\"(DeviceId=%u) to known dervice list.",
+                        "Add \"%s\"(DeviceId=%u) to known device list.",
                     PreferredDosName, DeviceId);
             }
+
+            return true;
         }
 
     public:
-        const char* get_device_name(uint32_t DeviceId) {
-            for (device_info_inventory_type::const_iterator iter =
-                     this->device_info_inventory.cbegin();
-                 iter != this->device_info_inventory.cend(); ++iter) {
-                if (std::get<0>(*iter) == DeviceId) {
-                    return std::get<1>(*iter)->c_str();
+        void DisableSessionProbeDrive() {
+            if (!this->user_logged_on) {
+                this->file_system_drive_manager.RemoveSessionProbeDrive(
+                    this->verbose);
+
+                return;
+            }
+
+            this->session_probe_drive_should_be_disable = true;
+
+            this->EffectiveDisableSessionProbeDrive();
+        }
+
+        void EffectiveDisableSessionProbeDrive() {
+            if (this->user_logged_on &&
+                !this->waiting_for_server_device_announce_response &&
+                !this->device_announces.size() &&
+                this->session_probe_drive_should_be_disable) {
+                this->file_system_drive_manager.DisableSessionProbeDrive(
+                    (*this->to_server_sender), this->verbose);
+
+                this->session_probe_drive_should_be_disable = false;
+            }
+        }
+
+        std::string const * get_device_name(uint32_t DeviceId) {
+            for (device_info_type const & info : this->device_info_inventory) {
+                if (info.device_id == DeviceId) {
+                    return &info.preferred_dos_name;
                 }
             }
 
             return nullptr;
         }
 
+        bool is_known_device(uint32_t DeviceId) {
+            for (device_info_type const & info : this->device_info_inventory) {
+                if (info.device_id == DeviceId) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
     private:
         void remove_known_device(uint32_t DeviceId) {
-            for (device_info_inventory_type::const_iterator iter =
-                     this->device_info_inventory.cbegin();
-                 iter != this->device_info_inventory.cend(); ++iter) {
-                if (std::get<0>(*iter) == DeviceId) {
+            for (auto iter = this->device_info_inventory.begin();
+                 iter != this->device_info_inventory.end(); ++iter) {
+                if (iter->device_id == DeviceId) {
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device: "
-                                "Remove \"%s\"(DeviceId=%u) from known dervice list.",
-                            std::get<1>(*iter)->c_str(),
+                                "Remove \"%s\"(DeviceId=%u) from known device list.",
+                            iter->preferred_dos_name.c_str(),
                             DeviceId);
                     }
+
+                    unordered_erase(this->device_info_inventory, iter);
 
                     break;
                 }
@@ -220,17 +296,14 @@ private:
         }
 
         void announce_device() {
-            if (!this->waiting_for_server_device_announce_response &&
-                this->device_announces.size()) {
+            while (!this->waiting_for_server_device_announce_response &&
+                   this->device_announces.size()) {
                 REDASSERT(this->to_server_sender);
 
-                const uint32_t total_length =
-                    std::get<0>(this->device_announces.front());
+                const uint32_t total_length = this->device_announces.front().length;
+                uint8_t const * chunk_data = this->device_announces.front().data.get();
 
                 uint32_t remaining_data_length = total_length;
-
-                uint8_t const * chunk_data =
-                    std::get<1>(this->device_announces.front()).get();
 
                 {
                     InStream chunk(chunk_data, total_length);
@@ -257,20 +330,13 @@ private:
 
                     if (device_announce_header.DeviceType() ==
                         rdpdr::RDPDR_DTYP_FILESYSTEM) {
-                        this->add_known_device(
-                            device_announce_header.DeviceId(),
-                            device_announce_header.PreferredDosName());
-                        this->device_info_inventory.push_back(
-                            std::make_tuple(device_announce_header.DeviceId(),
-                                std::make_unique<std::string>(
-                                    device_announce_header.PreferredDosName()))
-                            );
-                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                            LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::DeviceRedirectionManager::announce_device: "
-                                    "Add \"%s\"(DeviceId=%u) to known dervice list.",
-                                device_announce_header.PreferredDosName(),
-                                device_announce_header.DeviceId());
+                        if (!this->add_known_device(
+                                device_announce_header.DeviceId(),
+                                device_announce_header.PreferredDosName())) {
+
+                            this->device_announces.pop_front();
+
+                            continue;
                         }
                     }
                 }
@@ -310,13 +376,17 @@ private:
                 this->device_announces.pop_front();
 
                 this->waiting_for_server_device_announce_response = true;
-            }
-        }
+            }   // while (!this->waiting_for_server_device_announce_response &&
+                //        this->device_announces.size())
+
+            this->EffectiveDisableSessionProbeDrive();
+        }   // void announce_device()
 
     public:
         void process_client_device_list_announce_request(
             uint32_t total_length, uint32_t flags, InStream& chunk)
         {
+            (void)total_length;
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
             {
                 REDASSERT(
@@ -330,7 +400,7 @@ private:
                         LOG(LOG_ERR,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
                                 "Truncated DR_DEVICELIST_ANNOUNCE, "
-                                "need=%u remains=%u",
+                                "need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -444,7 +514,7 @@ private:
                         ((DeviceType == rdpdr::RDPDR_DTYP_SMARTCARD) &&
                          this->param_smart_card_authorized))
                     {
-                        REDASSERT(!(bool)this->current_device_announce_data);
+                        REDASSERT(!bool(this->current_device_announce_data));
 
                         const uint32_t current_device_announce_data_length =
                               rdpdr::SharedHeader::size()
@@ -573,10 +643,10 @@ private:
 
                         this->current_device_announce_stream = OutStream();
 
-                        this->device_announces.push_back(
-                            std::make_tuple(
-                                data_length,
-                                std::move(this->current_device_announce_data)));
+                        this->device_announces.push_back({
+                            data_length,
+                            std::move(this->current_device_announce_data)
+                        });
                     }
                 }
                 else if (this->length_of_remaining_device_data_to_be_skipped) {
@@ -591,18 +661,22 @@ private:
                 }
             }   // while (chunk.in_remain())
 
-            this->announce_device();
+            if (this->user_logged_on) {
+                this->announce_device();
+            }
         }   // process_client_device_list_announce_request()
 
         void process_client_drive_device_list_remove(uint32_t total_length,
                 uint32_t flags, InStream& chunk) {
+            (void)total_length;
+            (void)flags;
             {
                 const unsigned int expected = 4;    // DeviceCount(4)
                 if (!chunk.in_check_rem(expected)) {
                     LOG(LOG_ERR,
                         "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
                             "Truncated DR_DEVICELIST_REMOVE (1), "
-                            "need=%u remains=%u",
+                            "need=%u remains=%zu",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -618,7 +692,7 @@ private:
                     LOG(LOG_ERR,
                         "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
                             "Truncated DR_DEVICELIST_REMOVE (2), "
-                            "need=%u remains=%u",
+                            "need=%u remains=%zu",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -629,13 +703,10 @@ private:
                         const uint32_t DeviceId) -> bool {
                 bool device_removed = false;
 
-                for (device_announce_collection_type::const_iterator iter =
-                         device_announces.cbegin();
-                     iter != device_announces.cend(); ++iter) {
-                    uint8_t const * data =
-                        std::get<1>(*iter).get();
+                for (auto iter = device_announces.begin();
+                     iter != device_announces.end(); ++iter) {
 
-                    InStream header_stream(data,
+                    InStream header_stream(iter->data.get(),
                             rdpdr::SharedHeader::size() +
                             12  // DeviceCount(4) + DeviceType(4) + DeviceId(4)
                         );
@@ -649,7 +720,7 @@ private:
                         header_stream.in_uint32_le();
 
                     if (DeviceId == current_device_id) {
-                        device_announces.erase(iter);
+                        unordered_erase(device_announces, iter);
                         device_removed = true;
                         break;
                     }
@@ -731,11 +802,17 @@ private:
 
         void process_server_user_logged_on(uint32_t total_length,
                 uint32_t flags, InStream& chunk) {
+            (void)total_length;
+            (void)flags;
+            (void)chunk;
             this->announce_device();
         }
 
         void process_server_device_announce_response(uint32_t total_length,
-                uint32_t flags, InStream& chunk) {
+            uint32_t flags, InStream& chunk
+        ) {
+            (void)total_length;
+            (void)flags;
             this->waiting_for_server_device_announce_response = false;
 
             this->announce_device();
@@ -758,6 +835,17 @@ private:
     } device_redirection_manager;
 
     FrontAPI& front;
+
+    SessionProbeLauncher* drive_redirection_initialize_notifier = nullptr;
+
+    template<class Cont, class ItFw>
+    static void unordered_erase(Cont & cont, ItFw && pos)
+    {
+        if(pos + 1 != cont.end()) {
+            *pos = std::move(cont.back());
+        }
+        cont.pop_back();
+    }
 
 public:
     struct Params : public BaseVirtualChannel::Params
@@ -796,6 +884,8 @@ public:
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , device_redirection_manager(
+          file_system_drive_manager,
+          user_logged_on,
           to_client_sender_,
           to_server_sender_,
           (params.file_system_read_authorized ||
@@ -810,73 +900,86 @@ public:
 
     ~FileSystemVirtualChannel() override
     {
-#ifndef NDEBUG
-        bool make_boom_in_debug_mode = false;
-#endif  // #ifndef NDEBUG
-
-        if (!this->device_io_request_info_inventory.empty())
+        for (device_io_request_info_type & request_info : this->device_io_request_info_inventory)
         {
-            for (device_io_request_info_inventory_type::iterator iter =
-                     this->device_io_request_info_inventory.begin();
-                 iter != this->device_io_request_info_inventory.end();
-                 ++iter)
-            {
-                REDASSERT(std::get<3>(*iter) !=
-                    rdpdr::IRP_MJ_DIRECTORY_CONTROL);
+            REDASSERT(request_info.major_function != rdpdr::IRP_MJ_DIRECTORY_CONTROL);
 
-                LOG(LOG_WARNING,
-                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
-                        "There is Device I/O request information "
-                        "remaining in inventory. "
-                        "DeviceId=%u FileId=%u CompletionId=%u "
-                        "MajorFunction=%u extra_data=%u file_path=\"%s\"",
-                    std::get<0>(*iter), std::get<1>(*iter),
-                    std::get<2>(*iter), std::get<3>(*iter),
-                    std::get<4>(*iter),
-                    (std::get<5>(*iter) ?
-                     std::get<5>(*iter)->c_str() :
-                     ""));
-
-#ifndef NDEBUG
-                make_boom_in_debug_mode = true;
-#endif  // #ifndef NDEBUG
-            }
+            LOG(LOG_WARNING,
+                "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                    "There is Device I/O request information "
+                    "remaining in inventory. "
+                    "DeviceId=%u FileId=%u CompletionId=%u "
+                    "MajorFunction=%u extra_data=%u file_path=\"%s\"",
+                request_info.device_id,
+                request_info.file_id,
+                request_info.completion_id,
+                request_info.major_function,
+                request_info.extra_data,
+                request_info.path.c_str()
+            );
         }
 
-        if (!this->device_io_target_info_inventory.empty())
+        for (device_io_target_info_type & target_info : this->device_io_target_info_inventory)
         {
-            for (device_io_target_info_inventory_type::iterator iter =
-                     this->device_io_target_info_inventory.begin();
-                 iter != this->device_io_target_info_inventory.end();
-                 ++iter)
-            {
-                LOG(LOG_WARNING,
-                    "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
-                        "There is Device I/O target information "
-                        "remaining in inventory. "
-                        "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
-                        "for_writing=%s",
-                    std::get<0>(*iter), std::get<1>(*iter),
-                    (std::get<2>(*iter) ? std::get<2>(*iter)->c_str() : ""),
-                    (std::get<3>(*iter) ? "yes" : "no"),
-                    (std::get<4>(*iter) ? "yes" : "no"));
-
-#ifndef NDEBUG
-                make_boom_in_debug_mode = true;
-#endif  // #ifndef NDEBUG
-            }
+            LOG(LOG_WARNING,
+                "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
+                    "There is Device I/O target information "
+                    "remaining in inventory. "
+                    "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
+                    "for_writing=%s",
+                target_info.device_id,
+                target_info.file_id,
+                target_info.file_path.c_str(),
+                target_info.for_reading ? "yes" : "no",
+                target_info.for_writing ? "yes" : "no"
+            );
         }
-
-        REDASSERT(!make_boom_in_debug_mode);
     }
 
+    void disable_session_probe_drive() {
+        this->device_redirection_manager.DisableSessionProbeDrive();
+    }
+
+protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const override
     {
         return "RDPDR_LIMIT";
     }
 
+private:
+    device_io_request_info_inventory_type::iterator
+    find_request_response(rdpdr::DeviceIOResponse const & device_io_response)
+    {
+        return std::find_if(
+            this->device_io_request_info_inventory.begin(),
+            this->device_io_request_info_inventory.end(),
+            [&device_io_response](device_io_request_info_type const & request_info) {
+                return request_info.device_id == device_io_response.DeviceId()
+                    && request_info.completion_id == device_io_response.CompletionId();
+            }
+        );
+    }
+
+    device_io_target_info_inventory_type::iterator
+    find_target_response(rdpdr::DeviceIOResponse const & device_io_response, uint32_t file_id)
+    {
+        return std::find_if(
+            this->device_io_target_info_inventory.begin(),
+            this->device_io_target_info_inventory.end(),
+            [&device_io_response, file_id](device_io_target_info_type const & target_info){
+                return target_info.device_id == device_io_response.DeviceId()
+                    && target_info.file_id == file_id;
+            }
+        );
+    }
+
+public:
     void process_client_general_capability_set(uint32_t total_length,
-            uint32_t flags, InStream& chunk, uint32_t Version) {
+        uint32_t flags, InStream& chunk, uint32_t Version
+    ) {
+        (void)total_length;
+        (void)flags;
+
         rdpdr::GeneralCapabilitySet general_capability_set;
 
         InStream tmp_chunk = chunk.clone();
@@ -901,25 +1004,27 @@ public:
                 const_cast<uint8_t*>(chunk.get_current()),
                 rdpdr::GeneralCapabilitySet::size(Version));
 
-            if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
-                need_enable_user_loggedon_pdu) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_general_capability_set:"
-                        "Allow the server to send a "
-                        "Server User Logged On packet.");
+            if (need_enable_user_loggedon_pdu) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_general_capability_set:"
+                            "Allow the server to send a "
+                            "Server User Logged On packet.");
+                }
 
                 general_capability_set.set_extendedPDU(
                     general_capability_set.extendedPDU() |
                     rdpdr::RDPDR_USER_LOGGEDON_PDU);
             }
 
-            if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
-                need_deny_asyncio) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_general_capability_set:"
-                        "Deny user to send multiple simultaneous "
-                        "read or write requests on the same file from "
-                        "a redirected file system.");
+            if (need_deny_asyncio) {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_general_capability_set:"
+                            "Deny user to send multiple simultaneous "
+                            "read or write requests on the same file from "
+                            "a redirected file system.");
+                }
 
                 general_capability_set.set_extraFlags1(
                     general_capability_set.extraFlags1() &
@@ -934,6 +1039,9 @@ public:
                 (need_enable_user_loggedon_pdu || need_deny_asyncio)) {
                 general_capability_set.log(LOG_INFO);
             }
+        }
+        else {
+            chunk.rewind(tmp_chunk.get_offset());
         }
     }   // process_client_general_capability_set
 
@@ -950,7 +1058,7 @@ public:
                 LOG(LOG_ERR,
                     "FileSystemVirtualChannel::process_client_core_capability_response: "
                         "Truncated DR_CORE_CAPABILITY_RSP (1), "
-                        "need=%u remains=%u",
+                        "need=%u remains=%zu",
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -975,7 +1083,7 @@ public:
                     LOG(LOG_ERR,
                         "FileSystemVirtualChannel::process_client_core_capability_response: "
                             "Truncated DR_CORE_CAPABILITY_RSP (2), "
-                            "need=%u remains=%u",
+                            "need=%u remains=%zu",
                         expected, chunk.in_remain());
                     throw Error(ERR_RDP_DATA_TRUNCATED);
                 }
@@ -1030,30 +1138,162 @@ public:
         return false;
     }
 
+    bool process_client_drive_directory_control_response(
+        uint32_t total_length, uint32_t flags, InStream& chunk,
+        uint32_t FsInformationClass)
+    {
+        (void)total_length;
+        (void)flags;
+        switch (FsInformationClass) {
+            case rdpdr::FileFullDirectoryInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                                "FileFullDirectoryInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileFullDirectoryInformation
+                            file_full_directory_information;
+
+                        //auto chunk_p = chunk.get_current();
+
+                        file_full_directory_information.receive(chunk);
+
+                        //LOG(LOG_INFO, "FileFullDirectoryInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_full_directory_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
+            case rdpdr::FileBothDirectoryInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                                "FileBothDirectoryInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileBothDirectoryInformation
+                            file_both_directory_information;
+
+                        //auto chunk_p = chunk.get_current();
+
+                        file_both_directory_information.receive(chunk);
+
+                        //LOG(LOG_INFO, "FileBothDirectoryInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_both_directory_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
+            case rdpdr::FileNamesInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                                "FileNamesInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
+/*                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR)*/ {
+                        fscc::FileNamesInformation
+                            file_names_information;
+
+                        auto chunk_p = chunk.get_current();
+
+                        file_names_information.receive(chunk);
+
+                        LOG(LOG_INFO, "FileNamesInformation: size=%u",
+                            static_cast<unsigned>(chunk.get_current() - chunk_p));
+                        hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_names_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
+            default:
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_WARNING,
+                        "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
+                            "Undecoded FsInformationClass - %s(0x%X)",
+                        rdpdr::ServerDriveQueryDirectoryRequest::get_FsInformationClass_name(
+                            FsInformationClass),
+                        FsInformationClass);
+                }
+            break;
+        }
+
+        return true;
+    }   // process_client_drive_directory_control_response
+
     bool process_client_drive_query_information_response(
         uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
+        (void)total_length;
+        (void)flags;
         switch (FsInformationClass) {
             case rdpdr::FileBasicInformation:
             {
-                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    {
-                        const unsigned int expected = 4;    // Length(4)
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "FileSystemVirtualChannel::process_client_drive_query_information_response: "
-                                    "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
-                                    "FileBasicInformation, "
-                                    "need=%u remains=%u",
-                                expected, chunk.in_remain());
-                            throw Error(ERR_RDP_DATA_TRUNCATED);
-                        }
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_query_information_response: "
+                                "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
+                                "FileBasicInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
+                }
 
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                        chunk.in_skip_bytes(4); // Length(4)
-
                         fscc::FileBasicInformation file_basic_information;
 
                         file_basic_information.receive(chunk);
@@ -1065,23 +1305,23 @@ public:
 
             case rdpdr::FileStandardInformation:
             {
-                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    {
-                        const unsigned int expected = 4;    // Length(4)
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "FileSystemVirtualChannel::process_client_drive_query_information_response: "
-                                    "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
-                                    "FileStandardInformation, "
-                                    "need=%u remains=%u",
-                                expected, chunk.in_remain());
-                            throw Error(ERR_RDP_DATA_TRUNCATED);
-                        }
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_query_information_response: "
+                                "Truncated DR_DRIVE_QUERY_INFORMATION_RSP - "
+                                "FileStandardInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
+                }
 
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
                     if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                        chunk.in_skip_bytes(4); // Length(4)
-
                         fscc::FileStandardInformation file_standard_information;
 
                         file_standard_information.receive(chunk);
@@ -1104,13 +1344,51 @@ public:
         }
 
         return true;
-    }
+    }   // process_client_drive_query_information_response
 
     bool process_client_drive_query_volume_information_response(
         uint32_t total_length, uint32_t flags, InStream& chunk,
         uint32_t FsInformationClass)
     {
+        (void)total_length;
+        (void)flags;
         switch (FsInformationClass) {
+            case rdpdr::FileFsVolumeInformation:
+            {
+                {
+                    const unsigned int expected = 4;    // Length(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
+                                "Truncated DR_DRIVE_QUERY_VOLUME_INFORMATION_RSP - "
+                                "FileFsVolumeInformation, "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileFsVolumeInformation
+                            file_fs_volume_information;
+
+                        //auto chunk_p = chunk.get_current();
+
+                        file_fs_volume_information.receive(chunk);
+
+                        //LOG(LOG_INFO, "FileFsVolumeInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_fs_volume_information.log(LOG_INFO);
+                    }
+                }
+            }
+            break;
+
             case rdpdr::FileFsAttributeInformation:
             {
                 {
@@ -1120,20 +1398,29 @@ public:
                             "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
                                 "Truncated DR_DRIVE_QUERY_VOLUME_INFORMATION_RSP - "
                                 "FileFsAttributeInformation, "
-                                "need=%u remains=%u",
+                                "need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
                 }
 
-                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                    chunk.in_skip_bytes(4); // Length(4)
+                uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
-                    fscc::FileFsAttributeInformation
-                        file_fs_Attribute_information;
+                if (Length) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        fscc::FileFsAttributeInformation
+                            file_fs_Attribute_information;
 
-                    file_fs_Attribute_information.receive(chunk);
-                    file_fs_Attribute_information.log(LOG_INFO);
+                        //auto chunk_p = chunk.get_current();
+
+                        file_fs_Attribute_information.receive(chunk);
+
+                        //LOG(LOG_INFO, "FileFsAttributeInformation: size=%u",
+                        //    (unsigned int)(chunk.get_current() - chunk_p));
+                        //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
+                        file_fs_Attribute_information.log(LOG_INFO);
+                    }
                 }
             }
             break;
@@ -1165,12 +1452,7 @@ public:
             device_io_response.log(LOG_INFO);
         }
 
-        device_io_request_info_inventory_type::iterator iter;
-        for (iter = this->device_io_request_info_inventory.begin();
-             (iter != this->device_io_request_info_inventory.end()) &&
-             ((std::get<0>(*iter) != device_io_response.DeviceId()) ||
-              (std::get<2>(*iter) != device_io_response.CompletionId()));
-             ++iter);
+        auto iter = this->find_request_response(device_io_response);
 
         if (iter == this->device_io_request_info_inventory.end()) {
             LOG(LOG_WARNING,
@@ -1181,17 +1463,13 @@ public:
                 device_io_response.DeviceId(),
                 device_io_response.CompletionId());
 
-            REDASSERT(false);
-
             return true;
         }
 
-        const uint32_t FileId        = std::get<1>(*iter);
-        const uint32_t MajorFunction = std::get<3>(*iter);
-        const uint32_t extra_data    = std::get<4>(*iter);
-        const char*    file_path     = (std::get<5>(*iter) ?
-                                        std::get<5>(*iter)->c_str() :
-                                        "");
+        const uint32_t FileId         = iter->file_id;
+        const uint32_t MajorFunction  = iter->major_function;
+        const uint32_t extra_data     = iter->extra_data;
+        const std::string & file_path = iter->path.c_str();
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             LOG(LOG_INFO,
@@ -1200,7 +1478,7 @@ public:
                     "file_path=\"%s\"",
                 FileId,
                 rdpdr::DeviceIORequest::get_MajorFunction_name(MajorFunction),
-                MajorFunction, extra_data, file_path);
+                MajorFunction, extra_data, file_path.c_str());
         }
 
         switch (MajorFunction)
@@ -1215,42 +1493,37 @@ public:
 
                 rdpdr::DeviceCreateResponse device_create_response;
 
-                device_create_response.receive(chunk);
+                device_create_response.receive(chunk,
+                    device_io_response.IoStatus());
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     device_create_response.log(LOG_INFO);
                 }
 
-                if (device_io_response.IoStatus() ==
-                    0x00000000  // STATUS_SUCCESS
-                   ) {
-                    const char* device_name =
+                if (device_io_response.IoStatus() == 0x00000000 /* STATUS_SUCCESS */) {
+                    std::string const * device_name =
                         this->device_redirection_manager.get_device_name(
                             device_io_response.DeviceId());
 
                     if (device_name) {
-                        std::unique_ptr<std::string> target_file_name =
-                            std::make_unique<std::string>(device_name);
-
-                        *target_file_name += file_path;
+                        std::string target_file_name = *device_name + file_path;
 
                         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                             LOG(LOG_INFO,
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "Add \"%s\" to known file list. "
                                     "DeviceId=%u FileId=%u",
-                                target_file_name->c_str(),
+                                target_file_name.c_str(),
                                 device_io_response.DeviceId(),
                                 device_create_response.FileId());
                         }
 
-                        this->device_io_target_info_inventory.push_back(
-                            std::make_tuple(
-                                device_io_response.DeviceId(),
-                                device_create_response.FileId(),
-                                std::move(target_file_name),    // file_path
-                                false,                          // for_reading
-                                false                           // for_writing
-                            ));
+                        this->device_io_target_info_inventory.push_back({
+                            device_io_response.DeviceId(),
+                            device_create_response.FileId(),
+                            std::move(target_file_name),    // file_path
+                            false,                          // for_reading
+                            false                           // for_writing
+                        });
                     }
                     else {
                         LOG(LOG_WARNING,
@@ -1258,7 +1531,7 @@ public:
                                 "Device not found. DeviceId=%u",
                             device_io_response.DeviceId());
 
-                        REDASSERT(false);
+                        //REDASSERT(false);
                     }
                 }
             }
@@ -1272,31 +1545,19 @@ public:
                             "Close request.");
                 }
 
-                for (device_io_target_info_inventory_type::const_iterator
-                         target_iter =
-                             this->device_io_target_info_inventory.cbegin();
-                     target_iter !=
-                         this->device_io_target_info_inventory.cend();
-                     ++target_iter) {
-                    if ((std::get<0>(*target_iter) ==
-                         device_io_response.DeviceId()) &&
-                        (std::get<1>(*target_iter) == FileId)) {
+                auto target_iter = this->find_target_response(device_io_response, FileId);
 
-                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
-                            LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                    "Remove \"%s\" from known file list. "
-                                    "DeviceId=%u FileId=%u",
-                                std::get<2>(*target_iter)->c_str(),
-                                device_io_response.DeviceId(),
-                                FileId);
-                        }
-
-                        this->device_io_target_info_inventory.erase(
-                            target_iter);
-
-                        break;
+                if (target_iter != this->device_io_target_info_inventory.end()) {
+                    if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        LOG(LOG_INFO,
+                            "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                "Remove \"%s\" from known file list. "
+                                "DeviceId=%u FileId=%u",
+                            target_iter->file_path.c_str(),
+                            device_io_response.DeviceId(),
+                            FileId);
                     }
+                    unordered_erase(this->device_io_target_info_inventory, target_iter);
                 }
             }
             break;
@@ -1308,7 +1569,7 @@ public:
                     if (!chunk.in_check_rem(expected)) {
                         LOG(LOG_ERR,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                "Truncated IRP_MJ_READ, need=%u remains=%u",
+                                "Truncated IRP_MJ_READ, need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
@@ -1323,70 +1584,64 @@ public:
                         Length);
                 }
 
-                if (device_io_response.IoStatus() ==
-                    0x00000000  // STATUS_SUCCESS
-                   ) {
+                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
                     this->update_exchanged_data(Length);
 
-                    for (device_io_request_info_inventory_type::const_iterator
-                             request_iter =
-                                 this->device_io_request_info_inventory.cbegin();
-                         request_iter !=
-                             this->device_io_request_info_inventory.cend();
-                         ++request_iter) {
-                        //LOG(LOG_INFO, "DeviceId=%u:%u CompletionId=%u:%u",
-                        //    device_io_response.DeviceId(), std::get<0>(*request_iter),
-                        //    device_io_response.CompletionId(), std::get<2>(*request_iter)
-                        //    );
-                        if ((std::get<0>(*request_iter) ==
-                             device_io_response.DeviceId()) &&
-                            (std::get<2>(*request_iter) ==
-                             device_io_response.CompletionId())) {
-                            const uint32_t FileId = std::get<1>(*request_iter);
+                    auto request_iter = this->find_request_response(device_io_response);
+                    //for (auto & request_info
+                    //    : iter(this->device_io_request_info_inventory.begin(), request_iter)
+                    //) {
+                    //    LOG(LOG_INFO, "DeviceId=%u:%u CompletionId=%u:%u",
+                    //       device_io_response.DeviceId(), request_info.device_id,
+                    //       device_io_response.CompletionId(), request_info.completion_id
+                    //    );
+                    //}
 
-                            for (device_io_target_info_inventory_type::iterator
-                                     target_iter =
-                                         this->device_io_target_info_inventory.begin();
-                                 target_iter != this->device_io_target_info_inventory.end();
-                                 ++target_iter) {
-                                //LOG(LOG_INFO, "--> DeviceId=%u:%u FileId=%u:%u",
-                                //    device_io_response.DeviceId(), std::get<0>(*target_iter),
-                                //    FileId, std::get<1>(*target_iter)
-                                //    );
+                    if (request_iter != this->device_io_request_info_inventory.end()) {
+                        auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
+                        //for (auto & target_info
+                        //    : iter(this->device_io_request_info_inventory.begin(), request_iter)
+                        //) {
+                        //    LOG(LOG_INFO, "--> DeviceId=%u:%u FileId=%u:%u",
+                        //       device_io_response.DeviceId(), target_info.device_id,
+                        //       request_iter->file_id, target_info.file_id
+                        //       );
+                        //}
 
-                                if ((device_io_response.DeviceId() == std::get<0>(*target_iter)) &&
-                                    (FileId == std::get<1>(*target_iter))) {
-                                    if (!std::get<3>(*target_iter)) {
-                                        if (this->param_dont_log_data_into_syslog) {
-                                            LOG(LOG_INFO,
-                                                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                                    "Reads \"%s\".",
-                                                std::get<2>(*target_iter)->c_str());
-                                        }
+                        if (target_iter != this->device_io_target_info_inventory.end()) {
+                            device_io_target_info_type & target_info = *target_iter;
+                            if (!target_info.for_reading) {
+                                if (!::ends_case_with(
+                                    target_info.file_path.data(),
+                                    target_info.file_path.size(),
+                                    "/desktop.ini",
+                                    sizeof("/desktop.ini")-1
+                                )) {
+                                    if (this->authentifier) {
+                                        std::string info("file_name='");
+                                        info += target_info.file_path;
+                                        info += "'";
 
-                                        if (this->param_dont_log_data_into_wrm) {
-                                            std::string message("ReadRedirectedFileSystem=");
-                                            message += std::get<2>(*target_iter)->c_str();
-
-                                            bool contian_window_title = false;
-                                            this->front.session_update(message.c_str(),
-                                                contian_window_title);
-                                        }
-
-                                        std::get<3>(*target_iter) = true;
-
-                                        if (std::get<3>(*target_iter) ==
-                                            std::get<4>(*target_iter)) {
-                                            this->device_io_target_info_inventory.erase(
-                                                target_iter);
-                                        }
+                                        this->authentifier->log4(
+                                            !this->param_dont_log_data_into_syslog,
+                                            "DRIVE_REDIRECTION_READ",
+                                            info.c_str());
                                     }
 
-                                    break;
+                                    if (!this->param_dont_log_data_into_wrm) {
+                                        std::string message("ReadRedirectedFileSystem=");
+                                        message += target_info.file_path;
+
+                                        this->front.session_update(message);
+                                    }
+                                }
+
+                                target_info.for_reading = true;
+
+                                if (target_info.for_reading == target_info.for_writing) {
+                                    unordered_erase(this->device_io_target_info_inventory, target_iter);
                                 }
                             }
-
-                            break;
                         }
                     }
                 }
@@ -1400,59 +1655,38 @@ public:
                             "Write request.");
                 }
 
-                if (device_io_response.IoStatus() ==
-                    0x00000000  // STATUS_SUCCESS
-                   ) {
-                    for (device_io_request_info_inventory_type::const_iterator
-                             request_iter =
-                                 this->device_io_request_info_inventory.cbegin();
-                         request_iter !=
-                             this->device_io_request_info_inventory.cend();
-                         ++request_iter) {
-                        if ((std::get<0>(*request_iter) ==
-                             device_io_response.DeviceId()) &&
-                            (std::get<2>(*request_iter) ==
-                             device_io_response.CompletionId())) {
-                            const uint32_t FileId = std::get<1>(*request_iter);
+                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
+                    auto request_iter = this->find_request_response(device_io_response);
+                    if (request_iter != this->device_io_request_info_inventory.end()) {
+                        auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
+                        if (target_iter != this->device_io_target_info_inventory.end()) {
+                            device_io_target_info_type & target_info = *target_iter;
+                            if (!target_info.for_writing) {
+                                if (this->authentifier) {
+                                    std::string info("file_name='");
+                                    info += target_info.file_path;
+                                    info += "'";
 
-                            for (device_io_target_info_inventory_type::iterator
-                                     target_iter =
-                                         this->device_io_target_info_inventory.begin();
-                                 target_iter != this->device_io_target_info_inventory.end();
-                                 ++target_iter) {
-                                if ((device_io_response.DeviceId() == std::get<0>(*target_iter)) &&
-                                    (FileId == std::get<1>(*target_iter))) {
-                                    if (!std::get<4>(*target_iter)) {
-                                        if (this->param_dont_log_data_into_syslog) {
-                                            LOG(LOG_INFO,
-                                                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                                    "Writes \"%s\".",
-                                                std::get<2>(*target_iter)->c_str());
-                                        }
+                                    this->authentifier->log4(
+                                        !this->param_dont_log_data_into_syslog,
+                                        "DRIVE_REDIRECTION_WRITE",
+                                        info.c_str());
+                                }
 
-                                        if (this->param_dont_log_data_into_wrm) {
-                                            std::string message("WriteRedirectedFileSystem=");
-                                            message += std::get<2>(*target_iter)->c_str();
+                                if (!this->param_dont_log_data_into_wrm) {
+                                    std::string message("WriteRedirectedFileSystem=");
+                                    message += target_info.file_path;
 
-                                            bool contian_window_title = false;
-                                            this->front.session_update(message.c_str(),
-                                                contian_window_title);
-                                        }
+                                    this->front.session_update(message);
+                                }
 
-                                        std::get<4>(*target_iter) = true;
+                                target_info.for_writing = true;
 
-                                        if (std::get<3>(*target_iter) ==
-                                            std::get<4>(*target_iter)) {
-                                            this->device_io_target_info_inventory.erase(
-                                                target_iter);
-                                        }
-                                    }
-
-                                    break;
+                                if (target_info.for_reading == target_info.for_writing) {
+                                    unordered_erase(this->device_io_target_info_inventory, target_iter);
                                 }
                             }
 
-                            break;
                         }
                     }
                 }
@@ -1470,6 +1704,58 @@ public:
                     /* FsInformationClass = */extra_data);
             break;
 
+            case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
+                this->process_client_drive_directory_control_response(
+                    total_length, flags, chunk,
+                    /* FsInformationClass = */extra_data);
+            break;
+
+            case rdpdr::IRP_MJ_SET_INFORMATION:
+                if (device_io_response.IoStatus() == 0x00000000 /*STATUS_SUCCESS*/) {
+                    switch (extra_data) {
+                        case rdpdr::FileDispositionInformation:
+                        {
+                            auto target_iter = this->find_target_response(device_io_response, FileId);
+                            if (target_iter != this->device_io_target_info_inventory.end()) {
+                                device_io_target_info_type & target_info = *target_iter;
+                                if (this->authentifier) {
+                                    std::string info("file_name='");
+                                    info += target_info.file_path;
+                                    info += "'";
+
+                                    this->authentifier->log4(
+                                        !this->param_dont_log_data_into_syslog,
+                                        "DRIVE_REDIRECTION_DELETE",
+                                        info.c_str());
+                                }
+                            }
+                        }
+                        break;
+
+                        case rdpdr::FileRenameInformation:
+                        {
+                            auto target_iter = this->find_target_response(device_io_response, FileId);
+                            if (target_iter != this->device_io_target_info_inventory.end()) {
+                                device_io_target_info_type & target_info = *target_iter;
+                                if (this->authentifier) {
+                                    std::string info("old_file_name='");
+                                    info += target_info.file_path;
+                                    info += "' new_file_name='";
+                                    info += file_path;
+                                    info += "'";
+
+                                    this->authentifier->log4(
+                                        !this->param_dont_log_data_into_syslog,
+                                        "DRIVE_REDIRECTION_RENAME",
+                                        info.c_str());
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            break;
+
             default:
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_WARNING,
@@ -1483,7 +1769,7 @@ public:
             break;
         }   // switch (MajorFunction)
 
-        this->device_io_request_info_inventory.erase(iter);
+        unordered_erase(this->device_io_request_info_inventory, iter);
 
         return true;
     }   // process_client_drive_io_response
@@ -1543,7 +1829,14 @@ public:
 
                     rdpdr::ClientNameRequest client_name_request;
 
+                    //auto chunk_p = chunk.get_current();
+
                     client_name_request.receive(chunk);
+
+                    //LOG(LOG_INFO, "ClientNameRequest: size=%u",
+                    //    (unsigned int)(chunk.get_current() - chunk_p));
+                    //hexdump(chunk_p, chunk.get_current() - chunk_p);
+
                     client_name_request.log(LOG_INFO);
                 }
             break;
@@ -1627,13 +1920,20 @@ public:
                 send_message_to_server = false;
             break;
 
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY:
+            case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
+            case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
+            case rdpdr::PacketId::PAKID_PRN_CACHE_DATA:
+            case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
+            case rdpdr::PacketId::PAKID_PRN_USING_XPS:
             default:
                 if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
                     (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_client_message: "
                             "Undecoded PDU - "
-                            "Component=%s(0x%X) PacketId=0x%X",
+                            "Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
                         rdpdr::SharedHeader::get_Component_name(
                             this->server_message_header.component),
                         static_cast<uint16_t>(
@@ -1655,6 +1955,9 @@ public:
     bool process_server_announce_request(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+
         rdpdr::ServerAnnounceRequest server_announce_request;
 
         server_announce_request.receive(chunk);
@@ -1732,13 +2035,22 @@ public:
     bool process_server_client_id_confirm(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
+        (void)total_length;
+        (void)flags;
+        (void)chunk;
+
+        if (this->drive_redirection_initialize_notifier) {
+            if (!this->drive_redirection_initialize_notifier->on_drive_redirection_initialize()) {
+                this->drive_redirection_initialize_notifier = nullptr;
+            }
+        }
+
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender())
             return true;
 
-        uint8_t message_buffer[1024];
-
         {
+            uint8_t message_buffer[1024];
             OutStream out_stream(message_buffer);
 
             const rdpdr::SharedHeader clent_message_header(
@@ -1829,31 +2141,46 @@ public:
 
     bool process_server_create_drive_request(uint32_t total_length,
         uint32_t flags, InStream& chunk,
-        std::unique_ptr<std::string>& file_path)
+        std::string& file_path)
     {
+        (void)total_length;
+        (void)flags;
+        
         rdpdr::DeviceCreateRequest device_create_request;
 
+        //auto chunk_p = chunk.get_current();
+
         device_create_request.receive(chunk);
+
+        //LOG(LOG_INFO, "DeviceCreateRequest: size=%u",
+        //    (unsigned int)(chunk.get_current() - chunk_p));
+        //hexdump(chunk_p, chunk.get_current() - chunk_p);
 
         if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
             device_create_request.log(LOG_INFO);
         }
 
               bool     access_ok     = true;
-        const uint32_t DesiredAccess = device_create_request.DesiredAccess();
 
-        if (!this->param_file_system_read_authorized &&
-            smb2::read_access_is_required(DesiredAccess,
-                                          /* strict_check = */false) &&
-            !(device_create_request.CreateOptions() &
-              smb2::FILE_DIRECTORY_FILE) &&
-            ::strcmp(device_create_request.Path(), "/")) {
-            access_ok = false;
-        }
-        if (!this->param_file_system_write_authorized &&
-            smb2::write_access_is_required(DesiredAccess,
-                                           /* strict_check = */false)) {
-            access_ok = false;
+        if (this->device_redirection_manager.is_known_device(
+                this->server_device_io_request.DeviceId())) {
+            // Is a File system device.
+            const uint32_t DesiredAccess =
+                device_create_request.DesiredAccess();
+
+            if (!this->param_file_system_read_authorized &&
+                smb2::read_access_is_required(DesiredAccess,
+                                              /* strict_check = */false) &&
+                !(device_create_request.CreateOptions() &
+                  smb2::FILE_DIRECTORY_FILE) &&
+                ::strcmp(device_create_request.Path(), "/")) {
+                access_ok = false;
+            }
+            if (!this->param_file_system_write_authorized &&
+                smb2::write_access_is_required(DesiredAccess,
+                                               /* strict_check = */false)) {
+                access_ok = false;
+            }
         }
 
         if (!access_ok)
@@ -1896,15 +2223,14 @@ public:
             return false;
         }
 
-        file_path = std::make_unique<std::string>(
-            device_create_request.Path());
+        file_path = device_create_request.Path();
 
         return true;
     }   // process_server_create_drive_request
 
     bool process_server_drive_io_request(uint32_t total_length,
         uint32_t flags, InStream& chunk,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
+        std::unique_ptr<AsynchronousTask>& out_asynchronous_task)
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->server_device_io_request.receive(chunk);
@@ -1936,7 +2262,7 @@ public:
         bool send_message_to_client  = true;
         bool do_not_add_to_inventory = false;
 
-        std::unique_ptr<std::string> file_path;
+        std::string file_path;
 
         switch (this->server_device_io_request.MajorFunction())
         {
@@ -2059,6 +2385,53 @@ public:
                 }
             break;
 
+            case rdpdr::IRP_MJ_SET_INFORMATION:
+            {
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_server_drive_io_request: "
+                            "Server Drive Set Information Request");
+                }
+
+                rdpdr::ServerDriveSetInformationRequest
+                    server_drive_set_information_request;
+
+                server_drive_set_information_request.receive(chunk);
+                if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                    server_drive_set_information_request.log(LOG_INFO);
+                }
+
+                extra_data =
+                    server_drive_set_information_request.FsInformationClass();
+
+                if (server_drive_set_information_request.FsInformationClass() ==
+                    rdpdr::FileRenameInformation) {
+
+                    rdpdr::RDPFileRenameInformation rdp_file_rename_information;
+
+                    rdp_file_rename_information.receive(chunk);
+
+                    if (verbose & MODRDP_LOGLEVEL_RDPDR) {
+                        rdp_file_rename_information.log(LOG_INFO);
+                    }
+
+                    std::string const * device_name =
+                        this->device_redirection_manager.get_device_name(
+                            this->server_device_io_request.DeviceId());
+                    if (device_name) {
+                        file_path =
+                            *device_name + rdp_file_rename_information.FileName();
+                        if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
+                            LOG(LOG_INFO,
+                                "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                    "FileName=\"%s\"",
+                                file_path.c_str());
+                        }
+                    }
+                }
+            }
+            break;
+
             default:
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_WARNING,
@@ -2077,14 +2450,14 @@ public:
         }   // switch (this->server_device_io_request.MajorFunction())
 
         if (send_message_to_client && !do_not_add_to_inventory) {
-            this->device_io_request_info_inventory.push_back(
-                std::make_tuple(
-                    this->server_device_io_request.DeviceId(),
-                    this->server_device_io_request.FileId(),
-                    this->server_device_io_request.CompletionId(),
-                    this->server_device_io_request.MajorFunction(),
-                    extra_data,
-                    std::move(file_path)));
+            this->device_io_request_info_inventory.push_back({
+                this->server_device_io_request.DeviceId(),
+                this->server_device_io_request.FileId(),
+                this->server_device_io_request.CompletionId(),
+                this->server_device_io_request.MajorFunction(),
+                extra_data,
+                std::move(file_path)
+            });
         }
 
         return send_message_to_client;
@@ -2162,9 +2535,6 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
-                    (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
-
                 if (this->verbose & MODRDP_LOGLEVEL_RDPDR) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_message: "
@@ -2197,17 +2567,17 @@ public:
                             "Server User Logged On");
                 }
 
-                if (!this->proxy_managed_drives_announced) {
+                if (!this->user_logged_on) {
                     this->file_system_drive_manager.AnnounceDrive(
                         this->device_capability_version_02_supported,
                         this->device_redirection_manager.to_device_announce_collection_sender,
                         this->verbose);
-
-                    this->proxy_managed_drives_announced = true;
-
-                    this->device_redirection_manager.process_server_user_logged_on(
-                        total_length, flags, chunk);
                 }
+
+                this->user_logged_on = true;
+
+                this->device_redirection_manager.process_server_user_logged_on(
+                    total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_PRN_USING_XPS:
@@ -2221,13 +2591,19 @@ public:
                 }
             break;
 
+            case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
+            case rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
+            case rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
+            case rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY:
+            case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
+            case rdpdr::PacketId::PAKID_PRN_CACHE_DATA:
             default:
                 if ((this->verbose & MODRDP_LOGLEVEL_RDPDR) &&
                     (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_server_message: "
                             "Undecoded PDU - "
-                            "Component=%s(0x%X) PacketId=0x%X",
+                            "Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
                         rdpdr::SharedHeader::get_Component_name(
                             this->server_message_header.component),
                         static_cast<uint16_t>(
@@ -2245,6 +2621,9 @@ public:
                 chunk_data_length);
         }
     }   // process_server_message
+
+    void set_session_probe_launcher(SessionProbeLauncher* launcher) {
+        this->drive_redirection_initialize_notifier = launcher;
+    }
 };  // class FileSystemVirtualChannel
 
-#endif  // #ifndef REDEMPTION_MOD_RDP_CHANNELS_RDPDRCHANNEL_HPP

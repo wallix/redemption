@@ -16,21 +16,22 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAIT_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAIT_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "multiline.hpp"
 #include "image.hpp"
 #include "widget2_rect.hpp"
-#include "theme.hpp"
+#include "utils/theme.hpp"
 #include "group_box.hpp"
 #include "flat_form.hpp"
-#include "translation.hpp"
+#include "utils/translation.hpp"
+#include "flat_button.hpp"
+#include "gdi/graphic_api.hpp"
 
 class FlatWait : public WidgetParent
 {
@@ -46,18 +47,19 @@ public:
     bool hasform;
     CompositeArray composite_array;
 
-    FlatWait(DrawApi& drawable, int16_t width, int16_t height,
+    FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
+             WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
              bool showform = false, int required = FlatForm::NONE)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier, group_id)
-        , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption, -6,
+        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier, group_id)
+        , groupbox(drawable, 0, 0, width, height, *this, nullptr, caption,
                    theme.global.fgcolor, theme.global.bgcolor, font)
         , bg_color(theme.global.bgcolor)
         , dialog(drawable, 0, 0, this->groupbox, nullptr, text, true, -10,
                  theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
-        , form(drawable, width - 80, 150, *this, this, -20, font, theme, lang, required)
+        , form(drawable, left, top, width - 80, 150, *this, this, -20, font, theme, lang, required)
         , goselector(drawable, 0, 0, this->groupbox, this, TR("back_selector", lang), true, -12,
                      theme.global.fgcolor, theme.global.bgcolor,
                      theme.global.focus_color, font, 6, 2)
@@ -79,33 +81,39 @@ public:
         //     total_height += this->form.cy();
         // }
         // int starty = (height - total_height) / 2;
-        int starty = 20;
+        const int starty = 20;
         int y = starty;
-        this->dialog.rect.x = 30; // dialog has 10 margin.
+        this->dialog.rect.x = left + 30; // dialog has 10 margin.
         // this->dialog.rect.x = (this->cx() - total_width) / 2;
-        this->dialog.rect.y = y + 10;
+        this->dialog.rect.y = top + y + 10;
 
         y = this->dialog.dy() + this->dialog.cy() + 20;
 
         if (showform) {
             this->groupbox.add_widget(&this->form);
-            this->form.move_xy(40, y);
+            this->form.move_xy(40, y - top);
             y = this->form.ly() + 10;
         }
 
         this->groupbox.add_widget(&this->goselector);
         this->groupbox.add_widget(&this->exit);
 
-        this->exit.set_button_x(width - 40 - this->exit.cx());
+        this->exit.set_button_x(left + width - 40 - this->exit.cx());
         this->goselector.set_button_x(this->exit.dx() - (this->goselector.cx() + 10));
 
         this->goselector.set_button_y(y);
         this->exit.set_button_y(y);
 
         y += this->goselector.cy() + 20;
-        this->groupbox.rect.cy = y;
-        this->groupbox.move_xy(0, (height - y) / 2);
+        this->groupbox.rect.cy = y - top;
+        this->groupbox.move_xy(0, (height - (y - top)) / 2);
         this->add_widget(&this->groupbox);
+
+        if (extra_button) {
+            this->add_widget(extra_button);
+            extra_button->set_button_x(left + 60);
+            extra_button->set_button_y(top + height - 60);
+        }
     }
 
     ~FlatWait() override {
@@ -147,4 +155,4 @@ public:
     }
 };
 
-#endif
+

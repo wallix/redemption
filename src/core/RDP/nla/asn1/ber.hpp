@@ -17,10 +17,10 @@
     Copyright (C) Wallix 2013
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
-#ifndef _REDEMPTION_CORE_RDP_NLA_ASN1_BER_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_ASN1_BER_HPP_
 
-#include "stream.hpp"
+#pragma once
+
+#include "utils/stream.hpp"
 
 namespace BER {
     enum CLASS {
@@ -57,7 +57,7 @@ namespace BER {
     // ==========================
     //   LENGTH
     // ==========================
-    bool read_length(InStream & s, int & length) {
+    inline bool read_length(InStream & s, int & length) {
         if (!s.in_check_rem(1)) {
             return false;
         }
@@ -83,7 +83,7 @@ namespace BER {
         return true;
     }
 
-    int write_length(OutStream & s, int length) {
+    inline int write_length(OutStream & s, int length) {
         int res = 1;
         if (length > 0xFF) {
             s.out_uint8(0x82);
@@ -101,7 +101,7 @@ namespace BER {
         return res;
     }
 
-    int _ber_sizeof_length(int length) {
+    inline int _ber_sizeof_length(int length) {
         int res = 1;
         if (length > 0xFF) {
             res = 3;
@@ -116,7 +116,7 @@ namespace BER {
     // ==========================
     //   UNIVERSAL TAG
     // ==========================
-    bool read_universal_tag(InStream & s, uint8_t tag, bool pc) {
+    inline bool read_universal_tag(InStream & s, uint8_t tag, bool pc) {
         uint8_t byte;
         if (!s.in_check_rem(1))
             return false;
@@ -126,7 +126,7 @@ namespace BER {
         return true;
     }
 
-    int write_universal_tag(OutStream & s, uint8_t tag, bool pc) {
+    inline int write_universal_tag(OutStream & s, uint8_t tag, bool pc) {
         s.out_uint8(CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag));
         return 1;
     }
@@ -180,7 +180,7 @@ namespace BER {
     // ==========================
     //   CONTEXTUAL TAG
     // ==========================
-    bool read_contextual_tag(InStream & s, uint8_t tag, int & length, bool pc) {
+    inline bool read_contextual_tag(InStream & s, uint8_t tag, int & length, bool pc) {
         uint8_t byte;
         if (!s.in_check_rem(1))
             return false;
@@ -193,19 +193,19 @@ namespace BER {
         return read_length(s, length);
     }
 
-    int write_contextual_tag(OutStream & s, uint8_t tag, int length, bool pc) {
+    inline int write_contextual_tag(OutStream & s, uint8_t tag, int length, bool pc) {
         s.out_uint8(CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag));
         return 1 + write_length(s, length);
     }
 
-    int sizeof_contextual_tag(int length) {
+    inline int sizeof_contextual_tag(int length) {
         return 1 + _ber_sizeof_length(length);
     }
 
     // ==========================
     //   SEQUENCE TAG
     // ==========================
-    bool read_sequence_tag(InStream & s, int & length) {
+    inline bool read_sequence_tag(InStream & s, int & length) {
         uint8_t byte;
         if (!s.in_check_rem(1))
             return false;
@@ -218,16 +218,16 @@ namespace BER {
 
     }
 
-    int write_sequence_tag(OutStream & s, int length) {
+    inline int write_sequence_tag(OutStream & s, int length) {
         s.out_uint8(CLASS_UNIV | PC_CONSTRUCT | (TAG_MASK & TAG_SEQUENCE));
         return 1 + write_length(s, length);
     }
 
-    int sizeof_sequence(int length) {
+    inline int sizeof_sequence(int length) {
         return 1 + _ber_sizeof_length(length) + length;
     }
 
-    int sizeof_sequence_tag(int length) {
+    inline int sizeof_sequence_tag(int length) {
         return 1 + _ber_sizeof_length(length);
     }
 
@@ -275,7 +275,7 @@ namespace BER {
     // ==========================
     //   OCTET STRING
     // ==========================
-    int write_octet_string(OutStream & s, const uint8_t * oct_str, int length) {
+    inline int write_octet_string(OutStream & s, const uint8_t * oct_str, int length) {
         int size = 0;
         size += write_universal_tag(s, TAG_OCTET_STRING, false);
         size += write_length(s, length);
@@ -285,26 +285,26 @@ namespace BER {
     }
 
 
-    bool read_octet_string_tag(InStream & s, int & length) {
+    inline bool read_octet_string_tag(InStream & s, int & length) {
         return read_universal_tag(s, TAG_OCTET_STRING, false)
             && read_length(s, length);
     }
 
-    int write_octet_string_tag(OutStream & s, int length) {
+    inline int write_octet_string_tag(OutStream & s, int length) {
         write_universal_tag(s, TAG_OCTET_STRING, false);
         write_length(s, length);
         return 1 + _ber_sizeof_length(length);
     }
 
-    int sizeof_octet_string(int length) {
+    inline int sizeof_octet_string(int length) {
         return 1 + _ber_sizeof_length(length) + length;
     }
-    int sizeof_sequence_octet_string(int length) {
+    inline int sizeof_sequence_octet_string(int length) {
         return sizeof_contextual_tag(sizeof_octet_string(length))
             + sizeof_octet_string(length);
     }
 
-    int write_sequence_octet_string(OutStream & stream, uint8_t context,
+    inline int write_sequence_octet_string(OutStream & stream, uint8_t context,
                                         const uint8_t * value, int length) {
         return write_contextual_tag(stream, context, sizeof_octet_string(length), true)
             + write_octet_string(stream, value, length);
@@ -360,7 +360,7 @@ namespace BER {
     // ==========================
     //   INTEGER
     // ==========================
-    bool read_integer(InStream & s, uint32_t & value) {
+    inline bool read_integer(InStream & s, uint32_t & value) {
         int length;
         if (!read_universal_tag(s, TAG_INTEGER, false) ||
             !read_length(s, length) ||
@@ -390,7 +390,7 @@ namespace BER {
         return true;
     }
 
-    int write_integer(OutStream & s, uint32_t value)
+    inline int write_integer(OutStream & s, uint32_t value)
     {
         if (value <  0x80) {
             write_universal_tag(s, TAG_INTEGER, false);
@@ -421,7 +421,7 @@ namespace BER {
         return 0;
     }
 
-    int sizeof_integer(uint32_t value) {
+    inline int sizeof_integer(uint32_t value) {
         if (value < 0x80) {
                 return 3;
         }
@@ -444,4 +444,3 @@ namespace BER {
     //}
 }
 
-#endif

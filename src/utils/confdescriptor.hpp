@@ -20,19 +20,18 @@
    Configuration file descriptor objects
 */
 
-#ifndef _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP_
-#define _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP_
 
-#include "log.hpp"
-#include "parser.hpp"
+#pragma once
+
+#include "utils/log.hpp"
+#include "utils/parser.hpp"
 #include "cfgloader.hpp"
 
-#include "RDP/capabilities/general.hpp"
-#include "RDP/capabilities/cap_bitmap.hpp"
-#include "RDP/capabilities/order.hpp"
+#include "core/RDP/capabilities/general.hpp"
+#include "core/RDP/capabilities/cap_bitmap.hpp"
+#include "core/RDP/capabilities/order.hpp"
 
-TODO("We could probably use templated Entries instead of InputType_t and StorageType_t enums, this with also avoid combinatorial explosion."
-     "Well, not really, but the compiler will do the work.")
+// TODO We could probably use templated Entries instead of InputType_t and StorageType_t enums, this with also avoid combinatorial explosion. Well, not really, but the compiler will do the work.
 
 enum InputType_t {
     INPUT_BOOLEAN,
@@ -111,7 +110,7 @@ struct Entry {
     }
 };
 
-TODO("We also have to define BitmapCaps and OrderCaps loaders, then we will be able to use this in capability_sets.hpp")
+// TODO We also have to define BitmapCaps and OrderCaps loaders, then we will be able to use this in capability_sets.hpp
 struct GeneralCapsLoader : public ConfigurationHolder
 {
     char name[64];
@@ -173,7 +172,7 @@ struct GeneralCapsLoader : public ConfigurationHolder
     }
 
     void set_value(const char * section, const char * key, const char * value) override {
-        TODO("parsing like this is very, very inefficient, change that later")
+        // TODO parsing like this is very, very inefficient, change that later
 
         if (!this->match(section)) {
             return;
@@ -251,7 +250,7 @@ struct BitmapCapsLoader : public ConfigurationHolder
     }
 
     void set_value(const char * section, const char * key, const char * value) override {
-        TODO("parsing like this is very, very inefficient, change that later")
+        // TODO parsing like this is very, very inefficient, change that later
 
         if (!this->match(section)) {
             return;
@@ -402,7 +401,7 @@ struct OrderCapsLoader : public ConfigurationHolder
     }
 
     void set_value(const char * section, const char * key, const char * value) override {
-        TODO("parsing like this is very, very inefficient, change that later")
+        // TODO parsing like this is very, very inefficient, change that later
 
         if (!this->match(section)) {
             return;
@@ -415,4 +414,3 @@ struct OrderCapsLoader : public ConfigurationHolder
     }
 };
 
-#endif

@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_NETUTILS_HPP_
-#define _REDEMPTION_UTILS_NETUTILS_HPP_
+
+#pragma once
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -37,14 +37,19 @@
 #include <unistd.h>
 #include <netdb.h>
 
-#include "log.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/log.hpp"
+
+// TODO -Wold-style-cast is ignored
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
 
 static inline bool try_again(int errnum){
     int res = false;
-    TODO("Check wich signals are actually necessary depending on what we are doing "
-         "looks like EINPROGRESS or EALREADY only occurs when calling connect()"
-         "EAGAIN is when blocking IO would block (other name for EWOULDBLOCK)"
-         "EINTR when an interruption stopped system call (and we could do it again)")
+    // TODO Check wich signals are actually necessary depending on what we are doing
+    // looks like EINPROGRESS or EALREADY only occurs when calling connect()
+    // EAGAIN is when blocking IO would block (other name for EWOULDBLOCK)
+    // EINTR when an interruption stopped system call (and we could do it again)
     switch (errnum){
         case EAGAIN:
         /* case EWOULDBLOCK: */ // same as EAGAIN on Linux
@@ -60,10 +65,115 @@ static inline bool try_again(int errnum){
     return res;
 }
 
+namespace detail_ { namespace netutils {
+
+inline bool set_snd_buffer(int sck, int buffer_size = 32768) {
+    /* set snd buffer to at least 32 Kbytes */
+    int snd_buffer_size = buffer_size;
+    socklen_t option_len = static_cast<socklen_t>(sizeof(snd_buffer_size));
+    if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
+        if (snd_buffer_size < buffer_size) {
+            snd_buffer_size = buffer_size;
+            if (-1 == setsockopt(sck,
+                    SOL_SOCKET,
+                    SO_SNDBUF,
+                    &snd_buffer_size, sizeof(snd_buffer_size))){
+                LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
+                return false;
+            }
+        }
+    }
+    else {
+        LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+        return false;
+    }
+
+    return true;
+}
+
+inline int connect_sck(
+    int sck, int nbretry, int retry_delai_ms,
+    sockaddr & addr, socklen_t addr_len,
+    const char * ip, int port,
+    array_view<char> out_ip_addr
+) {
+    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
+
+    char ip_addr[256];
+    memset(ip_addr, 0, sizeof(ip_addr));
+    if ((addr.sa_family == AF_INET) && !isdigit(*ip)) {
+        union
+        {
+            struct sockaddr s;
+            struct sockaddr_storage ss;
+            struct sockaddr_in s4;
+            struct sockaddr_in6 s6;
+        } u;
+        memset(&u, 0, sizeof(u));
+        memcpy(&u.s, &addr, sizeof(u.s));
+        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(u.s4.sin_addr));
+
+        if (out_ip_addr.data()) {
+            snprintf(out_ip_addr.data(), out_ip_addr.size(), "%s", ip_addr);
+        }
+    }
+
+    int trial = 0;
+    for (; trial < nbretry ; trial++){
+        int res = ::connect(sck, &addr, addr_len);
+        if (-1 != res){
+            // connection suceeded
+            break;
+        }
+        int const err =  errno;
+        if (trial > 0){
+            LOG(LOG_INFO, "Connection to %s (%s) failed with errno = %d (%s)", ip, ip_addr, err, strerror(err));
+        }
+        if ((err == EINPROGRESS) || (err == EALREADY)){
+            // try again
+            fd_set fds;
+            FD_ZERO(&fds);
+            FD_SET(sck, &fds);
+            struct timeval timeout = {
+                retry_delai_ms / 1000,
+                1000 * (retry_delai_ms % 1000)
+            };
+            // exit select on timeout or connect or error
+            // connect will catch the actual error if any,
+            // no need to care of select result
+            select(sck+1, nullptr, &fds, nullptr, &timeout);
+        }
+        else {
+            // real failure
+           trial = nbretry;
+        }
+    }
+
+    if (trial >= nbretry){
+        if (port == -1) {
+            LOG(LOG_INFO, "All trials done connecting to %s", ip);
+        }
+        else {
+            LOG(LOG_INFO, "All trials done connecting to %s:%d", ip, port);
+        }
+        return -1;
+    }
+
+    if (port == -1) {
+        LOG(LOG_INFO, "connection to %s succeeded : socket %d", ip, sck);
+    }
+    else {
+        LOG(LOG_INFO, "connection to %s:%d succeeded : socket %d", ip, port, sck);
+    }
+
+    return sck;
+}
+
+} }
 
 static inline int ip_connect(const char* ip, int port,
              int nbretry = 3, int retry_delai_ms = 1000,
-             uint32_t verbose = 0)
+             array_view<char> out_ip_addr = {})
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
     // we will try connection several time
@@ -73,31 +183,16 @@ static inline int ip_connect(const char* ip, int port,
     int sck = socket(PF_INET, SOCK_STREAM, 0);
 
     /* set snd buffer to at least 32 Kbytes */
-    int snd_buffer_size = 32768;
-    unsigned int option_len = sizeof(snd_buffer_size);
-    if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
-        if (snd_buffer_size < 32768) {
-            snd_buffer_size = 32768;
-            if (-1 == setsockopt(sck,
-                    SOL_SOCKET,
-                    SO_SNDBUF,
-                    &snd_buffer_size, sizeof(snd_buffer_size))){
-                LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
-                return -1;
-            }
-        }
-    }
-    else {
-        LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+    if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
         return -1;
     }
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+      sockaddr s;
+      sockaddr_storage ss;
+      sockaddr_in s4;
+      sockaddr_in6 s6;
     } u;
 
     memset(&u, 0, sizeof(u));
@@ -126,47 +221,47 @@ static inline int ip_connect(const char* ip, int port,
             return -1;
         }
         u.s4.sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
+        freeaddrinfo(addr_info);
     }
 
-    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
-
-    int trial = 0;
-    for (; trial < nbretry ; trial++){
-        int res = ::connect(sck, &u.s, sizeof(u));
-        if (-1 != res){
-            // connection suceeded
-            break;
-        }
-        if (trial > 0){
-            LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)",
-                ip, errno, strerror(errno));
-        }
-        if ((errno == EINPROGRESS) || (errno == EALREADY)){
-            // try again
-            fd_set fds;
-            FD_ZERO(&fds);
-            struct timeval timeout = {
-                retry_delai_ms / 1000,
-                1000 * (retry_delai_ms % 1000)
-            };
-            FD_SET(sck, &fds);
-            // exit select on timeout or connect or error
-            // connect will catch the actual error if any,
-            // no need to care of select result
-            select(sck+1, nullptr, &fds, nullptr, &timeout);
-        }
-        else {
-            // real failure
-           trial = nbretry;
-        }
-    }
-    if (trial >= nbretry){
-        LOG(LOG_INFO, "All trials done connecting to %s:%d\n", ip, port);
-        return -1;
-    }
-    LOG(LOG_INFO, "connection to %s:%d succeeded : socket %d\n", ip, port, sck);
-
-    return sck;
+    return detail_::netutils::connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), ip, port, out_ip_addr);
 }
 
-#endif
+
+// TODO int retry_delai_ms -> std::milliseconds
+static inline int local_connect(const char* sck_name,
+             int nbretry = 3, int retry_delai_ms = 1000)
+{
+    LOG(LOG_INFO, "connecting to %s", sck_name);
+    // we will try connection several time
+    // the trial process include "ocket opening, hostname resolution, etc
+    // because some problems can come from the local endpoint,
+    // not necessarily from the remote endpoint.
+    int sck = socket(AF_UNIX, SOCK_STREAM, 0);
+
+    /* set snd buffer to at least 32 Kbytes */
+    if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
+        return -1;
+    }
+
+    union
+    {
+      sockaddr_un s;
+      sockaddr addr;
+    } u;
+
+    auto len = strnlen(sck_name, sizeof(u.s.sun_path)-1u);
+    memcpy(u.s.sun_path, sck_name, len);
+    u.s.sun_path[len] = 0;
+    u.s.sun_family = AF_UNIX;
+
+    return detail_::netutils::connect_sck(
+        sck, nbretry, retry_delai_ms,
+        u.addr,
+        static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u),
+        sck_name, -1, {}
+    );
+}
+
+#pragma GCC diagnostic pop
+

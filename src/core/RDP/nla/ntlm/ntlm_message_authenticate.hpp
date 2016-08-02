@@ -18,11 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGEAUTHENTICATE_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMMESSAGEAUTHENTICATE_HPP_
 
-#include "RDP/nla/ntlm/ntlm_message.hpp"
-#include "RDP/nla/ntlm/ntlm_avpair.hpp"
+#pragma once
+
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "core/RDP/nla/ntlm/ntlm_avpair.hpp"
 
 // [MS-NLMP]
 // 2.2.1.3   AUTHENTICATE_MESSAGE
@@ -307,7 +307,8 @@
 //   EncryptedRandomSessionKey and its usage are defined in sections 3.1.5 and 3.2.5.
 
 
-struct NTLMAuthenticateMessage : public NTLMMessage {
+struct NTLMAuthenticateMessage {
+    NTLMMessage message;
 
     NtlmField LmChallengeResponse;        /* 8 Bytes */
     NtlmField NtChallengeResponse;        /* 8 Bytes */
@@ -323,7 +324,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
     uint32_t PayloadOffset;
 
     NTLMAuthenticateMessage()
-        : NTLMMessage(NtlmAuthenticate)
+        : message(NtlmAuthenticate)
         , MIC()
         , ignore_mic(false)
         , has_mic(true)
@@ -331,8 +332,6 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
     {
         memset(this->MIC, 0x00, 16);
     }
-
-    ~NTLMAuthenticateMessage() override {}
 
     void emit(OutStream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
@@ -342,13 +341,14 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         if (this->has_mic) {
             currentOffset += 16;
         }
-        NTLMMessage::emit(stream);
+        this->message.emit(stream);
         currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
         currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
         currentOffset += this->DomainName.emit(stream, currentOffset);
         currentOffset += this->UserName.emit(stream, currentOffset);
         currentOffset += this->Workstation.emit(stream, currentOffset);
         currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
+        (void)currentOffset;
         this->negoFlags.emit(stream);
         this->version.emit(stream);
 
@@ -373,9 +373,9 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
     void recv(InStream & stream) {
         uint8_t const * pBegin = stream.get_current();
         bool res;
-        res = NTLMMessage::recv(stream);
+        res = this->message.recv(stream);
         if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->message.msgType);
         }
         this->LmChallengeResponse.recv(stream);
         this->NtChallengeResponse.recv(stream);
@@ -659,8 +659,4 @@ struct NTLMv2_Response {
     }
 
 };
-
-#endif
-
-
 

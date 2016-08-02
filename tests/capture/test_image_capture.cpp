@@ -23,20 +23,18 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestImageCapture
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 
-#include "out_file_transport.hpp"
-#include "out_filename_sequence_transport.hpp"
-#include "test_transport.hpp"
-#include "image_capture.hpp"
-#include "staticcapture.hpp"
-#include "RDP/RDPDrawable.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
+#include "transport/test_transport.hpp"
+#include "capture/drawable_to_file.hpp"
+#include "capture/image_capture.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 
 const char expected_red[] =
     /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
@@ -229,17 +227,17 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
-    TestTransport trans("TestTransportPNG", "", 0, expected_red, sizeof(expected_red)-1);
+    TestTransport trans("", 0, expected_red, sizeof(expected_red)-1);
     //int fd = open("TestTransportPNG.png", O_WRONLY|O_CREAT, 0777);
     //OutFileTransport trans(fd);
-    d.dump_png24(trans, true);
+    dump_png24(d.impl(), trans, true);
 }
 
 BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, 800, 600, drawable.impl());
+    DrawableToFile d(trans, drawable.impl());
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -262,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 
     OutFileTransport trans(fd);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, 800, 600, drawable.impl());
+    DrawableToFile d(trans, drawable.impl());
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -277,7 +275,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, 800, 600, drawable.impl());
+    DrawableToFile d(trans, drawable.impl());
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
@@ -306,14 +304,33 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     Rect screen_rect(0, 0, 800, 600);
     const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::png_interval>(1);
-    ini.set<cfg::video::png_limit>(3);
+    struct CleanupTransport : OutFilenameSequenceTransport {
+        CleanupTransport()
+        : OutFilenameSequenceTransport(
+            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION,
+            "./", "xxxtest", ".png", groupid)
+        {}
+
+        ~CleanupTransport() {
+            for(unsigned until_num = this->get_seqno() + 1u; this->num_start < until_num; ++this->num_start) {
+                ::unlink(this->seqgen()->get(this->num_start));
+            }
+        }
+
+        bool next() override {
+            if (this->png_limit && this->get_seqno() >= this->png_limit) {
+                // unlink may fail, for instance if file does not exist, just don't care
+                ::unlink(this->seqgen()->get(this->get_seqno() - this->png_limit));
+            }
+            return OutFilenameSequenceTransport::next();
+        }
+
+        unsigned num_start = 0;
+        unsigned png_limit = 3;
+    } trans;
     RDPDrawable drawable(800, 600, 24);
 
-    StaticCapture consumer(now, trans, trans.seqgen(), 800, 600, false, ini, drawable.impl());
+    ImageCapture consumer(now, drawable.impl(), trans, std::chrono::seconds{1});
 
     drawable.impl().dont_show_mouse_cursor = true;
 
@@ -324,27 +341,26 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
     bool ignore_frame_in_timeval = false;
-    bool requested_to_stop       = false;
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
     BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval, requested_to_stop);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
     BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
@@ -352,31 +368,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
     BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
 
-    ini.set<cfg::video::png_limit>(10);
-    consumer.update_config(ini);
-
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
-    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
-    BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
-
-    ini.set<cfg::video::png_limit>(2);
-    consumer.update_config(ini);
-
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
-    BOOST_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
-    BOOST_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
-
-    ini.set<cfg::video::png_limit>(0);
-    consumer.update_config(ini);
-
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
-    BOOST_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
+    for (unsigned i = 1; i <= 3; ++i) {
+        unlink(trans.seqgen()->get(i));
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestSmallImage)
@@ -385,7 +379,7 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, nullptr, 0x100);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
+    DrawableToFile d(trans, drawable.impl());
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -403,18 +397,18 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
     RDPDrawable drawable(scr.cx, scr.cy, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
+    DrawableToFile d(trans, drawable.impl());
     d.zoom(50);
 
     {
-        const char * filename = "./tests/fixtures/win2008capture10.png";
+        const char * filename = FIXTURES_PATH "/win2008capture10.png";
         FILE * fd = fopen(filename, "r");
-        TODO("Add ability to write image to file or read image from file in RDPDrawable")
+        // TODO "Add ability to write image to file or read image from file in RDPDrawable"
         read_png24(fd, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize());
         fclose(fd);
     }
     d.flush();
-    TODO("check this: BGR/RGB problem i changed 8176 to 8162 to fix test")
+    // TODO "check this: BGR/RGB problem i changed 8176 to 8162 to fix test"
     const char * filename = trans.seqgen()->get(0);
     BOOST_CHECK_EQUAL(8162, ::filesize(filename));
     ::unlink(filename);
@@ -427,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
+    DrawableToFile d(trans, drawable.impl());
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
     uint8_t source64x64[] = {
@@ -555,7 +549,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, nullptr, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600, 24);
-    ImageCapture d(trans, scr.cx, scr.cy, drawable.impl());
+    DrawableToFile d(trans, drawable.impl());
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
     uint8_t source32x1[] =

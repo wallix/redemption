@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_POINTER_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_POINTER_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
-#include "error.hpp"
+#include "utils/stream.hpp"
+#include "core/error.hpp"
 
 // 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
 
@@ -96,7 +96,7 @@ struct PointerCaps : public Capability {
 
         unsigned int expected = 2 + 2 + ((this->len < 10) ? 0 : 2); /* colorPointerFlag(2) + colorPointerCacheSize(2) + pointerCacheSize*/
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated CAPSTYPE_POINTER, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated CAPSTYPE_POINTER, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -116,4 +116,3 @@ struct PointerCaps : public Capability {
     }
 };
 
-#endif

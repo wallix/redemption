@@ -21,31 +21,25 @@
    log file including syslog
 */
 
-#ifndef _REDEMPTION_UTILS_LOG_HPP_
-#define _REDEMPTION_UTILS_LOG_HPP_
+
+#pragma once
 
 #include <string.h>
 
-#define REDOC(x)
-
 // These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
 
-#ifndef VERBOSE
-#define TODO(x)
-#else
-#define DO_PRAGMA(x) _Pragma (#x)
-#define TODO(x) DO_PRAGMA(message ("TODO - " x))
-#endif
-
 // -Wnull-dereference and clang++
-namespace aux_ {
+namespace { namespace compiler_aux_ {
     inline void * null_pointer()
     { return nullptr; }
-}
-#define BOOM (*reinterpret_cast<int*>(aux_::null_pointer())=1)
+} }
+#define BOOM (*reinterpret_cast<int*>(compiler_aux_::null_pointer())=1)
 
 // REDASSERT behave like assert but instaed of calling abort it triggers a segfault
 // This is handy to get stacktrace while debugging.
+
+
+
 #ifdef NDEBUG
 #define REDASSERT(x)
 #else
@@ -61,95 +55,237 @@ namespace aux_ {
 #include <syslog.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdarg.h>
 
-typedef struct _code {
-    const char *c_name;
-    //int c_val;
-} CODE;
 
-#ifdef LOGPRINT
-#define LOG LOGPRINT__REDEMPTION__INTERNAL
+// checked by the compiler
+#define LOG_FORMAT_CHECK(...) \
+    void(sizeof(printf(" " __VA_ARGS__)))
+
+
+#ifdef IN_IDE_PARSER
+#  define LOG LOGSYSLOG__REDEMPTION__INTERNAL
+#  define LOG_SESSION LOGSYSLOG__REDEMPTION__SESSION__INTERNAL
+
+#elif defined(LOGPRINT)
+#  define LOG(priority, ...)                                                     \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__),  \
+        1                                                                        \
+    ))
+#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
+        ip_client, ip_target, user, device, service, account, priority, ...)     \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGNULL__REDEMPTION__SESSION__INTERNAL(                                  \
+            normal_log,                                                          \
+            session_log,                                                         \
+            session_type,                                                        \
+            type,                                                                \
+            session_id,                                                          \
+            ip_client,                                                           \
+            ip_target,                                                           \
+            user,                                                                \
+            device,                                                              \
+            service,                                                             \
+            account                                                              \
+        ),                                                                       \
+        LOGPRINT__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__),  \
+        1                                                                        \
+    ))
+
 #elif defined(LOGNULL)
-#define LOG LOGNULL__REDEMPTION__INTERNAL
+#  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL(( \
+        LOG_FORMAT_CHECK(__VA_ARGS__), priority))
+#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
+        ip_client, ip_target, user, device, service, account, priority, ...)     \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGNULL__REDEMPTION__SESSION__INTERNAL(                                  \
+            normal_log,                                                          \
+            session_log,                                                         \
+            session_type,                                                        \
+            type,                                                                \
+            session_id,                                                          \
+            ip_client,                                                           \
+            ip_target,                                                           \
+            user,                                                                \
+            device,                                                              \
+            service,                                                             \
+            account                                                              \
+        ),                                                                       \
+        1                                                                        \
+    ))
+
 #else
-#define LOG LOGSYSLOG__REDEMPTION__INTERNAL
+#  define LOG(priority, ...)                                                     \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGSYSLOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " __VA_ARGS__), \
+        1                                                                        \
+    ))
+#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
+        ip_client, ip_target, user, device, service, account, priority, format,  \
+        ...                                                                      \
+    )                                                                            \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(format, __VA_ARGS__),                                   \
+        LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                                \
+            normal_log,                                                          \
+            session_log,                                                         \
+            session_type, type, session_id, ip_client, ip_target,                \
+            user, device, service, account, priority,                            \
+            "%s (%d/%d) -- type='%s'%s" format,                                  \
+            "[%s Session] "                                                      \
+                "type='%s' "                                                     \
+                "session_id='%s' "                                               \
+                "client_ip='%s' "                                                \
+                "target_ip='%s' "                                                \
+                "user='%s' "                                                     \
+                "device='%s' "                                                   \
+                "service='%s' "                                                  \
+                "account='%s'%s"                                                 \
+                format,                                                          \
+            ((*format) ? " " : ""),                                              \
+            __VA_ARGS__                                                          \
+        ), 1)                                                                    \
+    )
 #endif
 
-// LOG_EMERG      system is unusable
-// LOG_ALERT      action must be taken immediately
-// LOG_CRIT       critical conditions
-// LOG_ERR        error conditions
-// LOG_WARNING    warning conditions
-// LOG_NOTICE     normal, but significant, condition
-// LOG_INFO       informational message
-// LOG_DEBUG      debug-level message
+namespace {
+    // LOG_EMERG      system is unusable
+    // LOG_ALERT      action must be taken immediately
+    // LOG_CRIT       critical conditions
+    // LOG_ERR        error conditions
+    // LOG_WARNING    warning conditions
+    // LOG_NOTICE     normal, but significant, condition
+    // LOG_INFO       informational message
+    // LOG_DEBUG      debug-level message
 
-static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *format, ...)
-{
-    const CODE prioritynames[] =
+    constexpr const char * const prioritynames[] =
     {
-        { "EMERG"/*, LOG_EMERG*/ },
-        { "ALERT"/*, LOG_ALERT*/ },
-        { "CRIT"/*, LOG_CRIT*/ },
-        { "ERR"/*, LOG_ERR*/ },
-        { "WARNING"/*, LOG_WARNING*/ },
-        { "NOTICE"/*, LOG_NOTICE*/ },
-        { "INFO"/*, LOG_INFO*/ },
-        { "DEBUG"/*, LOG_DEBUG*/ },
-        { nullptr/*, -1*/ }
+        "EMERG"/*, LOG_EMERG*/,
+        "ALERT"/*, LOG_ALERT*/,
+        "CRIT"/*, LOG_CRIT*/,
+        "ERR"/*, LOG_ERR*/,
+        "WARNING"/*, LOG_WARNING*/,
+        "NOTICE"/*, LOG_NOTICE*/,
+        "INFO"/*, LOG_INFO*/,
+        "DEBUG"/*, LOG_DEBUG*/,
+        //{ nullptr/*, -1*/ }
     };
-    char message[8192];
-    va_list vl;
-    va_start (vl, format);
-#ifdef __clang__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-    vsnprintf(message, 8191, format, vl);
-#ifdef __clang__
-    #pragma GCC diagnostic pop
-# endif
-    va_end(vl);
-    syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
-}
 
-static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *format, ...)
-{
-    const CODE prioritynames[] =
+    inline void LOGCHECK__REDEMPTION__INTERNAL(int)
+    {}
+
+    template<class... Ts>
+    void LOGPRINT__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
-        { "EMERG"/*, LOG_EMERG*/ },
-        { "ALERT"/*, LOG_ALERT*/ },
-        { "CRIT"/*, LOG_CRIT*/ },
-        { "ERR"/*, LOG_ERR*/ },
-        { "WARNING"/*, LOG_WARNING*/ },
-        { "NOTICE"/*, LOG_NOTICE*/ },
-        { "INFO"/*, LOG_INFO*/ },
-        { "DEBUG"/*, LOG_DEBUG*/ },
-        { nullptr/*, -1*/ }
-    };
-    char message[8192];
-    va_list vl;
-    va_start (vl, format);
-#ifdef __clang__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-# endif
-    vsnprintf(message, 8191, format, vl);
-#ifdef __clang__
-    #pragma GCC diagnostic pop
-# endif
-    va_end(vl);
-    printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
+        #ifdef __GNUG__
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+        #endif
+        printf(format, prioritynames[priority], getpid(), getpid(), args...);
+        #ifdef __GNUG__
+            #pragma GCC diagnostic pop
+        #endif
+        puts("");
+    }
+
+    template<class... Ts>
+    void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
+    {
+        #ifdef __GNUG__
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+        #endif
+        syslog(priority, format, prioritynames[priority], getpid(), getpid(), args...);
+        #ifdef __GNUG__
+            #pragma GCC diagnostic pop
+        #endif
+    }
+
+    template<class... Ts>
+    void LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(
+        bool normal_log,
+        bool session_log,
+
+        const char * session_type,
+        const char * type,
+        const char * session_id,
+        const char * ip_client,
+        const char * ip_target,
+        const char * user,
+        const char * device,
+        const char * service,
+        const char * account,
+
+        int priority,
+        const char *format_with_pid,
+        const char *format2,
+        Ts const & ... args
+    ) {
+        #ifdef __GNUG__
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+        #endif
+        if (normal_log) {
+            syslog(
+                priority, format_with_pid,
+                prioritynames[priority], getpid(), getpid(),
+                type, args...
+            );
+        }
+        if (session_log) {
+            syslog(
+                priority, format2,
+                session_type,
+                type,
+                session_id,
+                ip_client,
+                ip_target,
+                user,
+                device,
+                service,
+                account,
+                args...
+             );
+        }
+        #ifdef __GNUG__
+            #pragma GCC diagnostic pop
+        #endif
+    }
+
+    inline void LOGNULL__REDEMPTION__SESSION__INTERNAL(
+        bool normal_log,
+        bool session_log,
+        char const * session_type,
+        char const * type,
+        char const * session_id,
+        char const * ip_client,
+        char const * ip_target,
+        char const * user,
+        char const * device,
+        char const * service,
+        char const * account
+    ) {
+        (void)normal_log;
+        (void)session_log;
+        (void)session_type;
+        (void)type;
+        (void)session_id;
+        (void)ip_client;
+        (void)ip_target;
+        (void)user;
+        (void)device;
+        (void)service;
+        (void)account;
+    }
 }
 
-static inline void LOGNULL__REDEMPTION__INTERNAL(int priority, const char *format, ...)
-{
-    (void)priority;
-    (void)format;
-}
+namespace {
 
-static inline void hexdump(const char * data, size_t size)
+inline void hexdump(const char * data, size_t size)
 {
     char buffer[2048];
     for (size_t j = 0 ; j < size ; j += 16){
@@ -165,7 +301,7 @@ static inline void hexdump(const char * data, size_t size)
         }
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')  || (tmp == '\\')){
                 tmp = '.';
             }
@@ -180,12 +316,12 @@ static inline void hexdump(const char * data, size_t size)
     }
 }
 
-static inline void hexdump(const unsigned char * data, size_t size)
+inline void hexdump(const unsigned char * data, size_t size)
 {
     hexdump(reinterpret_cast<const char*>(data), size);
 }
 
-static inline void hexdump_d(const char * data, size_t size, unsigned line_length = 16)
+inline void hexdump_d(const char * data, size_t size, unsigned line_length = 16)
 {
     char buffer[2048];
     for (size_t j = 0 ; j < size ; j += line_length){
@@ -204,7 +340,7 @@ static inline void hexdump_d(const char * data, size_t size, unsigned line_lengt
 
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }
@@ -219,12 +355,12 @@ static inline void hexdump_d(const char * data, size_t size, unsigned line_lengt
     }
 }
 
-static inline void hexdump_d(const unsigned char * data, size_t size, unsigned line_length = 16)
+inline void hexdump_d(const unsigned char * data, size_t size, unsigned line_length = 16)
 {
     hexdump_d(reinterpret_cast<const char*>(data), size, line_length);
 }
 
-static inline void hexdump_c(const char * data, size_t size)
+inline void hexdump_c(const char * data, size_t size)
 {
     char buffer[2048];
     for (size_t j = 0 ; j < size ; j += 16){
@@ -242,7 +378,7 @@ static inline void hexdump_c(const char * data, size_t size)
         line += sprintf(line, " //");
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }
@@ -257,12 +393,12 @@ static inline void hexdump_c(const char * data, size_t size)
     }
 }
 
-static inline void hexdump_c(const unsigned char * data, size_t size)
+inline void hexdump_c(const unsigned char * data, size_t size)
 {
     hexdump_c(reinterpret_cast<const char*>(data), size);
 }
 
-static inline void hexdump96_c(const char * data, size_t size)
+inline void hexdump96_c(const char * data, size_t size)
 {
     char buffer[32768];
     const unsigned line_length = 96;
@@ -281,7 +417,7 @@ static inline void hexdump96_c(const char * data, size_t size)
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')){
                 tmp = '.';
             }
@@ -296,12 +432,12 @@ static inline void hexdump96_c(const char * data, size_t size)
     }
 }
 
-static inline void hexdump96_c(const unsigned char * data, size_t size)
+inline void hexdump96_c(const unsigned char * data, size_t size)
 {
     hexdump96_c(reinterpret_cast<const char*>(data), size);
 }
 
-static inline void hexdump8_c(const char * data, size_t size)
+inline void hexdump8_c(const char * data, size_t size)
 {
     char buffer[1024];
     const unsigned line_length = 8;
@@ -320,7 +456,7 @@ static inline void hexdump8_c(const char * data, size_t size)
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = static_cast<unsigned>(static_cast<unsigned char>(data[j+i]));
+            unsigned char tmp = static_cast<unsigned char>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')){
                 tmp = '.';
             }
@@ -335,9 +471,10 @@ static inline void hexdump8_c(const char * data, size_t size)
     }
 }
 
-static inline void hexdump8_c(const unsigned char * data, size_t size)
+inline void hexdump8_c(const unsigned char * data, size_t size)
 {
     hexdump8_c(reinterpret_cast<const char*>(data), size);
 }
 
-#endif
+} // anonymous namespace
+

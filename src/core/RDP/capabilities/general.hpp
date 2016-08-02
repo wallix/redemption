@@ -20,12 +20,12 @@
    RDP Capabilities : General Capabilities
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
-#include "error.hpp"
+#include "utils/stream.hpp"
+#include "core/error.hpp"
 
 // 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
 // ===========================================================
@@ -54,6 +54,14 @@
 // +--------------------------------+----------------------+
 // | 0x0004 OSMAJORTYPE_UNIX        | UNIX platform        |
 // +--------------------------------+----------------------+
+// | 0x0005 OSMAJORTYPE_IOS         | iOS platform         |
+// +--------------------------------+----------------------+
+// | 0x0006 OSMAJORTYPE_OSX         | OS X platform        |
+// +--------------------------------+----------------------+
+// | 0x0007 OSMAJORTYPE_ANDROID     | Android platform     |
+// +--------------------------------+----------------------+
+// | 0x0008 OSMAJORTYPE_CHROME_OS   | Chrome OS platform   |
+// +--------------------------------+----------------------+
 
 enum {
        OSMAJORTYPE_UNSPECIFIED
@@ -61,6 +69,10 @@ enum {
      , OSMAJORTYPE_OS2
      , OSMAJORTYPE_MACINTOSH
      , OSMAJORTYPE_UNIX
+     , OSMAJORTYPE_IOS
+     , OSMAJORTYPE_OSX
+     , OSMAJORTYPE_ANDROID
+     , OSMAJORTYPE_CHROME_OS
 };
 
 
@@ -72,31 +84,34 @@ enum {
 // +--------------------------------------+----------------------+
 // | 0x0001 OSMINORTYPE_WINDOWS_31X       | Windows 3.1x         |
 // +--------------------------------------+----------------------+
-// | 0x0002 TS_OSMINORTYPE_WINDOWS_95     | Windows 95           |
+// | 0x0002 OSMINORTYPE_WINDOWS_95        | Windows 95           |
 // +--------------------------------------+----------------------+
-// | 0x0003 TS_OSMINORTYPE_WINDOWS_NT     | Windows NT           |
+// | 0x0003 OSMINORTYPE_WINDOWS_NT        | Windows NT           |
 // +--------------------------------------+----------------------+
-// | 0x0004 TS_OSMINORTYPE_OS2_V21        | OS/2 2.1             |
+// | 0x0004 OSMINORTYPE_OS2_V21           | OS/2 2.1             |
 // +--------------------------------------+----------------------+
-// | 0x0005 TS_OSMINORTYPE_POWER_PC       | PowerPC              |
+// | 0x0005 OSMINORTYPE_POWER_PC          | PowerPC              |
 // +--------------------------------------+----------------------+
-// | 0x0006 TS_OSMINORTYPE_MACINTOSH      | Macintosh            |
+// | 0x0006 OSMINORTYPE_MACINTOSH         | Macintosh            |
 // +--------------------------------------+----------------------+
-// | 0x0007 TS_OSMINORTYPE_NATIVE_XSERVER | Native X Server      |
+// | 0x0007 OSMINORTYPE_NATIVE_XSERVER    | Native X Server      |
 // +--------------------------------------+----------------------+
-// | 0x0008 TS_OSMINORTYPE_PSEUDO_XSERVER | Pseudo X Server      |
+// | 0x0008 OSMINORTYPE_PSEUDO_XSERVER    | Pseudo X Server      |
+// +--------------------------------------+----------------------+
+// | 0x0009 OSMINORTYPE_WINDOWS RT        | Pseudo X Server      |
 // +--------------------------------------+----------------------+
 
 enum {
        OSMINORTYPE_UNSPECIFIED
      , OSMINORTYPE_WINDOWS_31X
-     , TS_OSMINORTYPE_WINDOWS_95
-     , TS_OSMINORTYPE_WINDOWS_NT
-     , TS_OSMINORTYPE_OS2_V21
-     , TS_OSMINORTYPE_POWER_PC
-     , TS_OSMINORTYPE_MACINTOSH
-     , TS_OSMINORTYPE_NATIVE_XSERVER
-     , TS_OSMINORTYPE_PSEUDO_XSERVER
+     , OSMINORTYPE_WINDOWS_95
+     , OSMINORTYPE_WINDOWS_NT
+     , OSMINORTYPE_OS2_V21
+     , OSMINORTYPE_POWER_PC
+     , OSMINORTYPE_MACINTOSH
+     , OSMINORTYPE_NATIVE_XSERVER
+     , OSMINORTYPE_PSEUDO_XSERVER
+     , OSMINORTYPE_WINDOWS_RT
 };
 
 // protocolVersion (2 bytes): A 16-bit, unsigned integer. The protocol version.
@@ -199,7 +214,7 @@ struct GeneralCaps : public Capability {
     GeneralCaps()
     : Capability(CAPSTYPE_GENERAL, CAPLEN_GENERAL)
     , os_major(OSMAJORTYPE_WINDOWS)
-    , os_minor(TS_OSMINORTYPE_WINDOWS_NT)
+    , os_minor(OSMINORTYPE_WINDOWS_NT)
     , protocolVersion(0x200)
     , pad2octetsA(0)
     , compressionType(0)
@@ -239,7 +254,7 @@ struct GeneralCaps : public Capability {
          */
         const unsigned expected = 20;
         if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated GeneralCaps, need=%u remains=%u",
+            LOG(LOG_ERR, "Truncated GeneralCaps, need=%u remains=%zu",
                 expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -309,4 +324,3 @@ struct GeneralCaps : public Capability {
     }
 };
 
-#endif

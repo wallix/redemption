@@ -22,18 +22,18 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestCLIPRDRChannel
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 //#define LOGPRINT
 
-#include "channel_list.hpp"
-#include "client_info.hpp"
-#include "make_unique.hpp"
-#include "RDP/clipboard.hpp"
-#include "test_transport.hpp"
-#include "virtual_channel_data_sender.hpp"
-#include "rdp/channels/cliprdr_channel.hpp"
+#include "core/channel_list.hpp"
+#include "core/client_info.hpp"
+#include "utils/sugar/make_unique.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "transport/test_transport.hpp"
+#include "utils/virtual_channel_data_sender.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
 
 #include "../../../front/fake_front.hpp"
 
@@ -119,11 +119,11 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata), outdata, sizeof(outdata),
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -227,11 +227,11 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata), outdata, sizeof(outdata),
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -335,11 +335,11 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata), outdata, sizeof(outdata),
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1, verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -443,11 +443,11 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
-    TestTransport t("cliprdr", indata, sizeof(indata), outdata, sizeof(outdata),
-        verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1,verbose);
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
@@ -505,7 +505,7 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
                     total_length, flags, chunk_data, chunk_data_length,
                     out_asynchronous_task);
 
-                BOOST_CHECK(false == (bool)out_asynchronous_task);
+                BOOST_CHECK(false == bool(out_asynchronous_task));
             }
 
             virtual_channel_stream.rewind();
@@ -521,4 +521,70 @@ BOOST_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     }
 
     BOOST_CHECK(end_of_file_reached || t.get_status());
+}
+
+class NullSender : public VirtualChannelDataSender {
+public:
+    virtual void operator() (uint32_t, uint32_t, const uint8_t*, uint32_t) override {}
+};
+
+BOOST_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
+{
+    ClientInfo info;
+    info.keylayout             = 0x04C;
+    info.console_session       = 0;
+    info.brush_cache_code      = 0;
+    info.bpp                   = 24;
+    info.width                 = 800;
+    info.height                = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname, sizeof(info.hostname), "test");
+    FakeFront front(info,
+                    511 // verbose
+                   );
+
+    int verbose = MODRDP_LOGLEVEL_CLIPRDR | MODRDP_LOGLEVEL_CLIPRDR_DUMP;
+
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
+
+    clipboard_virtual_channel_params.authentifier              = nullptr;
+    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
+    clipboard_virtual_channel_params.verbose                   = verbose;
+
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
+
+    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+
+
+    NullSender to_client_sender;
+    NullSender to_server_sender;
+
+    ClipboardVirtualChannel clipboard_virtual_channel(
+        &to_client_sender, &to_server_sender, front,
+        clipboard_virtual_channel_params);
+
+    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
+    InStream virtual_channel_stream(virtual_channel_data);
+
+
+    RDPECLIP::FormatListPDU format_list_pdu;
+    StaticOutStream<256>    out_s;
+
+    const bool unicodetext           = false;
+    const bool use_long_format_names = true;    // Malformation
+
+    format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+
+    const size_t totalLength = out_s.get_offset();
+
+    clipboard_virtual_channel.process_client_message(
+            totalLength,
+              CHANNELS::CHANNEL_FLAG_FIRST
+            | CHANNELS::CHANNEL_FLAG_LAST
+            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            out_s.get_data(),
+            totalLength);
 }

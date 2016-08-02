@@ -18,14 +18,17 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_
 
-#include "cast.hpp"
-#include "log.hpp"
-#include "error.hpp"
-#include "noncopyable.hpp"
-#include "stream.hpp"
+#pragma once
+
+#include <vector>
+
+#include "utils/sugar/cast.hpp"
+#include "utils/log.hpp"
+#include "core/error.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "utils/stream.hpp"
+#include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 
 namespace RDP {
 
@@ -80,7 +83,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Rectangle: expected=%u remains=%u",
+                    "Truncated Rectangle: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -229,7 +232,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (0): expected=%u remains=%u",
+                    "Truncated IconInfo (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -248,7 +251,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (1): expected=%u remains=%u",
+                    "Truncated IconInfo (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -263,7 +266,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (2): expected=%u remains=%u",
+                    "Truncated IconInfo (2): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -279,7 +282,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated IconInfo (3): expected=%u remains=%u",
+                    "Truncated IconInfo (3): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -380,7 +383,7 @@ public:
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated CachedIconInfo: expected=%u remains=%u",
+                    "Truncated CachedIconInfo: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -488,7 +491,7 @@ protected:
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "Truncated Window Information Common Header: "
-                        "expected=%u remains=%u",
+                        "expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -923,17 +926,8 @@ public:
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
-            const size_t maximum_length_of_TitleInfo_in_bytes = this->title_info.length() * 2;
-
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(
-                        maximum_length_of_TitleInfo_in_bytes));
-            const size_t size_of_unicode_data = ::UTF8toUTF16(
-                reinterpret_cast<const uint8_t *>(this->title_info.c_str()), unicode_data,
-                maximum_length_of_TitleInfo_in_bytes);
-
-            stream.out_uint16_le(size_of_unicode_data);
-
-            stream.out_copy_bytes(unicode_data, size_of_unicode_data);
+            put_non_null_terminated_utf16_from_utf8(
+                stream, this->title_info.data(), this->title_info.size() * 2);
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
@@ -1002,7 +996,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (0): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (0): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1017,7 +1011,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (1): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1033,7 +1027,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (2): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (2): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1048,44 +1042,15 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (3): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (3): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
             }
 
             const uint16_t CbString = stream.in_uint16_le();
-
-            if (!stream.in_check_rem(CbString)) {
-                LOG(LOG_ERR,
-                    "Truncated NewOrExistingWindow (4): expected=%u remains=%u",
-                    CbString, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-
-            uint8_t * const unicode_data = static_cast<uint8_t *>(::alloca(CbString));
-
-            {
-                const unsigned expected = CbString;  // String(variable)
-
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (5): expected=%u remains=%u",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-            }
-
-            stream.in_copy_bytes(unicode_data, CbString);
-
-            const size_t size_of_utf8_string =
-                        CbString / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-            uint8_t * const utf8_string = static_cast<uint8_t *>(
-                ::alloca(size_of_utf8_string));
-            const size_t length_of_utf8_string = ::UTF16toUTF8(
-                unicode_data, CbString / 2, utf8_string, size_of_utf8_string);
-            this->title_info.assign(::char_ptr_cast(utf8_string),
-                length_of_utf8_string);
+            get_non_null_terminated_utf16_from_utf8(
+                this->title_info, stream, CbString, "NewOrExistingWindow (4)");
         }
 
         if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
@@ -1094,7 +1059,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (6): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (6): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1110,7 +1075,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (7): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (7): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1126,7 +1091,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (8): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (8): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1141,7 +1106,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (9): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (9): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1156,7 +1121,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (10): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (10): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1172,7 +1137,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (11): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (11): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1188,7 +1153,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (12): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (12): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1204,7 +1169,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1226,7 +1191,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (15): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (15): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1242,7 +1207,7 @@ public:
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%u",
+                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1443,7 +1408,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // NewOrExistingWindow
 
@@ -1550,7 +1515,7 @@ public:
         char buffer[2048];
         size_t length = this->str(buffer, sizeof(buffer));
         buffer[length] = '\0';
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // WindowIcon
 
@@ -1657,7 +1622,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // CachedIcon
 
@@ -1731,7 +1696,7 @@ public:
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, buffer);
+        LOG(level, "%s", buffer);
     }
 };  // CachedIcon
 
@@ -1765,4 +1730,3 @@ public:
 }   // namespace RAIL
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_ALTERNATESECONDARYWINDOWING_HPP_

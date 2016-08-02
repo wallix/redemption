@@ -24,9 +24,12 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestOrderDestBlt
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+//#define LOGPRINT
+#define LOGNULL
+
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 
 #include "test_orders.hpp"
 
@@ -62,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)DESTBLT, common_cmd.order);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(DESTBLT), common_cmd.order);
 
         RDPDestBlt cmd(Rect(), 0);
 

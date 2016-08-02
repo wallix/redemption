@@ -28,16 +28,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "config.hpp"
-#include "mainloop.hpp"
-#include "log.hpp"
-#include "listen.hpp"
-#include "session_server.hpp"
-#include "parse_ip_conntrack.hpp"
+#include "configs/config.hpp"
+#include "core/mainloop.hpp"
+#include "utils/log.hpp"
+#include "core/listen.hpp"
+#include "core/session_server.hpp"
+#include "utils/parse_ip_conntrack.hpp"
 
-#include "config.hpp"
-#include "parameters_holder.hpp"
+#include "configs/config.hpp"
 
+namespace {
 /*****************************************************************************/
 #ifndef IN_IDE_PARSER
 [[noreturn]]
@@ -92,6 +92,9 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGUSR1);
     sigaddset(&sa.sa_mask, SIGUSR2);
 
+// TODO -Wold-style-cast is ignored
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
     sa.sa_handler = SIG_IGN;
     sigaction(SIGSEGV, &sa, nullptr);
 
@@ -121,6 +124,9 @@ void init_signals(void)
 
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR2, &sa, nullptr);
+#pragma GCC diagnostic pop
+}
+
 }
 
 //void reset_signals(void)
@@ -154,7 +160,7 @@ void init_signals(void)
 //    sigaction(SIGUSR2, &sa, nullptr);
 //}
 
-void redemption_new_session(char const * config_filename)
+void redemption_new_session(CryptoContext & cctx, char const * config_filename)
 {
     char text[256];
     char source_ip[256];
@@ -171,12 +177,12 @@ void redemption_new_session(char const * config_filename)
     int sock_len = sizeof(u);
 
     Inifile ini;
-    { ConfigurationLoader cfg_loader(ini, config_filename); }
+    { ConfigurationLoader cfg_loader(ini.configuration_holder(), config_filename); }
 
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", unsigned(getpid()));
 
-    getpeername(0, &u.s, (socklen_t *)&sock_len);
+    getpeername(0, &u.s, reinterpret_cast<socklen_t *>(&sock_len));
     strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
 
     union
@@ -219,8 +225,8 @@ void redemption_new_session(char const * config_filename)
     }
 
     int nodelay = 1;
-    if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
-        Session session(sck, ini);
+    if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&nodelay), sizeof(nodelay))){
+        Session session(sck, ini, cctx);
 
         if (ini.get<cfg::debug::session>()){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
@@ -235,14 +241,18 @@ void redemption_new_session(char const * config_filename)
 
 }
 
-void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, parameters_holder & parametersHldr, std::string config_filename)
+void redemption_main_loop(Inifile & ini, CryptoContext & cctx, unsigned uid, unsigned gid, std::string config_filename)
 {
     init_signals();
 
-    SessionServer ss(uid, gid, parametersHldr, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
+    SessionServer ss(cctx, uid, gid, std::move(config_filename), ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-    uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>());
+    uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
+// TODO -Wold-style-cast is ignored
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
+#pragma GCC diagnostic pop
     int port = ini.get<cfg::globals::port>();
     Listen listener( ss
                      , s_addr

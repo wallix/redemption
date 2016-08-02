@@ -21,13 +21,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestVNC
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "vnc/vnc.hpp"
-#include "test_transport.hpp"
+#include "core/font.hpp"
+#include "mod/vnc/vnc.hpp"
+#include "transport/test_transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
 {

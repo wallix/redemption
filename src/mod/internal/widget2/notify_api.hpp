@@ -18,8 +18,7 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_)
-#define REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_
+#pragma once
 
 class Widget2;
 
@@ -30,8 +29,6 @@ public:
 
     virtual void notify(Widget2 * sender, notify_event_t event) = 0;
 
-    virtual ~NotifyApi()
-    {}
+    virtual ~NotifyApi() = default;
 };
 
-#endif

@@ -18,12 +18,12 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_SSPI_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_SSPI_HPP_
+
+#pragma once
 
 #include <stdio.h>
-#include "utf.hpp"
-#include "array.hpp"
+#include "utils/utf.hpp"
+#include "utils/array.hpp"
 
 #define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION                        0
@@ -573,12 +573,22 @@ struct SecurityFunctionTable {
                                                 PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
+        (void)pszPrincipal;
+        (void)pszPackage;
+        (void)fCredentialUse;
+        (void)pvLogonID;
+        (void)pAuthData;
+        (void)pGetKeyFn;
+        (void)pvGetKeyArgument;
+        (void)phCredential;
+        (void)ptsExpiry;
          return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Release_cred
     // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
     virtual SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
+        (void)phCredential;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -590,14 +600,23 @@ struct SecurityFunctionTable {
                                                  PCtxtHandle phContext,
                                                  char* pszTargetName,
                                                  unsigned long fContextReq,
-                                                 unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
                                                  SecBufferDesc * pInput,
                                                  unsigned long Reserved2,
                                                  PCtxtHandle phNewContext,
                                                  SecBufferDesc * pOutput,
-                                                 unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
+
+        (void)phCredential;
+        (void)phContext;
+        (void)pszTargetName;
+        (void)fContextReq;
+        (void)TargetDataRep;
+        (void)pInput;
+        (void)Reserved2;
+        (void)phNewContext;
+        (void)pOutput;
+        (void)ptsExpiry;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -610,8 +629,15 @@ struct SecurityFunctionTable {
                                              unsigned long TargetDataRep,
                                              PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
-                                             unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
+        (void)phCredential;
+        (void)phContext;
+        (void)fContextReq;
+        (void)TargetDataRep;
+        (void)pInput;
+        (void)phNewContext;
+        (void)pOutput;
+        (void)ptsTimeStamp;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -619,6 +645,8 @@ struct SecurityFunctionTable {
     // GSS_Process_context_token ?
     // COMPLETE_AUTH_TOKEN CompleteAuthToken;
     virtual SEC_STATUS CompleteAuthToken(PCtxtHandle phContext, SecBufferDesc * pToken) {
+        (void)phContext;
+        (void)pToken;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -636,16 +664,21 @@ struct SecurityFunctionTable {
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
     virtual SEC_STATUS QueryContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
                                               void* pBuffer) {
+        (void)phContext;
+        (void)ulAttribute;
+        (void)pBuffer;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
     virtual SEC_STATUS ImpersonateSecurityContext(PCtxtHandle phContext) {
+        (void)phContext;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
     virtual SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) {
+        (void)phContext;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -663,13 +696,15 @@ struct SecurityFunctionTable {
 
     // FREE_CONTEXT_BUFFER FreeContextBuffer;
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
+        (void)pvContextBuffer;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) {
-
+        (void)pszPackageName;
+        (void)pPackageInfo;
         return SEC_E_SECPKG_NOT_FOUND;
     }
 
@@ -687,6 +722,10 @@ struct SecurityFunctionTable {
     // IMPORT_SECURITY_CONTEXT ImportSecurityContext;
     virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
                                              HANDLE pToken, PCtxtHandle phContext) {
+        (void)pszPackage;
+        (void)pPackedContext;
+        (void)pToken;
+        (void)phContext;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -711,6 +750,10 @@ struct SecurityFunctionTable {
     virtual SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
                                       SecBufferDesc * pMessage,
                                       unsigned long MessageSeqNo) {
+        (void)phContext;
+        (void)fQOP;
+        (void)pMessage;
+        (void)MessageSeqNo;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -718,6 +761,10 @@ struct SecurityFunctionTable {
     // DECRYPT_MESSAGE DecryptMessage;
     virtual SEC_STATUS DecryptMessage(PCtxtHandle phContext, SecBufferDesc * pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) {
+        (void)phContext;
+        (void)pMessage;
+        (void)MessageSeqNo;
+        (void)pfQOP;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -740,4 +787,3 @@ enum SecInterface {
 
 
 
-#endif

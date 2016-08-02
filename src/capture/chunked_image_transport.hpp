@@ -22,11 +22,11 @@
 
 */
 
-#ifndef _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
-#define _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
 
-#include "transport.hpp"
-#include "stream.hpp"
+#pragma once
+
+#include "transport/transport.hpp"
+#include "utils/stream.hpp"
 #include "wrm_label.hpp"
 
 #include <memory>
@@ -91,4 +91,3 @@ private:
     }
 };
 
-#endif

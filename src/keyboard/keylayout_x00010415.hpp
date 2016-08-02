@@ -21,14 +21,16 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#ifndef _REDEMPTION_KEYLAYOUT_X00010415_HPP_
-#define _REDEMPTION_KEYLAYOUT_X00010415_HPP_
+
+#pragma once
 
 #include "keylayout.hpp"
 
 namespace x00010415 {    // Polish (Poland) // Polish (214)
 
 const static int LCID = 0x00010415;
+
+const static char * const locale_name = "pl-PL";
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
@@ -313,6 +315,7 @@ const static uint8_t nbDeadkeys = 10;
 } // END NAMESPACE - x00010415
 
 static const Keylayout keylayout_x00010415( x00010415::LCID
+                                          , x00010415::locale_name
                                           , x00010415::noMod
                                           , x00010415::shift
                                           , x00010415::altGr
@@ -326,4 +329,3 @@ static const Keylayout keylayout_x00010415( x00010415::LCID
                                           , x00010415::nbDeadkeys
 );
 
-#endif

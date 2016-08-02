@@ -22,21 +22,15 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestWidgetImage
-#include <boost/test/auto_unit_test.hpp>
-
-#undef SHARE_PATH
-#define SHARE_PATH FIXTURES_PATH
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "font.hpp"
-#include "internal/widget2/image.hpp"
-#include "internal/widget2/screen.hpp"
+#include "core/font.hpp"
+#include "mod/internal/widget2/image.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "check_sig.hpp"
 #include "fake_draw.hpp"
-
-#undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/tmp/"
 
 BOOST_AUTO_TEST_CASE(TraceWidgetImage)
 {
@@ -45,11 +39,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -74,11 +68,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, 10,100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, 10,100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -103,11 +97,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, -100,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, -100,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -132,11 +126,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, 700,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, 700,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -161,11 +155,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, -100,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, -100,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -190,11 +184,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -219,11 +213,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at position 80,10 and of size 50x100. After clip the size is of 20x15
     wimage.rdp_input_invalidate(Rect(80 + wimage.dx(),
@@ -248,11 +242,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     Font font;
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font);
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable.gd, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wimage.rdp_input_invalidate(Rect(100 + wimage.dx(),
@@ -279,7 +273,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //         NotifyApi::notify_event_t event;
 
 //         WidgetReceiveEvent()
-//         : Widget2(drawable, Rect(), *this, nullptr)
+//         : Widget2(drawable.gd, Rect(), *this, nullptr)
 //         , sender(nullptr)
 //         , event(0)
 //         {}
@@ -297,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     Widget2 & parent = widget_for_receive_event;
 //     NotifyApi * notifier = nullptr;
 
-//     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+//     WidgetImage wimage(drawable.gd, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
 //     wimage.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
 //     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
@@ -320,23 +314,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     Font font;
 
 //     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-//     WidgetScreen parent(drawable, 800, 600, font, nullptr);
+//     WidgetScreen parent(drawable.gd, 800, 600, font, nullptr);
 
 //     NotifyApi * notifier = nullptr;
 
-//     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
+//     WidgetComposite wcomposite(drawable.gd, Rect(0,0,800,600), parent, notifier);
 
-//     WidgetImage wimage1(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp",
+//     WidgetImage wimage1(drawable.gd, 0,0, FIXTURES_PATH"/logo-redemption.bmp",
 //                         wcomposite, notifier);
-//     WidgetImage wimage2(drawable, 0,100, FIXTURES_PATH"/logo-redemption.bmp",
+//     WidgetImage wimage2(drawable.gd, 0,100, FIXTURES_PATH"/logo-redemption.bmp",
 //                         wcomposite, notifier);
-//     WidgetImage wimage3(drawable, 100,100, FIXTURES_PATH"/logo-redemption.bmp",
+//     WidgetImage wimage3(drawable.gd, 100,100, FIXTURES_PATH"/logo-redemption.bmp",
 //                         wcomposite, notifier);
-//     WidgetImage wimage4(drawable, 300,300, FIXTURES_PATH"/logo-redemption.bmp",
+//     WidgetImage wimage4(drawable.gd, 300,300, FIXTURES_PATH"/logo-redemption.bmp",
 //                         wcomposite, notifier);
-//     WidgetImage wimage5(drawable, 700,-50, FIXTURES_PATH"/logo-redemption.bmp",
+//     WidgetImage wimage5(drawable.gd, 700,-50, FIXTURES_PATH"/logo-redemption.bmp",
 //                         wcomposite, notifier);
-//     WidgetImage wimage6(drawable, -50,550, FIXTURES_PATH"/logo-redemption.bmp",
+//     WidgetImage wimage6(drawable.gd, -50,550, FIXTURES_PATH"/logo-redemption.bmp",
 //                         wcomposite, notifier);
 
 //     wcomposite.add_widget(&wimage1);

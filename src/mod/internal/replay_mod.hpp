@@ -22,21 +22,49 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
 
-#include "FileToGraphic.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
-#include "in_meta_sequence_transport.hpp"
+#pragma once
+
+#include "capture/FileToGraphic.hpp"
+#include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
-class ReplayMod : public InternalMod {
-    char movie[1024];
-
+class ReplayMod : public InternalMod
+{
     std::string & auth_error_message;
 
-    InMetaSequenceTransport * in_trans;
-    FileToGraphic           * reader;
+    struct Reader
+    {
+        struct Impl
+        {
+            CryptoContext           cctx;
+            InMetaSequenceTransport in_trans;
+            FileToGraphic           reader;
+
+            Impl(LCGRandom & rnd, Inifile & ini, char const * prefix, char const * extension, uint32_t debug_capture)
+            // TODO We don't know yet how to manage encryption for replay. For now its just not supported, rnd and ini will never be used
+            : cctx(rnd, ini)
+            , in_trans(&this->cctx, prefix, extension, 0, 0)
+            , reader(&this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
+            {
+            }
+        };
+        std::unique_ptr<Impl> impl;
+
+        void construct(char const * prefix, char const * extension, uint32_t debug_capture)
+        {
+            LCGRandom rnd(0);
+            Inifile ini;
+            this->impl = std::make_unique<Impl>(rnd, ini, prefix, extension, debug_capture);
+        }
+
+        void destruct()
+        {
+            this->impl.reset();
+        }
+
+        FileToGraphic * operator -> () const { return &this->impl->reader; }
+    } reader;
 
     bool end_of_data;
     bool wait_for_escape;
@@ -56,9 +84,10 @@ public:
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)
     {
-        strncpy(this->movie, replay_path, sizeof(this->movie)-1);
-        strncat(this->movie, movie, sizeof(this->movie)-1);
-        LOG(LOG_INFO, "Playing %s", this->movie);
+        char path_movie[1024];
+        snprintf(path_movie,  sizeof(path_movie)-1, "%s%s", replay_path, movie);
+        path_movie[sizeof(path_movie)-1] = 0;
+        LOG(LOG_INFO, "Playing %s", path_movie);
 
         char path[1024];
         char basename[1024];
@@ -67,7 +96,7 @@ public:
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
-        const bool res = canonical_path( this->movie
+        const bool res = canonical_path( path_movie
                                        , path, sizeof(path)
                                        , basename, sizeof(basename)
                                        , extension, sizeof(extension)
@@ -78,10 +107,7 @@ public:
         }
         snprintf(prefix,  sizeof(prefix), "%s%s", path, basename);
 
-        this->in_trans = new InMetaSequenceTransport(prefix, extension);
-        timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-        timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-        this->reader = new FileToGraphic( this->in_trans, begin_capture, end_capture, true, debug_capture);
+        this->reader.construct(prefix, extension, debug_capture);
 
         switch (this->front.server_resize( this->reader->info_width
                                          , this->reader->info_height
@@ -105,13 +131,11 @@ public:
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
 
-        this->reader->add_consumer(&this->front, nullptr);
-        this->front.send_global_palette();
+        this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
     }
 
     ~ReplayMod() override {
-        delete reader;
-        delete in_trans;
+        this->reader.destruct();
         this->screen.clear();
     }
 
@@ -137,9 +161,11 @@ public:
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    void draw_event(time_t now) override {
-        TODO("use system constants for sizes");
-        TODO("RZ: Support encrypted recorded file.");
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        (void)now;
+        (void)drawable;
+        // TODO use system constants for sizes
+        // TODO RZ: Support encrypted recorded file.
         if (!this->end_of_data) {
             try
             {
@@ -152,7 +178,7 @@ public:
                     this->event.set(1);
                 }
                 else {
-                    this->front.flush();
+                    this->front.sync();
 
                     if (!this->wait_for_escape) {
                         this->event.signal = BACK_EVENT_STOP;
@@ -174,6 +200,7 @@ public:
             }
         }
     }
+
+    bool is_up_and_running() override { return true; }
 };
 
-#endif

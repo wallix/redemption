@@ -21,11 +21,11 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_FONT_HPP_
-#define _REDEMPTION_CORE_RDP_CAPABILITIES_CAP_FONT_HPP_
+
+#pragma once
 
 #include "common.hpp"
-#include "stream.hpp"
+#include "utils/stream.hpp"
 
 //  2.2.7.2.5 Font Capability Set (TS_FONT_CAPABILITYSET)
 
@@ -84,4 +84,3 @@ struct FontCaps : public Capability {
 };
 
 
-#endif

@@ -24,13 +24,13 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestMCS
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 #define LOGNULL
 
-#include "stream.hpp"
-#include "test_transport.hpp"
-#include "RDP/mcs.hpp"
+#include "utils/stream.hpp"
+#include "transport/test_transport.hpp"
+#include "core/RDP/mcs.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 {
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
     InStream stream(buf, length);
     MCS::DisconnectProviderUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_DisconnectProviderUltimatum , mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_DisconnectProviderUltimatum), mcs.type);
     BOOST_CHECK_EQUAL(0, mcs.reason);
 }
 
@@ -405,7 +405,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
     try {
         InStream stream(buf, length);
         MCS::AttachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
-        BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserRequest , mcs.type);
+        BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserRequest), mcs.type);
     }
     catch(...){
         BOOST_CHECK(0);
@@ -441,7 +441,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
     InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
     BOOST_CHECK_EQUAL(0 , mcs.result);
     BOOST_CHECK_EQUAL(false , mcs.initiator_flag);
 }
@@ -477,7 +477,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
     InStream stream(buf, length);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(0) , mcs.result);
     BOOST_CHECK_EQUAL(true , mcs.initiator_flag);
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1) , mcs.initiator);
@@ -515,9 +515,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 
     MCS::ChannelJoinRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinRequest , mcs.type);
-    BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
-    BOOST_CHECK_EQUAL((uint16_t)1004, mcs.channelId);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_ChannelJoinRequest), mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004), mcs.channelId);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
@@ -555,8 +555,8 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
     InStream stream(buf, length);
     MCS::ChannelJoinConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinConfirm , mcs.type);
-    BOOST_CHECK_EQUAL((uint8_t)MCS::RT_SUCCESSFUL , mcs.result);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_ChannelJoinConfirm), mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::RT_SUCCESSFUL), mcs.result);
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(3) , mcs.initiator);
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.requested);
     BOOST_CHECK_EQUAL(true , mcs.channelId_flag);
@@ -626,8 +626,8 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
     InStream stream(buf, length);
     MCS::SendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataRequest , mcs.type);
-    BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataRequest), mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
@@ -697,8 +697,8 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
     InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication , mcs.type);
-    BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3), mcs.initiator);
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
@@ -749,8 +749,8 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
     InStream stream(buf, length);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication, mcs.type);
-    BOOST_CHECK_EQUAL((uint16_t)1,                             mcs.initiator);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1),                             mcs.initiator);
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004),             mcs.channelId);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(1),                 mcs.dataPriority);
     BOOST_CHECK_EQUAL(static_cast<uint8_t>(3),                 mcs.segmentation);

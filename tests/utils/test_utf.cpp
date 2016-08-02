@@ -25,15 +25,15 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestLul
-#include <boost/test/auto_unit_test.hpp>
+#include "system/redemption_unit_tests.hpp"
 
 //#define LOGNULL
 #define LOGPRINT
 
 #include <stdio.h>
 
-#include "cast.hpp"
-#include "utf.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/utf.hpp"
 
 // BOOST_AUTO_TEST_CASE(TestUTF32isValid)
 // {
@@ -489,6 +489,14 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TestUTF32toUTF8) {
+    uint8_t buf[5]{};
+    BOOST_REQUIRE_EQUAL(1, UTF32toUTF8(reinterpret_cast<uint8_t const *>("a\0\0\0"), 1, buf, 5));
+    BOOST_REQUIRE_EQUAL('a', buf[0]);
+    BOOST_REQUIRE_EQUAL(1, UTF32toUTF8('a', buf, 4));
+    BOOST_REQUIRE_EQUAL('a', buf[0]);
+}
+
 //BOOST_AUTO_TEST_CASE(TestUTF8toUnicode)
 //{
 //    uint8_t source[16] = "Red";
@@ -733,11 +741,11 @@ BOOST_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
 
     const size_t number_of_characters = sizeof(utf16_src) / 2;
 
-    uint8_t latin1_dst[32];
+    uint8_t latin1_dst[32] = {};
 
-    BOOST_CHECK_EQUAL(
-        UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst)),
-        number_of_characters);
+    auto x = UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst));
+
+    BOOST_CHECK_EQUAL(x, number_of_characters);
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(latin1_dst)), "100 \x80");
 }
@@ -809,10 +817,8 @@ BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
 
     uint8_t utf16_dst[64];
 
-    const bool LfToCrLf = true;
-
     BOOST_CHECK_EQUAL(
-        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst), LfToCrLf),
+        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst)),
         number_of_characters * 2 + 2 /* '\n' -> 0x0D 0x00 0x0A 0x00 */);
 
     BOOST_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected,
@@ -828,4 +834,16 @@ BOOST_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
                              + 2 /* 'é'  => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
 
     BOOST_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €\r\ntrapézoïdal");
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast(""), 6), 0);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 6), 4);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 3), 2);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 1), 0);
+
+    BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 0), 0);
 }

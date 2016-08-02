@@ -18,13 +18,15 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_KERBEROS_CREDENTIALS_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_KERBEROS_CREDENTIALS_HPP_
+
+#pragma once
 
 #include <cstring>
 #include <krb5.h>
 
-class Krb5Creds {
+#include "utils/log.hpp"
+
+class Krb5Creds final {
 public:
     krb5_context ctx;
 
@@ -36,7 +38,7 @@ public:
         }
     }
 
-    virtual ~Krb5Creds() {
+    ~Krb5Creds() {
         krb5_free_context(this->ctx);
     }
 
@@ -142,4 +144,3 @@ public:
     }
 };
 
-#endif

@@ -20,23 +20,22 @@
    Transport layer abstraction
 */
 
-#ifndef REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
-#define REDEMPTION_TRANSPORT_COUNT_TRANSPORT_HPP
 
-#include "transport.hpp"
+#pragma once
+
+#include "transport/transport.hpp"
 
 class CountTransport
 : public Transport
 {
-    void do_recv(char **, size_t len) {
-        TODO("move that to base class : accounting_recv(len) (or base class recv could just do accounting)");
+    void do_recv(char **, size_t len) override {
+        // TODO move that to base class : accounting_recv(len) (or base class recv could just do accounting)
         this->last_quantum_received += len;
     }
 
-    void do_send(const char * const, size_t len) {
-        TODO("move that to base class : accounting_send(len) (or base class send could just do accounting)");
+    void do_send(const char * const, size_t len) override {
+        // TODO move that to base class : accounting_send(len) (or base class send could just do accounting)
         this->last_quantum_sent += len;
     }
 };
 
-#endif

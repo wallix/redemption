@@ -22,8 +22,8 @@
 
 */
 
-#ifndef _REDEMPTION_UTILS_RECT_HPP_
-#define _REDEMPTION_UTILS_RECT_HPP_
+
+#pragma once
 
 #include <utility>
 #include <iosfwd>
@@ -35,8 +35,16 @@ struct Rect {
     uint16_t cx;
     uint16_t cy;
 
+    int16_t left() const {
+        return this->x;
+    }
+
     int16_t right() const {
         return static_cast<int16_t>(this->x + this->cx);
+    }
+
+    int16_t top() const {
+        return this->y;
     }
 
     int16_t bottom() const {
@@ -63,6 +71,13 @@ struct Rect {
                 && y   < this->bottom();
     }
 
+    bool has_intersection(int16_t x, int16_t y) const
+    {
+        return this->cx
+            && (x >= this->x && x < this->right())
+            && (y >= this->y && y < this->bottom());
+    }
+
     // special cases: contains returns true
     // - if both rects are empty
     // - if inner rect is empty
@@ -73,19 +88,15 @@ struct Rect {
               && inner.bottom() <= this->bottom());
     }
 
-    bool equal(const Rect & other) const {
+    bool operator==(const Rect &other) const {
         return (other.x == this->x
              && other.y == this->y
-             && other.right() == this->right()
-             && other.bottom() == this->bottom());
-    }
-
-    bool operator==(const Rect &other) const {
-        return this->equal(other);
+             && other.cx == this->cx
+             && other.cy == this->cy);
     }
 
     bool operator!=(const Rect &other) const {
-        return !this->equal(other);
+        return !(*this == other);
     }
 
     // Rect constructor ensures that any empty rect will be (0, 0, 0, 0)
@@ -169,12 +180,6 @@ struct Rect {
         );
     }
 
-    bool has_intersection(int16_t x, int16_t y) const
-    {
-        return this->cx
-            && (x >= this->x && x < this->right())
-            && (y >= this->y && y < this->bottom());
-    }
 
     // Ensemblist difference
     template<class Fn>
@@ -317,9 +322,10 @@ struct LineEquation {
         int interX = 0;
         int interY = 0;
         bool found = false;
+
         if (region & Rect::LEFT) {
             int tmpy = this->compute_y(rect.x);
-            if (tmpy >= rect.y && tmpy < (rect.bottom())) {
+            if (tmpy >= rect.y && tmpy < rect.bottom()) {
                 found = true;
                 interX = rect.x;
                 interY = tmpy;
@@ -327,15 +333,16 @@ struct LineEquation {
         }
         else if (region & Rect::RIGHT) {
             int tmpy = this->compute_y(rect.right() - 1);
-            if (tmpy >= rect.y && tmpy < (rect.bottom())) {
+            if (tmpy >= rect.y && tmpy < rect.bottom()) {
                 found = true;
                 interX = rect.right() - 1;
                 interY = tmpy;
             }
         }
+
         if (region & Rect::UP) {
             int tmpx = this->compute_x(rect.y);
-            if (tmpx >= rect.x && tmpx < (rect.right())) {
+            if (tmpx >= rect.x && tmpx < rect.right()) {
                 found = true;
                 interX = tmpx;
                 interY = rect.y;
@@ -343,16 +350,18 @@ struct LineEquation {
         }
         else if (region & Rect::DOWN) {
             int tmpx = this->compute_x(rect.bottom() - 1);
-            if (tmpx >= rect.x && tmpx < (rect.right())) {
+            if (tmpx >= rect.x && tmpx < rect.right()) {
                 found = true;
                 interX = tmpx;
                 interY = rect.bottom() - 1;
             }
         }
+
         if (found) {
             x = interX;
             y = interY;
         }
+
         return found;
     }
 
@@ -408,4 +417,3 @@ class DeltaRect {
 };
 
 
-#endif

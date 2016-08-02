@@ -16,12 +16,11 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
- *              Meng Tan
+ *              Meng Tan, Jennifer Inthavong
  *
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_SELECTOR2_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_SELECTOR2_HPP
+#pragma once
 
 #include "composite.hpp"
 #include "multiline.hpp"
@@ -29,14 +28,16 @@
 #include "edit.hpp"
 #include "number_edit.hpp"
 #include "image.hpp"
-#include "region.hpp"
-#include "difftimeval.hpp"
+#include "utils/region.hpp"
+#include "utils/difftimeval.hpp"
 #include "labelgrid.hpp"
 
 
 #include "flat_button.hpp"
-#include "translation.hpp"
-#include "theme.hpp"
+#include "utils/translation.hpp"
+#include "utils/theme.hpp"
+#include "gdi/graphic_api.hpp"
+
 
 class WidgetSelectorFlat2 : public WidgetParent
 {
@@ -71,6 +72,9 @@ public:
 
     Font const & font;
 
+    int16_t left;
+    int16_t top;
+
 public:
     struct temporary_number_of_page {
         char buffer[15];
@@ -99,13 +103,15 @@ IDX_PROTOCOL,
         NAV_SEPARATOR = 15
     };
 public:
-    WidgetSelectorFlat2(DrawApi& drawable, const char * device_name, uint16_t width,
+    WidgetSelectorFlat2(gdi::GraphicApi & drawable,
+                        const char * device_name, int16_t left, int16_t top, uint16_t width,
                         uint16_t height, Widget2 & parent, NotifyApi* notifier,
                         const char * current_page, const char * number_of_page,
                         const char * filter_target_group, const char * filter_target,
                         const char * filter_protocol,
+                        WidgetFlatButton * extra_button,
                         Font const & font, Theme const & theme, Translation::language_t lang)
-        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, Rect(left, top, width, height), parent, notifier)
         , bg_color(theme.global.bgcolor)
         , less_than_800(this->rect.cx < 800)
         , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, nullptr, device_name,
@@ -173,6 +179,8 @@ public:
                   theme.global.fgcolor, theme.global.bgcolor,
                   theme.global.focus_color, font, 6, 2)
         , font(font)
+        ,left(left)
+        ,top(top)
     {
         this->impl = &composite_array;
 
@@ -195,6 +203,12 @@ public:
         this->add_widget(&this->logout);
         this->add_widget(&this->connect);
 
+        if (extra_button) {
+            this->add_widget(extra_button);
+            extra_button->set_button_x(left + 60);
+            extra_button->set_button_y(top + height - 60);
+        }
+
         this->rearrange();
     }
 
@@ -207,16 +221,12 @@ public:
     }
 
     void rearrange() {
-        int target_group_min_width = 0;
-        int target_min_width = 0;
-        int protocol_min_width = 0;
-        int h = 0;
-        this->drawable.text_metrics(this->font, this->target_group_label.get_text(), target_group_min_width, h);
-        this->drawable.text_metrics(this->font, this->target_label.get_text(), target_min_width, h);
-        this->drawable.text_metrics(this->font, this->protocol_label.get_text(), protocol_min_width, h);
-        target_group_min_width += 5;
-        target_min_width += 5;
-        protocol_min_width += 5;
+        gdi::TextMetrics tm1(this->font, this->target_group_label.get_text());
+        int target_group_min_width = tm1.width + 5;
+        gdi::TextMetrics tm2(this->font, this->target_label.get_text());
+        int target_min_width = tm2.width + 5;
+        gdi::TextMetrics tm(this->font, this->protocol_label.get_text());
+        int protocol_min_width = tm.width + 5;
 
         ColumnWidthStrategy column_width_strategies[] = {
             { static_cast<uint16_t>(target_group_min_width), 200 },
@@ -233,8 +243,8 @@ public:
 
         {
             // filter button position
-            this->apply.set_button_y(VERTICAL_MARGIN);
-            this->apply.set_button_x(this->cx() - (this->apply.cx() + TEXT_MARGIN));
+            this->apply.set_button_y(this->top + VERTICAL_MARGIN);
+            this->apply.set_button_x(this->left + this->cx() - (this->apply.cx() + TEXT_MARGIN));
         }
 
         {
@@ -246,7 +256,7 @@ public:
             // target group
             this->target_group_label.rect.cx = columns_width[IDX_TARGETGROUP] +
                 this->selector_lines.border * 2;
-            this->target_group_label.rect.x = offset;
+            this->target_group_label.rect.x = this->left + offset;
             this->target_group_label.rect.y = labels_y;
             this->filter_target_group.set_edit_x(this->target_group_label.dx());
             this->filter_target_group.set_edit_cx(this->target_group_label.cx() -
@@ -257,7 +267,7 @@ public:
             // target
             this->target_label.rect.cx = columns_width[IDX_TARGET] +
                 this->selector_lines.border * 2;
-            this->target_label.rect.x = offset;
+            this->target_label.rect.x = this->left + offset;
             this->target_label.rect.y = labels_y;
             this->filter_target.set_edit_x(this->target_label.dx());
             this->filter_target.set_edit_cx(this->target_label.cx() - FILTER_SEPARATOR);
@@ -267,23 +277,25 @@ public:
             // protocol
             this->protocol_label.rect.cx = columns_width[IDX_PROTOCOL] +
                 this->selector_lines.border * 2;
-            this->protocol_label.rect.x = offset;
+            this->protocol_label.rect.x = this->left + offset;
             this->protocol_label.rect.y = labels_y;
             this->filter_protocol.set_edit_x(this->protocol_label.dx());
             this->filter_protocol.set_edit_cx(this->protocol_label.cx());
             this->filter_protocol.set_edit_y(filters_y);
             offset += this->protocol_label.rect.cx;
+
+            (void)offset;
         }
         {
             // selector list position
-            this->selector_lines.rect.x = this->less_than_800 ? 0 : HORIZONTAL_MARGIN;
+            this->selector_lines.rect.x = this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN);
             this->selector_lines.rect.y = this->filter_target_group.ly() + FILTER_SEPARATOR;
         }
         {
             // Navigation buttons
             uint16_t nav_bottom_y = this->cy() - (this->connect.cy() + VERTICAL_MARGIN);
-            this->connect.set_button_y(nav_bottom_y);
-            this->logout.set_button_y(nav_bottom_y);
+            this->connect.set_button_y(this->top + nav_bottom_y);
+            this->logout.set_button_y(this->top + nav_bottom_y);
 
             uint16_t nav_top_y = this->connect.dy() - (this->last_page.cy() + VERTICAL_MARGIN);
             this->last_page.set_button_y(nav_top_y);
@@ -294,22 +306,22 @@ public:
             this->first_page.set_button_y(nav_top_y);
 
             uint16_t nav_offset_x = this->cx() - (this->last_page.cx() + TEXT_MARGIN);
-            this->last_page.set_button_x(nav_offset_x);
+            this->last_page.set_button_x(this->left + nav_offset_x);
 
             nav_offset_x -= (this->next_page.cx() + NAV_SEPARATOR);
-            this->next_page.set_button_x(nav_offset_x);
+            this->next_page.set_button_x(this->left + nav_offset_x);
 
             nav_offset_x -= (this->number_page.cx() + NAV_SEPARATOR);
-            this->number_page.rect.x = nav_offset_x;
+            this->number_page.rect.x = this->left + nav_offset_x;
 
             nav_offset_x -= this->current_page.cx();
-            this->current_page.set_edit_x(nav_offset_x);
+            this->current_page.set_edit_x(this->left + nav_offset_x);
 
             nav_offset_x -= (this->prev_page.cx() + NAV_SEPARATOR);
-            this->prev_page.set_button_x(nav_offset_x);
+            this->prev_page.set_button_x(this->left + nav_offset_x);
 
             nav_offset_x -= (this->first_page.cx() + NAV_SEPARATOR);
-            this->first_page.set_button_x(nav_offset_x);
+            this->first_page.set_button_x(this->left + nav_offset_x);
 
             int nav_w = this->last_page.lx() - this->first_page.dx();
             this->connect.set_button_x(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
@@ -356,6 +368,21 @@ public:
         const char * texts[] = { device_group, target_label, protocol };
         this->selector_lines.add_line(texts);
     }
+
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override {
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+            case Keymap2::KEVENT_ESC:
+                keymap->get_kevent();
+                this->send_notify(NOTIFY_CANCEL);
+                break;
+            default:
+                WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                break;
+            }
+        }
+    }
+
+
 };
 
-#endif
