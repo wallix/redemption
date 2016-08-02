@@ -172,28 +172,32 @@ constant CXXFLAGS-debug :
 
 ## Sanitize
 ## @{
-constant CXXFLAGS-GCC-5-sanitize :
+constant CXXFLAGS-GCC-4.9-sanitize :
     <cxxflags>-fsanitize=address
-    <cxxflags>-fsanitize=bounds
-    <cxxflags>-fsanitize=leak
     <linkflags>-fsanitize=address
-    <linkflags>-fsanitize=bounds
+
+    <cxxflags>-fsanitize=undefined
+    <linkflags>-fsanitize=undefined
+
     <linkflags>-fsanitize=leak
+    <cxxflags>-fsanitize=leak
 
     <cxxflags>-fno-omit-frame-pointer
 ;
 
+constant CXXFLAGS-GCC-5-sanitize :
+    $(CXXFLAGS-GCC-4.9-sanitize)
+    <cxxflags>-fsanitize=bounds
+    <linkflags>-fsanitize=bounds
+;
+
 constant CXXFLAGS-GCC-6-sanitize :
     $(CXXFLAGS-GCC-5-sanitize)
-    <cxxflags>-fsanitize=undefined
-    <linkflags>-fsanitize=undefined
 ;
 
 constant CXXFLAGS-GCC-6.1-sanitize :
     $(CXXFLAGS-GCC-6-sanitize)
     <cxxflags>-fsanitize=bounds-strict
-    <cxxflags>-fsanitize=bounds-strict
-    <linkflags>-fsanitize=bounds-strict
     <linkflags>-fsanitize=bounds-strict
 ;
 
@@ -241,6 +245,11 @@ constant CXXFLAGS-gcc-warnings :
 
 constant CXXFLAGS-gcc-sanitize :
     <variant>san,<toolset>clang-3.8.0:$(CXXFLAGS-CLANG-3.8-sanitize)
+    <variant>san,<toolset>gcc-4.9:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.1:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.2:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.3:$(CXXFLAGS-GCC-4.9-sanitize)
+    <variant>san,<toolset>gcc-4.9.4:$(CXXFLAGS-GCC-4.9-sanitize)
     <variant>san,<toolset>gcc-5.0:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-5.0.0:$(CXXFLAGS-GCC-5-sanitize)
     <variant>san,<toolset>gcc-5.1:$(CXXFLAGS-GCC-5-sanitize)
