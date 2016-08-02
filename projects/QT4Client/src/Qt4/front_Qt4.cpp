@@ -26,8 +26,6 @@
 #include <QtGui/QRegion>
 #include <QtGui/QBitmap>
 
-#define LOGPRINT
-
 #include "front_widget_Qt4.hpp"
 #pragma GCC diagnostic pop
 
@@ -99,6 +97,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
 
     uint8_t commandIsValid(0);
 
+    // TODO QCommandLineParser / program_options
     for (int i = 0; i <  argc - 1; i++) {
 
         std::string word(argv[i]);
@@ -120,12 +119,14 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         }
     }
 
+    // TODO leak
     CHANNELS::ChannelDef * channel = new CHANNELS::ChannelDef(channel_names::cliprdr,
                                                               GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                               GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
                                                               GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL,
                                                               PDU_MAX_SIZE+1);
 
+    // TODO static or dynamic size ?
     this->_formatIDs    = new uint32_t[this->_nbFormatIDs];
     this->_formatIDs[0] = RDPECLIP::CF_UNICODETEXT;
     this->_formatIDs[1] = RDPECLIP::CF_TEXT;
@@ -197,42 +198,50 @@ bool Front_Qt::setClientInfo() {
 
 
     // file config
-    std::ifstream ifichier(USER_CONF_PATH, std::ios::in);
+    std::ifstream ifichier(USER_CONF_PATH);
     if(ifichier) {
         // get config from conf file
         std::string ligne;
         std::string delimiter = " ";
 
-        while(getline(ifichier, ligne)) {
-
-            int pos(ligne.find(delimiter));
+        while(std::getline(ifichier, ligne)) {
+            auto pos(ligne.find(delimiter));
             std::string tag  = ligne.substr(0, pos);
             std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "keylayout") == 0) {
                 this->_info.keylayout = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "console_session") == 0) {
                 this->_info.console_session = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "brush_cache_code") == 0) {
                 this->_info.brush_cache_code = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "bpp") == 0) {
                 this->_info.bpp = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "width") == 0) {
                 this->_width      = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "height") == 0) {
                 this->_height     = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "rdp5_performanceflags") == 0) {
                 this->_info.rdp5_performanceflags = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "fps") == 0) {
                 this->_fps = std::stoi(info);
             } else
+            // TODO tag == s / std::compare
             if (strcmp(tag.c_str(), "monitorCount") == 0) {
                 this->_info.cs_monitor.monitorCount = std::stoi(info);
                 this->_monitorCount                 = std::stoi(info);
@@ -264,6 +273,7 @@ bool Front_Qt::setClientInfo() {
 void Front_Qt::writeClientInfo() {
     std::ofstream ofichier(USER_CONF_PATH, std::ios::out | std::ios::trunc);
     if(ofichier) {
+        // TODO std:endl -> "\n"
 
         ofichier << "User Info" << std::endl << std::endl;
 
@@ -277,6 +287,7 @@ void Front_Qt::writeClientInfo() {
         ofichier << "fps "                   << this->_fps                        << std::endl;
         ofichier << "monitorCount "          << this->_info.cs_monitor.monitorCount << std::endl;
 
+        // TODO useless
         ofichier.close();
     }
 }
@@ -313,6 +324,7 @@ void Front_Qt::disconnexionReleased(){
 }
 
 void Front_Qt::dropScreen() {
+    // TODO range-for
     for (int i = 0; i < this->_monitorCount; i++) {
         if (this->_screen[i] != nullptr) {
             this->_screen[i]->errorConnexion();
@@ -323,6 +335,7 @@ void Front_Qt::dropScreen() {
 }
 
 void Front_Qt::closeFromScreen(int screen_index) {
+    // TODO range-for
     for (int i = 0; i < this->_monitorCount; i++) {
         if (this->_screen[i] != nullptr && i != screen_index) {
             this->_screen[i]->errorConnexion();
@@ -361,6 +374,7 @@ void Front_Qt::connect() {
     }
 }
 
+// TODO const &
 void Front_Qt::disconnect(std::string error) {
 
     if (this->_connector != nullptr) {
@@ -384,6 +398,7 @@ void Front_Qt::connexionReleased(){
     this->_pwd      =  this->_form->get_PWDField();
     this->_port     =  this->_form->get_portField();
 
+    // TODO string::empty
     if (strcmp(this->_targetIP.c_str(), "") != 0){
         this->connect();
     }
@@ -1005,6 +1020,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
 
             int indice(mincy-1);
+            // TODO std::unique_ptr
             uchar * data = new uchar[srcBitmap.bytesPerLine()];
 
             for (size_t k = 0 ; k < mincy; k++) {
@@ -1054,6 +1070,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             QImage dstBitmap(this->_screen[0]->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
 
             int indice(mincy-1);
+            // TODO std::unique_ptr
             uchar * data = new uchar[dstBitmap.bytesPerLine()];
 
             for (size_t k = 0 ; k < mincy; k++) {
@@ -1100,6 +1117,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
 
             int indice(mincy-1);
+            // TODO std::unique_ptr
             uchar * data = new uchar[srcBitmap.bytesPerLine()];
 
             for (size_t k = 0 ; k < mincy; k++) {
@@ -1161,6 +1179,7 @@ void Front_Qt::draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bit
             dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
 
             int indice(mincy-1);
+            // TODO std::unique_ptr
             uchar * data = new uchar[srcBitmap.bytesPerLine()];
 
             for (size_t k = 0 ; k < mincy; k++) {
@@ -1595,6 +1614,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     const uint32_t total_length = out_stream.get_offset();
                     InStream chunk(out_stream.get_data(), total_length);
 
+                    // TODO cast is bad
                     static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                                 chunk,
                                                                                 total_length,
@@ -1620,6 +1640,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     format_list_pdu.emit_long(out_stream, this->_formatIDs, this->_formatListDataShortName, this->_nbFormatIDs);;
                     const uint32_t total_length      = out_stream.get_offset();
                     InStream chunk(out_stream.get_data(), out_stream.get_offset());
+                    // TODO cast is bad
                     static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                                 chunk,
                                                                                 total_length,
@@ -1687,6 +1708,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), k*2);
                         std::cout << " Format ID = " << formatID << ", name = \"" << this->_requestedFormatName << "\"";
 
+                        // TODO range-for (array_view)
                         for (int j = 0; j < this->_nbFormatIDs && !isSharedFormat; j++) {
                             if (this->_formatIDs[j] == formatID) {
                                 this->_requestedFormatId = formatID;
@@ -1713,6 +1735,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                     InStream chunk(out_stream.get_data(), total_length_FormatListResponsePDU);
 
+                    // TODO cast is bad
                     static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                                 chunk,
                                                                                 total_length_FormatListResponsePDU,
@@ -1728,6 +1751,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                     InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
+                    // TODO cast is bad
                     static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                                 chunkRequest,
                                                                                 total_length_FormatDataRequestPDU,
@@ -2024,6 +2048,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
                 InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
+                // TODO cast is bad
                 static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                             chunkRequest,
                                                                             total_length_FormatDataRequestPDU,
@@ -2083,6 +2108,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
                     InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
+                    // TODO cast is bad
                     static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                                 chunkRequest,
                                                                                 total_length_FormatDataRequestPDU,
@@ -2146,6 +2172,7 @@ void Front_Qt::send_imageBuffer_to_clipboard() {
 }
 
 void Front_Qt::send_textBuffer_to_clipboard(bool isTextHtml) {
+    // TODO std::unique_ptr / std::string
     uint8_t * utf8_string = new uint8_t[(this->_bufferRDPClipboardChannelSizeTotal/2)+10];
     size_t length_of_utf8_string = ::UTF16toUTF8(
         this->_bufferRDPClipboardChannel, this->_bufferRDPClipboardChannelSizeTotal,
@@ -2176,14 +2203,30 @@ void Front_Qt::empty_buffer() {
     this->_bufferRDPClipboardChannel = nullptr;
 }
 
+// TODO array_view
 std::string Front_Qt::HTMLtoText(const std::string & html) {
+    // TODO char
     std::string openDelimiter(">");
+    // TODO char
     std::string endDelimiter("<");
     std::string tmp(html + "<");
     std::string str;
 
     int pos0(0);
     int posEnd(0);
+    /** TODO so complex...
+     * first = html.begin();
+     * last = html.end();
+     * while(first != last) {
+     *  auto delim1 = std::find(first, last, '<');
+     *  auto delim2 = std::find(delim1, last, '>');
+     *  new_str.insert(new_str.end(), first, delim1);
+     *  first = delim2;
+     *  if (first != last) {
+     *      ++first;
+     *  }
+     }
+     */
     while (pos0 != -1 && posEnd != -1) {
         pos0 = tmp.find(openDelimiter);
         if (pos0 != -1) {
@@ -2211,6 +2254,7 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
     }
     const uint32_t total_length = out_stream.get_offset();
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
+    // TODO cast is bad
     static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                 chunk,
                                                                 total_length,
@@ -2278,6 +2322,7 @@ void Front_Qt::cut_data_to_send(int total_length, OutStream & out_streamfirst, i
         data_sent += first_part_data_size;
 
         InStream chunkFirst(out_streamfirst.get_data(), out_streamfirst.get_offset());
+        // TODO cast is bad
         static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                     chunkFirst,
                                                                     total_length,
@@ -2292,6 +2337,7 @@ void Front_Qt::cut_data_to_send(int total_length, OutStream & out_streamfirst, i
             data_sent += PDU_MAX_SIZE;
 
             InStream chunk(out_stream.get_data(), out_stream.get_offset());
+            // TODO cast is bad
             static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                         chunk,
                                                                         total_length,
@@ -2310,6 +2356,7 @@ void Front_Qt::cut_data_to_send(int total_length, OutStream & out_streamfirst, i
         data_sent += remains_PDU;
 
         InStream chunk(out_streamLast.get_data(), out_streamLast.get_offset());
+        // TODO cast is bad
         static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                     chunk,
                                                                     total_length,
@@ -2322,6 +2369,7 @@ void Front_Qt::cut_data_to_send(int total_length, OutStream & out_streamfirst, i
         out_streamfirst.out_copy_bytes(this->_connector->_chunk, this->_connector->_length);
 
         InStream chunk(out_streamfirst.get_data(), out_streamfirst.get_offset());
+        // TODO cast is bad
         static_cast<mod_rdp*>(this->_callback)->send_to_mod_channel(channel_names::cliprdr,
                                                                     chunk,
                                                                     total_length,
