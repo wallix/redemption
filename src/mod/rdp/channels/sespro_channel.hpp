@@ -723,9 +723,16 @@ public:
             bool message_format_invalid = false;
 
             if (separator) {
+                // TODO string_view
                 std::string order(message, separator - message);
+                // TODO vector<string_view>
                 std::vector<std::string> parameters;
 
+                /** TODO
+                 * for (r : get_split(separator, this->server_message.c_str() + this->server_message.size(), '\ x01')) {
+                 *     parameters.push_back({r.begin(), r.end()});
+                 * }
+                 */
                 {
                     std::istringstream ss(std::string(separator + 1));
                     std::string        parameter;
