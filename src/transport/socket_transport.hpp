@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
 #include <cinttypes>
@@ -231,9 +232,11 @@ public:
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
-        char * start = *pbuffer;
 
+        char * start = *pbuffer;
         ssize_t res = (this->tls) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
+        //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
+
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }

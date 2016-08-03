@@ -183,7 +183,7 @@ public:
         this->_layoutView->addRow(&(this->_labelFps), &(this->_fpsComboBox));
 
 
-        for (int i = 1; i <= GCC::UserData::CSMonitor::MAX_MONITOR_COUNT; i++) {
+        for (int i = 1; i <= Front_Qt::MAX_MONITOR_COUNT; i++) {
             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
         }
         int indexMonitorCount = this->_monitorCountComboBox.findData(this->_front->_info.cs_monitor.monitorCount);
@@ -700,7 +700,7 @@ public:
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
-        , _cache(new QPixmap(this->_front->_width*front->_monitorCount, this->_front->_info.height))
+        , _cache(new QPixmap(this->_front->_info.width*front->_monitorCount, this->_front->_info.height))
         , _cache_painter(this->_cache)
         , _width(this->_front->_width)
         , _height(this->_front->_height)
@@ -804,10 +804,6 @@ private:
         this->_front->keyPressEvent(e);
     }
 
-    //void enterEvent(QEvent * event) {
-        //this->_front->enterEvent(event, this->_screen_index);
-    //}
-
     void keyReleaseEvent(QKeyEvent *e) {
         this->_front->keyReleaseEvent(e);
     }
@@ -868,23 +864,28 @@ class Connector_Qt : public QObject
 Q_OBJECT
 
 public:
-    Front_Qt        * _front;
-    QSocketNotifier * _sckRead;
-    mod_api         * _callback;
-    SocketTransport * _sck;
-    int               _client_sck;
-    QClipboard      * _clipboard;
-    bool              _local_clipboard_stream;
-    size_t            _length;
-    uint8_t         * _chunk;
-    QImage          * _bufferImage;
-    uint16_t          _bufferTypeID;
-    std::string       _bufferTypeLongName;
-    int               _cItems;
-    uint64_t          _itemsSizeList[Front_Qt::LIST_FILES_MAX_SIZE];
-    std::string       _itemsNameList[Front_Qt::LIST_FILES_MAX_SIZE];
-    uint8_t         * _files_chunk[Front_Qt::LIST_FILES_MAX_SIZE];
-    TimeSystem        _timeSystem;
+
+    Front_Qt                  * _front;
+    QSocketNotifier           * _sckRead;
+    mod_rdp                   * _callback;
+    SocketTransport           * _sck;
+    int                         _client_sck;
+    QClipboard                * _clipboard;
+    bool                        _local_clipboard_stream;
+    size_t                      _length;
+    std::unique_ptr<uint8_t[]>  _chunk;
+    QImage                    * _bufferImage;
+    uint16_t                    _bufferTypeID;
+    std::string                 _bufferTypeLongName;
+    int                         _cItems;
+    TimeSystem                  _timeSystem;
+
+    struct {
+        uint64_t                   sizes[Front_Qt::LIST_FILES_MAX_SIZE];
+        std::string                names[Front_Qt::LIST_FILES_MAX_SIZE];
+        std::unique_ptr<uint8_t[]> chunk[Front_Qt::LIST_FILES_MAX_SIZE];
+    } _files_list;
+
 
 
     Connector_Qt(Front_Qt * front, QWidget * parent)
@@ -897,7 +898,6 @@ public:
     , _clipboard(nullptr)
     , _local_clipboard_stream(true)
     , _length(0)
-    , _chunk(nullptr)
     , _bufferImage(nullptr)
     , _bufferTypeID(0)
     , _bufferTypeLongName("")
@@ -915,7 +915,7 @@ public:
         this->emptyBuffer();
 
         if (this->_callback != nullptr) {
-            this->_callback->disconnect();
+            static_cast<mod_api*>(this->_callback)->disconnect();
             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->_callback = nullptr;
@@ -977,12 +977,12 @@ public:
         ini.set<cfg::debug::rdp>(0xffffffff);
 
         ModRDPParams mod_rdp_params( name
-                                    , pwd
-                                    , targetIP
-                                    , localIP
-                                    , 2
-                                    , 0
-                                    );
+                                   , pwd
+                                   , targetIP
+                                   , localIP
+                                   , 2
+                                   , 0
+                                   );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
         mod_rdp_params.enable_nla                      = false;
@@ -994,6 +994,8 @@ public:
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
         mod_rdp_params.allow_using_multiple_monitors   = true;
+        mod_rdp_params.bogus_refresh_rect              = true;
+        mod_rdp_params.verbose = 0xffffffff;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -1047,18 +1049,9 @@ public:
         this->_clipboard->setImage(image, QClipboard::Clipboard);
     }
 
-    void setClipboard() {           // Paste file to client
-        //const QMimeData * mimeData = this->_clipboard->mimeData();
-        //mimeData->setUrls(urls);
-    }
-
     void emptyBuffer() {
         this->_bufferTypeID = 0;
         this->_length = 0;
-        if (this->_chunk != nullptr) {
-            delete (this->_chunk);
-            this->_chunk = nullptr;
-        }
     }
 
     void send_FormatListPDU(bool isLong) {
@@ -1084,22 +1077,28 @@ public Q_SLOTS:
                 this->_bufferTypeLongName = "";
                 this->_bufferImage = new QImage(this->_clipboard->image());
                 this->_length = this->_bufferImage->byteCount();
+                uint8_t * image_data = this->_bufferImage->bits();
+                this->_chunk = std::make_unique<uint8_t[]>(this->_length);
+                for (uint32_t i = 0; i < this->_length; i++) {
+                    this->_chunk[i] = image_data[i];
+                }
 
                 this->send_FormatListPDU(false);
 
 
             } else if (mimeData->hasText()){
                 this->emptyBuffer();
-                for (int i = 0; i < Front_Qt::LIST_FILES_MAX_SIZE; i++) {
-                    this->_itemsSizeList[i] = 0;
-                    this->_itemsNameList[i] = "";
-                }
+
                 std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
 
                 if (str.at(0) == '/') {
                     //std::ifstream iFile(str, std::ios::in);
                     //if (iFile) {
                         //std::cout << "has file" <<  std::endl;
+                    for (int i = 0; i < Front_Qt::LIST_FILES_MAX_SIZE; i++) {
+                        this->_files_list.sizes[i] = 0;
+                        this->_files_list.names[i] = "";
+                    }
                     this->_bufferTypeID = Front_Qt::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;                    //49279;
                     this->_bufferTypeLongName = this->_front->FILEGROUPDESCRIPTORW;
 
@@ -1133,9 +1132,9 @@ public Q_SLOTS:
                             iFile.seekg (0, std::ios::end);
                             end = iFile.tellg();
                             uint64_t size(end-begin);
-                            this->_itemsSizeList[i] = size;
-                            this->_files_chunk[i] = new uint8_t[this->_itemsSizeList[i]];
-                            iFile.read(reinterpret_cast<char *>(this->_files_chunk[i]), size);
+                            this->_files_list.sizes[i] = size;
+                            this->_files_list.chunk[i] = std::make_unique<uint8_t[]>(this->_files_list.sizes[i]);
+                            iFile.read(reinterpret_cast<char *>(this->_files_list.chunk[i].get()), size);
                             iFile.close();
                         }
 
@@ -1154,7 +1153,7 @@ public Q_SLOTS:
                         }
                         uint8_t UTF16nameData[520];
                         int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(name.c_str()), UTF16nameData, UTF8nameSize);
-                        this->_itemsNameList[i] = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+                        this->_files_list.names[i] = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
 
                         i++;
                         if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
@@ -1184,8 +1183,9 @@ public Q_SLOTS:
 
                     size_t size((str.length() + cmptCR*2) * 4);
 
-                    this->_chunk  = new uint8_t[size];
-                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
+                    this->_chunk  = std::make_unique<uint8_t[]>(size);
+                    // UTF8toUTF16_CrLf for linux install
+                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
 
                     this->send_FormatListPDU(false);
 

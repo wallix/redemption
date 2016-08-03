@@ -21,7 +21,7 @@
 
 #pragma once
 
-#define LOGPRINT
+//#define LOGPRINT
 
 #ifndef Q_MOC_RUN
 #include <stdio.h>
@@ -132,7 +132,7 @@ public:
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
-    mod_api         * _callback;
+    mod_rdp         * _callback;
     QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
@@ -175,7 +175,7 @@ public:
     virtual void wheelEvent(QWheelEvent *e) = 0;
     virtual bool eventFilter(QObject *obj, QEvent *e, int screen_index) = 0;
     virtual void call_Draw() = 0;
-    virtual void disconnect(std::string txt) = 0;
+    virtual void disconnect(std::string const & txt) = 0;
     virtual QImage::Format bpp_to_QFormat(int bpp, bool alpha) = 0;
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
@@ -221,12 +221,17 @@ public:
       , CF_QT_CLIENT_FILECONTENTS         = 48026
     };
 
+    enum : int {
+        MAX_MONITOR_COUNT        = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
+      , CLIPBRD_FORMAT_COUNT     = 4
+    };
+
 
     // Graphic members
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
     Form_Qt            * _form;
-    Screen_Qt          * _screen[GCC::UserData::CSMonitor::MAX_MONITOR_COUNT];
+    Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
 
     // Connexion socket members
     Connector_Qt       * _connector;
@@ -242,27 +247,41 @@ public:
     CHANNELS::ChannelDefArray   _cl;
 
     //  Clipboard Channel Management members
-    uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatName;
-    // TODO std::unique_ptr
-    uint8_t            * _bufferRDPClipboardChannel;
-    size_t               _bufferRDPClipboardChannelSize;
-    size_t               _bufferRDPClipboardChannelSizeTotal;
-    int                  _bufferRDPCLipboardMetaFilePic_width;
-    int                  _bufferRDPCLipboardMetaFilePic_height;
-    int                  _bufferRDPClipboardMetaFilePicBPP;
-    // TODO std::unique_ptr<Format{id, short_name}[]>
-    //@{
-    uint32_t           * _formatIDs;
-    std::string        * _formatListDataShortName;
-    //@}
-    const int            _nbFormatIDs;
+    uint32_t                    _requestedFormatId = 0;
+    std::string                 _requestedFormatName;
+    std::unique_ptr<uint8_t[]>  _bufferRDPClipboardChannel;
+    size_t                      _bufferRDPClipboardChannelSize;
+    size_t                      _bufferRDPClipboardChannelSizeTotal;
+    int                         _bufferRDPCLipboardMetaFilePic_width;
+    int                         _bufferRDPCLipboardMetaFilePic_height;
+    int                         _bufferRDPClipboardMetaFilePicBPP;
+
+    struct {
+        uint32_t    IDs[CLIPBRD_FORMAT_COUNT];
+        std::string names[CLIPBRD_FORMAT_COUNT];
+        int index = 0;
+
+        void add_format(uint32_t ID, std::string name) {
+            if (index < CLIPBRD_FORMAT_COUNT) {
+                IDs[index]   = ID;
+                names[index] = name;
+                index++;
+            }
+        }
+    } _clipbrd_formats_list;
+
+
+    // copy/paste files
     const std::string    FILECONTENTS;
     const std::string    FILEGROUPDESCRIPTORW;
     int                  _cItems;
     int                  _streamID;
-    int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
-    std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
+    struct {
+        int         size;
+        std::string name;
+
+    } _items_list[LIST_FILES_MAX_SIZE];
+
 
 
 
@@ -288,11 +307,11 @@ public:
 
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool) override;
 
-    std::string HTMLtoText(const std::string & html);
+    //std::string HTMLtoText(const std::string & html);
 
     void send_to_clipboard_Buffer(InStream & chunk);
 
-    void send_textBuffer_to_clipboard(bool isTextHtml);
+    void send_textBuffer_to_clipboard();
 
     void send_imageBuffer_to_clipboard();
 
@@ -437,7 +456,7 @@ public:
 
     void connect();
 
-    void disconnect(std::string) override;
+    void disconnect( std::string const &) override;
 
     void closeFromScreen(int screen_index) override;
 
