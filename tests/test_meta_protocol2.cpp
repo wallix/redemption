@@ -333,6 +333,9 @@ namespace lazy {
 template<class L, class x>
 using mk_list_accu = typename lazy::mk_list_accu<L, x>::type;
 
+template<class L>
+using make_accumulate_sizeof_list = brigand::fold<L, brigand::list<>, brigand::call<mk_list_accu>>;
+
 template<class T>
 using desc_type = typename T::desc_type;
 
@@ -370,6 +373,47 @@ using sizeof_to_buffer = typename detail::sizeof_to_buffer<T>::type;
 template<class VarInfos>
 using is_dynamic_buffer = typename std::is_same<proto::sizeof_<brigand::front<VarInfos>>, proto::dyn_size>::type;
 
+namespace detail {
+    template<class T>
+    struct is_pkt_sz : std::false_type
+    {};
+
+    template<class T>
+    struct is_pkt_sz<proto::types::pkt_sz<T>> : std::true_type
+    {};
+
+    template<class T>
+    struct is_pkt_sz<proto::types::pkt_sz_with_self<T>> : std::true_type
+    {};
+}
+template<class T>
+using is_pkt_size = typename detail::is_pkt_sz<T>::type;
+
+template<class VarInfos>
+using has_pkt_sz = typename brigand::any<VarInfos, brigand::call<is_pkt_size>>;
+
+namespace detail {
+    template<class T>
+    struct is_static_size : std::false_type
+    {};
+
+    template<std::size_t n>
+    struct is_static_size<static_size<n>> : std::true_type
+    {};
+
+    template<class T>
+    struct is_dynamic_size : std::false_type
+    {};
+
+    template<std::size_t n>
+    struct is_dynamic_size<dynamic_size<n>> : std::true_type
+    {};
+}
+template<class T>
+using is_dynamic_size = typename detail::is_dynamic_size<T>::type;
+template<class T>
+using is_static_size = typename detail::is_static_size<T>::type;
+
 
 struct Buferring2
 {
@@ -404,6 +448,55 @@ struct Buferring2
         }
     };
 
+    template<class>
+    struct Sizes;
+
+    template<class... PktSz>
+    struct Sizes<brigand::list<PktSz...>>
+    {
+        // TODO sizeof -1
+        std::size_t sizes[sizeof...(PktSz)] { PktSz::value... };
+
+        template<class Buffers>
+        Sizes(Buffers & bufs)
+        {
+            foldr(mk_seq<sizeof...(PktSz)>{}, brigand::list<PktSz...>{}, bufs);
+        }
+
+        template<class Buffers>
+        i_<0> foldr(brigand::list<>, brigand::list<>, Buffers &)
+        { return {}; }
+
+        template<class I, class... Ints, class Sz, class... Szs, class Buffers>
+        std::size_t foldr(brigand::list<I, Ints...>, brigand::list<Sz, Szs...>, Buffers & buffers)
+        {
+            return plus(
+                I{},
+                size(I{}, Sz{}, buffers),
+                foldr(brigand::list<Ints...>{}, brigand::list<Szs...>{}, buffers)
+            );
+        }
+
+        template<class I, std::size_t n, class Buffers>
+        std::size_t size(I, dynamic_size<n>, Buffers & bufs)
+        { return bufs[I{}].iov_len; }
+
+        template<class I, std::size_t n, class Buffers>
+        i_<0> size(I, static_size<n>, Buffers &)
+        { return {}; }
+
+        template<class I, std::size_t i1, std::size_t i2>
+        i_<i1+i2> plus(I, std::integral_constant<std::size_t, i1>, std::integral_constant<std::size_t, i2>)
+        { return {}; }
+
+        template<class I>
+        std::size_t plus(I, std::size_t i1, std::size_t i2)
+        {
+            sizes[I{}] += i1+i2;
+            return i1+i2;
+        }
+    };
+
     template<class... Packets>
     void operator()(Packets ... packets) const {
         using brigand::transform;
@@ -417,6 +510,9 @@ struct Buferring2
         using std::tuple;
 
         using packet_list = brigand::list<brigand::transform<typename Packets::type_list, brigand::call<var_to_desc_type>>...>;
+        using sizeof_by_packet = transform<packet_list, call<sizeof_packet>>;
+        using accu_sizeof_by_packet = make_accumulate_sizeof_list<sizeof_by_packet>;
+        // TODO here recall with convert pkt_sz static
         using packet_count_list = transform<packet_list, call<size>>;
         using ipacket_list_by_var = transform<mk_seq<sizeof...(Packets)>, packet_count_list, call<mk_filled_list>>;
         using ipacket_list = wrap<ipacket_list_by_var, append>;
@@ -424,8 +520,6 @@ struct Buferring2
         using ivar_list = wrap<transform<packet_count_list, call<mk_seq2>>, append>;
         using var_info_list = transform<ipacket_list, ivar_list, var_list, call<var_info>>;
         using var_info_list_by_buffer = brigand::split_if<var_info_list, call<buffer_var_info_delimiter>>;
-        using sizeof_by_packet = transform<packet_list, call<sizeof_packet>>;
-        using accu_sizeof_by_packet = fold<sizeof_by_packet, brigand::list<>, call<mk_list_accu>>;
 
         using sizeof_by_buffer = transform<var_info_list_by_buffer, call<sizeof_var_infos>>;
         using buffer_list = transform<sizeof_by_buffer, call<sizeof_to_buffer>>;
@@ -437,7 +531,7 @@ struct Buferring2
             var_info_list_by_buffer{},
             accu_sizeof_by_packet{},
             mk_seq2<size<var_info_list_by_buffer>>{},
-            buffers,
+            buffers.buffers,
             packets...
         );
         std::cout << "------------------------------\n\n";
@@ -446,11 +540,22 @@ struct Buferring2
         this->write_dynamic_bufs(
             i_<0>{},
             var_info_list_by_buffer{},
-            accu_sizeof_by_packet{},
-            buffers,
+            buffers.buffers,
             packets...
         );
         std::cout << "--------------------------\n\n";
+
+        using accu_sizeof_by_buffer = make_accumulate_sizeof_list<sizeof_by_buffer>;
+        Sizes<accu_sizeof_by_buffer> sizes(buffers.buffers);
+
+        std::cout << "--- write_pkt_szs ---\n";
+        this->write_pkt_szs(
+            i_<0>{},
+            var_info_list_by_buffer{},
+            buffers.buffers,
+            sizes.sizes
+        );
+        std::cout << "---------------------\n\n";
 
 
         //using rlast_dyn_pkt_ = brigand::index_if<brigand::reverse<sizeof_by_packet>, call<is_static_pck_sz>>;
@@ -483,25 +588,24 @@ struct Buferring2
             write_not_dynamic_buf(
                 is_dynamic_buffer<VarInfos>{},
                 VarInfos{}, PktSizes{},
-                buffers.buffers[Ints::value], pkts...
+                buffers[Ints::value], pkts...
             )
         ), 1)...};
     }
 
     template<class... Ts>
-    static void
-    write_not_dynamic_buf(std::true_type, Ts && ...)
+    static void write_not_dynamic_buf(std::true_type, Ts && ...)
     { std::cout << "-------\n(dyn)\n"; }
 
     template<class... VarInfos, class PktSizes, class Buffer, class... Pkts>
     static void write_not_dynamic_buf(
         std::false_type, brigand::list<VarInfos...>,
-        PktSizes pkt_size, Buffer & buffer, Pkts & ... pkts
+        PktSizes pkt_sizes, Buffer & buffer, Pkts & ... pkts
     ) {
         std::cout << "-------\n";
         (void)std::initializer_list<int>{(void(
             write_type(
-                buffer, pkt_size,
+                buffer, pkt_sizes,
                 larg<VarInfos::ivar::value>(arg<VarInfos::ipacket::value>(pkts...))
             )
         ), 1)...};
@@ -514,47 +618,78 @@ struct Buferring2
         std::cout << "\n";
     }
 
-    template<class I, class var_info_list_by_buffer, class PktSizes, class Buffers, class... Pkts>
+
+    template<class I, class VarInfosByBuffer, class Buffers, class... Pkts>
     static void write_dynamic_bufs(
-        I, var_info_list_by_buffer, PktSizes pktszs,
-        Buffers & buffers, Pkts & ... pkts
+        I, VarInfosByBuffer, Buffers & buffers, Pkts & ... pkts
     ) {
-        using new_list = brigand::find<var_info_list_by_buffer, brigand::call<is_dynamic_buffer>>;
-        using old_size = brigand::size<var_info_list_by_buffer>;
+        using new_list = brigand::find<VarInfosByBuffer, brigand::call<is_dynamic_buffer>>;
+        using old_size = brigand::size<VarInfosByBuffer>;
         using new_size = brigand::size<new_list>;
         using new_index = brigand::size_t<I::value + (old_size::value - new_size::value)>;
 
-        write_dynamic_buf(new_index{}, new_list{}, pktszs, buffers, pkts...);
+        write_dynamic_buf(new_index{}, new_list{}, buffers, pkts...);
     }
 
-    template<class I, class PktSizes, class Buffers, class... Pkts>
+    template<class I, class Buffers, class... Pkts>
     static void write_dynamic_buf(
-        I, brigand::list<>, PktSizes,
-        Buffers &, Pkts & ...
+        I, brigand::list<>, Buffers &, Pkts & ...
     ) {
     }
 
-    template<class I, class VarInfo, class... VarInfos, class PktSizes, class Buffers, class... Pkts>
+    template<class I, class VarInfos, class... VarInfosBuffers, class Buffers, class... Pkts>
     static void write_dynamic_buf(
-        I, brigand::list<VarInfo, VarInfos...>, PktSizes pkt_size,
-        Buffers & buffers, Pkts & ... pkts
+        I, brigand::list<VarInfos, VarInfosBuffers...>, Buffers & buffers, Pkts & ... pkts
     ) {
-        using var_info = brigand::front<VarInfo>;
+        using var_info = brigand::front<VarInfos>;
         write_dyn_type(
-            buffers.buffers[I::value], pkt_size,
+            buffers[I::value],
             larg<var_info::ivar::value>(arg<var_info::ipacket::value>(pkts...)),
             [&buffers, &pkts...](){
-                write_dynamic_bufs(I{}, brigand::list<VarInfos...>{}, PktSizes{}, buffers, pkts...);
+                write_dynamic_bufs(I{}, brigand::list<VarInfosBuffers...>{}, buffers, pkts...);
             }
         );
     }
 
-    template<class Buffer, class PktSizes, class Var, class Continue>
-    static void write_dyn_type(Buffer &, PktSizes, Var & var, Continue f) {
+    template<class Buffer, class Var, class Continue>
+    static void write_dyn_type(Buffer &, Var & var, Continue f) {
         std::cout << var_type<Var>::name() << " = ";
         print(var);
         std::cout << "\n";
         f();
+    }
+
+
+    template<class I, class VarInfosByBuffer, class Buffers, class Sizes>
+    static void write_pkt_szs(I, VarInfosByBuffer, Buffers & buffers, Sizes & sizes) {
+        using new_list = brigand::find<VarInfosByBuffer, brigand::call<has_pkt_sz>>;
+        using old_size = brigand::size<VarInfosByBuffer>;
+        using new_size = brigand::size<new_list>;
+        using new_index = brigand::size_t<I::value + (old_size::value - new_size::value)>;
+
+        write_pkt_sz(new_index{}, new_list{}, buffers, sizes);
+    }
+
+    template<class I, class Buffers, class Sizes>
+    constexpr static void write_pkt_sz(
+        I, brigand::list<>, Buffers &, Sizes &
+    ) {
+    }
+
+    template<
+        class I,
+        class VarInfos, class... VarInfosBuffers,
+        class Buffers, class Sizes>
+    static void write_pkt_sz(
+        I, brigand::list<VarInfos, VarInfosBuffers...>, Buffers & buffers, Sizes & sizes
+    ) {
+        write_pkt_sz_from_buffer(I{}, VarInfos{}, sizes);
+        auto n = write_pkt_szs(I{}, brigand::list<VarInfosBuffers...>{}, buffers, sizes);
+    }
+
+    template<class I, class VarInfo, class Buffers, class Sizes>
+    static void write_pkt_sz_from_buffer(I, VarInfo, Buffers & buffers, Sizes & sizes) {
+        std::cout << "x";
     }
 
 
