@@ -242,14 +242,18 @@ public:
     //  Clipboard Channel Management members
     uint32_t             _requestedFormatId = 0;
     std::string          _requestedFormatName;
+    // TODO std::unique_ptr
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
     size_t               _bufferRDPClipboardChannelSizeTotal;
     int                  _bufferRDPCLipboardMetaFilePic_width;
     int                  _bufferRDPCLipboardMetaFilePic_height;
     int                  _bufferRDPClipboardMetaFilePicBPP;
+    // TODO std::unique_ptr<Format{id, short_name}[]>
+    //@{
     uint32_t           * _formatIDs;
     std::string        * _formatListDataShortName;
+    //@}
     const int            _nbFormatIDs;
     const std::string    FILECONTENTS;
     const std::string    FILEGROUPDESCRIPTORW;
