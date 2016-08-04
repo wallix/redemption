@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::opt_message>(cs);
     ini.set<cfg::context::opt_message>(s);
     ini.set_acl<cfg::context::opt_width>(1);
-    ini.set<cfg::context::outbound_connection_blocking_rules>(cs);
-    ini.set<cfg::context::outbound_connection_blocking_rules>(s);
+    ini.set<cfg::context::outbound_connection_monitoring_rules>(cs);
+    ini.set<cfg::context::outbound_connection_monitoring_rules>(s);
     ini.set_acl<cfg::context::password>(cs);
     ini.set_acl<cfg::context::password>(s);
     ini.set<cfg::context::pattern_kill>(cs);

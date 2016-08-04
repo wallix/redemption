@@ -474,7 +474,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "opt_message", r);
         W.sep();
-        W.member(type_<std::string>(), "outbound_connection_blocking_rules", r);
+        W.member(type_<std::string>(), "outbound_connection_monitoring_rules", sesman::name{"outbound_connection_blocking_rules"}, r);
+        W.sep();
+        W.member(type_<std::string>(), "process_monitoring_rules", sesman::name{"session_probe_process_monitoring_rules"}, r);
         W.sep();
         W.member(type_<std::string>(), "manager_disconnect_reason");
         W.member(type_<std::string>(), "disconnect_reason", r);

@@ -2580,14 +2580,27 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{};
         };
-        // AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES
+        // AUTHID_CONTEXT_OUTBOUND_CONNECTION_MONITORING_RULES
         // type: std::string
-        struct outbound_connection_blocking_rules {
+        struct outbound_connection_monitoring_rules {
             static constexpr bool is_readable() { return 1; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
-            static constexpr char const * name() { return "outbound_connection_blocking_rules"; }
+            static constexpr char const * name() { return "outbound_connection_monitoring_rules"; }
             static constexpr unsigned index() { return 96; }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // AUTHID_CONTEXT_PROCESS_MONITORING_RULES
+        // type: std::string
+        struct process_monitoring_rules {
+            static constexpr bool is_readable() { return 1; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "context"; }
+            static constexpr char const * name() { return "process_monitoring_rules"; }
+            static constexpr unsigned index() { return 97; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2610,7 +2623,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason"; }
-            static constexpr unsigned index() { return 97; }
+            static constexpr unsigned index() { return 98; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2623,7 +2636,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason_ack"; }
-            static constexpr unsigned index() { return 98; }
+            static constexpr unsigned index() { return 99; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2906,7 +2919,8 @@ struct context
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
 , cfg::context::opt_message
-, cfg::context::outbound_connection_blocking_rules
+, cfg::context::outbound_connection_monitoring_rules
+, cfg::context::process_monitoring_rules
 , cfg::context::manager_disconnect_reason
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
@@ -3030,7 +3044,8 @@ using VariablesAclPack = Pack<
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
 , cfg::context::opt_message
-, cfg::context::outbound_connection_blocking_rules
+, cfg::context::outbound_connection_monitoring_rules
+, cfg::context::process_monitoring_rules
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
 >;

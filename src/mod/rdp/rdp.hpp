@@ -324,7 +324,8 @@ protected:
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
-    std::string outbound_connection_killing_rules;
+    std::string outbound_connection_monitoring_rules;
+    std::string process_monitoring_rules;
 
     size_t recv_bmp_update;
 
@@ -697,7 +698,8 @@ public:
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
-        , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
+        , outbound_connection_monitoring_rules(mod_rdp_params.outbound_connection_monitoring_rules)
+        , process_monitoring_rules(mod_rdp_params.process_monitoring_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -1314,10 +1316,11 @@ protected:
         session_probe_virtual_channel_params.real_working_dir                       =
             this->real_working_dir.c_str();
 
-        session_probe_virtual_channel_params.outbound_connection_notifying_rules    =
-            "";
-        session_probe_virtual_channel_params.outbound_connection_killing_rules      =
-            this->outbound_connection_killing_rules.c_str();
+        session_probe_virtual_channel_params.outbound_connection_monitoring_rules   =
+            this->outbound_connection_monitoring_rules.c_str();
+
+        session_probe_virtual_channel_params.process_monitoring_rules               =
+            this->process_monitoring_rules.c_str();
 
         session_probe_virtual_channel_params.lang                                   =
             this->lang;

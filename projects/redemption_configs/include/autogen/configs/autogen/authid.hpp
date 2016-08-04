@@ -101,7 +101,8 @@ enum authid_t {
     AUTHID_CONTEXT_PATTERN_KILL,
     AUTHID_CONTEXT_PATTERN_NOTIFY,
     AUTHID_CONTEXT_OPT_MESSAGE,
-    AUTHID_CONTEXT_OUTBOUND_CONNECTION_BLOCKING_RULES,
+    AUTHID_CONTEXT_OUTBOUND_CONNECTION_MONITORING_RULES,
+    AUTHID_CONTEXT_PROCESS_MONITORING_RULES,
     AUTHID_CONTEXT_DISCONNECT_REASON,
     AUTHID_CONTEXT_DISCONNECT_REASON_ACK,
     MAX_AUTHID,
@@ -205,6 +206,7 @@ constexpr char const * const authstr[] = {
     "pattern_notify",
     "opt_message",
     "outbound_connection_blocking_rules",
+    "session_probe_process_monitoring_rules",
     "disconnect_reason",
     "disconnect_reason_ack",
 };
