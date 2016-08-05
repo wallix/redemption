@@ -90,7 +90,6 @@ class Engine(object):
         self.client = SynClient('localhost',
                                 self.wabengine_conf.get('port',
                                                         'unix:/var/run/wabengine.sock'))
-        self.alt_proxy = self.wabengine_conf.get('alt_proxy', False)
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
@@ -205,32 +204,18 @@ class Engine(object):
         return True, "OK"
 
     def init_timeframe(self, auth):
-        if self.alt_proxy:
-            if (auth['deconnection_time']
-                and auth['deconnection_time'] != u"-"
-                and auth['deconnection_time'][0:4] <= u"2034"):
-                self.deconnection_time = auth['deconnection_time']
-                self.deconnection_epoch = int(
-                    time.mktime(
-                        time.strptime(
-                            auth['deconnection_time'],
-                            "%Y-%m-%d %H:%M:%S"
-                        )
+        if (auth['deconnection_time']
+            and auth['deconnection_time'] != u"-"
+            and auth['deconnection_time'][0:4] <= u"2034"):
+            self.deconnection_time = auth['deconnection_time']
+            self.deconnection_epoch = int(
+                time.mktime(
+                    time.strptime(
+                        auth['deconnection_time'],
+                        "%Y-%m-%d %H:%M:%S"
                     )
                 )
-        else:
-            if (auth.deconnection_time
-                and auth.deconnection_time != u"-"
-                and auth.deconnection_time[0:4] <= u"2034"):
-                self.deconnection_time = auth.deconnection_time
-                self.deconnection_epoch = int(
-                    time.mktime(
-                        time.strptime(
-                            auth.deconnection_time,
-                            "%Y-%m-%d %H:%M:%S"
-                        )
-                    )
-                )
+            )
 
     def get_trace_type(self):
         try:
@@ -572,14 +557,11 @@ class Engine(object):
         self.checktarget_status_cache = None
         self.checktarget_infos_cache = None
 
-    def get_user_rights(self, protocols, target_device, **kwargs):
-        rights_getter = self.wabengine.get_proxy_rights
-        if self.alt_proxy:
-            rights_getter = self.wabengine.get_proxy_user_rights
-        urights = rights_getter(protocols,
+    def get_proxy_user_rights(self, protocols, target_device, **kwargs):
+        urights = self.wabengine.get_proxy_user_rights(protocols,
                                 target_device,
                                 **kwargs)
-        if self.alt_proxy and urights and (type(urights[0]) == str):
+        if urights and (type(urights[0]) == str):
             import json
             urights = map(json.loads, urights)
         return urights
@@ -587,16 +569,13 @@ class Engine(object):
     def valid_device_name(self, protocols, target_device):
         try:
             # Logger().info("** CALL VALIDATOR DEVICE NAME Get_proxy_right **")
-            prights = self.get_user_rights(
+            prights = self.get_proxy_user_rights(
                 protocols, target_device, check_timeframes=False)
         except Exception, e:
             # import traceback
             # Logger().info("valid_device_name failed: (((%s)))" % (traceback.format_exc(e)))
             return False
-        if self.alt_proxy:
-            rights = prights
-        else:
-            rights = prights.rights
+        rights = prights
         if rights:
             self.proxy_rights = prights
             return True
@@ -781,7 +760,7 @@ class Engine(object):
         if self.proxy_rights is None:
             try:
                 Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s, checktimeframe=%s" % (protocols, target_device, check_timeframes))
-                self.proxy_rights = self.get_user_rights(
+                self.proxy_rights = self.get_proxy_user_rights(
                     protocols, target_device, check_timeframes=check_timeframes)
                 Logger().debug("** END Get_proxy_right **")
             except Exception, e:
@@ -793,10 +772,7 @@ class Engine(object):
             return
         # start = time.time()
         # Logger().debug("** BEGIN Filter_rights **")
-        if self.alt_proxy:
-            self._filter_rights_alt(target_context)
-        else:
-            self._filter_rights(target_context)
+        self._filter_rights_alt(target_context)
         # Logger().debug("** END Filter_rights in %s sec **" % (time.time() - start))
 
     def _find_target_right(self, target_login, target_device, target_service,
@@ -827,12 +803,8 @@ class Engine(object):
                 if filtered_service != r_service:
                     right = None
                     break
-                if self.alt_proxy:
-                    if r['auth_has_approval'] is False:
-                        right = r
-                else:
-                    if r.authorization.hasApproval is False:
-                        right = r
+                if r['auth_has_approval'] is False:
+                    right = r
         if right:
             self.init_timeframe(right)
             self.target_right = right
@@ -882,10 +854,7 @@ class Engine(object):
                                       target_group)
 
     def get_effective_target(self, selected_target):
-        if self.alt_proxy:
-            application = selected_target['application_cn']
-        else:
-            application = selected_target.resource.application
+        application = selected_target['application_cn']
         try:
             if application:
                 effective_target = self.wabengine.get_effective_target(selected_target)
@@ -941,10 +910,7 @@ class Engine(object):
         """
         Checkout target and get credentials object
         """
-        if self.alt_proxy:
-            target_uid = target['target_uid']
-        else:
-            target_uid = target
+        target_uid = target['target_uid']
         if self.target_credentials.get(target_uid) is None:
             try:
                 Logger().debug("** CALL checkout_target")
@@ -963,10 +929,9 @@ class Engine(object):
 
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
-        if self.alt_proxy:
-            target_device = target_device['target_uid']
+        target_uid = target_device['target_uid']
         try:
-            target_credentials = self.target_credentials.get(target_device, {})
+            target_credentials = self.target_credentials.get(target_uid, {})
             passwords = [ cred.data.get(CRED_DATA_PASSWORD) \
                           for cred in target_credentials.get(CRED_TYPE_PASSWORD, []) \
                           if cred.data.get(CRED_DATA_PASSWORD) ]
@@ -983,10 +948,9 @@ class Engine(object):
 
     def get_target_privkeys(self, target_device):
         Logger().info("Engine get_target_privkeys ...")
-        if self.alt_proxy:
-            target_device = target_device['target_uid']
+        target_uid = target_device['target_uid']
         try:
-            target_credentials = self.target_credentials.get(target_device, {})
+            target_credentials = self.target_credentials.get(target_uid, {})
             privkeys = [ (cred.data.get(CRED_DATA_PRIVATE_KEY),
                           cred.data.get("passphrase", None)) \
                          for cred in target_credentials.get(CRED_TYPE_SSH_KEY, []) ]
@@ -999,19 +963,17 @@ class Engine(object):
 
     def release_target(self, target_device):
         res = False
-        if self.alt_proxy:
-            target_device = target_device['target_uid']
-        if target_device in self.target_credentials:
+        target_uid = target_device['target_uid']
+        if target_uid in self.target_credentials:
             try:
                 Logger().debug("Engine release_target")
                 try:
-                    if self.alt_proxy:
-                        target_device = self.wabengine.get_target_by_uid(target_device)
+                    target_device = self.wabengine.get_target_by_uid(target_uid)
                     res = self.wabengine.release_target(target_device)
                 except Exception, e:
                     Logger().info(">>> Engine release_target does not exist: try release_target_credentials")
                     res = self.wabengine.release_target_credentials(target_device)
-                self.target_credentials.pop(target_device, None)
+                self.target_credentials.pop(target_uid, None)
                 Logger().debug("Engine release_target done")
             except Exception, e:
                 import traceback
@@ -1021,10 +983,9 @@ class Engine(object):
     def release_all_target(self):
         # Logger().debug("Engine release_all_target %s" % list(self.checkout_target_creds))
         Logger().debug("Engine release_all_target")
-        for target_device in self.target_credentials:
+        for target_uid in self.target_credentials:
             try:
-                if self.alt_proxy:
-                    target_device = self.wabengine.get_target_by_uid(target_device)
+                target_device = self.wabengine.get_target_by_uid(target_uid)
                 res = self.wabengine.release_target(target_device)
                 Logger().debug("Engine release_target res = %s" % res)
             except Exception, e:
@@ -1087,12 +1048,9 @@ class Engine(object):
         Logger().debug("**** END wabengine START SESSION ")
         if self.session_id is None:
             return None
-        if self.alt_proxy:
-            self.service = target['service_cn']
-            is_critical = target['auth_is_critical']
-        else:
-            self.service = target.resource.service.cn
-            is_critical = target.authorization.isCritical
+        self.service = target['service_cn']
+        is_critical = target['auth_is_critical']
+        device_host = target['device_host']
 
         if not is_critical:
             return self.session_id
@@ -1106,7 +1064,7 @@ class Engine(object):
             'ip_source': client_addr,
             'login': self.get_account_login(target),
             'device': hname,
-            'ip': target.resource.device.host,
+            'ip': device_host,
             'time': time.ctime()
         }
 
@@ -1123,18 +1081,11 @@ class Engine(object):
         :param target physical_target: selected target
         :return: None
         """
-        if self.alt_proxy:
-            hosttarget = u"%s@%s@%s:%s" % (
-                physical_target['account_name'],
-                physical_target['domain_cn'],
-                physical_target['device_cn'],
-                physical_target['service_cn'])
-        else:
-            hosttarget = u"%s@%s@%s:%s" % (
-                physical_target.account.name,
-                physical_target.account.domain_cn,
-                physical_target.resource.device.cn,
-                physical_target.resource.service.cn)
+        hosttarget = u"%s@%s@%s:%s" % (
+            physical_target['account_name'],
+            physical_target['domain_cn'],
+            physical_target['device_cn'],
+            physical_target['service_cn'])
         try:
             if self.session_id:
                 self.wabengine.update_session(self.session_id,
@@ -1290,10 +1241,7 @@ class Engine(object):
             Logger().debug("start_record failed: missing target right")
             return False
         try:
-            if self.alt_proxy:
-                is_recorded = target['auth_is_recorded']
-            else:
-                is_recorded = target.authorization.isRecorded
+            is_recorded = target['auth_is_recorded']
             if is_recorded:
                 self.session_record = self.get_trace_writer(self.session_id, trace_type=u'ttyrec')
                 self.session_record.initialize()
@@ -1357,10 +1305,7 @@ class Engine(object):
         deconnection_time = infos.get("deconnection_time")
         if deconnection_time:
 #            Logger().info("deconnection_time updated from %s to %s" % (target.deconnection_time, deconnection_time))
-            if self.alt_proxy:
-                target['deconnection_time'] = deconnection_time
-            else:
-                target.deconnection_time = deconnection_time
+            target['deconnection_time'] = deconnection_time
             # update deconnection_time in right
         return status, infos
 
@@ -1368,47 +1313,31 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return None
-        if self.alt_proxy:
-            return target['application_cn']
-        else:
-            return target.resource.application
+        return target['application_cn']
 
     def get_target_protocols(self, selected_target=None):
         target = selected_target or self.target_right
         if not target:
             return None
-        if self.alt_proxy:
-            proto = target['service_protocol_cn']
-            # subproto = [x.cn for x in target.resource.service.subprotocols]
-            subproto = target['service_subprotocols']
-        else:
-            proto = target.resource.service.protocol.cn
-            # subproto = [x.cn for x in target.resource.service.subprotocols]
-            subproto = [x.cn for x in target.subprotocols]
+        proto = target['service_protocol_cn']
+        # subproto = [x.cn for x in target.resource.service.subprotocols]
+        subproto = target['service_subprotocols']
         return ProtocolInfo(proto, subproto)
 
     def get_target_extra_info(self, selected_target=None):
         target = selected_target or self.target_right
         if not target:
             return None
-        if self.alt_proxy:
-            isRecorded = target['auth_is_recorded']
-            isCritical = target['auth_is_critical']
-            hasApproval = target['auth_has_approval']
-        else:
-            isRecorded = target.authorization.isRecorded
-            isCritical = target.authorization.isCritical
-            hasApproval = target.authorization.hasApproval
+        isRecorded = target['auth_is_recorded']
+        isCritical = target['auth_is_critical']
+        hasApproval = target['auth_has_approval']
         return ExtraInfo(isRecorded, isCritical, hasApproval)
 
     def get_deconnection_time(self, selected_target=None):
         target = selected_target or self.target_right
         if not target:
             return None
-        if self.alt_proxy:
-            return target['deconnection_time']
-        else:
-            return target.deconnection_time
+        return target['deconnection_time']
 
     def get_server_pubkey_options(self, selected_target=None):
         target = selected_target or self.target_right
@@ -1429,10 +1358,7 @@ class Engine(object):
         try:
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
-            if self.alt_proxy:
-                authmethods = target['connection_policy_methods']
-            else:
-                authmethods = target.resource.service.connectionpolicy.methods
+            authmethods = target['connection_policy_methods']
         except:
             Logger().error("Error: Connection policy has no methods field")
             authmethods = []
@@ -1445,57 +1371,34 @@ class Engine(object):
         try:
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
-            if self.alt_proxy:
-                conn_opts = target['connection_policy_data']
-            else:
-                conn_opts = target.resource.service.connectionpolicy.data
+            conn_opts = target['connection_policy_data']
         except:
             Logger().error("Error: Connection policy has no data field")
             conn_opts = {}
         return conn_opts
 
     def get_physical_target_info(self, physical_target):
-        if self.alt_proxy:
-            return PhysicalTarget(device_host=physical_target['device_host'],
-                                  account_login=self.get_account_login(physical_target),
-                                  service_port=int(physical_target['service_port']),
-                                  device_id=physical_target['device_uid'])
-        else:
-            return PhysicalTarget(device_host=physical_target.resource.device.host,
-                                  account_login=self.get_account_login(physical_target),
-                                  service_port=int(physical_target.resource.service.port),
-                                  device_id=physical_target.resource.device.uid)
+        return PhysicalTarget(device_host=physical_target['device_host'],
+                              account_login=self.get_account_login(physical_target),
+                              service_port=int(physical_target['service_port']),
+                              device_id=physical_target['device_uid'])
 
     def get_target_login_info(self, selected_target=None):
         target = selected_target or self.target_right
         if not target:
             return None
-        if self.alt_proxy:
-            if target['application_cn']:
-                target_name = target['application_cn']
-                device_host = None
-            else:
-                target_name = target['device_cn']
-                device_host = target['device_host']
-
-            account_login = self.get_account_login(target)
-            account_name = target['account_name']
-            service_port = target['service_port']
-            service_name = target['service_cn']
-            conn_opts = target['connection_policy_data']
+        if target['application_cn']:
+            target_name = target['application_cn']
+            device_host = None
         else:
-            if target.resource.application:
-                target_name = target.resource.application.cn
-                device_host = None
-            else:
-                target_name = target.resource.device.cn
-                device_host = target.resource.device.host
+            target_name = target['device_cn']
+            device_host = target['device_host']
 
-            account_login = self.get_account_login(target)
-            account_name = target.account.name
-            service_port = target.resource.service.port
-            service_name = target.resource.service.cn
-            conn_opts = target.resource.service.connectionpolicy.data
+        account_login = self.get_account_login(target)
+        account_name = target['account_name']
+        service_port = target['service_port']
+        service_name = target['service_cn']
+        conn_opts = target['connection_policy_data']
         return LoginInfo(account_login=account_login,
                          account_name=account_name,
                          target_name=target_name,
@@ -1505,24 +1408,14 @@ class Engine(object):
                          conn_opts=conn_opts)
 
     def get_account_login(self, right):
-        if self.alt_proxy:
-            login = right['account_login']
-            try:
-                domain = right['domain_name']
-            except:
-                domain = ""
-            if right['domain_cn'] == AM_IL_DOMAIN:
-                return login
-            trule = right['connection_policy_data'].get("general", {}).get("transformation_rule")
-        else:
-            login = right.account.login
-            try:
-                domain = right.account.domain_name
-            except:
-                domain = ""
-            if right.account.domain_cn == AM_IL_DOMAIN:
-                return login
-            trule = right.resource.service.connectionpolicy.data.get("general", {}).get("transformation_rule")
+        login = right['account_login']
+        try:
+            domain = right['domain_name']
+        except:
+            domain = ""
+        if right['domain_cn'] == AM_IL_DOMAIN:
+            return login
+        trule = right['connection_policy_data'].get("general", {}).get("transformation_rule")
         if (trule and '${LOGIN}' in trule):
             return trule.replace('${LOGIN}', login).replace('${DOMAIN}', domain or '')
         if not domain:
