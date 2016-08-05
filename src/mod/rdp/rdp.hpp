@@ -317,6 +317,9 @@ protected:
     const std::chrono::milliseconds   session_probe_keepalive_timeout;
     const bool                        session_probe_on_keepalive_timeout_disconnect_user;
     const bool                        session_probe_end_disconnected_session;
+    const std::chrono::milliseconds   session_probe_disconnected_application_limit;
+    const std::chrono::milliseconds   session_probe_disconnected_session_limit;
+    const std::chrono::milliseconds   session_probe_idle_session_limit;
           std::string                 session_probe_alternate_shell;
     const bool                        session_probe_use_clipboard_based_launcher;
 
@@ -693,6 +696,9 @@ public:
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
+        , session_probe_disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
+        , session_probe_disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
+        , session_probe_idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
@@ -1310,6 +1316,13 @@ protected:
             this->front_width;
         session_probe_virtual_channel_params.front_height                           =
             this->front_height;
+
+        session_probe_virtual_channel_params.session_probe_disconnected_application_limit =
+            this->session_probe_disconnected_application_limit;
+        session_probe_virtual_channel_params.session_probe_disconnected_session_limit =
+            this->session_probe_disconnected_session_limit;
+        session_probe_virtual_channel_params.session_probe_idle_session_limit       =
+            this->session_probe_idle_session_limit;
 
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();

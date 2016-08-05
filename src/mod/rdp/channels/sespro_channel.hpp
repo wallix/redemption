@@ -57,6 +57,10 @@ private:
     const uint16_t param_front_width;
     const uint16_t param_front_height;
 
+    const std::chrono::duration<unsigned, std::milli> param_session_probe_disconnected_application_limit;
+    const std::chrono::duration<unsigned, std::milli> param_session_probe_disconnected_session_limit;
+    const std::chrono::duration<unsigned, std::milli> param_session_probe_idle_session_limit;
+
     std::string param_real_alternate_shell;
     std::string param_real_working_dir;
 
@@ -99,6 +103,10 @@ public:
         uint16_t front_width;
         uint16_t front_height;
 
+        std::chrono::duration<unsigned, std::milli> session_probe_disconnected_application_limit;
+        std::chrono::duration<unsigned, std::milli> session_probe_disconnected_session_limit;
+        std::chrono::duration<unsigned, std::milli> session_probe_idle_session_limit;
+
         const char* real_alternate_shell;
         const char* real_working_dir;
 
@@ -137,6 +145,12 @@ public:
     , param_target_informations(params.target_informations)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
+    , param_session_probe_disconnected_application_limit(
+        params.session_probe_disconnected_application_limit)
+    , param_session_probe_disconnected_session_limit(
+        params.session_probe_disconnected_session_limit)
+    , param_session_probe_idle_session_limit(
+        params.session_probe_idle_session_limit)
     , param_real_alternate_shell(params.real_alternate_shell)
     , param_real_working_dir(params.real_working_dir)
     , param_lang(params.lang)
@@ -510,6 +524,75 @@ public:
                 else {
                     const char cstr[] = "No";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            unsigned int const disconnect_session_limit =
+                (this->param_real_alternate_shell.empty() ?
+                 // Normal RDP session
+                 this->param_session_probe_disconnected_session_limit.count() :
+                 // Application session
+                 this->param_session_probe_disconnected_application_limit.count());
+
+            if (disconnect_session_limit)
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "DisconnectedSessionLimit=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                {
+                    char cstr[128];
+                    snprintf(cstr, sizeof(cstr), "%u",
+                        disconnect_session_limit);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            if (this->param_session_probe_idle_session_limit.count())
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "IdleSessionLimit=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                {
+                    char cstr[128];
+                    snprintf(cstr, sizeof(cstr), "%u",
+                        this->param_session_probe_idle_session_limit.count());
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 out_s.out_clear_bytes(1);   // Null-terminator.

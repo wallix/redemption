@@ -340,6 +340,24 @@
 "#_advanced\n"
 "session_probe_customize_executable_name = 0\n\n"
 
+"# This policy setting allows you to configure a time limit for disconnected application sessions.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
+"#_hidden\n"
+"session_probe_disconnected_application_limit = 0\n\n"
+
+"# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
+"#_hidden\n"
+"session_probe_disconnected_session_limit = 0\n\n"
+
+"# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
+"#_hidden\n"
+"session_probe_idle_session_limit = 0\n\n"
+
 "#_hidden\n"
 "session_probe_alternate_shell = cmd /k\n\n"
 

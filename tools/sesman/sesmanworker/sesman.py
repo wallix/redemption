@@ -1302,6 +1302,10 @@ class Sesman():
                         connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user']        = session_probe_section.get('on_keepalive_timeout_disconnect_user')
                         connectionpolicy_kv[u'session_probe_end_disconnected_session']= session_probe_section.get('end_disconnected_session')
 
+                        connectionpolicy_kv[u'session_probe_disconnected_application_limit']              = session_probe_section.get('disconnected_application_limit')
+                        connectionpolicy_kv[u'session_probe_disconnected_session_limit']                  = session_probe_section.get('disconnected_session_limit')
+                        connectionpolicy_kv[u'session_probe_idle_session_limit']      = session_probe_section.get('idle_session_limit')
+
                         connectionpolicy_kv[u'outbound_connection_blocking_rules']    = session_probe_section.get('outbound_connection_blocking_rules')
                         connectionpolicy_kv[u'session_probe_process_monitoring_rules']= session_probe_section.get('process_monitoring_rules')
 

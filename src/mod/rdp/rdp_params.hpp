@@ -64,6 +64,9 @@ struct ModRDPParams {
     bool                         session_probe_on_keepalive_timeout_disconnect_user = true;
     bool                         session_probe_end_disconnected_session = false;
     bool                         session_probe_customize_executable_name = false;
+    std::chrono::milliseconds    session_probe_disconnected_application_limit {};
+    std::chrono::milliseconds    session_probe_disconnected_session_limit {};
+    std::chrono::milliseconds    session_probe_idle_session_limit {};
     const char *                 session_probe_alternate_shell = "";
 
     bool         enable_transparent_mode = false;
@@ -189,6 +192,9 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_keepalive_timeout);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_on_keepalive_timeout_disconnect_user);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_end_disconnected_session);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_disconnected_application_limit);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_disconnected_session_limit);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_idle_session_limit);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_customize_executable_name);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
