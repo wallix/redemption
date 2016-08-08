@@ -92,7 +92,7 @@
 "persistent_path = " PERSISTENT_PATH "\n\n"
 
 "#_hidden\n"
-"disable_proxy_opt = 0\n\n"
+"enable_wab_integration = 0\n\n"
 
 "allow_using_multiple_monitors = 0\n\n"
 

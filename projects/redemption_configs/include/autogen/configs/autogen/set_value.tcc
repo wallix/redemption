@@ -199,10 +199,10 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
-        else if (0 == strcmp(key, "disable_proxy_opt")) {
+        else if (0 == strcmp(key, "enable_wab_integration")) {
             ::configs::parse_and_log(
                 context, key, 
-                static_cast<cfg::globals::disable_proxy_opt&>(this->variables).value,
+                static_cast<cfg::globals::enable_wab_integration&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

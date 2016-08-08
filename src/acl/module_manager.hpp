@@ -1128,7 +1128,7 @@ public:
                 this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 // BEGIN READ PROXY_OPT
-                if (!this->ini.get<cfg::globals::disable_proxy_opt>()) {
+                if (this->ini.get<cfg::globals::enable_wab_integration>()) {
                     AuthorizationChannels::update_authorized_channels(
                         this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
                         this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
