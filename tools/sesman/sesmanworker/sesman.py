@@ -1302,7 +1302,12 @@ class Sesman():
                         connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user']        = session_probe_section.get('on_keepalive_timeout_disconnect_user')
                         connectionpolicy_kv[u'session_probe_end_disconnected_session']= session_probe_section.get('end_disconnected_session')
 
-                        connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
+                        connectionpolicy_kv[u'session_probe_disconnected_application_limit']              = session_probe_section.get('disconnected_application_limit')
+                        connectionpolicy_kv[u'session_probe_disconnected_session_limit']                  = session_probe_section.get('disconnected_session_limit')
+                        connectionpolicy_kv[u'session_probe_idle_session_limit']      = session_probe_section.get('idle_session_limit')
+
+                        connectionpolicy_kv[u'outbound_connection_blocking_rules']    = session_probe_section.get('outbound_connection_blocking_rules')
+                        connectionpolicy_kv[u'session_probe_process_monitoring_rules']= session_probe_section.get('process_monitoring_rules')
 
                     server_cert_section = conn_opts.get('server_cert')
                     if server_cert_section is not None:
@@ -1553,6 +1558,12 @@ class Sesman():
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_outbound_connection_blocking_failed")})
+                                    elif _reporting_reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block process')
+                                        release_reason = u'Session Probe failed to block process'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_process_blocking_failed")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break
@@ -1670,6 +1681,8 @@ class Sesman():
         elif reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
             pass
         elif reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
+            pass
+        elif reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
             pass
         elif reason == u'SERVER_REDIRECTION':
             (nlogin, _, nhost) = message.rpartition('@')

@@ -676,6 +676,30 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
+        else if (0 == strcmp(key, "session_probe_disconnected_application_limit")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::mod_rdp::session_probe_disconnected_application_limit&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_disconnected_session_limit")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::mod_rdp::session_probe_disconnected_session_limit&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_idle_session_limit")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::mod_rdp::session_probe_idle_session_limit&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "session_probe_alternate_shell")) {
             ::configs::parse_and_log(
                 context, key, 

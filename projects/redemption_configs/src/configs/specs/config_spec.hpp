@@ -261,6 +261,21 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true), r);
         W.member(H, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false), r);
         W.member(A, type_<bool>(), "session_probe_customize_executable_name", set(false));
+
+
+        W.member(H, type_<std::chrono::milliseconds>(), "session_probe_disconnected_application_limit", desc{
+            "This policy setting allows you to configure a time limit for disconnected application sessions.\n"
+            "0 to disable timeout."
+        }, set(0), r);
+        W.member(H, type_<std::chrono::milliseconds>(), "session_probe_disconnected_session_limit", desc{
+            "This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
+            "0 to disable timeout."
+        }, set(0), r);
+        W.member(H, type_<std::chrono::milliseconds>(), "session_probe_idle_session_limit", desc{
+            "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
+            "0 to disable timeout."
+        }, set(0), r);
+
         W.member(H, type_<types::fixed_string<511>>(), "session_probe_alternate_shell", set("cmd /k"));
         W.sep();
 
@@ -474,7 +489,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(type_<std::string>(), "opt_message", r);
         W.sep();
-        W.member(type_<std::string>(), "outbound_connection_blocking_rules", r);
+        W.member(type_<std::string>(), "outbound_connection_monitoring_rules", sesman::name{"outbound_connection_blocking_rules"}, r);
+        W.sep();
+        W.member(type_<std::string>(), "process_monitoring_rules", sesman::name{"session_probe_process_monitoring_rules"}, r);
         W.sep();
         W.member(type_<std::string>(), "manager_disconnect_reason");
         W.member(type_<std::string>(), "disconnect_reason", r);

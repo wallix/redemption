@@ -28,26 +28,22 @@
 #include <cstring>
 
 
-class OutboundConnectionMonitorRules
+class ProcessMonitorRules
 {
-    struct outbound_connection_monitor_rule
+    struct process_monitor_rule
     {
-        unsigned type;
-        std::string address;
-        std::string port_range;
+        unsigned    type;
+        std::string pattern;
         std::string description;
     };
 
-    std::vector<outbound_connection_monitor_rule> rules;
+    std::vector<process_monitor_rule> rules;
 
 public:
-    OutboundConnectionMonitorRules(
-        const char * comme_separated_monitoring_rules
-    ) {
-        if (comme_separated_monitoring_rules) {
-            const char * rule = comme_separated_monitoring_rules;
+    ProcessMonitorRules(const char * comme_separated_rules) {
+        if (comme_separated_rules) {
+            const char * rule = comme_separated_rules;
 
-            char const RULE_PREFIX_ALLOW[]  = "$allow:";
             char const RULE_PREFIX_NOTIFY[] = "$notify:";
             char const RULE_PREFIX_DENY[]   = "$deny:";
 
@@ -60,12 +56,7 @@ public:
                 char const * rule_begin = rule;
 
                 unsigned uType = 1; // Deny
-                if (strcasestr(rule, RULE_PREFIX_ALLOW) == rule)
-                {
-                    uType  = 2;                             // Allow
-                    rule  += sizeof(RULE_PREFIX_ALLOW) - 1;
-                }
-                else if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
+                if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
                 {
                     uType  = 0;                             // Notify
                     rule  += sizeof(RULE_PREFIX_NOTIFY) - 1;
@@ -80,21 +71,11 @@ public:
 
                 std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
 
-                std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
+                std::string pattern(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
 
-                const char * rule_c_str = rule_string.c_str();
-
-                const char * info_separator = strchr(rule_c_str, ':');
-
-                if (info_separator)
-                {
-                    std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
-
-                    this->rules.push_back({
-                        uType, std::move(host_address_or_subnet), std::string(info_separator + 1),
-                        std::move(description_string)
-                    });
-                }
+                this->rules.push_back({
+                    uType, std::move(pattern), std::move(description_string)
+                });
 
                 if (!rule_separator) {
                     break;
@@ -108,22 +89,19 @@ public:
     bool get(
         size_t index,
         unsigned int & out__type,
-        std::string & out__host_address_or_subnet,
-        std::string & out__port_range,
+        std::string & out__pattern,
         std::string & out__description
     ) {
         if (this->rules.size() <= index) {
             out__type = 0;
-            out__host_address_or_subnet.clear();
-            out__port_range.clear();
+            out__pattern.clear();
             out__description.clear();
 
             return false;
         }
 
         out__type                   = this->rules[index].type;
-        out__host_address_or_subnet = this->rules[index].address;
-        out__port_range             = this->rules[index].port_range;
+        out__pattern                = this->rules[index].pattern;
         out__description            = this->rules[index].description;
 
         return true;
