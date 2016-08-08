@@ -132,7 +132,7 @@ explicit install instexe install-bin install-etc install-etc-themes install-shar
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-etc-themes install-share install-lib ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
-alias libs    : libredver libreddec libredrec ;
+alias libs    : libredrec ;
 
 
 install install-bin
@@ -274,36 +274,6 @@ lib libredrec
         openssl
         crypto
         png
-        z
-        dl
-
-        snappy
-    :
-        $(LIB_DEPENDENCIES)
-    ;
-
-lib libreddec
-    :
-        src/main/do_decrypter.cpp
-        program_options
-
-        openssl
-        crypto
-        z
-        dl
-
-        snappy
-    :
-        $(LIB_DEPENDENCIES)
-    ;
-
-lib libredver
-    :
-        src/main/do_verifier.cpp
-        program_options
-
-        openssl
-        crypto
         z
         dl
 
