@@ -92,7 +92,7 @@
 "persistent_path = string(max=4096, default='" PERSISTENT_PATH "')\n\n"
 
 "#_hidden\n"
-"disable_proxy_opt = boolean(default=False)\n\n"
+"enable_wab_integration = boolean(default=False)\n\n"
 
 "allow_using_multiple_monitors = boolean(default=False)\n\n"
 

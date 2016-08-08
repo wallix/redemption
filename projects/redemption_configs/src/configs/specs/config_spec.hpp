@@ -126,7 +126,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<types::path>(), "persistent_path", set(CPP_MACRO(PERSISTENT_PATH)));
         W.sep();
-        W.member(H, type_<bool>(), "disable_proxy_opt", set(false));
+        W.member(H, type_<bool>(), "enable_wab_integration", set(false));
         W.sep();
         W.member(V, type_<bool>(), "allow_using_multiple_monitors", set(false));
         W.sep();

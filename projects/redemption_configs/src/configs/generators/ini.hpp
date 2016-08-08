@@ -55,6 +55,16 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     using base_type_::base_type_;
     using base_type_::write_type_info;
 
+    template<class Pack>
+    void do_member(
+        std::string const & section_name,
+        std::string const & member_name,
+        Pack const & infos
+    ) {
+        // comments variable
+        base_type_::do_member(section_name, '#' + member_name, infos);
+    }
+
     template<class... Ts>
     void write_comment_line(Ts const & ... args)
     {
