@@ -22,21 +22,46 @@ namespace proto
     namespace types {
         struct u8 { using type = uint8_t; };
         struct u16_le { using type = uint16_t; };
+        struct u8_or_u16_le { using type = uint16_t; };
         struct bytes { using type = char const *; };
+        struct str8_to_str16 { using type = char const *; };
         template<class T> struct pkt_sz { using type = T; };
         template<class T> struct pkt_sz_with_self { using type = T; };
     }
+
+    // TODO type_traits { sizeof_, buffer+tag }
 
     struct dyn_size {};
     namespace detail {
         template<class T> struct sizeof_ : sizeof_<typename T::desc_type> {};
         template<> struct sizeof_<types::u8> : std::integral_constant<std::size_t, 1> {};
         template<> struct sizeof_<types::u16_le> : std::integral_constant<std::size_t, 2> {};
+        template<> struct sizeof_<types::u8_or_u16_le> { using type = dyn_size; };
         template<> struct sizeof_<types::bytes> { using type = dyn_size; };
+        template<> struct sizeof_<types::str8_to_str16> { using type = dyn_size; };
         template<class T> struct sizeof_<types::pkt_sz<T>> : sizeof_<T> {};
         template<class T> struct sizeof_<types::pkt_sz_with_self<T>> : sizeof_<T> {};
     }
     template<class T> using sizeof_ = typename detail::sizeof_<T>::type;
+
+    namespace tags {
+        class static_buffer {};
+        class dynamic_buffer {};
+        class view_buffer {};
+        class limited_buffer {};
+    }
+
+    namespace detail {
+        template<class T> struct buffer_category : buffer_category<typename T::desc_type> {};
+        template<> struct buffer_category<types::u8> { using type = tags::static_buffer; };
+        template<> struct buffer_category<types::u16_le> { using type = tags::static_buffer; };
+        template<> struct buffer_category<types::u8_or_u16_le> { using type = tags::limited_buffer; };
+        template<> struct buffer_category<types::bytes> { using type = tags::view_buffer; };
+        template<> struct buffer_category<types::str8_to_str16> { using type = tags::dynamic_buffer; };
+        template<class T> struct buffer_category<types::pkt_sz<T>> : buffer_category<T> {};
+        template<class T> struct buffer_category<types::pkt_sz_with_self<T>> : buffer_category<T> {};
+    }
+    template<class T> using buffer_category = typename detail::buffer_category<T>::type;
 
     using std::size_t;
 
@@ -59,13 +84,6 @@ namespace proto
         constexpr val<Derived> operator = (U y) const
         { return val<Derived>{y}; }
     };
-
-    template<char const * Name, class>
-    struct tag
-    {
-        constexpr static char const * const name = Name;
-    };
-
 
     template<class Ints, class... Ts>
     struct description;
@@ -116,6 +134,8 @@ namespace XXX {
     PROTO_VAR(proto::types::u8, b);
     PROTO_VAR(proto::types::bytes, c);
     PROTO_VAR(proto::types::u16_le, d);
+    PROTO_VAR(proto::types::str8_to_str16, e);
+    PROTO_VAR(proto::types::u8_or_u16_le, f);
     PROTO_VAR(proto::types::pkt_sz<proto::types::u8>, sz);
     PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u8>, sz2);
 
@@ -124,16 +144,16 @@ namespace XXX {
 
 
 
-
-
-
-namespace lazy {
-    // TODO rename to is_dyn_buf
-    template<class T> struct is_buffer : std::false_type {};
-
-    template<> struct is_buffer<proto::types::bytes> : std::true_type {};
+namespace detail {
+    template<class T> using is_static_buffer = std::is_same<T, proto::tags::static_buffer>;
+    template<class T> using is_dynamic_buffer = std::is_same<T, proto::tags::dynamic_buffer>;
+    template<class T> using is_view_buffer = std::is_same<T, proto::tags::view_buffer>;
+    template<class T> using is_limited_buffer = std::is_same<T, proto::tags::limited_buffer>;
 }
-template<class T> using is_buffer = typename lazy::is_buffer<T>::type;
+template<class T> using is_static_buffer = typename detail::is_static_buffer<proto::buffer_category<T>>::type;
+template<class T> using is_dynamic_buffer = typename detail::is_dynamic_buffer<proto::buffer_category<T>>::type;
+template<class T> using is_view_buffer = typename detail::is_view_buffer<proto::buffer_category<T>>::type;
+template<class T> using is_limited_buffer = typename detail::is_limited_buffer<proto::buffer_category<T>>::type;
 
 
 struct Printer
@@ -141,7 +161,12 @@ struct Printer
     template<class var>
     void operator()(proto::val<var> x) const {
         std::cout << var::name() << " = "; print(x.x, 1);
-        std::cout << "  isbuf: " << is_buffer<typename var::desc_type>{} << '\n';
+        std::cout
+            << "  static: " << is_static_buffer<typename var::desc_type>{}
+            << "  dyn: " << is_dynamic_buffer<typename var::desc_type>{}
+            << "  view: " << is_view_buffer<typename var::desc_type>{}
+            << "  limited: " << is_limited_buffer<typename var::desc_type>{}
+            << "\n";
     }
 
     template<class T, class tag>
@@ -205,8 +230,14 @@ namespace detail {
 }
 
 
+template<class T>
+using is_buffer_delimiter = brigand::bool_<
+    is_dynamic_buffer<T>::value or
+    is_view_buffer<T>::value
+>;
+
 template<class idx_var>
-using buffer_delimiter = is_buffer<typename idx_var::second_type::desc_type>;
+using pair_is_buffer_delimiter = is_buffer_delimiter<typename idx_var::second_type::desc_type>;
 
 template<std::size_t i, class... T>
 auto & arg(T & ... args)
@@ -246,7 +277,7 @@ struct Buferring
         using iseq = brigand::range<size_t, 0, sizeof...(val)>;
         using list = brigand::list<var_type<Val>...>;
         using list_pair = brigand::transform<iseq, list, brigand::call<brigand::pair>>;
-        using list_by_buffer = brigand::split_if<list_pair, brigand::call<buffer_delimiter>>;
+        using list_by_buffer = brigand::split_if<list_pair, brigand::call<pair_is_buffer_delimiter>>;
 
         brigand::for_each<list_by_buffer>([&val...](auto g) {
             std::cout << '[';
@@ -294,7 +325,7 @@ struct var_info {
 };
 
 template<class var_info>
-using buffer_var_info_delimiter = is_buffer<typename var_info::desc_type>;
+using var_info_is_buffer_delimiter = is_buffer_delimiter<typename var_info::desc_type>;
 
 template<std::size_t n> struct static_size : brigand::size_t<n> {};
 template<std::size_t n> struct dynamic_size : brigand::size_t<n> {};
@@ -377,7 +408,7 @@ template<class T>
 using sizeof_to_buffer = typename detail::sizeof_to_buffer<T>::type;
 
 template<class VarInfos>
-using is_dynamic_buffer = typename std::is_same<proto::sizeof_<brigand::front<VarInfos>>, proto::dyn_size>::type;
+using var_infos_is_not_dynamic = is_dynamic_buffer<brigand::front<VarInfos>>;
 
 namespace detail {
     template<class T>
@@ -487,8 +518,6 @@ namespace detail
 
 struct Buferring2
 {
-
-
     template<class... Pkts>
     struct Impl
     {
@@ -501,7 +530,7 @@ struct Buferring2
         using var_list = brigand::wrap<packet_list, brigand::append>;
         using ivar_list = brigand::wrap<brigand::transform<packet_count_list, brigand::call<mk_seq2>>, brigand::append>;
         using var_info_list = brigand::transform<ipacket_list, ivar_list, var_list, brigand::call<var_info>>;
-        using var_info_list_by_buffer = brigand::split_if<var_info_list, brigand::call<buffer_var_info_delimiter>>;
+        using var_info_list_by_buffer = brigand::split_if<var_info_list, brigand::call<var_info_is_buffer_delimiter>>;
 
         using sizeof_by_buffer = brigand::transform<var_info_list_by_buffer, brigand::call<sizeof_var_infos>>;
         using buffer_list = brigand::transform<sizeof_by_buffer, brigand::call<sizeof_to_buffer>>;
@@ -522,7 +551,6 @@ struct Buferring2
             );
             std::cout << "------------------------------\n\n";
 
-
             std::cout << "--- write_dynamic_bufs ---\n";
             this->write_dynamic_bufs(
                 i_<0>{},
@@ -535,7 +563,7 @@ struct Buferring2
         void write_not_dynamic_bufs(brigand::list<VarInfos...>, brigand::list<Ints...>, Pkts & ... pkts) {
             (void)std::initializer_list<int>{(void(
                 write_not_dynamic_buf(
-                    is_dynamic_buffer<VarInfos>{},
+                    var_infos_is_not_dynamic<VarInfos>{},
                     VarInfos{},
                     this->buffers.data[Ints::value],
                     pkts...
@@ -552,26 +580,54 @@ struct Buferring2
             std::cout << "-------\n";
             (void)std::initializer_list<int>{(void(
                 this->write_type(
-                    VarInfos{}, buffer, this->pktptrs[VarInfos::ipacket::value],
+                    proto::buffer_category<VarInfos>{}, VarInfos{}, buffer,
                     larg<VarInfos::ivar::value>(arg<VarInfos::ipacket::value>(pkts...)))
             ), 1)...};
         }
 
-        template<class VarInfo, class Buffer, class PktPtr, class Var>
-        void write_type(VarInfo, Buffer & buffer, PktPtr & pktptr, Var & var) {
-            // TODO
+        template<class VarInfo, class Buffer, class Var>
+        void write_type(proto::tags::static_buffer, VarInfo, Buffer & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            std::cout << "\n";
+            std::cout << " [static_buffer]\n";
             if (var_info_is_pkt_size<VarInfo>{}) {
-                pktptr = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
+                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
+            }
+        }
+
+        template<class VarInfo, class Buffer, class Var>
+        void write_type(proto::tags::view_buffer, VarInfo, Buffer & buffer, Var & var) {
+            std::cout << var_type<Var>::name() << " = ";
+            this->print(var);
+            std::cout << " [view_buffer]\n";
+            // TODO
+            buffer.iov_len = 3;
+            this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len;
+            std::cout << "  [size: " << buffer.iov_len << "]\n";
+            if (var_info_is_pkt_size<VarInfo>{}) {
+                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
+            }
+        }
+
+        template<class VarInfo, class Buffer, class Var>
+        void write_type(proto::tags::limited_buffer, VarInfo, Buffer & buffer, Var & var) {
+            std::cout << var_type<Var>::name() << " = ";
+            this->print(var);
+            std::cout << " [limited_buffer]";
+            // TODO
+            auto const previous_len = buffer.iov_len;
+            buffer.iov_len += 3;
+            this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len - previous_len;
+            std::cout << "  [size: " << buffer.iov_len - previous_len << "]\n";
+            if (var_info_is_pkt_size<VarInfo>{}) {
+                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
             }
         }
 
 
         template<class I, class VarInfosByBuffer>
         void write_dynamic_bufs(I, VarInfosByBuffer, Pkts & ... pkts) {
-            using new_list = brigand::find<VarInfosByBuffer, brigand::call<is_dynamic_buffer>>;
+            using new_list = brigand::find<VarInfosByBuffer, brigand::call<var_infos_is_not_dynamic>>;
             using old_size = brigand::size<VarInfosByBuffer>;
             using new_size = brigand::size<new_list>;
             using new_index = brigand::size_t<I::value + (old_size::value - new_size::value)>;
@@ -623,7 +679,7 @@ struct Buferring2
             size += buffer.iov_len;
             std::cout << var_type<Var>::name() << " = ";
             print(var);
-            std::cout << "\n";
+            std::cout << "  [size: " << buffer.iov_len << "]\n";
             f();
         }
 
@@ -685,6 +741,11 @@ struct Buferring2
         template<class T, class tag>
         static void print(proto::var<proto::types::pkt_sz_with_self<T>, tag>)
         { std::cout << "[pkt_sz_with_self]"; }
+
+        static void print_buffer_type(proto::tags::static_buffer) { std::cout << "[static_buffer]"; }
+        static void print_buffer_type(proto::tags::dynamic_buffer) { std::cout << "[dyn_buffer]"; }
+        static void print_buffer_type(proto::tags::view_buffer) { std::cout << "[view_buffer]"; }
+        static void print_buffer_type(proto::tags::limited_buffer) { std::cout << "[limited_buffer]"; }
     };
 
 
@@ -709,6 +770,8 @@ int main() {
         XXX::b = pkt.b,
         XXX::c = pkt.c,
         XXX::d = pkt.d,
+        XXX::e = pkt.c,
+        XXX::f = pkt.d,
 //         XXX::sz,
         XXX::sz2
     );
