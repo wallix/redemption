@@ -512,7 +512,7 @@ parse(T & x, spec_type<U> ty, array_view_const_char value)
 template<class E>
 parse_error parse_enum_u(E & x, array_view_const_char value, unsigned long max)
 {
-    unsigned long xi;
+    unsigned long xi = 0;
     if (parse_error err = detail::parse_integral(xi, value, 0ul, max)) {
         return err;
     }
@@ -541,7 +541,7 @@ parse_error parse_enum_str(
 template<class E>
 parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer_list<E> l)
 {
-    unsigned long xi;
+    unsigned long xi = 0;
     using limits = std::numeric_limits<unsigned long>;
     if (parse_error err = detail::parse_integral(xi, value, limits::min(), limits::max())) {
         return err;

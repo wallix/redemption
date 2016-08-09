@@ -426,11 +426,11 @@ namespace cfg {
             type value = PERSISTENT_PATH;
         };
         // type: bool
-        struct disable_proxy_opt {
+        struct enable_wab_integration {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
-            static constexpr char const * name() { return "disable_proxy_opt"; }
+            static constexpr char const * name() { return "enable_wab_integration"; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2759,7 +2759,7 @@ struct globals
 , cfg::globals::enable_osd
 , cfg::globals::enable_osd_display_remote_target
 , cfg::globals::persistent_path
-, cfg::globals::disable_proxy_opt
+, cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::bogus_refresh_rect
 { static constexpr bool is_section = true; };
