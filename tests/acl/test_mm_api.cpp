@@ -25,9 +25,9 @@
 #define BOOST_TEST_MODULE TestMMAPI
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
 #define LOGNULL
 //#define LOGPRINT
+#include "utils/log.hpp"
 
 //#include "path/to/file.hpp"
 
