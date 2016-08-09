@@ -2011,12 +2011,14 @@ public:
                     case RdpNego::NEGO_STATE_TLS:
                     case RdpNego::NEGO_STATE_RDP:
                     default:
+                        LOG(LOG_INFO, "this->nego.server_event start");
                         this->nego.server_event(
                                 this->server_cert_store,
                                 this->server_cert_check,
                                 this->server_notifier,
                                 this->certif_path.get()
                             );
+                        LOG(LOG_INFO, "this->nego.server_event end");
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         // Basic Settings Exchange
@@ -2063,6 +2065,7 @@ public:
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
                                 }
                                 if (!single_monitor) {
+                                    LOG(LOG_INFO, "not a single_monitor");
                                     cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
                                 }
 
@@ -2079,7 +2082,9 @@ public:
                                 if (this->verbose & 1) {
                                     cs_core.log("Sending to Server");
                                 }
+                                LOG(LOG_INFO, "before cs_core.emit(stream);");
                                 cs_core.emit(stream);
+                                LOG(LOG_INFO, "after cs_core.emit(stream);");
                                 // ------------------------------------------------------------
 
                                 GCC::UserData::CSCluster cs_cluster;
@@ -2267,9 +2272,9 @@ public:
                                 }
 
                                 if (!single_monitor) {
-                                    if (this->verbose & 1) {
+                                    //if (this->verbose & 1) {
                                         this->cs_monitor.log("Sending to server");
-                                    }
+                                    //}
                                     this->cs_monitor.emit(stream);
                                 }
                             },
@@ -2296,13 +2301,19 @@ public:
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
                     }
+
                     {
                         constexpr std::size_t array_size = 65536;
+
                         uint8_t array[array_size];
+
                         uint8_t * end = array;
+
                         X224::RecvFactory f(this->nego.trans, &end, array_size);
                         InStream x224_data(array, end - array);
+
                         X224::DT_TPDU_Recv x224(x224_data);
+
                         MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
                         GCC::Create_Response_Recv gcc_cr(mcs.payload);
                         while (gcc_cr.payload.in_check_rem(4)) {
@@ -2509,14 +2520,12 @@ public:
                                 LOG(LOG_ERR, "unsupported GCC UserData response tag 0x%x", f.tag);
                                 throw Error(ERR_GCC);
                             }
-
                         }
 
                         if (gcc_cr.payload.in_check_rem(1)) {
                             LOG(LOG_ERR, "Error while parsing GCC UserData : short header");
                             throw Error(ERR_GCC);
                         }
-
                     }
 
                     if (this->verbose & (1|16)){
@@ -2585,6 +2594,7 @@ public:
                         write_x224_dt_tpdu_fn{}
                     );
                     this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
+
                     break;
 
                 case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
@@ -3364,7 +3374,6 @@ public:
                                             LOG(LOG_ERR, "Rdp::finalization is early");
                                             throw Error(ERR_SEC);
                                         case WAITING_SYNCHRONIZE:
-                                            std::cout << "WAITING_SYNCHRONIZE" <<  std::endl;
                                             if (this->verbose & 1){
                                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                                             }
@@ -3373,6 +3382,7 @@ public:
                                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
 
                                                 if (sdata.pdutype2 == PDUTYPE2_MONITOR_LAYOUT_PDU) {
+
                                                     MonitorLayoutPDU monitor_layout_pdu;
 
                                                     monitor_layout_pdu.recv(sdata.payload);

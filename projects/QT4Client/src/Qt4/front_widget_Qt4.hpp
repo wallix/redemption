@@ -56,6 +56,7 @@
 
 
 #define KEY_SETTING_PATH "keySetting.config"
+#define LOGINS_PATH "logins.config"
 
 
 
@@ -90,6 +91,7 @@ public:
     QLabel               _labelPerf;
     QLabel               _labelLanguage;
     QLabel               _labelFps;
+    QLabel               _labelScreen;
     QTableWidget       * _tableKeySetting;
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
@@ -121,6 +123,7 @@ public:
         , _labelPerf("Disable wallaper :", this)
         , _labelLanguage("Keyboard Language :", this)
         , _labelFps("Refresh per second :", this)
+        , _labelScreen("Screen :", this)
         , _tableKeySetting(nullptr)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
@@ -143,6 +146,7 @@ public:
         const QString strView("View");
         this->_layoutView = new QFormLayout(this->_viewTab);
 
+
         this->_bppComboBox.addItem("32", 32);
         this->_bppComboBox.addItem("24", 24);
         this->_bppComboBox.addItem("16", 16);
@@ -152,20 +156,20 @@ public:
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
         this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(QLabel ("", this););
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
+
 
         this->_resolutionComboBox.addItem( "640 * 480", 640);
         this->_resolutionComboBox.addItem( "800 * 600", 800);
         this->_resolutionComboBox.addItem("1024 * 768", 1024);
         this->_resolutionComboBox.addItem("1600 * 900", 1600);
-        int indexResolution = this->_resolutionComboBox.findData(this->_front->_info.width);
+        int indexResolution = this->_resolutionComboBox.findData(this->_front->_width);
         if ( indexResolution != -1 ) {
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+
 
         this->_fpsComboBox.addItem("20", 20);
         this->_fpsComboBox.addItem("30", 30);
@@ -177,33 +181,30 @@ public:
             this->_fpsComboBox.setCurrentIndex(indexFps);
         }
         this->_fpsComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelFps), &(this->_fpsComboBox));
 
 
-        for (int i = 1; i <= GCC::UserData::CSMonitor::MAX_MONITOR_COUNT; i++) {
+        for (int i = 1; i <= Front_Qt::MAX_MONITOR_COUNT; i++) {
             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
         }
-
         int indexMonitorCount = this->_monitorCountComboBox.findData(this->_front->_info.cs_monitor.monitorCount);
         if ( indexFps != -1 ) {
             this->_monitorCountComboBox.setCurrentIndex(indexMonitorCount);
         }
         this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
-        //this->_layoutView->addRow(new QLabel("", this));
-        this->_layoutView->addRow(&(this->_labelFps), &(this->_monitorCountComboBox));
-
+        this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
 
 
         if (this->_front->_info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
             this->_perfCheckBox.setCheckState(Qt::Checked);
         }
-        //this->_layoutView->addRow(new QLabel("", this));
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
+
 
         this->_viewTab->setLayout(this->_layoutView);
 
         this->_tabs->addTab(this->_viewTab, strView);
+
 
 
         // Keyboard tab
@@ -371,8 +372,8 @@ public Q_SLOTS:
         std::string delimiter = " * ";
         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
-        this->_front->_info.width  = std::stoi(resolution.substr(0, pos));
-        this->_front->_info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->_front->_width  = std::stoi(resolution.substr(0, pos));
+        this->_front->_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
         this->_front->_fps = this->_fpsComboBox.currentText().toInt();
         if (this->_perfCheckBox.isChecked()) {
             this->_front->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
@@ -382,6 +383,8 @@ public Q_SLOTS:
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
         this->_front->_info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
         this->_front->_monitorCount = this->_front->_info.cs_monitor.monitorCount;
+        this->_front->_info.width   = this->_front->_width; // * this->_front->_monitorCount;
+        this->_front->_info.height  = this->_front->_height;
 
         this->_front->writeClientInfo();
 
@@ -471,10 +474,16 @@ class Form_Qt : public QWidget
 Q_OBJECT
 
 public:
+    enum : int {
+        MAX_ACCOUNT_DATA = 10
+    };
+
     Front_Qt_API       * _front;
     const int            _width;
     const int            _height;
     QFormLayout          _formLayout;
+    QComboBox            _IPCombobox;
+    int                  _accountNB;
     QLineEdit            _IPField;
     QLineEdit            _userNameField;
     QLineEdit            _PWDField;
@@ -484,8 +493,18 @@ public:
     QLabel               _PWDLabel;
     QLabel               _portLabel;
     QLabel               _errorLabel;
+    QCheckBox            _pwdCheckBox;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
+    struct {
+        std::string title;
+        std::string IP;
+        std::string name;
+        std::string pwd;
+        int port;
+    } _accountData[MAX_ACCOUNT_DATA];
+    bool                 _pwdCheckBoxChecked;
+    int                  _lastTargetIndex;
 
 
     Form_Qt(Front_Qt_API * front)
@@ -494,6 +513,8 @@ public:
         , _width(400)
         , _height(300)
         , _formLayout(this)
+        , _IPCombobox(this)
+        , _accountNB(0)
         , _IPField("", this)
         , _userNameField("", this)
         , _PWDField("", this)
@@ -503,19 +524,30 @@ public:
         , _PWDLabel(     QString("Password :  "), this)
         , _portLabel(    QString("Port :      "), this)
         , _errorLabel(   QString(""            ), this)
+        , _pwdCheckBox(QString("Save password."), this)
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
+        , _pwdCheckBoxChecked(false)
+        , _lastTargetIndex(0)
     {
         this->setWindowTitle("Remote Desktop Player");
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
 
+        this->setAccountData();
+        if (this->_pwdCheckBoxChecked) {
+            this->_pwdCheckBox.setCheckState(Qt::Checked);
+        }
+        this->_IPCombobox.setLineEdit(&(this->_IPField));
+        this->QObject::connect(&(this->_IPCombobox), SIGNAL(currentIndexChanged(int)) , this, SLOT(targetPicked(int)));
+
         this->_PWDField.setEchoMode(QLineEdit::Password);
         this->_PWDField.setInputMethodHints(Qt::ImhHiddenText | Qt::ImhNoPredictiveText | Qt::ImhNoAutoUppercase);
-        this->_formLayout.addRow(&(this->_IPLabel)      , &(this->_IPField));
+        this->_formLayout.addRow(&(this->_IPLabel)      , &(this->_IPCombobox));
         this->_formLayout.addRow(&(this->_userNameLabel), &(this->_userNameField));
         this->_formLayout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
         this->_formLayout.addRow(&(this->_portLabel)    , &(this->_portField));
+        this->_formLayout.addRow(&(this->_pwdCheckBox));
         this->_formLayout.addRow(&(this->_errorLabel));
         this->setLayout(&(this->_formLayout));
 
@@ -542,6 +574,69 @@ public:
     }
 
     ~Form_Qt() {}
+
+    void setAccountData() {
+        this->_accountNB = 0;
+        std::ifstream ifichier(LOGINS_PATH, std::ios::in);
+        if (ifichier) {
+            int accountNB(0);
+            std::string ligne;
+            const std::string delimiter = " ";
+
+            while(std::getline(ifichier, ligne)) {
+
+                auto pos(ligne.find(delimiter));
+                std::string tag  = ligne.substr(0, pos);
+                std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+                if (tag.compare(std::string("save_pwd")) == 0) {
+                    if (info.compare(std::string("true")) == 0) {
+                        this->_pwdCheckBoxChecked = true;
+                    } else {
+                        this->_pwdCheckBoxChecked = false;
+                    }
+                } else
+                if (tag.compare(std::string("last_target")) == 0) {
+                    this->_lastTargetIndex = std::stoi(info);
+                } else
+                if (tag.compare(std::string("title")) == 0) {
+                    this->_accountData[accountNB].title = info;
+                } else
+                if (tag.compare(std::string("IP")) == 0) {
+                    this->_accountData[accountNB].IP = info;
+                } else
+                if (tag.compare(std::string("name")) == 0) {
+                    this->_accountData[accountNB].name = info;
+                } else
+                if (tag.compare(std::string("pwd")) == 0) {
+                    this->_accountData[accountNB].pwd = info;
+                } else
+                if (tag.compare(std::string("port")) == 0) {
+                    this->_accountData[accountNB].port = std::stoi(info);
+                    accountNB++;
+                    if (accountNB == MAX_ACCOUNT_DATA) {
+                        this->_accountNB = MAX_ACCOUNT_DATA;
+                        accountNB = 0;
+                    }
+                }
+            }
+
+            if (this->_accountNB < MAX_ACCOUNT_DATA) {
+                this->_accountNB = accountNB;
+            }
+;
+            if (this->_IPCombobox.currentIndex() >= 0) {
+                std::cout << "currentindex=" << this->_IPCombobox.currentIndex() <<  std::endl;
+                this->_IPCombobox.clear();
+            }
+
+            this->_IPCombobox.addItem(QString(""), 0);
+            for (int i = 0; i < this->_accountNB; i++) {
+                std::string title(this->_accountData[i].IP + std::string(" - ")+ this->_accountData[i].name);
+                this->_IPCombobox.addItem(QString(title.c_str()), i+1);
+            }
+        }
+    }
 
     void set_ErrorMsg(std::string str) {
         this->_errorLabel.clear();
@@ -573,7 +668,11 @@ public:
     }
 
     std::string get_IPField() {
-        return this->_IPField.text().toStdString();
+        std::string delimiter(" ");
+        std::string ip_field_content = this->_IPField.text().toStdString();
+        auto pos(ip_field_content.find(delimiter));
+        std::string IP  = ip_field_content.substr(0, pos);
+        return IP;
     }
 
     std::string get_userNameField() {
@@ -590,12 +689,82 @@ public:
 
 
 private Q_SLOTS:
+    void targetPicked(int index) {
+        if (index == 0) {
+            this->_IPField.clear();
+            this->_userNameField.clear();
+            this->_PWDField.clear();
+            this->_portField.clear();
+
+        } else {
+            index--;
+            this->set_IPField(this->_accountData[index].IP);
+            this->set_userNameField(this->_accountData[index].name);
+            this->set_PWDField(this->_accountData[index].pwd);
+            this->set_portField(this->_accountData[index].port);
+        }
+    }
+
     void connexionPressed() {
         this->_front->connexionPressed();
     }
 
     void connexionReleased() {
-        this->_front->connexionReleased();
+
+        if (this->_front->connexionReleased()) {
+            bool alreadySet = false;
+            this->_pwdCheckBoxChecked = this->_pwdCheckBox.isChecked();
+
+            std::string title(this->get_IPField() + std::string(" - ")+ this->get_userNameField());
+
+            for (int i = 0; i < this->_accountNB; i++) {
+
+                if (this->_accountData[i].title.compare(title) == 0) {
+                    alreadySet = true;
+                    this->_lastTargetIndex = i;
+                    this->_accountData[i].pwd  = this->get_PWDField();
+                    this->_accountData[i].port = this->get_portField();
+                }
+            }
+            if (!alreadySet) {
+                this->_accountData[this->_accountNB].title = title;
+                this->_accountData[this->_accountNB].IP    = this->get_IPField();
+                this->_accountData[this->_accountNB].name  = this->get_userNameField();
+                this->_accountData[this->_accountNB].pwd   = this->get_PWDField();
+                this->_accountData[this->_accountNB].port  = this->get_portField();
+                this->_accountNB++;
+                this->_lastTargetIndex = this->_accountNB;
+                if (this->_accountNB > MAX_ACCOUNT_DATA) {
+                    this->_accountNB = MAX_ACCOUNT_DATA;
+                }
+            }
+
+            std::ofstream ofichier(LOGINS_PATH, std::ios::out | std::ios::trunc);
+            if(ofichier) {
+
+                if (this->_pwdCheckBoxChecked) {
+                    ofichier << "save_pwd true" << "\n";
+                } else {
+                    ofichier << "save_pwd false" << "\n";
+                }
+                ofichier << "last_target " <<  this->_lastTargetIndex << "\n";
+
+                ofichier << "\n";
+
+                for (int i = 0; i < this->_accountNB; i++) {
+                    ofichier << "title " << this->_accountData[i].title << "\n";
+                    ofichier << "IP "    << this->_accountData[i].IP    << "\n";
+                    ofichier << "name "  << this->_accountData[i].name  << "\n";
+                    if (this->_pwdCheckBoxChecked) {
+                        ofichier << "pwd " << this->_accountData[i].pwd << "\n";
+                    } else {
+                        ofichier << "pwd " << "\n";
+                    }
+                    ofichier << "port " << this->_accountData[i].port << "\n";
+                    ofichier << "\n";
+                }
+            }
+        }
     }
 
     void optionsPressed() {}
@@ -631,25 +800,26 @@ public:
 
 
     Screen_Qt (Front_Qt_API * front, int screen_index)
-    : QWidget()
-    , _front(front)
-    , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
-    , _buttonRefresh("Refresh", this)
-    , _buttonDisconnexion("Disconnection", this)
-    , _penColor(Qt::black)
-    , _cache(front->getMainScreen()->_cache)
-    //, _cache_painter(&(this->_cache))
-    , _width(this->_front->_info.width)
-    , _height(this->_front->_info.height)
-    , _connexionLasted(false)
-    , _buttonHeight(20)
-    , _timer(this)
-    , _screen_index(screen_index)
+        : QWidget()
+        , _front(front)
+        , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
+        , _buttonRefresh("Refresh", this)
+        , _buttonDisconnexion("Disconnection", this)
+        , _penColor(Qt::black)
+        , _cache(front->getMainScreen()->_cache)
+        //, _cache_painter(&(this->_cache))
+        , _width(this->_front->_width)
+        , _height(this->_front->_height)
+        , _connexionLasted(false)
+        , _buttonHeight(20)
+        , _timer(this)
+        , _screen_index(screen_index)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
-        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
+        std::string screen_index_str = std::to_string(int(this->_screen_index));
+        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "]. " + screen_index_str;
         this->setWindowTitle(QString(title.c_str()));
 
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
@@ -692,29 +862,28 @@ public:
 
 
     Screen_Qt (Front_Qt_API * front)
-    : QWidget()
-    , _front(front)
-    , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
-    , _buttonRefresh("Refresh", this)
-    , _buttonDisconnexion("Disconnection", this)
-    , _penColor(Qt::black)
-    , _cache(new QPixmap(this->_front->_info.width, this->_front->_info.height))
-    , _cache_painter(this->_cache)
-    , _width(this->_front->_info.width)
-    , _height(this->_front->_info.height)
-    , _connexionLasted(false)
-    , _buttonHeight(20)
-    , _timer(this)
-    , _screen_index(0)
+        : QWidget()
+        , _front(front)
+        , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
+        , _buttonRefresh("Refresh", this)
+        , _buttonDisconnexion("Disconnection", this)
+        , _penColor(Qt::black)
+        , _cache(new QPixmap(this->_front->_info.width*front->_monitorCount, this->_front->_info.height))
+        , _cache_painter(this->_cache)
+        , _width(this->_front->_width)
+        , _height(this->_front->_height)
+        , _connexionLasted(false)
+        , _buttonHeight(20)
+        , _timer(this)
+        , _screen_index(0)
     {
-
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str()));
 
-        this->_cache_painter.fillRect(0, 0, this->_width, this->_height, QColor(0, 0, 0, 0));
+        this->_cache_painter.fillRect(0, 0, this->_width * this->_front->_monitorCount, this->_height, QColor(127, 127, 127, 0));
 
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
 
@@ -777,7 +946,7 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(0, 0, *(this->_cache));
+        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_width * this->_screen_index, 0, this->_width, this->_height));
         painter.end();
     }
 
@@ -792,11 +961,11 @@ public:
 
 private:
     void mousePressEvent(QMouseEvent *e) {
-        this->_front->mousePressEvent(e);
+        this->_front->mousePressEvent(e, this->_screen_index);
     }
 
     void mouseReleaseEvent(QMouseEvent *e) {
-        this->_front->mouseReleaseEvent(e);
+        this->_front->mouseReleaseEvent(e, this->_screen_index);
     }
 
     void keyPressEvent(QKeyEvent *e) {
@@ -812,7 +981,7 @@ private:
     }
 
     bool eventFilter(QObject *obj, QEvent *e) {
-        this->_front->eventFilter(obj, e);
+        this->_front->eventFilter(obj, e, this->_screen_index);
         return false;
     }
 
@@ -863,23 +1032,27 @@ class Connector_Qt : public QObject
 Q_OBJECT
 
 public:
-    Front_Qt        * _front;
-    QSocketNotifier * _sckRead;
-    mod_api         * _callback;
-    SocketTransport * _sck;
-    int               _client_sck;
-    QClipboard      * _clipboard;
-    bool              _local_clipboard_stream;
-    size_t            _length;
-    uint8_t         * _chunk;
-    QImage          * _bufferImage;
-    uint16_t          _bufferTypeID;
-    std::string       _bufferTypeLongName;
-    int               _cItems;
-    uint64_t          _itemsSizeList[Front_Qt::LIST_FILES_MAX_SIZE];
-    std::string       _itemsNameList[Front_Qt::LIST_FILES_MAX_SIZE];
-    uint8_t         * _files_chunk[Front_Qt::LIST_FILES_MAX_SIZE];
-    TimeSystem        _timeSystem;
+
+    Front_Qt                  * _front;
+    QSocketNotifier           * _sckRead;
+    mod_rdp                   * _callback;
+    SocketTransport           * _sck;
+    int                         _client_sck;
+    QClipboard                * _clipboard;
+    bool                        _local_clipboard_stream;
+    size_t                      _length;
+    std::unique_ptr<uint8_t[]>  _chunk;
+    QImage                    * _bufferImage;
+    uint16_t                    _bufferTypeID;
+    std::string                 _bufferTypeLongName;
+    int                         _cItems;
+    TimeSystem                  _timeSystem;
+
+    struct {
+        uint64_t                   sizes[Front_Qt::LIST_FILES_MAX_SIZE];
+        std::string                names[Front_Qt::LIST_FILES_MAX_SIZE];
+        std::unique_ptr<uint8_t[]> chunk[Front_Qt::LIST_FILES_MAX_SIZE];
+    } _files_list;
 
 
     Connector_Qt(Front_Qt * front, QWidget * parent)
@@ -892,7 +1065,6 @@ public:
     , _clipboard(nullptr)
     , _local_clipboard_stream(true)
     , _length(0)
-    , _chunk(nullptr)
     , _bufferImage(nullptr)
     , _bufferTypeID(0)
     , _bufferTypeLongName("")
@@ -910,7 +1082,7 @@ public:
         this->emptyBuffer();
 
         if (this->_callback != nullptr) {
-            this->_callback->disconnect();
+            static_cast<mod_api*>(this->_callback)->disconnect();
             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->_callback = nullptr;
@@ -949,15 +1121,15 @@ public:
                 return true;
 
             } catch (const std::exception & e) {
-                std::string windowErrorMsg("<font color='Red'>"+errorMsg+" Socket error.</font>");
+                std::string windowErrorMsg(errorMsg+" Socket error.");
                 std::cout << windowErrorMsg << std::endl;
-                this->_front->disconnect(windowErrorMsg);
+                this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
                 return false;
             }
         } else {
-            std::string windowErrorMsg("<font color='Red'>"+errorMsg+" IP connection error("+std::to_string(this->_client_sck)+").</font>");
+            std::string windowErrorMsg(errorMsg+" ip_connect error.");
             std::cout << windowErrorMsg << std::endl;
-            this->_front->disconnect(windowErrorMsg);
+            this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
             return false;
         }
     }
@@ -969,14 +1141,15 @@ public:
         const char * localIP(this->_front->_localIP.c_str());
 
         Inifile ini;
+        ini.set<cfg::debug::rdp>(0xffffffff);
 
         ModRDPParams mod_rdp_params( name
-                                    , pwd
-                                    , targetIP
-                                    , localIP
-                                    , 2
-                                    , 0
-                                    );
+                                   , pwd
+                                   , targetIP
+                                   , localIP
+                                   , 2
+                                   , 0
+                                   );
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = false;
         mod_rdp_params.enable_nla                      = false;
@@ -987,6 +1160,9 @@ public:
         mod_rdp_params.server_redirection_support      = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
+        //mod_rdp_params.allow_using_multiple_monitors   = true;
+        //mod_rdp_params.bogus_refresh_rect              = true;
+        mod_rdp_params.verbose = 0xffffffff;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -1040,18 +1216,9 @@ public:
         this->_clipboard->setImage(image, QClipboard::Clipboard);
     }
 
-    void setClipboard() {           // Paste file to client
-        //const QMimeData * mimeData = this->_clipboard->mimeData();
-        //mimeData->setUrls(urls);
-    }
-
     void emptyBuffer() {
         this->_bufferTypeID = 0;
         this->_length = 0;
-        if (this->_chunk != nullptr) {
-            delete (this->_chunk);
-            this->_chunk = nullptr;
-        }
     }
 
     void send_FormatListPDU(bool isLong) {
@@ -1077,24 +1244,30 @@ public Q_SLOTS:
                 this->_bufferTypeLongName = "";
                 this->_bufferImage = new QImage(this->_clipboard->image());
                 this->_length = this->_bufferImage->byteCount();
+                uint8_t * image_data = this->_bufferImage->bits();
+                this->_chunk = std::make_unique<uint8_t[]>(this->_length);
+                for (uint32_t i = 0; i < this->_length; i++) {
+                    this->_chunk[i] = image_data[i];
+                }
 
                 this->send_FormatListPDU(false);
 
 
             } else if (mimeData->hasText()){
                 this->emptyBuffer();
-                for (int i = 0; i < Front_Qt::LIST_FILES_MAX_SIZE; i++) {
-                    this->_itemsSizeList[i] = 0;
-                    this->_itemsNameList[i] = "";
-                }
+
                 std::string str(std::string(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData()) + std::string(" "));
 
                 if (str.at(0) == '/') {
                     //std::ifstream iFile(str, std::ios::in);
                     //if (iFile) {
                         //std::cout << "has file" <<  std::endl;
-                    this->_bufferTypeID = Front_Qt::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;                    //49279;
-                    this->_bufferTypeLongName = this->_front->FILEGROUPDESCRIPTORW;
+                    for (int i = 0; i < Front_Qt::LIST_FILES_MAX_SIZE; i++) {
+                        this->_files_list.sizes[i] = 0;
+                        this->_files_list.names[i] = "";
+                    }
+                    this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
 
                     std::string delimiter = "\n";
                     int i = 0;
@@ -1126,9 +1299,9 @@ public Q_SLOTS:
                             iFile.seekg (0, std::ios::end);
                             end = iFile.tellg();
                             uint64_t size(end-begin);
-                            this->_itemsSizeList[i] = size;
-                            this->_files_chunk[i] = new uint8_t[this->_itemsSizeList[i]];
-                            iFile.read(reinterpret_cast<char *>(this->_files_chunk[i]), size);
+                            this->_files_list.sizes[i] = size;
+                            this->_files_list.chunk[i] = std::make_unique<uint8_t[]>(this->_files_list.sizes[i]);
+                            iFile.read(reinterpret_cast<char *>(this->_files_list.chunk[i].get()), size);
                             iFile.close();
                         }
 
@@ -1147,7 +1320,7 @@ public Q_SLOTS:
                         }
                         uint8_t UTF16nameData[520];
                         int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(name.c_str()), UTF16nameData, UTF8nameSize);
-                        this->_itemsNameList[i] = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+                        this->_files_list.names[i] = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
 
                         i++;
                         if (i >= Front_Qt::LIST_FILES_MAX_SIZE) {
@@ -1177,8 +1350,9 @@ public Q_SLOTS:
 
                     size_t size((str.length() + cmptCR*2) * 4);
 
-                    this->_chunk  = new uint8_t[size];
-                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk, size);  // UTF8toUTF16_CrLf for linux install
+                    this->_chunk  = std::make_unique<uint8_t[]>(size);
+                    // UTF8toUTF16_CrLf for linux install
+                    this->_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
 
                     this->send_FormatListPDU(false);
 
