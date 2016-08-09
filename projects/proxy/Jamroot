@@ -1064,7 +1064,7 @@ lib sashimi :
 ##
 
 unit-test test_buffer :
-    $(SRCDIR)/sashimi/tests/buffer.cpp
+    $(TESTDIR)/sashimi/test_buffer.cpp
     sashimi_error
     libboost_unit_test
     :
@@ -1072,7 +1072,7 @@ unit-test test_buffer :
     ;
 
 unit-test test_crypto :
-    $(SRCDIR)/sashimi/tests/test_crypto.cpp
+    $(TESTDIR)/sashimi/test_crypto.cpp
     sashimi_error
     crypto
     libboost_unit_test
