@@ -1995,12 +1995,14 @@ public:
                     case RdpNego::NEGO_STATE_TLS:
                     case RdpNego::NEGO_STATE_RDP:
                     default:
+                        LOG(LOG_INFO, "this->nego.server_event start");
                         this->nego.server_event(
                                 this->server_cert_store,
                                 this->server_cert_check,
                                 this->server_notifier,
                                 this->certif_path.get()
                             );
+                        LOG(LOG_INFO, "this->nego.server_event end");
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         // Basic Settings Exchange

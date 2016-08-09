@@ -153,13 +153,14 @@ public:
     , _qtRDPKeymap()
     , _fps(30)
     , _monitorCount(1)
+
     {
         this->_to_client_sender._front = this;
     }
 
     virtual Screen_Qt * getMainScreen() = 0;
     virtual void connexionPressed() = 0;
-    virtual void connexionReleased() = 0;
+    virtual bool connexionReleased() = 0;
     virtual void closeFromScreen(int screen_index) = 0;
     virtual void RefreshPressed() = 0;
     virtual void RefreshReleased() = 0;
@@ -214,16 +215,7 @@ public:
 
     enum : int {
         LIST_FILES_MAX_SIZE = 5
-    };
-
-    enum : uint16_t {
-        CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-      , CF_QT_CLIENT_FILECONTENTS         = 48026
-    };
-
-    enum : int {
-        MAX_MONITOR_COUNT        = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
-      , CLIPBRD_FORMAT_COUNT     = 4
+      , MAX_MONITOR_COUNT   = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
 
@@ -237,6 +229,7 @@ public:
     Connector_Qt       * _connector;
     int                  _timer;
     bool                 _connected;
+    bool                 _monitorCountNegociated;
     ClipboardVirtualChannel  _clipboard_channel;
 
     // Keyboard Controllers members
@@ -255,32 +248,44 @@ public:
     int                         _bufferRDPCLipboardMetaFilePic_width;
     int                         _bufferRDPCLipboardMetaFilePic_height;
     int                         _bufferRDPClipboardMetaFilePicBPP;
-
-    struct {
-        uint32_t    IDs[CLIPBRD_FORMAT_COUNT];
-        std::string names[CLIPBRD_FORMAT_COUNT];
+    struct Clipbrd_formats_list{
+        enum : uint16_t {
+              CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+            , CF_QT_CLIENT_FILECONTENTS         = 48026
+        };
+        enum : int {
+              CLIPBRD_FORMAT_COUNT = 4
+        };
+        const std::string FILECONTENTS;
+        const std::string FILEGROUPDESCRIPTORW;
+        uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
+        std::string       names[CLIPBRD_FORMAT_COUNT];
         int index = 0;
 
-        void add_format(uint32_t ID, std::string name) {
+        Clipbrd_formats_list()
+          : FILECONTENTS(
+              "F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0"
+            , 26)
+          , FILEGROUPDESCRIPTORW(
+              "F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0"
+            , 42)
+        {}
+
+        void add_format(uint32_t ID, const std::string & name) {
             if (index < CLIPBRD_FORMAT_COUNT) {
                 IDs[index]   = ID;
                 names[index] = name;
                 index++;
             }
         }
-    } _clipbrd_formats_list;
-
-
-    // copy/paste files
-    const std::string    FILECONTENTS;
-    const std::string    FILEGROUPDESCRIPTORW;
-    int                  _cItems;
-    int                  _streamID;
+    }                           _clipbrd_formats_list;
+    int                         _cItems;
+    int                         _streamID;
     struct {
         int         size;
         std::string name;
 
-    } _items_list[LIST_FILES_MAX_SIZE];
+    }                           _items_list[LIST_FILES_MAX_SIZE];
 
 
 
@@ -326,6 +331,7 @@ public:
     void show_out_stream(int flags, OutStream & chunk);
 
     Screen_Qt * getMainScreen();
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -434,7 +440,7 @@ public:
 
     void connexionPressed() override;
 
-    void connexionReleased() override;
+    bool connexionReleased() override;
 
     void RefreshPressed() override;
 
@@ -454,7 +460,7 @@ public:
 
     void send_rdp_scanCode(int keyCode, int flag);
 
-    void connect();
+    bool connect();
 
     void disconnect( std::string const &) override;
 

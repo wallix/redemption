@@ -20,7 +20,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 
-#define LOGPRINT
+//#define LOGPRINT
 
 #include <string>
 #include <unistd.h>
@@ -44,6 +44,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _connector(nullptr)
     , _timer(0)
     , _connected(false)
+    , _monitorCountNegociated(false)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
         ClipboardVirtualChannel::Params params;
 
@@ -67,8 +68,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _bufferRDPClipboardChannelSizeTotal(0)
     , _bufferRDPCLipboardMetaFilePic_width(0)
     , _bufferRDPCLipboardMetaFilePic_height(0)
-    , FILECONTENTS("F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0", 26)
-    , FILEGROUPDESCRIPTORW("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42)
+    , _clipbrd_formats_list()
     , _cItems(0)
     , _streamID(0)
 {
@@ -105,11 +105,10 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         }
     }
 
-
     for (int i = 0; i < this->_monitorCount; i++) {
         this->_info.cs_monitor.monitorDefArray[i].left   = this->_width * i ;
         this->_info.cs_monitor.monitorDefArray[i].top    = 0;
-        this->_info.cs_monitor.monitorDefArray[i].right  = this->_width * (i + 1) - 1;
+        this->_info.cs_monitor.monitorDefArray[i].right  = (this->_width * (i + 1)) - 1;
         this->_info.cs_monitor.monitorDefArray[i].bottom = this->_height - 1;
         this->_info.cs_monitor.monitorDefArray[i].flags  = 0;
     }
@@ -125,7 +124,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     this->_clipbrd_formats_list.add_format(RDPECLIP::CF_UNICODETEXT         , ""                        );
     this->_clipbrd_formats_list.add_format(RDPECLIP::CF_TEXT                , ""                        );
     this->_clipbrd_formats_list.add_format(RDPECLIP::CF_METAFILEPICT        , ""                        );
-    this->_clipbrd_formats_list.add_format(CF_QT_CLIENT_FILEGROUPDESCRIPTORW, this->FILEGROUPDESCRIPTORW);
+    this->_clipbrd_formats_list.add_format(Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW);
 
     this->_to_client_sender._channel = channel;
     this->_cl.push_back(channel);
@@ -146,7 +145,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         this->connect();
 
     } else {
-        std::cout << "missing argument(s) (" << static_cast<int>(commandIsValid) << "): ";
+        std::cout << "Argument(s) requied to connect: ";
         if (!(commandIsValid & Front_Qt::NAME_GOTTEN)) {
             std::cout << "-n [user_name] ";
         }
@@ -225,7 +224,7 @@ bool Front_Qt::setClientInfo() {
             }
         }
 
-        this->_info.width  = this->_width;                  //  * this->_monitorCount;
+        this->_info.width  = this->_width * this->_monitorCount;
         this->_info.height = this->_height;
 
         ifichier.close();
@@ -239,7 +238,7 @@ bool Front_Qt::setClientInfo() {
 
     } else {
 
-        this->_info.width  = this->_width  * this->_monitorCount;
+        this->_info.width  = this->_width * this->_monitorCount;
         this->_info.height = this->_height;
 
         return true;
@@ -293,7 +292,7 @@ void Front_Qt::disconnexionReleased(){
 }
 
 void Front_Qt::dropScreen() {
-    for (auto screen : this->_screen) {                     //int i = 0; i < this->_monitorCount; i++) {
+    for (auto screen : this->_screen) {
         if (screen != nullptr) {
             screen->errorConnexion();
             screen->close();
@@ -318,7 +317,7 @@ void Front_Qt::closeFromScreen(int screen_index) {
     }
 }
 
-void Front_Qt::connect() {
+bool Front_Qt::connect() {
     if (this->_connector->connect()) {
         this->_connected = true;
         this->_form->hide();
@@ -326,16 +325,29 @@ void Front_Qt::connect() {
         this->_screen[0] = new Screen_Qt(this);
         this->_screen[0]->show();
 
-        this->_connector->listen();
-    }
-}
+        if (!this->_monitorCountNegociated) {
+            for (int i = this->_monitorCount - 1; i >= 1; i--) {
+                this->_screen[i] = new Screen_Qt(this, i);
+                this->_screen[i]->show();
+            }
+            this->_screen[0]->activateWindow();
+            this->_monitorCountNegociated = true;
+        }
 
+        this->_connector->listen();
+
+        return true;
+    }
+
+    return false;
+}
 
 void Front_Qt::disconnect(std::string const & error) {
 
     if (this->_connector != nullptr) {
         this->_connector->drop_connexion();
     }
+    this->_monitorCountNegociated = false;
 
     this->_form->set_IPField(this->_targetIP);
     this->_form->set_portField(this->_port);
@@ -347,17 +359,20 @@ void Front_Qt::disconnect(std::string const & error) {
     this->_connected = false;
 }
 
-void Front_Qt::connexionReleased(){
+bool Front_Qt::connexionReleased(){
     this->_form->setCursor(Qt::WaitCursor);
     this->_userName =  this->_form->get_userNameField();
     this->_targetIP =  this->_form->get_IPField();
     this->_pwd      =  this->_form->get_PWDField();
     this->_port     =  this->_form->get_portField();
 
+    bool res(false);
     if (!this->_targetIP.empty()){
-        this->connect();
+        res = this->connect();
     }
     this->_form->setCursor(Qt::ArrowCursor);
+
+    return res;
 }
 
 void Front_Qt::mousePressEvent(QMouseEvent *e, int screen_index) {
@@ -1306,7 +1321,7 @@ void Front_Qt::draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCac
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "RDPGlyphIndex" << gly_cache.glyphs << std::endl;
+    std::cout << "RDPGlyphIndex " << gly_cache.glyphs << std::endl;
 
     /* RDPGlyphIndex new_cmd24 = cmd;
     new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
@@ -1554,27 +1569,33 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     this->_monitorCount = this->_info.cs_monitor.monitorCount;
 
                     std::cout << "cs_monitor count negociated. MonitorCount=" << this->_monitorCount << std::endl;
+                    std::cout << "width=" <<  this->_info.width <<  " " << "height=" << this->_info.height <<  std::endl;
 
-                    for (int i = this->_monitorCount - 1; i >= 1; i--) {
-                        this->_screen[i] = new Screen_Qt(this, i);
-                        this->_screen[i]->show();
-                    }
-                    this->_screen[0]->activateWindow();
+                    /*this->_info.width  = (this->_width * this->_monitorCount);
 
+                    if (!this->_monitorCountNegociated) {
+                        for (int i = this->_monitorCount - 1; i >= 1; i--) {
+                            this->_screen[i] = new Screen_Qt(this, i);
+                            this->_screen[i]->show();
+                        }
+                        this->_screen[0]->activateWindow();
+                        this->_monitorCountNegociated = true;
+
+                    }*/
                 }
-
                 {
+
                     RDPECLIP::FormatListPDU format_list_pdu;
                     StaticOutStream<1024> out_stream;
-                    format_list_pdu.emit_long(out_stream, this->_clipbrd_formats_list.IDs, this->_clipbrd_formats_list.names, CLIPBRD_FORMAT_COUNT);;
+                    format_list_pdu.emit_long(out_stream, this->_clipbrd_formats_list.IDs, this->_clipbrd_formats_list.names, Clipbrd_formats_list::CLIPBRD_FORMAT_COUNT);;
                     const uint32_t total_length      = out_stream.get_offset();
                     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
                     this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                                                chunk,
-                                                                                total_length,
-                                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                            );
+                                                         chunk,
+                                                         total_length,
+                                                         CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                        );
                     std::cout << "client >> Format List PDU" << std::endl;
                 }
 
@@ -1636,7 +1657,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), k*2);
                         std::cout << " Format ID = " << formatID << ", name = \"" << this->_requestedFormatName << "\"";
 
-                        for (int j = 0; j < CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
+                        for (int j = 0; j < Clipbrd_formats_list::CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
                             if (this->_clipbrd_formats_list.IDs[j] == formatID) {
                                 this->_requestedFormatId = formatID;
                                 isSharedFormat = true;
@@ -1645,7 +1666,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             }
                         }
 
-                        if (this->_requestedFormatName == this->FILEGROUPDESCRIPTORW && !isSharedFormat) {
+                        if (this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW && !isSharedFormat) {
                             this->_requestedFormatId = formatID;
                             isSharedFormat = true;
                             std::cout <<  " pick!";
@@ -1696,8 +1717,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             "Format Data Response PDU");
                 }
 
-                if(this->_requestedFormatName == this->FILEGROUPDESCRIPTORW) {
-                    this->_requestedFormatId = CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                if(this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW) {
+                    this->_requestedFormatId = Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                 }
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -1766,7 +1787,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         }
                         break;
 
-                        case CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+                        case Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
                         {
                             time_t  timev;
                             time(&timev);
@@ -1815,8 +1836,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     }
                 }
 
-                if(this->_requestedFormatName == this->FILEGROUPDESCRIPTORW) {
-                    this->_requestedFormatId = CF_QT_CLIENT_FILECONTENTS;
+                if(this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW) {
+                    this->_requestedFormatId = Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS;
                     this->process_server_clipboard_data(flags, chunk);
                 }
 
@@ -1946,7 +1967,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
             }
         break;
 
-        case CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+        case Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->_bufferRDPClipboardChannelSizeTotal -= 4;
@@ -1989,7 +2010,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
             }
         break;
 
-        case CF_QT_CLIENT_FILECONTENTS:
+        case Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->_bufferRDPClipboardChannelSizeTotal -= 4;
@@ -2347,6 +2368,8 @@ int main(int argc, char** argv){
 
     // sudo python ./sesman/sesmanlink/WABRDPAuthentifier
 
+    // sudo nano /etc/rdpproxy/rdpproxy.ini
+
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
     //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd "$testmdp" -ip 10.10.46.88 -p 3389
@@ -2359,6 +2382,9 @@ int main(int argc, char** argv){
 
 
     app.exec();
+
+    //  xfreerdp /u:x /p: /port:3389 /v:10.10.43.46 /multimon /monitors:2
+
 
 }
 

@@ -56,6 +56,7 @@
 
 
 #define KEY_SETTING_PATH "keySetting.config"
+#define LOGINS_PATH "logins.config"
 
 
 
@@ -473,10 +474,16 @@ class Form_Qt : public QWidget
 Q_OBJECT
 
 public:
+    enum : int {
+        MAX_ACCOUNT_DATA = 10
+    };
+
     Front_Qt_API       * _front;
     const int            _width;
     const int            _height;
     QFormLayout          _formLayout;
+    QComboBox            _IPCombobox;
+    int                  _accountNB;
     QLineEdit            _IPField;
     QLineEdit            _userNameField;
     QLineEdit            _PWDField;
@@ -486,8 +493,18 @@ public:
     QLabel               _PWDLabel;
     QLabel               _portLabel;
     QLabel               _errorLabel;
+    QCheckBox            _pwdCheckBox;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
+    struct {
+        std::string title;
+        std::string IP;
+        std::string name;
+        std::string pwd;
+        int port;
+    } _accountData[MAX_ACCOUNT_DATA];
+    bool                 _pwdCheckBoxChecked;
+    int                  _lastTargetIndex;
 
 
     Form_Qt(Front_Qt_API * front)
@@ -496,6 +513,8 @@ public:
         , _width(400)
         , _height(300)
         , _formLayout(this)
+        , _IPCombobox(this)
+        , _accountNB(0)
         , _IPField("", this)
         , _userNameField("", this)
         , _PWDField("", this)
@@ -505,19 +524,30 @@ public:
         , _PWDLabel(     QString("Password :  "), this)
         , _portLabel(    QString("Port :      "), this)
         , _errorLabel(   QString(""            ), this)
+        , _pwdCheckBox(QString("Save password."), this)
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
+        , _pwdCheckBoxChecked(false)
+        , _lastTargetIndex(0)
     {
         this->setWindowTitle("Remote Desktop Player");
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
 
+        this->setAccountData();
+        if (this->_pwdCheckBoxChecked) {
+            this->_pwdCheckBox.setCheckState(Qt::Checked);
+        }
+        this->_IPCombobox.setLineEdit(&(this->_IPField));
+        this->QObject::connect(&(this->_IPCombobox), SIGNAL(currentIndexChanged(int)) , this, SLOT(targetPicked(int)));
+
         this->_PWDField.setEchoMode(QLineEdit::Password);
         this->_PWDField.setInputMethodHints(Qt::ImhHiddenText | Qt::ImhNoPredictiveText | Qt::ImhNoAutoUppercase);
-        this->_formLayout.addRow(&(this->_IPLabel)      , &(this->_IPField));
+        this->_formLayout.addRow(&(this->_IPLabel)      , &(this->_IPCombobox));
         this->_formLayout.addRow(&(this->_userNameLabel), &(this->_userNameField));
         this->_formLayout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
         this->_formLayout.addRow(&(this->_portLabel)    , &(this->_portField));
+        this->_formLayout.addRow(&(this->_pwdCheckBox));
         this->_formLayout.addRow(&(this->_errorLabel));
         this->setLayout(&(this->_formLayout));
 
@@ -544,6 +574,69 @@ public:
     }
 
     ~Form_Qt() {}
+
+    void setAccountData() {
+        this->_accountNB = 0;
+        std::ifstream ifichier(LOGINS_PATH, std::ios::in);
+        if (ifichier) {
+            int accountNB(0);
+            std::string ligne;
+            const std::string delimiter = " ";
+
+            while(std::getline(ifichier, ligne)) {
+
+                auto pos(ligne.find(delimiter));
+                std::string tag  = ligne.substr(0, pos);
+                std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+                if (tag.compare(std::string("save_pwd")) == 0) {
+                    if (info.compare(std::string("true")) == 0) {
+                        this->_pwdCheckBoxChecked = true;
+                    } else {
+                        this->_pwdCheckBoxChecked = false;
+                    }
+                } else
+                if (tag.compare(std::string("last_target")) == 0) {
+                    this->_lastTargetIndex = std::stoi(info);
+                } else
+                if (tag.compare(std::string("title")) == 0) {
+                    this->_accountData[accountNB].title = info;
+                } else
+                if (tag.compare(std::string("IP")) == 0) {
+                    this->_accountData[accountNB].IP = info;
+                } else
+                if (tag.compare(std::string("name")) == 0) {
+                    this->_accountData[accountNB].name = info;
+                } else
+                if (tag.compare(std::string("pwd")) == 0) {
+                    this->_accountData[accountNB].pwd = info;
+                } else
+                if (tag.compare(std::string("port")) == 0) {
+                    this->_accountData[accountNB].port = std::stoi(info);
+                    accountNB++;
+                    if (accountNB == MAX_ACCOUNT_DATA) {
+                        this->_accountNB = MAX_ACCOUNT_DATA;
+                        accountNB = 0;
+                    }
+                }
+            }
+
+            if (this->_accountNB < MAX_ACCOUNT_DATA) {
+                this->_accountNB = accountNB;
+            }
+;
+            if (this->_IPCombobox.currentIndex() >= 0) {
+                std::cout << "currentindex=" << this->_IPCombobox.currentIndex() <<  std::endl;
+                this->_IPCombobox.clear();
+            }
+
+            this->_IPCombobox.addItem(QString(""), 0);
+            for (int i = 0; i < this->_accountNB; i++) {
+                std::string title(this->_accountData[i].IP + std::string(" - ")+ this->_accountData[i].name);
+                this->_IPCombobox.addItem(QString(title.c_str()), i+1);
+            }
+        }
+    }
 
     void set_ErrorMsg(std::string str) {
         this->_errorLabel.clear();
@@ -575,7 +668,11 @@ public:
     }
 
     std::string get_IPField() {
-        return this->_IPField.text().toStdString();
+        std::string delimiter(" ");
+        std::string ip_field_content = this->_IPField.text().toStdString();
+        auto pos(ip_field_content.find(delimiter));
+        std::string IP  = ip_field_content.substr(0, pos);
+        return IP;
     }
 
     std::string get_userNameField() {
@@ -592,12 +689,82 @@ public:
 
 
 private Q_SLOTS:
+    void targetPicked(int index) {
+        if (index == 0) {
+            this->_IPField.clear();
+            this->_userNameField.clear();
+            this->_PWDField.clear();
+            this->_portField.clear();
+
+        } else {
+            index--;
+            this->set_IPField(this->_accountData[index].IP);
+            this->set_userNameField(this->_accountData[index].name);
+            this->set_PWDField(this->_accountData[index].pwd);
+            this->set_portField(this->_accountData[index].port);
+        }
+    }
+
     void connexionPressed() {
         this->_front->connexionPressed();
     }
 
     void connexionReleased() {
-        this->_front->connexionReleased();
+
+        if (this->_front->connexionReleased()) {
+            bool alreadySet = false;
+            this->_pwdCheckBoxChecked = this->_pwdCheckBox.isChecked();
+
+            std::string title(this->get_IPField() + std::string(" - ")+ this->get_userNameField());
+
+            for (int i = 0; i < this->_accountNB; i++) {
+
+                if (this->_accountData[i].title.compare(title) == 0) {
+                    alreadySet = true;
+                    this->_lastTargetIndex = i;
+                    this->_accountData[i].pwd  = this->get_PWDField();
+                    this->_accountData[i].port = this->get_portField();
+                }
+            }
+            if (!alreadySet) {
+                this->_accountData[this->_accountNB].title = title;
+                this->_accountData[this->_accountNB].IP    = this->get_IPField();
+                this->_accountData[this->_accountNB].name  = this->get_userNameField();
+                this->_accountData[this->_accountNB].pwd   = this->get_PWDField();
+                this->_accountData[this->_accountNB].port  = this->get_portField();
+                this->_accountNB++;
+                this->_lastTargetIndex = this->_accountNB;
+                if (this->_accountNB > MAX_ACCOUNT_DATA) {
+                    this->_accountNB = MAX_ACCOUNT_DATA;
+                }
+            }
+
+            std::ofstream ofichier(LOGINS_PATH, std::ios::out | std::ios::trunc);
+            if(ofichier) {
+
+                if (this->_pwdCheckBoxChecked) {
+                    ofichier << "save_pwd true" << "\n";
+                } else {
+                    ofichier << "save_pwd false" << "\n";
+                }
+                ofichier << "last_target " <<  this->_lastTargetIndex << "\n";
+
+                ofichier << "\n";
+
+                for (int i = 0; i < this->_accountNB; i++) {
+                    ofichier << "title " << this->_accountData[i].title << "\n";
+                    ofichier << "IP "    << this->_accountData[i].IP    << "\n";
+                    ofichier << "name "  << this->_accountData[i].name  << "\n";
+                    if (this->_pwdCheckBoxChecked) {
+                        ofichier << "pwd " << this->_accountData[i].pwd << "\n";
+                    } else {
+                        ofichier << "pwd " << "\n";
+                    }
+                    ofichier << "port " << this->_accountData[i].port << "\n";
+                    ofichier << "\n";
+                }
+            }
+        }
     }
 
     void optionsPressed() {}
@@ -651,7 +818,8 @@ public:
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
-        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
+        std::string screen_index_str = std::to_string(int(this->_screen_index));
+        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "]. " + screen_index_str;
         this->setWindowTitle(QString(title.c_str()));
 
         this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
@@ -887,7 +1055,6 @@ public:
     } _files_list;
 
 
-
     Connector_Qt(Front_Qt * front, QWidget * parent)
     : QObject(parent)
     , _front(front)
@@ -993,8 +1160,8 @@ public:
         mod_rdp_params.server_redirection_support      = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
-        mod_rdp_params.allow_using_multiple_monitors   = true;
-        mod_rdp_params.bogus_refresh_rect              = true;
+        //mod_rdp_params.allow_using_multiple_monitors   = true;
+        //mod_rdp_params.bogus_refresh_rect              = true;
         mod_rdp_params.verbose = 0xffffffff;
 
         LCGRandom gen(0); // To always get the same client random, in tests
@@ -1099,8 +1266,8 @@ public Q_SLOTS:
                         this->_files_list.sizes[i] = 0;
                         this->_files_list.names[i] = "";
                     }
-                    this->_bufferTypeID = Front_Qt::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;                    //49279;
-                    this->_bufferTypeLongName = this->_front->FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
 
                     std::string delimiter = "\n";
                     int i = 0;
