@@ -25,7 +25,7 @@
 #define BOOST_TEST_MODULE TestAuthAPI
 #include "system/redemption_unit_tests.hpp"
 
-
+#include "utils/log.hpp"
 #define LOGNULL
 //#define LOGPRINT
 
