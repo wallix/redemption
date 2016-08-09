@@ -1674,12 +1674,14 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             );
     }
 
-
+    enum : int {
+        FILE_DESCRIPTOR_SIZE = 592
+    };
 
     // Files List
     // TODO std::string* + int* -> array_view { name, size };
     void emit_fileList(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems, uint64_t time) {
-        this->dataLen_ = (cItems * 592) + 4;
+        this->dataLen_ = (cItems * FILE_DESCRIPTOR_SIZE) + 4;
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(cItems);
         for (int i = 0; i < cItems; i++) {

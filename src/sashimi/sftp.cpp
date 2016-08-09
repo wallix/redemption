@@ -918,68 +918,68 @@ enum {
 /** End-of-file encountered */
 #define SSH_FX_EOF 1
 /** File doesn't exist */
-#define SSH_FX_NO_SUCH_FILE 2
+//#define SSH_FX_NO_SUCH_FILE 2
 /** Permission denied */
-#define SSH_FX_PERMISSION_DENIED 3
+//#define SSH_FX_PERMISSION_DENIED 3
 /** Generic failure */
 #define SSH_FX_FAILURE 4
 /** Garbage received from server */
-#define SSH_FX_BAD_MESSAGE 5
+//#define SSH_FX_BAD_MESSAGE 5
 /** No connection has been set up */
-#define SSH_FX_NO_CONNECTION 6
+//#define SSH_FX_NO_CONNECTION 6
 /** There was a connection, but we lost it */
-#define SSH_FX_CONNECTION_LOST 7
+//#define SSH_FX_CONNECTION_LOST 7
 /** Operation not supported by the server */
-#define SSH_FX_OP_UNSUPPORTED 8
+//#define SSH_FX_OP_UNSUPPORTED 8
 /** Invalid file handle */
-#define SSH_FX_INVALID_HANDLE 9
+//#define SSH_FX_INVALID_HANDLE 9
 /** No such file or directory path exists */
-#define SSH_FX_NO_SUCH_PATH 10
+//#define SSH_FX_NO_SUCH_PATH 10
 /** An attempt to create an already existing file or directory has been made */
 #define SSH_FX_FILE_ALREADY_EXISTS 11
 /** We are trying to write on a write-protected filesystem */
-#define SSH_FX_WRITE_PROTECT 12
+//#define SSH_FX_WRITE_PROTECT 12
 /** No media in remote drive */
-#define SSH_FX_NO_MEDIA 13
+//#define SSH_FX_NO_MEDIA 13
 
 /** @} */
 
 /* file flags */
 #define SSH_FXF_READ 0x01
 #define SSH_FXF_WRITE 0x02
-#define SSH_FXF_APPEND 0x04
+//#define SSH_FXF_APPEND 0x04
 #define SSH_FXF_CREAT 0x08
 #define SSH_FXF_TRUNC 0x10
 #define SSH_FXF_EXCL 0x20
-#define SSH_FXF_TEXT 0x40
+//#define SSH_FXF_TEXT 0x40
 
 /* rename flags */
 #define SSH_FXF_RENAME_OVERWRITE  0x00000001
-#define SSH_FXF_RENAME_ATOMIC     0x00000002
-#define SSH_FXF_RENAME_NATIVE     0x00000004
+//#define SSH_FXF_RENAME_ATOMIC     0x00000002
+//#define SSH_FXF_RENAME_NATIVE     0x00000004
 
-#define SFTP_OPEN SSH_FXP_OPEN
-#define SFTP_CLOSE SSH_FXP_CLOSE
-#define SFTP_READ SSH_FXP_READ
-#define SFTP_WRITE SSH_FXP_WRITE
-#define SFTP_LSTAT SSH_FXP_LSTAT
-#define SFTP_FSTAT SSH_FXP_FSTAT
-#define SFTP_SETSTAT SSH_FXP_SETSTAT
-#define SFTP_FSETSTAT SSH_FXP_FSETSTAT
-#define SFTP_OPENDIR SSH_FXP_OPENDIR
-#define SFTP_READDIR SSH_FXP_READDIR
-#define SFTP_REMOVE SSH_FXP_REMOVE
-#define SFTP_MKDIR SSH_FXP_MKDIR
-#define SFTP_RMDIR SSH_FXP_RMDIR
-#define SFTP_REALPATH SSH_FXP_REALPATH
-#define SFTP_STAT SSH_FXP_STAT
-#define SFTP_RENAME SSH_FXP_RENAME
-#define SFTP_READLINK SSH_FXP_READLINK
-#define SFTP_SYMLINK SSH_FXP_SYMLINK
+//#define SFTP_OPEN SSH_FXP_OPEN
+//#define SFTP_CLOSE SSH_FXP_CLOSE
+//#define SFTP_READ SSH_FXP_READ
+//#define SFTP_WRITE SSH_FXP_WRITE
+//#define SFTP_LSTAT SSH_FXP_LSTAT
+//#define SFTP_FSTAT SSH_FXP_FSTAT
+//#define SFTP_SETSTAT SSH_FXP_SETSTAT
+//#define SFTP_FSETSTAT SSH_FXP_FSETSTAT
+//#define SFTP_OPENDIR SSH_FXP_OPENDIR
+//#define SFTP_READDIR SSH_FXP_READDIR
+//#define SFTP_REMOVE SSH_FXP_REMOVE
+//#define SFTP_MKDIR SSH_FXP_MKDIR
+//#define SFTP_RMDIR SSH_FXP_RMDIR
+//#define SFTP_REALPATH SSH_FXP_REALPATH
+//#define SFTP_STAT SSH_FXP_STAT
+//#define SFTP_RENAME SSH_FXP_RENAME
+//#define SFTP_READLINK SSH_FXP_READLINK
+//#define SFTP_SYMLINK SSH_FXP_SYMLINK
 
 /* openssh flags */
-#define SSH_FXE_STATVFS_ST_RDONLY 0x1 /* read-only */
-#define SSH_FXE_STATVFS_ST_NOSUID 0x2 /* no setuid */
+//#define SSH_FXE_STATVFS_ST_RDONLY 0x1 /* read-only */
+//#define SSH_FXE_STATVFS_ST_NOSUID 0x2 /* no setuid */
 
 
 /* file handler */

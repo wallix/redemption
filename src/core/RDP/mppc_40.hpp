@@ -199,7 +199,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
             ** get more bits before we process length of match
             */
 
-            /* how may bits do we need to get? */
+            /* how many bits do we need to get? */
             int tmp2 = 32 - bits_left;
 
             while (tmp2) {
@@ -737,4 +737,3 @@ public:
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
     }
 };
-

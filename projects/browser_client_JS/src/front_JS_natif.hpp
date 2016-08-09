@@ -32,7 +32,6 @@
 #include <math.h>
 
 
-
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"

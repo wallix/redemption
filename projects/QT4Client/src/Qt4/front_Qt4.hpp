@@ -21,7 +21,7 @@
 
 #pragma once
 
-#define LOGPRINT
+//#define LOGPRINT
 
 #ifndef Q_MOC_RUN
 #include <stdio.h>
@@ -123,6 +123,8 @@ private:
 public:
     uint32_t          verbose;
     ClientInfo        _info;
+    int               _width;
+    int               _height;
     std::string       _userName;
     std::string       _pwd;
     std::string       _targetIP;
@@ -130,7 +132,7 @@ public:
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
-    mod_api         * _callback;
+    mod_rdp         * _callback;
     QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
@@ -150,14 +152,15 @@ public:
     , _callback(nullptr)
     , _qtRDPKeymap()
     , _fps(30)
-    , _monitorCount(GCC::UserData::CSMonitor::MAX_MONITOR_COUNT)
+    , _monitorCount(1)
+
     {
         this->_to_client_sender._front = this;
     }
 
     virtual Screen_Qt * getMainScreen() = 0;
     virtual void connexionPressed() = 0;
-    virtual void connexionReleased() = 0;
+    virtual bool connexionReleased() = 0;
     virtual void closeFromScreen(int screen_index) = 0;
     virtual void RefreshPressed() = 0;
     virtual void RefreshReleased() = 0;
@@ -166,14 +169,14 @@ public:
     virtual void disconnexionPressed() = 0;
     virtual void disconnexionReleased() = 0;
     virtual void setMainScreenOnTopRelease() = 0;
-    virtual void mousePressEvent(QMouseEvent *e) = 0;
-    virtual void mouseReleaseEvent(QMouseEvent *e) = 0;
+    virtual void mousePressEvent(QMouseEvent *e, int screen_index) = 0;
+    virtual void mouseReleaseEvent(QMouseEvent *e, int screen_index) = 0;
     virtual void keyPressEvent(QKeyEvent *e) = 0;
     virtual void keyReleaseEvent(QKeyEvent *e) = 0;
     virtual void wheelEvent(QWheelEvent *e) = 0;
-    virtual bool eventFilter(QObject *obj, QEvent *e) = 0;
+    virtual bool eventFilter(QObject *obj, QEvent *e, int screen_index) = 0;
     virtual void call_Draw() = 0;
-    virtual void disconnect(std::string txt) = 0;
+    virtual void disconnect(std::string const & txt) = 0;
     virtual QImage::Format bpp_to_QFormat(int bpp, bool alpha) = 0;
     virtual void dropScreen() = 0;
     virtual bool setClientInfo() = 0;
@@ -212,11 +215,7 @@ public:
 
     enum : int {
         LIST_FILES_MAX_SIZE = 5
-    };
-
-    enum : uint16_t {
-        CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-      , CF_QT_CLIENT_FILECONTENTS         = 48026
+      , MAX_MONITOR_COUNT   = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
 
@@ -224,12 +223,13 @@ public:
     uint8_t               mod_bpp;
     BGRPalette            mod_palette;
     Form_Qt            * _form;
-    Screen_Qt          * _screen[GCC::UserData::CSMonitor::MAX_MONITOR_COUNT];
+    Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
 
     // Connexion socket members
     Connector_Qt       * _connector;
     int                  _timer;
     bool                 _connected;
+    bool                 _monitorCountNegociated;
     ClipboardVirtualChannel  _clipboard_channel;
 
     // Keyboard Controllers members
@@ -240,27 +240,53 @@ public:
     CHANNELS::ChannelDefArray   _cl;
 
     //  Clipboard Channel Management members
-    uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatName;
-    // TODO std::unique_ptr
-    uint8_t            * _bufferRDPClipboardChannel;
-    size_t               _bufferRDPClipboardChannelSize;
-    size_t               _bufferRDPClipboardChannelSizeTotal;
-    int                  _bufferRDPCLipboardMetaFilePic_width;
-    int                  _bufferRDPCLipboardMetaFilePic_height;
-    int                  _bufferRDPClipboardMetaFilePicBPP;
-    // TODO std::unique_ptr<Format{id, short_name}[]>
-    //@{
-    uint32_t           * _formatIDs;
-    std::string        * _formatListDataShortName;
-    //@}
-    const int            _nbFormatIDs;
-    const std::string    FILECONTENTS;
-    const std::string    FILEGROUPDESCRIPTORW;
-    int                  _cItems;
-    int                  _streamID;
-    int                  _itemsSizeList[LIST_FILES_MAX_SIZE];
-    std::string          _itemsNameList[LIST_FILES_MAX_SIZE];
+    uint32_t                    _requestedFormatId = 0;
+    std::string                 _requestedFormatName;
+    std::unique_ptr<uint8_t[]>  _bufferRDPClipboardChannel;
+    size_t                      _bufferRDPClipboardChannelSize;
+    size_t                      _bufferRDPClipboardChannelSizeTotal;
+    int                         _bufferRDPCLipboardMetaFilePic_width;
+    int                         _bufferRDPCLipboardMetaFilePic_height;
+    int                         _bufferRDPClipboardMetaFilePicBPP;
+    struct Clipbrd_formats_list{
+        enum : uint16_t {
+              CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+            , CF_QT_CLIENT_FILECONTENTS         = 48026
+        };
+        enum : int {
+              CLIPBRD_FORMAT_COUNT = 4
+        };
+        const std::string FILECONTENTS;
+        const std::string FILEGROUPDESCRIPTORW;
+        uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
+        std::string       names[CLIPBRD_FORMAT_COUNT];
+        int index = 0;
+
+        Clipbrd_formats_list()
+          : FILECONTENTS(
+              "F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0"
+            , 26)
+          , FILEGROUPDESCRIPTORW(
+              "F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0"
+            , 42)
+        {}
+
+        void add_format(uint32_t ID, const std::string & name) {
+            if (index < CLIPBRD_FORMAT_COUNT) {
+                IDs[index]   = ID;
+                names[index] = name;
+                index++;
+            }
+        }
+    }                           _clipbrd_formats_list;
+    int                         _cItems;
+    int                         _streamID;
+    struct {
+        int         size;
+        std::string name;
+
+    }                           _items_list[LIST_FILES_MAX_SIZE];
+
 
 
 
@@ -286,11 +312,11 @@ public:
 
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool) override;
 
-    std::string HTMLtoText(const std::string & html);
+    //std::string HTMLtoText(const std::string & html);
 
     void send_to_clipboard_Buffer(InStream & chunk);
 
-    void send_textBuffer_to_clipboard(bool isTextHtml);
+    void send_textBuffer_to_clipboard();
 
     void send_imageBuffer_to_clipboard();
 
@@ -305,6 +331,7 @@ public:
     void show_out_stream(int flags, OutStream & chunk);
 
     Screen_Qt * getMainScreen();
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -399,9 +426,9 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void mousePressEvent(QMouseEvent *e) override;
+    void mousePressEvent(QMouseEvent *e, int screen_index) override;
 
-    void mouseReleaseEvent(QMouseEvent *e) override;
+    void mouseReleaseEvent(QMouseEvent *e, int screen_index) override;
 
     void keyPressEvent(QKeyEvent *e) override;
 
@@ -409,11 +436,11 @@ public:
 
     void wheelEvent(QWheelEvent *e) override;
 
-    bool eventFilter(QObject *obj, QEvent *e) override;
+    bool eventFilter(QObject *obj, QEvent *e, int screen_index) override;
 
     void connexionPressed() override;
 
-    void connexionReleased() override;
+    bool connexionReleased() override;
 
     void RefreshPressed() override;
 
@@ -433,9 +460,9 @@ public:
 
     void send_rdp_scanCode(int keyCode, int flag);
 
-    void connect();
+    bool connect();
 
-    void disconnect(std::string) override;
+    void disconnect( std::string const &) override;
 
     void closeFromScreen(int screen_index) override;
 
