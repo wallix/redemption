@@ -22,7 +22,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
+#define BOOST_TEST_MODULE TestMMAPI
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -31,7 +31,8 @@
 
 //#include "path/to/file.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+BOOST_AUTO_TEST_CASE(TestMMAPI1)
 {
+    LOG(LOG_INFO, "Test not yet implemented");
     BOOST_CHECK(true);
 }
