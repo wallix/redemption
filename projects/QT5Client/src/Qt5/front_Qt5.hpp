@@ -390,16 +390,16 @@ public:
     virtual void draw(const RDP::FrameMarker & order) override;
 
     // TODO vritual + override -> override
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override;
+    virtual void draw(const RDP::RAIL::WindowInformationNewOrExistingWindow & order) override;
 
     // TODO vritual + override -> override
-    virtual void draw(const RDP::RAIL::WindowIcon & order) override;
+    virtual void draw(const RDP::RAIL::WindowInformationWindowIcon & order) override;
 
     // TODO vritual + override -> override
-    virtual void draw(const RDP::RAIL::CachedIcon & order) override;
+    virtual void draw(const RDP::RAIL::WindowInformationCachedIcon & order) override;
 
     // TODO vritual + override -> override
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
+    virtual void draw(const RDP::RAIL::WindowInformationDeletedWindow & order) override;
 
     // TODO vritual + override -> override
     virtual void draw(const RDPColCache   & cmd);

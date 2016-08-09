@@ -248,13 +248,13 @@ public:
 
     void draw(const RDP::FrameMarker & order) override {}
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {}
+    void draw(const RDP::RAIL::WindowInformationNewOrExistingWindow & order) override {}
 
-    void draw(const RDP::RAIL::WindowIcon & order) override {}
+    void draw(const RDP::RAIL::WindowInformationWindowIcon & order) override {}
 
-    void draw(const RDP::RAIL::CachedIcon & order) override {}
+    void draw(const RDP::RAIL::WindowInformationCachedIcon & order) override {}
 
-    void draw(const RDP::RAIL::DeletedWindow & order) override {}
+    void draw(const RDP::RAIL::WindowInformationDeletedWindow & order) override {}
 
     void draw(const RDPColCache   & cmd) override {}
 

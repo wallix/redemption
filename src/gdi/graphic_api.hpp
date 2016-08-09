@@ -63,10 +63,10 @@ namespace RDP {
     class FrameMarker;
 
     namespace RAIL {
-        class NewOrExistingWindow;
-        class WindowIcon;
-        class CachedIcon;
-        class DeletedWindow;
+        class WindowInformationNewOrExistingWindow;
+        class WindowInformationWindowIcon;
+        class WindowInformationCachedIcon;
+        class WindowInformationDeletedWindow;
     }
 }
 
@@ -179,10 +179,10 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPGlyphIndex       const & cmd, Rect const & clip, GlyphCache const & gly_cache) = 0;
 
     // NOTE maybe in an other interface
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow &) {}
-    virtual void draw(const RDP::RAIL::WindowIcon          &) {}
-    virtual void draw(const RDP::RAIL::CachedIcon          &) {}
-    virtual void draw(const RDP::RAIL::DeletedWindow       &) {}
+    virtual void draw(const RDP::RAIL::WindowInformationNewOrExistingWindow &) {}
+    virtual void draw(const RDP::RAIL::WindowInformationWindowIcon          &) {}
+    virtual void draw(const RDP::RAIL::WindowInformationCachedIcon          &) {}
+    virtual void draw(const RDP::RAIL::WindowInformationDeletedWindow       &) {}
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
     virtual void draw(RDPColCache   const &) {}
@@ -288,10 +288,10 @@ public:
         this->draw_(cmd, clip, gly_cache);
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow & order) override { this->draw_(order); }
-    void draw(const RDP::RAIL::WindowIcon          & order) override { this->draw_(order); }
-    void draw(const RDP::RAIL::CachedIcon          & order) override { this->draw_(order); }
-    void draw(const RDP::RAIL::DeletedWindow       & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowInformationNewOrExistingWindow & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowInformationWindowIcon          & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowInformationCachedIcon          & order) override { this->draw_(order); }
+    void draw(const RDP::RAIL::WindowInformationDeletedWindow       & order) override { this->draw_(order); }
 
     void draw(RDPColCache   const & cmd) override { this->draw_(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_(cmd); }

@@ -723,4 +723,3 @@ public:
         stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
     }
 };
-

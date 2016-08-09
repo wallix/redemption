@@ -454,7 +454,7 @@ class WindowInformationCommonHeader {
     mutable uint32_t   offset_of_OrderSize = 0;
     mutable OutStream* output_stream       = nullptr;
 
-protected:
+public:
     //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
     //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
     //}
@@ -503,7 +503,7 @@ protected:
     }
 
     inline static size_t size() {
-        return 6;   // OrderSize(2) + FieldsPresentFlags(2) + WindowId(2)
+        return 10;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4)
     }
 
     inline size_t str(char * buffer, size_t size) const {
@@ -515,7 +515,6 @@ protected:
         return ((length < size) ? length : size - 1);
     }
 
-public:
     inline uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
 };  // WindowInformationCommonHeader
 
@@ -870,7 +869,9 @@ enum {
 //  is greater than 0 and the WINDOW_ORDER_FIELD_VISIBILITY flag is set in
 //  the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
 
-class NewOrExistingWindow : public WindowInformationCommonHeader {
+class WindowInformationNewOrExistingWindow {
+    WindowInformationCommonHeader header;
+
     uint32_t OwnerWindowId = 0;
     uint32_t Style         = 0;
     uint32_t ExtendedStyle = 0;
@@ -910,60 +911,60 @@ class NewOrExistingWindow : public WindowInformationCommonHeader {
 
 public:
     void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+        this->header.emit_begin(stream);
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             stream.out_uint32_le(this->OwnerWindowId);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             stream.out_uint32_le(this->Style);
             stream.out_uint32_le(this->ExtendedStyle);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             stream.out_uint8(this->ShowState);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             put_non_null_terminated_utf16_from_utf8(
                 stream, this->title_info.data(), this->title_info.size() * 2);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             stream.out_uint32_le(this->ClientOffsetX);
             stream.out_uint32_le(this->ClientOffsetY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             stream.out_uint32_le(this->ClientAreaWidth);
             stream.out_uint32_le(this->ClientAreaHeight);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             stream.out_uint8(this->RPContent);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             stream.out_uint32_le(this->RootParentHandle);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             stream.out_sint32_le(this->WindowOffsetX);
             stream.out_sint32_le(this->WindowOffsetY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             stream.out_sint32_le(this->WindowClientDeltaX);
             stream.out_sint32_le(this->WindowClientDeltaY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             stream.out_uint32_le(this->WindowWidth);
             stream.out_uint32_le(this->WindowHeight);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             stream.out_uint16_le(this->NumWindowRects);
 
             for (Rectangle const & rectangle : this->window_rects) {
@@ -971,12 +972,12 @@ public:
             }
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             stream.out_sint32_le(this->VisibleOffsetX);
             stream.out_sint32_le(this->VisibleOffsetY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             stream.out_uint16_le(this->NumVisibilityRects);
 
             for (Rectangle const & rectangle : this->visibility_rects) {
@@ -984,19 +985,19 @@ public:
             }
         }
 
-        WindowInformationCommonHeader::emit_end();
+        this->header.emit_end();
     }   // emit
 
     void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+        this->header.receive(stream);
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             {
                 const unsigned expected = 4;  // OwnerWindowId(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (0): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (0): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1005,13 +1006,13 @@ public:
             this->OwnerWindowId = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             {
                 const unsigned expected = 8;  // Style(4) + ExtendedStyle(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (1): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (1): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1021,13 +1022,13 @@ public:
             this->ExtendedStyle = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             {
                 const unsigned expected = 1;  // ShowState(1)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (2): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (2): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1036,13 +1037,13 @@ public:
             this->ShowState = stream.in_uint8();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             {
                 const unsigned expected = 2;  // CbString(2)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (3): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (3): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1050,16 +1051,16 @@ public:
 
             const uint16_t CbString = stream.in_uint16_le();
             get_non_null_terminated_utf16_from_utf8(
-                this->title_info, stream, CbString, "NewOrExistingWindow (4)");
+                this->title_info, stream, CbString, "WindowInformationNewOrExistingWindow (4)");
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             {
                 const unsigned expected = 8;  // ClientOffsetX(4) + ClientOffsetY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (6): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (5): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1069,13 +1070,13 @@ public:
             this->ClientOffsetY = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             {
                 const unsigned expected = 8;  // ClientAreaWidth(4) + ClientAreaHeight(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (7): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (6): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1085,13 +1086,13 @@ public:
             this->ClientAreaHeight = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             {
                 const unsigned expected = 1;  // RPContent(1)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (8): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (7): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1100,13 +1101,13 @@ public:
             this->RPContent = stream.in_uint8();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             {
                 const unsigned expected = 4;  // RootParentHandle(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (9): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (8): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1115,13 +1116,13 @@ public:
             this->RootParentHandle = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             {
                 const unsigned expected = 8;  // WindowOffsetX(4) + WindowOffsetY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (10): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (9): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1131,13 +1132,13 @@ public:
             this->WindowOffsetY = stream.in_sint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             {
                 const unsigned expected = 8;  // WindowClientDeltaX(4) + WindowClientDeltaY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (11): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (10): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1147,13 +1148,13 @@ public:
             this->WindowClientDeltaY = stream.in_sint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             {
                 const unsigned expected = 8;  // WindowWidth(4) + WindowHeight(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (12): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (11): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1163,13 +1164,13 @@ public:
             this->WindowHeight = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             {
                 const unsigned expected = 2;  // NumWindowRects(2)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (12): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1185,13 +1186,13 @@ public:
             }
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             {
                 const unsigned expected = 8;  // VisibleOffsetX(4) + VisibleOffsetY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (15): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (13): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1201,13 +1202,13 @@ public:
             this->VisibleOffsetY = stream.in_sint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             {
                 const unsigned expected = 2;  // NumVisibilityRects(2)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
+                        "Truncated WindowInformationNewOrExistingWindow (14): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1227,64 +1228,64 @@ public:
     size_t size() const {
         size_t count = 0;
 
-        count += WindowInformationCommonHeader::size();
+        count += this->header.size();
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             count += 4; // OwnerWindowId(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             count += 8; // Style(4) + ExtendedStyle(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             count += 1; // ShowState(1)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             const size_t maximum_length_of_TitleInfo_in_bytes = this->title_info.length() * 2;
 
             count += maximum_length_of_TitleInfo_in_bytes; // ShowState(1)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             count += 8; // ClientOffsetX(4) + ClientOffsetY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             count += 8; // ClientAreaWidth(4) + ClientAreaHeight(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             count += 1; // RPContent(1)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             count += 4; // RootParentHandle(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             count += 8; // WindowOffsetX(4) + WindowOffsetY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             count += 8; // WindowClientDeltaX(4) + WindowClientDeltaY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             count += 8; // WindowWidth(4) + WindowHeight(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             count += 2; // NumWindowRects(2)
             count += this->NumWindowRects * Rectangle::size();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             count += 8; // VisibleOffsetX(4) + VisibleOffsetY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             count += 2; // NumVisibilityRects(2)
             count += this->NumVisibilityRects * Rectangle::size();
         }
@@ -1296,81 +1297,81 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "NewOrExistingWindow ");
+        size_t result = ::snprintf(buffer + length, size - length, "WindowInformationNewOrExistingWindow ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
         result = ::snprintf(buffer + length, size - length, ":");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             result = ::snprintf(buffer + length, size - length, " OwnerWindowId=%u",
                 this->OwnerWindowId);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             result = ::snprintf(buffer + length, size - length, " Style=%u ExtendedStyle=%u",
                 this->Style, this->ExtendedStyle);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             result = ::snprintf(buffer + length, size - length, " ShowState=%u",
                 unsigned(this->ShowState));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             result = ::snprintf(buffer + length, size - length, " TitleInfo=\"%s\"",
                 this->title_info.c_str());
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             result = ::snprintf(buffer + length, size - length, " ClientOffsetX=%d ClientOffsetY=%d",
                 this->ClientOffsetX, this->ClientOffsetY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             result = ::snprintf(buffer + length, size - length, " ClientAreaWidth=%u ClientAreaHeight=%u",
                 this->ClientAreaWidth, this->ClientAreaHeight);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             result = ::snprintf(buffer + length, size - length, " RPContent=%u",
                 unsigned(this->RPContent));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             result = ::snprintf(buffer + length, size - length, " RootParentHandle=%u",
                 this->RootParentHandle);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             result = ::snprintf(buffer + length, size - length, " WindowOffsetX=%d WindowOffsetY=%d",
                 this->WindowOffsetX, this->WindowOffsetY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             result = ::snprintf(buffer + length, size - length, " WindowClientDeltaX=%d WindowClientDeltaY=%d",
                 this->WindowClientDeltaX, this->WindowClientDeltaY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             result = ::snprintf(buffer + length, size - length, " WindowWidth=%u WindowHeight=%u",
                 this->WindowWidth, this->WindowHeight);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             result = ::snprintf(buffer + length, size - length, " WindowRects=(");
             length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1382,13 +1383,13 @@ private:
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             result = ::snprintf(buffer + length, size - length, " VisibleOffsetX=%d VisibleOffsetY=%d",
                 this->VisibleOffsetX, this->VisibleOffsetY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             result = ::snprintf(buffer + length, size - length, " VisibilityRects=(");
             length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1410,7 +1411,7 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
-};  // NewOrExistingWindow
+};  // WindowInformationNewOrExistingWindow
 
 // [MS-RDPERP] - 2.2.1.3.1.2.2 Window Icon
 // =======================================
@@ -1470,37 +1471,38 @@ enum {
 // IconInfo (variable): Variable length. TS_ICON_INFO structure. Describes
 //  the window's icon.
 
-class WindowIcon : public WindowInformationCommonHeader {
+class WindowInformationWindowIcon {
+    WindowInformationCommonHeader header;
+
     IconInfo icon_info;
 
 public:
     inline void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+        this->header.emit_begin(stream);
 
         this->icon_info.emit(stream);
 
-        WindowInformationCommonHeader::emit_end();
+        this->header.emit_end();
     }   // emit
 
     inline void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+        this->header.receive(stream);
 
         this->icon_info.receive(stream);
     }   // receive
 
     inline size_t size() const {
-        return WindowInformationCommonHeader::size() +
-            this->icon_info.size();
+        return this->header.size() + this->icon_info.size();
     }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "WindowIcon ");
+        size_t result = ::snprintf(buffer + length, size - length, "WindowInformationWindowIcon ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
         result = ::snprintf(buffer + length, size - length, ":");
         length += ((result < size - length) ? result : (size - length - 1));
@@ -1517,7 +1519,7 @@ public:
         buffer[length] = '\0';
         LOG(level, "%s", buffer);
     }
-};  // WindowIcon
+};  // WindowInformationWindowIcon
 
 // [MS-RDPERP] - 2.2.1.3.1.2.3 Cached Icon
 // =======================================
@@ -1577,37 +1579,38 @@ enum {
 // CachedIcon (3 bytes): Three bytes. TS_CACHED ICON_INFO structure.
 //  Describes a cached icon on the client.
 
-class CachedIcon : public WindowInformationCommonHeader {
+class WindowInformationCachedIcon {
+    WindowInformationCommonHeader header;
+
     CachedIconInfo cached_icon_info;
 
 public:
     inline void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+        this->header.emit_begin(stream);
 
         this->cached_icon_info.emit(stream);
 
-        WindowInformationCommonHeader::emit_end();
+        this->header.emit_end();
     }   // emit
 
     inline void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+        this->header.receive(stream);
 
         this->cached_icon_info.receive(stream);
     }   // receive
 
-    inline static size_t size() {
-        return WindowInformationCommonHeader::size() +
-            CachedIconInfo::size();
+    inline size_t size() const {
+        return this->header.size() + CachedIconInfo::size();
     }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "CachedIcon ");
+        size_t result = ::snprintf(buffer + length, size - length, "WindowInformationCachedIcon ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
         result = ::snprintf(buffer + length, size - length, ":");
         length += ((result < size - length) ? result : (size - length - 1));
@@ -1624,7 +1627,7 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
-};  // CachedIcon
+};  // WindowInformationCachedIcon
 
 // [MS-RDPERP] - 2.2.1.3.1.2.4 Deleted Window
 // ==========================================
@@ -1663,30 +1666,32 @@ enum {
       WINDOW_ORDER_STATE_DELETED = 0x20000000
 };
 
-class DeletedWindow : public WindowInformationCommonHeader {
+class WindowInformationDeletedWindow {
+    WindowInformationCommonHeader header;
+
 public:
     inline void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+        this->header.emit_begin(stream);
 
-        WindowInformationCommonHeader::emit_end();
+        this->header.emit_end();
     }   // emit
 
     inline void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+        this->header.receive(stream);
     }   // receive
 
-    inline static size_t size() {
-        return WindowInformationCommonHeader::size();
+    inline size_t size() const {
+        return this->header.size();
     }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "DeletedWindow ");
+        size_t result = ::snprintf(buffer + length, size - length, "WindowInformationDeletedWindow ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
         return length;
     }
@@ -1698,7 +1703,131 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
-};  // CachedIcon
+};  // WindowInformationDeletedWindow
+
+// [MS-RDPERP] - 2.2.1.3.2.1 Common Header (TS_NOTIFYICON_ORDER_HEADER)
+// ====================================================================
+
+// The TS_NOTIFYICON_ORDER_HEADER packet contains information common to every
+//  Windowing Alternate Secondary Drawing Order specifying a notification
+//  icon.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |     Header    |           OrderSize           | FieldsPresent |
+// |               |                               |     Flags     |
+// +---------------+-------------------------------+---------------+
+// |                      ...                      |    WindowId   |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |  NotifyIconId |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |
+// +-----------------------------------------------+
+
+// Header (1 byte): An unsigned 8-bit integer. An Alternate Secondary Order
+//  Header, as specified in [MS-RDPEGDI] section 2.2.2.2.1.3.1.1. The
+//  embedded orderType field MUST be set to 0x0B (TS_ALTSEC_WINDOW).
+
+// OrderSize (2 bytes): An unsigned 16-bit integer. The size, in bytes, of
+//  the entire packet.
+
+// FieldsPresentFlags (4 bytes): An unsigned 32-bit integer. The flags
+//  indicating which fields are present in the packet. See New or Existing
+//  Notification Icons.
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window
+//  owning the notification icon specified in the drawing order. The ID is
+//  generated by the server and is unique for every window in the session.
+
+// NotifyIconId (4 bytes): An unsigned 32-bit integer. The ID of the
+//  notification icon specified in the drawing order. The ID is generated by
+//  the application that owns the notification icon and SHOULD be unique for
+//  every notification icon owned by the application.
+
+class NotificationIconInformationCommonHeader {
+    mutable uint16_t OrderSize           = 0;
+            uint32_t FieldsPresentFlags_ = 0;
+            uint32_t WindowId            = 0;
+            uint32_t NotifyIconId        = 0;
+
+    mutable uint32_t   offset_of_OrderSize = 0;
+    mutable OutStream* output_stream       = nullptr;
+
+public:
+    //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
+    //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
+    //}
+
+    //inline void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
+    //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
+    //}
+
+    inline void emit_begin(OutStream & stream) const {
+        REDASSERT(this->output_stream == nullptr);
+
+        this->output_stream = &stream;
+
+        this->offset_of_OrderSize = stream.get_offset();
+        stream.out_skip_bytes(2); // OrderSize(2)
+
+        stream.out_uint32_le(this->FieldsPresentFlags_);
+        stream.out_uint32_le(this->WindowId);
+        stream.out_uint32_le(this->NotifyIconId);
+    }
+
+    inline void emit_end() const {
+        REDASSERT(this->output_stream != nullptr);
+
+        this->output_stream->set_out_uint16_le(
+            this->output_stream->get_offset() - this->offset_of_OrderSize,
+            this->offset_of_OrderSize);
+    }
+
+    inline void receive(InStream & stream) {
+        {
+            const unsigned expected =
+                14;  // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Notification Icon Information Common Header: "
+                        "expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->OrderSize           = stream.in_uint16_le();
+        this->FieldsPresentFlags_ = stream.in_uint32_le();
+        this->WindowId            = stream.in_uint32_le();
+        this->NotifyIconId        = stream.in_uint32_le();
+    }
+
+    inline static size_t size() {
+        return 14;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
+    }
+
+    inline size_t str(char * buffer, size_t size) const {
+        const size_t length =
+            ::snprintf(buffer, size,
+                       "(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u NotifyIconId=%u)",
+                       unsigned(this->OrderSize), this->FieldsPresentFlags_,
+                       this->WindowId, this->NotifyIconId);
+        return ((length < size) ? length : size - 1);
+    }
+
+    inline uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+};  // NotificationIconInformationCommonHeader
+
+enum {
+      WINDOW_ORDER_TYPE_NOTIFY = 0x02000000
+};
+
+enum {
+      WINDOW_ORDER_TYPE_DESKTOP = 0x04000000
+};
 
 // [MS-RDPERP] - 2.2.1.3.3.1 Common Header (TS_DESKTOP_ORDER_HEADER)
 // =================================================================
@@ -1729,4 +1858,3 @@ public:
 
 }   // namespace RAIL
 }   // namespace RDP
-

@@ -47,5 +47,5 @@ BOOST_AUTO_TEST_CASE(TestWindowingCommon)
     BOOST_CHECK_EQUAL(wch_r.WindowId(),           WindowId);
 */
 
-    RDP::RAIL::NewOrExistingWindow new_or_existing_window;
+    RDP::RAIL::WindowInformationNewOrExistingWindow window_informationnew_or_existing_window;
 }
