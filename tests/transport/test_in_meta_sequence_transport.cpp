@@ -29,7 +29,6 @@
 
 
 #include "transport/out_meta_sequence_transport.hpp"
-#include "transport/sequence_generator.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/error.hpp"
 
@@ -831,5 +830,3 @@ BOOST_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)
         }
     }
 }
-
-

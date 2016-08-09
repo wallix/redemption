@@ -24,6 +24,7 @@
 #include "core/front_api.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "utils/outbound_connection_monitor_rules.hpp"
+#include "utils/process_monitor_rules.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "core/error.hpp"
@@ -56,6 +57,10 @@ private:
     const uint16_t param_front_width;
     const uint16_t param_front_height;
 
+    const std::chrono::duration<unsigned, std::milli> param_session_probe_disconnected_application_limit;
+    const std::chrono::duration<unsigned, std::milli> param_session_probe_disconnected_session_limit;
+    const std::chrono::duration<unsigned, std::milli> param_session_probe_idle_session_limit;
+
     std::string param_real_alternate_shell;
     std::string param_real_working_dir;
 
@@ -72,6 +77,7 @@ private:
     wait_obj session_probe_event;
 
     OutboundConnectionMonitorRules outbound_connection_monitor_rules;
+    ProcessMonitorRules            process_monitor_rules;
 
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
@@ -97,11 +103,16 @@ public:
         uint16_t front_width;
         uint16_t front_height;
 
+        std::chrono::duration<unsigned, std::milli> session_probe_disconnected_application_limit;
+        std::chrono::duration<unsigned, std::milli> session_probe_disconnected_session_limit;
+        std::chrono::duration<unsigned, std::milli> session_probe_idle_session_limit;
+
         const char* real_alternate_shell;
         const char* real_working_dir;
 
-        const char* outbound_connection_notifying_rules;
-        const char* outbound_connection_killing_rules;
+        const char* outbound_connection_monitoring_rules;
+
+        const char* process_monitoring_rules;
 
         Translation::language_t lang;
 
@@ -134,6 +145,12 @@ public:
     , param_target_informations(params.target_informations)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
+    , param_session_probe_disconnected_application_limit(
+        params.session_probe_disconnected_application_limit)
+    , param_session_probe_disconnected_session_limit(
+        params.session_probe_disconnected_session_limit)
+    , param_session_probe_idle_session_limit(
+        params.session_probe_idle_session_limit)
     , param_real_alternate_shell(params.real_alternate_shell)
     , param_real_working_dir(params.real_working_dir)
     , param_lang(params.lang)
@@ -142,8 +159,8 @@ public:
     , mod(mod)
     , file_system_virtual_channel(file_system_virtual_channel)
     , outbound_connection_monitor_rules(
-          params.outbound_connection_notifying_rules,
-          params.outbound_connection_killing_rules)
+          params.outbound_connection_monitoring_rules)
+    , process_monitor_rules(params.process_monitoring_rules)
     {
         if (this->verbose & MODRDP_LOGLEVEL_SESPROBE) {
             LOG(LOG_INFO,
@@ -385,6 +402,9 @@ public:
         const char request_outbound_connection_monitoring_rule[] =
             "Request=Get outbound connection monitoring rule\x01";
 
+        const char request_process_monitoring_rule[] =
+            "Request=Get process monitoring rule\x01";
+
         const char request_hello[] = "Request=Hello";
 
         const char version[] = "Version=";
@@ -504,6 +524,75 @@ public:
                 else {
                     const char cstr[] = "No";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            unsigned int const disconnect_session_limit =
+                (this->param_real_alternate_shell.empty() ?
+                 // Normal RDP session
+                 this->param_session_probe_disconnected_session_limit.count() :
+                 // Application session
+                 this->param_session_probe_disconnected_application_limit.count());
+
+            if (disconnect_session_limit)
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "DisconnectedSessionLimit=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                {
+                    char cstr[128];
+                    snprintf(cstr, sizeof(cstr), "%u",
+                        disconnect_session_limit);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            if (this->param_session_probe_idle_session_limit.count())
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "IdleSessionLimit=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                {
+                    char cstr[128];
+                    snprintf(cstr, sizeof(cstr), "%u",
+                        this->param_session_probe_idle_session_limit.count());
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 out_s.out_clear_bytes(1);   // Null-terminator.
@@ -648,7 +737,7 @@ public:
                 ::strtoul(remaining_data, nullptr, 10);
 
             // OutboundConnectionMonitoringRule=RuleIndex\x01ErrorCode[\x01RuleType\x01HostAddrOrSubnet\x01Port]
-            // RuleType  : 0 - notify, 1 - kill.
+            // RuleType  : 0 - notify, 1 - deny, 2 - allow.
             // ErrorCode : 0 on success. -1 if an error occurred.
 
             {
@@ -675,15 +764,76 @@ public:
                 {
                     const int error_code = (result ? 0 : -1);
                     char cstr[128];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d" "\x01",
+                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                         rule_index, error_code);
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 if (result) {
                     char cstr[1024];
-                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%s" "\x01" "%s",
+                    snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
                         type, host_address_or_subnet.c_str(), port_range.c_str());
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+        }
+        else if (!this->server_message.compare(
+                     0,
+                     sizeof(request_process_monitoring_rule) - 1,
+                     request_process_monitoring_rule)) {
+            const char * remaining_data =
+                (this->server_message.c_str() +
+                 sizeof(request_process_monitoring_rule) - 1);
+
+            const unsigned int rule_index =
+                ::strtoul(remaining_data, nullptr, 10);
+
+            // ProcessMonitoringRule=RuleIndex\x01ErrorCode[\x01RuleType\x01Pattern]
+            // RuleType  : 0 - notify, 1 - deny.
+            // ErrorCode : 0 on success. -1 if an error occurred.
+
+            {
+                StaticOutStream<8192> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "ProcessMonitoringRule=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                unsigned int type = 0;
+                std::string  pattern;
+                std::string  description;
+
+                const bool result =
+                    this->process_monitor_rules.get(
+                        rule_index, type, pattern, description);
+
+                {
+                    const int error_code = (result ? 0 : -1);
+                    char cstr[128];
+                    snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                        rule_index, error_code);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                if (result) {
+                    char cstr[1024];
+                    snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
+                        type, pattern.c_str());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
@@ -805,7 +955,10 @@ public:
                     if (parameters.size() == 2) {
                         std::string info(
                             "rule='" + parameters[0] +
-                            "' application_name='" + parameters[1] + "'");
+                            "' application_name='" + parameters[1] +
+                            "' application_command_line='" + parameters[2] +
+                            "' destination_address='" + parameters[3] +
+                            "' destination_port='" + parameters[4] + "'");
                         this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
@@ -837,7 +990,8 @@ public:
                          !order.compare("OUTBOUND_CONNECTION_DETECTED_2")) {
                     bool deny = (!order.compare("OUTBOUND_CONNECTION_BLOCKED_2"));
 
-                    if (parameters.size() == 5) {
+                    if ((!deny && (parameters.size() == 5)) ||
+                        (deny && (parameters.size() == 6))) {
                         unsigned int type = 0;
                         std::string  host_address_or_subnet;
                         std::string  port_range;
@@ -852,35 +1006,94 @@ public:
                         if (result) {
                             std::string info(
                                 "rule='" + description +
-                                "' application_name='" + parameters[1] + "'");
+                                "' app_name='" + parameters[1] +
+                                "' app_cmd_line='" + parameters[2] +
+                                "' dst_addr='" + parameters[3] +
+                                "' dst_port='" + parameters[4] + "'");
                             this->authentifier->log4(
                                 (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                                 order.c_str(), info.c_str());
 
                             if (deny) {
-                                if (!::strtoul(parameters[4].c_str(), nullptr, 10)) {
+                                if (::strtoul(parameters[5].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block outbound connection!");
                                     this->authentifier->report(
                                         "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
                                 }
-
-                                char message[4096];
+                                else {
+                                    char message[4096];
 
 #ifdef __GNUG__
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 # endif
-                                snprintf(message, sizeof(message),
-                                    TR("process_interrupted_security_policies",
-                                       this->param_lang),
-                                    parameters[1].c_str());
+                                    snprintf(message, sizeof(message),
+                                        TR("process_interrupted_security_policies",
+                                           this->param_lang),
+                                        parameters[1].c_str());
 #ifdef __GNUG__
     #pragma GCC diagnostic pop
 # endif
 
-                                std::string string_message = message;
-                                this->mod.display_osd_message(string_message);
+                                    std::string string_message = message;
+                                    this->mod.display_osd_message(string_message);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("PROCESS_BLOCKED") ||
+                         !order.compare("PROCESS_DETECTED")) {
+                    bool deny = (!order.compare("PROCESS_BLOCKED"));
+
+                    if ((!deny && (parameters.size() == 3)) ||
+                        (deny && (parameters.size() == 4))) {
+                        unsigned int type = 0;
+                        std::string  pattern;
+                        std::string  description;
+                        const bool result =
+                            this->process_monitor_rules.get(
+                                ::strtoul(parameters[0].c_str(), nullptr, 10),
+                                type, pattern, description);
+
+                        if (result) {
+                            std::string info(
+                                "rule='" + description +
+                                "' app_name='" + parameters[1] +
+                                "' app_cmd_line='" + parameters[2] + "'");
+                            this->authentifier->log4(
+                                (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
+                                order.c_str(), info.c_str());
+
+                            if (deny) {
+                                if (::strtoul(parameters[3].c_str(), nullptr, 10)) {
+                                    LOG(LOG_ERR,
+                                        "Session Probe failed to block process!");
+                                    this->authentifier->report(
+                                        "SESSION_PROBE_PROCESS_BLOCKING_FAILED", "");
+                                }
+                                else {
+                                    char message[4096];
+
+#ifdef __GNUG__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+# endif
+                                    snprintf(message, sizeof(message),
+                                        TR("process_interrupted_security_policies",
+                                           this->param_lang),
+                                        parameters[1].c_str());
+#ifdef __GNUG__
+    #pragma GCC diagnostic pop
+# endif
+
+                                    std::string string_message = message;
+                                    this->mod.display_osd_message(string_message);
+                                }
                             }
                         }
                     }

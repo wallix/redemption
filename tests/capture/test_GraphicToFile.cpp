@@ -29,7 +29,6 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "transport/sequence_generator.hpp"
 #include "transport/test_transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/in_file_transport.hpp"
@@ -852,4 +851,3 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     BOOST_CHECK_EQUAL(341, ::filesize(filename));
     ::unlink(filename);
 }
-

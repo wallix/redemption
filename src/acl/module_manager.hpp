@@ -1128,7 +1128,7 @@ public:
                 this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 // BEGIN READ PROXY_OPT
-                if (!this->ini.get<cfg::globals::disable_proxy_opt>()) {
+                if (this->ini.get<cfg::globals::enable_wab_integration>()) {
                     AuthorizationChannels::update_authorized_channels(
                         this->ini.get_ref<cfg::mod_rdp::allow_channels>(),
                         this->ini.get_ref<cfg::mod_rdp::deny_channels>(),
@@ -1181,6 +1181,12 @@ public:
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
                 mod_rdp_params.session_probe_customize_executable_name
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_customize_executable_name>();
+                mod_rdp_params.session_probe_disconnected_application_limit =
+                                                                   this->ini.get<cfg::mod_rdp::session_probe_disconnected_application_limit>();
+                mod_rdp_params.session_probe_disconnected_session_limit =
+                                                                   this->ini.get<cfg::mod_rdp::session_probe_disconnected_session_limit>();
+                mod_rdp_params.session_probe_idle_session_limit    =
+                                                                   this->ini.get<cfg::mod_rdp::session_probe_idle_session_limit>();
                 mod_rdp_params.session_probe_alternate_shell       = this->ini.get<cfg::mod_rdp::session_probe_alternate_shell>();
 
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
@@ -1188,8 +1194,10 @@ public:
                 mod_rdp_params.disable_file_system_log_syslog      = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
                 mod_rdp_params.disable_file_system_log_wrm         = bool(this->ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
                 mod_rdp_params.acl                                 = acl;
-                mod_rdp_params.outbound_connection_blocking_rules  =
-                    this->ini.get<cfg::context::outbound_connection_blocking_rules>().c_str();
+                mod_rdp_params.outbound_connection_monitoring_rules=
+                    this->ini.get<cfg::context::outbound_connection_monitoring_rules>().c_str();
+                mod_rdp_params.process_monitoring_rules            =
+                    this->ini.get<cfg::context::process_monitoring_rules>().c_str();
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = this->ini.get<cfg::mod_rdp::auth_channel>();
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();

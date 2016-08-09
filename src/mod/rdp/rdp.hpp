@@ -317,6 +317,9 @@ protected:
     const std::chrono::milliseconds   session_probe_keepalive_timeout;
     const bool                        session_probe_on_keepalive_timeout_disconnect_user;
     const bool                        session_probe_end_disconnected_session;
+    const std::chrono::milliseconds   session_probe_disconnected_application_limit;
+    const std::chrono::milliseconds   session_probe_disconnected_session_limit;
+    const std::chrono::milliseconds   session_probe_idle_session_limit;
           std::string                 session_probe_alternate_shell;
     const bool                        session_probe_use_clipboard_based_launcher;
 
@@ -324,7 +327,8 @@ protected:
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
-    std::string outbound_connection_killing_rules;
+    std::string outbound_connection_monitoring_rules;
+    std::string process_monitoring_rules;
 
     size_t recv_bmp_update;
 
@@ -692,12 +696,16 @@ public:
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
         , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
+        , session_probe_disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
+        , session_probe_disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
+        , session_probe_idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
         , session_probe_alternate_shell(mod_rdp_params.session_probe_alternate_shell)
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
                                                       !info.alternate_shell[0]))
-        , outbound_connection_killing_rules(mod_rdp_params.outbound_connection_blocking_rules)
+        , outbound_connection_monitoring_rules(mod_rdp_params.outbound_connection_monitoring_rules)
+        , process_monitoring_rules(mod_rdp_params.process_monitoring_rules)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -1309,15 +1317,23 @@ protected:
         session_probe_virtual_channel_params.front_height                           =
             this->front_height;
 
+        session_probe_virtual_channel_params.session_probe_disconnected_application_limit =
+            this->session_probe_disconnected_application_limit;
+        session_probe_virtual_channel_params.session_probe_disconnected_session_limit =
+            this->session_probe_disconnected_session_limit;
+        session_probe_virtual_channel_params.session_probe_idle_session_limit       =
+            this->session_probe_idle_session_limit;
+
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();
         session_probe_virtual_channel_params.real_working_dir                       =
             this->real_working_dir.c_str();
 
-        session_probe_virtual_channel_params.outbound_connection_notifying_rules    =
-            "";
-        session_probe_virtual_channel_params.outbound_connection_killing_rules      =
-            this->outbound_connection_killing_rules.c_str();
+        session_probe_virtual_channel_params.outbound_connection_monitoring_rules   =
+            this->outbound_connection_monitoring_rules.c_str();
+
+        session_probe_virtual_channel_params.process_monitoring_rules               =
+            this->process_monitoring_rules.c_str();
 
         session_probe_virtual_channel_params.lang                                   =
             this->lang;
