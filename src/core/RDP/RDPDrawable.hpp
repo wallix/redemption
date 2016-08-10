@@ -872,10 +872,14 @@ public:
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow &) override {}
-    void draw(const RDP::RAIL::WindowIcon          &) override {}
-    void draw(const RDP::RAIL::CachedIcon          &) override {}
-    void draw(const RDP::RAIL::DeletedWindow       &) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
+    void draw(const RDP::RAIL::WindowIcon                     &) override {}
+    void draw(const RDP::RAIL::CachedIcon                     &) override {}
+    void draw(const RDP::RAIL::DeletedWindow                  &) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons       &) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       &) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop            &) override {}
 
     void set_pointer(const Pointer & cursor) override {
         this->drawable.use_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
