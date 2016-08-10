@@ -165,7 +165,7 @@ auto check_call(T && a, int) -> decltype(cstr_array_view(a), true)
 
 
 template<class T>
-bool check_call(T && a, char)
+bool check_call(T &&, char)
 {
     return false;
 }
