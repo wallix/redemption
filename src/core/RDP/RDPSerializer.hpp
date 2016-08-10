@@ -590,7 +590,7 @@ public:
         }
     }
 
-    void draw(const RDP::RAIL::WindowInformationNewOrExistingWindow & order) override {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
         if (this->ini.get<cfg::debug::secondary_orders>()) {
@@ -598,7 +598,7 @@ public:
         }
     }
 
-    void draw(const RDP::RAIL::WindowInformationWindowIcon & order) override {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
         if (this->ini.get<cfg::debug::secondary_orders>()) {
@@ -606,7 +606,7 @@ public:
         }
     }
 
-    void draw(const RDP::RAIL::WindowInformationCachedIcon & order) override {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
         if (this->ini.get<cfg::debug::secondary_orders>()) {
@@ -614,7 +614,7 @@ public:
         }
     }
 
-    void draw(const RDP::RAIL::WindowInformationDeletedWindow & order) override {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
         if (this->ini.get<cfg::debug::secondary_orders>()) {

@@ -325,7 +325,7 @@ private:
                                       | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
         {
             case RDP::RAIL::WINDOW_ORDER_ICON: {
-                    RDP::RAIL::WindowInformationWindowIcon order;
+                    RDP::RAIL::WindowIcon order;
                     order.receive(stream);
                     order.log(LOG_INFO);
                     gd.draw(order);
@@ -333,7 +333,7 @@ private:
                 break;
 
             case RDP::RAIL::WINDOW_ORDER_CACHEDICON: {
-                    RDP::RAIL::WindowInformationCachedIcon order;
+                    RDP::RAIL::CachedIcon order;
                     order.receive(stream);
                     order.log(LOG_INFO);
                     gd.draw(order);
@@ -341,7 +341,7 @@ private:
                 break;
 
             case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
-                    RDP::RAIL::WindowInformationDeletedWindow order;
+                    RDP::RAIL::DeletedWindow order;
                     order.receive(stream);
                     order.log(LOG_INFO);
                     gd.draw(order);
@@ -350,7 +350,7 @@ private:
 
             case 0:
             case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
-                    RDP::RAIL::WindowInformationNewOrExistingWindow order;
+                    RDP::RAIL::NewOrExistingWindow order;
                     order.receive(stream);
                     order.log(LOG_INFO);
                     gd.draw(order);
