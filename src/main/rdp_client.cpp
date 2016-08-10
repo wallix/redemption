@@ -285,7 +285,7 @@ public:
         this->gd.draw(order);
     }
 
-    void draw(const RDP::RAIL::WindowInformationNewOrExistingWindow & order) override {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -295,7 +295,7 @@ public:
         this->gd.draw(order);
     }
 
-    void draw(const RDP::RAIL::WindowInformationWindowIcon & order) override {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -305,7 +305,7 @@ public:
         this->gd.draw(order);
     }
 
-    void draw(const RDP::RAIL::WindowInformationCachedIcon & order) override {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);
@@ -315,7 +315,7 @@ public:
         this->gd.draw(order);
     }
 
-    void draw(const RDP::RAIL::WindowInformationDeletedWindow & order) override {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             order.log(LOG_INFO);

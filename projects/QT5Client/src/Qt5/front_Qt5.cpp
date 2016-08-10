@@ -1379,48 +1379,48 @@ void Front_Qt::draw(const RDP::FrameMarker & order) {
     //this->gd.draw(order);
 }
 
-void Front_Qt::draw(const RDP::RAIL::WindowInformationNewOrExistingWindow & order) {
+void Front_Qt::draw(const RDP::RAIL::NewOrExistingWindow & order) {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "WindowInformationNewOrExistingWindow" << std::endl;
+    std::cout << "NewOrExistingWindow" << std::endl;
     //this->gd.draw(order);
 }
 
-void Front_Qt::draw(const RDP::RAIL::WindowInformationWindowIcon & order) {
+void Front_Qt::draw(const RDP::RAIL::WindowIcon & order) {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "WindowInformationWindowIcon" << std::endl;
+    std::cout << "WindowIcon" << std::endl;
     //this->gd.draw(order);
 }
 
-void Front_Qt::draw(const RDP::RAIL::WindowInformationCachedIcon & order) {
+void Front_Qt::draw(const RDP::RAIL::CachedIcon & order) {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-        std::cout << "WindowInformationCachedIcon" << std::endl;
+        std::cout << "CachedIcon" << std::endl;
 
     //this->gd.draw(order);
 }
 
-void Front_Qt::draw(const RDP::RAIL::WindowInformationDeletedWindow & order) {
+void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         order.log(LOG_INFO);
         LOG(LOG_INFO, "========================================\n");
     }
 
-    std::cout << "WindowInformationDeletedWindow" << std::endl;
+    std::cout << "DeletedWindow" << std::endl;
 
     //this->gd.draw(order);
 }
