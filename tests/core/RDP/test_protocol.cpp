@@ -28,6 +28,7 @@
 
 #define LOGNULL
 //#define LOGPRINT
+#include "utils/logs.hpp"
 
 //#include "path/to/file.hpp"
 
