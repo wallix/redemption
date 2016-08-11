@@ -29,6 +29,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 namespace RDP {
 
