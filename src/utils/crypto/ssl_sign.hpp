@@ -67,6 +67,14 @@ public:
         };
         md5.update(sigconst, sizeof(sigconst));
         md5.update(shasig, sizeof(shasig));
-        md5.final(out, out_size);
+
+        // TODO: check out_size provided to sign.final() 
+        // if it's already MD5::DIGEST_LENGTH
+        // no need to provide it
+        
+        uint8_t tmp[SslMd5::DIGEST_LENGTH];
+        md5.final(tmp);
+        memcpy(out, tmp, std::min(out_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+        
     }
 };

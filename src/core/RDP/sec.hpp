@@ -919,7 +919,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -934,7 +934,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -949,7 +949,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 32);
             }
 
             {
@@ -965,7 +965,7 @@ enum {
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob0);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -980,7 +980,7 @@ enum {
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob1);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -995,7 +995,7 @@ enum {
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob2);
             }
 
             {
@@ -1003,7 +1003,7 @@ enum {
                 md5.update(this->blob1, sizeof(this->blob1));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->licensingEncryptionKey, SslMd5::DIGEST_LENGTH);
+                md5.final(this->licensingEncryptionKey);
             }
         }
 
@@ -1410,7 +1410,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1425,7 +1425,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 16, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1440,7 +1440,7 @@ enum {
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(master_secret + 32, SslMd5::DIGEST_LENGTH);
+                md5.final(master_secret + 32);
             }
 
             {
@@ -1456,7 +1456,7 @@ enum {
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob0, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob0);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
@@ -1471,7 +1471,7 @@ enum {
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob1, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob1);
             }
             {
 
@@ -1487,7 +1487,7 @@ enum {
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
                 md5.update(shasig, sizeof(shasig));
-                md5.final(this->blob2, SslMd5::DIGEST_LENGTH);
+                md5.final(this->blob2);
             }
 
             {
@@ -1495,14 +1495,14 @@ enum {
                 md5.update(this->blob1, sizeof(this->blob1));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->key1, SslMd5::DIGEST_LENGTH);
+                md5.final(this->key1);
             }
             {
                 SslMd5 md5;
                 md5.update(this->blob2, sizeof(this->blob2));
                 md5.update(client_random, client_random_size);
                 md5.update(server_random, server_random_size);
-                md5.final(this->key2, SslMd5::DIGEST_LENGTH);
+                md5.final(this->key2);
             }
         }
     };

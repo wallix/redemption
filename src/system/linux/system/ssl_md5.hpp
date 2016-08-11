@@ -44,17 +44,11 @@ public:
         MD5_Update(&this->md5, data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        if (DIGEST_LENGTH > out_data_size){
-            uint8_t tmp[DIGEST_LENGTH];
-            MD5_Final(tmp, &this->md5);
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
         MD5_Final(out_data, &this->md5);
     }
 };
 
 
-using SslHMAC_Md5 = detail_::basic_HMAC<&EVP_md5, SslMd5::DIGEST_LENGTH>;
+using SslHMAC_Md5 = detail_::basic_HMAC_2<&EVP_md5, SslMd5::DIGEST_LENGTH>;

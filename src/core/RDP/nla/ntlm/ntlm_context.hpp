@@ -105,7 +105,7 @@ struct NTLMContext
     uint8_t ChallengeTimestamp[8];
     uint8_t ServerChallenge[8];
     uint8_t ClientChallenge[8];
-    uint8_t SessionBaseKey[16];
+    uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH];
     uint8_t KeyExchangeKey[16];
     uint8_t RandomSessionKey[16];
     uint8_t ExportedSessionKey[16];
@@ -114,7 +114,7 @@ struct NTLMContext
     uint8_t ClientSealingKey[16];
     uint8_t ServerSigningKey[16];
     uint8_t ServerSealingKey[16];
-    uint8_t MessageIntegrityCheck[16];
+    uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
     // uint8_t NtProofStr[16];
 
     uint32_t verbose;
@@ -295,9 +295,18 @@ struct NTLMContext
         delete [] userup;
         userup = nullptr;
 
+        uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
+
         // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
-        hmac_md5.final(buff, buff_size);
+        hmac_md5.final(tmp_md5);
+        // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
+        // if it is so no need to use a temporary variable
+        // and copy digest afterward.
+        memset(buff, 0, buff_size);
+        memcpy(buff, tmp_md5, 
+            std::min(static_cast<size_t>(buff_size),
+            static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
     }
     // all strings are in unicode utf16
     void hash_password(const uint8_t * pass, size_t pass_size, uint8_t * hash) {
@@ -329,9 +338,21 @@ struct NTLMContext
         hmac_md5.update(userup, user_size);
 
         delete [] userup;
+        
+        uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
+        
         userup = nullptr;
         hmac_md5.update(domain, domain_size);
-        hmac_md5.final(buff, buff_size);
+        hmac_md5.final(tmp_md5);
+        // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
+        // if it is so no need to use a temporary variable
+        // and copy digest afterward.
+        memset(buff, 0, buff_size);
+        memcpy(buff, tmp_md5, 
+            std::min(static_cast<size_t>(buff_size),
+            static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+        
+        
         if (this->verbose & 0x400) {
             if (!buff) {
                 LOG(LOG_INFO, "NTOWFv2 error: nullptr result");
@@ -395,7 +416,7 @@ struct NTLMContext
         // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                       Concat(ServerChallenge, temp))
 
-        uint8_t NtProofStr[16] = {};
+        uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
         if (this->verbose & 0x400) {
             LOG(LOG_INFO, "NTLMContext Compute response: NtProofStr");
         }
@@ -404,7 +425,7 @@ struct NTLMContext
         this->ntlm_get_server_challenge();
         hmac_md5resp.update(this->ServerChallenge, 8);
         hmac_md5resp.update(temp, temp_size);
-        hmac_md5resp.final(NtProofStr, sizeof(NtProofStr));
+        hmac_md5resp.final(NtProofStr);
 
         // NtChallengeResponse = Concat(NtProofStr, temp)
 
@@ -439,10 +460,10 @@ struct NTLMContext
         LmChallengeResponse.reset();
         hmac_md5lmresp.update(this->ServerChallenge, 8);
         hmac_md5lmresp.update(this->ClientChallenge, 8);
-        uint8_t LCResponse[16] = {};
-        hmac_md5lmresp.final(LCResponse, 16);
+        uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
+        hmac_md5lmresp.final(LCResponse);
 
-        LmChallengeResponse.ostream.out_copy_bytes(LCResponse, 16);
+        LmChallengeResponse.ostream.out_copy_bytes(LCResponse, SslMd5::DIGEST_LENGTH);
         LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
         LmChallengeResponse.mark_end();
 
@@ -453,7 +474,7 @@ struct NTLMContext
         //                           NtProofStr)
         SslHMAC_Md5 hmac_md5seskey(ResponseKeyNT, sizeof(ResponseKeyNT));
         hmac_md5seskey.update(NtProofStr, sizeof(NtProofStr));
-        hmac_md5seskey.final(this->SessionBaseKey, 16);
+        hmac_md5seskey.final(this->SessionBaseKey);
     }
 
     // static method for both client and server (encrypt and decrypt)
@@ -509,7 +530,7 @@ struct NTLMContext
         SslMd5 md5sign;
         md5sign.update(this->ExportedSessionKey, 16);
         md5sign.update(sign_magic, magic_size);
-        md5sign.final(signing_key, 16);
+        md5sign.final(signing_key);
     }
 
 
@@ -548,7 +569,7 @@ struct NTLMContext
         SslMd5 md5seal;
         md5seal.update(this->ExportedSessionKey, 16);
         md5seal.update(seal_magic, magic_size);
-        md5seal.final(sealing_key, 16);
+        md5seal.final(sealing_key);
     }
 
     /**
@@ -582,7 +603,7 @@ struct NTLMContext
                             this->SavedChallengeMessage.size());
         hmac_md5resp.update(this->SavedAuthenticateMessage.get_data(),
                             this->SavedAuthenticateMessage.size());
-        hmac_md5resp.final(MIC, 16);
+        hmac_md5resp.final(MIC);
     }
 
 
@@ -655,7 +676,7 @@ struct NTLMContext
         in_AuthNtResponse.in_copy_bytes(temp, temp_size);
         AuthNtResponse.ostream.rewind();
 
-        uint8_t NtProofStr[16] = {};
+        uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyNT[16] = {};
         // LOG(LOG_INFO, "NTLM CHECK NT RESPONSE FROM AUTHENTICATE");
         // LOG(LOG_INFO, "UserName size = %u", UserName.size());
@@ -671,7 +692,7 @@ struct NTLMContext
         SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
         hmac_md5resp.update(this->ServerChallenge, 8);
         hmac_md5resp.update(temp, temp_size);
-        hmac_md5resp.final(NtProofStr, sizeof(NtProofStr));
+        hmac_md5resp.final(NtProofStr);
 
         bool res = !memcmp(NtProofStr, NtProofStr_from_msg, 16);
 
@@ -699,7 +720,7 @@ struct NTLMContext
         in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
         AuthLmResponse.ostream.rewind();
 
-        uint8_t compute_response[16] = {};
+        uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyLM[16] = {};
         this->NTOWFv2_FromHash(hash, hash_size,
                                UserName.get_data(), UserName.size(),
@@ -709,7 +730,7 @@ struct NTLMContext
         SslHMAC_Md5 hmac_md5resp(ResponseKeyLM, sizeof(ResponseKeyLM));
         hmac_md5resp.update(this->ServerChallenge, 8);
         hmac_md5resp.update(this->ClientChallenge, 8);
-        hmac_md5resp.final(compute_response, sizeof(compute_response));
+        hmac_md5resp.final(compute_response);
 
         bool res = !memcmp(response, compute_response, 16);
 
@@ -737,7 +758,7 @@ struct NTLMContext
         //                           NtProofStr)
         SslHMAC_Md5 hmac_md5seskey(ResponseKeyNT, sizeof(ResponseKeyNT));
         hmac_md5seskey.update(NtProofStr, sizeof(NtProofStr));
-        hmac_md5seskey.final(this->SessionBaseKey, 16);
+        hmac_md5seskey.final(this->SessionBaseKey);
     }
 
 

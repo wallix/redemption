@@ -47,7 +47,7 @@ public:
         this->md5_update(data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
         //assert(MD5_DIGEST_LENGTH == out_data_size);
         this->md5_sum(out_data);
@@ -271,4 +271,4 @@ private:
 };
 
 
-using SslHMAC_Md5_direct = detail_::basic_HMAC_direct<SslMd5_direct, 64>;
+using SslHMAC_Md5_direct = detail_::basic_HMAC_direct_2<SslMd5_direct, 64>;
