@@ -806,7 +806,7 @@ class Sesman():
                         self.internal_target = True if s[2] == u'INTERNAL' else False
                     self.send_data(data_to_send)
                     self.target_service_name = service_name
-                    self.target_group = s[0].split(';')[0]
+                    self.target_group = s[0]
                     # Logger().info("Only one target : service name %s" % self.target_service_name)
                     _status = True
                 else:

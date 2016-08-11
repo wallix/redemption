@@ -296,11 +296,11 @@ private:
                 break;
 
             case RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY:
-//                this->process_notification_icon_information(stream, header, FieldsPresentFlags, gd);
+                this->process_notification_icon_information(stream, header, FieldsPresentFlags, gd);
                 break;
 
             case RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP:
-//                this->process_desktop_information(stream, header, FieldsPresentFlags, gd);
+                this->process_desktop_information(stream, header, FieldsPresentFlags, gd);
                 break;
 
             default:
@@ -356,6 +356,54 @@ private:
                     gd.draw(order);
                 }
                 break;
+        }
+    }
+
+    void process_notification_icon_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                              , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
+        }
+
+        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+        {
+            case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
+                    RDP::RAIL::DeletedNotificationIcons order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    gd.draw(order);
+                }
+                break;
+
+            case 0:
+            case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
+                    RDP::RAIL::NewOrExistingNotificationIcons order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    gd.draw(order);
+                }
+                break;
+        }
+    }
+
+    void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                    , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders::process_desktop_information");
+        }
+
+        if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
+            RDP::RAIL::NonMonitoredDesktop order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            gd.draw(order);
+        }
+        else {
+            RDP::RAIL::ActivelyMonitoredDesktop order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            gd.draw(order);
         }
     }
 

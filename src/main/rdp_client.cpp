@@ -325,6 +325,46 @@ public:
         this->gd.draw(order);
     }
 
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");

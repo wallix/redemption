@@ -35,7 +35,7 @@ except Exception, e:
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
     except Exception, e:
-        Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
+        # Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
 import time
@@ -302,6 +302,7 @@ class Engine(object):
             self.challenge = None
             import traceback
             Logger().info("Engine password_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            raise
         return False
 
     def passthrough_authenticate(self, wab_login, ip_client, ip_server):
@@ -321,6 +322,7 @@ class Engine(object):
         except Exception, e:
             import traceback
             Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            raise
         return False
 
     def gssapi_authenticate(self, wab_login, ip_client, ip_server):
@@ -342,6 +344,7 @@ class Engine(object):
         except Exception, e:
             import traceback
             Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            raise
         return False
 
     def pubkey_authenticate(self, wab_login, ip_client, pubkey, ip_server):
@@ -367,6 +370,7 @@ class Engine(object):
             self.challenge = None
             import traceback
             Logger().info("Engine pubkey_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            raise
         return False
 
     def resolve_target_host(self, target_device, target_login, target_service,
@@ -681,7 +685,10 @@ class Engine(object):
             account_namedom = account_name
             if account_domain and account_domain != AM_IL_DOMAIN:
                 account_namedom = "%s@%s" % (account_name, account_domain)
-            target_groups = right['target_group'].split(';')
+            try:
+                group_name = right['auth_cn']
+            except:
+                group_name = right['target_group']
             if right['application_cn']:
                 target_name = right['application_cn']
                 service_name = u"APP"
@@ -715,10 +722,10 @@ class Engine(object):
                     service_name != target_context.service):
                     continue
                 if (target_context.group and
-                    not (target_context.group in target_groups)):
+                    target_context.group != group_name):
                     continue
 
-            target_value = (service_name, target_groups, right)
+            target_value = (service_name, group_name, right)
             # feed targets hashtable indexed on account_name and target_name
             # targets{(account, target)}{domain}[(service, group, right)]
             tuple_index = (account_name, target_name)
@@ -751,7 +758,7 @@ class Engine(object):
                                                    target_name,
                                                    service_name,
                                                    protocol,
-                                                   ';'.join(target_groups),
+                                                   group_name,
                                                    subprotocols,
                                                    host))
 
@@ -794,7 +801,7 @@ class Engine(object):
         right = None
         filtered = [ (r_service, r) for (r_service, r_groups, r) in results if (
             ((not target_service) or (r_service == target_service)) and
-            ((not target_group) or (target_group in r_groups))) ]
+            ((not target_group) or (r_groups == target_group))) ]
         if filtered:
             filtered_service, right = filtered[0]
             # if ambiguity in group but not in service,
@@ -1448,9 +1455,8 @@ class DisplayInfo(object):
         self.host = host
 
     def get_target_tuple(self):
-        target_group = self.group.split(';')[0]
         return (self.target_login.encode('utf-8'), self.target_name.encode('utf-8'),
-                self.service_name.encode('utf-8'), target_group.encode('utf-8'))
+                self.service_name.encode('utf-8'), self.group.encode('utf-8'))
 
 class ProtocolInfo(object):
     def __init__(self, protocol, subprotocols=[]):

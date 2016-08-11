@@ -206,15 +206,15 @@ public:
     uint8_t              _keyboardMods;
     CHANNELS::ChannelDefArray   _cl;
     uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatShortName;   
+    std::string          _requestedFormatShortName;
     uint8_t            * _bufferRDPClipboardChannel;
     size_t               _bufferRDPClipboardChannelSize;
     size_t               _bufferRDPClipboardChannelSizeTotal;
     int                  _bufferRDPCLipboardMetaFilePic_width;
     int                  _bufferRDPCLipboardMetaFilePic_height;
     int                  _bufferRDPClipboardMetaFilePicBPP;
-    
-    
+
+
     enum : int {
         COMMAND_VALID = 15
       , NAME_GOTTEN   =  1
@@ -246,26 +246,26 @@ public:
     virtual void server_set_pointer(const Pointer & cursor) override;
 
     virtual int server_resize(int width, int height, int bpp) override;
-    
+
     void send_buffer_to_clipboard();
-    
+
     void process_server_clipboard_data(int flags, InStream & chunk);
-    
+
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size) override;
-    
+
     std::string HTMLtoText(const std::string & html);
-    
+
     void send_to_clipboard_Buffer(InStream & chunk);
 
     void send_textBuffer_to_clipboard(bool isTextHtml);
-    
+
     void send_imageBuffer_to_clipboard();
-    
+
     void empty_buffer() override;
-    
-    
-    
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
@@ -334,6 +334,14 @@ public:
     virtual void draw(const RDP::RAIL::CachedIcon & order) override;
 
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
+
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
+
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
+
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
+
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
 
     virtual void draw(const RDPColCache   & cmd);
 

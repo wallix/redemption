@@ -622,6 +622,38 @@ public:
         }
     }
 
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
+        this->reserve_order(order.size());
+        order.emit(this->stream_orders);
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
+            order.log(LOG_INFO);
+        }
+    }
+
+    void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
+        this->reserve_order(order.size());
+        order.emit(this->stream_orders);
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
+            order.log(LOG_INFO);
+        }
+    }
+
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
+        this->reserve_order(order.size());
+        order.emit(this->stream_orders);
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
+            order.log(LOG_INFO);
+        }
+    }
+
+    void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+        this->reserve_order(order.size());
+        order.emit(this->stream_orders);
+        if (this->ini.get<cfg::debug::secondary_orders>()) {
+            order.log(LOG_INFO);
+        }
+    }
+
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
