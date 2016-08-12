@@ -56,7 +56,6 @@ protected:
         uint32_t flags, InStream& chunk)
     {
         (void)total_length;
-        (void)flags;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
@@ -86,7 +85,6 @@ protected:
         uint32_t flags, InStream& chunk)
     {
         (void)total_length;
-        (void)flags;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
@@ -115,7 +113,6 @@ protected:
         uint32_t flags, InStream& chunk)
     {
         (void)total_length;
-        (void)flags;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
@@ -145,7 +142,6 @@ protected:
         uint32_t flags, InStream& chunk)
     {
         (void)total_length;
-        (void)flags;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
@@ -377,7 +373,7 @@ protected:
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
                             "SPI_SETHIGHCONTRAST - "
-                            "parameters for the high-contrast accessibility feature, Flags=0x%X, ColorScheme=\"%s\".",
+                            "Parameters for the high-contrast accessibility feature, Flags=0x%X, ColorScheme=\"%s\".",
                         hcsisr.Flags(), hcsisr.ColorScheme());
                 }
             }
@@ -388,7 +384,7 @@ protected:
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
                             "Delivering unprocessed client system parameter %s(%u) to server.",
-                        get_RAIL_SystemParam_name(SystemParam),
+                        get_RAIL_ClientSystemParam_name(SystemParam),
                         SystemParam);
                 }
             break;
@@ -434,30 +430,6 @@ public:
 
         switch (this->client_order_type)
         {
-            case TS_RAIL_ORDER_EXEC:
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Execute PDU");
-                }
-
-                send_message_to_server =
-                    this->process_client_execute_pdu(
-                        total_length, flags, chunk);
-            break;
-
-            case TS_RAIL_ORDER_SYSPARAM:
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client System Parameters Update PDU");
-                }
-
-                send_message_to_server =
-                    this->process_client_system_parameters_update_pdu(
-                        total_length, flags, chunk);
-            break;
-
             case TS_RAIL_ORDER_CLIENTSTATUS:
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
@@ -470,6 +442,18 @@ public:
                         total_length, flags, chunk);
             break;
 
+            case TS_RAIL_ORDER_EXEC:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_message: "
+                            "Client Execute PDU");
+                }
+
+                send_message_to_server =
+                    this->process_client_execute_pdu(
+                        total_length, flags, chunk);
+            break;
+
             case TS_RAIL_ORDER_HANDSHAKE:
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
@@ -479,6 +463,18 @@ public:
 
                 send_message_to_server =
                     this->process_client_handshake_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case TS_RAIL_ORDER_SYSPARAM:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_message: "
+                            "Client System Parameters Update PDU");
+                }
+
+                send_message_to_server =
+                    this->process_client_system_parameters_update_pdu(
                         total_length, flags, chunk);
             break;
 
@@ -499,6 +495,120 @@ public:
         }
     }   // process_client_message
 
+    bool process_server_handshake_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+        (void)flags;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        HandshakePDU_Recv hspdur(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            LOG(LOG_INFO,
+                "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                    "buildNumber=%u", hspdur.buildNumber());
+        }
+
+        return true;
+    }
+
+    bool process_server_system_parameters_update_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ServerSystemParametersUpdatePDU_Recv sspupdur(chunk);
+
+        uint32_t SystemParam = sspupdur.SystemParam();
+
+        switch(SystemParam) {
+            case SPI_SETSCREENSAVEACTIVE:
+            {
+                const unsigned expected = 1 /* Body(1) */;
+                if (!chunk.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
+                            "SPI_SETSCREENSAVEACTIVE - "
+                            "expected=%u remains=%zu (0x%04X)",
+                        expected, chunk.in_remain(),
+                        sspupdur.SystemParam());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+
+                uint8_t const Body = chunk.in_uint8();
+
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
+                            "SPI_SETSCREENSAVEACTIVE - "
+                            "Screen saver is %s.",
+                        (!Body ? "disabled" : "enabled"));
+                }
+            }
+            break;
+
+            case SPI_SETSCREENSAVESECURE:
+            {
+                const unsigned expected = 1 /* Body(1) */;
+                if (!chunk.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
+                            "SPI_SETSCREENSAVESECURE - "
+                            "expected=%u remains=%zu (0x%04X)",
+                        expected, chunk.in_remain(),
+                        sspupdur.SystemParam());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+
+                uint8_t const Body = chunk.in_uint8();
+
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
+                            "SPI_SETSCREENSAVESECURE - "
+                            "The desktop is%s to be locked after switching out of screen saver mode.",
+                        (!Body ? " not" : ""));
+                }
+            }
+            break;
+
+            default:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
+                            "Delivering unprocessed server system parameter %s(%u) to client.",
+                        get_RAIL_ServerSystemParam_name(SystemParam),
+                        SystemParam);
+                }
+            break;
+        }
+
+        return true;
+    }
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
@@ -539,6 +649,30 @@ public:
 
         switch (this->server_order_type)
         {
+            case TS_RAIL_ORDER_HANDSHAKE:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_message: "
+                            "Server Handshake PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_handshake_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case TS_RAIL_ORDER_SYSPARAM:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_message: "
+                            "Server System Parameters Update PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_system_parameters_update_pdu(
+                        total_length, flags, chunk);
+            break;
+
             default:
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,

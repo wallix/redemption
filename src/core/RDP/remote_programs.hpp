@@ -319,6 +319,81 @@ public:
     }
 };
 
+// [MS-RDPERP] - 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
+// ====================================================================
+
+// The HandshakeEx PDU is sent from the server to the client to signal that
+//  it is ready to begin Enhanced RemoteApp mode. The server sends the
+//  HandshakeEx PDU, and the client responds with the Handshake PDU (section
+//  2.2.2.2.1).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +---------------------------------------------------------------+
+// |                          buildNumber                          |
+// +---------------------------------------------------------------+
+// |                       railHandshakeFlags                      |
+// +---------------------------------------------------------------+
+
+// header (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of
+//  the header MUST be set to 0x0013 (TS_RAIL_ORDER_HANDSHAKE_EX).
+
+// buildNumber (4 bytes): An unsigned 32-bit integer. The build or version of
+//  the sending party.
+
+// railHandshakeFlags (4 bytes): An unsigned 32-bit integer. Flags for
+//  setting up RAIL session parameters.
+
+//  +---------------------------------------+----------------------------------+
+//  | Flag                                  | Meaning                          |
+//  +---------------------------------------+----------------------------------+
+//  | TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF | Indicates that Enhanced          |
+//  | 0x00000001                            |  RemoteApp (section 1.3.3) is    |
+//  |                                       | supported. This implies support  |
+//  |                                       | for the Remote Desktop Protocol: |
+//  |                                       | Graphics Pipeline Extension      |
+//  |                                       | ([MS-RDPEGFX] section 1.5),      |
+//  |                                       | specifically the                 |
+//  |                                       | RDPGFX_MAP_SURFACE_TO_WINDOW_PDU |
+//  |                                       | ([MS-RDPEGFX] section 2.2.2.20)  |
+//  |                                       | message.                         |
+//  +---------------------------------------+----------------------------------+
+
+
+class HandshakeExPDU_Recv {
+    uint32_t buildNumber_;
+    uint32_t railHandshakeFlags_;
+
+public:
+    explicit HandshakeExPDU_Recv(InStream & stream) {
+        const unsigned expected = 8;    // buildNumber(4) + railHandshakeFlags(4)
+
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "HandshakeEx PDU: expected=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        this->buildNumber_        = stream.in_uint32_le();
+        this->railHandshakeFlags_ = stream.in_uint32_le();
+    }
+
+    uint32_t buildNumber() const { return this->buildNumber_; }
+
+    uint32_t railHandshakeFlags() const { return this->railHandshakeFlags_; }
+};
+
+class HandshakeExPDU_Send {
+public:
+    HandshakeExPDU_Send(OutStream & stream, uint32_t buildNumber, uint32_t railHandshakeFlags) {
+        stream.out_uint32_le(buildNumber);
+        stream.out_uint32_le(railHandshakeFlags);
+    }
+};
+
 // [MS-RDPERP] - 2.2.2.3.1 Client Execute PDU (TS_RAIL_ORDER_EXEC)
 // ===============================================================
 
@@ -507,6 +582,154 @@ public:
     }
 };
 
+// [MS-RDPERP] - 2.2.2.3.2 Server Execute Result PDU
+// (TS_RAIL_ORDER_EXEC_RESULT)
+// =================================================
+
+// The Server Execute Result PDU is sent from server to client in response to
+//  a Client Execute PDU request, and contains the result of the server's
+//  attempt to launch the requested executable.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +-------------------------------+-------------------------------+
+// |             Flags             |           ExecResult          |
+// +-------------------------------+-------------------------------+
+// |                           RawResult                           |
+// +-------------------------------+-------------------------------+
+// |            Padding            |        ExeOrFileLength        |
+// +-------------------------------+-------------------------------+
+// |                      ExeOrFile (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// header (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of
+//  the header MUST be set to TS_RAIL_ORDER_EXEC_RESULT (0x0080).
+
+// Flags (2 bytes): An unsigned 16-bit integer. Identical to the Flags field
+//  of the Client Execute PDU. The server sets this field to enable the
+//  client to match the Client Execute PDU with the Server Execute Result
+//  PDU.
+
+// ExecResult (2 bytes): An unsigned 16-bit integer. The result of the Client
+//  Execute PDU. This field MUST be set to one of the following values.
+
+//  +------------------------------+-------------------------------------------+
+//  | Value                        | Meaning                                   |
+//  +------------------------------+-------------------------------------------+
+//  | RAIL_EXEC_S_OK               | The Client Execute request was successful |
+//  | 0x0000                       | and the requested application or file has |
+//  |                              | been launched.                            |
+//  +------------------------------+-------------------------------------------+
+//  | RAIL_EXEC_E_HOOK_NOT_LOADED  | The Client Execute request could not be   |
+//  | 0x0001                       | satisfied because the server is not       |
+//  |                              | monitoring the current input desktop.     |
+//  +------------------------------+-------------------------------------------+
+//  | RAIL_EXEC_E_DECODE_FAILED    | The Execute request could not be          |
+//  | 0x0002                       | satisfied because the request PDU was     |
+//  |                              | malformed.                                |
+//  +------------------------------+-------------------------------------------+
+//  | RAIL_EXEC_E_NOT_IN_ALLOWLIST | The Client Execute request could not be   |
+//  | 0x0003                       | satisfied because the requested           |
+//  |                              | application was blocked by policy from    |
+//  |                              | being launched on the server.             |
+//  +------------------------------+-------------------------------------------+
+//  | RAIL_EXEC_E_FILE_NOT_FOUND   | The Client Execute request could not be   |
+//  | 0x0005                       | satisfied because the application or file |
+//  |                              | path could not be found.                  |
+//  +------------------------------+-------------------------------------------+
+//  | RAIL_EXEC_E_FAIL             | The Client Execute request could not be   |
+//  | 0x0006                       | satisfied because an unspecified error    |
+//  |                              | occurred on the server.                   |
+//  +------------------------------+-------------------------------------------+
+//  | RAIL_EXEC_E_SESSION_LOCKED   | The Client Execute request could not be   |
+//  | 0x0007                       | satisfied because the remote session is   |
+//  |                              | locked.                                   |
+//  +------------------------------+-------------------------------------------+
+
+// RawResult (4 bytes): An unsigned 32-bit integer. Contains an operating
+//  system-specific return code for the result of the Client Execute
+//  request.<11>
+
+// Padding (2 bytes): An unsigned 16-bit integer. Not used.
+
+// ExeOrFileLength (2 bytes): An unsigned 16-bit integer. Specifies the
+//  length of the ExeOrFile field in bytes. The length MUST be nonzero. The
+//  maximum length is 520 bytes.
+
+// ExeOrFile (variable): The executable or file that was attempted to be
+//  launched. This field is copied from the ExeOrFile field of the Client
+//  Execute PDU. The server sets this field to enable the client to match the
+//  Client Execute PDU with the Server Execute Result PDU.
+
+class ServerExecuteResultPDU_Recv {
+    uint16_t Flags_;
+    uint16_t ExecResult_;
+    uint32_t RawResult_;
+    uint16_t ExeOrFileLength;
+
+    std::string exe_or_file_;
+
+public:
+    explicit ServerExecuteResultPDU_Recv(InStream & stream) {
+        {
+            const unsigned expected =
+                12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server Execute Result PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->Flags_            = stream.in_uint16_le();
+        this->ExecResult_       = stream.in_uint16_le();
+        this->RawResult_        = stream.in_uint32_le();
+
+        stream.in_skip_bytes(2);    // Padding(2)
+
+        this->ExeOrFileLength   = stream.in_uint16_le();
+
+        get_non_null_terminated_utf16_from_utf8(
+            this->exe_or_file_, stream, this->ExeOrFileLength, "Server Execute Result PDU");
+    }
+
+    uint16_t Flags() const { return this->Flags_; }
+
+    uint16_t ExecResult() const { return this->ExecResult_; }
+
+    uint16_t RawResult() const { return this->RawResult_; }
+
+    const char * exe_or_file() const { return this->exe_or_file_.c_str(); }
+};  // class ServerExecuteResultPDU_Recv
+
+class ServerExecuteResultPDU_Send {
+public:
+    ServerExecuteResultPDU_Send(OutStream & stream, uint16_t Flags,
+            uint16_t ExecResult, uint32_t RawResult,
+            const char * exe_or_file) {
+        stream.out_uint16_le(Flags);
+        stream.out_uint16_le(ExecResult);
+        stream.out_uint32_le(RawResult);
+
+        stream.out_clear_bytes(2);  // Padding(2)
+
+        const uint32_t offset_of_ExeOrFile  = stream.get_offset();
+        stream.out_clear_bytes(2);
+
+        const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
+        put_non_null_terminated_utf16_from_utf8(
+            stream, exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
+            offset_of_ExeOrFile);
+    }
+};
+
 // [MS-RDPERP] - 2.2.2.4.1 Client System Parameters Update PDU
 //  (TS_RAIL_ORDER_SYSPARAM)
 // ===========================================================
@@ -632,7 +855,7 @@ enum {
 //  +------------------------+------------------------------------------------+
 
 static inline
-char const* get_RAIL_SystemParam_name(uint32_t SystemParam) {
+char const* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
     switch (SystemParam) {
         case SPI_SETDRAGFULLWINDOWS: return "SPI_SETDRAGFULLWINDOWS";
         case SPI_SETKEYBOARDCUES:    return "SPI_SETKEYBOARDCUES";
@@ -761,5 +984,557 @@ public:
             stream, color_scheme, strlen(color_scheme) * 2);
 
         stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.5.1 Server System Parameters Update PDU
+//  (TS_RAIL_ORDER_SYSPARAM)
+// ===========================================================
+
+// The Server System Parameters Update PDU is sent from the server to client
+//  to synchronize system parameters on the client with those on the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Header                            |
+// +---------------------------------------------------------------+
+// |                        SystemParameter                        |
+// +---------------+-----------------------------------------------+
+// |      Body     |
+// +---------------+
+
+// Header (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of
+//  header MUST be set to 0x03 (TS_RAIL_ORDER_SYSPARAM).
+
+// SystemParameter (4 bytes): An unsigned 32-bit integer. The type of system
+//  parameter being transmitted. This field MUST be set to one of the
+//  following values.
+
+//  +-------------------------+------------------------------------------------+
+//  | Value                   | Meaning                                        |
+//  +-------------------------+------------------------------------------------+
+//  | SPI_SETSCREENSAVEACTIVE | The system parameter indicating whether the    |
+//  | 0x00000011              | screen saver is enabled.                       |
+//  +-------------------------+------------------------------------------------+
+//  | SPI_SETSCREENSAVESECURE | The system parameter indicating whether the    |
+//  | 0x00000077              | desktop is to be locked after switching out of |
+//  |                         | screen saver mode (that is, after the screen   |
+//  |                         | saver starts due to inactivity, then stops due |
+//  |                         | to activity).<14>                              |
+//  +-------------------------+------------------------------------------------+
+
+enum {
+      SPI_SETSCREENSAVEACTIVE = 0x00000011
+    , SPI_SETSCREENSAVESECURE = 0x00000077
+};
+
+// Body (1 byte): The content of this field depends on the SystemParameter
+//  field. The following table outlines the valid values of the
+//  SystemParameter field (Value column) and corresponding values of the Body
+//  field (Meaning column).
+
+//  +-------------------------+------------------------------------------------+
+//  | Value                   | Meaning                                        |
+//  +-------------------------+------------------------------------------------+
+//  | SPI_SETSCREENSAVEACTIVE | Size of Body field: 1 byte.                    |
+//  | 0x00000011              | 0 (FALSE): Screen saver is not enabled.        |
+//  |                         | Nonzero (TRUE): Screen Saver is enabled.       |
+//  +-------------------------+------------------------------------------------+
+//  | SPI_SETSCREENSAVESECURE | Size of Body field: 1 byte.                    |
+//  | 0x00000077              | 0 (FALSE): Do not lock the desktop when        |
+//  |                         | switching out of screen saver mode. Nonzero    |
+//  |                         | (TRUE): Lock the desktop when switching out of |
+//  |                         | screen saver mode.                             |
+//  +-------------------------+------------------------------------------------+
+
+static inline
+char const* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
+    switch (SystemParam) {
+        case SPI_SETSCREENSAVEACTIVE: return "SPI_SETSCREENSAVEACTIVE";
+        case SPI_SETSCREENSAVESECURE: return "SPI_SETSCREENSAVESECURE";
+        default:                      return "<unknown>";
+    }
+}
+
+class ServerSystemParametersUpdatePDU_Recv {
+    uint32_t SystemParam_;
+
+public:
+    explicit ServerSystemParametersUpdatePDU_Recv(InStream & stream) {
+        {
+            const unsigned expected = 4;    // SystemParam(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server System Parameters Update PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->SystemParam_ = stream.in_uint32_le();
+    }
+
+    uint32_t SystemParam() const { return this->SystemParam_; }
+};
+
+class ServerSystemParametersUpdatePDU_Send {
+public:
+    ServerSystemParametersUpdatePDU_Send(OutStream & stream, uint32_t SystemParam) {
+        stream.out_uint32_le(SystemParam);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.6.1 Client Activate PDU (TS_RAIL_ORDER_ACTIVATE)
+// ====================================================================
+
+// The Client Activate PDU is sent from client to server when a local RAIL
+//  window on the client is activated or deactivated.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +---------------+-----------------------------------------------+
+// |    Enabled    |
+// +---------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_ACTIVATE (0x0002).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the associated
+//  window on the server that is to be activated or deactivated.
+
+// Enabled (1 byte): An unsigned 8-bit integer. Indicates whether the window
+//  is to be activated (value = nonzero) or deactivated (value = 0).
+
+class ClientActivatePDU_Recv {
+    uint32_t WindowId_;
+    uint8_t  Enabled_;
+
+public:
+    explicit ClientActivatePDU_Recv(InStream & stream) {
+        {
+            const unsigned expected = 5;    // WindowId(4) + Enabled(1)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client Get Activate PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId_ = stream.in_uint32_le();
+        this->Enabled_  = stream.in_uint8();
+    }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    uint8_t Enabled() const { return this->Enabled_; }
+};
+
+class ClientActivatePDU_Send {
+public:
+    ClientActivatePDU_Send(OutStream & stream, uint32_t WindowId, uint8_t Enabled) {
+        stream.out_uint32_le(WindowId);
+        stream.out_uint8(Enabled);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.6.2 Client System Menu PDU (TS_RAIL_ORDER_SYSMENU)
+// ======================================================================
+
+// The Client System Menu PDU packet is sent from the client to the server
+//  when a local RAIL window on the client receives a command to display its
+//  System menu. This command is forwarded to the server via the System menu
+//  PDU.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +-------------------------------+-------------------------------+
+// |              Left             |              Top              |
+// +-------------------------------+-------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_SYSMENU (0x000C).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window on
+//  the server that SHOULD display its System menu.
+
+// Left (2 bytes): A 16-bit signed integer. The x-coordinate of the top-left
+//  corner at which the System menu SHOULD be displayed. Specified in screen
+//  coordinates.
+
+// Top (2 bytes): A 16-bit signed integer. The y-coordinate of the top-left
+//  corner at which the System menu SHOULD be displayed. Specified in screen
+//  coordinates.
+
+class ClientSystemMenuPDU_Recv {
+    uint32_t WindowId_;
+    int16_t  Left_;
+    int16_t  Top_;
+
+public:
+    explicit ClientSystemMenuPDU_Recv(InStream & stream) {
+        {
+            const unsigned expected = 8;    // WindowId(4) + Left(2) + Top(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client System Menu PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId_ = stream.in_uint32_le();
+        this->Left_     = stream.in_sint16_le();
+        this->Top_      = stream.in_sint16_le();
+    }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    int16_t Left() const { return this->Left_; }
+
+    int16_t Top() const { return this->Top_; }
+};
+
+class ClientSystemMenuPDU_Send {
+public:
+    ClientSystemMenuPDU_Send(OutStream & stream, uint32_t WindowId, int16_t Left, int16_t Top) {
+        stream.out_uint32_le(WindowId);
+        stream.out_sint16_le(Left);
+        stream.out_sint16_le(Top);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.6.3 Client System Command PDU
+//  (TS_RAIL_ORDER_SYSCOMMAND)
+// =================================================
+
+// The Client System Command PDU packet is sent from the client to the server
+//  when a local RAIL window on the client receives a command to perform an
+//  action on the window, such as minimize or maximize. This command is
+//  forwarded to the server via the System Command PDU.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +-------------------------------+-------------------------------+
+// |            Command            |
+// +-------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_SYSCOMMAND (0x0004).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window on
+//  the server to activate or deactivate.
+
+// Command (2 bytes): An unsigned 16-bit integer. Specifies the type of
+//  command. The field MUST be one of the following values.
+
+//  +-------------+----------------------------------------------------------+
+//  | Value       | Meaning                                                  |
+//  +-------------+----------------------------------------------------------+
+//  | SC_SIZE     | Resize the window.                                       |
+//  | 0xF000      |                                                          |
+//  +-------------+----------------------------------------------------------+
+//  | SC_MOVE     | Move the window.                                         |
+//  | 0xF010      |                                                          |
+//  +-------------+----------------------------------------------------------+
+//  | SC_MINIMIZE | Minimize the window.                                     |
+//  | 0xF020      |                                                          |
+//  +-------------+----------------------------------------------------------+
+//  | SC_MAXIMIZE | Maximize the window.                                     |
+//  | 0xF030      |                                                          |
+//  +-------------+----------------------------------------------------------+
+//  | SC_CLOSE    | Close the window.                                        |
+//  | 0xF060      |                                                          |
+//  +-------------+----------------------------------------------------------+
+//  | SC_KEYMENU  | The ALT + SPACE key combination was pressed; display the |
+//  | 0xF100      | window's system menu.                                    |
+//  +-------------+----------------------------------------------------------+
+//  | SC_RESTORE  | Restore the window to its original shape and size.       |
+//  | 0xF120      |                                                          |
+//  +-------------+----------------------------------------------------------+
+//  | SC_DEFAULT  | Perform the default action of the window's system menu.  |
+//  | 0xF160      |                                                          |
+//  +-------------+----------------------------------------------------------+
+
+enum {
+      SC_SIZE     = 0xF000
+    , SC_MOVE     = 0xF010
+    , SC_MINIMIZE = 0xF020
+    , SC_MAXIMIZE = 0xF030
+    , SC_CLOSE    = 0xF060
+    , SC_KEYMENU  = 0xF100
+    , SC_RESTORE  = 0xF120
+    , SC_DEFAULT  = 0xF160
+};
+
+class ClientSystemCommandPDU_Recv {
+    uint32_t WindowId_;
+    uint16_t Command_;
+
+public:
+    explicit ClientSystemCommandPDU_Recv(InStream & stream) {
+        {
+            const unsigned expected = 6;    // WindowId(4) + Command(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client System Command PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId_ = stream.in_uint32_le();
+        this->Command_  = stream.in_uint16_le();
+    }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    int16_t Command() const { return this->Command_; }
+};
+
+class ClientSystemCommandPDU_Send {
+public:
+    ClientSystemCommandPDU_Send(OutStream & stream, uint32_t WindowId, uint16_t Command) {
+        stream.out_uint32_le(WindowId);
+        stream.out_uint16_le(Command);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.6.4 Client Notify Event PDU
+//  (TS_RAIL_ORDER_NOTIFY_EVENT)
+// ===============================================
+
+// The Client Notify Event PDU packet is sent from a client to a server when
+//  a local RAIL Notification Icon on the client receives a keyboard or mouse
+//  message from the user. This notification is forwarded to the server via
+//  the Notify Event PDU.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +---------------------------------------------------------------+
+// |                          NotifyIconId                         |
+// +---------------------------------------------------------------+
+// |                            Message                            |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_NOTIFY_EVENT (0x0006).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the associated
+//  window on the server that owns the notification icon being specified in
+//  the PDU.
+
+// NotifyIconId (4 bytes): An unsigned 32-bit integer. The ID of the
+//  associated notification icon on the server that SHOULD receive the
+//  keyboard or mouse interaction.
+
+// Message (4 bytes): An unsigned 32-bit integer. The message being sent to
+//  the notification icon on the server.
+
+//  +----------------------+---------------------------------------------------+
+//  | Value                | Meaning                                           |
+//  +----------------------+---------------------------------------------------+
+//  | WM_LBUTTONDOWN       | The user pressed the left mouse button in the     |
+//  | 0x00000201           | client area of the notification icon.             |
+//  +----------------------+---------------------------------------------------+
+//  | WM_LBUTTONUP         | The user released the left mouse button while the |
+//  | 0x00000202           | cursor was in the client area of the notification |
+//  |                      | icon.                                             |
+//  +----------------------+---------------------------------------------------+
+//  | WM_RBUTTONDOWN       | The user pressed the right mouse button in the    |
+//  | 0x00000204           | client area of the notification icon.             |
+//  +----------------------+---------------------------------------------------+
+//  | WM_RBUTTONUP         | The user released the right mouse button while    |
+//  | 0x00000205           | the cursor was in the client area of the          |
+//  |                      | notification icon.                                |
+//  +----------------------+---------------------------------------------------+
+//  | WM_CONTEXTMENU       | The user selected a notification icon’s shortcut  |
+//  | 0x0000007B           | menu with the keyboard. This message is sent only |
+//  |                      | for notification icons that follow Windows 2000   |
+//  |                      | behavior (see Version field in section            |
+//  |                      | 2.2.1.3.2.2.1).                                   |
+//  +----------------------+---------------------------------------------------+
+//  | WM_LBUTTONDBLCLK     | The user double-clicked the left mouse button in  |
+//  | 0x00000203           | the client area of the notification icon.         |
+//  +----------------------+---------------------------------------------------+
+//  | WM_RBUTTONDBLCLK     | The user double-clicked the right mouse button in |
+//  | 0x00000206           | the client area of the notification icon.         |
+//  +----------------------+---------------------------------------------------+
+//  | NIN_SELECT           | The user selected a notification icon with the    |
+//  | 0x00000400           | mouse and activated it with the ENTER key. This   |
+//  |                      | message is sent only for notification icons that  |
+//  |                      | follow Windows 2000 behavior (see Version field   |
+//  |                      | in section 2.2.1.3.2.2.1).                        |
+//  +----------------------+---------------------------------------------------+
+//  | NIN_KEYSELECT        | The user selected a notification icon with the    |
+//  | 0x00000401           | keyboard and activated it with the SPACEBAR or    |
+//  |                      | ENTER key. This message is sent only for          |
+//  |                      | notification icons that follow Windows 2000       |
+//  |                      | behavior (see Version field in section            |
+//  |                      | 2.2.1.3.2.2.1).                                   |
+//  +----------------------+---------------------------------------------------+
+//  | NIN_BALLOONSHOW      | The user passed the mouse pointer over an icon    |
+//  | 0x00000402           | with which a balloon tooltip is associated (see   |
+//  |                      | InfoTip field in section 2.2.1.3.2.2.1), and the  |
+//  |                      | balloon tooltip was shown. This message is sent   |
+//  |                      | only for notification icons that follow Windows   |
+//  |                      | 2000 behavior (see Version field in section       |
+//  |                      | 2.2.1.3.2.2.1).                                   |
+//  +----------------------+---------------------------------------------------+
+//  | NIN_BALLOONHIDE      | The icon's balloon tooltip disappeared because,   |
+//  | 0x00000403           | for example, the icon was deleted. This message   |
+//  |                      | is not sent if the balloon is dismissed because   |
+//  |                      | of a timeout or mouse click by the user. This     |
+//  |                      | message is sent only for notification icons that  |
+//  |                      | follow Windows 2000 behavior (see Version field   |
+//  |                      | in section 2.2.1.3.2.2.1).                        |
+//  +----------------------+---------------------------------------------------+
+//  | NIN_BALLOONTIMEOUT   | The icon's balloon tooltip was dismissed because  |
+//  | 0x00000404           | of a timeout. This message is sent only for       |
+//  |                      | notification icons that follow Windows 2000       |
+//  |                      | behavior (see Version field in section            |
+//  |                      | 2.2.1.3.2.2.1).                                   |
+//  +----------------------+---------------------------------------------------+
+//  | NIN_BALLOONUSERCLICK | User dismissed the balloon by clicking the mouse. |
+//  | 0x00000405           | This message is sent only for notification icons  |
+//  |                      | that follow Windows 2000 behavior (see Version    |
+//  |                      | field in section 2.2.1.3.2.2.1).                  |
+//  +----------------------+---------------------------------------------------+
+
+enum {
+      WM_LBUTTONDOWN       = 0x00000201
+    , WM_LBUTTONUP         = 0x00000202
+    , WM_RBUTTONDOWN       = 0x00000204
+    , WM_RBUTTONUP         = 0x00000205
+    , WM_CONTEXTMENU       = 0x0000007B
+    , WM_LBUTTONDBLCLK     = 0x00000203
+    , WM_RBUTTONDBLCLK     = 0x00000206
+    , NIN_SELECT           = 0x00000400
+    , NIN_KEYSELECT        = 0x00000401
+    , NIN_BALLOONSHOW      = 0x00000402
+    , NIN_BALLOONHIDE      = 0x00000403
+    , NIN_BALLOONTIMEOUT   = 0x00000404
+    , NIN_BALLOONUSERCLICK = 0x00000405
+};
+
+
+class ClientNotifyEventPDU_Recv {
+    uint32_t WindowId_;
+    uint32_t NotifyIconId_;
+    uint32_t Message_;
+
+public:
+    explicit ClientNotifyEventPDU_Recv(InStream & stream) {
+        {
+            const unsigned expected = 12;   // WindowId(4) + NotifyIconId(4) + Message(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client Notify Event PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId_     = stream.in_uint32_le();
+        this->NotifyIconId_ = stream.in_uint32_le();
+        this->Message_      = stream.in_uint32_le();
+    }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    uint32_t NotifyIconId() const { return this->NotifyIconId_; }
+
+    uint32_t Message() const { return this->Message_; }
+};
+
+class ClientNotifyEventPDU_Send {
+public:
+    ClientNotifyEventPDU_Send(OutStream & stream, uint32_t WindowId, uint32_t NotifyIconId, uint32_t Message) {
+        stream.out_uint32_le(WindowId);
+        stream.out_uint16_le(NotifyIconId);
+        stream.out_uint16_le(Message);
+    }
+};
+
+
+
+// [MS-RDPERP] - 2.2.2.6.5 Client Get Application ID PDU
+//  (TS_RAIL_ORDER_GET_APPID_REQ)
+// =====================================================
+
+// The Client Get Application ID PDU is sent from a client to a server. This
+//  PDU requests information from the server about the Application ID that
+//  the window SHOULD<15> have on the client.
+
+// The server MAY ignore this PDU.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_GET_APPID_REQ (0x000E).
+
+// WindowId (4 bytes): An unsigned 32-bit integer specifying the ID of the
+//  associated window on the server that requires needs an Application ID.
+
+class ClientGetApplicationIDPDU_Recv {
+    uint32_t WindowId_;
+
+public:
+    explicit ClientGetApplicationIDPDU_Recv(InStream & stream) {
+        {
+            const unsigned expected = 4;    // WindowId(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client Get Application ID PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId_ = stream.in_uint32_le();
+    }
+
+    uint32_t SystemParam() const { return this->WindowId_; }
+};
+
+class ClientGetApplicationIDPDU_Send {
+public:
+    ClientGetApplicationIDPDU_Send(OutStream & stream, uint32_t WindowId) {
+        stream.out_uint32_le(WindowId);
     }
 };
