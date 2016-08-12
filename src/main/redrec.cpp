@@ -90,4 +90,8 @@ int main(int argc, char** argv) {
     get_hmac_key_prototype_fn,
     get_trace_key_prototype_fn
   );
+  
+  // don't keep global variables when exiting main
+  g_hmac_key_str = nullptr;
+  g_key_str = nullptr;
 }
