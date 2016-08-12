@@ -305,7 +305,7 @@ struct NTLMContext
         // and copy digest afterward.
         memset(buff, 0, buff_size);
         memcpy(buff, tmp_md5, 
-            std::min(static_cast<size_t>(buff_size),
+            std::min(buff_size,
             static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
     }
     // all strings are in unicode utf16
@@ -349,8 +349,7 @@ struct NTLMContext
         // and copy digest afterward.
         memset(buff, 0, buff_size);
         memcpy(buff, tmp_md5, 
-            std::min(static_cast<size_t>(buff_size),
-            static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+            std::min(buff_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
         
         
         if (this->verbose & 0x400) {

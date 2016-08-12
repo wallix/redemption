@@ -505,7 +505,6 @@ static struct crypto_file gl_file_store[1024];
 
 
 extern "C" {
-    UdevRandom * get_rnd();
     CryptoContext * get_cctx();
 }
 
@@ -523,33 +522,24 @@ extern "C" {
  */
 
 
-UdevRandom * get_rnd(){
-    static UdevRandom * rnd = nullptr;
-    if (rnd == nullptr){
-        rnd = new UdevRandom;
-    }
-    return rnd;
-}
-
-Inifile * get_ini(){
-    static Inifile * ini = nullptr;
-    if (ini == nullptr){
-        ini = new Inifile;
-        ini->set<cfg::crypto::key0>(
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08"
-            "\x01\x02\x03\x04\x05\x06\x07\x08");
-    }
-    return ini;
-}
-
-
 CryptoContext * get_cctx()
 {
     static CryptoContext * cctx = nullptr;
     if (cctx == nullptr){
-        cctx = new CryptoContext(*get_rnd(), *get_ini());
+        static Inifile * ini = nullptr;
+        if (ini == nullptr){
+            ini = new Inifile;
+            ini->set<cfg::crypto::key0>(
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08"
+                "\x01\x02\x03\x04\x05\x06\x07\x08");
+        }
+        static UdevRandom * rnd = nullptr;
+        if (rnd == nullptr){
+            rnd = new UdevRandom;
+        }
+        cctx = new CryptoContext(*rnd, *ini);
     }
     return cctx;
 }
@@ -635,6 +625,8 @@ static void Random_dealloc(PyORandom* self) {
 
 static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
+    (void)kwds;
+    (void)args;
     PyORandom *self = reinterpret_cast<PyORandom *>(type->tp_alloc(type, 0));
     if (self != nullptr) {
         self->rnd = new UdevRandom;
@@ -644,6 +636,8 @@ static PyObject *Random_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 static int Random_init(PyORandom *self, PyObject *args, PyObject *kwds)
 {
+    (void)kwds;
+    (void)args;
     if (self != nullptr) {
         if (self->rnd == nullptr){
             self->rnd = new UdevRandom;
@@ -743,6 +737,7 @@ namespace {
 
 static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 {
+    (void)self;
     char *path = nullptr;
     char *omode = nullptr;
     if (!PyArg_ParseTuple(args, "ss", &path, &omode)){
@@ -805,6 +800,7 @@ static PyObject *python_redcryptofile_open(PyObject* self, PyObject* args)
 
 static PyObject *python_redcryptofile_flush(PyObject* self, PyObject* args)
 {
+    (void)self;
     int fd = 0;
     if (!PyArg_ParseTuple(args, "i", &fd)){
         return py_return_none();
@@ -826,6 +822,8 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
     int fd = 0;
     unsigned char hash[MD_HASH_LENGTH<<1];
     char hash_digest[(MD_HASH_LENGTH*4)+1];
+
+    (void)self;
 
     if (!PyArg_ParseTuple(args, "i", &fd)){
         return py_return_none();
@@ -882,6 +880,8 @@ static PyObject *python_redcryptofile_close(PyObject* self, PyObject* args)
 
 static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
 {
+    (void)self;
+
     int fd;
     PyObject *python_buf;
     if (!PyArg_ParseTuple(args, "iS", &fd, &python_buf)){
@@ -910,6 +910,8 @@ static PyObject *python_redcryptofile_write(PyObject* self, PyObject* args)
 
 static PyObject *python_redcryptofile_read(PyObject* self, PyObject* args)
 {
+    (void)self;
+
     int fd;
     int buf_len;
     if (!PyArg_ParseTuple(args, "ii", &fd, &buf_len)){
