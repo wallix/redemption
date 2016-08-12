@@ -81,6 +81,7 @@
 
 #include "core/FSCC/FileInformation.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/rail_channel.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
@@ -98,19 +99,24 @@
 class mod_rdp : public mod_api
 {
 private:
-    std::unique_ptr<VirtualChannelDataSender>   file_system_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>   file_system_to_server_sender;
+    std::unique_ptr<VirtualChannelDataSender>     file_system_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>     file_system_to_server_sender;
 
-    std::unique_ptr<FileSystemVirtualChannel>   file_system_virtual_channel;
+    std::unique_ptr<FileSystemVirtualChannel>     file_system_virtual_channel;
 
-    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>   clipboard_to_server_sender;
+    std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
 
-    std::unique_ptr<ClipboardVirtualChannel>    clipboard_virtual_channel;
+    std::unique_ptr<ClipboardVirtualChannel>      clipboard_virtual_channel;
 
-    std::unique_ptr<VirtualChannelDataSender>   session_probe_to_server_sender;
+    std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
-    std::unique_ptr<SessionProbeVirtualChannel> session_probe_virtual_channel;
+    std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
+
+    std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_server_sender;
+
+    std::unique_ptr<RemoteProgramsVirtualChannel> remote_programs_virtual_channel;
 
 protected:
     FileSystemDriveManager file_system_drive_manager;
@@ -505,6 +511,27 @@ protected:
         }
 
         return *this->session_probe_virtual_channel;
+    }
+
+    inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel() {
+        if (!this->remote_programs_virtual_channel) {
+            REDASSERT(!this->remote_programs_to_client_sender &&
+                !this->remote_programs_to_server_sender);
+
+            this->remote_programs_to_client_sender =
+                this->create_to_client_sender(channel_names::rail);
+            this->remote_programs_to_server_sender =
+                this->create_to_server_sender(channel_names::rail);
+
+            this->remote_programs_virtual_channel =
+                std::make_unique<RemoteProgramsVirtualChannel>(
+                    this->remote_programs_to_client_sender.get(),
+                    this->remote_programs_to_server_sender.get(),
+                    this->front,
+                    this->get_remote_programs_virtual_channel_params());
+        }
+
+        return *this->remote_programs_virtual_channel;
     }
 
     // TODO duplicated code in front
@@ -1345,6 +1372,21 @@ protected:
         return session_probe_virtual_channel_params;
     }
 
+    const RemoteProgramsVirtualChannel::Params
+        get_remote_programs_virtual_channel_params() const
+    {
+        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params;
+
+        remote_programs_virtual_channel_params.authentifier                    =
+            this->acl;
+        remote_programs_virtual_channel_params.exchanged_data_limit            =
+            this->max_clipboard_data;
+        remote_programs_virtual_channel_params.verbose                         =
+            this->verbose;
+
+        return remote_programs_virtual_channel_params;
+    }
+
 public:
     static void get_proxy_managed_connection_cookie(const char * target_informations,
             size_t target_informations_length, char (&cookie)[9]) {
@@ -1591,253 +1633,11 @@ private:
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
 
-    void send_to_mod_rail_channel(const CHANNELS::ChannelDef * rail_channel,
+    void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,
                                   InStream & chunk, size_t length, uint32_t flags) {
-        //LOG(LOG_INFO, "mod_rdp::send_to_mod_rail_channel: chunk.size=%u length=%u",
-        //    chunk.size(), length);
-        //hexdump_d(chunk.get_data(), chunk.size());
+        BaseVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
-        const auto saved_chunk_p = chunk.get_current();
-
-        const uint16_t orderType   = chunk.in_uint16_le();
-        const uint16_t orderLength = chunk.in_uint16_le();
-
-        //LOG(LOG_INFO, "mod_rdp::send_to_mod_rail_channel: orderType=%u orderLength=%u",
-        //    orderType, orderLength);
-
-        switch (orderType) {
-            case TS_RAIL_ORDER_EXEC:
-            {
-                ClientExecutePDU_Recv cepdur(chunk);
-
-                LOG(LOG_INFO,
-                    "mod_rdp::send_to_mod_rail_channel: Client Execute PDU - "
-                        "flags=0x%X exe_or_file=\"%s\" working_dir=\"%s\" arguments=\"%s\"",
-                    cepdur.Flags(), cepdur.exe_or_file(), cepdur.working_dir(), cepdur.arguments());
-            }
-            break;
-
-            case TS_RAIL_ORDER_SYSPARAM:
-            {
-                ClientSystemParametersUpdatePDU_Recv cspupdur(chunk);
-
-                switch(cspupdur.SystemParam()) {
-                    case SPI_SETDRAGFULLWINDOWS:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%zu (0x%04X)",
-                                expected, chunk.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = chunk.in_uint8();
-
-                        LOG(LOG_INFO,
-                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                "Full Window Drag is %s.",
-                            (!Body ? "disabled" : "enabled"));
-                    }
-                    break;
-
-                    case SPI_SETKEYBOARDCUES:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%zu (0x%04X)",
-                                expected, chunk.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = chunk.in_uint8();
-
-                        if (Body) {
-                            LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "Menu Access Keys are always underlined.");
-                        }
-                        else {
-                            LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "Menu Access Keys are underlined only when the menu is activated by the keyboard.");
-                        }
-                    }
-                    break;
-
-                    case SPI_SETKEYBOARDPREF:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%zu (0x%04X)",
-                                expected, chunk.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = chunk.in_uint8();
-
-                        if (Body) {
-                            LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "The user prefers the keyboard over mouse.");
-                        }
-                        else {
-                            LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "The user does not prefer the keyboard over mouse.");
-                        }
-                    }
-                    break;
-
-                    case SPI_SETMOUSEBUTTONSWAP:
-                    {
-                        const unsigned expected = 1 /* Body(1) */;
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%zu (0x%04X)",
-                                expected, chunk.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint8_t Body = chunk.in_uint8();
-
-                        if (Body) {
-                            LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "Swaps the meaning of the left and right mouse buttons.");
-                        }
-                        else {
-                            LOG(LOG_INFO,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "Restores the meaning of the left and right mouse buttons to their original meanings.");
-                        }
-                    }
-                    break;
-
-                    case SPI_SETWORKAREA:
-                    {
-                        const unsigned expected = 8 /* Body(8) */;
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%zu (0x%04X)",
-                                expected, chunk.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint16_t Left   = chunk.in_uint16_le();
-                        uint16_t Top    = chunk.in_uint16_le();
-                        uint16_t Right  = chunk.in_uint16_le();
-                        uint16_t Bottom = chunk.in_uint16_le();
-
-                        LOG(LOG_INFO,
-                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                "work area in virtual screen coordinates is (left=%u top=%u right=%u bottom=%u).",
-                            Left, Top, Right, Bottom);
-                    }
-                    break;
-
-                    case RAIL_SPI_DISPLAYCHANGE:
-                    {
-                        const unsigned expected = 8 /* Body(8) */;
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%zu (0x%04X)",
-                                expected, chunk.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint16_t Left   = chunk.in_uint16_le();
-                        uint16_t Top    = chunk.in_uint16_le();
-                        uint16_t Right  = chunk.in_uint16_le();
-                        uint16_t Bottom = chunk.in_uint16_le();
-
-                        LOG(LOG_INFO,
-                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                "New display resolution in virtual screen coordinates is (left=%u top=%u right=%u bottom=%u).",
-                            Left, Top, Right, Bottom);
-                    }
-                    break;
-
-                    case RAIL_SPI_TASKBARPOS:
-                    {
-                        const unsigned expected = 8 /* Body(8) */;
-                        if (!chunk.in_check_rem(expected)) {
-                            LOG(LOG_ERR,
-                                "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                    "expected=%u remains=%zu (0x%04X)",
-                                expected, chunk.in_remain(),
-                                cspupdur.SystemParam());
-                            throw Error(ERR_RAIL_PDU_TRUNCATED);
-                        }
-
-                        uint16_t Left   = chunk.in_uint16_le();
-                        uint16_t Top    = chunk.in_uint16_le();
-                        uint16_t Right  = chunk.in_uint16_le();
-                        uint16_t Bottom = chunk.in_uint16_le();
-
-                        LOG(LOG_INFO,
-                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                "Size of the client taskbar is (left=%u top=%u right=%u bottom=%u).",
-                            Left, Top, Right, Bottom);
-                    }
-                    break;
-
-                    case SPI_SETHIGHCONTRAST:
-                    {
-                        HighContrastSystemInformationStructure_Recv hcsisr(chunk);
-
-                        LOG(LOG_INFO,
-                            "mod_rdp::send_to_mod_rail_channel: Client System Parameters Update PDU - "
-                                "parameters for the high-contrast accessibility feature, Flags=0x%X, ColorScheme=\"%s\".",
-                            hcsisr.Flags(), hcsisr.ColorScheme());
-                    }
-                    break;
-                }
-            }
-            break;
-
-            case TS_RAIL_ORDER_CLIENTSTATUS:
-            {
-                ClientInformationPDU_Recv cipdur(chunk);
-
-                LOG(LOG_INFO,
-                    "mod_rdp::send_to_mod_rail_channel: Client Information PDU - Flags=0x%08X",
-                    cipdur.Flags());
-            }
-            break;
-
-            case TS_RAIL_ORDER_HANDSHAKE:
-            {
-                HandshakePDU_Recv hpdur(chunk);
-
-                LOG(LOG_INFO,
-                    "mod_rdp::send_to_mod_rail_channel: Handshake PDU - buildNumber=%u",
-                    hpdur.buildNumber());
-            }
-            break;
-
-            default:
-                LOG(LOG_INFO,
-                    "mod_rdp::send_to_mod_rail_channel: undecoded PDU - orderType=%u orderLength=%u",
-                    orderType, orderLength);
-            break;
-        }
-
-        this->send_to_channel(*rail_channel, saved_chunk_p, chunk.get_capacity(), length, flags);
+        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }   // send_to_mod_rail_channel
 
 private:
@@ -6768,25 +6568,15 @@ private:
 
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
-        REDASSERT(stream.in_remain() == chunk_size);
+        (void)rail_channel;
+        BaseVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
-        if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp::process_rail_event: Server RAIL PDU.");
-        }
+        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        const auto saved_stream_p = stream.get_current();
+        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
+            out_asynchronous_task);
 
-        const uint16_t orderType   = stream.in_uint16_le();
-        const uint16_t orderLength = stream.in_uint16_le();
-
-        if (this->verbose & 1) {
-            LOG(LOG_INFO, "mod_rdp::process_rail_event: orderType=%u orderLength=%u.",
-                orderType, orderLength);
-        }
-
-        this->send_to_front_channel(
-            rail_channel.name, saved_stream_p, length, chunk_size, flags
-        );
+        REDASSERT(!out_asynchronous_task);
     }
 
     void process_rdpdr_event(const CHANNELS::ChannelDef &,

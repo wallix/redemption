@@ -126,6 +126,31 @@ enum {
     , TS_RAIL_ORDER_HANDSHAKE_EX    = 0x0013
 };
 
+static inline
+char const* get_RAIL_orderType_name(uint16_t orderType) {
+    switch (orderType) {
+        case TS_RAIL_ORDER_EXEC:            return "TS_RAIL_ORDER_EXEC";
+        case TS_RAIL_ORDER_ACTIVATE:        return "TS_RAIL_ORDER_ACTIVATE";
+        case TS_RAIL_ORDER_SYSPARAM:        return "TS_RAIL_ORDER_SYSPARAM";
+        case TS_RAIL_ORDER_SYSCOMMAND:      return "TS_RAIL_ORDER_SYSCOMMAND";
+        case TS_RAIL_ORDER_HANDSHAKE:       return "TS_RAIL_ORDER_HANDSHAKE";
+        case TS_RAIL_ORDER_NOTIFY_EVENT:    return "TS_RAIL_ORDER_NOTIFY_EVENT";
+        case TS_RAIL_ORDER_WINDOWMOVE:      return "TS_RAIL_ORDER_WINDOWMOVE";
+        case TS_RAIL_ORDER_LOCALMOVESIZE:   return "TS_RAIL_ORDER_LOCALMOVESIZE";
+        case TS_RAIL_ORDER_MINMAXINFO:      return "TS_RAIL_ORDER_MINMAXINFO";
+        case TS_RAIL_ORDER_CLIENTSTATUS:    return "TS_RAIL_ORDER_CLIENTSTATUS";
+        case TS_RAIL_ORDER_SYSMENU:         return "TS_RAIL_ORDER_SYSMENU";
+        case TS_RAIL_ORDER_LANGBARINFO:     return "TS_RAIL_ORDER_LANGBARINFO";
+        case TS_RAIL_ORDER_EXEC_RESULT:     return "TS_RAIL_ORDER_EXEC_RESULT";
+        case TS_RAIL_ORDER_GET_APPID_REQ:   return "TS_RAIL_ORDER_GET_APPID_REQ";
+        case TS_RAIL_ORDER_GET_APPID_RESP:  return "TS_RAIL_ORDER_GET_APPID_RESP";
+        case TS_RAIL_ORDER_LANGUAGEIMEINFO: return "TS_RAIL_ORDER_LANGUAGEIMEINFO";
+        case TS_RAIL_ORDER_COMPARTMENTINFO: return "TS_RAIL_ORDER_COMPARTMENTINFO";
+        case TS_RAIL_ORDER_HANDSHAKE_EX:    return "TS_RAIL_ORDER_HANDSHAKE_EX";
+        default:                            return "<unknown>";
+    }
+}
+
 // orderLength (2 bytes): An unsigned 16-bit integer. The length of the
 //  Virtual Channel PDU, in bytes.
 
@@ -605,6 +630,21 @@ enum {
 //  | SPI_SETHIGHCONTRAST    | Size of Body field: Variable number of bytes.  |
 //  | 0x0043                 | The body is a TS_HIGHCONTRAST structure.       |
 //  +------------------------+------------------------------------------------+
+
+static inline
+char const* get_RAIL_SystemParam_name(uint32_t SystemParam) {
+    switch (SystemParam) {
+        case SPI_SETDRAGFULLWINDOWS: return "SPI_SETDRAGFULLWINDOWS";
+        case SPI_SETKEYBOARDCUES:    return "SPI_SETKEYBOARDCUES";
+        case SPI_SETKEYBOARDPREF:    return "SPI_SETKEYBOARDPREF";
+        case SPI_SETWORKAREA:        return "SPI_SETWORKAREA";
+        case RAIL_SPI_DISPLAYCHANGE: return "RAIL_SPI_DISPLAYCHANGE";
+        case SPI_SETMOUSEBUTTONSWAP: return "SPI_SETMOUSEBUTTONSWAP";
+        case RAIL_SPI_TASKBARPOS:    return "RAIL_SPI_TASKBARPOS";
+        case SPI_SETHIGHCONTRAST:    return "SPI_SETHIGHCONTRAST";
+        default:                     return "<unknown>";
+    }
+}
 
 class ClientSystemParametersUpdatePDU_Recv {
     uint32_t SystemParam_;
