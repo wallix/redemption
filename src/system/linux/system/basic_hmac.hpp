@@ -28,7 +28,6 @@
 
 namespace detail_
 {
-
 template<const EVP_MD * (* evp)(), std::size_t DigestLength>
 class basic_HMAC
 {
@@ -45,53 +44,6 @@ public:
     }
 
     ~basic_HMAC()
-    {
-        HMAC_CTX_cleanup(&this->hmac);
-    }
-
-    void update(const uint8_t * const data, size_t data_size)
-    {
-        int res = HMAC_Update(&this->hmac, data, data_size);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
-        }
-    }
-
-    void final(uint8_t * out_data, size_t out_data_size)
-    {
-        unsigned int len = 0;
-        if (DigestLength > out_data_size){
-            uint8_t tmp[DigestLength];
-            int res = HMAC_Final(&this->hmac, tmp, &len);
-            if (res == 0) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
-        int res = HMAC_Final(&this->hmac, out_data, &len);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-        }
-    }
-};
-
-template<const EVP_MD * (* evp)(), std::size_t DigestLength>
-class basic_HMAC_2
-{
-    HMAC_CTX hmac;
-
-public:
-    basic_HMAC_2(const uint8_t * const key, size_t key_size)
-    {
-        HMAC_CTX_init(&this->hmac);
-        int res = HMAC_Init_ex(&this->hmac, key, key_size, evp(), nullptr);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
-        }
-    }
-
-    ~basic_HMAC_2()
     {
         HMAC_CTX_cleanup(&this->hmac);
     }

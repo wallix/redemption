@@ -271,4 +271,4 @@ private:
 };
 
 
-using SslHMAC_Md5_direct = detail_::basic_HMAC_direct_2<SslMd5_direct, 64>;
+using SslHMAC_Md5_direct = detail_::basic_HMAC_direct<SslMd5_direct, 64>;

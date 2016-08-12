@@ -51,4 +51,4 @@ public:
 };
 
 
-using SslHMAC_Md5 = detail_::basic_HMAC_2<&EVP_md5, SslMd5::DIGEST_LENGTH>;
+using SslHMAC_Md5 = detail_::basic_HMAC<&EVP_md5, SslMd5::DIGEST_LENGTH>;

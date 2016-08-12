@@ -225,4 +225,4 @@ private:
 };
 
 
-using SslHMAC_Sha1_direct = detail_::basic_HMAC_direct_2<SslSha1_direct, 64>;
+using SslHMAC_Sha1_direct = detail_::basic_HMAC_direct<SslSha1_direct, 64>;

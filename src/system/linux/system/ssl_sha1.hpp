@@ -59,4 +59,4 @@ public:
 };
 
 
-using SslHMAC_Sha1 = detail_::basic_HMAC_2<&EVP_sha1, SslSha1::DIGEST_LENGTH>;
+using SslHMAC_Sha1 = detail_::basic_HMAC<&EVP_sha1, SslSha1::DIGEST_LENGTH>;

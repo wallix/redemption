@@ -238,4 +238,4 @@ private:
 };
 
 
-using SslHMAC_Sha512_direct = detail_::basic_HMAC_direct_2<SslSha512_direct, 128>;
+using SslHMAC_Sha512_direct = detail_::basic_HMAC_direct<SslSha512_direct, 128>;
