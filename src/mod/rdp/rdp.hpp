@@ -1392,8 +1392,8 @@ public:
             size_t target_informations_length, char (&cookie)[9]) {
         SslSha1 sha1;
         sha1.update(byte_ptr_cast(target_informations), target_informations_length);
-        uint8_t sig[20];
-        sha1.final(sig, sizeof(sig));
+        uint8_t sig[SslSha1::DIGEST_LENGTH];
+        sha1.final(sig);
 
         static_assert(((sizeof(cookie) % 2) == 1), "Buffer size must be an odd number");
 

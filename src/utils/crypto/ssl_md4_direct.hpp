@@ -14,14 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2014
+   Copyright (C) Wallix 2010-2016
    Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
-
-   openssl headers
-
-   Based on xrdp and rdesktop
-   Copyright (C) Jay Sorg 2004-2010
-   Copyright (C) Matthew Chapman 1999-2007
 */
 
 #pragma once
@@ -47,9 +41,8 @@ public:
         this->MD4_update(data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        assert(DIGEST_LENGTH == out_data_size);
         this->MD4_final(out_data);
     }
 

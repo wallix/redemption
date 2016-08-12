@@ -237,7 +237,7 @@ struct ssh_session_struct {
         SslHMAC_Sha1 hmac_sha1(this->current_crypto->decryptMAC, SHA_DIGEST_LENGTH);
         hmac_sha1.update(reinterpret_cast<uint8_t *>(&seq), sizeof(uint32_t));
         hmac_sha1.update(buffer->get_pos_ptr(), buffer->in_remain());
-        hmac_sha1.final(hmacbuf, SHA_DIGEST_LENGTH);
+        hmac_sha1.final(hmacbuf);
 
 //      hexa("received mac",mac,SHA_DIGEST_LENGTH);
 //      hexa("Computed mac",hmacbuf,SHA_DIGEST_LENGTH);
@@ -349,7 +349,7 @@ struct ssh_session_struct {
             // Check memory allocation
             SslSha1 sha1;
             sha1.update(buf.get_pos_ptr(), buf.in_remain());
-            sha1.final(this->next_crypto->secret_hash, SHA_DIGEST_LENGTH);
+            sha1.final(this->next_crypto->secret_hash);
         }
         break;
         case SSH_KEX_DH_GROUP14_SHA1:
@@ -403,7 +403,7 @@ struct ssh_session_struct {
             // Check memory allocation
             SslSha1 sha1;
             sha1.update(buf.get_pos_ptr(), buf.in_remain());
-            sha1.final(this->next_crypto->secret_hash, SHA_DIGEST_LENGTH);
+            sha1.final(this->next_crypto->secret_hash);
         }
         break;
         case SSH_KEX_ECDH_SHA2_NISTP256:
@@ -437,7 +437,7 @@ struct ssh_session_struct {
             // check memory allocation
             SslSha256 sha256;
             sha256.update(buf.get_pos_ptr(), buf.in_remain());
-            sha256.final(this->next_crypto->secret_hash, SHA256_DIGEST_LENGTH);
+            sha256.final(this->next_crypto->secret_hash);
         }
         break;
         case SSH_KEX_CURVE25519_SHA256_LIBSSH_ORG:
@@ -468,7 +468,7 @@ struct ssh_session_struct {
             this->next_crypto->mac_type = SSH_MAC_SHA256;
             SslSha256 sha256;
             sha256.update(buf.get_pos_ptr(), buf.in_remain());
-            sha256.final(this->next_crypto->secret_hash, SHA256_DIGEST_LENGTH);
+            sha256.final(this->next_crypto->secret_hash);
         }
         break;
         }
@@ -2884,7 +2884,7 @@ struct SshServerSession : public ssh_session_struct
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
                 sha1.update(crypto->secret_hash, crypto->digest_len);
-                sha1.final(hash, SHA_DIGEST_LENGTH);
+                sha1.final(hash);
 
                 SSHString sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
 
@@ -3177,7 +3177,7 @@ struct SshServerSession : public ssh_session_struct
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
                 sha1.update(crypto->secret_hash, crypto->digest_len);
-                sha1.final(hash, SHA_DIGEST_LENGTH);
+                sha1.final(hash);
 
                 SSHString sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
 
@@ -3405,7 +3405,7 @@ struct SshServerSession : public ssh_session_struct
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
                 sha1.update(crypto->secret_hash, crypto->digest_len);
-                sha1.final(hash, SHA_DIGEST_LENGTH);
+                sha1.final(hash);
 
                 ssh_key_struct *privkey = nullptr;
                 syslog(LOG_INFO,"%s negociated hostkey is %d", __FUNCTION__, this->server_negociated_hostkey);
@@ -3643,7 +3643,7 @@ struct SshServerSession : public ssh_session_struct
                 unsigned char hash[SHA_DIGEST_LENGTH] = {0};
                 SslSha1 sha1;
                 sha1.update(crypto->secret_hash, crypto->digest_len);
-                sha1.final(hash, SHA_DIGEST_LENGTH);
+                sha1.final(hash);
 
                 SSHString sig_blob = ssh_pki_export_signature_blob(privkey, hash, SHA_DIGEST_LENGTH);
 

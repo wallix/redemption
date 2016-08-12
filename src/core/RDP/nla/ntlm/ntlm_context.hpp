@@ -305,15 +305,15 @@ struct NTLMContext
         // and copy digest afterward.
         memset(buff, 0, buff_size);
         memcpy(buff, tmp_md5, 
-            std::min(static_cast<size_t>(buff_size),
+            std::min(buff_size,
             static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
     }
     // all strings are in unicode utf16
     void hash_password(const uint8_t * pass, size_t pass_size, uint8_t * hash) {
         SslMd4 md4;
-
         md4.update(pass, pass_size);
-        md4.final(hash, 16);
+        // TODO: check hash is the size of an MD4 digest
+        md4.final(hash);
     }
 
     // all strings are in unicode utf16
@@ -325,10 +325,10 @@ struct NTLMContext
             LOG(LOG_INFO, "NTLMContext NTOWFv2");
         }
         SslMd4 md4;
-        uint8_t md4password[16] = {};
+        uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
 
         md4.update(pass, pass_size);
-        md4.final(md4password, sizeof(md4password));
+        md4.final(md4password);
 
         SslHMAC_Md5 hmac_md5(md4password, sizeof(md4password));
 
@@ -349,8 +349,7 @@ struct NTLMContext
         // and copy digest afterward.
         memset(buff, 0, buff_size);
         memcpy(buff, tmp_md5, 
-            std::min(static_cast<size_t>(buff_size),
-            static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+            std::min(buff_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
         
         
         if (this->verbose & 0x400) {
@@ -625,8 +624,8 @@ struct NTLMContext
     //    LmChallengeResponse.reset();
     //    hmac_md5lmresp.update(this->ServerChallenge, 8);
     //    hmac_md5lmresp.update(this->ClientChallenge, 8);
-    //    uint8_t LCResponse[16] = {};
-    //    hmac_md5lmresp.final(LCResponse, 16);
+    //    uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
+    //    hmac_md5lmresp.final(LCResponse);
     //    LmChallengeResponse.out_copy_bytes(LCResponse, 16);
     //    LmChallengeResponse.out_copy_bytes(this->ClientChallenge, 8);
     //    LmChallengeResponse.mark_end();

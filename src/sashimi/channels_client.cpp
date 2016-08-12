@@ -6467,7 +6467,7 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
     {
         SslSha1 sha1;
         sha1.update(blob.data.get(), blob.size);
-        sha1.final(buf, SHA_DIGEST_LENGTH);
+        sha1.final(buf);
         if (hlen){
             *hlen = SHA_DIGEST_LENGTH;
         }

@@ -195,8 +195,8 @@ BOOST_AUTO_TEST_CASE(TestVerifierCheckFileHash)
     const uint8_t * base = reinterpret_cast<const uint8_t *>(basename_len(test_file_name.c_str(), len));
     SslSha256 sha256;
     sha256.update(base, len);
-    uint8_t tmp[SHA256_DIGEST_LENGTH];
-    sha256.final(tmp, SHA256_DIGEST_LENGTH);
+    uint8_t tmp[SslSha256::DIGEST_LENGTH];
+    sha256.final(tmp);
     memcpy(derivator, tmp, DERIVATOR_LENGTH);
     unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
     unsigned char tmp_derivation2[DERIVATOR_LENGTH + CRYPTO_KEY_LENGTH] = {}; // derivator + masterkey
