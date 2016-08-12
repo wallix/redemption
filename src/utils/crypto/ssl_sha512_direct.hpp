@@ -44,9 +44,8 @@ public:
         this->sha512_update(data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size) noexcept
+    void final(uint8_t * out_data) noexcept
     {
-        assert(DIGEST_LENGTH == out_data_size);
         this->sha512_sum(out_data);
     }
 
@@ -239,4 +238,4 @@ private:
 };
 
 
-using SslHMAC_Sha512_direct = detail_::basic_HMAC_direct<SslSha512_direct, 128>;
+using SslHMAC_Sha512_direct = detail_::basic_HMAC_direct_2<SslSha512_direct, 128>;

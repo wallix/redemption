@@ -914,7 +914,7 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
@@ -929,7 +929,7 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
@@ -944,7 +944,7 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
@@ -960,7 +960,7 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
@@ -975,7 +975,7 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
@@ -990,7 +990,7 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(server_random, server_random_size);
                 sha1.update(client_random, client_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
@@ -1405,7 +1405,7 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
@@ -1420,7 +1420,7 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
@@ -1435,7 +1435,7 @@ enum {
                 sha1.update(pre_master_secret, pre_master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(pre_master_secret, pre_master_secret_size);
@@ -1451,7 +1451,7 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
@@ -1466,7 +1466,7 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);
@@ -1482,7 +1482,7 @@ enum {
                 sha1.update(master_secret, master_secret_size);
                 sha1.update(client_random, client_random_size);
                 sha1.update(server_random, server_random_size);
-                sha1.final(shasig, SslSha1::DIGEST_LENGTH);
+                sha1.final(shasig);
 
                 SslMd5 md5;
                 md5.update(master_secret, master_secret_size);

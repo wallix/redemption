@@ -38,33 +38,25 @@ public:
 
     SslSha256()
     {
-        int res = 0;
-        res = SHA256_Init(&this->sha256);
-        if (res == 0) {
+        if (0 == SHA256_Init(&this->sha256)){
             throw Error(ERR_SSL_CALL_SHA1_INIT_FAILED);
         }
     }
 
     void update(const uint8_t * const data,  size_t data_size)
     {
-        int res = 0;
-        res = SHA256_Update(&this->sha256, data, data_size);
-        if (res == 0) {
+        if (0 == SHA256_Update(&this->sha256, data, data_size)){
             throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
         }
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        (void)out_data_size;
-        assert(DIGEST_LENGTH == out_data_size);
-        int res = 0;
-        res = SHA256_Final(out_data, &this->sha256);
-        if (res == 0) {
+        if (0 == SHA256_Final(out_data, &this->sha256)){
             throw Error(ERR_SSL_CALL_SHA1_FINAL_FAILED);
         }
     }
 };
 
 
-using SslHMAC_Sha256 = detail_::basic_HMAC<&EVP_sha256, SslSha256::DIGEST_LENGTH>;
+using SslHMAC_Sha256 = detail_::basic_HMAC_2<&EVP_sha256, SslSha256::DIGEST_LENGTH>;

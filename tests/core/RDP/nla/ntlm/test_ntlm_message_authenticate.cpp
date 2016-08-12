@@ -113,8 +113,8 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     StaticOutStream<sizeof(packet3)> s;
     s.out_copy_bytes(packet3, sizeof(packet3));
 
-    uint8_t sig[20];
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig);
 
     InStream in_s(s.get_data(), s.get_offset());
     TSRequest ts_req3(in_s);

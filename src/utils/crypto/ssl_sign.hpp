@@ -52,8 +52,8 @@ public:
     }
 
     void final(uint8_t * out, size_t out_size) {
-        uint8_t shasig[20];
-        this->sha1.final(shasig, 20);
+        uint8_t shasig[SslSha1::DIGEST_LENGTH];
+        this->sha1.final(shasig);
 
         SslMd5 md5;
         md5.update(this->key, this->key_size);

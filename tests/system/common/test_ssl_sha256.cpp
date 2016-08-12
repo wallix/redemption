@@ -27,7 +27,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSslSha256)
 {
-    uint8_t sig[32];
+    uint8_t sig[SslSha256::DIGEST_LENGTH];
 
     uint8_t data[512] = {
         /* 0000 */ 0x86, 0x79, 0x05, 0x32, 0x6c, 0x24, 0x43, 0x02,  // .y.2l$C.
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha256)
         SslSha256 sha256;
 
         sha256.update(data, sizeof(data));
-        sha256.final(sig, sizeof(sig));
+        sha256.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha256)
         sha256.update(data + 128, 128);
         sha256.update(data + 256, 128);
         sha256.update(data + 384, 128);
-        sha256.final(sig, sizeof(sig));
+        sha256.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA256)
     hmac.update(msg, sizeof(msg)-1);
 
     uint8_t sig[SslSha256::DIGEST_LENGTH];
-    hmac.final(sig, SslSha256::DIGEST_LENGTH);
+    hmac.final(sig);
 
     BOOST_CHECK_EQUAL(SslSha256::DIGEST_LENGTH, 32);
 

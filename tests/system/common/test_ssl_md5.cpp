@@ -175,9 +175,9 @@ BOOST_AUTO_TEST_CASE(TestNTLMAUTH)
     };
 
 
-    uint8_t md4password[16] = {};
+    uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
     md4.update(password, sizeof(password));
-    md4.final(md4password, sizeof(md4password));
+    md4.final(md4password);
     // hexdump96_c(md4password, sizeof(md4password));
 
     SslHMAC_Md5 hmac_md5(md4password, sizeof(md4password));
