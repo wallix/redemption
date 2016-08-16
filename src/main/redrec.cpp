@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
   auto const len = strlen(argv[0]);
   memcpy(argv[arg_consumed] + 2 - len, argv[0], len);
   argv[arg_consumed] = argv[arg_consumed] - len;
-  return (*do_main)(
+  int res = (*do_main)(
     argc - arg_consumed,
     argv + arg_consumed,
     get_hmac_key_prototype_fn,
@@ -94,4 +94,5 @@ int main(int argc, char** argv) {
   // don't keep global variables when exiting main
   g_hmac_key_str = nullptr;
   g_key_str = nullptr;
+  return res;
 }
