@@ -92,11 +92,27 @@ public:
         }
     }
 
+    void wait_on_timeout(timeval & timeout) const
+    {
+        // TODO: And what exactly means that set_state state variable in wait_obj ?
+        // if it means 'already triggered' it's one more reason to wake up fast...
+        if (this->set_state) {
+            struct timeval now = tvtime();
+            timeval remain = how_long_to_wait(this->trigger_time, now);
+            if (lessthantimeval(remain, timeout)) {
+                timeout = remain;
+            }
+        }
+    }
+
 // NOTE: old-style-cast is ignored because of FD_xxx macros using it behind the hood
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-    void add_to_fd_set(int fd, fd_set & rfds, unsigned & max, timeval & timeout) const
+    void wait_on_fd(int fd, fd_set & rfds, unsigned & max, timeval & timeout) const
     {
+        // TODO: shouldn't we *always* have a timeout ? 
+        // TODO: And what exactly means that set_state state variable in wait_obj ?
+        // if it means 'already triggered' it's one more reason to wake up fast...
         if (fd > INVALID_SOCKET) {
             FD_SET(fd, &rfds);
             max = (static_cast<unsigned>(fd) > max) ? fd : max;

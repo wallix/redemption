@@ -86,12 +86,12 @@ class Session {
     TimeSystem timeobj;
 
     class Client {
-        SocketTransport auth_trans;
-        // TODO Looks like acl and mod can be unified into a common class, where events can happen
-        // TODO move auth_event to acl
-        wait_obj        auth_event;
 
     public:
+        // TODO Looks like acl and mod can be unified into a common class, where events can happen
+        // TODO move auth_event to acl
+        SocketTransport auth_trans;
+        wait_obj        auth_event;
         SessionManager  acl;
 
         Client(int client_sck, Inifile & ini, ActivityChecker & activity_checker, time_t now)
@@ -113,7 +113,7 @@ class Session {
         }
 
         void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout) {
-            return this->auth_event.add_to_fd_set(this->auth_trans.sck, rfds, max, timeout);
+            return this->auth_event.wait_on_fd(this->auth_trans.sck, rfds, max, timeout);
         }
     };
 
@@ -183,30 +183,32 @@ public:
                 timeval timeout = time_mark;
 
                 if (mm.mod->is_up_and_running() || !this->front->up_and_running) {
-                    this->front->get_event().add_to_fd_set(front_trans.sck, rfds, max, timeout);
+                    this->front->get_event().wait_on_fd(front_trans.sck, rfds, max, timeout);
                     if (this->front->capture) {
-                        this->front->capture->get_capture_event().add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
+                        this->front->capture->get_capture_event().wait_on_timeout(timeout);
                     }
                 }
                 if (this->client) {
-                    this->client->add_to_fd_set(rfds, max, timeout);
+                    this->client->auth_event.wait_on_fd(this->client->auth_trans.sck, rfds, max, timeout);
                 }
-                mm.mod->get_event().add_to_fd_set(mm.mod_transport?mm.mod_transport->sck:INVALID_SOCKET,
-                              rfds, max, timeout);
+                
+                mm.mod_transport ? mm.mod->get_event().wait_on_fd(mm.mod_transport->sck, rfds, max, timeout)
+                                 : mm.mod->get_event().wait_on_timeout(timeout);
+                              
                 wait_obj * secondary_event = mm.mod->get_secondary_event();
                 if (secondary_event) {
-                    secondary_event->add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
+                    secondary_event->wait_on_timeout(timeout);
                 }
 
-                int        asynchronous_task_fd    = -1;
+                int        asynchronous_task_fd    = INVALID_SOCKET;
                 wait_obj * asynchronous_task_event = mm.mod->get_asynchronous_task_event(asynchronous_task_fd);
                 if (asynchronous_task_event) {
-                    asynchronous_task_event->add_to_fd_set(asynchronous_task_fd, rfds, max, timeout);
+                    asynchronous_task_event->wait_on_fd(asynchronous_task_fd, rfds, max, timeout);
                 }
 
                 wait_obj * session_probe_launcher_event = mm.mod->get_session_probe_launcher_event();
                 if (session_probe_launcher_event) {
-                    session_probe_launcher_event->add_to_fd_set(INVALID_SOCKET, rfds, max, timeout);
+                    session_probe_launcher_event->wait_on_timeout(timeout);
                 }
 
                 const bool has_pending_data = (front_trans.tls && SSL_pending(front_trans.tls->allocated_ssl));
