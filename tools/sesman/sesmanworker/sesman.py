@@ -206,9 +206,7 @@ class Sesman():
             u"rec_path": u'',
             u"is_rec": False,
             u"selector_number_of_pages": 1,
-            u"target_service": u'',
             u"proxy_opt": u'',
-            u"target_port": 3389,
             u"device_id": u'',
             u"session_id": u'',
             u"trace_type": 0,
@@ -219,6 +217,8 @@ class Sesman():
             u"target_application": u'',
             u'target_host': u'',
             u'target_password': u'',
+            u"target_service": u'',
+            u"target_port": 3389,
             u'selector_group_filter': u'',
             u'selector_device_filter': u'',
             u'selector_proto_filter': u'',
@@ -227,6 +227,24 @@ class Sesman():
             u'auth_channel_answer': u'',
             u'auth_channel_result': u'',
             u'auth_channel_target': u'',
+
+            u'pattern_kill': u'',
+            u'pattern_notify': u'',
+            u'reporting': u'',
+            u'target_login': u'',
+            u'target_device': u'',
+            u'proto_dest': u'',
+            u'target_application_account': u'',
+            u'target_application_password': u'',
+            u'rt_display': 0,
+            u'timezone': -3600,
+            u'opt_message': u'',
+
+            u'ticket': u'',
+            u'comment': u'',
+            u'duration': u'',
+            u'showform': False,
+            u'formflag': 0,
             })
         self.engine.reset_proxy_rights()
 
