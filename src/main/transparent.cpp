@@ -352,8 +352,8 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             FD_ZERO(&wfds);
             struct timeval timeout = time_mark;
 
-            front_event.add_to_fd_set(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
-            mod.get_event().add_to_fd_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
+            front_event.wait_on_fd(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
+            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
             if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 0;

@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
         timeval timeout = { 3, 0 };
 
-        event.add_to_fd_set(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
+        event.wait_on_fd(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
         timeval timeout = { 3, 0 };
 
-        event.add_to_fd_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
+        event.wait_on_fd(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
