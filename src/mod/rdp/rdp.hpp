@@ -3663,6 +3663,7 @@ public:
             this->end_session_message.clear();
 
             this->acl->disconnect_target();
+            this->acl->set_auth_error_message(TR("session_logoff_in_progress", this->lang));
 
             this->event.signal = BACK_EVENT_NEXT;
         }
