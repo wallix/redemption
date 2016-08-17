@@ -367,14 +367,12 @@ protected:
 
             case SPI_SETHIGHCONTRAST:
             {
-                HighContrastSystemInformationStructure_Recv hcsisr(chunk);
+                HighContrastSystemInformationStructure hcsis;
+
+                hcsis.receive(chunk);
 
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETHIGHCONTRAST - "
-                            "Parameters for the high-contrast accessibility feature, Flags=0x%X, ColorScheme=\"%s\".",
-                        hcsisr.Flags(), hcsisr.ColorScheme());
+                    hcsis.log(LOG_INFO);
                 }
             }
             break;
@@ -541,26 +539,18 @@ public:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ServerSystemParametersUpdatePDU_Recv sspupdur(chunk);
+        ServerSystemParametersUpdatePDU sspupdu;
 
-        uint32_t SystemParam = sspupdur.SystemParam();
+        sspupdu.receive(chunk);
+
+        uint32_t SystemParam = sspupdu.SystemParam();
+
+        uint8_t Body;
+        sspupdu.Body(&Body, sizeof(Body));
 
         switch(SystemParam) {
             case SPI_SETSCREENSAVEACTIVE:
             {
-                const unsigned expected = 1 /* Body(1) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
-                            "SPI_SETSCREENSAVEACTIVE - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        sspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint8_t const Body = chunk.in_uint8();
-
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
@@ -573,19 +563,6 @@ public:
 
             case SPI_SETSCREENSAVESECURE:
             {
-                const unsigned expected = 1 /* Body(1) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
-                            "SPI_SETSCREENSAVESECURE - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        sspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint8_t const Body = chunk.in_uint8();
-
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
                         "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "

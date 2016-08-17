@@ -70,14 +70,14 @@ class Rectangle {
     uint16_t Bottom = 0;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Left);
         stream.out_uint16_le(this->Top);
         stream.out_uint16_le(this->Right);
         stream.out_uint16_le(this->Bottom);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 8;  // Left(2) + Top(2) + Right(2) + Bottom(2)
@@ -96,11 +96,11 @@ public:
         this->Bottom = stream.in_uint16_le();
     }
 
-    inline static size_t size() {
+    static size_t size() {
         return 8;   /* Left(2) + Top(2) + Right(2) + Bottom(2) */
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
                        "Rectangle=(Left=%u Top=%u Right=%u Bottom=%u)",
@@ -300,7 +300,7 @@ public:
 //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }
 
-    inline size_t size() const {
+    size_t size() const {
         return 9 +  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
             (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? 2 /* CbColorTable(2) */ : 0) +
             4 + // CbBitsMask(2) + CbBitsColor(2)
@@ -377,12 +377,12 @@ class CachedIconInfo {
     uint8_t  CacheId    = 0;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->CacheEntry);
         stream.out_uint8(this->CacheId);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected = 3;  // CacheEntry(2) + CacheId(1)
 
@@ -398,11 +398,11 @@ public:
         this->CacheId    = stream.in_uint8();
     }
 
-    inline static size_t size() {
+    static size_t size() {
         return 3;   // CacheEntry(2) + CacheId(1)
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         const size_t result = ::snprintf(
@@ -460,15 +460,15 @@ class WindowInformationCommonHeader {
     mutable OutStream* output_stream       = nullptr;
 
 public:
-    //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
+    //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
     //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
     //}
 
-    //inline void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
+    //void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    inline void emit_begin(OutStream & stream) const {
+    void emit_begin(OutStream & stream) const {
         REDASSERT(this->output_stream == nullptr);
 
         this->output_stream = &stream;
@@ -483,7 +483,7 @@ public:
         stream.out_uint32_le(this->WindowId);
     }
 
-    inline void emit_end() const {
+    void emit_end() const {
         REDASSERT(this->output_stream != nullptr);
 
         this->output_stream->set_out_uint16_le(
@@ -491,7 +491,7 @@ public:
             this->offset_of_OrderSize);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 10;  // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4)
@@ -510,11 +510,11 @@ public:
         this->WindowId            = stream.in_uint32_le();
     }
 
-    inline static size_t size() {
+    static size_t size() {
         return 10;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4)
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
                        "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u)",
@@ -523,7 +523,7 @@ public:
         return ((length < size) ? length : size - 1);
     }
 
-    inline uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+    uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
 };  // WindowInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.1.2.1 New or Existing Window
@@ -1430,7 +1430,7 @@ private:
     }   // str
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -1502,7 +1502,7 @@ class WindowIcon {
     IconInfo icon_info;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         this->header.emit_begin(stream);
 
         this->icon_info.emit(stream);
@@ -1510,18 +1510,18 @@ public:
         this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         this->header.receive(stream);
 
         this->icon_info.receive(stream);
     }   // receive
 
-    inline size_t size() const {
+    size_t size() const {
         return this->header.size() + this->icon_info.size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length, "WindowIcon: ");
@@ -1538,7 +1538,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         size_t length = this->str(buffer, sizeof(buffer));
         buffer[length] = '\0';
@@ -1610,7 +1610,7 @@ class CachedIcon {
     CachedIconInfo cached_icon_info;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         this->header.emit_begin(stream);
 
         this->cached_icon_info.emit(stream);
@@ -1618,18 +1618,18 @@ public:
         this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         this->header.receive(stream);
 
         this->cached_icon_info.receive(stream);
     }   // receive
 
-    inline size_t size() const {
+    size_t size() const {
         return this->header.size() + CachedIconInfo::size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length, "CachedIcon: ");
@@ -1646,7 +1646,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -1695,22 +1695,22 @@ class DeletedWindow {
     WindowInformationCommonHeader header;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         this->header.emit_begin(stream);
 
         this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         this->header.receive(stream);
     }   // receive
 
-    inline size_t size() const {
-        return this->header.size();
+    static size_t size() {
+        return WindowInformationCommonHeader::size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length, "DeletedWindow: ");
@@ -1722,7 +1722,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -1781,15 +1781,15 @@ class NotificationIconInformationCommonHeader {
     mutable OutStream* output_stream       = nullptr;
 
 public:
-    //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
+    //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
     //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
     //}
 
-    //inline void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
+    //void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    inline void emit_begin(OutStream & stream) const {
+    void emit_begin(OutStream & stream) const {
         REDASSERT(this->output_stream == nullptr);
 
         this->output_stream = &stream;
@@ -1805,7 +1805,7 @@ public:
         stream.out_uint32_le(this->NotifyIconId);
     }
 
-    inline void emit_end() const {
+    void emit_end() const {
         REDASSERT(this->output_stream != nullptr);
 
         this->output_stream->set_out_uint16_le(
@@ -1813,7 +1813,7 @@ public:
             this->offset_of_OrderSize);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 14;  // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
@@ -1833,11 +1833,11 @@ public:
         this->NotifyIconId        = stream.in_uint32_le();
     }
 
-    inline static size_t size() {
+    static size_t size() {
         return 14;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
                        "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u NotifyIconId=%u)",
@@ -1846,7 +1846,7 @@ public:
         return ((length < size) ? length : size - 1);
     }
 
-    inline uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+    uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
 };  // NotificationIconInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.2.2.3 Notification Icon Balloon Tooltip
@@ -2038,7 +2038,7 @@ public:
         return length;
     }   // str
 
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -2223,7 +2223,7 @@ class NewOrExistingNotificationIcons {
     CachedIconInfo cached_icon;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
@@ -2254,7 +2254,7 @@ public:
         this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         this->header.receive(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
@@ -2317,7 +2317,7 @@ public:
         }
     }   // receive
 
-    inline size_t size() const {
+    size_t size() const {
         size_t count = 0;
 
         count += this->header.size();
@@ -2354,7 +2354,7 @@ public:
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length, "NewOrExistingNotificationIcons: ");
@@ -2396,7 +2396,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -2448,22 +2448,22 @@ class DeletedNotificationIcons {
     NotificationIconInformationCommonHeader header;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         this->header.emit_begin(stream);
 
         this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         this->header.receive(stream);
     }   // receive
 
-    inline size_t size() const {
-        return this->header.size();
+    static size_t size() {
+        return NotificationIconInformationCommonHeader::size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length, "DeletedNotificationIcons: ");
@@ -2475,7 +2475,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -2518,15 +2518,15 @@ class DesktopInformationCommonHeader {
     mutable OutStream* output_stream       = nullptr;
 
 public:
-    //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
+    //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
     //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
     //}
 
-    //inline void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
+    //void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    inline void emit_begin(OutStream & stream) const {
+    void emit_begin(OutStream & stream) const {
         REDASSERT(this->output_stream == nullptr);
 
         this->output_stream = &stream;
@@ -2540,7 +2540,7 @@ public:
         stream.out_uint32_le(this->FieldsPresentFlags_);
     }
 
-    inline void emit_end() const {
+    void emit_end() const {
         REDASSERT(this->output_stream != nullptr);
 
         this->output_stream->set_out_uint16_le(
@@ -2548,7 +2548,7 @@ public:
             this->offset_of_OrderSize);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 6;  // OrderSize(2) + FieldsPresentFlags(4)
@@ -2566,11 +2566,11 @@ public:
         this->FieldsPresentFlags_ = stream.in_uint32_le();
     }
 
-    inline static size_t size() {
+    static size_t size() {
         return 6;   // OrderSize(2) + FieldsPresentFlags(4)
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
                        "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X)",
@@ -2578,7 +2578,7 @@ public:
         return ((length < size) ? length : size - 1);
     }
 
-    inline uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+    uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
 };  // DesktopInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.3.2.1 Actively Monitored Desktop
@@ -2690,7 +2690,7 @@ class ActivelyMonitoredDesktop {
     uint32_t window_ids[255];
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
 const auto save_stream_p = stream.get_current();
         this->header.emit_begin(stream);
 
@@ -2711,7 +2711,7 @@ LOG(LOG_INFO, "Send ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_curr
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
 const auto save_stream_p = stream.get_current();
         this->header.receive(stream);
 
@@ -2763,7 +2763,7 @@ LOG(LOG_INFO, "Recv ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_curr
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
-    inline size_t size() const {
+    size_t size() const {
         size_t count = 0;
 
         count += this->header.size();
@@ -2783,7 +2783,7 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length, "ActivelyMonitoredDesktop: ");
@@ -2822,7 +2822,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -2866,22 +2866,22 @@ class NonMonitoredDesktop {
     DesktopInformationCommonHeader header;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         this->header.emit_begin(stream);
 
         this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         this->header.receive(stream);
     }   // receive
 
-    inline size_t size() const {
-        return this->header.size();
+    static size_t size() {
+        return DesktopInformationCommonHeader::size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
@@ -2893,7 +2893,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;

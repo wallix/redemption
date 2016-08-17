@@ -3650,8 +3650,21 @@ public:
             }
         }
 
-        if (this->session_probe_virtual_channel_p) {
-            this->session_probe_virtual_channel_p->process_event();
+        try{
+            if (this->session_probe_virtual_channel_p) {
+                this->session_probe_virtual_channel_p->process_event();
+            }
+        }
+        catch (Error const & e) {
+            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
+                throw;
+
+            this->end_session_reason.clear();
+            this->end_session_message.clear();
+
+            this->acl->disconnect_target();
+
+            this->event.signal = BACK_EVENT_NEXT;
         }
     }   // draw_event
 

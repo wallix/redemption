@@ -303,13 +303,11 @@ public:
 
                 if (!this->disconnection_reconnection_required) {
                     if (this->session_probe_ending_in_progress) {
-                        this->authentifier->disconnect_target();
                         throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
                     }
 
                     if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
                         this->authentifier->report("SESSION_PROBE_KEEPALIVE_MISSED", "");
-//                        throw Error(ERR_SESSION_PROBE_KEEPALIVE);
                     }
                     else {
                         this->front.session_probe_started(false);
