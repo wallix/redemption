@@ -69,13 +69,12 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientExecutePDU_Recv cepdur(chunk);
+        ClientExecutePDU cepdu;
+
+        cepdu.receive(chunk);
 
         if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
-                    "flags=0x%X exe_or_file=\"%s\" working_dir=\"%s\" arguments=\"%s\"",
-                cepdur.Flags(), cepdur.exe_or_file(), cepdur.working_dir(), cepdur.arguments());
+            cepdu.log(LOG_INFO);
         }
 
         return true;
@@ -98,12 +97,12 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        HandshakePDU_Recv hspdur(chunk);
+        HandshakePDU hspdu;
+
+        hspdu.receive(chunk);
 
         if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::process_client_handshake_pdu: "
-                    "buildNumber=%u", hspdur.buildNumber());
+            hspdu.log(LOG_INFO);
         }
 
         return true;
@@ -126,13 +125,12 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientInformationPDU_Recv cipdur(chunk);
+        ClientInformationPDU cipdu;
+
+        cipdu.receive(chunk);
 
         if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::process_client_information_pdu: "
-                    "Flags=0x%08X",
-                cipdur.Flags());
+            cipdu.log(LOG_INFO);
         }
 
         return true;
@@ -155,237 +153,12 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        ClientSystemParametersUpdatePDU_Recv cspupdur(chunk);
+        ClientSystemParametersUpdatePDU cspupdu;
 
-        uint32_t SystemParam = cspupdur.SystemParam();
+        cspupdu.receive(chunk);
 
-        switch(SystemParam) {
-            case SPI_SETDRAGFULLWINDOWS:
-            {
-                const unsigned expected = 1 /* Body(1) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETDRAGFULLWINDOWS - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        cspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint8_t const Body = chunk.in_uint8();
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETDRAGFULLWINDOWS - "
-                            "Full Window Drag is %s.",
-                        (!Body ? "disabled" : "enabled"));
-                }
-            }
-            break;
-
-            case SPI_SETKEYBOARDCUES:
-            {
-                const unsigned expected = 1 /* Body(1) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETKEYBOARDCUES - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        cspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint8_t const Body = chunk.in_uint8();
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    if (Body) {
-                        LOG(LOG_INFO,
-                            "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                                "SPI_SETKEYBOARDCUES - "
-                                "Menu Access Keys are always underlined.");
-                    }
-                    else {
-                        LOG(LOG_INFO,
-                            "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                                "SPI_SETKEYBOARDCUES - "
-                                "Menu Access Keys are underlined only when the menu is activated by the keyboard.");
-                    }
-                }
-            }
-            break;
-
-            case SPI_SETKEYBOARDPREF:
-            {
-                const unsigned expected = 1 /* Body(1) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETKEYBOARDPREF - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        cspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint8_t const Body = chunk.in_uint8();
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    if (Body) {
-                        LOG(LOG_INFO,
-                            "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                                "SPI_SETKEYBOARDPREF - "
-                                "The user prefers the keyboard over mouse.");
-                    }
-                    else {
-                        LOG(LOG_INFO,
-                            "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                                "SPI_SETKEYBOARDPREF - "
-                                "The user does not prefer the keyboard over mouse.");
-                    }
-                }
-            }
-            break;
-
-            case SPI_SETMOUSEBUTTONSWAP:
-            {
-                const unsigned expected = 1 /* Body(1) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETMOUSEBUTTONSWAP - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        cspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint8_t Body = chunk.in_uint8();
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    if (Body) {
-                        LOG(LOG_INFO,
-                            "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                                "SPI_SETMOUSEBUTTONSWAP - "
-                                "Swaps the meaning of the left and right mouse buttons.");
-                    }
-                    else {
-                        LOG(LOG_INFO,
-                            "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                                "SPI_SETMOUSEBUTTONSWAP - "
-                                "Restores the meaning of the left and right mouse buttons to their original meanings.");
-                    }
-                }
-            }
-            break;
-
-            case SPI_SETWORKAREA:
-            {
-                const unsigned expected = 8 /* Body(8) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETWORKAREA - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        cspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint16_t Left   = chunk.in_uint16_le();
-                uint16_t Top    = chunk.in_uint16_le();
-                uint16_t Right  = chunk.in_uint16_le();
-                uint16_t Bottom = chunk.in_uint16_le();
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "SPI_SETWORKAREA - "
-                            "work area in virtual screen coordinates is (left=%u top=%u right=%u bottom=%u).",
-                        Left, Top, Right, Bottom);
-                }
-            }
-            break;
-
-            case RAIL_SPI_DISPLAYCHANGE:
-            {
-                const unsigned expected = 8 /* Body(8) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "RAIL_SPI_DISPLAYCHANGE - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        cspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint16_t Left   = chunk.in_uint16_le();
-                uint16_t Top    = chunk.in_uint16_le();
-                uint16_t Right  = chunk.in_uint16_le();
-                uint16_t Bottom = chunk.in_uint16_le();
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "RAIL_SPI_DISPLAYCHANGE - "
-                            "New display resolution in virtual screen coordinates is (left=%u top=%u right=%u bottom=%u).",
-                        Left, Top, Right, Bottom);
-                }
-            }
-            break;
-
-            case RAIL_SPI_TASKBARPOS:
-            {
-                const unsigned expected = 8 /* Body(8) */;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "RAIL_SPI_TASKBARPOS - "
-                            "expected=%u remains=%zu (0x%04X)",
-                        expected, chunk.in_remain(),
-                        cspupdur.SystemParam());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-
-                uint16_t Left   = chunk.in_uint16_le();
-                uint16_t Top    = chunk.in_uint16_le();
-                uint16_t Right  = chunk.in_uint16_le();
-                uint16_t Bottom = chunk.in_uint16_le();
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "RAIL_SPI_TASKBARPOS - "
-                            "Size of the client taskbar is (left=%u top=%u right=%u bottom=%u).",
-                        Left, Top, Right, Bottom);
-                }
-            }
-            break;
-
-            case SPI_SETHIGHCONTRAST:
-            {
-                HighContrastSystemInformationStructure hcsis;
-
-                hcsis.receive(chunk);
-
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    hcsis.log(LOG_INFO);
-                }
-            }
-            break;
-
-            default:
-                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                            "Delivering unprocessed client system parameter %s(%u) to server.",
-                        get_RAIL_ClientSystemParam_name(SystemParam),
-                        SystemParam);
-                }
-            break;
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            cspupdu.log(LOG_INFO);
         }
 
         return true;
@@ -511,12 +284,12 @@ public:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
-        HandshakePDU_Recv hspdur(chunk);
+        HandshakePDU hspdu;
+
+        hspdu.receive(chunk);
 
         if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
-                    "buildNumber=%u", hspdur.buildNumber());
+            hspdu.log(LOG_INFO);
         }
 
         return true;
@@ -545,8 +318,7 @@ public:
 
         uint32_t SystemParam = sspupdu.SystemParam();
 
-        uint8_t Body;
-        sspupdu.Body(&Body, sizeof(Body));
+        uint8_t Body = sspupdu.Body();
 
         switch(SystemParam) {
             case SPI_SETSCREENSAVEACTIVE:

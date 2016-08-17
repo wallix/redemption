@@ -29,6 +29,7 @@
 #include "utils/log.hpp"
 #include "core/RDP/remote_programs.hpp"
 
+/*
 BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 {
     uint8_t buf[128];
@@ -49,7 +50,8 @@ BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 
     BOOST_CHECK_EQUAL(header_r.orderType(), TS_RAIL_ORDER_EXEC);
     BOOST_CHECK_EQUAL(header_r.orderLength(),
-        sizeof(order_data) + 4 /* orderType(2) + orderLength(2) */);
+        sizeof(order_data) + 4 //* orderType(2) + orderLength(2)
+        );
 }
 
 BOOST_AUTO_TEST_CASE(TestHandshakePDU)
@@ -100,23 +102,31 @@ BOOST_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
 
     BOOST_CHECK_EQUAL(client_system_parameters_update_pdu_r.SystemParam(), SPI_SETHIGHCONTRAST);
 }
+*/
 
-/*
-BOOST_AUTO_TEST_CASE(HighContrastSystemInformationStructure)
+BOOST_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
 {
     uint8_t buf[2048];
-
     OutStream out_stream(buf);
-    HighContrastSystemInformationStructure_Send high_contrast_system_information_structure_s(
-        out_stream, 0x10101010, "ColorScheme");
+
+    {
+        HighContrastSystemInformationStructure
+            high_contrast_system_information_structure(0x10101010, "ColorScheme");
+
+        high_contrast_system_information_structure.emit(out_stream);
+    }
 
     InStream in_stream(buf, out_stream.get_offset());
-    HighContrastSystemInformationStructure_Recv high_contrast_system_information_structure_r(
-        in_stream);
 
-    BOOST_CHECK_EQUAL(high_contrast_system_information_structure_r.Flags(),
-        0x10101010);
-    BOOST_CHECK_EQUAL(high_contrast_system_information_structure_r.ColorScheme(),
-        "ColorScheme");
+    {
+        HighContrastSystemInformationStructure
+            high_contrast_system_information_structure;
+
+        high_contrast_system_information_structure.receive(in_stream);
+
+        BOOST_CHECK_EQUAL(high_contrast_system_information_structure.Flags(),
+            0x10101010);
+        BOOST_CHECK_EQUAL(high_contrast_system_information_structure.ColorScheme(),
+            "ColorScheme");
+    }
 }
-*/

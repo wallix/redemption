@@ -25,6 +25,7 @@
 #include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
 // ========================================================
@@ -224,11 +225,15 @@ public:
 // buildNumber (4 bytes): An unsigned 32-bit integer. The build or version of
 //  the sending party.
 
-class HandshakePDU_Recv {
-    uint32_t buildNumber_;
+class HandshakePDU {
+    uint32_t buildNumber_ = 0;
 
 public:
-    explicit HandshakePDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->buildNumber_);
+    }
+
+    void receive(InStream & stream) {
         const unsigned expected = 4;    // buildNumber(4)
 
         if (!stream.in_check_rem(expected)) {
@@ -241,12 +246,31 @@ public:
     }
 
     uint32_t buildNumber() const { return this->buildNumber_; }
-};
 
-class HandshakePDU_Send {
+    static size_t size() {
+        return 4;   // buildNumber(4)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientInformationPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "buildNumber=%u", this->buildNumber_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    HandshakePDU_Send(OutStream & stream, uint32_t buildNumber) {
-        stream.out_uint32_le(buildNumber);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -272,29 +296,67 @@ public:
 // Flags (4 bytes): An unsigned 32-bit integer. RAIL features that are
 //  supported by the client; MUST be set to one of the following.
 
-//  +-----------------------------------------+------------------------------+
-//  | Value                                   |   Meaning                    |
-//  +-----------------------------------------+------------------------------+
-//  | TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE | Indicates that the client    |
-//  | 0x00000001                              | supports the local move/size |
-//  |                                         | RAIL feature.                |
-//  +-----------------------------------------+------------------------------+
-//  | TS_RAIL_CLIENTSTATUS_AUTORECONNECT      | Indicates that the client is |
-//  | 0x00000002                              | auto-reconnecting to the     |
-//  |                                         | server after an unexpected   |
-//  |                                         | disconnect of the session.   |
-//  +-----------------------------------------+------------------------------+
+//  +-----------------------------------------------------+--------------------+
+//  | Value                                               |   Meaning          |
+//  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE             | Indicates that the |
+//  | 0x00000001                                          | client supports    |
+//  |                                                     | the local          |
+//  |                                                     | move/size RAIL     |
+//  |                                                     | feature.           |
+//  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_AUTORECONNECT                  | Indicates that the |
+//  | 0x00000002                                          | client is          |
+//  |                                                     | auto-reconnecting  |
+//  |                                                     | to the server      |
+//  |                                                     | after an           |
+//  |                                                     | unexpected         |
+//  |                                                     | disconnect of the  |
+//  |                                                     | session.           |
+//  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_ZORDER_SYNC                    | Indicates that the |
+//  | 0x00000004                                          | client supports    |
+//  |                                                     | Z-order sync using |
+//  |                                                     | the Z-Order Sync   |
+//  |                                                     | Information PDU    |
+//  |                                                     | (section           |
+//  |                                                     | 2.2.2.11.1).       |
+//  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED | Indicates that the |
+//  | 0x00000010                                          | client supports    |
+//  |                                                     | resize margins     |
+//  |                                                     | using the Window   |
+//  |                                                     | Information PDU    |
+//  |                                                     | (section           |
+//  |                                                     |  2.2.1.3.1).       |
+//  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED      | Indicates that the |
+//  | 0x00000040                                          | client supports    |
+//  |                                                     | application        |
+//  |                                                     | desktop toolbar    |
+//  |                                                     | remoting using the |
+//  |                                                     | Window Information |
+//  |                                                     | PDU (section       |
+//  |                                                     | 2.2.1.3.1).        |
+//  +-----------------------------------------------------+--------------------+
 
 enum {
-      TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE = 0x00000001
-    , TS_RAIL_CLIENTSTATUS_AUTORECONNECT      = 0x00000002
+      TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE             = 0x00000001
+    , TS_RAIL_CLIENTSTATUS_AUTORECONNECT                  = 0x00000002
+    , TS_RAIL_CLIENTSTATUS_ZORDER_SYNC                    = 0x00000004
+    , TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED = 0x00000010
+    , TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED      = 0x00000040
 };
 
-class ClientInformationPDU_Recv {
-    uint32_t Flags_;
+class ClientInformationPDU {
+    uint32_t Flags_ = 0;
 
 public:
-    explicit ClientInformationPDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Flags_);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 4;    // Flags(4)
 
@@ -310,12 +372,31 @@ public:
     }
 
     uint32_t Flags() const { return this->Flags_; }
-};
 
-class ClientInformationPDU_Send {
+    static size_t size() {
+        return 4;   // Flags(4)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientInformationPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "Flags=0x%X", this->Flags_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    ClientInformationPDU_Send(OutStream & stream, uint32_t Flags) {
-        stream.out_uint32_le(Flags);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -362,13 +443,21 @@ public:
 //  |                                       | message.                         |
 //  +---------------------------------------+----------------------------------+
 
+enum {
+      TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF = 0x00000001
+};
 
-class HandshakeExPDU_Recv {
-    uint32_t buildNumber_;
-    uint32_t railHandshakeFlags_;
+class HandshakeExPDU {
+    uint32_t buildNumber_        = 0;
+    uint32_t railHandshakeFlags_ = 0;
 
 public:
-    explicit HandshakeExPDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->buildNumber_);
+        stream.out_uint32_le(this->railHandshakeFlags_);
+    }
+
+    void receive(InStream & stream) {
         const unsigned expected = 8;    // buildNumber(4) + railHandshakeFlags(4)
 
         if (!stream.in_check_rem(expected)) {
@@ -384,13 +473,32 @@ public:
     uint32_t buildNumber() const { return this->buildNumber_; }
 
     uint32_t railHandshakeFlags() const { return this->railHandshakeFlags_; }
-};
 
-class HandshakeExPDU_Send {
+    static size_t size() {
+        return 8;   // buildNumber(4) + railHandshakeFlags(4)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientExecutePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "buildNumber=%u railHandshakeFlags_=0x%X",
+            this->buildNumber_, this->railHandshakeFlags_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    HandshakeExPDU_Send(OutStream & stream, uint32_t buildNumber, uint32_t railHandshakeFlags) {
-        stream.out_uint32_le(buildNumber);
-        stream.out_uint32_le(railHandshakeFlags);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -471,7 +579,6 @@ enum {
     , TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        = 0x0008
 };
 
-
 // ExeOrFileLength (2 bytes): An unsigned 16-bit integer. Specifies the
 //  length of the ExeOrFile field in bytes. The length MUST be nonzero. The
 //  maximum length is 520 bytes.
@@ -505,18 +612,41 @@ enum {
 //  including expanded environment variables (see
 //  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS mask of Flags field), is 16,000 bytes.
 
-class ClientExecutePDU_Recv {
-    uint16_t Flags_;
-    uint16_t ExeOrFileLength;
-    uint16_t WorkingDirLength;
-    uint16_t ArgumentsLen;
+class ClientExecutePDU {
+    uint16_t Flags_ = 0;
 
-    std::string exe_or_file_;
-    std::string working_dir_;
-    std::string arguments_;
+    std::string exe_or_file;
+    std::string working_dir;
+    std::string arguments;
 
 public:
-    explicit ClientExecutePDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->Flags_);
+
+        const uint32_t offset_of_ExeOrFile  = stream.get_offset();
+        stream.out_clear_bytes(2);
+        const uint32_t offset_of_WorkingDir = stream.get_offset();
+        stream.out_clear_bytes(2);
+        const uint32_t offset_of_Arguments  = stream.get_offset();
+        stream.out_clear_bytes(2);
+
+        const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
+        put_non_null_terminated_utf16_from_utf8(
+            stream, this->exe_or_file.c_str(), maximum_length_of_ExeOrFile_in_bytes,
+            offset_of_ExeOrFile);
+
+        const size_t maximum_length_of_WorkingDir_in_bytes = 520;
+        put_non_null_terminated_utf16_from_utf8(
+            stream, this->working_dir.c_str(), maximum_length_of_WorkingDir_in_bytes,
+            offset_of_WorkingDir);
+
+        const size_t maximum_length_of_Arguments_in_bytes = 16000;
+        put_non_null_terminated_utf16_from_utf8(
+            stream, this->arguments.c_str(), maximum_length_of_Arguments_in_bytes,
+            offset_of_Arguments);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 8;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -529,58 +659,85 @@ public:
             }
         }
 
-        this->Flags_            = stream.in_uint16_le();
-        this->ExeOrFileLength   = stream.in_uint16_le();
-        this->WorkingDirLength  = stream.in_uint16_le();
-        this->ArgumentsLen      = stream.in_uint16_le();
+        this->Flags_ = stream.in_uint16_le();
+
+        uint16_t ExeOrFileLength  = stream.in_uint16_le();
+        uint16_t WorkingDirLength = stream.in_uint16_le();
+        uint16_t ArgumentsLen     = stream.in_uint16_le();
 
         get_non_null_terminated_utf16_from_utf8(
-            this->exe_or_file_, stream, this->ExeOrFileLength, "Client Execute PDU");
+            this->exe_or_file, stream, ExeOrFileLength, "Client Execute PDU");
         get_non_null_terminated_utf16_from_utf8(
-            this->working_dir_, stream, this->WorkingDirLength, "Client Execute PDU");
+            this->working_dir, stream, WorkingDirLength, "Client Execute PDU");
         get_non_null_terminated_utf16_from_utf8(
-            this->arguments_, stream, this->ArgumentsLen, "Client Execute PDU");
+            this->arguments, stream, ArgumentsLen, "Client Execute PDU");
     }
 
     uint16_t Flags() const { return this->Flags_; }
 
-    const char * exe_or_file() const { return this->exe_or_file_.c_str(); }
+    const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
 
-    const char * working_dir() const { return this->working_dir_.c_str(); }
+    const char * WorkingDir() const { return this->working_dir.c_str(); }
 
-    const char * arguments() const { return this->arguments_.c_str(); }
-};  // class ClientExecutePDU_Recv
+    const char * Arguments() const { return this->arguments.c_str(); }
 
-class ClientExecutePDU_Send {
-public:
-    ClientExecutePDU_Send(OutStream & stream, uint16_t Flags,
-                          const char * exe_or_file, const char * working_dir,
-                          const char * arguments) {
-        stream.out_uint16_le(Flags);
+    size_t size() const {
+        size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
 
-        const uint32_t offset_of_ExeOrFile  = stream.get_offset();
-        stream.out_clear_bytes(2);
-        const uint32_t offset_of_WorkingDir = stream.get_offset();
-        stream.out_clear_bytes(2);
-        const uint32_t offset_of_Arguments  = stream.get_offset();
-        stream.out_clear_bytes(2);
+        {
+            StaticOutStream<65536> out_stream;
 
-        const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
-        put_non_null_terminated_utf16_from_utf8(
-            stream, exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
-            offset_of_ExeOrFile);
+            auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+                out_stream, this->exe_or_file.c_str(), this->exe_or_file.length() * 2);
 
-        const size_t maximum_length_of_WorkingDir_in_bytes = 520;
-        put_non_null_terminated_utf16_from_utf8(
-            stream, working_dir, maximum_length_of_WorkingDir_in_bytes,
-            offset_of_WorkingDir);
+            count += 2 /* CbString(2) */ + size_of_unicode_data;
+        }
 
-        const size_t maximum_length_of_Arguments_in_bytes = 16000;
-        put_non_null_terminated_utf16_from_utf8(
-            stream, arguments, maximum_length_of_Arguments_in_bytes,
-            offset_of_Arguments);
+        {
+            StaticOutStream<65536> out_stream;
+
+            auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+                out_stream, this->working_dir.c_str(), this->working_dir.length() * 2);
+
+            count += 2 /* CbString(2) */ + size_of_unicode_data;
+        }
+
+        {
+            StaticOutStream<65536> out_stream;
+
+            auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+                out_stream, this->arguments.c_str(), this->arguments.length() * 2);
+
+            count += 2 /* CbString(2) */ + size_of_unicode_data;
+        }
+
+        return count;
     }
-};
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientExecutePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "Flags=0x%X ExeOrFile=\"%s\" WorkingDir=\"%s\" Arguments=\"%s\"",
+            this->Flags_, this->exe_or_file.c_str(), this->working_dir.c_str(),
+            this->arguments.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // class ClientExecutePDU
 
 // [MS-RDPERP] - 2.2.2.3.2 Server Execute Result PDU
 // (TS_RAIL_ORDER_EXEC_RESULT)
@@ -666,16 +823,55 @@ public:
 //  Execute PDU. The server sets this field to enable the client to match the
 //  Client Execute PDU with the Server Execute Result PDU.
 
-class ServerExecuteResultPDU_Recv {
-    uint16_t Flags_;
-    uint16_t ExecResult_;
-    uint32_t RawResult_;
-    uint16_t ExeOrFileLength;
+enum {
+      RAIL_EXEC_S_OK               = 0x0000
+    , RAIL_EXEC_E_HOOK_NOT_LOADED  = 0x0001
+    , RAIL_EXEC_E_DECODE_FAILED    = 0x0002
+    , RAIL_EXEC_E_NOT_IN_ALLOWLIST = 0x0003
+    , RAIL_EXEC_E_FILE_NOT_FOUND   = 0x0005
+    , RAIL_EXEC_E_FAIL             = 0x0006
+    , RAIL_EXEC_E_SESSION_LOCKED   = 0x0007
+};
 
-    std::string exe_or_file_;
+static inline
+char const* get_RAIL_ExecResult_name(uint16_t ExecResult) {
+    switch (ExecResult) {
+        case RAIL_EXEC_S_OK:               return "RAIL_EXEC_S_OK";
+        case RAIL_EXEC_E_HOOK_NOT_LOADED:  return "RAIL_EXEC_E_HOOK_NOT_LOADED";
+        case RAIL_EXEC_E_DECODE_FAILED:    return "RAIL_EXEC_E_DECODE_FAILED";
+        case RAIL_EXEC_E_NOT_IN_ALLOWLIST: return "RAIL_EXEC_E_NOT_IN_ALLOWLIST";
+        case RAIL_EXEC_E_FILE_NOT_FOUND:   return "RAIL_EXEC_E_FILE_NOT_FOUND";
+        case RAIL_EXEC_E_SESSION_LOCKED:   return "RAIL_EXEC_E_SESSION_LOCKED";
+        default:                           return "<unknown>";
+    }
+}
+
+class ServerExecuteResultPDU {
+    uint16_t Flags_          = 0;
+    uint16_t ExecResult_     = 0;
+    uint32_t RawResult_      = 0;
+    uint16_t ExeOrFileLength = 0;
+
+    std::string exe_or_file;
 
 public:
-    explicit ServerExecuteResultPDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint16_le(this->Flags_);
+        stream.out_uint16_le(this->ExecResult_);
+        stream.out_uint32_le(this->RawResult_);
+
+        stream.out_clear_bytes(2);  // Padding(2)
+
+        const uint32_t offset_of_ExeOrFile  = stream.get_offset();
+        stream.out_clear_bytes(2);
+
+        const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
+        put_non_null_terminated_utf16_from_utf8(
+            stream, this->exe_or_file.c_str(), maximum_length_of_ExeOrFile_in_bytes,
+            offset_of_ExeOrFile);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
@@ -697,7 +893,7 @@ public:
         this->ExeOrFileLength   = stream.in_uint16_le();
 
         get_non_null_terminated_utf16_from_utf8(
-            this->exe_or_file_, stream, this->ExeOrFileLength, "Server Execute Result PDU");
+            this->exe_or_file, stream, this->ExeOrFileLength, "Server Execute Result PDU");
     }
 
     uint16_t Flags() const { return this->Flags_; }
@@ -706,27 +902,170 @@ public:
 
     uint16_t RawResult() const { return this->RawResult_; }
 
-    const char * exe_or_file() const { return this->exe_or_file_.c_str(); }
-};  // class ServerExecuteResultPDU_Recv
+    const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
 
-class ServerExecuteResultPDU_Send {
+    size_t size() const {
+        size_t count = 12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
+
+        StaticOutStream<65536> out_stream;
+
+        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+            out_stream, this->exe_or_file.c_str(), this->exe_or_file.length() * 2);
+
+        count += 2 /* CbString(2) */ + size_of_unicode_data;
+
+        return count;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerExecuteResultPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "Flags=0x%X ExecResult=\"%s\"(%u) RawResult=0x%08X ExeOrFile=\"%s\"",
+            this->Flags_, ::get_RAIL_ExecResult_name(this->ExecResult_),
+            this->ExecResult_, this->RawResult_, this->exe_or_file.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    ServerExecuteResultPDU_Send(OutStream & stream, uint16_t Flags,
-            uint16_t ExecResult, uint32_t RawResult,
-            const char * exe_or_file) {
-        stream.out_uint16_le(Flags);
-        stream.out_uint16_le(ExecResult);
-        stream.out_uint32_le(RawResult);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // class ServerExecuteResultPDU
 
-        stream.out_clear_bytes(2);  // Padding(2)
+// [MS-RDPERP] - 2.2.2.4.2 High Contrast System Information Structure
+//  (TS_HIGHCONTRAST)
+// ==================================================================
 
-        const uint32_t offset_of_ExeOrFile  = stream.get_offset();
-        stream.out_clear_bytes(2);
+// The TS_HIGHCONTRAST packet defines parameters for the high-contrast
+//  accessibility feature.
 
-        const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
-        put_non_null_terminated_utf16_from_utf8(
-            stream, exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
-            offset_of_ExeOrFile);
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Flags                             |
+// +---------------------------------------------------------------+
+// |                       ColorSchemeLength                       |
+// +---------------------------------------------------------------+
+// |                     ColorScheme (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Flags (4 bytes): An unsigned 32-bit integer. This field is opaque to RAIL.
+//  It is transmitted from the client to the server and used by the server to
+//  set the High Contrast parameters.<12>
+
+// ColorSchemeLength (4 bytes): An unsigned 32-bit integer. The length, in
+//  bytes, of the ColorScheme field.
+
+// ColorScheme (variable): UNICODE_STRING. Variable length. The
+//  Windows-specific name of the High Contrast Color Scheme, specified as a
+//  null-terminated UNICODE_STRING.<13>
+
+class HighContrastSystemInformationStructure {
+    uint32_t Flags_ = 0;
+
+    std::string color_scheme;
+
+public:
+    HighContrastSystemInformationStructure() = default;
+
+    HighContrastSystemInformationStructure(uint32_t Flags_, char const* ColorScheme_)
+    : Flags_(Flags_)
+    , color_scheme(ColorScheme_) {}
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Flags_);
+
+        const size_t offset_of_data_length = stream.get_offset();
+        stream.out_skip_bytes(4);
+
+        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+            stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
+
+        stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated High Contrast System Information Structure: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->Flags_ = stream.in_uint32_le();
+
+        uint32_t const ColorSchemeLength = stream.in_uint32_le();
+
+        if (!stream.in_check_rem(ColorSchemeLength)) {
+            LOG(LOG_ERR,
+                "Truncated High Contrast System Information Structure: expected=%u remains=%zu (1)",
+                ColorSchemeLength, stream.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+
+        REDASSERT(ColorSchemeLength >= 2);
+
+        get_non_null_terminated_utf16_from_utf8(
+            this->color_scheme, stream, stream.in_uint16_le(),
+            "High Contrast System Information Structure");
+    }
+
+    uint32_t Flags() const { return this->Flags_; }
+
+    const char * ColorScheme() const { return this->color_scheme.c_str(); }
+
+    size_t size() const {
+        size_t count = 8;   // // Flags(4) + ColorSchemeLength(4)
+
+        StaticOutStream<65536> out_stream;
+
+        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+            out_stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
+
+        count += 2 /* CbString(2) */ + size_of_unicode_data;
+
+        return count;
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "HighContrastSystemInformation=(");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "Flags=0x%X ColorScheme=\"%s\"",
+            this->Flags_, this->color_scheme.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, ")");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -869,128 +1208,105 @@ char const* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
     }
 }
 
-class ClientSystemParametersUpdatePDU_Recv {
-    uint32_t SystemParam_;
-    uint8_t  Body_[8];
+class ClientSystemParametersUpdatePDU {
+    uint32_t                                SystemParam_;
+    uint8_t                                 body_b;
+    RDP::RAIL::Rectangle                    body_r;
+    HighContrastSystemInformationStructure  body_hcsis;
 
 public:
-    explicit ClientSystemParametersUpdatePDU_Recv(InStream & stream) {
+
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->SystemParam_);
+
+        switch (this->SystemParam_) {
+            case SPI_SETDRAGFULLWINDOWS:
+            case SPI_SETKEYBOARDCUES:
+            case SPI_SETKEYBOARDPREF:
+            case SPI_SETMOUSEBUTTONSWAP:
+                stream.out_uint8(this->body_b);
+                break;
+
+            case SPI_SETWORKAREA:
+            case RAIL_SPI_DISPLAYCHANGE:
+            case RAIL_SPI_TASKBARPOS:
+                this->body_r.emit(stream);
+                break;
+
+            case SPI_SETHIGHCONTRAST:
+                this->body_hcsis.emit(stream);
+                break;
+        }
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 4;    // SystemParam(4)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Client System Parameters Update PDU: expected=%u remains=%zu",
+                    "Truncated Client System Parameters Update PDU (1): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
         }
 
         this->SystemParam_ = stream.in_uint32_le();
+
+        switch (this->SystemParam_) {
+            case SPI_SETDRAGFULLWINDOWS:
+            case SPI_SETKEYBOARDCUES:
+            case SPI_SETKEYBOARDPREF:
+            case SPI_SETMOUSEBUTTONSWAP:
+                {
+                    const unsigned expected = 1;    // Body(variable)
+
+                    if (!stream.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "Truncated Client System Parameters Update PDU (2): expected=%u remains=%zu",
+                            expected, stream.in_remain());
+                        throw Error(ERR_RAIL_PDU_TRUNCATED);
+                    }
+                }
+
+                this->body_b = stream.in_uint8();
+                break;
+
+            case SPI_SETWORKAREA:
+            case RAIL_SPI_DISPLAYCHANGE:
+            case RAIL_SPI_TASKBARPOS:
+                this->body_r.receive(stream);
+                break;
+
+            case SPI_SETHIGHCONTRAST:
+                this->body_hcsis.receive(stream);
+                break;
+        }
     }
 
     uint32_t SystemParam() const { return this->SystemParam_; }
-};
-
-class ClientSystemParametersUpdatePDU_Send {
-public:
-    ClientSystemParametersUpdatePDU_Send(OutStream & stream, uint32_t SystemParam) {
-        stream.out_uint32_le(SystemParam);
-    }
-};
-
-// [MS-RDPERP] - 2.2.2.4.2 High Contrast System Information Structure
-//  (TS_HIGHCONTRAST)
-// ==================================================================
-
-// The TS_HIGHCONTRAST packet defines parameters for the high-contrast
-//  accessibility feature.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                             Flags                             |
-// +---------------------------------------------------------------+
-// |                       ColorSchemeLength                       |
-// +---------------------------------------------------------------+
-// |                     ColorScheme (variable)                    |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// Flags (4 bytes): An unsigned 32-bit integer. This field is opaque to RAIL.
-//  It is transmitted from the client to the server and used by the server to
-//  set the High Contrast parameters.<12>
-
-// ColorSchemeLength (4 bytes): An unsigned 32-bit integer. The length, in
-//  bytes, of the ColorScheme field.
-
-// ColorScheme (variable): UNICODE_STRING. Variable length. The
-//  Windows-specific name of the High Contrast Color Scheme, specified as a
-//  null-terminated UNICODE_STRING.<13>
-
-class HighContrastSystemInformationStructure {
-    uint32_t Flags_ = 0;
-
-    std::string color_scheme;
-
-public:
-    void emit(OutStream & stream) {
-        stream.out_uint32_le(this->Flags_);
-
-        const size_t offset_of_data_length = stream.get_offset();
-        stream.out_skip_bytes(4);
-
-        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-            stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
-
-        stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
-    }
-
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated High Contrast System Information Structure: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
-
-        this->Flags_ = stream.in_uint32_le();
-
-        uint32_t const ColorSchemeLength = stream.in_uint32_le();
-
-        if (!stream.in_check_rem(ColorSchemeLength)) {
-            LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%zu (1)",
-                ColorSchemeLength, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
-
-        REDASSERT(ColorSchemeLength >= 2);
-
-        get_non_null_terminated_utf16_from_utf8(
-            this->color_scheme, stream, stream.in_uint16_le(),
-            "High Contrast System Information Structure");
-    }
-
-    uint32_t Flags() const { return this->Flags_; }
-
-    const char * ColorScheme() const { return this->color_scheme.c_str(); }
 
     size_t size() const {
-        size_t count = 8;   // // Flags(4) + ColorSchemeLength(4)
+        size_t count = 4;   // SystemParam(4)
 
-        StaticOutStream<65536> out_stream;
+        switch (this->SystemParam_) {
+            case SPI_SETDRAGFULLWINDOWS:
+            case SPI_SETKEYBOARDCUES:
+            case SPI_SETKEYBOARDPREF:
+            case SPI_SETMOUSEBUTTONSWAP:
+                count += 1; // Body(variable)
+                break;
 
-        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-            out_stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
+            case SPI_SETWORKAREA:
+            case RAIL_SPI_DISPLAYCHANGE:
+            case RAIL_SPI_TASKBARPOS:
+                count += this->body_r.size();   // Body(variable)
+                break;
 
-        count += 2 /* CbString(2) */ + size_of_unicode_data;
+            case SPI_SETHIGHCONTRAST:
+                count += this->body_hcsis.size();   // Body(variable)
+                break;
+        }
 
         return count;
     }
@@ -999,13 +1315,38 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "HighContrastSystemInformationStructure: ");
+        size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "Flags=0x%X ColorScheme=\"%s\"",
-            this->Flags_, this->color_scheme.c_str());
+            "SystemParam=%s(%u) ",
+            ::get_RAIL_ClientSystemParam_name(this->SystemParam_),
+            this->SystemParam_);
         length += ((result < size - length) ? result : (size - length - 1));
+
+        switch (this->SystemParam_) {
+            case SPI_SETDRAGFULLWINDOWS:
+            case SPI_SETKEYBOARDCUES:
+            case SPI_SETKEYBOARDPREF:
+            case SPI_SETMOUSEBUTTONSWAP:
+                result = ::snprintf(buffer + length, size - length,
+                    "Body=%s(%u) ",
+                    (this->body_b ? "TRUE" : "FALSE"), this->body_b);
+                length += ((result < size - length) ? result : (size - length - 1));
+                break;
+
+            case SPI_SETWORKAREA:
+            case RAIL_SPI_DISPLAYCHANGE:
+            case RAIL_SPI_TASKBARPOS:
+                result = this->body_r.str(buffer + length, size - length);
+                length += ((result < size - length) ? result : (size - length - 1));
+                break;
+
+            case SPI_SETHIGHCONTRAST:
+                result = this->body_hcsis.str(buffer + length, size - length);
+                length += ((result < size - length) ? result : (size - length - 1));
+                break;
+        }
 
         return length;
     }
@@ -1092,13 +1433,13 @@ char const* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
 
 class ServerSystemParametersUpdatePDU {
     uint32_t SystemParam_ = 0;
-    uint8_t  Body_[1] = { 0 };
+    uint8_t  Body_ = 0;
 
 public:
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->SystemParam_);
 
-        stream.out_copy_bytes(this->Body_, 1);  // Body(1)
+        stream.out_uint8(this->Body_);
     }
 
     void receive(InStream & stream) {
@@ -1114,25 +1455,12 @@ public:
         }
 
         this->SystemParam_ = stream.in_uint32_le();
-
-        stream.in_copy_bytes(this->Body_, 1);    // Body(1);
+        this->Body_        = stream.in_uint8();
     }
 
     uint32_t SystemParam() const { return this->SystemParam_; }
 
-    int Body(uint8_t * buffer, size_t buffer_length) {
-        int const size_of_body_field = 1;   // Body(1)
-
-        if (!buffer_length)
-            return size_of_body_field;
-
-        if (buffer_length < size_of_body_field)
-            return -1;
-
-        ::memcpy(buffer, this->Body_, size_of_body_field);
-
-        return size_of_body_field;
-    }
+    uint8_t Body() const { return this->Body_; }
 
     static size_t size() {
         return 5;   // WindowId(4) + Body(1)
@@ -1148,7 +1476,7 @@ private:
         result = ::snprintf(buffer + length, size - length,
             "SystemParam=%s(%u) Body=\\x%02x",
             ::get_RAIL_ServerSystemParam_name(this->SystemParam_),
-            this->SystemParam_, this->Body_[0]);
+            this->SystemParam_, this->Body_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
