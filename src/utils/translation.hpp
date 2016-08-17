@@ -61,7 +61,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 55> trans_t;
+    typedef std::array<value_type, 56> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -174,6 +174,9 @@ private:
         {"process_interrupted_security_policies",
             {"The process '%s' was interrupted in accordance with security policies.",
              "Le processus '%s' a été interrompu conformément aux politiques de sécurité."}},
+        {"session_logoff_in_progress",
+            {"Session logoff in progress.",
+             "Fermeture de session en cours."}},
     }}
     {
         std::sort(this->trans.begin(), this->trans.end());

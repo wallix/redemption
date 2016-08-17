@@ -101,6 +101,7 @@ BOOST_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
     BOOST_CHECK_EQUAL(client_system_parameters_update_pdu_r.SystemParam(), SPI_SETHIGHCONTRAST);
 }
 
+/*
 BOOST_AUTO_TEST_CASE(HighContrastSystemInformationStructure)
 {
     uint8_t buf[2048];
@@ -118,3 +119,4 @@ BOOST_AUTO_TEST_CASE(HighContrastSystemInformationStructure)
     BOOST_CHECK_EQUAL(high_contrast_system_information_structure_r.ColorScheme(),
         "ColorScheme");
 }
+*/

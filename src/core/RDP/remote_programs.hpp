@@ -871,6 +871,7 @@ char const* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
 
 class ClientSystemParametersUpdatePDU_Recv {
     uint32_t SystemParam_;
+    uint8_t  Body_[8];
 
 public:
     explicit ClientSystemParametersUpdatePDU_Recv(InStream & stream) {
@@ -929,15 +930,25 @@ public:
 //  Windows-specific name of the High Contrast Color Scheme, specified as a
 //  null-terminated UNICODE_STRING.<13>
 
+class HighContrastSystemInformationStructure {
+    uint32_t Flags_ = 0;
 
-class HighContrastSystemInformationStructure_Recv {
-    uint32_t Flags_;
-    uint32_t ColorSchemeLength;
-
-    std::string ColorScheme_;
+    std::string color_scheme;
 
 public:
-    explicit HighContrastSystemInformationStructure_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->Flags_);
+
+        const size_t offset_of_data_length = stream.get_offset();
+        stream.out_skip_bytes(4);
+
+        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
+            stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
+
+        stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
 
@@ -949,41 +960,62 @@ public:
             }
         }
 
-        this->Flags_            = stream.in_uint32_le();
-        this->ColorSchemeLength = stream.in_uint32_le();
+        this->Flags_ = stream.in_uint32_le();
 
-        if (!stream.in_check_rem(this->ColorSchemeLength)) {
+        uint32_t const ColorSchemeLength = stream.in_uint32_le();
+
+        if (!stream.in_check_rem(ColorSchemeLength)) {
             LOG(LOG_ERR,
                 "Truncated High Contrast System Information Structure: expected=%u remains=%zu (1)",
-                this->ColorSchemeLength, stream.in_remain());
+                ColorSchemeLength, stream.in_remain());
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
 
-        REDASSERT(this->ColorSchemeLength >= 2 /* CbString(2) */);
+        REDASSERT(ColorSchemeLength >= 2);
 
         get_non_null_terminated_utf16_from_utf8(
-            this->ColorScheme_, stream, stream.in_uint16_le(),
+            this->color_scheme, stream, stream.in_uint16_le(),
             "High Contrast System Information Structure");
     }
 
     uint32_t Flags() const { return this->Flags_; }
 
-    const char * ColorScheme() const { return this->ColorScheme_.c_str(); }
-};
+    const char * ColorScheme() const { return this->color_scheme.c_str(); }
 
-class HighContrastSystemInformationStructure_Send {
-public:
-    HighContrastSystemInformationStructure_Send(OutStream & stream, uint32_t Flags,
-                                                const char * color_scheme) {
-        stream.out_uint32_le(Flags);
+    size_t size() const {
+        size_t count = 8;   // // Flags(4) + ColorSchemeLength(4)
 
-        const size_t offset_of_data_length = stream.get_offset();
-        stream.out_skip_bytes(4);
+        StaticOutStream<65536> out_stream;
 
         auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-            stream, color_scheme, strlen(color_scheme) * 2);
+            out_stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
 
-        stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
+        count += 2 /* CbString(2) */ + size_of_unicode_data;
+
+        return count;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "HighContrastSystemInformationStructure: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "Flags=0x%X ColorScheme=\"%s\"",
+            this->Flags_, this->color_scheme.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1058,13 +1090,20 @@ char const* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
     }
 }
 
-class ServerSystemParametersUpdatePDU_Recv {
-    uint32_t SystemParam_;
+class ServerSystemParametersUpdatePDU {
+    uint32_t SystemParam_ = 0;
+    uint8_t  Body_[1] = { 0 };
 
 public:
-    explicit ServerSystemParametersUpdatePDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->SystemParam_);
+
+        stream.out_copy_bytes(this->Body_, 1);  // Body(1)
+    }
+
+    void receive(InStream & stream) {
         {
-            const unsigned expected = 4;    // SystemParam(4)
+            const unsigned expected = 5;    // SystemParam(4) + Body(1)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -1075,15 +1114,52 @@ public:
         }
 
         this->SystemParam_ = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->Body_, 1);    // Body(1);
     }
 
     uint32_t SystemParam() const { return this->SystemParam_; }
-};
 
-class ServerSystemParametersUpdatePDU_Send {
+    int Body(uint8_t * buffer, size_t buffer_length) {
+        int const size_of_body_field = 1;   // Body(1)
+
+        if (!buffer_length)
+            return size_of_body_field;
+
+        if (buffer_length < size_of_body_field)
+            return -1;
+
+        ::memcpy(buffer, this->Body_, size_of_body_field);
+
+        return size_of_body_field;
+    }
+
+    static size_t size() {
+        return 5;   // WindowId(4) + Body(1)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientActivatePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "SystemParam=%s(%u) Body=\\x%02x",
+            ::get_RAIL_ServerSystemParam_name(this->SystemParam_),
+            this->SystemParam_, this->Body_[0]);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    ServerSystemParametersUpdatePDU_Send(OutStream & stream, uint32_t SystemParam) {
-        stream.out_uint32_le(SystemParam);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1113,12 +1189,17 @@ public:
 // Enabled (1 byte): An unsigned 8-bit integer. Indicates whether the window
 //  is to be activated (value = nonzero) or deactivated (value = 0).
 
-class ClientActivatePDU_Recv {
-    uint32_t WindowId_;
-    uint8_t  Enabled_;
+class ClientActivatePDU {
+    uint32_t WindowId_ = 0;
+    uint8_t  Enabled_  = 0;
 
 public:
-    explicit ClientActivatePDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId_);
+        stream.out_uint8(this->Enabled_);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 5;    // WindowId(4) + Enabled(1)
 
@@ -1137,13 +1218,32 @@ public:
     uint32_t WindowId() const { return this->WindowId_; }
 
     uint8_t Enabled() const { return this->Enabled_; }
-};
 
-class ClientActivatePDU_Send {
+    static size_t size() {
+        return 5;   // WindowId(4) + Enabled(1)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientActivatePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=%u Enabled=%s",
+            this->WindowId_, (this->Enabled_ ? "Yes" : "No"));
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    ClientActivatePDU_Send(OutStream & stream, uint32_t WindowId, uint8_t Enabled) {
-        stream.out_uint32_le(WindowId);
-        stream.out_uint8(Enabled);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1180,13 +1280,19 @@ public:
 //  corner at which the System menu SHOULD be displayed. Specified in screen
 //  coordinates.
 
-class ClientSystemMenuPDU_Recv {
-    uint32_t WindowId_;
-    int16_t  Left_;
-    int16_t  Top_;
+class ClientSystemMenuPDU {
+    uint32_t WindowId_ = 0;
+    int16_t  Left_     = 0;
+    int16_t  Top_      = 0;
 
 public:
-    explicit ClientSystemMenuPDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId_);
+        stream.out_sint16_le(this->Left_);
+        stream.out_sint16_le(this->Top_);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 8;    // WindowId(4) + Left(2) + Top(2)
 
@@ -1208,14 +1314,32 @@ public:
     int16_t Left() const { return this->Left_; }
 
     int16_t Top() const { return this->Top_; }
-};
 
-class ClientSystemMenuPDU_Send {
+    static size_t size() {
+        return 8;   // WindowId(4) + Left(2) + Top(2)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientSystemMenuPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=%u Left=%u Top=%u",
+            this->WindowId_, this->Left_, this->Top_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    ClientSystemMenuPDU_Send(OutStream & stream, uint32_t WindowId, int16_t Left, int16_t Top) {
-        stream.out_uint32_le(WindowId);
-        stream.out_sint16_le(Left);
-        stream.out_sint16_le(Top);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1287,12 +1411,32 @@ enum {
     , SC_DEFAULT  = 0xF160
 };
 
-class ClientSystemCommandPDU_Recv {
-    uint32_t WindowId_;
-    uint16_t Command_;
+static inline
+char const* get_RAIL_Command_name(uint16_t Command) {
+    switch (Command) {
+        case SC_SIZE:     return "SC_SIZE";
+        case SC_MOVE:     return "SC_MOVE";
+        case SC_MINIMIZE: return "SC_MINIMIZE";
+        case SC_MAXIMIZE: return "SC_MAXIMIZE";
+        case SC_CLOSE:    return "SC_CLOSE";
+        case SC_KEYMENU:  return "SC_KEYMENU";
+        case SC_RESTORE:  return "SC_RESTORE";
+        case SC_DEFAULT:  return "SC_DEFAULT";
+        default:          return "<unknown>";
+    }
+}
+
+class ClientSystemCommandPDU {
+    uint32_t WindowId_ = 0;
+    uint16_t Command_  = 0;
 
 public:
-    explicit ClientSystemCommandPDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId_);
+        stream.out_uint16_le(this->Command_);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 6;    // WindowId(4) + Command(2)
 
@@ -1311,13 +1455,33 @@ public:
     uint32_t WindowId() const { return this->WindowId_; }
 
     int16_t Command() const { return this->Command_; }
-};
 
-class ClientSystemCommandPDU_Send {
+    static size_t size() {
+        return 6;   // WindowId(4) + Command(2)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientSystemCommandPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=%u Command=%s(%u)",
+            this->WindowId_, ::get_RAIL_Command_name(this->Command_),
+            this->Command_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    ClientSystemCommandPDU_Send(OutStream & stream, uint32_t WindowId, uint16_t Command) {
-        stream.out_uint32_le(WindowId);
-        stream.out_uint16_le(Command);
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
 
@@ -1443,14 +1607,39 @@ enum {
     , NIN_BALLOONUSERCLICK = 0x00000405
 };
 
+static inline
+char const* get_RAIL_Message_name(uint32_t Message) {
+    switch (Message) {
+        case WM_LBUTTONDOWN:       return "WM_LBUTTONDOWN";
+        case WM_LBUTTONUP:         return "WM_LBUTTONUP";
+        case WM_RBUTTONDOWN:       return "WM_RBUTTONDOWN";
+        case WM_RBUTTONUP:         return "WM_RBUTTONUP";
+        case WM_CONTEXTMENU:       return "WM_CONTEXTMENU";
+        case WM_LBUTTONDBLCLK:     return "WM_LBUTTONDBLCLK";
+        case WM_RBUTTONDBLCLK:     return "WM_RBUTTONDBLCLK";
+        case NIN_SELECT:           return "NIN_SELECT";
+        case NIN_KEYSELECT:        return "NIN_KEYSELECT";
+        case NIN_BALLOONSHOW:      return "NIN_BALLOONSHOW";
+        case NIN_BALLOONHIDE:      return "NIN_BALLOONHIDE";
+        case NIN_BALLOONTIMEOUT:   return "NIN_BALLOONTIMEOUT";
+        case NIN_BALLOONUSERCLICK: return "NIN_BALLOONUSERCLICK";
+        default:                   return "<unknown>";
+    }
+}
 
-class ClientNotifyEventPDU_Recv {
-    uint32_t WindowId_;
-    uint32_t NotifyIconId_;
-    uint32_t Message_;
+class ClientNotifyEventPDU {
+    uint32_t WindowId_     = 0;
+    uint32_t NotifyIconId_ = 0;
+    uint32_t Message_      = 0;
 
 public:
-    explicit ClientNotifyEventPDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId_);
+        stream.out_uint16_le(this->NotifyIconId_);
+        stream.out_uint16_le(this->Message_);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // WindowId(4) + NotifyIconId(4) + Message(4)
 
@@ -1472,18 +1661,35 @@ public:
     uint32_t NotifyIconId() const { return this->NotifyIconId_; }
 
     uint32_t Message() const { return this->Message_; }
-};
 
-class ClientNotifyEventPDU_Send {
+    static size_t size() {
+        return 12;  // WindowId(4) + NotifyIconId(4) + Message(4)
+    }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=%u NotifyIconId=%u Message=%s(%u)",
+            this->WindowId_, this->NotifyIconId_, ::get_RAIL_Message_name(this->Message_),
+            this->Message_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
 public:
-    ClientNotifyEventPDU_Send(OutStream & stream, uint32_t WindowId, uint32_t NotifyIconId, uint32_t Message) {
-        stream.out_uint32_le(WindowId);
-        stream.out_uint16_le(NotifyIconId);
-        stream.out_uint16_le(Message);
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
-
-
 
 // [MS-RDPERP] - 2.2.2.6.5 Client Get Application ID PDU
 //  (TS_RAIL_ORDER_GET_APPID_REQ)
@@ -1510,11 +1716,15 @@ public:
 // WindowId (4 bytes): An unsigned 32-bit integer specifying the ID of the
 //  associated window on the server that requires needs an Application ID.
 
-class ClientGetApplicationIDPDU_Recv {
-    uint32_t WindowId_;
+class ClientGetApplicationIDPDU {
+    uint32_t WindowId_ = 0;
 
 public:
-    explicit ClientGetApplicationIDPDU_Recv(InStream & stream) {
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId_);
+    }
+
+    void receive(InStream & stream) {
         {
             const unsigned expected = 4;    // WindowId(4)
 
@@ -1529,12 +1739,426 @@ public:
         this->WindowId_ = stream.in_uint32_le();
     }
 
-    uint32_t SystemParam() const { return this->WindowId_; }
+    static size_t size() {
+        return 4;   // WindowId(4)
+    }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ClientGetApplicationIDPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=%u", this->WindowId_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
 };
 
-class ClientGetApplicationIDPDU_Send {
+// [MS-RDPERP] - 2.2.2.7.1 Server Min Max Info PDU (TS_RAIL_ORDER_MINMAXINFO)
+// ==========================================================================
+
+// The Server Min Max Info PDU is sent from a server to a client when a
+//  window move or resize on the server is being initiated. This PDU contains
+//  information about the minimum and maximum extents to which the window can
+//  be moved or sized.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +-------------------------------+-------------------------------+
+// |            MaxWidth           |           MaxHeight           |
+// +-------------------------------+-------------------------------+
+// |            MaxPosX            |            MaxPosY            |
+// +-------------------------------+-------------------------------+
+// |         MinTrackWidth         |         MinTrackHeight        |
+// +-------------------------------+-------------------------------+
+// |         MaxTrackWidth         |         MaxTrackHeight        |
+// +-------------------------------+-------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_MINMAXINFO (0x000A).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window on
+//  the server that is being moved or resized.
+
+// MaxWidth (2 bytes): An unsigned 16-bit integer. The width of the maximized
+//  window.
+
+// MaxHeight (2 bytes): An unsigned 16-bit integer. The height of the
+//  maximized window.
+
+// MaxPosX (2 bytes): An unsigned 16-bit integer. The x-coordinate of the
+//  top-left corner of the maximized window.
+
+// MaxPosY (2 bytes): An unsigned 16-bit integer. The y-coordinate of the
+//  top-left corner of the maximized window.
+
+// MinTrackWidth (2 bytes): An unsigned 16-bit integer. The minimum width to
+//  which the window can be resized.
+
+// MinTrackHeight (2 bytes): An unsigned 16-bit integer. The minimum height
+//  to which the window can be resized.
+
+// MaxTrackWidth (2 bytes): An unsigned 16-bit integer. The maximum width to
+//  which the window can be resized.
+
+// MaxTrackHeight (2 bytes): An unsigned 16-bit integer. The maximum height
+//  to which the window can be resized.
+
+class ServerMinMaxInfoPDU {
+    uint32_t WindowId       = 0;
+    uint16_t MaxWidth       = 0;
+    uint16_t MaxHeight      = 0;
+    uint16_t MaxPosX        = 0;
+    uint16_t MaxPosY        = 0;
+    uint16_t MinTrackWidth  = 0;
+    uint16_t MinTrackHeight = 0;
+    uint16_t MaxTrackWidth  = 0;
+    uint16_t MaxTrackHeight = 0;
+
 public:
-    ClientGetApplicationIDPDU_Send(OutStream & stream, uint32_t WindowId) {
-        stream.out_uint32_le(WindowId);
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId);
+        stream.out_uint16_le(this->MaxWidth);
+        stream.out_uint16_le(this->MaxHeight);
+        stream.out_uint16_le(this->MaxPosX);
+        stream.out_uint16_le(this->MaxPosY);
+        stream.out_uint16_le(this->MinTrackWidth);
+        stream.out_uint16_le(this->MinTrackHeight);
+        stream.out_uint16_le(this->MaxTrackWidth);
+        stream.out_uint16_le(this->MaxTrackHeight);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 20;   // WindowId(4) + MaxWidth(2) +
+                                            //  MaxHeight(2) + MaxPosX(2) +
+                                            //  MaxPosY(2) + MinTrackWidth(2) +
+                                            //  MinTrackHeight(2) + MaxTrackWidth(2) +
+                                            //  MaxTrackHeight(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server Min Max Info PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId       = stream.in_uint32_le();
+        this->MaxWidth       = stream.in_uint16_le();
+        this->MaxHeight      = stream.in_uint16_le();
+        this->MaxPosX        = stream.in_uint16_le();
+        this->MaxPosY        = stream.in_uint16_le();
+        this->MinTrackWidth  = stream.in_uint16_le();
+        this->MinTrackHeight = stream.in_uint16_le();
+        this->MaxTrackWidth  = stream.in_uint16_le();
+        this->MaxTrackHeight = stream.in_uint16_le();
+    }
+
+    static size_t size() {
+        return 20;  // WindowId(4) + MaxWidth(2) + MaxHeight(2) +
+                    //  MaxPosX(2) + MaxPosY(2) + MinTrackWidth(2) +
+                    //  MinTrackHeight(2) + MaxTrackWidth(2) +
+                    //  MaxTrackHeight(2)
+    }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerMinMaxInfoPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=%u MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
+                "MinTrackWidth=%u MinTrackHeight=%u MaxTrackWidth=%u "
+                "MaxTrackHeight=%u",
+            this->WindowId, this->MaxWidth, this->MaxHeight, this->MaxPosX,
+            this->MaxPosY, this->MinTrackWidth, this->MinTrackHeight,
+            this->MaxTrackWidth, this->MaxTrackHeight);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.7.2 Server Move/Size Start PDU
+//  (TS_RAIL_ORDER_LOCALMOVESIZE)
+// ==================================================
+
+// The Server Move/Size Start PDU packet is sent by the server when a window
+//  on the server is beginning a move or resize. The client uses this
+//  information to initiate a local move or resize of the corresponding local
+//  window.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +-------------------------------+-------------------------------+
+// |        IsMoveSizeStart        |          MoveSizeType         |
+// +-------------------------------+-------------------------------+
+// |              PosX             |              PosY             |
+// +-------------------------------+-------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_LOCALMOVESIZE (0x0009).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window on
+//  the server that is being moved or resized.
+
+// IsMoveSizeStart (2 bytes): An unsigned 16-bit integer. Indicates that the
+//  move/size is beginning; MUST be set to a nonzero value.
+
+// MoveSizeType (2 bytes): An unsigned 16-bit integer. Indicates the type of
+//  the move/size. This value determines the meaning of the fields PosX and
+//  PosY.
+
+//  +-----------------------+--------------------------------------------------+
+//  | Value                 | Meaning
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_LEFT        | The left edge of the window is being sized.      |
+//  | 0x0001                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_RIGHT       | The right edge of the window is being sized.     |
+//  | 0x0002                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_TOP         | The top edge of the window is being sized.       |
+//  | 0x0003                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_TOPLEFT     | The top-left corner of the window is being       |
+//  | 0x0004                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_TOPRIGHT    | The top-right corner of the window is being      |
+//  | 0x0005                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOM      | The bottom edge of the window is being sized.    |
+//  | 0x0006                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMLEFT  | The bottom-left corner of the window is being    |
+//  | 0x0007                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMRIGHT | The bottom-right corner of the window is being   |
+//  | 0x0008                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_MOVE        | The window is being moved by using the mouse.    |
+//  | 0x0009                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_KEYMOVE     | The window is being moved by using the keyboard. |
+//  | 0x000A                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_KEYSIZE     | The window is being resized by using the         |
+//  | 0x000B                | keyboard.                                        |
+//  +-----------------------+--------------------------------------------------+
+
+enum {
+      RAIL_WMSZ_LEFT        = 0x0001
+    , RAIL_WMSZ_RIGHT       = 0x0002
+    , RAIL_WMSZ_TOP         = 0x0003
+    , RAIL_WMSZ_TOPLEFT     = 0x0004
+    , RAIL_WMSZ_TOPRIGHT    = 0x0005
+    , RAIL_WMSZ_BOTTOM      = 0x0006
+    , RAIL_WMSZ_BOTTOMLEFT  = 0x0007
+    , RAIL_WMSZ_BOTTOMRIGHT = 0x0008
+    , RAIL_WMSZ_MOVE        = 0x0009
+    , RAIL_WMSZ_KEYMOVE     = 0x000A
+    , RAIL_WMSZ_KEYSIZE     = 0x000B
+};
+
+// PosX (2 bytes): An unsigned 16-bit integer. The meaning of this field
+//  depends upon the value of the MoveSizeType field.
+
+//  +-----------------------+-------------------------------------------------+
+//  | Value                 | Meaning                                         |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_LEFT        | The x-coordinate of the last mouse button-down. |
+//  | 0x0001                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_RIGHT       | The x-coordinate of the last mouse button-down. |
+//  | 0x0002                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_TOP         | The x-coordinate of the last mouse button-down. |
+//  | 0x0003                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_TOPLEFT     | The x-coordinate of the last mouse button-down. |
+//  | 0x0004                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_TOPRIGHT    | The x-coordinate of the last mouse button-down. |
+//  | 0x0005                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOM      | The x-coordinate of the last mouse button-down. |
+//  | 0x0006                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMLEFT  | The x-coordinate of the last mouse button-down. |
+//  | 0x0007                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMRIGHT | The x-coordinate of the last mouse button-down. |
+//  | 0x0008                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_MOVE        | The horizontal offset between the window's      |
+//  | 0x0009                | top-left edge and the current mouse position.   |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_KEYMOVE     | The x-coordinate of the last mouse button-down. |
+//  | 0x000A                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_KEYSIZE     | The x-coordinate of the last mouse button-down. |
+//  | 0x000B                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+
+// PosY (2 bytes): An unsigned 16-bit integer. The meaning of this field
+//  depends on the value of the MoveSizeType field.
+
+//  +-----------------------+-------------------------------------------------+
+//  | Value                 | Meaning                                         |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_LEFT        | The y-coordinate of the last mouse button-down. |
+//  | 0x0001                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_RIGHT       | The y-coordinate of the last mouse button-down. |
+//  | 0x0002                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_TOP         | The y-coordinate of the last mouse button-down. |
+//  | 0x0003                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_TOPLEFT     | The y-coordinate of the last mouse button-down. |
+//  | 0x0004                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_TOPRIGHT    | The y-coordinate of the last mouse button-down. |
+//  | 0x0005                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOM      | The y-coordinate of the last mouse button-down. |
+//  | 0x0006                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMLEFT  | The y-coordinate of the last mouse button-down. |
+//  | 0x0007                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMRIGHT | The y-coordinate of the last mouse button-down. |
+//  | 0x0008                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_MOVE        | The vertical offset between the window's        |
+//  | 0x0009                | top-left edge and the current mouse position.   |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_KEYMOVE     | The y-coordinate of the last mouse button-down. |
+//  | 0x000A                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+//  | RAIL_WMSZ_KEYSIZE     | The y-coordinate of the last mouse button-down. |
+//  | 0x000B                |                                                 |
+//  +-----------------------+-------------------------------------------------+
+
+static inline
+char const* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
+    switch (MoveSizeType) {
+        case RAIL_WMSZ_LEFT:        return "RAIL_WMSZ_LEFT";
+        case RAIL_WMSZ_RIGHT:       return "RAIL_WMSZ_RIGHT";
+        case RAIL_WMSZ_TOP:         return "RAIL_WMSZ_TOP";
+        case RAIL_WMSZ_TOPLEFT:     return "RAIL_WMSZ_TOPLEFT";
+        case RAIL_WMSZ_TOPRIGHT:    return "RAIL_WMSZ_TOPRIGHT";
+        case RAIL_WMSZ_BOTTOM:      return "RAIL_WMSZ_BOTTOM";
+        case RAIL_WMSZ_BOTTOMLEFT:  return "RAIL_WMSZ_BOTTOMLEFT";
+        case RAIL_WMSZ_BOTTOMRIGHT: return "RAIL_WMSZ_BOTTOMRIGHT";
+        case RAIL_WMSZ_MOVE:        return "RAIL_WMSZ_MOVE";
+        case RAIL_WMSZ_KEYMOVE:     return "RAIL_WMSZ_KEYMOVE";
+        case RAIL_WMSZ_KEYSIZE:     return "RAIL_WMSZ_KEYSIZE";
+        default:                    return "<unknown>";
+    }
+}
+
+class ServerMoveSizeStartPDU {
+    uint32_t WindowId        = 0;
+    uint16_t IsMoveSizeStart = 0;
+    uint16_t MoveSizeType    = 0;
+    uint16_t PosX            = 0;
+    uint16_t PosY            = 0;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId);
+        stream.out_uint16_le(this->IsMoveSizeStart);
+        stream.out_uint16_le(this->MoveSizeType);
+        stream.out_uint16_le(this->PosX);
+        stream.out_uint16_le(this->PosY);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 12;   // WindowId(4) +
+                                            //  IsMoveSizeStart(2) +
+                                            //  MoveSizeType(2) + PosX(2) +
+                                            //  PosY(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server Move/Size Start PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId        = stream.in_uint32_le();
+        this->IsMoveSizeStart = stream.in_uint16_le();
+        this->MoveSizeType    = stream.in_uint16_le();
+        this->PosX            = stream.in_uint16_le();
+        this->PosY            = stream.in_uint16_le();
+    }
+
+    static size_t size() {
+        return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
+                    //  PosX(2) + PosY(2)
+    }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeStartPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX=%u PosY=%u",
+            this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
+            this->MoveSizeType, this->PosX, this->PosY);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
     }
 };
