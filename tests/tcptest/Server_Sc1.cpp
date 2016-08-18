@@ -26,12 +26,28 @@ public:
         strcpy(this->ip_source, inet_ntoa(u.s4.sin_addr));
         LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", this->sck, this->ip_source);
         int pid = fork();
+        close(incoming_sck);
         switch (pid){
-        case 0:
-            return START_WANT_STOP;
+        case -1:
+            return Server::START_FAILED;
+        case 0: // Child
+            // Actual Server code : this one is a simple generator, always sending the same message
+            const char * message = "The quick brown fox jump over the lazy dog\n";
+            unsigned len = strlen(message);
+            while(1) {
+                unsigned sent = 0;
+                while (sent < len){
+                    int res = write(this->sck, &message[sent], len-sent);
+                    if (res < 0){
+                        break;
+                    }
+                    sent += len;
+                }
+            }
+            _exit(0);
         break;
-        default:
-            return START_OK;
+        default: // Listener
+            return Server::START_OK;
         break;
         }
     }
@@ -42,6 +58,6 @@ int main(int argc, char * argv[])
 {
     LOG(LOG_INFO, "Server Start\n");
     
-    Listen listener(one_shot_server, 0, 5000, true, 25);  // 25 seconds to connect, or timeout
+    Listen listener(Generator, 0, 5000, true, 25);  // 25 seconds to connect, or timeout
     listener.run();
 }

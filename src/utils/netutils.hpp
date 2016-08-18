@@ -40,10 +40,6 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/log.hpp"
 
-// TODO -Wold-style-cast is ignored
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-
 static inline bool try_again(int errnum){
     int res = false;
     // TODO Check wich signals are actually necessary depending on what we are doing
@@ -64,8 +60,6 @@ static inline bool try_again(int errnum){
     }
     return res;
 }
-
-namespace detail_ { namespace netutils {
 
 inline bool set_snd_buffer(int sck, int buffer_size = 32768) {
     /* set snd buffer to at least 32 Kbytes */
@@ -91,32 +85,9 @@ inline bool set_snd_buffer(int sck, int buffer_size = 32768) {
     return true;
 }
 
-inline int connect_sck(
-    int sck, int nbretry, int retry_delai_ms,
-    sockaddr & addr, socklen_t addr_len,
-    const char * ip, int port,
-    array_view<char> out_ip_addr
-) {
+inline int connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr, socklen_t addr_len, const char * target) 
+{
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
-
-    char ip_addr[256];
-    memset(ip_addr, 0, sizeof(ip_addr));
-    if ((addr.sa_family == AF_INET) && !isdigit(*ip)) {
-        union
-        {
-            struct sockaddr s;
-            struct sockaddr_storage ss;
-            struct sockaddr_in s4;
-            struct sockaddr_in6 s6;
-        } u;
-        memset(&u, 0, sizeof(u));
-        memcpy(&u.s, &addr, sizeof(u.s));
-        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(u.s4.sin_addr));
-
-        if (out_ip_addr.data()) {
-            snprintf(out_ip_addr.data(), out_ip_addr.size(), "%s", ip_addr);
-        }
-    }
 
     int trial = 0;
     for (; trial < nbretry ; trial++){
@@ -127,7 +98,7 @@ inline int connect_sck(
         }
         int const err =  errno;
         if (trial > 0){
-            LOG(LOG_INFO, "Connection to %s (%s) failed with errno = %d (%s)", ip, ip_addr, err, strerror(err));
+            LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", target, err, strerror(err));
         }
         if ((err == EINPROGRESS) || (err == EALREADY)){
             // try again
@@ -150,26 +121,13 @@ inline int connect_sck(
     }
 
     if (trial >= nbretry){
-        if (port == -1) {
-            LOG(LOG_INFO, "All trials done connecting to %s", ip);
-        }
-        else {
-            LOG(LOG_INFO, "All trials done connecting to %s:%d", ip, port);
-        }
+        LOG(LOG_INFO, "All trials done connecting to %s", target);
         return -1;
     }
 
-    if (port == -1) {
-        LOG(LOG_INFO, "connection to %s succeeded : socket %d", ip, sck);
-    }
-    else {
-        LOG(LOG_INFO, "connection to %s:%d succeeded : socket %d", ip, port, sck);
-    }
-
+    LOG(LOG_INFO, "connection to %s succeeded : socket %d", target, sck);
     return sck;
 }
-
-} }
 
 static inline int ip_connect(const char* ip, int port,
              int nbretry = 3, int retry_delai_ms = 1000,
@@ -183,7 +141,7 @@ static inline int ip_connect(const char* ip, int port,
     int sck = socket(PF_INET, SOCK_STREAM, 0);
 
     /* set snd buffer to at least 32 Kbytes */
-    if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
+    if (!set_snd_buffer(sck, 32768)) {
         return -1;
     }
 
@@ -198,9 +156,8 @@ static inline int ip_connect(const char* ip, int port,
     memset(&u, 0, sizeof(u));
     u.s4.sin_family = AF_INET;
     u.s4.sin_port = htons(port);
-    u.s4.sin_addr.s_addr = inet_addr(ip);
 
-    if (u.s4.sin_addr.s_addr == INADDR_NONE) {
+    if (!inet_aton(ip, &u.s4.sin_addr)) {
         struct addrinfo * addr_info = nullptr;
         int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
 
@@ -223,8 +180,32 @@ static inline int ip_connect(const char* ip, int port,
         u.s4.sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
         freeaddrinfo(addr_info);
     }
+    
 
-    return detail_::netutils::connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), ip, port, out_ip_addr);
+    char ip_addr[256] = {};
+    
+    sockaddr & addr = u.s;
+    if (!isdigit(*ip)) {
+        union
+        {
+            struct sockaddr s;
+            struct sockaddr_storage ss;
+            struct sockaddr_in s4;
+            struct sockaddr_in6 s6;
+        } u2;
+        memset(&u2, 0, sizeof(u2));
+        memcpy(&u2.s, &addr, sizeof(u2.s));
+        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(u2.s4.sin_addr));
+
+        if (out_ip_addr.data()) {
+            snprintf(out_ip_addr.data(), out_ip_addr.size(), "%s", ip_addr);
+        }
+    }
+
+    char target[1024] = {};
+    snprintf(target, sizeof(target), "%s:%d (%s)", ip, port, ip_addr);
+
+    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), target);
 }
 
 
@@ -232,6 +213,9 @@ static inline int ip_connect(const char* ip, int port,
 static inline int local_connect(const char* sck_name,
              int nbretry = 3, int retry_delai_ms = 1000)
 {
+    char target[1024] = {};
+    snprintf(target, sizeof(target), "%s", sck_name);
+
     LOG(LOG_INFO, "connecting to %s", sck_name);
     // we will try connection several time
     // the trial process include "ocket opening, hostname resolution, etc
@@ -240,7 +224,7 @@ static inline int local_connect(const char* sck_name,
     int sck = socket(AF_UNIX, SOCK_STREAM, 0);
 
     /* set snd buffer to at least 32 Kbytes */
-    if (!detail_::netutils::set_snd_buffer(sck, 32768)) {
+    if (!set_snd_buffer(sck, 32768)) {
         return -1;
     }
 
@@ -255,13 +239,7 @@ static inline int local_connect(const char* sck_name,
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
-    return detail_::netutils::connect_sck(
-        sck, nbretry, retry_delai_ms,
-        u.addr,
+    return connect_sck(sck, nbretry, retry_delai_ms, u.addr,
         static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u),
-        sck_name, -1, {}
-    );
+        target);
 }
-
-#pragma GCC diagnostic pop
-
