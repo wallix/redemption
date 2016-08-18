@@ -1566,19 +1566,19 @@ class Sesman():
                                             result=False, diag=release_reason)
                                     elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
                                         Logger().info(u'RDP connection terminated. Reason: Session Probe Keepalive missed')
-                                        release_reason = u'Session Probe Keepalive missed'
+                                        release_reason = u'Interrupt: Session Probe Keepalive missed'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_keepalive_missed")})
                                     elif _reporting_reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
                                         Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block outbound connection')
-                                        release_reason = u'Session Probe failed to block outbound connection'
+                                        release_reason = u'Interrupt: Session Probe failed to block outbound connection'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_outbound_connection_blocking_failed")})
                                     elif _reporting_reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
                                         Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block process')
-                                        release_reason = u'Session Probe failed to block process'
+                                        release_reason = u'Interrupt: Session Probe failed to block process'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_process_blocking_failed")})
