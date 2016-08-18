@@ -66,15 +66,17 @@ public:
         }
 
         char source_ip[256];
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
         const int source_port = ntohs(u.s4.sin_port);
-#pragma GCC diagnostic pop
         /* start new process */
         const pid_t pid = fork();
         switch (pid) {
         case 0: /* child */
+        // TODO: see exit status of child, we could use it to diagnose session behaviours
+        // TODO: we could probably use some session launcher object here. Something like
+        // an abstraction layer that would manage either forking of threading behavior
+        // this would also likely have some effect on network ressources management
+        // (that means the select() on ressources could be managed by that layer)
             {
                 close(incoming_sck);
 
@@ -103,10 +105,7 @@ public:
                 }
 
                 char target_ip[256];
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
                 const int target_port = ntohs(localAddress.s4.sin_port);
-#pragma GCC diagnostic pop
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
@@ -189,7 +188,7 @@ public:
                 else {
                     LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
                 }
-                return START_WANT_STOP;
+                _exit(0);
             }
             break;
         default: /* father */
