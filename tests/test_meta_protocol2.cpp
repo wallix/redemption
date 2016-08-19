@@ -141,12 +141,6 @@ namespace proto
         { return val<Derived>{y}; }
     };
 
-    template<class Ints, class... Ts>
-    struct description;
-
-    template<class Ints, class... Ts>
-    struct description_value;
-
     template<class...> using void_t = void;
 
     namespace diagnostics {
@@ -187,34 +181,36 @@ namespace proto
     template<class T> struct is_proto_value : std::false_type {};
     template<class T> struct is_proto_value<val<T>> : std::true_type {};
 
-//     template<class... Desc>
-//     constexpr description<mk_iseq<sizeof...(Desc)>, Desc...>
-//     def(Desc... args)
-//     {
-//         PROTO_CHECK(is_proto_variable, Desc);
-//         return {args...};
-//     }
+    template<class T> using var_type_t = typename T::var_type;
+
+    template<class Ints, class... Ts>
+    struct packet;
+
+    template<class... Ts>
+    struct packet_description
+    {
+        //using type_list = brigand::list<Ts...>;
+
+        template<class T> using contains = brigand::contains<brigand::set<Ts...>, T>;
+
+        template<class Val>
+        using check_param = val<check_and_return_t<contains, var_type_t<check_and_return_t<is_proto_value, Val>>>>;
+
+        template<class... Val>
+        constexpr auto
+        operator()(Val... values) const
+        {
+            return packet<mk_iseq<sizeof...(Val)>, check_param<Val>...>{values...};
+        }
+    };
 
     template<class... Desc>
     constexpr auto
-    def(Desc... args)
+    desc(Desc...)
     {
-        return description<mk_iseq<sizeof...(Desc)>, check_and_return_t<is_proto_variable, Desc>...>{args...};
-    }
-
-//     template<class... Val>
-//     constexpr description_value<mk_iseq<sizeof...(Val)>, Val...>
-//     defv(Val... args)
-//     {
-//         PROTO_CHECK(is_proto_value, Val);
-//         return {args...};
-//     }
-
-    template<class... Val>
-    constexpr auto
-    defv(Val... args)
-    {
-        return description_value<mk_iseq<sizeof...(Val)>, check_and_return_t<is_proto_value, Val>...>{args...};
+        return packet_description<
+            check_and_return_t<std::is_empty, check_and_return_t<is_proto_variable, Desc>>...
+        >{};
     }
 
     template<std::size_t i, class Var>
@@ -223,30 +219,12 @@ namespace proto
     };
 
     template<std::size_t... Ints, class... Ts>
-    struct description<std::integer_sequence<std::size_t, Ints...>, Ts...>
+    struct packet<std::integer_sequence<std::size_t, Ints...>, Ts...>
     : value_desc<Ints, Ts>...
     {
         using type_list = brigand::list<Ts...>;
 
-        constexpr description(Ts... args)
-        : value_desc<Ints, Ts>{args}...
-        {}
-
-        template<class... Args>
-        constexpr auto
-        operator()(Args... args) const
-        {
-            return defv(args...);
-        }
-    };
-
-    template<std::size_t... Ints, class... Ts>
-    struct description_value<std::integer_sequence<std::size_t, Ints...>, Ts...>
-    : value_desc<Ints, Ts>...
-    {
-        using type_list = brigand::list<Ts...>;
-
-        constexpr description_value(Ts... args)
+        constexpr packet(Ts... args)
         : value_desc<Ints, Ts>{args}...
         {}
 
@@ -265,14 +243,14 @@ namespace proto
         }
     };
 
-    template<class T> struct is_proto_description_value : std::false_type {};
+    template<class T> struct is_proto_packet : std::false_type {};
     template<class Ints, class... Ts>
-    struct is_proto_description_value<description_value<Ints, Ts...>> : std::true_type {};
+    struct is_proto_packet<packet<Ints, Ts...>> : std::true_type {};
 
     template<class F, class... Pkts>
     void apply(F f, Pkts ... pkts)
     {
-        PROTO_CHECK(is_proto_description_value, Pkts);
+        PROTO_CHECK(is_proto_packet, Pkts);
         f(pkts...);
     }
 }
@@ -287,7 +265,7 @@ namespace XXX {
     PROTO_VAR(proto::types::pkt_sz<proto::types::u8>, sz);
     PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u8>, sz2);
 
-    constexpr auto desc = proto::def(a, b, c, d, sz, sz2);
+    constexpr auto desc = proto::desc(a, b, c, d, sz, sz2);
 }
 
 
@@ -922,9 +900,9 @@ int main() {
         XXX::a = pkt.a,
         XXX::b = pkt.b,
         XXX::c = pkt.c,
-        XXX::d = pkt.d,
+        XXX::d = pkt.d/*,
         XXX::e = pkt.c,
-        XXX::f = pkt.d/*,
+        XXX::f = pkt.d*//*,
 //         XXX::sz,
         XXX::sz2
       , 1*/
