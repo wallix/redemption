@@ -64,6 +64,9 @@ private:
 
     const bool proxy_managed;   // Has not client.
 
+    std::unique_ptr<uint8_t[]> first_client_format_list_pdu;
+    size_t                     first_client_format_list_pdu_length = 0;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -539,6 +542,21 @@ private:
 
         const uint16_t msgFlags = chunk.in_uint16_le();
         const uint32_t dataLen  = chunk.in_uint32_le();
+
+        if (!this->first_client_format_list_pdu) {
+            this->first_client_format_list_pdu_length =
+                    2 + // msgType(2)
+                    2 + // msgFlags(2)
+                    4 + // dataLen(4)
+                    dataLen
+                ;
+            this->first_client_format_list_pdu =
+                std::make_unique<uint8_t[]>(
+                    this->first_client_format_list_pdu_length);
+
+            ::memcpy(this->first_client_format_list_pdu.get(),
+                chunk.get_data(), this->first_client_format_list_pdu_length);
+        }
 
         if (!this->client_use_long_format_names ||
             !this->server_use_long_format_names) {
@@ -1483,6 +1501,7 @@ public:
         }
 
         // Format List PDU.
+/*
         {
             RDPECLIP::FormatListPDU format_list_pdu;
             StaticOutStream<1024> out_stream;
@@ -1507,6 +1526,15 @@ public:
                 chunk_data,
                 chunk_data_length);
         }
+*/
+            this->send_message_to_server(
+                    this->first_client_format_list_pdu_length,
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    this->first_client_format_list_pdu.get(),
+                    this->first_client_format_list_pdu_length
+                );
+            first_client_format_list_pdu.reset(nullptr);
+            this->first_client_format_list_pdu_length = 0;
     }
 };  // class ClipboardVirtualChannel
 
