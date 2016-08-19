@@ -1420,7 +1420,8 @@ class Engine(object):
             domain = right['domain_name']
         except:
             domain = ""
-        if right['domain_cn'] == AM_IL_DOMAIN:
+        if not login and right['domain_cn'] == AM_IL_DOMAIN:
+            # Interactive Login
             return login
         trule = right['connection_policy_data'].get("general", {}).get("transformation_rule")
         if (trule and '${LOGIN}' in trule):
