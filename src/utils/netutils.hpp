@@ -24,18 +24,21 @@
 
 #pragma once
 
+#include "utils/log.hpp"
+
+#include <cstddef>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/tcp.h>
 #include <signal.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/un.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <sys/un.h>
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/log.hpp"
@@ -147,8 +150,7 @@ static int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 }
 
 static inline int ip_connect(const char* ip, int port,
-             int nbretry /* 3 */, int retry_delai_ms /*1000*/
-             /*array_view<char> text_ip_target*/)
+             int nbretry /* 3 */, int retry_delai_ms /*1000*/)
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
 
@@ -175,10 +177,6 @@ static inline int ip_connect(const char* ip, int port,
         LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
         return status;
     }
-
-//    if (text_ip_target.data()){
-//        snprintf(text_ip_target.data(), text_ip_target.size(), "%s", inet_ntoa(u.s4.sin_addr));
-//    }
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
@@ -224,7 +222,5 @@ static inline int local_connect(const char* sck_name,
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
-    return connect_sck(sck, nbretry, retry_delai_ms, u.addr,
-        static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u),
-        target);
+    return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u), target);
 }

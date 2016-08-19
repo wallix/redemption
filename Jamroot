@@ -836,11 +836,18 @@ unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp 
 #    : <cxxflags>-fPIC
 #    ;
 
-explicit server_sc1 ;
+explicit server_sc1 client_sc1 ;
 
 exe server_sc1
     :
         tests/tcptest/Server_Sc1.cpp
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
+exe client_sc1
+    :
+        tests/tcptest/Client_Sc1.cpp
     :
         $(EXE_DEPENDENCIES)
     ;

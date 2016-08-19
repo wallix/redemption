@@ -59,7 +59,7 @@ int main(int argc, char** argv) //TestModRDPWin2008Server)
 
     const char * name = "RDP W2008 TLS Target";
 
-    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
