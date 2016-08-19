@@ -200,7 +200,7 @@ public:
 
     bool connect() override {
         if (this->sck_closed == 1){
-            this->sck = ip_connect(this->ip_address, this->port, 3, 1000, {});
+            this->sck = ip_connect(this->ip_address, this->port, 3, 1000);
             this->sck_closed = 0;
         }
         return true;

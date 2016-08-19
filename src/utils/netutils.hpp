@@ -129,21 +129,35 @@ inline int connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr
     return sck;
 }
 
+static int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
+{
+    if (!inet_aton(ip, &s4_sin_addr)) {
+        struct addrinfo * addr_info = nullptr;
+        int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
+        if (result) {
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)\n",
+                ip, (result == EAI_SYSTEM) ? errno : result
+                  , (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result));
+            return -1;
+        }
+        s4_sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
+        freeaddrinfo(addr_info);
+    }
+    return 0;
+}
+
 static inline int ip_connect(const char* ip, int port,
-             int nbretry = 3, int retry_delai_ms = 1000,
-             array_view<char> out_ip_addr = {})
+             int nbretry /* 3 */, int retry_delai_ms /*1000*/
+             /*array_view<char> text_ip_target*/)
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
+
+
     // we will try connection several time
     // the trial process include "ocket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
     // not necessarily from the remote endpoint.
     int sck = socket(PF_INET, SOCK_STREAM, 0);
-
-    /* set snd buffer to at least 32 Kbytes */
-    if (!set_snd_buffer(sck, 32768)) {
-        return -1;
-    }
 
     union
     {
@@ -156,56 +170,27 @@ static inline int ip_connect(const char* ip, int port,
     memset(&u, 0, sizeof(u));
     u.s4.sin_family = AF_INET;
     u.s4.sin_port = htons(port);
-
-    if (!inet_aton(ip, &u.s4.sin_addr)) {
-        struct addrinfo * addr_info = nullptr;
-        int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
-
-        if (result) {
-            int          _error;
-            const char * _strerror;
-
-            if (result == EAI_SYSTEM) {
-                _error    = errno;
-                _strerror = strerror(errno);
-            }
-            else {
-                _error    = result;
-                _strerror = gai_strerror(result);
-            }
-            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
-                ip, _error, _strerror);
-            return -1;
-        }
-        u.s4.sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
-        freeaddrinfo(addr_info);
-    }
-    
-
-    char ip_addr[256] = {};
-    
-    sockaddr & addr = u.s;
-    if (!isdigit(*ip)) {
-        union
-        {
-            struct sockaddr s;
-            struct sockaddr_storage ss;
-            struct sockaddr_in s4;
-            struct sockaddr_in6 s6;
-        } u2;
-        memset(&u2, 0, sizeof(u2));
-        memcpy(&u2.s, &addr, sizeof(u2.s));
-        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(u2.s4.sin_addr));
-
-        if (out_ip_addr.data()) {
-            snprintf(out_ip_addr.data(), out_ip_addr.size(), "%s", ip_addr);
-        }
+    int status = resolve_ipv4_address(ip, u.s4.sin_addr); 
+    if (status){
+        LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
+        return status;
     }
 
-    char target[1024] = {};
-    snprintf(target, sizeof(target), "%s:%d (%s)", ip, port, ip_addr);
+//    if (text_ip_target.data()){
+//        snprintf(text_ip_target.data(), text_ip_target.size(), "%s", inet_ntoa(u.s4.sin_addr));
+//    }
 
-    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), target);
+    /* set snd buffer to at least 32 Kbytes */
+    if (!set_snd_buffer(sck, 32768)) {
+        LOG(LOG_INFO, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
+        return -1;
+    }
+
+
+    char text_target[256];
+    snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
+
+    return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target);
 }
 
 

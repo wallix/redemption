@@ -1052,11 +1052,23 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
+                const char * ip = this->ini.get<cfg::context::target_host>().c_str();
                 char ip_addr[256];
+                in_addr s4_sin_addr;
+                int status = resolve_ipv4_address(ip, s4_sin_addr); 
+                if (status){
+                    if (acl) {
+                        acl->log4(false, "CONNECTION_FAILED");
+                    }
 
-                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
-                                            this->ini.get<cfg::context::target_port>(),
-                                            4, 1000, ip_addr);
+                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    // TODO: actually this is DNS Failure or invalid address
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
+
+                int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 4, 1000);
 
                 if (client_sck == -1){
                     if (acl) {
@@ -1109,11 +1121,23 @@ public:
                 //    // default is "allow", do nothing special
                 //}
 
+                const char * ip = this->ini.get<cfg::context::target_host>().c_str();
                 char ip_addr[256];
+                in_addr s4_sin_addr;
+                int status = resolve_ipv4_address(ip, s4_sin_addr); 
+                if (status){
+                    if (acl) {
+                        acl->log4(false, "CONNECTION_FAILED");
+                    }
 
-                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
-                                            this->ini.get<cfg::context::target_port>(),
-                                            3, 1000, ip_addr);
+                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    // TODO: actually this is DNS Failure or invalid address
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
+
+                int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
                     if (acl) {
@@ -1293,12 +1317,24 @@ public:
         case MODULE_VNC:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
+                const char * ip = this->ini.get<cfg::context::target_host>().c_str();
 
                 char ip_addr[256];
+                in_addr s4_sin_addr;
+                int status = resolve_ipv4_address(ip, s4_sin_addr); 
+                if (status){
+                    if (acl) {
+                        acl->log4(false, "CONNECTION_FAILED");
+                    }
 
-                int client_sck = ip_connect(this->ini.get<cfg::context::target_host>().c_str(),
-                                            this->ini.get<cfg::context::target_port>(),
-                                            3, 1000, ip_addr);
+                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    // TODO: actually this is DNS Failure or invalid address
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
+
+                int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
                 if (client_sck == -1) {
                     if (acl) {

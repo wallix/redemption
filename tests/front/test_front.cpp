@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TestFront)
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
         // std::string error_message;
         // SocketTransport t( name
         //                  , client_sck
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestFront2)
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
         // std::string error_message;
         // SocketTransport t( name
         //                  , client_sck
@@ -629,7 +629,7 @@ BOOST_AUTO_TEST_CASE(TestFront3)
 
         LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
         // std::string error_message;
         // SocketTransport t( name
         //                  , client_sck

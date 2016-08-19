@@ -63,8 +63,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     //const char * name       = "RDP W2008 TLS Target";
     // Uncomment the code block below to generate testing data.
-    //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000, {},
-    //                                     verbose);
+    //int          client_sck = ip_connect("10.10.47.35", 3389, 3, 1000);
 
     // Uncomment the code block below to generate testing data.
     //std::string  error_message;
@@ -159,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket2)
     FakeFront front(info, verbose);
 
     //const char * name       = "RDP W2008 TLS Target";
-    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000, verbose);
+    //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000);
 
     //std::string  error_message;
     //SocketTransport     t( name
