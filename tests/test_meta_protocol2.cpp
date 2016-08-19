@@ -17,11 +17,68 @@
 #define BRIGAND_NO_BOOST_SUPPORT
 #include <brigand/brigand.hpp>
 
+namespace proto { namespace ext {
+    // sizeof_, etc
+}}
+
 namespace proto
 {
+    template<std::size_t N>
+    using size_ = std::integral_constant<std::size_t, N>;
+
+    namespace detail
+    {
+        template<class T>
+        struct internal_type
+        { using type = typename T::type; };
+    }
+
+    template<class T>
+    using internal_type = typename detail::internal_type<T>::type;
+
     namespace types {
-        struct u8 { using type = uint8_t; };
-        struct u16_le { using type = uint16_t; };
+        class le_tag {};
+        class be_tag {};
+
+        /**
+        * fixed width integer types
+        * @{
+        */
+        template<class T, class Tag> struct integer {};
+
+        using s8 = integer<int8_t, void>;
+        using u8 = integer<uint8_t, void>;
+
+        using s16_be = integer<int16_t, be_tag>;
+        using s16_le = integer<int16_t, le_tag>;
+        using u16_be = integer<uint16_t, be_tag>;
+        using u16_le = integer<uint16_t, le_tag>;
+
+        using s32_be = integer<int32_t, be_tag>;
+        using s32_le = integer<int32_t, le_tag>;
+        using u32_be = integer<uint32_t, be_tag>;
+        using u32_le = integer<uint32_t, le_tag>;
+
+        using s64_be = integer<int64_t, be_tag>;
+        using s64_le = integer<int64_t, le_tag>;
+        using u64_be = integer<uint64_t, be_tag>;
+        using u64_le = integer<uint64_t, le_tag>;
+
+        template<class T, class Tag>
+        size_<sizeof(T)>
+        sizeof_(types::integer<T, Tag>)
+        { return {}; }
+        /** @} */
+    }
+
+    namespace detail
+    {
+        template<class T, class Tag>
+        struct internal_type<types::integer<T, Tag>>
+        { using type = T; };
+    }
+
+    namespace types {
         struct u8_or_u16_le { using type = uint16_t; };
         struct bytes { using type = char const *; };
         struct str8_to_str16 { using type = char const *; };
@@ -34,8 +91,8 @@ namespace proto
     struct dyn_size {};
     namespace detail {
         template<class T> struct sizeof_ : sizeof_<typename T::desc_type> {};
-        template<> struct sizeof_<types::u8> : std::integral_constant<std::size_t, 1> {};
-        template<> struct sizeof_<types::u16_le> : std::integral_constant<std::size_t, 2> {};
+        template<> struct sizeof_<types::u8> : size_<1> {};
+        template<> struct sizeof_<types::u16_le> : size_<2> {};
         template<> struct sizeof_<types::u8_or_u16_le> { using type = dyn_size; };
         template<> struct sizeof_<types::bytes> { using type = dyn_size; };
         template<> struct sizeof_<types::str8_to_str16> { using type = dyn_size; };
@@ -63,15 +120,14 @@ namespace proto
     }
     template<class T> using buffer_category = typename detail::buffer_category<T>::type;
 
-    using std::size_t;
-
-    template<size_t n> using mk_iseq = std::make_integer_sequence<size_t, n>;
+    template<std::size_t n> using mk_iseq = std::make_integer_sequence<std::size_t, n>;
 
     template<class Var>
     struct val
     {
         using var_type = Var;
-        typename Var::desc_type::type x;
+        // TODO is_convertible / adapter
+        internal_type<typename Var::desc_type> x;
     };
 
     template<class T, class Derived>
@@ -88,18 +144,86 @@ namespace proto
     template<class Ints, class... Ts>
     struct description;
 
-    template<class... Ts>
-    constexpr description<mk_iseq<sizeof...(Ts)>, Ts...>
-    def(Ts... args)
-    { return {args...}; }
+    template<class Ints, class... Ts>
+    struct description_value;
 
-    template<size_t i, class Var>
+    template<class...> using void_t = void;
+
+    namespace diagnostics {
+        class value_is_missing_or_not_proto_value;
+        class is_not_proto_var;
+    }
+
+    template<class T, class = void> struct check;
+    template<class T> struct check<T, std::enable_if_t<T::value>> { constexpr operator bool () { return 0; } };
+
+#define PROTO_CHECK(Tpl, Ts)             \
+    (void)::std::initializer_list<bool>{ \
+      ::proto::check<Tpl<Ts>>{}...       \
+    }
+
+    namespace detail {
+        template<template<class> class Tpl, class T, class = std::true_type>
+        struct check_and_return_impl {};
+
+        template<template<class> class Tpl, class T>
+        struct check_and_return_impl<Tpl, T, typename Tpl<T>::type>
+        { using type = T; };
+    }
+
+    template<template<class> class Tpl, class T>
+    struct check_and_return : detail::check_and_return_impl<Tpl, T> {};
+
+    template<template<class> class Tpl, class T>
+    using check_and_return_t = typename check_and_return<Tpl, T>::type;
+
+
+    namespace detail {
+        template<class T, class = void> struct is_proto_variable_impl : std::false_type {};
+        template<class T> struct is_proto_variable_impl<T, void_t<typename T::var_type>> : std::true_type {};
+    }
+    template<class T> struct is_proto_variable : detail::is_proto_variable_impl<T> {};
+
+    template<class T> struct is_proto_value : std::false_type {};
+    template<class T> struct is_proto_value<val<T>> : std::true_type {};
+
+//     template<class... Desc>
+//     constexpr description<mk_iseq<sizeof...(Desc)>, Desc...>
+//     def(Desc... args)
+//     {
+//         PROTO_CHECK(is_proto_variable, Desc);
+//         return {args...};
+//     }
+
+    template<class... Desc>
+    constexpr auto
+    def(Desc... args)
+    {
+        return description<mk_iseq<sizeof...(Desc)>, check_and_return_t<is_proto_variable, Desc>...>{args...};
+    }
+
+//     template<class... Val>
+//     constexpr description_value<mk_iseq<sizeof...(Val)>, Val...>
+//     defv(Val... args)
+//     {
+//         PROTO_CHECK(is_proto_value, Val);
+//         return {args...};
+//     }
+
+    template<class... Val>
+    constexpr auto
+    defv(Val... args)
+    {
+        return description_value<mk_iseq<sizeof...(Val)>, check_and_return_t<is_proto_value, Val>...>{args...};
+    }
+
+    template<std::size_t i, class Var>
     struct value_desc {
         Var x;
     };
 
-    template<size_t... Ints, class... Ts>
-    struct description<std::integer_sequence<size_t, Ints...>, Ts...>
+    template<std::size_t... Ints, class... Ts>
+    struct description<std::integer_sequence<std::size_t, Ints...>, Ts...>
     : value_desc<Ints, Ts>...
     {
         using type_list = brigand::list<Ts...>;
@@ -108,10 +232,23 @@ namespace proto
         : value_desc<Ints, Ts>{args}...
         {}
 
-        template<class... Us>
+        template<class... Args>
         constexpr auto
-        operator()(Us... args) const
-        { return def(args...); }
+        operator()(Args... args) const
+        {
+            return defv(args...);
+        }
+    };
+
+    template<std::size_t... Ints, class... Ts>
+    struct description_value<std::integer_sequence<std::size_t, Ints...>, Ts...>
+    : value_desc<Ints, Ts>...
+    {
+        using type_list = brigand::list<Ts...>;
+
+        constexpr description_value(Ts... args)
+        : value_desc<Ints, Ts>{args}...
+        {}
 
         template<class F>
         void apply_for_each(F f)
@@ -127,6 +264,17 @@ namespace proto
             return f(static_cast<value_desc<Ints, Ts>&>(*this).x...);
         }
     };
+
+    template<class T> struct is_proto_description_value : std::false_type {};
+    template<class Ints, class... Ts>
+    struct is_proto_description_value<description_value<Ints, Ts...>> : std::true_type {};
+
+    template<class F, class... Pkts>
+    void apply(F f, Pkts ... pkts)
+    {
+        PROTO_CHECK(is_proto_description_value, Pkts);
+        f(pkts...);
+    }
 }
 
 namespace XXX {
@@ -543,6 +691,8 @@ struct Buferring2
 
         void impl(Pkts & ... packets)
         {
+            // TODO check if pkt_sz is a static_buffer
+
             std::cout << "--- write_not_dynamic_bufs ---\n";
             this->write_not_dynamic_bufs(
                 var_info_list_by_buffer{},
@@ -599,7 +749,7 @@ struct Buferring2
         void write_type(proto::tags::view_buffer, VarInfo, Buffer & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            std::cout << " [view_buffer]\n";
+            std::cout << " [view_buffer]";
             // TODO
             buffer.iov_len = 3;
             this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len;
@@ -754,6 +904,9 @@ struct Buferring2
         Impl<Packets...> impl;
         impl.impl(packets...);
     }
+
+    template<class... Packets>
+    void impl(std::false_type, Packets ... packets) const = delete;
 };
 
 int main() {
@@ -771,16 +924,17 @@ int main() {
         XXX::c = pkt.c,
         XXX::d = pkt.d,
         XXX::e = pkt.c,
-        XXX::f = pkt.d,
+        XXX::f = pkt.d/*,
 //         XXX::sz,
         XXX::sz2
+      , 1*/
     );
 
 packet.apply_for_each(Printer{});
 std::cout << "\n";
 packet.apply(Buferring{});
 std::cout << "\n";
-XXX::desc(packet, packet).apply(Buferring2{});
+proto::apply(Buferring2{}, packet, packet);
 
 /*
  * type, type_adapter, type_list.
