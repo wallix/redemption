@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestRAILPDUHeader)
 
     BOOST_CHECK_EQUAL(header_r.orderType(), TS_RAIL_ORDER_EXEC);
     BOOST_CHECK_EQUAL(header_r.orderLength(),
-        sizeof(order_data) + 4 //* orderType(2) + orderLength(2)
+        sizeof(order_data) + 4 // * orderType(2) + orderLength(2)
         );
 }
 
