@@ -26,15 +26,12 @@ namespace proto
     template<std::size_t N>
     using size_ = std::integral_constant<std::size_t, N>;
 
-    namespace detail
-    {
-        template<class T>
-        struct internal_type
-        { using type = typename T::type; };
-    }
+    template<class T>
+    struct internal_type
+    { using type = typename T::type; };
 
     template<class T>
-    using internal_type = typename detail::internal_type<T>::type;
+    using internal_type_t = typename internal_type<T>::type;
 
     namespace types {
         class le_tag {};
@@ -71,12 +68,9 @@ namespace proto
         /** @} */
     }
 
-    namespace detail
-    {
-        template<class T, class Tag>
-        struct internal_type<types::integer<T, Tag>>
-        { using type = T; };
-    }
+    template<class T, class Tag>
+    struct internal_type<types::integer<T, Tag>>
+    { using type = T; };
 
     namespace types {
         struct u8_or_u16_le { using type = uint16_t; };
@@ -108,17 +102,15 @@ namespace proto
         class limited_buffer {};
     }
 
-    namespace detail {
-        template<class T> struct buffer_category : buffer_category<typename T::desc_type> {};
-        template<> struct buffer_category<types::u8> { using type = tags::static_buffer; };
-        template<> struct buffer_category<types::u16_le> { using type = tags::static_buffer; };
-        template<> struct buffer_category<types::u8_or_u16_le> { using type = tags::limited_buffer; };
-        template<> struct buffer_category<types::bytes> { using type = tags::view_buffer; };
-        template<> struct buffer_category<types::str8_to_str16> { using type = tags::dynamic_buffer; };
-        template<class T> struct buffer_category<types::pkt_sz<T>> : buffer_category<T> {};
-        template<class T> struct buffer_category<types::pkt_sz_with_self<T>> : buffer_category<T> {};
-    }
-    template<class T> using buffer_category = typename detail::buffer_category<T>::type;
+    template<class T> struct buffer_category : buffer_category<typename T::desc_type> {};
+    template<> struct buffer_category<types::u8> { using type = tags::static_buffer; };
+    template<> struct buffer_category<types::u16_le> { using type = tags::static_buffer; };
+    template<> struct buffer_category<types::u8_or_u16_le> { using type = tags::limited_buffer; };
+    template<> struct buffer_category<types::bytes> { using type = tags::view_buffer; };
+    template<> struct buffer_category<types::str8_to_str16> { using type = tags::dynamic_buffer; };
+    template<class T> struct buffer_category<types::pkt_sz<T>> : buffer_category<T> {};
+    template<class T> struct buffer_category<types::pkt_sz_with_self<T>> : buffer_category<T> {};
+    template<class T> using buffer_category_t = typename buffer_category<T>::type;
 
     template<std::size_t n> using mk_iseq = std::make_integer_sequence<std::size_t, n>;
 
@@ -140,12 +132,11 @@ namespace proto
     using is_pkt_sz = typename detail::is_pkt_sz<T>::type;
 
 
-    template<class Var>
+    template<class Var, class T>
     struct val
     {
         using var_type = Var;
-        // TODO is_convertible / adapter
-        internal_type<typename Var::desc_type> x;
+        T x;
     };
 
     template<class T, class Derived>
@@ -155,8 +146,10 @@ namespace proto
         using var_type = var;
 
         template<class U>
-        constexpr val<Derived> operator = (U y) const
-        { return val<Derived>{y}; }
+        // TODO is_convertible / adapter
+        constexpr val<Derived, internal_type_t<desc_type>>
+        operator = (U y) const
+        { return {y}; }
     };
 
     template<class T>
@@ -172,7 +165,7 @@ namespace proto
     template<class T, class = void> struct check;
     template<class T> struct check<T, std::enable_if_t<T::value>> { constexpr operator bool () { return 0; } };
 
-#define PROTO_CHECK(Tpl, Ts)             \
+#define PROTO_CHECKS(Tpl, Ts)             \
     (void)::std::initializer_list<bool>{ \
       ::proto::check<Tpl<Ts>>{}...       \
     }
@@ -200,22 +193,25 @@ namespace proto
     template<class T> struct is_proto_variable : detail::is_proto_variable_impl<T> {};
 
     template<class T> struct is_proto_value : std::false_type {};
-    template<class T> struct is_proto_value<val<T>> : std::true_type {};
+    template<class Var, class T> struct is_proto_value<val<Var, T>> : std::true_type {};
 
     template<class T> using var_type_t = typename T::var_type;
 
     template<class Ints, class... Ts>
     struct packet;
 
-    template<class T, class Refs>
-    std::enable_if_t<is_pkt_sz<desc_type<T>>{}, T>
+    template<class Var, class Refs>
+    std::enable_if_t<is_pkt_sz<desc_type<Var>>{}, Var>
     val_or_pkt_size(Refs)
     { return {}; }
 
-    template<class T, class Refs>
-    std::enable_if_t<!is_pkt_sz<desc_type<T>>{}, val<T>&>
-    val_or_pkt_size(Refs refs)
-    { return static_cast<std::reference_wrapper<val<T>>>(refs); }
+    template<class Var, class T>
+    std::enable_if_t<!is_pkt_sz<desc_type<Var>>{}, val<Var, T>&>
+    val_or_pkt_size(std::reference_wrapper<val<Var, T>> ref)
+    { return ref; }
+
+    template<class T, class = void>
+    using enable_type = T;
 
     template<class... Ts>
     struct packet_description
@@ -227,7 +223,7 @@ namespace proto
         template<class T> using contains = brigand::contains<brigand::wrap<strong_type_list, brigand::set>, T>;
 
         template<class Val>
-        using check_param = val<check_and_return_t<contains, var_type_t<check_and_return_t<is_proto_value, Val>>>>;
+        using check_param = enable_type<Val, void_t<check_and_return_t<contains, var_type_t<check_and_return_t<is_proto_value, Val>>>>>;
 
         template<class... Val>
         constexpr auto
@@ -240,12 +236,12 @@ namespace proto
         constexpr auto
         ordering_parameter(Val... values) const
         {
-            struct Vals : std::reference_wrapper<Val>... {
-                Vals(Val & ... val) : std::reference_wrapper<Val>{val}... {}
+            struct ValRefs : std::reference_wrapper<Val>... {
+                ValRefs(Val & ... val) : std::reference_wrapper<Val>{val}... {}
             } refs {values...};
             return packet<
                 mk_iseq<sizeof...(Ts)>,
-                std::conditional_t<is_pkt_sz<desc_type<Ts>>{}, Ts, val<Ts>>...
+                std::remove_reference_t<decltype(val_or_pkt_size<Ts>(refs))>...
             >{val_or_pkt_size<Ts>(refs)...};
         }
     };
@@ -296,7 +292,7 @@ namespace proto
     template<class F, class... Pkts>
     void apply(F f, Pkts ... pkts)
     {
-        PROTO_CHECK(is_proto_packet, Pkts);
+        PROTO_CHECKS(is_proto_packet, Pkts);
         f(pkts...);
     }
 }
@@ -306,8 +302,8 @@ namespace XXX {
     PROTO_VAR(proto::types::u8, b);
     PROTO_VAR(proto::types::bytes, c);
     PROTO_VAR(proto::types::u16_le, d);
-    PROTO_VAR(proto::types::str8_to_str16, e);
-    PROTO_VAR(proto::types::u8_or_u16_le, f);
+//     PROTO_VAR(proto::types::str8_to_str16, e);
+//     PROTO_VAR(proto::types::u8_or_u16_le, f);
     PROTO_VAR(proto::types::pkt_sz<proto::types::u8>, sz);
     PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u8>, sz2);
 
@@ -322,16 +318,16 @@ namespace detail {
     template<class T> using is_view_buffer = std::is_same<T, proto::tags::view_buffer>;
     template<class T> using is_limited_buffer = std::is_same<T, proto::tags::limited_buffer>;
 }
-template<class T> using is_static_buffer = typename detail::is_static_buffer<proto::buffer_category<T>>::type;
-template<class T> using is_dynamic_buffer = typename detail::is_dynamic_buffer<proto::buffer_category<T>>::type;
-template<class T> using is_view_buffer = typename detail::is_view_buffer<proto::buffer_category<T>>::type;
-template<class T> using is_limited_buffer = typename detail::is_limited_buffer<proto::buffer_category<T>>::type;
+template<class T> using is_static_buffer = typename detail::is_static_buffer<proto::buffer_category_t<T>>::type;
+template<class T> using is_dynamic_buffer = typename detail::is_dynamic_buffer<proto::buffer_category_t<T>>::type;
+template<class T> using is_view_buffer = typename detail::is_view_buffer<proto::buffer_category_t<T>>::type;
+template<class T> using is_limited_buffer = typename detail::is_limited_buffer<proto::buffer_category_t<T>>::type;
 
 
 struct Printer
 {
-    template<class var>
-    void operator()(proto::val<var> x) const {
+    template<class var, class T>
+    void operator()(proto::val<var, T> x) const {
         std::cout << var::name() << " = "; print(x.x, 1);
         std::cout
             << "  static: " << is_static_buffer<typename var::desc_type>{}
@@ -433,9 +429,9 @@ namespace detail {
     struct var_type_impl
     { using type = T; };
 
-    template<class T>
-    struct var_type_impl<proto::val<T>>
-    { using type = T; };
+    template<class Var, class T>
+    struct var_type_impl<proto::val<Var, T>>
+    { using type = Var; };
 }
 
 template<class T>
@@ -463,8 +459,8 @@ struct Buferring
         });
     }
 
-    template<class T>
-    static void print(proto::val<T> const & x)
+    template<class Var, class T>
+    static void print(proto::val<Var, T> const & x)
     { Printer{}.print(x.x, 1); }
 
     template<class T, class tag>
@@ -737,7 +733,7 @@ struct Buferring2
             std::cout << "-------\n";
             (void)std::initializer_list<int>{(void(
                 this->write_type(
-                    proto::buffer_category<VarInfos>{}, VarInfos{}, buffer,
+                    proto::buffer_category_t<VarInfos>{}, VarInfos{}, buffer,
                     larg<VarInfos::ivar::value>(arg<VarInfos::ipacket::value>(pkts...)))
             ), 1)...};
         }
@@ -887,8 +883,8 @@ struct Buferring2
             std::cout << "pktptrs[" << IPacket::value << "] = " << this->sizes.data[IPacket::value] << "\n";
         }
 
-        template<class T>
-        static void print(proto::val<T> const & x)
+        template<class Var, class T>
+        static void print(proto::val<Var, T> const & x)
         { Printer{}.print(x.x, 1); }
 
         template<class T, class tag>
