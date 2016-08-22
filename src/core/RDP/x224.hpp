@@ -30,7 +30,7 @@
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
-#include "fastpath.hpp"
+#include "core/RDP/fastpath.hpp"
 #include "utils/parse.hpp"
 
 //##############################################################################

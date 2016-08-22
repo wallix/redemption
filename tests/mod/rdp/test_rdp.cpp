@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
     const char * name = "RDP XP Target";
 
-    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     FakeFront front(info, verbose);
 
     // const char * name = "RDP W2008 Target";
-    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     const char * name = "RDP W2003 Target";
 
-    // int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     const char * name = "RDP W2000 Target";
 
-    // int client_sck = ip_connect("10.10.47.39", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.39", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
     //                  , client_sck

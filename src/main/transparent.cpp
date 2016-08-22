@@ -254,7 +254,7 @@ int main(int argc, char * argv[]) {
                     persistent_key_list_filename.c_str());
             }
 
-            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, {});
+            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000);
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
                                      , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
 

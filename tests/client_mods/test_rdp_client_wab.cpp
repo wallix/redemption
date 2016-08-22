@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // const char * name = "RDP Wab Target";
     // Uncomment the code block below to generate testing data.
-    //int             client_sck = ip_connect("10.10.47.154", 3389, 3, 1000, {}, verbose);
+    //int             client_sck = ip_connect("10.10.47.154", 3389, 3, 1000);
     //std::string     error_message;
     //SocketTransport t( name
     //                 , client_sck

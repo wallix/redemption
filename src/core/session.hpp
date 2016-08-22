@@ -111,10 +111,6 @@ class Session {
         bool is_set(fd_set & rfds) {
             return this->auth_event.is_set(this->auth_trans.sck, rfds);
         }
-
-        void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout) {
-            return this->auth_event.wait_on_fd(this->auth_trans.sck, rfds, max, timeout);
-        }
     };
 
     Client * client = nullptr;
