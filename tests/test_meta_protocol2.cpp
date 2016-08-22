@@ -122,6 +122,24 @@ namespace proto
 
     template<std::size_t n> using mk_iseq = std::make_integer_sequence<std::size_t, n>;
 
+
+    namespace detail {
+        template<class T>
+        struct is_pkt_sz : std::false_type
+        {};
+
+        template<class T>
+        struct is_pkt_sz<proto::types::pkt_sz<T>> : std::true_type
+        {};
+
+        template<class T>
+        struct is_pkt_sz<proto::types::pkt_sz_with_self<T>> : std::true_type
+        {};
+    }
+    template<class T>
+    using is_pkt_sz = typename detail::is_pkt_sz<T>::type;
+
+
     template<class Var>
     struct val
     {
@@ -140,6 +158,9 @@ namespace proto
         constexpr val<Derived> operator = (U y) const
         { return val<Derived>{y}; }
     };
+
+    template<class T>
+    using desc_type = typename T::desc_type;
 
     template<class...> using void_t = void;
 
@@ -186,12 +207,24 @@ namespace proto
     template<class Ints, class... Ts>
     struct packet;
 
+    template<class T, class Refs>
+    std::enable_if_t<is_pkt_sz<desc_type<T>>{}, T>
+    val_or_pkt_size(Refs)
+    { return {}; }
+
+    template<class T, class Refs>
+    std::enable_if_t<!is_pkt_sz<desc_type<T>>{}, val<T>&>
+    val_or_pkt_size(Refs refs)
+    { return static_cast<std::reference_wrapper<val<T>>>(refs); }
+
     template<class... Ts>
     struct packet_description
     {
-        //using type_list = brigand::list<Ts...>;
+        using type_list = brigand::list<Ts...>;
 
-        template<class T> using contains = brigand::contains<brigand::set<Ts...>, T>;
+        using strong_type_list = brigand::remove<type_list, brigand::bind<brigand::not_<brigand::call<is_pkt_sz>>>>;
+
+        template<class T> using contains = brigand::contains<brigand::wrap<strong_type_list, brigand::set>, T>;
 
         template<class Val>
         using check_param = val<check_and_return_t<contains, var_type_t<check_and_return_t<is_proto_value, Val>>>>;
@@ -200,7 +233,20 @@ namespace proto
         constexpr auto
         operator()(Val... values) const
         {
-            return packet<mk_iseq<sizeof...(Val)>, check_param<Val>...>{values...};
+            return ordering_parameter<check_param<Val>...>(values...);
+        }
+
+        template<class... Val>
+        constexpr auto
+        ordering_parameter(Val... values) const
+        {
+            struct Vals : std::reference_wrapper<Val>... {
+                Vals(Val & ... val) : std::reference_wrapper<Val>{val}... {}
+            } refs {values...};
+            return packet<
+                mk_iseq<sizeof...(Ts)>,
+                std::conditional_t<is_pkt_sz<desc_type<Ts>>{}, Ts, val<Ts>>...
+            >{val_or_pkt_size<Ts>(refs)...};
         }
     };
 
@@ -496,8 +542,7 @@ using mk_list_accu = typename lazy::mk_list_accu<L, x>::type;
 template<class L>
 using make_accumulate_sizeof_list = brigand::fold<L, brigand::list<>, brigand::call<mk_list_accu>>;
 
-template<class T>
-using desc_type = typename T::desc_type;
+using proto::desc_type;
 
 template<class T>
 using var_to_desc_type = desc_type<var_type<T>>;
@@ -536,24 +581,8 @@ using sizeof_to_buffer = typename detail::sizeof_to_buffer<T>::type;
 template<class VarInfos>
 using var_infos_is_not_dynamic = is_dynamic_buffer<brigand::front<VarInfos>>;
 
-namespace detail {
-    template<class T>
-    struct is_pkt_sz : std::false_type
-    {};
-
-    template<class T>
-    struct is_pkt_sz<proto::types::pkt_sz<T>> : std::true_type
-    {};
-
-    template<class T>
-    struct is_pkt_sz<proto::types::pkt_sz_with_self<T>> : std::true_type
-    {};
-}
 template<class T>
-using is_pkt_sz = typename detail::is_pkt_sz<T>::type;
-
-template<class T>
-using var_info_is_pkt_size = is_pkt_sz<var_to_desc_type<T>>;
+using var_info_is_pkt_size = proto::is_pkt_sz<var_to_desc_type<T>>;
 
 template<class VarInfos>
 using var_infos_has_pkt_sz = brigand::any<VarInfos, brigand::call<var_info_is_pkt_size>>;
