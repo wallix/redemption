@@ -28,7 +28,7 @@
 // analogous to static_cast<> for integral types
 // with an assert macro if the conversion is overflow or underflow.
 template <class Dst, class Src>
-/*constexpr*/ Dst checked_cast(Src value)
+/*c++17 constexpr*/ Dst checked_cast(Src value)
 {
     static_assert(std::is_integral<Src>::value, "Argument must be an integral.");
     static_assert(std::is_integral<Dst>::value, "Dst must be an integral.");
@@ -41,7 +41,7 @@ template <class Dst, class Src>
 // analogous to static_cast<> for integral types,
 // except that use std::clamp if the conversion is overflow or underflow.
 template <class Dst, class Src>
-/*constexpr*/ Dst saturated_cast(Src value)
+/*c++14 constexpr*/ Dst saturated_cast(Src value)
 {
     if (std::is_signed<Dst>::value == std::is_signed<Src>::value && sizeof(Dst) >= sizeof(Src)) {
         return static_cast<Dst>(value);
