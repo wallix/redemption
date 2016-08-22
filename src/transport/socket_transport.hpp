@@ -309,6 +309,17 @@ private:
                 default: /* some data received */
                     data += res;
                     remaining_len -= res;
+                    if (remaining_len > 0) {
+                        fd_set fds;
+                        struct timeval time = { 1, 0 };
+                        FD_ZERO(&fds);
+                        FD_SET(this->sck, &fds);
+                        if ((::select(this->sck + 1, &fds, nullptr, nullptr, &time) < 1) ||
+                            !FD_ISSET(this->sck, &fds)) {
+                            LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes", this->name, this->sck, remaining_len);
+                            return -1;
+                        }
+                    }
                 break;
             }
         }
