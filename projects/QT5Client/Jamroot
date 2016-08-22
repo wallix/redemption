@@ -110,6 +110,7 @@ project redemption
     <cxxflags>-std=c++11
 
     $(CXXFLAGS)
+    <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
 
 #    <cxxflags>-fpie
     <cxxflags>-fPIC

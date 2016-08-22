@@ -41,6 +41,7 @@
 #include <sys/un.h>
 
 #include "utils/sugar/array_view.hpp"
+#include "utils/select.hpp"
 #include "utils/log.hpp"
 
 static inline bool try_again(int errnum){
@@ -88,7 +89,7 @@ inline bool set_snd_buffer(int sck, int buffer_size = 32768) {
     return true;
 }
 
-inline int connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr, socklen_t addr_len, const char * target) 
+inline int connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr, socklen_t addr_len, const char * target)
 {
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
@@ -106,8 +107,8 @@ inline int connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr
         if ((err == EINPROGRESS) || (err == EALREADY)){
             // try again
             fd_set fds;
-            FD_ZERO(&fds);
-            FD_SET(sck, &fds);
+            io_fd_zero(fds);
+            io_fd_set(sck, fds);
             struct timeval timeout = {
                 retry_delai_ms / 1000,
                 1000 * (retry_delai_ms % 1000)
@@ -172,7 +173,7 @@ static inline int ip_connect(const char* ip, int port,
     memset(&u, 0, sizeof(u));
     u.s4.sin_family = AF_INET;
     u.s4.sin_port = htons(port);
-    int status = resolve_ipv4_address(ip, u.s4.sin_addr); 
+    int status = resolve_ipv4_address(ip, u.s4.sin_addr);
     if (status){
         LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
         return status;

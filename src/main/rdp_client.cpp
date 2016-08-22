@@ -541,8 +541,8 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj &, SocketTransport * s
             fd_set   rfds;
             fd_set   wfds;
 
-            FD_ZERO(&rfds);
-            FD_ZERO(&wfds);
+            io_fd_zero(rfds);
+            io_fd_zero(wfds);
             struct timeval timeout = time_mark;
 
             mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
