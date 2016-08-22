@@ -3,6 +3,12 @@
 #include "core/server.hpp"
 #include "core/listen.hpp"
 
+// Simple proxy is both a Server and a Client
+// When it receives an incoming connexion
+// it connects to some outbound server
+// The proxy is contents neutral and should work
+// for any kind of traffic.
+
 class Generator : public Server {
 public:
     int  sck;
