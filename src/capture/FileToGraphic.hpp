@@ -41,6 +41,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/share.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/difftimeval.hpp"
