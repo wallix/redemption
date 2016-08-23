@@ -9,12 +9,12 @@
 // The proxy is contents neutral and should work
 // for any kind of traffic.
 
-class Generator : public Server {
+class Proxy : public Server {
 public:
     int  sck;
     char ip_source[256];
 
-    Generator() : sck(0) {
+    Proxy() : sck(0) {
         LOG(LOG_INFO, "Server Once Start\n");
        this->ip_source[0] = 0;
     }
@@ -40,7 +40,17 @@ public:
         case 0: // Child
         {
             close(incoming_sck);
-            
+
+            // 1) connect to remote target
+            // 2) Listen on both sockets
+            // - only read on a socket if the cross write on the other socket is ready
+            // (useless to read if we can't send). Another way to achieve that
+            // is to only read when a buffer has been sent.
+            // - reading put data in the read buffer
+            // - writing consume that data and send it
+            // (another way could be using rotating buffer, but I wonder if that would not be
+            // just useless complexity...)
+
             // Actual Server code : this one is a simple generator, always sending the same message
             const char * message = "The quick brown fox jump over the lazy dog\n";
             unsigned len = strlen(message);
@@ -57,7 +67,7 @@ public:
                 int select_res = select(this->sck + 1, nullptr, &wfds, nullptr, &timeout);
                 switch (select_res){
                 case -1: // error
-                    if ((errno == EAGAIN) || (errno == EWOULDBLOCK) 
+                    if ((errno == EAGAIN) || (errno == EWOULDBLOCK)
                      || (errno == EINPROGRESS) || (errno == EINTR)){
                         continue; /* these are not really errors */
                     }
@@ -91,13 +101,13 @@ public:
 };
 
 
-int main(int argc, char * argv[]) 
+int main(int argc, char * argv[])
 {
     LOG(LOG_INFO, "Server Start\n");
     // TODO: provide server port on command line
     (void)argc; (void)argv;
     Generator g;
-    
+
     Listen listener(g, 0, 5000, true, 25);  // 25 seconds to connect, or timeout
     listener.run();
 }
