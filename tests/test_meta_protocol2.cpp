@@ -138,10 +138,12 @@ namespace proto
         T x;
     };
 
-    template<class T, class Derived>
+    template<class Desc, class Derived>
     struct var
     {
-        using desc_type = T;
+        static_assert(std::is_empty<Desc>{}, "");
+
+        using desc_type = Desc;
         using var_type = var;
 
         template<class U>
@@ -296,12 +298,12 @@ namespace XXX {
     PROTO_VAR(proto::types::u8, b);
     PROTO_VAR(proto::types::bytes, c);
     PROTO_VAR(proto::types::u16_le, d);
-//     PROTO_VAR(proto::types::str8_to_str16, e);
-//     PROTO_VAR(proto::types::u8_or_u16_le, f);
+    PROTO_VAR(proto::types::str8_to_str16, e);
+    PROTO_VAR(proto::types::u8_or_u16_le, f);
     PROTO_VAR(proto::types::pkt_sz<proto::types::u8>, sz);
     PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u8>, sz2);
 
-    constexpr auto desc = proto::desc(a, b, c, d, sz, sz2);
+    constexpr auto desc = proto::desc(a, b, c, d, e, f, sz, sz2);
 }
 
 
@@ -957,9 +959,9 @@ int main() {
         XXX::a = pkt.a,
         XXX::b = pkt.b,
         XXX::c = pkt.c,
-        XXX::d = pkt.d/*,
+        XXX::d = pkt.d,
         XXX::e = pkt.c,
-        XXX::f = pkt.d*//*,
+        XXX::f = pkt.d/*,
 //         XXX::sz,
         XXX::sz2
       , 1*/
