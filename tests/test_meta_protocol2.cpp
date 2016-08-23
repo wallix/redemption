@@ -60,11 +60,6 @@ namespace proto
         using s64_le = integer<int64_t, le_tag>;
         using u64_be = integer<uint64_t, be_tag>;
         using u64_le = integer<uint64_t, le_tag>;
-
-        template<class T, class Tag>
-        size_<sizeof(T)>
-        sizeof_(types::integer<T, Tag>)
-        { return {}; }
         /** @} */
     }
 
@@ -85,8 +80,7 @@ namespace proto
     struct dyn_size {};
     namespace detail {
         template<class T> struct sizeof_ : sizeof_<typename T::desc_type> {};
-        template<> struct sizeof_<types::u8> : size_<1> {};
-        template<> struct sizeof_<types::u16_le> : size_<2> {};
+        template<class T, class Tag> struct sizeof_<types::integer<T, Tag>> : size_<sizeof(T)> {};
         template<> struct sizeof_<types::u8_or_u16_le> { using type = dyn_size; };
         template<> struct sizeof_<types::bytes> { using type = dyn_size; };
         template<> struct sizeof_<types::str8_to_str16> { using type = dyn_size; };
@@ -125,11 +119,16 @@ namespace proto
         {};
 
         template<class T>
-        struct is_pkt_sz<proto::types::pkt_sz_with_self<T>> : std::true_type
+        struct is_pkt_sz_with_self : std::false_type
+        {};
+
+        template<class T>
+        struct is_pkt_sz_with_self<proto::types::pkt_sz_with_self<T>> : std::true_type
         {};
     }
-    template<class T>
-    using is_pkt_sz = typename detail::is_pkt_sz<T>::type;
+    template<class T> using is_pkt_sz = typename detail::is_pkt_sz<T>::type;
+    template<class T> using is_pkt_sz_with_self = typename detail::is_pkt_sz_with_self<T>::type;
+    template<class T> using is_pkt_sz_cat = brigand::bool_<is_pkt_sz<T>{} or is_pkt_sz_with_self<T>{}>;
 
 
     template<class Var, class T>
@@ -156,11 +155,6 @@ namespace proto
     using desc_type = typename T::desc_type;
 
     template<class...> using void_t = void;
-
-    namespace diagnostics {
-        class value_is_missing_or_not_proto_value;
-        class is_not_proto_var;
-    }
 
     template<class T, class = void> struct check;
     template<class T> struct check<T, std::enable_if_t<T::value>> { constexpr operator bool () { return 0; } };
@@ -201,12 +195,12 @@ namespace proto
     struct packet;
 
     template<class Var, class Refs>
-    std::enable_if_t<is_pkt_sz<desc_type<Var>>{}, Var>
+    std::enable_if_t<is_pkt_sz_cat<desc_type<Var>>{}, Var>
     val_or_pkt_size(Refs)
     { return {}; }
 
     template<class Var, class T>
-    std::enable_if_t<!is_pkt_sz<desc_type<Var>>{}, val<Var, T>&>
+    std::enable_if_t<!is_pkt_sz_cat<desc_type<Var>>{}, val<Var, T>&>
     val_or_pkt_size(std::reference_wrapper<val<Var, T>> ref)
     { return ref; }
 
@@ -218,7 +212,7 @@ namespace proto
     {
         using type_list = brigand::list<Ts...>;
 
-        using strong_type_list = brigand::remove<type_list, brigand::bind<brigand::not_<brigand::call<is_pkt_sz>>>>;
+        using strong_type_list = brigand::remove<type_list, brigand::bind<brigand::not_<brigand::call<is_pkt_sz_cat>>>>;
 
         template<class T> using contains = brigand::contains<brigand::wrap<strong_type_list, brigand::set>, T>;
 
@@ -538,6 +532,26 @@ using mk_list_accu = typename lazy::mk_list_accu<L, x>::type;
 template<class L>
 using make_accumulate_sizeof_list = brigand::fold<L, brigand::list<>, brigand::call<mk_list_accu>>;
 
+
+namespace detail {
+    template<class T, std::size_t n> struct pkt_sz_with_size { using desc_type = T; };
+
+    template<template<class> class IsPktSz, class Pkt, class Sz>
+    struct convert_pkt_sz
+    { using type = Pkt; };
+
+    template<template<class> class IsPktSz, class... Ts, std::size_t n>
+    struct convert_pkt_sz<IsPktSz, brigand::list<Ts...>, proto::size_<n>>
+    { using type = brigand::list<std::conditional_t<IsPktSz<Ts>{}, pkt_sz_with_size<Ts, n>, Ts>...>; };
+}
+template<class Pkt, class Sz, class SzNext>
+using convert_pkt_sz = typename detail::convert_pkt_sz<
+    proto::is_pkt_sz_with_self,
+    typename detail::convert_pkt_sz<proto::is_pkt_sz, Pkt, SzNext>::type,
+    Sz
+>::type;
+
+
 using proto::desc_type;
 
 template<class T>
@@ -578,10 +592,10 @@ template<class VarInfos>
 using var_infos_is_not_dynamic = is_dynamic_buffer<brigand::front<VarInfos>>;
 
 template<class T>
-using var_info_is_pkt_size = proto::is_pkt_sz<var_to_desc_type<T>>;
+using var_info_is_pkt_sz = proto::is_pkt_sz_cat<var_to_desc_type<T>>;
 
 template<class VarInfos>
-using var_infos_has_pkt_sz = brigand::any<VarInfos, brigand::call<var_info_is_pkt_size>>;
+using var_infos_has_pkt_sz = brigand::any<VarInfos, brigand::call<var_info_is_pkt_sz>>;
 
 namespace detail {
     template<class T>
@@ -672,9 +686,15 @@ struct Buferring2
     template<class... Pkts>
     struct Impl
     {
-        using packet_list = brigand::list<brigand::transform<typename Pkts::type_list, brigand::call<var_to_desc_type>>...>;
-        using sizeof_by_packet = brigand::transform<packet_list, brigand::call<sizeof_packet>>;
-        // TODO here recall with convert pkt_sz static
+        using packet_list_ = brigand::list<brigand::transform<typename Pkts::type_list, brigand::call<var_to_desc_type>>...>;
+        using sizeof_by_packet = brigand::transform<packet_list_, brigand::call<sizeof_packet>>;
+        using accu_sizeof_by_packet = make_accumulate_sizeof_list<sizeof_by_packet>;
+        using packet_list = brigand::transform<
+            packet_list_,
+            accu_sizeof_by_packet,
+            brigand::push_back<brigand::pop_front<accu_sizeof_by_packet>, proto::size_<0>>,
+            brigand::call<convert_pkt_sz>
+        >;
         using packet_count_list = brigand::transform<packet_list, brigand::call<brigand::size>>;
         using ipacket_list_by_var = brigand::transform<mk_seq<sizeof...(Pkts)>, packet_count_list, brigand::call<mk_filled_list>>;
         using ipacket_list = brigand::wrap<ipacket_list_by_var, brigand::append>;
@@ -742,10 +762,10 @@ struct Buferring2
         void write_type(proto::tags::static_buffer, VarInfo, Buffer & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            std::cout << " [static_buffer]\n";
-            if (var_info_is_pkt_size<VarInfo>{}) {
-                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
-            }
+            std::cout << " [static_buffer]";
+            write_pkt_sz_with_size(var_to_desc_type<VarInfo>{});
+            std::cout << "\n";
+            record_pos_is_pkt_sz(VarInfo{}, buffer);
         }
 
         template<class VarInfo, class Buffer, class Var>
@@ -757,9 +777,7 @@ struct Buferring2
             buffer.iov_len = 3;
             this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len;
             std::cout << "  [size: " << buffer.iov_len << "]\n";
-            if (var_info_is_pkt_size<VarInfo>{}) {
-                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
-            }
+            record_pos_is_pkt_sz(VarInfo{}, buffer);
         }
 
         template<class VarInfo, class Buffer, class Var>
@@ -772,10 +790,24 @@ struct Buferring2
             buffer.iov_len += 3;
             this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len - previous_len;
             std::cout << "  [size: " << buffer.iov_len - previous_len << "]\n";
-            if (var_info_is_pkt_size<VarInfo>{}) {
+            record_pos_is_pkt_sz(VarInfo{}, buffer);
+        }
+
+        template<class VarInfo, class Buffer>
+        void record_pos_is_pkt_sz(VarInfo, Buffer & buffer)
+        {
+            if (var_info_is_pkt_sz<VarInfo>{}) {
                 this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
             }
         }
+
+        template<class T, std::size_t n>
+        void write_pkt_sz_with_size(detail::pkt_sz_with_size<T, n>)
+        { std::cout << " = " << n; }
+
+        template<class T>
+        void write_pkt_sz_with_size(T)
+        {}
 
 
         template<class I, class VarInfosByBuffer>
