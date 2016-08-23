@@ -15,13 +15,13 @@ if len(sys.argv) < 3 or not (sys.argv[2] == '--' or (sys.argv[2] != '--' and len
 
 pathlib = sys.argv[1]
 
-if 'redrec' in sys.arg[1]:
+if 'redrec' in sys.argv[1]:
     role = 0
-elif 'redver' in sys.arg[1]:
+elif 'redver' in sys.argv[1]:
     role = 1
     import re
     re.sub(sys.argv[1], 'redver', 'redrec')
-elif 'reddec' in sys.arg[1]:
+elif 'reddec' in sys.argv[1]:
     role = 2
     import re
     re.sub(sys.argv[1], 'reddec', 'redrec')
