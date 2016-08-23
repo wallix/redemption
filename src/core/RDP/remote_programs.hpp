@@ -3123,7 +3123,7 @@ public:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "GloballyUniqueIdentifier: ");
+        size_t result = ::snprintf(buffer + length, size - length, "GloballyUniqueIdentifier=(");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -3135,6 +3135,9 @@ public:
             this->codecGUID4, this->codecGUID5, this->codecGUID6,
             this->codecGUID7, this->codecGUID8, this->codecGUID9,
             this->codecGUID10, this->codecGUID11);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, ")");
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -3204,6 +3207,11 @@ public:
 //  | TF_PROFILETYPE_KEYBOARDLAYOUT | Indicates that the profile type is a  |
 //  | 0x00000002                    | keyboard layout.                      |
 //  +-------------------------------+---------------------------------------+
+
+enum {
+      TF_PROFILETYPE_INPUTPROCESSOR = 0x00000001
+    , TF_PROFILETYPE_KEYBOARDLAYOUT = 0x00000002
+};
 
 // LanguageID (2 bytes): An unsigned 2-byte integer. This is the language
 //  identifier that identifies both the language and the country/region. For
@@ -3288,3 +3296,473 @@ public:
 //  identifies a "United States-Dvorak" keyboard layout, while 0x00020418 is
 //  a "Romanian (Programmers)" keyboard layout). For a list of input locale
 //  identifiers, see [MSFT-DIL].
+
+class LanguageProfileInformationPDU {
+    uint32_t ProfileType;
+
+    uint16_t LanguageID;
+
+    GloballyUniqueIdentifier LanguageProfileCLSID;
+    GloballyUniqueIdentifier ProfileGUID;
+
+    uint32_t KeyboardLayout;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->ProfileType);
+        stream.out_uint16_le(this->LanguageID);
+
+        this->LanguageProfileCLSID.emit(stream);
+        this->ProfileGUID.emit(stream);
+
+        stream.out_uint32_le(this->KeyboardLayout);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 6;    // ProfileType(4) + LanguageID(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Language Profile Information PDU (1): expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->ProfileType = stream.in_uint32_le();
+        this->LanguageID  = stream.in_uint16_le();
+
+        this->LanguageProfileCLSID.receive(stream);
+        this->ProfileGUID.receive(stream);
+
+        {
+            const unsigned expected = 4;    // KeyboardLayout(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Language Profile Information PDU (2): expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->KeyboardLayout = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 6 +  // ProfileType(4) +
+               2 +  // LanguageID(2) +
+               GloballyUniqueIdentifier::size() +   // LanguageProfileCLSID
+               GloballyUniqueIdentifier::size() +   // ProfileGUID
+               4;   // KeyboardLayout(1)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "GloballyUniqueIdentifier: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "ProfileType=%u LanguageID=0x%X ",
+            this->ProfileType, this->LanguageID);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = this->LanguageProfileCLSID.str(buffer + length, size - length);
+        result = this->ProfileGUID.str(buffer + length, size - length);
+
+        result = ::snprintf(buffer + length, size - length,
+            " KeyboardLayout=0x%X",
+            this->KeyboardLayout);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.10.2 Compartment Status Information PDU
+//  (TS_RAIL_ORDER_COMPARTMENTINFO_BODY)
+// ===========================================================
+
+// The Compartment Status Information PDU is used to send the current input
+//  method editor (IME) status information. It is sent from a client to the
+//  server, or from a server to the client, but only when client and server
+//  both support this capability (TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED).
+//  This PDU is used to send the current compartment values of the client or
+//  server and is sent only if the current language profile type is
+//  TF_PROFILETYPE_INPUTPROCESSOR (0x0001).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            ImeState                           |
+// +---------------------------------------------------------------+
+// |                          ImeConvMode                          |
+// +---------------------------------------------------------------+
+// |                        ImeSentenceMode                        |
+// +---------------------------------------------------------------+
+// |                            KANAMode                           |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_COMPARTMENTINFO (0x0012).
+
+// ImeState (4 bytes): A 32-bit, unsigned integer. Indicates the open or
+//  closed state of the IME.
+
+//  +------------------+--------------------------+
+//  | Value            | Meaning                  |
+//  +------------------+--------------------------+
+//  | IME_STATE_CLOSED | The IME state is closed. |
+//  | 0x00000000       |                          |
+//  +------------------+--------------------------+
+//  | IME_STATE_OPEN   | The IME state is open.   |
+//  | 0x00000001       |                          |
+//  +------------------+--------------------------+
+
+enum {
+      IME_STATE_CLOSED = 0x00000000
+    , IME_STATE_OPEN   = 0x00000001
+};
+
+// ImeConvMode (4 bytes): A 32-bit, unsigned integer. Indicates the IME
+//  conversion mode.
+
+//  +------------------------+-------------------------------------------------+
+//  | Value                  | Meaning                                         |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_NATIVE       | The input mode is native. If not set, the input |
+//  | 0x00000001             | mode is alphanumeric.                           |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_KATAKANA     | The input mode is Katakana. If not set, the     |
+//  | 0x00000002             | input mode is Hiragana.                         |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_FULLSHAPE    | The input mode is full-width. If not set, the   |
+//  | 0x00000008             | input mode is half-width.                       |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_ROMAN        | The input mode is Roman.                        |
+//  | 0x00000010             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_CHARCODE     | Character-code input is in effect.              |
+//  | 0x00000020             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_HANJACONVERT | Hanja conversion mode is in effect.             |
+//  | 0x00000040             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_SOFTKBD      | A soft (on-screen) keyboard is being used.      |
+//  | 0x00000080             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_NOCONVERSION | IME conversion is inactive (that is, the IME is |
+//  | 0x00000100             | closed).                                        |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_EUDC         | End-User Defined Character (EUDC) conversion    |
+//  | 0x00000200             | mode is in effect.                              |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_SYMBOL       | Symbol conversion mode is in effect.            |
+//  | 0x00000400             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_FIXED        | Fixed conversion mode is in effect.             |
+//  | 0x00000800             |                                                 |
+//  +------------------------+-------------------------------------------------+
+
+enum {
+      IME_CMODE_NATIVE       = 0x00000001
+    , IME_CMODE_KATAKANA     = 0x00000002
+    , IME_CMODE_FULLSHAPE    = 0x00000008
+    , IME_CMODE_ROMAN        = 0x00000010
+    , IME_CMODE_CHARCODE     = 0x00000020
+    , IME_CMODE_HANJACONVERT = 0x00000040
+    , IME_CMODE_SOFTKBD      = 0x00000080
+    , IME_CMODE_NOCONVERSION = 0x00000100
+    , IME_CMODE_EUDC         = 0x00000200
+    , IME_CMODE_SYMBOL       = 0x00000400
+    , IME_CMODE_FIXED        = 0x00000800
+};
+
+// ImeSentenceMode (4 bytes): An unsigned 4-byte integer that identifies the
+//  sentence mode of the IME.
+
+//  +-------------------------+------------------------------------------------+
+//  | Flag                    | Meaning                                        |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_NONE          | Indicates that the IME uses no information for |
+//  | 0x00000000              | sentence.
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_PLURALCLAUSE  | Indicates that the IME uses plural clause      |
+//  | 0x00000001              | information to carry out conversion            |
+//  |                         | processing.                                    |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_SINGLECONVERT | Indicates that the IME carries out conversion  |
+//  | 0x00000002              | processing in single-character mode.           |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_AUTOMATIC     | Indicates that the IME carries conversion      |
+//  | 0x00000004              | processing in automatic mode.                  |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_PHRASEPREDICT | Indicates that the IME uses phrase information |
+//  | 0x00000008              | to predict the next character.                 |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_CONVERSATION  | Indicates that the IME uses conversation mode. |
+//  | 0x00000010              | This is useful for chat applications.          |
+//  +-------------------------+------------------------------------------------+
+
+enum {
+      IME_SMODE_NONE          = 0x00000000
+    , IME_SMODE_PLURALCLAUSE  = 0x00000001
+    , IME_SMODE_SINGLECONVERT = 0x00000002
+    , IME_SMODE_AUTOMATIC     = 0x00000004
+    , IME_SMODE_PHRASEPREDICT = 0x00000008
+    , IME_SMODE_CONVERSATION  = 0x00000010
+};
+
+// KANAMode (4 bytes): An unsigned 4-byte integer that identifies whether the
+//  input mode is Romaji or KANA for Japanese text processors. The value is
+//  0x0000 for all non-Japanese text processors.
+
+//  +---------------+--------------------------------------------------+
+//  | Value         | Meaning                                          |
+//  +---------------+--------------------------------------------------+
+//  | KANA_MODE_OFF | Indicates that the KANA input mode is off.       |
+//  | 0x00000000    |                                                  |
+//  +---------------+--------------------------------------------------+
+//  | KANA_MODE_ON  | Indicates that the KANA input mode is activated. |
+//  | 0x00000001    |                                                  |
+//  +---------------+--------------------------------------------------+
+
+enum {
+      KANA_MODE_OFF = 0x00000000
+    , KANA_MODE_ON  = 0x00000001
+};
+
+class CompartmentStatusInformationPDU {
+    uint32_t ImeState;
+    uint32_t ImeConvMode;
+    uint32_t ImeSentenceMode;
+    uint32_t KANAMode;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->ImeState);
+        stream.out_uint32_le(this->ImeConvMode);
+        stream.out_uint32_le(this->ImeSentenceMode);
+        stream.out_uint32_le(this->KANAMode);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 16;   // ImeState(4) + ImeConvMode(4) +
+                                            //  ImeSentenceMode(4) + KANAMode(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Compartment Status Information PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->ImeState        = stream.in_uint32_le();
+        this->ImeConvMode     = stream.in_uint32_le();
+        this->ImeSentenceMode = stream.in_uint32_le();
+        this->KANAMode        = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 16;  // ImeState(4) + ImeConvMode(4) + ImeSentenceMode(4) +
+                    //  KANAMode(4)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "CompartmentStatusInformationPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "ImeState=0x%X ImeConvMode=0x%X ImeSentenceMode=0x%X KANAMode=0x%X",
+            this->ImeState, this->ImeConvMode, this->ImeSentenceMode, this->KANAMode);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.11.1 Server Z-Order Sync Information PDU
+//  (TS_RAIL_ORDER_ZORDER_SYNC)
+// ============================================================
+
+// The Z-Order Sync Information PDU is sent from the server to the client if
+//  the client has advertised support for Z-order sync in the Client
+//  Information PDU (section 2.2.2.2.2).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                         WindowIdMarker                        |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_ZORDER_SYNC (0x0014).
+
+// WindowIdMarker (4 bytes): An unsigned 32-bit integer. Indicates the ID of
+//  the marker window (section 3.3.1.3), which is used to manage the
+//  activation of RAIL windows as specified in section 3.2.5.2.9.2.
+
+class ServerZOrderSyncInformationPDU {
+    uint32_t WindowIdMarker;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowIdMarker);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;    // WindowIdMarker(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server Z-Order Sync Information PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowIdMarker = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 4;   // WindowIdMarker(4)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerZOrderSyncInformationPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowIdMarker=0x%X", this->WindowIdMarker);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.12.1 Window Cloak State Change PDU
+//  (TS_RAIL_ORDER_CLOAK)
+// ======================================================
+
+// The Window Cloak State Change PDU is sent from the client to the server
+//  when a RAIL window has been cloaked or uncloaked on the client. It is
+//  only sent when both the client and server support syncing per-window
+//  cloak state (indicated by the TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED
+//  flag in the Remote Programs Capability Set (section 2.2.1.1.1). The
+//  server uses this information to sync the cloak state to the associated
+//  window on the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +---------------+-----------------------------------------------+
+// |    Cloaked    |
+// +---------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_CLOAK (0x0015).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the associated
+//  window on the server that is to be cloaked or uncloaked.
+
+// Cloaked (1 byte): An unsigned 8-bit integer that indicates whether the
+//  window SHOULD be cloaked or uncloaked.
+
+//  +-------+---------------------------------+
+//  | Value | Meaning                         |
+//  +-------+---------------------------------+
+//  | 0x00  | The window SHOULD be uncloaked. |
+//  +-------+---------------------------------+
+//  | 0x01  | The window SHOULD be cloaked.   |
+//  +-------+---------------------------------+
+
+class WindowCloakStateChangePDU {
+    uint32_t WindowId;
+    uint8_t  Cloaked;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId);
+        stream.out_uint8(this->Cloaked);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 5;    // WindowId(4) + Cloaked(1)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Window Cloak State Change PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId = stream.in_uint32_le();
+        this->Cloaked  = stream.in_uint8();
+    }
+
+    static size_t size() {
+        return 5;   // WindowId(4) + Cloaked(1)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "WindowCloakStateChangePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=0x%X Cloaked=0x%X", this->WindowId, this->Cloaked);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
