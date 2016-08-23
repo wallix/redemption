@@ -17,6 +17,8 @@
 #define BRIGAND_NO_BOOST_SUPPORT
 #include <brigand/brigand.hpp>
 
+#include "utils/sugar/array_view.hpp"
+
 namespace proto { namespace ext {
     // sizeof_, etc
 }}
@@ -78,10 +80,11 @@ namespace proto
     // TODO type_traits { sizeof_, buffer+tag }
 
     struct dyn_size {};
+    template<std::size_t i> struct limited_size {};
     namespace detail {
         template<class T> struct sizeof_ : sizeof_<typename T::desc_type> {};
         template<class T, class Tag> struct sizeof_<types::integer<T, Tag>> : size_<sizeof(T)> {};
-        template<> struct sizeof_<types::u8_or_u16_le> { using type = dyn_size; };
+        template<> struct sizeof_<types::u8_or_u16_le> { using type = /*dyn_size*/limited_size<sizeof(uint16_t)>; };
         template<> struct sizeof_<types::bytes> { using type = dyn_size; };
         template<> struct sizeof_<types::str8_to_str16> { using type = dyn_size; };
         template<class T> struct sizeof_<types::pkt_sz<T>> : sizeof_<T> {};
@@ -493,6 +496,7 @@ using var_info_is_buffer_delimiter = is_buffer_delimiter<typename var_info::desc
 
 template<std::size_t n> struct static_size : brigand::size_t<n> {};
 template<std::size_t n> struct dynamic_size : brigand::size_t<n> {};
+template<std::size_t n> struct limited_size : brigand::size_t<n> {};
 
 namespace lazy {
     template<class p, class i>
@@ -506,6 +510,18 @@ namespace lazy {
     struct add_size<Size<n>, proto::dyn_size>
     { using type = dynamic_size<n>; };
 
+    template<template<std::size_t> class Size, std::size_t n1, std::size_t n2>
+    struct add_size<Size<n1>, proto::limited_size<n2>>
+    { using type = Size<n1+n2>; };
+
+    template<std::size_t n1, std::size_t n2>
+    struct add_size<brigand::size_t<n1>, proto::limited_size<n2>>
+    { using type = limited_size<n1+n2>; };
+
+    template<std::size_t n1, std::size_t n2>
+    struct add_size<static_size<n1>, proto::limited_size<n2>>
+    { using type = limited_size<n1+n2>; };
+
     template<std::size_t n1, std::size_t n2>
     struct add_size<brigand::size_t<n1>, brigand::size_t<n2>>
     { using type = brigand::size_t<n1+n2>; };
@@ -516,6 +532,28 @@ using add_size = typename lazy::add_size<i1, i2>::type;
 template<class L>
 using sizeof_packet = brigand::fold<
     brigand::transform<L, brigand::call<proto::sizeof_>>,
+    static_size<0>,
+    brigand::call<add_size>
+>;
+
+namespace detail {
+    template<class T>
+    struct limited_size_like_dyn_size
+    { using type = T; };
+
+    template<std::size_t n>
+    struct limited_size_like_dyn_size<proto::limited_size<n>>
+    { using type = proto::dyn_size; };
+}
+template<class T>
+using limited_size_like_dyn_size = typename detail::limited_size_like_dyn_size<T>::type;
+
+template<class L>
+using sizeof_packet_with_limited_size_like_dyn_size = brigand::fold<
+    brigand::transform<
+        brigand::transform<L, brigand::call<proto::sizeof_>>,
+        brigand::call<limited_size_like_dyn_size>
+    >,
     static_size<0>,
     brigand::call<add_size>
 >;
@@ -568,13 +606,6 @@ using mk_sizeof_var_info_list = brigand::transform<
     brigand::call<proto::sizeof_>
 >;
 
-template<class L>
-using sizeof_var_infos = brigand::fold<
-    mk_sizeof_var_info_list<L>,
-    static_size<0>,
-    brigand::call<add_size>
->;
-
 namespace detail {
     template<class>
     struct sizeof_to_buffer;
@@ -586,9 +617,23 @@ namespace detail {
     template<std::size_t n>
     struct sizeof_to_buffer<static_size<n>>
     { using type = uint8_t [n]; };
+
+    template<std::size_t n>
+    struct sizeof_to_buffer<limited_size<n>>
+    { using type = uint8_t [n]; };
 }
 template<class T>
 using sizeof_to_buffer = typename detail::sizeof_to_buffer<T>::type;
+
+template<class L>
+using sizeof_var_infos = brigand::fold<
+    mk_sizeof_var_info_list<L>,
+    static_size<0>,
+    brigand::call<add_size>
+>;
+
+template<class L>
+using buffer_from_var_infos = sizeof_to_buffer<sizeof_var_infos<L>>;
 
 template<class VarInfos>
 using var_infos_is_not_dynamic = is_dynamic_buffer<brigand::front<VarInfos>>;
@@ -609,6 +654,14 @@ namespace detail {
     {};
 
     template<class T>
+    struct is_not_static_size : std::true_type
+    {};
+
+    template<std::size_t n>
+    struct is_not_static_size<static_size<n>> : std::false_type
+    {};
+
+    template<class T>
     struct is_dynamic_size : std::false_type
     {};
 
@@ -620,6 +673,8 @@ template<class T>
 using is_dynamic_size = typename detail::is_dynamic_size<T>::type;
 template<class T>
 using is_static_size = typename detail::is_static_size<T>::type;
+template<class T>
+using is_not_static_size = typename detail::is_not_static_size<T>::type;
 
 namespace detail
 {
@@ -643,6 +698,7 @@ namespace detail
             });
         }
 
+    private:
         template<class I, std::size_t arr_len>
         void init_buf(I i, uint8_t(&a)[arr_len]) {
             this->data[i].iov_base = a;
@@ -683,6 +739,7 @@ namespace detail
     };
 }
 
+template<class Policy>
 struct Buferring2
 {
     template<class... Pkts>
@@ -705,14 +762,16 @@ struct Buferring2
         using var_info_list = brigand::transform<ipacket_list, ivar_list, var_list, brigand::call<var_info>>;
         using var_info_list_by_buffer = brigand::split_if<var_info_list, brigand::call<var_info_is_buffer_delimiter>>;
 
-        using sizeof_by_buffer = brigand::transform<var_info_list_by_buffer, brigand::call<sizeof_var_infos>>;
-        using buffer_list = brigand::transform<sizeof_by_buffer, brigand::call<sizeof_to_buffer>>;
+        using buffer_list = brigand::transform<var_info_list_by_buffer, brigand::call<buffer_from_var_infos>>;
+        using default_buffer_size = brigand::transform<packet_list_, brigand::call<sizeof_packet_with_limited_size_like_dyn_size>>;
 
         // TODO rapidtuple
         brigand::wrap<buffer_list, std::tuple> buffer_tuple;
         detail::Buffers<brigand::size<buffer_list>::value> buffers{buffer_tuple};
         uint8_t * pktptrs[brigand::size<packet_list>::value];
-        detail::Sizes<sizeof_by_packet> sizes;
+        detail::Sizes<default_buffer_size> sizes;
+        // TODO reference
+        Policy policy;
 
         void impl(Pkts & ... packets)
         {
@@ -764,53 +823,69 @@ struct Buferring2
         void write_type(proto::tags::static_buffer, VarInfo, Buffer & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            std::cout << " [static_buffer]";
-            write_pkt_sz_with_size(var_to_desc_type<VarInfo>{});
+            this->write_pkt_sz_with_size_or_var(desc_type<VarInfo>{}, buffer, var);
             std::cout << "\n";
-            record_pos_is_pkt_sz(VarInfo{}, buffer);
+            if (var_info_is_pkt_sz<VarInfo>{}) {
+                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base);
+            }
         }
 
-        template<class VarInfo, class Buffer, class Var>
-        void write_type(proto::tags::view_buffer, VarInfo, Buffer & buffer, Var & var) {
-            std::cout << var_type<Var>::name() << " = ";
-            this->print(var);
-            std::cout << " [view_buffer]";
-            // TODO
-            buffer.iov_len = 3;
-            this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len;
-            std::cout << "  [size: " << buffer.iov_len << "]\n";
-            record_pos_is_pkt_sz(VarInfo{}, buffer);
+        template<class T, class Buffer, class Var>
+        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz<T>, Buffer &, Var &)
+        {}
+
+        template<class T, class Buffer, class Var>
+        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz_with_self<T>, Buffer &, Var &)
+        {}
+
+        template<class T, std::size_t n, class Buffer, class Var>
+        void write_pkt_sz_with_size_or_var(detail::pkt_sz_with_size<T, n>, Buffer & buffer, Var &)
+        {
+            policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), n, var_to_desc_type<Var>{});
+            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<T>{};
+            std::cout << " = " << n;
+        }
+
+        template<class T, class Buffer, class Var>
+        void write_pkt_sz_with_size_or_var(T, Buffer & buffer, Var & var)
+        {
+            policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, var_to_desc_type<Var>{});
+            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<T>{};
         }
 
         template<class VarInfo, class Buffer, class Var>
         void write_type(proto::tags::limited_buffer, VarInfo, Buffer & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            std::cout << " [limited_buffer]";
+            std::size_t len = policy.write_limited_buffer(
+                static_cast<uint8_t*>(buffer.iov_base),
+                var.x,
+                desc_type<VarInfo>{}
+            );
+            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + len;
+
             // TODO
-            auto const previous_len = buffer.iov_len;
-            buffer.iov_len += 3;
-            this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len - previous_len;
-            std::cout << "  [size: " << buffer.iov_len - previous_len << "]\n";
-            record_pos_is_pkt_sz(VarInfo{}, buffer);
+            len = 3;
+            this->sizes.data[VarInfo::ipacket::value] += len;
+            std::cout << "  [size: " << len << "]\n";
+            static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
         }
 
-        template<class VarInfo, class Buffer>
-        void record_pos_is_pkt_sz(VarInfo, Buffer & buffer)
-        {
-            if (var_info_is_pkt_sz<VarInfo>{}) {
-                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base) + buffer.iov_len;
-            }
+        template<class VarInfo, class Buffer, class Var>
+        void write_type(proto::tags::view_buffer, VarInfo, Buffer & buffer, Var & var) {
+            std::cout << var_type<Var>::name() << " = ";
+            this->print(var);
+            auto av = policy.get_view_buffer(var.x, desc_type<VarInfo>{});
+            buffer.iov_base = av.data();
+            buffer.iov_len = av.size();
+            this->sizes.data[VarInfo::ipacket::value] += av.size();
+
+            // TODO
+            buffer.iov_len = 3;
+            this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len;
+            std::cout << "  [size: " << buffer.iov_len << "]\n";
+            static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
         }
-
-        template<class T, std::size_t n>
-        void write_pkt_sz_with_size(detail::pkt_sz_with_size<T, n>)
-        { std::cout << " = " << n; }
-
-        template<class T>
-        void write_pkt_sz_with_size(T)
-        {}
-
 
         template<class I, class VarInfosByBuffer>
         void write_dynamic_bufs(I, VarInfosByBuffer, Pkts & ... pkts) {
@@ -825,6 +900,8 @@ struct Buferring2
         template<class I>
         void write_dynamic_buf(I, brigand::list<>, Pkts & ...) {
             std::cout << "--------------------------\n\n";
+
+            // TODO reset limited_buffer ptr
 
             this->sizes.propagate_size();
 
@@ -846,10 +923,17 @@ struct Buferring2
         void write_dynamic_buf(I, brigand::list<VarInfos, VarInfosBuffers...>, Pkts & ... pkts) {
             using var_info = brigand::front<VarInfos>;
             write_dyn_type(
-                this->buffers.data[I::value],
-                this->sizes.data[var_info::ipacket::value],
                 larg<var_info::ivar::value>(arg<var_info::ipacket::value>(pkts...)),
-                [this, &pkts...](){
+                [this, &pkts...](array_view_u8 av) {
+                    auto & buffer = this->buffers.data[I::value];
+                    buffer.iov_base = av.data();
+                    buffer.iov_len = av.size();
+                    this->sizes.data[var_info::ipacket::value] += av.size();
+                    // TODO
+                    this->sizes.data[var_info::ipacket::value] += 3;
+                    std::cout << "  [size: " << av.size() << "]";
+                    // TODO assert called
+                    std::cout << "\n";
                     this->write_dynamic_bufs(
                         brigand::size_t<I::value + 1>{},
                         brigand::list<VarInfosBuffers...>{},
@@ -859,15 +943,11 @@ struct Buferring2
             );
         }
 
-        template<class Buffer, class Var, class Continue>
-        void write_dyn_type(Buffer & buffer, std::size_t & size, Var & var, Continue f) {
-            // TODO
-            buffer.iov_len = 3;
-            size += buffer.iov_len;
+        template<class Var, class Continue>
+        void write_dyn_type(Var & var, Continue f) {
             std::cout << var_type<Var>::name() << " = ";
             print(var);
-            std::cout << "  [size: " << buffer.iov_len << "]\n";
-            f();
+            policy.context_dynamic_buffer(f, var.x, var_to_desc_type<Var>{});
         }
 
 
@@ -907,12 +987,16 @@ struct Buferring2
 
         template<class IPacket, class IVar, class T>
         void write_pkt_sz_var(var_info<IPacket, IVar, proto::types::pkt_sz<T>>) {
+            using is_proto_integer = std::is_same<T, brigand::wrap<T, proto::types::integer>>;
+            static_assert(is_proto_integer{}, "only proto::types::integer is supported with pkt_sz");
             // TODO
             std::cout << "pktptrs[" << IPacket::value << "] = " << this->sizes.data[IPacket::value+1] << "\n";
         }
 
         template<class IPacket, class IVar, class T>
         void write_pkt_sz_var(var_info<IPacket, IVar, proto::types::pkt_sz_with_self<T>>) {
+            using is_proto_integer = std::is_same<T, brigand::wrap<T, proto::types::integer>>;
+            static_assert(is_proto_integer{}, "only proto::types::integer is supported with pkt_sz_with_self");
             // TODO
             std::cout << "pktptrs[" << IPacket::value << "] = " << this->sizes.data[IPacket::value] << "\n";
         }
@@ -946,6 +1030,39 @@ struct Buferring2
     void impl(std::false_type, Packets ... packets) const = delete;
 };
 
+
+struct stream_protocol_policy
+{
+    template<class T, class Desc>
+    void write_static_buffer(uint8_t *, T, Desc)
+    {
+        std::cout << " [static_buffer]";
+    }
+
+    template<class T, class Desc>
+    array_view_u8 get_view_buffer(T, Desc)
+    {
+        std::cout << " [view_buffer]";
+        return {};
+    }
+
+    template<class T, class Desc>
+    std::size_t write_limited_buffer(uint8_t *, T, Desc)
+    {
+        std::cout << " [limited_buffer]";
+        return {};
+    }
+
+    template<class F, class T, class Desc>
+    void context_dynamic_buffer(F f, T, Desc)
+    {
+        std::cout << " [dynamic_buffer]";
+        f(array_view_u8{});
+    }
+};
+
+
+
 int main() {
 
     struct {
@@ -971,26 +1088,6 @@ packet.apply_for_each(Printer{});
 std::cout << "\n";
 packet.apply(Buferring{});
 std::cout << "\n";
-proto::apply(Buferring2{}, packet, packet);
-
-/*
- * type, type_adapter, type_list.
- * value, integral_constant, value_list?
- * visiteur par type, par groupe
- *
- * pkt1: [ 1.u8 2.u8 3.bytes 4.u16 ]
- * buffers1: [ [u8 u8] [bytes] [u16] ] (split on buffer_view)
- *
- * pkt2: [ 1.pkt_sz 2.u32 3.bytes ]
- * buffers2: [ [pkt_sz u32] [bytes] ] (split on buffer_view)
- *
- * buffers: [ [1.1.u8 1.2.u8] [1.3.bytes] [1.3.u16 2.1.pkt_sz 2.2.u32] [2.3.bytes] ]
- *
- * static pkt_sz resolved (auto_val)
- * write to buffers
- * dynamic pkt_sz resolved
- */
-
-
+proto::apply(Buferring2<stream_protocol_policy>{}, packet, packet);
 
 }
