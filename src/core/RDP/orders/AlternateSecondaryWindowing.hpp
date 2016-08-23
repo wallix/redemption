@@ -489,6 +489,8 @@ public:
         this->output_stream->set_out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
             this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
     }
 
     void receive(InStream & stream) {
@@ -1811,6 +1813,8 @@ public:
         this->output_stream->set_out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
             this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
     }
 
     void receive(InStream & stream) {
@@ -2546,6 +2550,8 @@ public:
         this->output_stream->set_out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
             this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
     }
 
     void receive(InStream & stream) {
