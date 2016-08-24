@@ -690,14 +690,14 @@ using is_not_static_size = typename detail::is_not_static_size<T>::type;
 
 namespace detail
 {
+    struct iovec {
+        void  *iov_base;
+        size_t iov_len;
+    };
+
     template<std::size_t n>
     struct Buffers
     {
-        struct iovec {
-            void  *iov_base;
-            size_t iov_len;
-        };
-
         iovec data[n]{};
 
         template<class Tuple>
@@ -754,6 +754,8 @@ namespace detail
 template<class Policy>
 struct Buferring2
 {
+    using iovec = detail::iovec;
+
     template<class... Pkts>
     struct Impl
     {
@@ -821,8 +823,8 @@ struct Buferring2
         static void write_not_dynamic_buf(std::true_type, Ts && ...)
         { std::cout << "-------\n(dyn)\n"; }
 
-        template<class... VarInfos, class Buffer>
-        void write_not_dynamic_buf(std::false_type, brigand::list<VarInfos...>, Buffer & buffer, Pkts & ... pkts) {
+        template<class... VarInfos>
+        void write_not_dynamic_buf(std::false_type, brigand::list<VarInfos...>, iovec & buffer, Pkts & ... pkts) {
             std::cout << "-------\n";
             (void)std::initializer_list<int>{(void(
                 this->write_type(
@@ -831,8 +833,8 @@ struct Buferring2
             ), 1)...};
         }
 
-        template<class VarInfo, class Buffer, class Var>
-        void write_type(proto::tags::static_buffer, VarInfo, Buffer & buffer, Var & var) {
+        template<class VarInfo, class Var>
+        void write_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
             this->write_pkt_sz_with_size_or_var(desc_type<VarInfo>{}, buffer, var);
@@ -842,16 +844,16 @@ struct Buferring2
             }
         }
 
-        template<class T, class Buffer, class Var>
-        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz<T>, Buffer &, Var &)
+        template<class T, class Var>
+        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz<T>, iovec &, Var &)
         {}
 
-        template<class T, class Buffer, class Var>
-        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz_with_self<T>, Buffer &, Var &)
+        template<class T, class Var>
+        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz_with_self<T>, iovec &, Var &)
         {}
 
-        template<class T, std::size_t n, class Buffer, class Var>
-        void write_pkt_sz_with_size_or_var(detail::pkt_sz_with_size<T, n>, Buffer & buffer, Var &)
+        template<class T, std::size_t n, class Var>
+        void write_pkt_sz_with_size_or_var(detail::pkt_sz_with_size<T, n>, iovec & buffer, Var &)
         {
             using proto_integer = typename T::type;
             policy.write_static_buffer(
@@ -862,15 +864,15 @@ struct Buferring2
             std::cout << " = " << n;
         }
 
-        template<class T, class Buffer, class Var>
-        void write_pkt_sz_with_size_or_var(T, Buffer & buffer, Var const & var)
+        template<class T, class Var>
+        void write_pkt_sz_with_size_or_var(T, iovec & buffer, Var const & var)
         {
             policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, T{});
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<T>{};
         }
 
-        template<class VarInfo, class Buffer, class Var>
-        void write_type(proto::tags::limited_buffer, VarInfo, Buffer & buffer, Var & var) {
+        template<class VarInfo, class Var>
+        void write_type(proto::tags::limited_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
             std::size_t len = policy.write_limited_buffer(
@@ -887,8 +889,8 @@ struct Buferring2
             static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
         }
 
-        template<class VarInfo, class Buffer, class Var>
-        void write_type(proto::tags::view_buffer, VarInfo, Buffer & buffer, Var & var) {
+        template<class VarInfo, class Var>
+        void write_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
             auto av = policy.get_view_buffer(var.x, desc_type<VarInfo>{});
