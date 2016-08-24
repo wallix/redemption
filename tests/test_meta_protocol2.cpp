@@ -1057,7 +1057,7 @@ struct stream_protocol_policy
         >;
         brigand::for_each<rng>([&p, val](auto I) {
             constexpr const std::size_t i = t_<decltype(I)>::value;
-            *p++ = (val & (0xff << i)) > i;
+            *p++ = val >> (i * 8);
         });
     }
 
