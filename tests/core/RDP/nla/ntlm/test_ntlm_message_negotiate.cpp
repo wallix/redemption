@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
     s.out_copy_bytes(packet, sizeof(packet));
 
-    uint8_t sig[20];
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig);
 
     InStream in_s(s.get_data(), s.get_offset());
     TSRequest ts_req(in_s);
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
     BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
     char message[1024];
-    if (!check_sig(to_send, message, reinterpret_cast<const char *>(sig))){
+    if (!check_sig(to_send, message, sig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
 // BOOST_CHECK_EQUAL(to_send4.size(), 0x12b + 4);
 
-// if (!check_sig(to_send4, message, (const char *)sig)){
+// if (!check_sig(to_send4, message, sig)){
 //     BOOST_CHECK_MESSAGE(false, message);
 // }
 
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
 // BOOST_CHECK_EQUAL(to_send5.size(), 0x5a + 2);
 
-// if (!check_sig(to_send5, message, (const char *)sig)){
+// if (!check_sig(to_send5, message, sig)){
 //     BOOST_CHECK_MESSAGE(false, message);
 // }
 

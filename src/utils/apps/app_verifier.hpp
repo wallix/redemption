@@ -730,7 +730,7 @@ static inline int file_start_hmac_sha256(const char * filename,
         hmac.update(buf, ret);
         ret = ::read(file.fd, buf, sizeof(buf));
     }
-    hmac.final(&hash[0], SHA256_DIGEST_LENGTH);
+    hmac.final(&hash[0]);
     return 0;
 }
 

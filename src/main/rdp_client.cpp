@@ -325,6 +325,46 @@ public:
         this->gd.draw(order);
     }
 
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
+    void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+        if (this->verbose > 10) {
+            LOG(LOG_INFO, "--------- ClientFront ------------------");
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        this->gd.draw(order);
+    }
+
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
@@ -471,7 +511,7 @@ int main(int argc, char** argv)
     }
 
     /* SocketTransport mod_trans */
-    int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms, {});
+    int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
     SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, verbose, nullptr);
 
 
@@ -501,11 +541,11 @@ void run_mod(mod_api & mod, ClientFront & front, wait_obj &, SocketTransport * s
             fd_set   rfds;
             fd_set   wfds;
 
-            FD_ZERO(&rfds);
-            FD_ZERO(&wfds);
+            io_fd_zero(rfds);
+            io_fd_zero(wfds);
             struct timeval timeout = time_mark;
 
-            mod.get_event().add_to_fd_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
+            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
             if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 2;

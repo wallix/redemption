@@ -401,6 +401,14 @@ public:
     // TODO vritual + override -> override
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override;
 
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override;
+
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override;
+
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override;
+
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override;
+
     // TODO vritual + override -> override
     virtual void draw(const RDPColCache   & cmd);
 

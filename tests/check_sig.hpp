@@ -28,12 +28,12 @@
 inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
                      char * message, const void * shasig)
 {
-   uint8_t sig[20];
+   uint8_t sig[SslSha1::DIGEST_LENGTH];
    SslSha1 sha1;
    for (size_t y = 0; y < height; y++){
        sha1.update(data + y * len, len);
    }
-   sha1.final(sig, sizeof(sig));
+   sha1.final(sig);
 
    if (memcmp(shasig, sig, sizeof(sig))){
        sprintf(message, "Expected signature: \""
@@ -82,17 +82,17 @@ inline bool check_sig(const uint8_t * data, size_t length, char * message, const
     }
 
 
-inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig, size_t sig_length)
+inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig)
 {
    SslSha1 sha1;
    sha1.update(data, length);
-   sha1.final(sig, sig_length);
+   sha1.final(sig);
 }
 
 template<class Stream>
-inline void get_sig(Stream const & stream, uint8_t * sig, size_t sig_length)
+inline void get_sig(Stream const & stream, uint8_t * sig)
 {
    SslSha1 sha1;
    sha1.update(stream.get_data(), stream.get_offset());
-   sha1.final(sig, sig_length);
+   sha1.final(sig);
 }

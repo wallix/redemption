@@ -52,8 +52,8 @@ public:
     }
 
     void final(uint8_t * out, size_t out_size) {
-        uint8_t shasig[20];
-        this->sha1.final(shasig, 20);
+        uint8_t shasig[SslSha1::DIGEST_LENGTH];
+        this->sha1.final(shasig);
 
         SslMd5 md5;
         md5.update(this->key, this->key_size);
@@ -67,6 +67,14 @@ public:
         };
         md5.update(sigconst, sizeof(sigconst));
         md5.update(shasig, sizeof(shasig));
-        md5.final(out, out_size);
+
+        // TODO: check out_size provided to sign.final() 
+        // if it's already MD5::DIGEST_LENGTH
+        // no need to provide it
+        
+        uint8_t tmp[SslMd5::DIGEST_LENGTH];
+        md5.final(tmp);
+        memcpy(out, tmp, std::min(out_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+        
     }
 };

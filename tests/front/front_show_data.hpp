@@ -256,6 +256,14 @@ public:
 
     void draw(const RDP::RAIL::DeletedWindow & order) override {}
 
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {}
+
+    void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {}
+
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {}
+
+    void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {}
+
     void draw(const RDPColCache   & cmd) override {}
 
     void draw(const RDPBrushCache & cmd) override {}

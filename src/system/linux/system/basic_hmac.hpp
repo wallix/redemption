@@ -28,7 +28,6 @@
 
 namespace detail_
 {
-
 template<const EVP_MD * (* evp)(), std::size_t DigestLength>
 class basic_HMAC
 {
@@ -57,18 +56,9 @@ public:
         }
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
         unsigned int len = 0;
-        if (DigestLength > out_data_size){
-            uint8_t tmp[DigestLength];
-            int res = HMAC_Final(&this->hmac, tmp, &len);
-            if (res == 0) {
-                throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-            }
-            memcpy(out_data, tmp, out_data_size);
-            return;
-        }
         int res = HMAC_Final(&this->hmac, out_data, &len);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);

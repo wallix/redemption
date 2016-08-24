@@ -41,6 +41,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/share.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/difftimeval.hpp"
@@ -381,6 +382,9 @@ public:
                             gd->draw(order);
                         }
                     }
+                    break;
+                    case RDP::AltsecDrawingOrderHeader::Window:
+                        this->process_windowing(stream, header);
                     break;
                     default:
                         LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
@@ -982,6 +986,153 @@ public:
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
                 throw Error(ERR_WRM);
+        }
+    }
+
+
+    void process_windowing( InStream & stream, const RDP::AltsecDrawingOrderHeader & header) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders::process_windowing");
+        }
+
+        const uint32_t FieldsPresentFlags = [&]{
+            InStream stream2(stream.get_current(), stream.in_remain());
+            stream2.in_skip_bytes(2);    // OrderSize(2)
+            return stream2.in_uint32_le();
+        }();
+
+        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                                      | RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY
+                                      | RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP)) {
+            case RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW:
+                this->process_window_information(stream, header, FieldsPresentFlags);
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY:
+                this->process_notification_icon_information(stream, header, FieldsPresentFlags);
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP:
+                this->process_desktop_information(stream, header, FieldsPresentFlags);
+                break;
+
+            default:
+                LOG(LOG_INFO,
+                    "rdp_orders::process_windowing: "
+                        "unsupported Windowing Alternate Secondary Drawing Orders! "
+                        "FieldsPresentFlags=0x%08X",
+                    FieldsPresentFlags);
+                break;
+        }
+    }
+
+    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                   , uint32_t FieldsPresentFlags) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders::process_window_information");
+        }
+
+        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                                      | RDP::RAIL::WINDOW_ORDER_ICON
+                                      | RDP::RAIL::WINDOW_ORDER_CACHEDICON
+                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+        {
+            case RDP::RAIL::WINDOW_ORDER_ICON: {
+                    RDP::RAIL::WindowIcon order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_CACHEDICON: {
+                    RDP::RAIL::CachedIcon order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
+                    RDP::RAIL::DeletedWindow order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case 0:
+            case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
+                    RDP::RAIL::NewOrExistingWindow order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+        }
+    }
+
+    void process_notification_icon_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                              , uint32_t FieldsPresentFlags) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
+        }
+
+        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+        {
+            case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
+                    RDP::RAIL::DeletedNotificationIcons order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+
+            case 0:
+            case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
+                    RDP::RAIL::NewOrExistingNotificationIcons order;
+                    order.receive(stream);
+                    order.log(LOG_INFO);
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(order);
+                    }
+                }
+                break;
+        }
+    }
+
+    void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+                                    , uint32_t FieldsPresentFlags) {
+        if (this->verbose & 64) {
+            LOG(LOG_INFO, "rdp_orders::process_desktop_information");
+        }
+
+        if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
+            RDP::RAIL::NonMonitoredDesktop order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->draw(order);
+            }
+        }
+        else {
+            RDP::RAIL::ActivelyMonitoredDesktop order;
+            order.receive(stream);
+            order.log(LOG_INFO);
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->draw(order);
+            }
         }
     }
 

@@ -25065,6 +25065,13 @@ var outData = [
 ];
 
 
+var L = console.log;
+
+/*********************************************************************************************/
+
+/************************/
+/* Server > html client */
+/************************/
 
 var fs = require('fs');
 
@@ -25078,196 +25085,35 @@ var server = require('http').createServer(function(request, response) {
 });
 
 var io = require('socket.io').listen(server);
-
 server.listen(8080);
-console.log('Server running at  http://localhost:8080 '+ server.address().address + server.address().port);
+L('Server running at  http://localhost:8080 '+ server.address().address + server.address().port + '\n\n');
 
-/******************************/
-
-
-var net = require('net');
-var tls = require('tls');
-
-var targetIp =  '10.10.46.74';
- //var targetIp = '127.0.0.1';
-var targetPort = 3389;
-var buf = new Buffer(1024);
-var client = new net.Socket();
-client.connect(targetPort, targetIp, function(/*fd*/) {
-    console.log('Connected to ' + targetIp);
-    console.log('Client socket info : ' + client.address().address + ':' + client.address().port);
-    console.log('Remote info : ' + client.remoteAddress + ':' + client.remotePort);
-
-    //console.log('fd : ' + fd);
-    //fs.read(fd, buffer, offset, length, position, callback)
-    client.write('Hello, server! Love, Client.');
-    //client.end();
-
-
-
-
-/*
-     fs.read(fd, buf, 0, buf.length, 0, function(err, bytes){
-          if (err){
-             console.log(err);
-          }
-          console.log(bytes + " bytes read");
-          
-          // Print only read bytes to avoid junk.
-          if(bytes > 0){
-             console.log(buf.slice(0, bytes).toString());
-          }
-       });
-*/
-
-});
-
-/*   Unsupported fd type: FILE atcreateHandle   at new Socket at io.sockets.on.socket.on.number */
-/*
-
-fs.open('/tmp/node.test.sock', 'w+', function(err, fdesc){
-    if (err || !fdesc) {
-        throw 'Error: ' + (err || 'No fdesc');
-    }
-
-    // Create socket
-    sock = new net.Socket({ fd : fdesc });
-    console.log(sock);
-});
-*/
-
-
-
-/*
-fd_set rfds;
-FD_ZERO(&rfds);
-FD_SET(client, &rfds);
-
-
-fs.exists(fileName, function(exists) {
-  if (exists) {
-    fs.stat(fileName, function(error, stats) {
-      fs.open(fileName, "r", function(error, fd) {
-        var buffer = new Buffer(stats.size);
-
-        fs.read(fd, buffer, 0, buffer.length, null, function(error, bytesRead, buffer) {
-          var data = buffer.toString("utf8", 0, buffer.length);
-
-          console.log(data);
-          fs.close(fd);
-        });
-      });
-    });
-  }
-});
-*/
-
-client.on('data', function(data) {
-    console.log('Received: ' + data.toString());
-});
-
-client.on('clientError', function(err) {
-    console.log('clientError: ' + err);
-    client.destroy();
-});
-
-client.on('end', function() {
-  console.log('client disconnected from server');
-});
-
-process.on('uncaughtException', function (err) {
-    console.error(err.stack);
-    console.log("Node NOT Exiting...");
-});
-
-
-/*
-var s = new net.Socket();
-s.connect(80, 'google.com');
-s.write('GET http://www.google.com/ HTTP/1.1\n\n');
-
-s.on('data', function(d){
-    console.log('\ndata received :' + d.toString());
-});
-
-s.end();
-*/
-
-/*
-HTTP/1.1 302 Found
-Cache-Control: private
-Content-Type: text/html; charset=UTF-8
-Location: http://www.google.fr/?gfe_rd=cr&ei=MTGOV4bpM4ux8wfsvLiIDQ
-Content-Length: 258
-Date: Tue, 19 Jul 2016 13:54:57 GMT
-
-<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
-<TITLE>302 Moved</TITLE></HEAD><BODY>
-<H1>302 Moved</H1>
-The document has moved
-<A HREF="http://www.google.fr/?gfe_rd=cr&amp;ei=MTGOV4bpM4ux8wfsvLiIDQ">here</A>.
-</BODY></HTML>
-*/
-
-
-
-
-
-/*
-var options = {
-  // These are necessary only if using the client certificate authentication
-  key: fs.readFileSync('rdpproxy-key.pem'),
-  cert: fs.readFileSync('rdpproxy-cert.pem'),
- };
- 
-var cleartextStream = tls.connect(3389, options, function() {
-  console.log('client connected',
-              cleartextStream.authorized ? 'authorized' : 'unauthorized');
-  process.stdin.pipe(cleartextStream);
-  process.stdin.resume();
-});
-cleartextStream.setEncoding('utf8');
-cleartextStream.on('data', function(data) {
-  console.log(data);
-});
-cleartextStream.on('end', function() {
-  server.close();
-});
-*/
-
-
-
-
-/******************************/
 
 io.sockets.on('connection', function (socket) {
-    console.log('A client is connected !');
-//    socket.emit('event', { msg: 'The world is round, there is no up or down.' });
-    socket.on('disconnect', function(){console.log('A client has disconnected !');});
-    socket.on('close', function () {console.log("Browser gone.");});
+    L('A client is connected !');
+    socket.on('disconnect', function(){ L('A client has disconnected !'); });
+    socket.on('close', function () { L("Browser gone."); });
 
     socket.on('message', function (str) {
-        
         var ob = JSON.parse(str);
-        console.log("Socket id = " + socket.id);
-        console.log("\n\n Server received from client : " + str);
+        //L("Socket id = " + socket.id);
+        L("\n\n Server received from client : " + str);
 
         console.dir(ob);
-        console.log("ob.type: %s", ob.data.type);
+        L("ob.type: %s", ob.data.type);
 
         switch(ob.data.type) {
 
             case 'type1':
-        //        console.log("Socket id = " + socket.id);
-                console.log("Server @type1 : received from client : " + ob.data.content);
+                L("Server @type1 : received from client : " + ob.data.content);
 
                 inData.forEach(sendBinaryData);
-                console.log("Server sendBinaryData done");
+                L("Server sendBinaryData done");
 
                 break;
 
             case 'type2':
-                console.log("\nServer @type2 : received from client : " + ob.data.content)
+                L("\nServer @type2 : received from client : " + ob.data.content)
                 var number = 0;
                 while (number < 10) {
                     data = {
@@ -25277,7 +25123,7 @@ io.sockets.on('connection', function (socket) {
                         };
 
                     socket.emit('event', { data:data, msg: 'Client ? Want some data ?', num:number });         
-                    console.log( "socket.emit event number " + number);
+                    L( "socket.emit event number " + number);
                     number++;
                 }
 
@@ -25286,16 +25132,120 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('poke', function (message) {
-        console.log('poke event :A client is talking to me ! He says : ' + message);
+        L('poke event :A client is talking to me ! He says : ' + message);
         socket.emit('event', {msg: 'Hi client, I\'m fine, what about you ?'});
 
     }); 
 
-
     function sendBinaryData(item, index) {
         var res = String.fromCharCode(item);
-        console.log(index + " item " + item + " res " + res)
+        L(index + " item " + item + " res " + res)
         socket.emit('data', {data:item, msg:'sending inData', index:index});
-     }
+    }
 
+
+    /***********************/
+    /* Client > RDP server */
+    /***********************/
+    var net = require('net');
+    var tls = require('tls');
+
+    //var targetIp =  '10.10.46.74';
+    var targetIp = '127.0.0.1';
+    var targetPort = process.argv[2] || 3389;
+    var client = new net.Socket({
+        readable: true,
+        writable: true
+    });
+
+    client.setTimeout(30000);
+    client.setNoDelay();
+    client.setEncoding('binary');
+
+    var loc = client.connect(targetPort, targetIp, function() {
+        L('Connected to ' + targetIp);
+        L('Client socket adress : ' + client.address().address + ':' + client.address().port);
+        L('Remote info : ' + client.remoteAddress + ':' + client.remotePort);
+        L('client.fd : ' + client._handle.fd);
+        L('process pid : ' + process.pid);
+
+
+        /* print info client */
+        // console.dir(client);
+
+
+        client.setEncoding('binary');
+//        var buff = new Buffer('\x03\x00\x00\x2C\x27\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x0d\x0a', "binary");
+        var buff = new Buffer([0x03, 0x00, 0x00, 0x2C, 0x27, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69, 0x65, 0x3a, 0x20, 0x6d, 
+                               0x73, 0x74, 0x73, 0x68, 0x61, 0x73, 0x68, 0x3d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 
+                               0x75, 0x72, 0x0d, 0x0a]);
+        client.write(buff);
+        L("client.bytesWritten = " + client.bytesWritten + " and client.bytesRead = " + client.bytesRead);
+
+        client.on('data', function(data) {
+            L('\n Received: ' + data.toString());
+            for(var i=0 ; i< data.length; i++ ) {
+                L("Found: \'"+data[i] + '\'');
+            }
+            L('\n*******************');
+
+            var buff_bin = new Buffer([0x03, 0x00, 0x01, 0x78, 0x02, 0xf0, 0x80, 0x7f, 0x65, 0x82, 0x01, 0x6c, 0x04, 0x01, 0x01, 0x04, 0x01, 0x01, 0x01,
+                                       0x01, 0xff, 0x30, 0x1a, 0x02, 0x01, 0x22, 0x02, 0x01, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x01, 0x00,
+                                       0x02, 0x01, 0x01, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x02, 0x30, 0x19, 0x02, 0x01, 0x01, 0x02, 0x01, 0x01, 
+                                       0x02, 0x01, 0x01, 0x02, 0x01, 0x01, 0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x02, 0x04, 0x20, 0x02, 0x01, 0x02, 
+                                       0x30, 0x1f, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x02, 0xfc, 0x17, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x01, 
+                                       0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x02, 0x04, 0x82, 0x01, 0x07, 0x00, 
+                                       0x05, 0x00, 0x14, 0x7c, 0x00, 0x01, 0x80, 0xfe, 0x00, 0x08, 0x00, 0x10, 0x00, 0x01, 0xc0, 0x00, 0x44, 0x75, 0x63, 
+                                       0x61, 0x80, 0xf0, 0x01, 0xc0, 0xd8, 0x00, 0x04, 0x00, 0x08, 0x00, 0x20, 0x03, 0x58, 0x02, 0x01, 0xca, 0x03, 0xaa, 
+                                       0x4c, 0x00, 0x00, 0x00, 0x28, 0x0a, 0x00, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x01, 0xca, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x07, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+            client.write(buff_bin);
+
+         /* Test ok 
+            var buff_bin2 = new Buffer(inData);
+            client.write(buff_bin2);
+         */
+
+            L("client.bytesWritten = " + client.bytesWritten + " and client.bytesRead = " + client.bytesRead);
+        }); /* client.on('data') */
+
+
+        client.on('clientError', function(err) {
+            L('clientError: ' + err);
+            client.destroy();
+        });
+
+
+        client.on('timeout', function() {
+            L('clientTimeout');
+            client.destroy();
+         })
+
+
+        client.on('end', function() {
+           L('client disconnected from server');
+        });
+
+    }); /* client.connect */ 
+
+}); /* io.sockets.on('connection') */
+
+
+
+/*********************************************************************************************/
+
+// Handle uncaughtExceptions
+process.on('uncaughtException', function (err) {
+    console.error(err.stack);
+    L("Node NOT Exiting...");
 });
+

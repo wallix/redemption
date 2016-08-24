@@ -1604,6 +1604,50 @@ void Front_Qt::draw(const RDP::RAIL::DeletedWindow & order) {
     //this->gd.draw(order);
 }
 
+void Front_Qt::draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "NewOrExistingNotificationIcons" << std::endl;
+    //this->gd.draw(order);
+}
+
+void Front_Qt::draw(const RDP::RAIL::DeletedNotificationIcons & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "DeletedNotificationIcons" << std::endl;
+    //this->gd.draw(order);
+}
+
+void Front_Qt::draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "ActivelyMonitoredDesktop" << std::endl;
+    //this->gd.draw(order);
+}
+
+void Front_Qt::draw(const RDP::RAIL::NonMonitoredDesktop & order) {
+    if (this->verbose > 10) {
+        LOG(LOG_INFO, "--------- FRONT ------------------------");
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "========================================\n");
+    }
+
+    std::cout << "NonMonitoredDesktop" << std::endl;
+    //this->gd.draw(order);
+}
+
 void Front_Qt::draw(const RDPColCache   & cmd) {
     std::cout <<  "RDPColCache " << cmd.cacheIndex << std::endl;
 }

@@ -878,7 +878,7 @@ struct ssh_auth_auto_state_struct {
     }
 };
 
-#include "sashimi/session.hpp"
+#include "sashimi/ssh_session.hpp"
 
 int ssh_poll_ctx_dopoll(struct ssh_poll_ctx_struct * ctx, int timeout);
 int dopoll(ssh_poll_ctx_struct * ctx, int timeout);

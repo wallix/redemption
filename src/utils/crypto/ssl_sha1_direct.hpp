@@ -39,17 +39,65 @@ public:
 
     SslSha1_direct() noexcept
     {
-        this->SHA1Init();
+        /* SHA1 initialization constants */
+        this->ctx.state[0] = 0x67452301;
+        this->ctx.state[1] = 0xEFCDAB89;
+        this->ctx.state[2] = 0x98BADCFE;
+        this->ctx.state[3] = 0x10325476;
+        this->ctx.state[4] = 0xC3D2E1F0;
+
+        this->ctx.count[0] = 0;
+        this->ctx.count[1] = 0;
     }
 
     void update(const uint8_t * const data, size_t data_size) noexcept
     {
-        this->SHA1Update(data, data_size);
+        uint32_t i;
+
+        uint32_t j = this->ctx.count[0];
+        if ((this->ctx.count[0] += data_size << 3) < j){
+            this->ctx.count[1]++;
+        }
+        this->ctx.count[1] += (data_size>>29);
+        j = (j >> 3) & 63;
+        if ((j + data_size) > 63) {
+            memcpy(&this->ctx.buffer[j], data, (i = 64-j));
+            this->SHA1Transform(this->ctx.state, this->ctx.buffer);
+            for ( ; i + 63 < data_size; i += 64) {
+                this->SHA1Transform(this->ctx.state, &data[i]);
+            }
+            j = 0;
+        }
+        else {
+            i = 0;
+        }
+        memcpy(&this->ctx.buffer[j], &data[i], data_size - i);    
     }
 
-    void final(unsigned char digest[DIGEST_LENGTH], size_t data_size) noexcept
+    void final(unsigned char digest[DIGEST_LENGTH]) noexcept
     {
-        this->SHA1Final(digest);
+        /* Add padding and return the message digest. */
+        unsigned char finalcount[8];
+
+        for (unsigned i = 0; i < 8; i++) {
+            finalcount[i] = static_cast<unsigned char>((this->ctx.count[(i >= 4 ? 0 : 1)]
+             >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
+        }
+
+        unsigned char c = 0200;
+        this->update(&c, 1);
+        while ((this->ctx.count[0] & 504) != 448) {
+        c = 0000;
+            this->update(&c, 1);
+        }
+        this->update(finalcount, 8);  /* Should cause a SHA1Transform() */
+        for (unsigned i = 0; i < 20; i++) {
+            digest[i] = static_cast<unsigned char>
+             ((this->ctx.state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
+        }
+        /* Wipe variables */
+        memset(&this->ctx, '\0', sizeof(this->ctx));
+        memset(&finalcount, '\0', sizeof(finalcount));
     }
 
 private:
@@ -137,19 +185,15 @@ private:
     /* Hash a single 512-bit block. This is the core of the algorithm. */
     static void SHA1Transform(uint32_t state[5], const unsigned char buffer[64]) noexcept
     {
-        uint32_t a, b, c, d, e;
-
         unsigned char block[64];
-
         memcpy(block, buffer, 64);
 
-
         /* Copy this->ctx.state[] to working vars */
-        a = state[0];
-        b = state[1];
-        c = state[2];
-        d = state[3];
-        e = state[4];
+        uint32_t a = state[0];
+        uint32_t b = state[1];
+        uint32_t c = state[2];
+        uint32_t d = state[3];
+        uint32_t e = state[4];
         /* 4 rounds of 20 operations each. Loop unrolled. */
         R0(a,b,c,d,e, 0, block); R0(e,a,b,c,d, 1, block); R0(d,e,a,b,c, 2, block); R0(c,d,e,a,b, 3, block);
         R0(b,c,d,e,a, 4, block); R0(a,b,c,d,e, 5, block); R0(e,a,b,c,d, 6, block); R0(d,e,a,b,c, 7, block);
@@ -177,72 +221,6 @@ private:
         state[2] += c;
         state[3] += d;
         state[4] += e;
-    }
-
-
-    /* SHA1Init - Initialize new context */
-    void SHA1Init() noexcept
-    {
-        /* SHA1 initialization constants */
-        this->ctx.state[0] = 0x67452301;
-        this->ctx.state[1] = 0xEFCDAB89;
-        this->ctx.state[2] = 0x98BADCFE;
-        this->ctx.state[3] = 0x10325476;
-        this->ctx.state[4] = 0xC3D2E1F0;
-
-        this->ctx.count[0] = 0;
-        this->ctx.count[1] = 0;
-    }
-
-
-    /* Run your data through this. */
-    void SHA1Update(const unsigned char* data, uint32_t len) noexcept
-    {
-        uint32_t i;
-        uint32_t j;
-
-        j = this->ctx.count[0];
-        if ((this->ctx.count[0] += len << 3) < j)
-        this->ctx.count[1]++;
-        this->ctx.count[1] += (len>>29);
-        j = (j >> 3) & 63;
-        if ((j + len) > 63) {
-            memcpy(&this->ctx.buffer[j], data, (i = 64-j));
-            SHA1Transform(this->ctx.state, this->ctx.buffer);
-            for ( ; i + 63 < len; i += 64) {
-                SHA1Transform(this->ctx.state, &data[i]);
-            }
-            j = 0;
-        }
-        else i = 0;
-        memcpy(&this->ctx.buffer[j], &data[i], len - i);
-    }
-
-
-    /* Add padding and return the message digest. */
-    void SHA1Final(unsigned char digest[DIGEST_LENGTH]) noexcept
-    {
-        unsigned char finalcount[8];
-
-        for (unsigned i = 0; i < 8; i++) {
-            finalcount[i] = static_cast<unsigned char>((this->ctx.count[(i >= 4 ? 0 : 1)]
-             >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
-        }
-
-        unsigned char c = 0200;
-        SHA1Update(&c, 1);
-        while ((this->ctx.count[0] & 504) != 448) {
-        c = 0000;
-            SHA1Update(&c, 1);
-        }
-        SHA1Update(finalcount, 8);  /* Should cause a SHA1Transform() */
-        for (unsigned i = 0; i < 20; i++) {
-            digest[i] = static_cast<unsigned char>
-             ((this->ctx.state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
-        }
-        /* Wipe variables */
-        memset(&this->ctx, '\0', sizeof(this->ctx));
-        memset(&finalcount, '\0', sizeof(finalcount));
     }
 };
 

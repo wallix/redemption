@@ -29,6 +29,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
+#include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 namespace RDP {
 
@@ -69,14 +70,14 @@ class Rectangle {
     uint16_t Bottom = 0;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Left);
         stream.out_uint16_le(this->Top);
         stream.out_uint16_le(this->Right);
         stream.out_uint16_le(this->Bottom);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 8;  // Left(2) + Top(2) + Right(2) + Bottom(2)
@@ -95,14 +96,14 @@ public:
         this->Bottom = stream.in_uint16_le();
     }
 
-    inline static size_t size() {
+    static size_t size() {
         return 8;   /* Left(2) + Top(2) + Right(2) + Bottom(2) */
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
-                       "(Left=%u Top=%u Right=%u Bottom=%u)",
+                       "Rectangle=(Left=%u Top=%u Right=%u Bottom=%u)",
                        unsigned(this->Left), unsigned(this->Top),
                        unsigned(this->Right), unsigned(this->Bottom));
         return ((length < size) ? length : size - 1);
@@ -156,12 +157,7 @@ public:
 // Bpp (1 byte): An unsigned 8-bit integer. The color depth of the icon.
 //  Valid values are as follows:
 
-//  1
-//  4
-//  8
-//  16
-//  24
-//  32
+//  1, 4, 8, 16, 24, 32.
 
 // Width (2 bytes): An unsigned 16-bit integer. The width, in pixels, of the
 //  icon.
@@ -205,8 +201,9 @@ class IconInfo {
 
 public:
     void emit(OutStream & stream) const {
+//const auto save_stream_p = stream.get_current();
         stream.out_uint16_le(this->CacheEntry);
-        stream.out_uint16_le(this->CacheId);
+        stream.out_uint8(this->CacheId);
 
         stream.out_uint8(this->Bpp);
 
@@ -223,12 +220,15 @@ public:
         stream.out_copy_bytes(this->bits_mask.p, this->bits_mask.sz);
         stream.out_copy_bytes(this->color_table.p, this->color_table.sz);
         stream.out_copy_bytes(this->bits_color.p, this->bits_color.sz);
+//LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+//hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }
 
     void receive(InStream & stream) {
+//const auto save_stream_p = stream.get_current();
         {
             const unsigned expected =
-                9;  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
+                8;  // CacheEntry(2) + CacheId(1) + Bpp(1) + Width(2) + Height(2)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -239,7 +239,7 @@ public:
         }
 
         this->CacheEntry = stream.in_uint16_le();
-        this->CacheId    = stream.in_uint16_le();
+        this->CacheId    = stream.in_uint8();
 
         this->Bpp = stream.in_uint8();
 
@@ -296,9 +296,11 @@ public:
 
         this->bits_color = {stream.get_current(), CbBitsColor};
         stream.in_skip_bytes(CbBitsColor);
+//LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+//hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }
 
-    inline size_t size() const {
+    size_t size() const {
         return 9 +  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
             (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? 2 /* CbColorTable(2) */ : 0) +
             4 + // CbBitsMask(2) + CbBitsColor(2)
@@ -310,9 +312,9 @@ public:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        const size_t result = ::snprintf(
+        size_t result = ::snprintf(
             buffer + length, size - length,
-            "(CacheEntry=%u CacheId=%u Bpp=%u Width=%u Height=%u",
+            "IconInfo=(CacheEntry=%u CacheId=%u Bpp=%u Width=%u Height=%u",
             unsigned(this->CacheEntry), unsigned(this->CacheId), unsigned(this->Bpp),
             unsigned(this->Width), unsigned(this->Height));
         length += (
@@ -337,6 +339,9 @@ public:
         str_optional(this->color_table, "CbColorTable");
         str_optional(this->bits_mask,   "CbBitsMask");
         str_optional(this->bits_color,  "CbBitsColor");
+
+        result = ::snprintf(buffer + length, size - length, ")");
+        length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
     }
@@ -372,14 +377,14 @@ class CachedIconInfo {
     uint8_t  CacheId    = 0;
 
 public:
-    inline void emit(OutStream & stream) const {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->CacheEntry);
-        stream.out_uint16_le(this->CacheId);
+        stream.out_uint8(this->CacheId);
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
-            const unsigned expected = 4;  // CacheEntry(2) + CacheId(2)
+            const unsigned expected = 3;  // CacheEntry(2) + CacheId(1)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -390,19 +395,19 @@ public:
         }
 
         this->CacheEntry = stream.in_uint16_le();
-        this->CacheId    = stream.in_uint16_le();
+        this->CacheId    = stream.in_uint8();
     }
 
-    inline static size_t size() {
-        return 4;   // CacheEntry(2) + CacheId(2)
+    static size_t size() {
+        return 3;   // CacheEntry(2) + CacheId(1)
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         const size_t result = ::snprintf(
             buffer + length, size - length,
-            "(CacheEntry=%u CacheId=%u)",
+            "CachedIconInfo=(CacheEntry=%u CacheId=%u)",
             unsigned(this->CacheEntry), unsigned(this->CacheId));
         length += (
                    (result < (size - length)) ?
@@ -454,19 +459,22 @@ class WindowInformationCommonHeader {
     mutable uint32_t   offset_of_OrderSize = 0;
     mutable OutStream* output_stream       = nullptr;
 
-protected:
-    //inline void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
+public:
+    //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
     //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
     //}
 
-    //inline void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
+    //void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    inline void emit_begin(OutStream & stream) const {
+    void emit_begin(OutStream & stream) const {
         REDASSERT(this->output_stream == nullptr);
 
         this->output_stream = &stream;
+
+        uint8_t const controlFlags = SECONDARY | (AltsecDrawingOrderHeader::Window << 2);
+        stream.out_uint8(controlFlags);
 
         this->offset_of_OrderSize = stream.get_offset();
         stream.out_skip_bytes(2); // OrderSize(2)
@@ -475,15 +483,17 @@ protected:
         stream.out_uint32_le(this->WindowId);
     }
 
-    inline void emit_end() const {
+    void emit_end() const {
         REDASSERT(this->output_stream != nullptr);
 
         this->output_stream->set_out_uint16_le(
-            this->output_stream->get_offset() - this->offset_of_OrderSize,
+            this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
             this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
     }
 
-    inline void receive(InStream & stream) {
+    void receive(InStream & stream) {
         {
             const unsigned expected =
                 10;  // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4)
@@ -502,21 +512,20 @@ protected:
         this->WindowId            = stream.in_uint32_le();
     }
 
-    inline static size_t size() {
-        return 6;   // OrderSize(2) + FieldsPresentFlags(2) + WindowId(2)
+    static size_t size() {
+        return 10;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4)
     }
 
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
-                       "(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u)",
+                       "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u)",
                        unsigned(this->OrderSize), this->FieldsPresentFlags_,
                        this->WindowId);
         return ((length < size) ? length : size - 1);
     }
 
-public:
-    inline uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+    uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
 };  // WindowInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.1.2.1 New or Existing Window
@@ -870,7 +879,9 @@ enum {
 //  is greater than 0 and the WINDOW_ORDER_FIELD_VISIBILITY flag is set in
 //  the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
 
-class NewOrExistingWindow : public WindowInformationCommonHeader {
+class NewOrExistingWindow {
+    WindowInformationCommonHeader header;
+
     uint32_t OwnerWindowId = 0;
     uint32_t Style         = 0;
     uint32_t ExtendedStyle = 0;
@@ -910,60 +921,61 @@ class NewOrExistingWindow : public WindowInformationCommonHeader {
 
 public:
     void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+const auto save_stream_p = stream.get_current();
+        this->header.emit_begin(stream);
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             stream.out_uint32_le(this->OwnerWindowId);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             stream.out_uint32_le(this->Style);
             stream.out_uint32_le(this->ExtendedStyle);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             stream.out_uint8(this->ShowState);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             put_non_null_terminated_utf16_from_utf8(
                 stream, this->title_info.data(), this->title_info.size() * 2);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             stream.out_uint32_le(this->ClientOffsetX);
             stream.out_uint32_le(this->ClientOffsetY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             stream.out_uint32_le(this->ClientAreaWidth);
             stream.out_uint32_le(this->ClientAreaHeight);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             stream.out_uint8(this->RPContent);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             stream.out_uint32_le(this->RootParentHandle);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             stream.out_sint32_le(this->WindowOffsetX);
             stream.out_sint32_le(this->WindowOffsetY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             stream.out_sint32_le(this->WindowClientDeltaX);
             stream.out_sint32_le(this->WindowClientDeltaY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             stream.out_uint32_le(this->WindowWidth);
             stream.out_uint32_le(this->WindowHeight);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             stream.out_uint16_le(this->NumWindowRects);
 
             for (Rectangle const & rectangle : this->window_rects) {
@@ -971,12 +983,12 @@ public:
             }
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             stream.out_sint32_le(this->VisibleOffsetX);
             stream.out_sint32_le(this->VisibleOffsetY);
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             stream.out_uint16_le(this->NumVisibilityRects);
 
             for (Rectangle const & rectangle : this->visibility_rects) {
@@ -984,13 +996,16 @@ public:
             }
         }
 
-        WindowInformationCommonHeader::emit_end();
+        this->header.emit_end();
+LOG(LOG_INFO, "Send NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+const auto save_stream_p = stream.get_current();
+        this->header.receive(stream);
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             {
                 const unsigned expected = 4;  // OwnerWindowId(4)
 
@@ -1005,7 +1020,7 @@ public:
             this->OwnerWindowId = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             {
                 const unsigned expected = 8;  // Style(4) + ExtendedStyle(4)
 
@@ -1021,7 +1036,7 @@ public:
             this->ExtendedStyle = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             {
                 const unsigned expected = 1;  // ShowState(1)
 
@@ -1036,7 +1051,7 @@ public:
             this->ShowState = stream.in_uint8();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             {
                 const unsigned expected = 2;  // CbString(2)
 
@@ -1053,13 +1068,13 @@ public:
                 this->title_info, stream, CbString, "NewOrExistingWindow (4)");
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             {
                 const unsigned expected = 8;  // ClientOffsetX(4) + ClientOffsetY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (6): expected=%u remains=%zu",
+                        "Truncated NewOrExistingWindow (5): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1069,13 +1084,13 @@ public:
             this->ClientOffsetY = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             {
                 const unsigned expected = 8;  // ClientAreaWidth(4) + ClientAreaHeight(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (7): expected=%u remains=%zu",
+                        "Truncated NewOrExistingWindow (6): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1085,9 +1100,24 @@ public:
             this->ClientAreaHeight = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             {
                 const unsigned expected = 1;  // RPContent(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (7): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->RPContent = stream.in_uint8();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+            {
+                const unsigned expected = 4;  // RootParentHandle(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -1097,12 +1127,12 @@ public:
                 }
             }
 
-            this->RPContent = stream.in_uint8();
+            this->RootParentHandle = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             {
-                const unsigned expected = 4;  // RootParentHandle(4)
+                const unsigned expected = 8;  // WindowOffsetX(4) + WindowOffsetY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -1112,12 +1142,13 @@ public:
                 }
             }
 
-            this->RootParentHandle = stream.in_uint32_le();
+            this->WindowOffsetX = stream.in_sint32_le();
+            this->WindowOffsetY = stream.in_sint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             {
-                const unsigned expected = 8;  // WindowOffsetX(4) + WindowOffsetY(4)
+                const unsigned expected = 8;  // WindowClientDeltaX(4) + WindowClientDeltaY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -1127,13 +1158,13 @@ public:
                 }
             }
 
-            this->WindowOffsetX = stream.in_sint32_le();
-            this->WindowOffsetY = stream.in_sint32_le();
+            this->WindowClientDeltaX = stream.in_sint32_le();
+            this->WindowClientDeltaY = stream.in_sint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             {
-                const unsigned expected = 8;  // WindowClientDeltaX(4) + WindowClientDeltaY(4)
+                const unsigned expected = 8;  // WindowWidth(4) + WindowHeight(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -1143,33 +1174,17 @@ public:
                 }
             }
 
-            this->WindowClientDeltaX = stream.in_sint32_le();
-            this->WindowClientDeltaY = stream.in_sint32_le();
-        }
-
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
-            {
-                const unsigned expected = 8;  // WindowWidth(4) + WindowHeight(4)
-
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (12): expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RAIL_PDU_TRUNCATED);
-                }
-            }
-
             this->WindowWidth  = stream.in_uint32_le();
             this->WindowHeight = stream.in_uint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             {
                 const unsigned expected = 2;  // NumWindowRects(2)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
+                        "Truncated NewOrExistingWindow (12): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1185,13 +1200,13 @@ public:
             }
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             {
                 const unsigned expected = 8;  // VisibleOffsetX(4) + VisibleOffsetY(4)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (15): expected=%u remains=%zu",
+                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1201,13 +1216,13 @@ public:
             this->VisibleOffsetY = stream.in_sint32_le();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             {
                 const unsigned expected = 2;  // NumVisibilityRects(2)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
-                        "Truncated NewOrExistingWindow (13): expected=%u remains=%zu",
+                        "Truncated NewOrExistingWindow (14): expected=%u remains=%zu",
                         expected, stream.in_remain());
                     throw Error(ERR_RAIL_PDU_TRUNCATED);
                 }
@@ -1222,69 +1237,73 @@ public:
                 this->visibility_rects.push_back(rectangle);
             }
         }
+LOG(LOG_INFO, "Recv NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     size_t size() const {
         size_t count = 0;
 
-        count += WindowInformationCommonHeader::size();
+        count += this->header.size();
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             count += 4; // OwnerWindowId(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             count += 8; // Style(4) + ExtendedStyle(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             count += 1; // ShowState(1)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+            count += 2; // CbString(2)
+
             const size_t maximum_length_of_TitleInfo_in_bytes = this->title_info.length() * 2;
 
-            count += maximum_length_of_TitleInfo_in_bytes; // ShowState(1)
+            count += maximum_length_of_TitleInfo_in_bytes; // TitleInfo(variable)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             count += 8; // ClientOffsetX(4) + ClientOffsetY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             count += 8; // ClientAreaWidth(4) + ClientAreaHeight(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             count += 1; // RPContent(1)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             count += 4; // RootParentHandle(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             count += 8; // WindowOffsetX(4) + WindowOffsetY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             count += 8; // WindowClientDeltaX(4) + WindowClientDeltaY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             count += 8; // WindowWidth(4) + WindowHeight(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             count += 2; // NumWindowRects(2)
             count += this->NumWindowRects * Rectangle::size();
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             count += 8; // VisibleOffsetX(4) + VisibleOffsetY(4)
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             count += 2; // NumVisibilityRects(2)
             count += this->NumVisibilityRects * Rectangle::size();
         }
@@ -1296,104 +1315,113 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "NewOrExistingWindow ");
+        size_t result = ::snprintf(buffer + length, size - length, "NewOrExistingWindow: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
-        result = ::snprintf(buffer + length, size - length, ":");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             result = ::snprintf(buffer + length, size - length, " OwnerWindowId=%u",
                 this->OwnerWindowId);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             result = ::snprintf(buffer + length, size - length, " Style=%u ExtendedStyle=%u",
                 this->Style, this->ExtendedStyle);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             result = ::snprintf(buffer + length, size - length, " ShowState=%u",
                 unsigned(this->ShowState));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             result = ::snprintf(buffer + length, size - length, " TitleInfo=\"%s\"",
                 this->title_info.c_str());
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             result = ::snprintf(buffer + length, size - length, " ClientOffsetX=%d ClientOffsetY=%d",
                 this->ClientOffsetX, this->ClientOffsetY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             result = ::snprintf(buffer + length, size - length, " ClientAreaWidth=%u ClientAreaHeight=%u",
                 this->ClientAreaWidth, this->ClientAreaHeight);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             result = ::snprintf(buffer + length, size - length, " RPContent=%u",
                 unsigned(this->RPContent));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             result = ::snprintf(buffer + length, size - length, " RootParentHandle=%u",
                 this->RootParentHandle);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             result = ::snprintf(buffer + length, size - length, " WindowOffsetX=%d WindowOffsetY=%d",
                 this->WindowOffsetX, this->WindowOffsetY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             result = ::snprintf(buffer + length, size - length, " WindowClientDeltaX=%d WindowClientDeltaY=%d",
                 this->WindowClientDeltaX, this->WindowClientDeltaY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             result = ::snprintf(buffer + length, size - length, " WindowWidth=%u WindowHeight=%u",
                 this->WindowWidth, this->WindowHeight);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             result = ::snprintf(buffer + length, size - length, " WindowRects=(");
             length += ((result < size - length) ? result : (size - length - 1));
 
+            unsigned idx = 0;
             for (Rectangle rectangle : this->window_rects) {
+                if (idx) {
+                    result = ::snprintf(buffer + length, size - length, ", ");
+                    length += ((result < size - length) ? result : (size - length - 1));
+                }
                 length += rectangle.str(buffer + length, size - length);
+                idx++;
             }
 
             result = ::snprintf(buffer + length, size - length, ")");
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             result = ::snprintf(buffer + length, size - length, " VisibleOffsetX=%d VisibleOffsetY=%d",
                 this->VisibleOffsetX, this->VisibleOffsetY);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             result = ::snprintf(buffer + length, size - length, " VisibilityRects=(");
             length += ((result < size - length) ? result : (size - length - 1));
 
+            unsigned idx = 0;
             for (Rectangle rectangle : this->visibility_rects) {
+                if (idx) {
+                    result = ::snprintf(buffer + length, size - length, ", ");
+                    length += ((result < size - length) ? result : (size - length - 1));
+                }
                 length += rectangle.str(buffer + length, size - length);
+                idx++;
             }
 
             result = ::snprintf(buffer + length, size - length, ")");
@@ -1404,7 +1432,7 @@ private:
     }   // str
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -1470,39 +1498,40 @@ enum {
 // IconInfo (variable): Variable length. TS_ICON_INFO structure. Describes
 //  the window's icon.
 
-class WindowIcon : public WindowInformationCommonHeader {
+class WindowIcon {
+    WindowInformationCommonHeader header;
+
     IconInfo icon_info;
 
 public:
-    inline void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+    void emit(OutStream & stream) const {
+        this->header.emit_begin(stream);
 
         this->icon_info.emit(stream);
 
-        WindowInformationCommonHeader::emit_end();
+        this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+    void receive(InStream & stream) {
+        this->header.receive(stream);
 
         this->icon_info.receive(stream);
     }   // receive
 
-    inline size_t size() const {
-        return WindowInformationCommonHeader::size() +
-            this->icon_info.size();
+    size_t size() const {
+        return this->header.size() + this->icon_info.size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "WindowIcon ");
+        size_t result = ::snprintf(buffer + length, size - length, "WindowIcon: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
-        result = ::snprintf(buffer + length, size - length, ":");
+        result = ::snprintf(buffer + length, size - length, " ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         length += this->icon_info.str(buffer + length, size - length);
@@ -1511,7 +1540,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         size_t length = this->str(buffer, sizeof(buffer));
         buffer[length] = '\0';
@@ -1577,39 +1606,40 @@ enum {
 // CachedIcon (3 bytes): Three bytes. TS_CACHED ICON_INFO structure.
 //  Describes a cached icon on the client.
 
-class CachedIcon : public WindowInformationCommonHeader {
+class CachedIcon {
+    WindowInformationCommonHeader header;
+
     CachedIconInfo cached_icon_info;
 
 public:
-    inline void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+    void emit(OutStream & stream) const {
+        this->header.emit_begin(stream);
 
         this->cached_icon_info.emit(stream);
 
-        WindowInformationCommonHeader::emit_end();
+        this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+    void receive(InStream & stream) {
+        this->header.receive(stream);
 
         this->cached_icon_info.receive(stream);
     }   // receive
 
-    inline static size_t size() {
-        return WindowInformationCommonHeader::size() +
-            CachedIconInfo::size();
+    size_t size() const {
+        return this->header.size() + CachedIconInfo::size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "CachedIcon ");
+        size_t result = ::snprintf(buffer + length, size - length, "CachedIcon: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
-        result = ::snprintf(buffer + length, size - length, ":");
+        result = ::snprintf(buffer + length, size - length, " ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         length += this->cached_icon_info.str(buffer + length, size - length);
@@ -1618,7 +1648,7 @@ private:
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
@@ -1663,42 +1693,799 @@ enum {
       WINDOW_ORDER_STATE_DELETED = 0x20000000
 };
 
-class DeletedWindow : public WindowInformationCommonHeader {
-public:
-    inline void emit(OutStream & stream) const {
-        WindowInformationCommonHeader::emit_begin(stream);
+class DeletedWindow {
+    WindowInformationCommonHeader header;
 
-        WindowInformationCommonHeader::emit_end();
+public:
+    void emit(OutStream & stream) const {
+        this->header.emit_begin(stream);
+
+        this->header.emit_end();
     }   // emit
 
-    inline void receive(InStream & stream) {
-        WindowInformationCommonHeader::receive(stream);
+    void receive(InStream & stream) {
+        this->header.receive(stream);
     }   // receive
 
-    inline static size_t size() {
+    static size_t size() {
         return WindowInformationCommonHeader::size();
     }
 
 private:
-    inline size_t str(char * buffer, size_t size) const {
+    size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "DeletedWindow ");
+        size_t result = ::snprintf(buffer + length, size - length, "DeletedWindow: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        length += WindowInformationCommonHeader::str(buffer + length, size - length);
+        length += this->header.str(buffer + length, size - length);
 
         return length;
     }
 
 public:
-    inline void log(int level) const {
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
-};  // CachedIcon
+};  // DeletedWindow
+
+// [MS-RDPERP] - 2.2.1.3.2.1 Common Header (TS_NOTIFYICON_ORDER_HEADER)
+// ====================================================================
+
+// The TS_NOTIFYICON_ORDER_HEADER packet contains information common to every
+//  Windowing Alternate Secondary Drawing Order specifying a notification
+//  icon.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |     Header    |           OrderSize           | FieldsPresent |
+// |               |                               |     Flags     |
+// +---------------+-------------------------------+---------------+
+// |                      ...                      |    WindowId   |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |  NotifyIconId |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |
+// +-----------------------------------------------+
+
+// Header (1 byte): An unsigned 8-bit integer. An Alternate Secondary Order
+//  Header, as specified in [MS-RDPEGDI] section 2.2.2.2.1.3.1.1. The
+//  embedded orderType field MUST be set to 0x0B (TS_ALTSEC_WINDOW).
+
+// OrderSize (2 bytes): An unsigned 16-bit integer. The size, in bytes, of
+//  the entire packet.
+
+// FieldsPresentFlags (4 bytes): An unsigned 32-bit integer. The flags
+//  indicating which fields are present in the packet. See New or Existing
+//  Notification Icons.
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window
+//  owning the notification icon specified in the drawing order. The ID is
+//  generated by the server and is unique for every window in the session.
+
+// NotifyIconId (4 bytes): An unsigned 32-bit integer. The ID of the
+//  notification icon specified in the drawing order. The ID is generated by
+//  the application that owns the notification icon and SHOULD be unique for
+//  every notification icon owned by the application.
+
+class NotificationIconInformationCommonHeader {
+    mutable uint16_t OrderSize           = 0;
+            uint32_t FieldsPresentFlags_ = 0;
+            uint32_t WindowId            = 0;
+            uint32_t NotifyIconId        = 0;
+
+    mutable uint32_t   offset_of_OrderSize = 0;
+    mutable OutStream* output_stream       = nullptr;
+
+public:
+    //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
+    //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
+    //}
+
+    //void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
+    //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
+    //}
+
+    void emit_begin(OutStream & stream) const {
+        REDASSERT(this->output_stream == nullptr);
+
+        this->output_stream = &stream;
+
+        uint8_t const controlFlags = SECONDARY | (AltsecDrawingOrderHeader::Window << 2);
+        stream.out_uint8(controlFlags);
+
+        this->offset_of_OrderSize = stream.get_offset();
+        stream.out_skip_bytes(2); // OrderSize(2)
+
+        stream.out_uint32_le(this->FieldsPresentFlags_);
+        stream.out_uint32_le(this->WindowId);
+        stream.out_uint32_le(this->NotifyIconId);
+    }
+
+    void emit_end() const {
+        REDASSERT(this->output_stream != nullptr);
+
+        this->output_stream->set_out_uint16_le(
+            this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
+            this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected =
+                14;  // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Notification Icon Information Common Header: "
+                        "expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->OrderSize           = stream.in_uint16_le();
+        this->FieldsPresentFlags_ = stream.in_uint32_le();
+        this->WindowId            = stream.in_uint32_le();
+        this->NotifyIconId        = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 14;   // OrderSize(2) + FieldsPresentFlags(4) + WindowId(4) + NotifyIconId(4)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        const size_t length =
+            ::snprintf(buffer, size,
+                       "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u NotifyIconId=%u)",
+                       unsigned(this->OrderSize), this->FieldsPresentFlags_,
+                       this->WindowId, this->NotifyIconId);
+        return ((length < size) ? length : size - 1);
+    }
+
+    uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+};  // NotificationIconInformationCommonHeader
+
+// [MS-RDPERP] - 2.2.1.3.2.2.3 Notification Icon Balloon Tooltip
+//  (TS_NOTIFY_ICON_INFOTIP)
+// =============================================================
+
+// The TS_NOTIFY_ICON_INFOTIP structure specifies the balloon tooltip of a
+//  notification icon.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                            Timeout                            |
+// +---------------------------------------------------------------+
+// |                           InfoFlags                           |
+// +---------------------------------------------------------------+
+// |                     InfoTipText (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                        Title (variable)                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Timeout (4 bytes): An unsigned 32-bit integer. The timeout in milliseconds
+//  for the notification icon’s balloon tooltip. After the specified timeout,
+//  the tooltip SHOULD be destroyed. <9>
+
+// InfoFlags (4 bytes): An unsigned 32-bit integer. The flags that can be set
+//  to add an icon to a balloon tooltip. It is placed to the left of the
+//  title. If the InfoTipText field length is zero-length, the icon is not
+//  shown.
+
+//  +-----------------+--------------------------------------------------------+
+//  | Value           | Meaning                                                |
+//  +-----------------+--------------------------------------------------------+
+//  | NIIF_NONE       | Do not show an icon.                                   |
+//  | 0x00000000      |                                                        |
+//  +-----------------+--------------------------------------------------------+
+//  | NIIF_INFO       | Show an informational icon next to the balloon tooltip |
+//  | 0x00000001      | text.                                                  |
+//  +-----------------+--------------------------------------------------------+
+//  | NIIF_WARNING    | Show a warning icon next to the balloon tooltip text.  |
+//  | 0x00000002      |                                                        |
+//  +-----------------+--------------------------------------------------------+
+//  | NIIF_ERROR      | Show an error icon next to the balloon tooltip text.   |
+//  | 0x00000003      |                                                        |
+//  +-----------------+--------------------------------------------------------+
+//  | NIIF_NOSOUND    | Do not play an associated sound.                       |
+//  | 0x00000010      |                                                        |
+//  +-----------------+--------------------------------------------------------+
+//  | NIIF_LARGE_ICON | Show the large version of the icon.                    |
+//  | 0x00000020      |                                                        |
+//  +-----------------+--------------------------------------------------------+
+
+// InfoTipText (variable): Variable length. A UNICODE_STRING specifying the
+//  text of the balloon tooltip. The maximum length of the tooltip text
+//  string is 510 bytes.
+
+// Title (variable): Variable length. A UNICODE_STRING specifying the title
+//  of the balloon tooltip. The maximum length of the tooltip title string is
+//  126 bytes.
+
+enum {
+      NIIF_NONE       = 0x00000000
+    , NIIF_INFO       = 0x00000001
+    , NIIF_WARNING    = 0x00000002
+    , NIIF_ERROR      = 0x00000003
+    , NIIF_NOSOUND    = 0x00000010
+    , NIIF_LARGE_ICON = 0x00000020
+};
+
+class NotificationIconBalloonTooltip {
+    uint32_t Timeout   = 0;
+    uint32_t InfoFlags = 0;
+
+    std::string info_tip_text;
+    std::string title;
+
+public:
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->Timeout);
+        stream.out_uint32_le(this->InfoFlags);
+
+        put_non_null_terminated_utf16_from_utf8(
+            stream, this->info_tip_text.data(), this->info_tip_text.size() * 2);
+        put_non_null_terminated_utf16_from_utf8(
+            stream, this->title.data(), this->title.size() * 2);
+    }   // emit
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 8;  // Timeout(4) + InfoFlags(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated NotificationIconBalloonTooltip (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->Timeout = stream.in_uint32_le();
+        this->InfoFlags = stream.in_uint32_le();
+
+        {
+            {
+                const unsigned expected = 2;  // CbString(2)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NotificationIconBalloonTooltip (1): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            const uint16_t CbString = stream.in_uint16_le();
+            get_non_null_terminated_utf16_from_utf8(
+                this->info_tip_text, stream, CbString, "NotificationIconBalloonTooltip (2)");
+        }
+
+        {
+            {
+                const unsigned expected = 2;  // CbString(2)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NotificationIconBalloonTooltip (3): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            const uint16_t CbString = stream.in_uint16_le();
+            get_non_null_terminated_utf16_from_utf8(
+                this->title, stream, CbString, "NotificationIconBalloonTooltip (4)");
+        }
+    }   // receive
+
+    size_t size() const {
+        size_t count = 0;
+
+        count += 8; // Timeout(4) + InfoFlags(4)
+
+        {
+            count += 2; // CbString(2)
+
+            const size_t maximum_length_of_InfoTipText_in_bytes = this->info_tip_text.length() * 2;
+
+            count += maximum_length_of_InfoTipText_in_bytes;    // InfoTipText(variable)
+        }
+
+        {
+            count += 2; // CbString(2)
+
+            const size_t maximum_length_of_Title_in_bytes = this->title.length() * 2;
+
+            count += maximum_length_of_Title_in_bytes;          // Title(variable)
+        }
+
+        return count;
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "NotificationIconBalloonTooltip=(");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, "Timeout=%u",
+            this->Timeout);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, " InfoFlags=%u",
+            this->InfoFlags);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, " InfoTipText=\"%s\"",
+            this->info_tip_text.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, " Title=\"%s\")",
+            this->title.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }   // str
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // NotificationIconBalloonTooltip
+
+// [MS-RDPERP] - 2.2.1.3.2.2.1 New or Existing Notification Icons
+// ==============================================================
+
+// The Notification Icon Information Order packet is generated by the server
+//  whenever a new notification icon is created on the server or when an
+//  existing notification icon is updated.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         Hdr (15 bytes)                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |    Version    |
+// |                                               |   (optional)  |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |    ToolTip    |
+// |                                               |   (variable)  |
+// +-----------------------------------------------+---------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                       InfoTip (variable)                      |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                        State (optional)                       |
+// +---------------------------------------------------------------+
+// |                        Icon (variable)                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +-----------------------------------------------+---------------+
+// |             CachedIcon (optional)             |
+// +-----------------------------------------------+
+
+// Hdr (15 bytes): A TS_NOTIFYICON_ORDER_HEADER structure. Common AltSec
+//  Order header. The FieldsPresentFlags field of the header MUST conform to
+//  the values defined as follows.
+
+//  +------------------------------------+-------------------------------------+
+//  | Value                              | Meaning                             |
+//  | WINDOW_ORDER_TYPE_NOTIFY           | Indicates a Windowing Alternate     |
+//  | 0x02000000                         | Secondary Drawing Order specifying  |
+//  |                                    | a notification icon. This flag MUST |
+//  |                                    | be set.                             |
+//  +------------------------------------+-------------------------------------+
+//  | WINDOW_ORDER_STATE_NEW             | Indicates that the Windowing        |
+//  | 0x10000000                         | Alternate Secondary Drawing Order   |
+//  |                                    | contains information for a new      |
+//  |                                    | notification icon. If this flag is  |
+//  |                                    | set, one of the Icon and CachedIcon |
+//  |                                    | fields MUST be present. If this     |
+//  |                                    | flag is not set, the Windowing      |
+//  |                                    | Alternate Secondary Drawing Order   |
+//  |                                    | contains information for an         |
+//  |                                    | existing notification icon.         |
+//  +------------------------------------+-------------------------------------+
+//  | WINDOW_ORDER_FIELD_NOTIFY_VERSION  | Indicates that the Version field is |
+//  | 0x00000008                         | present.                            |
+//  +------------------------------------+-------------------------------------+
+//  | WINDOW_ORDER_FIELD_NOTIFY_TIP      | Indicates that the ToolTip field is |
+//  | 0x00000001                         | present.                            |
+//  +------------------------------------+-------------------------------------+
+//  | WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP | Indicates that the InfoTip field is |
+//  | 0x00000002                         | present.                            |
+//  +------------------------------------+-------------------------------------+
+//  | WINDOW_ORDER_FIELD_NOTIFY_STATE    | Indicates that the State field is   |
+//  | 0x00000004                         | present.                            |
+//  +------------------------------------+-------------------------------------+
+//  | WINDOW_ORDER_ICON                  | Indicates that the Icon field is    |
+//  | 0x40000000                         | present. Either the Icon or the     |
+//  |                                    | CachedIcon field SHOULD be present, |
+//  |                                    | but not both.                       |
+//  +------------------------------------+-------------------------------------+
+//  | WINDOW_ORDER_CACHED_ICON           | Indicates that the CachedIcon field |
+//  | 0x80000000                         | is present. Either the Icon or the  |
+//  |                                    | CachedIcon field SHOULD be present, |
+//  |                                    | but not both. <8>                   |
+//  +------------------------------------+-------------------------------------+
+
+// Version (4 bytes): An unsigned 32-bit integer. Specifies the behavior of
+//  the notification icons. This field is present only if the
+//  WINDOW_ORDER_FIELD_NOTIFY_VERSION flag is set in the FieldsPresentFlags
+//  field of TS_NOTIFYICON_ORDER_HEADER. This field MUST be set to one of the
+//  following values.
+
+//  +-------+----------------------------------------------------------------+
+//  | Value | Meaning                                                        |
+//  +-------+----------------------------------------------------------------+
+//  | 0     | Use this value for applications designed for Windows NT 4.0    |
+//  |       | operating system.                                              |
+//  +-------+----------------------------------------------------------------+
+//  | 3     | Use the Windows 2000 operating system notification icons       |
+//  |       | behavior. Use this value for applications designed for Windows |
+//  |       | 2000 and Windows XP operating system.                          |
+//  +-------+----------------------------------------------------------------+
+//  | 4     | Use the current behavior. Use this value for applications      |
+//  |       | designed for Windows Vista operating system and Windows 7      |
+//  |       | operating system.                                              |
+//  +-------+----------------------------------------------------------------+
+
+//  For more information about notification icons, see [MSDN-SHELLNOTIFY],
+//  the Remarks section.
+
+// ToolTip (variable): Variable length. UNICODE_STRING. Specifies the text of
+//  the notification icon tooltip. This structure is present only if the
+//  WINDOW_ORDER_FIELD_NOTIFY_TIP flag is set in the FieldsPresentFlags field
+//  of TS_NOTIFYICON_ORDER_HEADER.
+
+// InfoTip (variable): Variable length. A TS_NOTIFY_ICON_INFOTIP structure.
+//  Specifies the notification icon’s balloon tooltip. This field SHOULD NOT
+//  be present for icons that follow Windows 95 operating system behavior
+//  (Version = 0). This structure is present only if the
+//  WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP flag is set in the FieldsPresentFlags
+//  field of TS_NOTIFYICON_ORDER_HEADER.
+
+// State (4 bytes): Unsigned 32-bit integer. Specifies the state of the
+//  notification icon. This field SHOULD NOT be present for icons that follow
+//  Windows 95 behavior (Version = 0).
+
+//  This field is present only if the WINDOW_ORDER_FIELD_NOTIFY_STATE flag is
+//  set in the FieldsPresentFlags field of TS_NOTIFYICON_ORDER_HEADER.
+
+//  +-------+----------------------------------+
+//  | Value | Meaning                          |
+//  +-------+----------------------------------+
+//  | 1     | The notification icon is hidden. |
+//  +-------+----------------------------------+
+
+// Icon (variable): Variable length. A TS_ICON_INFO structure. Specifies the
+//  notification icon’s image. This structure is present only if the
+//  WINDOW_ORDER_ICON flag is set in the FieldsPresentFlags field of
+//  TS_NOTIFYICON_ORDER_HEADER.
+
+//  A Notification Icon Order MUST NOT contain both an Icon field and a
+//  CachedIcon field. If the WINDOW_ORDER_STATE_NEW flag is set, either the
+//  Icon field or the CachedIcon field MUST be present.
+
+// CachedIcon (3 bytes): Three bytes. A TS_CACHED_ICON_INFO structure.
+//  Specifies the notification icon as a cached icon on the client.
+
+//  This structure is present only if the WINDOW_ORDER_CACHEDICON flag is set
+//  in the FieldsPresentFlags field of TS_NOTIFYICON_ORDER_HEADER. Only one
+//  of Icon and CachedIcon fields SHOULD be present in the Notification Icon
+//  Order. If the WINDOW_ORDER_STATE_NEW flag is set, only one of these
+//  fields MUST be present.
+
+enum {
+      WINDOW_ORDER_TYPE_NOTIFY           = 0x02000000
+    //, WINDOW_ORDER_STATE_NEW             = 0x10000000
+    , WINDOW_ORDER_FIELD_NOTIFY_VERSION  = 0x00000008
+    , WINDOW_ORDER_FIELD_NOTIFY_TIP      = 0x00000001
+    , WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP = 0x00000002
+    , WINDOW_ORDER_FIELD_NOTIFY_STATE    = 0x00000004
+    //, WINDOW_ORDER_ICON                  = 0x40000000
+    , WINDOW_ORDER_CACHED_ICON           = 0x80000000
+};
+
+class NewOrExistingNotificationIcons {
+    NotificationIconInformationCommonHeader header;
+
+    uint32_t Version;
+
+    std::string tool_tip;
+
+    NotificationIconBalloonTooltip info_tip;
+
+    uint32_t State;
+
+    IconInfo icon;
+
+    CachedIconInfo cached_icon;
+
+public:
+    void emit(OutStream & stream) const {
+        this->header.emit_begin(stream);
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
+            stream.out_uint32_le(this->Version);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_TIP) {
+            put_non_null_terminated_utf16_from_utf8(
+                stream, this->tool_tip.data(), this->tool_tip.size() * 2);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) {
+            this->info_tip.emit(stream);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_STATE) {
+            stream.out_uint32_le(this->State);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_ICON) {
+            this->icon.emit(stream);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_CACHEDICON) {
+            this->cached_icon.emit(stream);
+        }
+
+        this->header.emit_end();
+    }   // emit
+
+    void receive(InStream & stream) {
+        this->header.receive(stream);
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
+            {
+                const unsigned expected = 4;  // Version(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingNotificationIcons (0): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->Version = stream.in_uint32_le();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_TIP) {
+            {
+                const unsigned expected = 2;  // CbString(2)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingNotificationIcons (1): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            const uint16_t CbString = stream.in_uint16_le();
+            get_non_null_terminated_utf16_from_utf8(
+                this->tool_tip, stream, CbString, "NewOrExistingNotificationIcons (2)");
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) {
+            this->info_tip.receive(stream);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_STATE) {
+            {
+                const unsigned expected = 4;  // State(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingNotificationIcons (3): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->State = stream.in_uint32_le();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_ICON) {
+            this->icon.receive(stream);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_CACHEDICON) {
+            this->cached_icon.receive(stream);
+        }
+    }   // receive
+
+    size_t size() const {
+        size_t count = 0;
+
+        count += this->header.size();
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
+            count += 4; // Version(4)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_TIP) {
+            count += 2; // CbString(2)
+
+            const size_t maximum_length_of_ToolTip_in_bytes = this->tool_tip.length() * 2;
+
+            count += maximum_length_of_ToolTip_in_bytes;    // ToolTip(variable)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) {
+            count += this->info_tip.size(); // InfoTip(variable)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_STATE) {
+            count += 4; // State(4)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_ICON) {
+            count += this->icon.size(); // Icon(variable)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_CACHEDICON) {
+            count += 3; // CachedIcon(3)
+        }
+
+        return count;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "NewOrExistingNotificationIcons: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        length += this->header.str(buffer + length, size - length);
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
+            result = ::snprintf(buffer + length, size - length, " Version=%u",
+                this->Version);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_TIP) {
+            result = ::snprintf(buffer + length, size - length, " ToolTip=\"%s\"",
+                this->tool_tip.c_str());
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) {
+            length += this->info_tip.str(buffer + length, size - length);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_STATE) {
+            result = ::snprintf(buffer + length, size - length, " State=%u",
+                this->State);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_ICON) {
+            length += this->icon.str(buffer + length, size - length);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_CACHEDICON) {
+            length += this->cached_icon.str(buffer + length, size - length);
+        }
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // NewOrExistingNotificationIcons
+
+// [MS-RDPERP] - 2.2.1.3.2.2.2 Deleted Notification Icons
+// ======================================================
+
+// The server generates a Notification Icon Information (section 2.2.1.3.2)
+//  order packet whenever an existing notification icon is deleted on the
+//  server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                         Hdr (15 bytes)                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +-----------------------------------------------+---------------+
+// |                                               |
+// +-----------------------------------------------+
+
+// Hdr (15 bytes): A TS_NOTIFYICON_ORDER_HEADER (section 2.2.1.3.2.1)
+//  structure. The FieldsPresentFlags field of the header MUST be constructed
+//  using the following values.
+
+//  +----------------------------+--------------------------------------------+
+//  | Value                      | Meaning                                    |
+//  +----------------------------+--------------------------------------------+
+//  | 0x02000000                 | Indicates an order specifying a            |
+//  | WINDOW_ORDER_TYPE_NOTIFY   | notification icon. This flag MUST be set.  |
+//  +----------------------------+--------------------------------------------+
+//  | 0x20000000                 | Indicates that the window is deleted. This |
+//  | WINDOW_ORDER_STATE_DELETED | flag MUST be set, and the order MUST NOT   |
+//  |                            | contain any other information.             |
+//  +----------------------------+--------------------------------------------+
+
+
+//enum {
+//      WINDOW_ORDER_STATE_DELETED = 0x20000000
+//};
+
+class DeletedNotificationIcons {
+    NotificationIconInformationCommonHeader header;
+
+public:
+    void emit(OutStream & stream) const {
+        this->header.emit_begin(stream);
+
+        this->header.emit_end();
+    }   // emit
+
+    void receive(InStream & stream) {
+        this->header.receive(stream);
+    }   // receive
+
+    static size_t size() {
+        return NotificationIconInformationCommonHeader::size();
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "DeletedNotificationIcons: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        length += this->header.str(buffer + length, size - length);
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // DeletedNotificationIcons
 
 // [MS-RDPERP] - 2.2.1.3.3.1 Common Header (TS_DESKTOP_ORDER_HEADER)
 // =================================================================
@@ -1727,6 +2514,398 @@ public:
 //  indicating which fields are present in the packet. See Actively Monitored
 //  Desktop for values and use.
 
+class DesktopInformationCommonHeader {
+    mutable uint16_t OrderSize           = 0;
+            uint32_t FieldsPresentFlags_ = 0;
+
+    mutable uint32_t   offset_of_OrderSize = 0;
+    mutable OutStream* output_stream       = nullptr;
+
+public:
+    //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
+    //    this->FieldsPresentFlags_ |= FieldsPresentFlagsToAdd;
+    //}
+
+    //void RemoveFieldsPresentFlags(uint32_t FieldsPresentFlagsToRemove) {
+    //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
+    //}
+
+    void emit_begin(OutStream & stream) const {
+        REDASSERT(this->output_stream == nullptr);
+
+        this->output_stream = &stream;
+
+        uint8_t const controlFlags = SECONDARY | (AltsecDrawingOrderHeader::Window << 2);
+        stream.out_uint8(controlFlags);
+
+        this->offset_of_OrderSize = stream.get_offset();
+        stream.out_skip_bytes(2); // OrderSize(2)
+
+        stream.out_uint32_le(this->FieldsPresentFlags_);
+    }
+
+    void emit_end() const {
+        REDASSERT(this->output_stream != nullptr);
+
+        this->output_stream->set_out_uint16_le(
+            this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
+            this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected =
+                6;  // OrderSize(2) + FieldsPresentFlags(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Window Information Common Header: "
+                        "expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->OrderSize           = stream.in_uint16_le();
+        this->FieldsPresentFlags_ = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 6;   // OrderSize(2) + FieldsPresentFlags(4)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        const size_t length =
+            ::snprintf(buffer, size,
+                       "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X)",
+                       unsigned(this->OrderSize), this->FieldsPresentFlags_);
+        return ((length < size) ? length : size - 1);
+    }
+
+    uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+};  // DesktopInformationCommonHeader
+
+// [MS-RDPERP] - 2.2.1.3.3.2.1 Actively Monitored Desktop
+// ======================================================
+
+// The Actively Monitored Desktop packet contains information about the
+//  actively monitored desktop.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +-----------------------------------------------+---------------+
+// |                      ...                      | ActiveWindowId|
+// |                      ...                      |   (optional)  |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |  NumWindowIds |
+// |                      ...                      |   (optional)  |
+// +-----------------------------------------------+---------------+
+// |                      WindowIds (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Hdr (7 bytes): Seven bytes. A TS_DESKTOP_ORDER_HEADER header. The
+//  FieldsPresentFlags field of the header MUST be constructed using the
+//  following values.
+
+//  +------------------------------------------+-----------------------------------+
+//  | Value                                    | Meaning                           |
+//  +------------------------------------------+-----------------------------------+
+//  | 0x04000000                               | Indicates an order specifyinga    |
+//  | WINDOW_ORDER_TYPE_DESKTOP                | desktop. This flag MUST be set.   |
+//  +------------------------------------------+-----------------------------------+
+//  | 0x00000002                               | Indicates that the server will be |
+//  | WINDOW_ORDER_FIELD_DESKTOP_HOOKED        | sending information for the       |
+//  |                                          | server's current input desktop.   |
+//  +------------------------------------------+-----------------------------------+
+//  | 0x00000008                               | Indicates that the server is      |
+//  | WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN     | beginning to synchronize          |
+//  |                                          | information with the client after |
+//  |                                          | the client has auto-reconnected   |
+//  |                                          | or the server has just begun      |
+//  |                                          | monitoring a new desktop. If this |
+//  |                                          | flag is set, the                  |
+//  |                                          | WINDOW_ORDER_FIELD_DESKTOP_HOOKED |
+//  |                                          | flag MUST also be set.            |
+//  +------------------------------------------+-----------------------------------+
+//  | 0x00000004                               | Indicates that the server has     |
+//  | WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED | finished synchronizing data after |
+//  |                                          | the client has auto-reconnected   |
+//  |                                          | or the server has just begun      |
+//  |                                          | monitoring a new desktop. The     |
+//  |                                          | client SHOULD assume that any     |
+//  |                                          | window or shell notification icon |
+//  |                                          | not received during the           |
+//  |                                          | synchronization is discarded.     |
+//  |                                          | This flag MUST only be combined   |
+//  |                                          | with the                          |
+//  |                                          | WINDOW_ORDER_TYPE_DESKTOP flag.   |
+//  +------------------------------------------+-----------------------------------+
+//  | 0x00000020                               | Indicates that the ActiveWindowId |
+//  | WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND     | field is present.                 |
+//  +------------------------------------------+-----------------------------------+
+//  | 0x00000010                               | Indicates that the NumWindowIds   |
+//  | WINDOW_ORDER_FIELD_DESKTOP_ZORDER        | field is present. If the          |
+//  |                                          | NumWindowIds field has a value    |
+//  |                                          | greater than 0, the WindowIds     |
+//  |                                          | field MUST also be present.       |
+//  +------------------------------------------+-----------------------------------+
+
+// ActiveWindowId (4 bytes): Optional. An unsigned 32-bit integer. The ID of
+//  the currently active window on the server. This field is present if and
+//  only if the WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND flag is set in the
+//  FieldsPresentFlags field of the TS_DESKTOP_ORDER_HEADER packet (section
+//  2.2.1.3.3.1).
+
+// NumWindowIds (1 byte): Optional. An unsigned 8-bit integer. The number of
+//  top-level windows on the server. This field is present if and only if the
+//  WINDOW_ORDER_FIELD_DESKTOP_ZORDER flag is set in the FieldsPresentFlags
+//  field of the TS_DESKTOP_ORDER_HEADER packet (section 2.2.1.3.3.1).
+
+// WindowIds (variable): Variable length. An array of 4-byte window IDs,
+//  corresponding to the IDs of the top-level windows on the server, ordered
+//  by their Z-order on the server. The number of window IDs in the array is
+//  equal to the value of the NumWindowIds field.
+
+//  This field is present if and only if the NumWindowIds field is greater
+//  than 0 and the WINDOW_ORDER_FIELD_DESKTOP_ZORDER flag is set in the
+//  FieldsPresentFlags field of the TS_DESKTOP_ORDER_HEADER packet (section
+//  2.2.1.3.3.1).
+
+enum {
+      WINDOW_ORDER_TYPE_DESKTOP                = 0x04000000
+    , WINDOW_ORDER_FIELD_DESKTOP_HOOKED        = 0x00000002
+    , WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN     = 0x00000008
+    , WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED = 0x00000004
+    , WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND     = 0x00000020
+    , WINDOW_ORDER_FIELD_DESKTOP_ZORDER        = 0x00000010
+};
+
+class ActivelyMonitoredDesktop {
+    DesktopInformationCommonHeader header;
+
+    uint32_t ActiveWindowId;
+    uint8_t  NumWindowIds;
+
+    uint32_t window_ids[255];
+
+public:
+    void emit(OutStream & stream) const {
+const auto save_stream_p = stream.get_current();
+        this->header.emit_begin(stream);
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
+            stream.out_uint32_le(this->ActiveWindowId);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
+            stream.out_uint8(this->NumWindowIds);
+
+            for (uint16_t i = 0; i < this->NumWindowIds; ++i) {
+                stream.out_uint32_le(this->window_ids[i]);
+            }
+        }
+
+        this->header.emit_end();
+LOG(LOG_INFO, "Send ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+    }   // emit
+
+    void receive(InStream & stream) {
+const auto save_stream_p = stream.get_current();
+        this->header.receive(stream);
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
+            {
+                const unsigned expected = 4;  // ActiveWindowId(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated ActivelyMonitoredDesktop (0): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->ActiveWindowId = stream.in_uint32_le();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
+            {
+                const unsigned expected = 1;  // NumWindowIds(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated ActivelyMonitoredDesktop (1): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->NumWindowIds = stream.in_uint8();
+
+            {
+                const unsigned expected = this->NumWindowIds * sizeof(uint32_t);    // WindowIds(variable)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated ActivelyMonitoredDesktop (2): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            for (uint16_t i = 0; i < this->NumWindowIds; ++i) {
+                this->window_ids[i] = stream.in_uint32_le();
+            }
+        }
+LOG(LOG_INFO, "Recv ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+    }   // receive
+
+    size_t size() const {
+        size_t count = 0;
+
+        count += this->header.size();
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
+            count += 4; // ActiveWindowId(4)
+        }
+
+        if ((this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) &&
+            this->NumWindowIds) {
+            count += 1; // NumWindowIds(1)
+
+            count += this->NumWindowIds * sizeof(uint32_t); // WindowIds(variable)
+        }
+
+        return count;
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ActivelyMonitoredDesktop: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        length += this->header.str(buffer + length, size - length);
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
+            result = ::snprintf(buffer + length, size - length, " ActiveWindowId=%u",
+                this->ActiveWindowId);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if ((this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) &&
+            this->NumWindowIds) {
+            result = ::snprintf(buffer + length, size - length, " NumWindowIds=%u (",
+                uint(this->NumWindowIds));
+            length += ((result < size - length) ? result : (size - length - 1));
+
+            for (uint16_t i = 0; i < this->NumWindowIds; ++i) {
+                if (i) {
+                    result = ::snprintf(buffer + length, size - length, ", ");
+                    length += ((result < size - length) ? result : (size - length - 1));
+                }
+
+                result = ::snprintf(buffer + length, size - length, "%u",
+                    this->window_ids[i]);
+                length += ((result < size - length) ? result : (size - length - 1));
+            }
+
+            result = ::snprintf(buffer + length, size - length, ")");
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // ActivelyMonitoredDesktop
+
+// [MS-RDPERP] - 2.2.1.3.3.2.2 Non-Monitored Desktop
+// =================================================
+
+// The Non-Monitored Desktop packet is generated by the server when it is not
+//  actively monitoring the current desktop on the server.
+
+// +---------------------------------------------------------------+
+// |                              Hdr                              |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |
+// +-----------------------------------------------+
+
+// Hdr (7 bytes): Seven bytes. A TS_DESKTOP_ORDER_HEADER header. The
+//  FieldsPresentFlags field of the header MUST be constructed using the
+//  following values.
+
+//  +---------------------------------+---------------------------------------+
+//  | Value                           | Meaning                               |
+//  +---------------------------------+---------------------------------------+
+//  | 0x04000000                      | Indicates an order specifying a       |
+//  | WINDOW_ORDER_TYPE_DESKTOP       | desktop. This flag MUST be set.       |
+//  +---------------------------------+---------------------------------------+
+//  | 0x00000001                      | Indicates that the server will not be |
+//  | WINDOW_ORDER_FIELD_DESKTOP_NONE | sending information for the server's  |
+//  |                                 | current input desktop. This flag MUST |
+//  |                                 | be set.                               |
+//  +---------------------------------+---------------------------------------+
+
+enum {
+      WINDOW_ORDER_FIELD_DESKTOP_NONE = 0x00000001
+};
+
+class NonMonitoredDesktop {
+    DesktopInformationCommonHeader header;
+
+public:
+    void emit(OutStream & stream) const {
+        this->header.emit_begin(stream);
+
+        this->header.emit_end();
+    }   // emit
+
+    void receive(InStream & stream) {
+        this->header.receive(stream);
+    }   // receive
+
+    static size_t size() {
+        return DesktopInformationCommonHeader::size();
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        length += this->header.str(buffer + length, size - length);
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};  // NonMonitoredDesktop
+
 }   // namespace RAIL
 }   // namespace RDP
-
