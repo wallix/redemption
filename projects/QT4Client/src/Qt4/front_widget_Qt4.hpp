@@ -253,7 +253,7 @@ public:
                     int scanCode = std::stoi(ligne.substr(0, pos));
                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                     pos = ligne.find(delimiter);
-;
+
                     int ASCII8   = std::stoi(ligne.substr(0, pos));
                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                     pos = ligne.find(delimiter);
@@ -343,7 +343,6 @@ private:
         this->_tableKeySetting->setItem(row, 2, item3);
 
         static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended);
-
     }
 
     void updateKeySetting() {
@@ -383,7 +382,7 @@ public Q_SLOTS:
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
         this->_front->_info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
         this->_front->_monitorCount = this->_front->_info.cs_monitor.monitorCount;
-        this->_front->_info.width   = this->_front->_width; // * this->_front->_monitorCount;
+        this->_front->_info.width   = this->_front->_width * this->_front->_monitorCount;
         this->_front->_info.height  = this->_front->_height;
 
         this->_front->writeClientInfo();
@@ -502,7 +501,7 @@ public:
         std::string name;
         std::string pwd;
         int port;
-    } _accountData[MAX_ACCOUNT_DATA];
+    }                    _accountData[MAX_ACCOUNT_DATA];
     bool                 _pwdCheckBoxChecked;
     int                  _lastTargetIndex;
 
@@ -558,6 +557,7 @@ public:
         this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (pressed()),  this, SLOT (connexionPressed()));
         this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (released()), this, SLOT (connexionReleased()));
         this->_buttonConnexion.setFocusPolicy(Qt::StrongFocus);
+        this->_buttonConnexion.setAutoDefault(true);
 
         QRect rectOptions(QPoint(10, 256), QSize(110, 24));
         this->_buttonOptions.setToolTip(this->_buttonOptions.text());
@@ -624,12 +624,8 @@ public:
             if (this->_accountNB < MAX_ACCOUNT_DATA) {
                 this->_accountNB = accountNB;
             }
-;
-            if (this->_IPCombobox.currentIndex() >= 0) {
-                std::cout << "currentindex=" << this->_IPCombobox.currentIndex() <<  std::endl;
-                this->_IPCombobox.clear();
-            }
 
+            this->_IPCombobox.clear();
             this->_IPCombobox.addItem(QString(""), 0);
             for (int i = 0; i < this->_accountNB; i++) {
                 std::string title(this->_accountData[i].IP + std::string(" - ")+ this->_accountData[i].name);
@@ -668,7 +664,7 @@ public:
     }
 
     std::string get_IPField() {
-        std::string delimiter(" ");
+        std::string delimiter(" - ");
         std::string ip_field_content = this->_IPField.text().toStdString();
         auto pos(ip_field_content.find(delimiter));
         std::string IP  = ip_field_content.substr(0, pos);
@@ -688,6 +684,7 @@ public:
     }
 
 
+
 private Q_SLOTS:
     void targetPicked(int index) {
         if (index == 0) {
@@ -703,6 +700,8 @@ private Q_SLOTS:
             this->set_PWDField(this->_accountData[index].pwd);
             this->set_portField(this->_accountData[index].port);
         }
+
+        this->_buttonConnexion.setFocus();
     }
 
     void connexionPressed() {
@@ -1032,7 +1031,6 @@ class Connector_Qt : public QObject
 Q_OBJECT
 
 public:
-
     Front_Qt                  * _front;
     QSocketNotifier           * _sckRead;
     mod_rdp                   * _callback;
@@ -1047,28 +1045,27 @@ public:
     std::string                 _bufferTypeLongName;
     int                         _cItems;
     TimeSystem                  _timeSystem;
-
     struct {
         uint64_t                   sizes[Front_Qt::LIST_FILES_MAX_SIZE];
         std::string                names[Front_Qt::LIST_FILES_MAX_SIZE];
         std::unique_ptr<uint8_t[]> chunk[Front_Qt::LIST_FILES_MAX_SIZE];
-    } _files_list;
+    }                           _files_list;
 
 
     Connector_Qt(Front_Qt * front, QWidget * parent)
-    : QObject(parent)
-    , _front(front)
-    , _sckRead(nullptr)
-    , _callback(nullptr)
-    , _sck(nullptr)
-    , _client_sck(0)
-    , _clipboard(nullptr)
-    , _local_clipboard_stream(true)
-    , _length(0)
-    , _bufferImage(nullptr)
-    , _bufferTypeID(0)
-    , _bufferTypeLongName("")
-    , _cItems(0)
+        : QObject(parent)
+        , _front(front)
+        , _sckRead(nullptr)
+        , _callback(nullptr)
+        , _sck(nullptr)
+        , _client_sck(0)
+        , _clipboard(nullptr)
+        , _local_clipboard_stream(true)
+        , _length(0)
+        , _bufferImage(nullptr)
+        , _bufferTypeID(0)
+        , _bufferTypeLongName("")
+        , _cItems(0)
     {
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
@@ -1141,7 +1138,7 @@ public:
         const char * localIP(this->_front->_localIP.c_str());
 
         Inifile ini;
-        ini.set<cfg::debug::rdp>(0xffffffff);
+        //ini.set<cfg::debug::rdp>(MODRDP_LOGLEVEL_CLIPRDR);
 
         ModRDPParams mod_rdp_params( name
                                    , pwd
@@ -1162,7 +1159,7 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = 0xffffffff;
+        mod_rdp_params.verbose = MODRDP_LOGLEVEL_CLIPRDR;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -1221,10 +1218,10 @@ public:
         this->_length = 0;
     }
 
-    void send_FormatListPDU(bool isLong) {
-        uint32_t formatIDs[]                  = { this->_bufferTypeID };
-        std::string formatListDataShortName[] = { this->_bufferTypeLongName };
-        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, isLong);
+    void send_FormatListPDU(bool isLongFormat) {
+        uint32_t formatIDs[]                  = { this->_bufferTypeID, Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS };
+        std::string formatListDataShortName[] = { this->_bufferTypeLongName, this->_front->_clipbrd_formats_list.FILECONTENTS};
+        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, isLongFormat);
     }
 
 

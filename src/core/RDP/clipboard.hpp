@@ -666,6 +666,11 @@ struct ServerMonitorReadyPDU : public CliprdrHeader {
 //  names are in ASCII 8 format, then the msgFlags field of the clipHeader
 //  must contain the CB_ASCII_NAMES (0x0004) flag.
 
+enum : int {
+    FORMAT_LIST_MAX_SIZE = 32
+  , SHORT_NAME_MAX_SIZE  = 32
+};
+
 struct FormatListPDU : public CliprdrHeader {
     bool contians_data_in_text_format        = false;
     bool contians_data_in_unicodetext_format = false;
@@ -681,40 +686,47 @@ struct FormatListPDU : public CliprdrHeader {
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
-        stream.out_clear_bytes(32); // formatName(32)
+        stream.out_clear_bytes(SHORT_NAME_MAX_SIZE); // formatName(32)
     }
 
     void emit_short(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
-        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
-        if (formatListData_size > 32) {
-            formatListData_size = 32;
+        if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
+            formatListData_size = FORMAT_LIST_MAX_SIZE;
         }
+
+        this->dataLen_ = formatListData_size * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+
         for (std::size_t i = 0; i < formatListData_size; i++) {
             stream.out_uint32_le(formatListData[i]);
             std::string const & currentStr = formatListDataShortName[i];
-            REDASSERT(currentStr.size() <= 32);
+            REDASSERT(currentStr.size() <= SHORT_NAME_MAX_SIZE);
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
-            stream.out_clear_bytes(32 - currentStr.size()); // formatName(32)
+            stream.out_clear_bytes(SHORT_NAME_MAX_SIZE - currentStr.size()); // formatName(32)
         }
     }
 
     void emit_long(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDatalongName, std::size_t formatListData_size) {
-        this->dataLen_ = 46*formatListData_size;    /* formatId(4) + formatName(42) */
+        if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
+            formatListData_size = FORMAT_LIST_MAX_SIZE;
+        }
+
+        for (std::size_t i = 0; i < formatListData_size; i++) {
+            this->dataLen_ += formatListDatalongName[i].size() + 4;    /* formatId(4) + formatName(variable) */
+        }
+        REDASSERT(this->dataLen_ <= 1024);
         CliprdrHeader::emit(stream);
 
-        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
-        if (formatListData_size > 32) {
-            formatListData_size = 32;
-        }
         for (std::size_t i = 0; i < formatListData_size; i++) {
             stream.out_uint32_le(formatListData[i]);
             std::string const & currentStr = formatListDatalongName[i];
             //REDASSERT(currentStr.size() <= 32);
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
-            stream.out_clear_bytes(42 - currentStr.size()); // formatName(32)
+            //stream.out_clear_bytes(42 - currentStr.size()); // formatName(32)
+            //stream.out_clear_bytes(4);
         }
     }
 
@@ -983,7 +995,7 @@ struct FileContentsRequestPDU : CliprdrHeader {
     : CliprdrHeader( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
-    void emit(OutStream & stream, int streamID, int flag, int lindex, int sizeRequested) {
+    void emit(OutStream & stream, int streamID, int flag, int lindex, uint64_t sizeRequested) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(this->dataLen_);
@@ -1675,7 +1687,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     }
 
     enum : int {
-        FILE_DESCRIPTOR_SIZE = 592
+        FILE_DESCRIPTOR_SIZE = 596
     };
 
     // Files List
@@ -1687,21 +1699,20 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         for (int i = 0; i < cItems; i++) {
             stream.out_uint32_le(FD_SHOWPROGRESSUI |
                                  FD_FILESIZE       |
-                                 //FD_WRITESTIME     |
+                                 FD_WRITESTIME     |
                                  FD_ATTRIBUTES
                                 );
             stream.out_clear_bytes(32);
-            stream.out_uint32_le(FILE_ATTRIBUTE_NORMAL);
+            stream.out_uint32_le(FILE_ATTRIBUTE_ARCHIVE);
             stream.out_clear_bytes(16);
             stream.out_uint64_le(time);
             stream.out_uint32_le(sizesList[i] >> 32);
             stream.out_uint32_le(sizesList[i]);
             size_t size(namesList[i].size());
+            //REDASSERT(namesList[i].size() <= 520);
             stream.out_copy_bytes(namesList[i].data(), size);
-            REDASSERT(namesList[i].size() <= 520);
-            stream.out_clear_bytes(520 - size);
+            stream.out_clear_bytes(524 - size);
         }
-
     }
 
     void emit_text(OutStream & stream, uint32_t length) {
