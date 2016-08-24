@@ -42,12 +42,10 @@ class OutboundConnectionMonitorRules
 
 public:
     OutboundConnectionMonitorRules(
-        const char * comma_separated_notify_rules,
-        const char * comme_separated_block_rules
+        const char * comme_separated_monitoring_rules
     ) {
-        (void)comma_separated_notify_rules;
-        if (comme_separated_block_rules) {
-            const char * rule = comme_separated_block_rules;
+        if (comme_separated_monitoring_rules) {
+            const char * rule = comme_separated_monitoring_rules;
 
             char const RULE_PREFIX_ALLOW[]  = "$allow:";
             char const RULE_PREFIX_NOTIFY[] = "$notify:";

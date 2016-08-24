@@ -28,6 +28,7 @@
 
 #define LOGNULL
 //#define LOGPRINT
+#include "utils/log.hpp"
 
 //#include "path/to/file.hpp"
 #include "utils/bitmap_data_allocator.hpp"

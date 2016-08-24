@@ -27,7 +27,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSslMd4)
 {
-    uint8_t sig[16];
+    uint8_t sig[SslMd4::DIGEST_LENGTH];
     uint8_t data[512] = {
         /* 0000 */ 0xba, 0x96, 0x63, 0xe9, 0x11, 0x42, 0xf1, 0xec,  // ..c..B..
         /* 0008 */ 0x31, 0xed, 0xd5, 0xb4, 0xcd, 0x2e, 0xee, 0x64,  // 1......d
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestSslMd4)
         SslMd4 md;
 
         md.update(data, sizeof(data));
-        md.final(sig, sizeof(sig));
+        md.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestSslMd4)
         md.update(data + 128, 128);
         md.update(data + 256, 128);
         md.update(data + 384, 128);
-        md.final(sig, sizeof(sig));
+        md.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -138,8 +138,8 @@ BOOST_AUTO_TEST_CASE(TestSslHmacMd4)
     // const uint8_t msg[] = "";
     hmac.update(msg, sizeof(msg) - 1);
 
-    uint8_t sig[16];
-    hmac.final(sig, sizeof(sig));
+    uint8_t sig[SslMd4::DIGEST_LENGTH];
+    hmac.final(sig);
     // hexdump96_c(sig, sizeof(sig));
     BOOST_CHECK_EQUAL(memcmp(sig,
                         "\x8d\x33\x66\xc4\x40\xa9\xc6\x51"

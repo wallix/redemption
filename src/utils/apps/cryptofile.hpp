@@ -132,13 +132,13 @@ public:
         {
             SslSha256 sha256;
             sha256.update(derivator, derivator_len);
-            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+            sha256.final(tmp);
         }
         {
             SslSha256 sha256;
             sha256.update(tmp, DERIVATOR_LENGTH);
             sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
-            sha256.final(tmp, SHA256_DIGEST_LENGTH);
+            sha256.final(tmp);
         }
         memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
     }

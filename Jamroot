@@ -132,7 +132,7 @@ explicit install instexe install-bin install-etc install-etc-themes install-shar
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-etc-themes install-share install-lib ;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
-alias libs    : libredver libreddec libredrec ;
+alias libs    : libredrec ;
 
 
 install install-bin
@@ -274,36 +274,6 @@ lib libredrec
         openssl
         crypto
         png
-        z
-        dl
-
-        snappy
-    :
-        $(LIB_DEPENDENCIES)
-    ;
-
-lib libreddec
-    :
-        src/main/do_decrypter.cpp
-        program_options
-
-        openssl
-        crypto
-        z
-        dl
-
-        snappy
-    :
-        $(LIB_DEPENDENCIES)
-    ;
-
-lib libredver
-    :
-        src/main/do_verifier.cpp
-        program_options
-
-        openssl
-        crypto
         z
         dl
 
@@ -493,6 +463,7 @@ unit-test test_make_unique : tests/utils/sugar/test_make_unique.cpp : $(TEST_DEP
 unit-test test_array_view : tests/utils/sugar/test_array_view.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_local_fd : tests/utils/sugar/test_local_fd.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_bytes_t : tests/utils/sugar/test_bytes_t.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_numerics_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions.cpp : $(TEST_DEPENDENCIES) ;
 ## @}
 
 
@@ -871,3 +842,19 @@ unit-test test_meta_protocol11 : tests/test_meta_protocol.c11.cpp crypto libboos
 unit-test test_meta_protocol : tests/test_meta_protocol.c14.cpp crypto libboost_unit_test : <cxxflags>-std=c++14 ;
 
 unit-test test_meta_protocol2 : tests/test_meta_protocol2.cpp : <cxxflags>-std=c++14 ;
+
+explicit server_sc1 client_sc1 ;
+
+exe server_sc1
+    :
+        tests/tcptest/Server_Sc1.cpp
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
+exe client_sc1
+    :
+        tests/tcptest/Client_Sc1.cpp
+    :
+        $(EXE_DEPENDENCIES)
+    ;

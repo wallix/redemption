@@ -539,7 +539,7 @@ struct SshPrivateDSAKey {
                BIO_free(p);
             }
         };
-        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf(b64_key, -1));
+        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf(b64_key, bsize));
         this->dsa = PEM_read_bio_DSAPrivateKey(mem.get(), nullptr, nullptr, nullptr);
         if (this->dsa == nullptr) {
             LOG(LOG_INFO, "Parsing private key: %s", ERR_error_string(ERR_get_error(), nullptr));
@@ -550,7 +550,7 @@ struct SshPrivateDSAKey {
 };
 
 struct SshPrivateRSAKey {
-    RSA *dsa;
+    RSA *rsa;
     SshPrivateRSAKey(char * b64_key, size_t bsize) 
     {
         struct BIO_deleter{
@@ -559,14 +559,13 @@ struct SshPrivateRSAKey {
                BIO_free(p);
             }
         };
-        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf(b64_key, -1));
-        this->dsa = PEM_read_bio_RSAPrivateKey(mem.get(), nullptr, nullptr, nullptr);
-        if (this->dsa == nullptr) {
+        std::unique_ptr<BIO, BIO_deleter> mem(BIO_new_mem_buf(b64_key, bsize));
+        this->rsa = PEM_read_bio_RSAPrivateKey(mem.get(), nullptr, nullptr, nullptr);
+        if (this->rsa == nullptr) {
             LOG(LOG_INFO, "Parsing private key: %s", ERR_error_string(ERR_get_error(), nullptr));
             throw Error(ERR_SSH_PARSE_PRIVATE_RSA_KEY);
         }
     }
-
 };
 
 
@@ -611,6 +610,8 @@ BOOST_AUTO_TEST_CASE(CreateDSAKeyFromPem)
 "wouR8tWcIB8CIFygYTeQaKNq+PuO/IJ3/O6slnMBROzfbo0zIqz4mhB7\n"
 "-----END DSA PRIVATE KEY-----\n";
     OpenSSL_add_all_algorithms();
-    SshPrivateDSAKey privkey(b64_key, sizeof(b64_key));
+    // sizeof-2 because neither \n or trailing zero are necessary
+    // but it also works if they are provided
+    SshPrivateDSAKey privkey(b64_key, sizeof(b64_key)-2);
 
 }

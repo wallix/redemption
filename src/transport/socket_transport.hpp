@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
 #include <cinttypes>
@@ -199,7 +200,7 @@ public:
 
     bool connect() override {
         if (this->sck_closed == 1){
-            this->sck = ip_connect(this->ip_address, this->port, 3, 1000, {});
+            this->sck = ip_connect(this->ip_address, this->port, 3, 1000);
             this->sck_closed = 0;
         }
         return true;
@@ -210,9 +211,9 @@ public:
         int rv = 0;
         fd_set rfds;
 
-        FD_ZERO(&rfds);
+        io_fd_zero(rfds);
         if (this->sck > 0) {
-            FD_SET(this->sck, &rfds);
+            io_fd_set(this->sck, rfds);
             timeval time { 0, 0 };
             rv = select(this->sck + 1, &rfds, nullptr, nullptr, &time); /* don't wait */
             if (rv > 0) {
@@ -231,9 +232,11 @@ public:
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
         }
-        char * start = *pbuffer;
 
+        char * start = *pbuffer;
         ssize_t res = (this->tls) ? this->tls->privrecv_tls(*pbuffer, len) : this->privrecv(*pbuffer, len);
+        //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;
+
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -289,8 +292,8 @@ private:
                     if (try_again(errno)) {
                         fd_set fds;
                         struct timeval time = { 0, 100000 };
-                        FD_ZERO(&fds);
-                        FD_SET(this->sck, &fds);
+                        io_fd_zero(fds);
+                        io_fd_set(this->sck, fds);
                         ::select(this->sck + 1, &fds, nullptr, nullptr, &time);
                         continue;
                     }
@@ -306,6 +309,17 @@ private:
                 default: /* some data received */
                     data += res;
                     remaining_len -= res;
+                    if (remaining_len > 0) {
+                        fd_set fds;
+                        struct timeval time = { 1, 0 };
+                        io_fd_zero(fds);
+                        io_fd_set(this->sck, fds);
+                        if ((::select(this->sck + 1, &fds, nullptr, nullptr, &time) < 1) ||
+                            !io_fd_isset(this->sck, fds)) {
+                            LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes", this->name, this->sck, remaining_len);
+                            return -1;
+                        }
+                    }
                 break;
             }
         }
@@ -322,8 +336,8 @@ private:
                 if (try_again(errno)) {
                     fd_set wfds;
                     struct timeval time = { 0, 10000 };
-                    FD_ZERO(&wfds);
-                    FD_SET(this->sck, &wfds);
+                    io_fd_zero(wfds);
+                    io_fd_set(this->sck, wfds);
                     select(this->sck + 1, nullptr, &wfds, nullptr, &time);
                     continue;
                 }

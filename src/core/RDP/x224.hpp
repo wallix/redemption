@@ -30,7 +30,7 @@
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
-#include "fastpath.hpp"
+#include "core/RDP/fastpath.hpp"
 #include "utils/parse.hpp"
 
 //##############################################################################
@@ -332,8 +332,9 @@ namespace X224
             size_t nbbytes = 0;
             Parse data(*end);
             // TODO We should have less calls to read, one to get length, the other to get data, other short packets are error
-            t.recv(end, 1);
 
+            t.recv(end, 1);
+            
             nbbytes++;
             uint8_t tpkt_version = data.in_uint8();
             int action = tpkt_version & 0x03;

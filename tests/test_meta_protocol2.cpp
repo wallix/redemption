@@ -19,12 +19,16 @@
 
 #include "utils/sugar/array_view.hpp"
 
-namespace proto { namespace ext {
-    // sizeof_, etc
-}}
-
 namespace proto
 {
+    namespace ext
+    {
+        template<class Desc, class T>
+        typename Desc::type
+        adapt(Desc, T x)
+        { return x; }
+    }
+
     template<std::size_t N>
     using size_ = std::integral_constant<std::size_t, N>;
 
@@ -43,7 +47,7 @@ namespace proto
         * fixed width integer types
         * @{
         */
-        template<class T, class Tag> struct integer {};
+        template<class T, class Tag> struct integer { using type = T; };
 
         using s8 = integer<int8_t, void>;
         using u8 = integer<uint8_t, void>;
@@ -65,17 +69,22 @@ namespace proto
         /** @} */
     }
 
-    template<class T, class Tag>
-    struct internal_type<types::integer<T, Tag>>
-    { using type = T; };
-
     namespace types {
         struct u8_or_u16_le { using type = uint16_t; };
-        struct bytes { using type = char const *; };
+        struct bytes { using type = uint8_t const *; };
         struct str8_to_str16 { using type = char const *; };
         template<class T> struct pkt_sz { using type = T; };
         template<class T> struct pkt_sz_with_self { using type = T; };
     }
+
+    namespace ext
+    {
+        inline
+        uint8_t const *
+        adapt(types::bytes, char const * p) noexcept
+        { return reinterpret_cast<uint8_t const *>(p); }
+    }
+
 
     // TODO type_traits { sizeof_, buffer+tag }
 
@@ -150,10 +159,10 @@ namespace proto
         using var_type = var;
 
         template<class U>
-        // TODO is_convertible / adapter
-        constexpr val<Derived, internal_type_t<desc_type>>
-        operator = (U y) const
-        { return {y}; }
+        auto operator = (U y) const
+        //-> val<Derived, decltype(ext::adapt(desc_type{}, y))>
+        -> val<Derived, decltype(ext::adapt(Desc{}, y))>
+        { return {ext::adapt(Desc{}, y)}; }
     };
 
     template<class T>
@@ -164,7 +173,7 @@ namespace proto
     template<class T, class = void> struct check;
     template<class T> struct check<T, std::enable_if_t<T::value>> { constexpr operator bool () { return 0; } };
 
-#define PROTO_CHECKS(Tpl, Ts)             \
+#define PROTO_CHECKS(Tpl, Ts)            \
     (void)::std::initializer_list<bool>{ \
       ::proto::check<Tpl<Ts>>{}...       \
     }
@@ -876,13 +885,9 @@ struct Buferring2
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
             auto av = policy.get_view_buffer(var.x, desc_type<VarInfo>{});
-            buffer.iov_base = av.data();
+            buffer.iov_base = const_cast<uint8_t *>(av.data());
             buffer.iov_len = av.size();
             this->sizes.data[VarInfo::ipacket::value] += av.size();
-
-            // TODO
-            buffer.iov_len = 3;
-            this->sizes.data[VarInfo::ipacket::value] += buffer.iov_len;
             std::cout << "  [size: " << buffer.iov_len << "]\n";
             static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
         }
@@ -924,9 +929,9 @@ struct Buferring2
             using var_info = brigand::front<VarInfos>;
             write_dyn_type(
                 larg<var_info::ivar::value>(arg<var_info::ipacket::value>(pkts...)),
-                [this, &pkts...](array_view_u8 av) {
+                [this, &pkts...](array_view_const_u8 av) {
                     auto & buffer = this->buffers.data[I::value];
-                    buffer.iov_base = av.data();
+                    buffer.iov_base = const_cast<uint8_t *>(av.data());
                     buffer.iov_len = av.size();
                     this->sizes.data[var_info::ipacket::value] += av.size();
                     // TODO
@@ -1039,11 +1044,10 @@ struct stream_protocol_policy
         std::cout << " [static_buffer]";
     }
 
-    template<class T, class Desc>
-    array_view_u8 get_view_buffer(T, Desc)
+    array_view_const_u8 get_view_buffer(uint8_t const * x, proto::types::bytes)
     {
         std::cout << " [view_buffer]";
-        return {};
+        return array_view_const_u8(x, 3u);
     }
 
     template<class T, class Desc>
@@ -1057,7 +1061,7 @@ struct stream_protocol_policy
     void context_dynamic_buffer(F f, T, Desc)
     {
         std::cout << " [dynamic_buffer]";
-        f(array_view_u8{});
+        f(array_view_const_u8{});
     }
 };
 

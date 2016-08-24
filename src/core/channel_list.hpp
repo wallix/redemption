@@ -129,17 +129,17 @@ namespace CHANNELS {
             return channel;
         }
 
-        //const ChannelDef * get_by_id(int chanid) const {
-        //    const ChannelDef * channel = nullptr;
-        //    for (size_t index = 0; index < this->size(); index++) {
-        //        const ChannelDef & item = this->items[index];
-        //        if (item.chanid == chanid) {
-        //            channel = &item;
-        //            break;
-        //        }
-        //    }
-        //    return channel;
-        //}
+        const ChannelDef * get_by_id(int chanid) const {
+           const ChannelDef * channel = nullptr;
+           for (size_t index = 0; index < this->size(); index++) {
+               const ChannelDef & item = this->items[index];
+               if (item.chanid == chanid) {
+                   channel = &item;
+                   break;
+               }
+           }
+           return channel;
+        }
 
         int get_index_by_id(int chanid) const {
             int res = -1;

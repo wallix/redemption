@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::opt_message>(cs);
     ini.set<cfg::context::opt_message>(s);
     ini.set_acl<cfg::context::opt_width>(1);
-    ini.set<cfg::context::outbound_connection_blocking_rules>(cs);
-    ini.set<cfg::context::outbound_connection_blocking_rules>(s);
+    ini.set<cfg::context::outbound_connection_monitoring_rules>(cs);
+    ini.set<cfg::context::outbound_connection_monitoring_rules>(s);
     ini.set_acl<cfg::context::password>(cs);
     ini.set_acl<cfg::context::password>(s);
     ini.set<cfg::context::pattern_kill>(cs);
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::close_timeout>(std::chrono::seconds{1});
     ini.set<cfg::globals::globals::device_id>(cs);
     ini.set<cfg::globals::globals::device_id>(s);
-    ini.set<cfg::globals::globals::disable_proxy_opt>(true);
+    ini.set<cfg::globals::globals::enable_wab_integration>(true);
     ini.set<cfg::globals::globals::enable_bitmap_update>(true);
     ini.set<cfg::globals::globals::enable_close_box>(true);
     ini.set<cfg::globals::globals::enable_ip_transparent>(true);

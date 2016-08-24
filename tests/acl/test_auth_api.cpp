@@ -22,17 +22,18 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXXXXXXXXX
+#define BOOST_TEST_MODULE TestAuthAPI
 #include "system/redemption_unit_tests.hpp"
-
 
 #define LOGNULL
 //#define LOGPRINT
+#include "utils/log.hpp"
 
 #include "acl/auth_api.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXXXXXXXX)
+BOOST_AUTO_TEST_CASE(TestAuthAPI1)
 {
+    LOG(LOG_INFO, "Test not yet implemented");
     BOOST_CHECK(true);
 
     NullAuthentifier nullAuth;

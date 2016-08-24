@@ -48,7 +48,7 @@ public:
         if (key_len > pad_length) {
             Ssl ssl;
             ssl.update(key, key_len);
-            ssl.final(digest, Ssl::DIGEST_LENGTH);
+            ssl.final(digest);
             key_len = Ssl::DIGEST_LENGTH;
             k = digest;
         }
@@ -69,16 +69,16 @@ public:
         context.update(data, data_size);
     }
 
-    void final(uint8_t * out_data, size_t out_data_size)
+    void final(uint8_t * out_data)
     {
-        assert(Ssl::DIGEST_LENGTH == out_data_size);
-        context.final(out_data, Ssl::DIGEST_LENGTH);
+        context.final(out_data);
 
         Ssl ssl;
         ssl.update(this->k_opad, pad_length);
         ssl.update(out_data, Ssl::DIGEST_LENGTH);
-        ssl.final(out_data, Ssl::DIGEST_LENGTH);
+        ssl.final(out_data);
     }
 };
+
 
 }

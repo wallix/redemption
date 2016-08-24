@@ -254,7 +254,7 @@ int main(int argc, char * argv[]) {
                     persistent_key_list_filename.c_str());
             }
 
-            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, {});
+            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000);
             SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
                                      , ini.get<cfg::debug::mod_rdp>(), &ini.get_ref<cfg::context::auth_error_message>());
 
@@ -348,12 +348,12 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             fd_set   rfds;
             fd_set   wfds;
 
-            FD_ZERO(&rfds);
-            FD_ZERO(&wfds);
+            io_fd_zero(rfds);
+            io_fd_zero(wfds);
             struct timeval timeout = time_mark;
 
-            front_event.add_to_fd_set(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
-            mod.get_event().add_to_fd_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
+            front_event.wait_on_fd(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
+            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
             if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
                 timeout.tv_sec  = 0;

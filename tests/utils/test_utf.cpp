@@ -847,3 +847,11 @@ BOOST_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
 
     BOOST_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast("èè"), 0), 0);
 }
+
+BOOST_AUTO_TEST_CASE(TestUTF16StrLen) {
+    BOOST_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x00\x00")), 0);
+
+    BOOST_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00")), 3);
+
+    BOOST_CHECK_EQUAL(UTF16StrLen(byte_ptr_cast("\x31\x00\x30\x00\x30\x00\x00\x00\x31\x00\x30\x00\x30\x00")), 3);
+}

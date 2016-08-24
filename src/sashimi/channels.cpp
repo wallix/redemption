@@ -123,14 +123,12 @@
 
 
 
-#define SOCKOPT_TYPE_ARG4 int
-
 #define RSA_HEADER_BEGIN "-----BEGIN RSA PRIVATE KEY-----"
-#define RSA_HEADER_END "-----END RSA PRIVATE KEY-----"
+//#define RSA_HEADER_END "-----END RSA PRIVATE KEY-----"
 #define DSA_HEADER_BEGIN "-----BEGIN DSA PRIVATE KEY-----"
-#define DSA_HEADER_END "-----END DSA PRIVATE KEY-----"
+//#define DSA_HEADER_END "-----END DSA PRIVATE KEY-----"
 #define ECDSA_HEADER_BEGIN "-----BEGIN EC PRIVATE KEY-----"
-#define ECDSA_HEADER_END "-----END EC PRIVATE KEY-----"
+//#define ECDSA_HEADER_END "-----END EC PRIVATE KEY-----"
 
 
 
@@ -1062,10 +1060,6 @@ struct ssh_config_keyword_table_s {
   const char *name;
   enum ssh_config_opcode_e opcode;
 };
-
-#define KNOWNHOSTS_MAXTYPES 10
-
-
 
 void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents);
 

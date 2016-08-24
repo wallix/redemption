@@ -206,9 +206,7 @@ class Sesman():
             u"rec_path": u'',
             u"is_rec": False,
             u"selector_number_of_pages": 1,
-            u"target_service": u'',
             u"proxy_opt": u'',
-            u"target_port": 3389,
             u"device_id": u'',
             u"session_id": u'',
             u"trace_type": 0,
@@ -219,6 +217,8 @@ class Sesman():
             u"target_application": u'',
             u'target_host': u'',
             u'target_password': u'',
+            u"target_service": u'',
+            u"target_port": 3389,
             u'selector_group_filter': u'',
             u'selector_device_filter': u'',
             u'selector_proto_filter': u'',
@@ -227,6 +227,24 @@ class Sesman():
             u'auth_channel_answer': u'',
             u'auth_channel_result': u'',
             u'auth_channel_target': u'',
+
+            u'pattern_kill': u'',
+            u'pattern_notify': u'',
+            u'reporting': u'',
+            u'target_login': u'',
+            u'target_device': u'',
+            u'proto_dest': u'',
+            u'target_application_account': u'',
+            u'target_application_password': u'',
+            u'rt_display': 0,
+            u'timezone': -3600,
+            u'opt_message': u'',
+
+            u'ticket': u'',
+            u'comment': u'',
+            u'duration': u'',
+            u'showform': False,
+            u'formflag': 0,
             })
         self.engine.reset_proxy_rights()
 
@@ -806,7 +824,7 @@ class Sesman():
                         self.internal_target = True if s[2] == u'INTERNAL' else False
                     self.send_data(data_to_send)
                     self.target_service_name = service_name
-                    self.target_group = s[0].split(';')[0]
+                    self.target_group = s[0]
                     # Logger().info("Only one target : service name %s" % self.target_service_name)
                     _status = True
                 else:
@@ -1302,7 +1320,12 @@ class Sesman():
                         connectionpolicy_kv[u'session_probe_on_keepalive_timeout_disconnect_user']        = session_probe_section.get('on_keepalive_timeout_disconnect_user')
                         connectionpolicy_kv[u'session_probe_end_disconnected_session']= session_probe_section.get('end_disconnected_session')
 
-                        connectionpolicy_kv[u'outbound_connection_blocking_rules'] = session_probe_section.get('outbound_connection_blocking_rules')
+                        connectionpolicy_kv[u'session_probe_disconnected_application_limit']              = session_probe_section.get('disconnected_application_limit')
+                        connectionpolicy_kv[u'session_probe_disconnected_session_limit']                  = session_probe_section.get('disconnected_session_limit')
+                        connectionpolicy_kv[u'session_probe_idle_session_limit']      = session_probe_section.get('idle_session_limit')
+
+                        connectionpolicy_kv[u'outbound_connection_blocking_rules']    = session_probe_section.get('outbound_connection_blocking_rules')
+                        connectionpolicy_kv[u'session_probe_process_monitoring_rules']= session_probe_section.get('process_monitoring_rules')
 
                     server_cert_section = conn_opts.get('server_cert')
                     if server_cert_section is not None:
@@ -1543,16 +1566,22 @@ class Sesman():
                                             result=False, diag=release_reason)
                                     elif _reporting_reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
                                         Logger().info(u'RDP connection terminated. Reason: Session Probe Keepalive missed')
-                                        release_reason = u'Session Probe Keepalive missed'
+                                        release_reason = u'Interrupt: Session Probe Keepalive missed'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_keepalive_missed")})
                                     elif _reporting_reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
                                         Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block outbound connection')
-                                        release_reason = u'Session Probe failed to block outbound connection'
+                                        release_reason = u'Interrupt: Session Probe failed to block outbound connection'
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_outbound_connection_blocking_failed")})
+                                    elif _reporting_reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe failed to block process')
+                                        release_reason = u'Interrupt: Session Probe failed to block process'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_process_blocking_failed")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break
@@ -1670,6 +1699,8 @@ class Sesman():
         elif reason == u'SESSION_PROBE_KEEPALIVE_MISSED':
             pass
         elif reason == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED':
+            pass
+        elif reason == u'SESSION_PROBE_PROCESS_BLOCKING_FAILED':
             pass
         elif reason == u'SERVER_REDIRECTION':
             (nlogin, _, nhost) = message.rpartition('@')

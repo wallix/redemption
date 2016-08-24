@@ -138,7 +138,7 @@ public:
                         "Session Probe is not launched. "
                         "Maybe something blocks it on the target. "
                         "Is the target running under Microsoft Server products? "
-                        "The Command Prompt should be published as the RemoteApp program and accept any command-line parameters."
+                        "The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. "
                         "Please also check the temporary directory to ensure there is enough free space.");
             }
             else {

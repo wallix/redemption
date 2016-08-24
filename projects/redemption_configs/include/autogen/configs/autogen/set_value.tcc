@@ -199,10 +199,10 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
-        else if (0 == strcmp(key, "disable_proxy_opt")) {
+        else if (0 == strcmp(key, "enable_wab_integration")) {
             ::configs::parse_and_log(
                 context, key, 
-                static_cast<cfg::globals::disable_proxy_opt&>(this->variables).value,
+                static_cast<cfg::globals::enable_wab_integration&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -673,6 +673,30 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 context, key, 
                 static_cast<cfg::mod_rdp::session_probe_customize_executable_name&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_disconnected_application_limit")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::mod_rdp::session_probe_disconnected_application_limit&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_disconnected_session_limit")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::mod_rdp::session_probe_disconnected_session_limit&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_idle_session_limit")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::mod_rdp::session_probe_idle_session_limit&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
         }

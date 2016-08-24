@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     s.out_copy_bytes(packet, sizeof(packet));
 
-    uint8_t sig[20];
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig1[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig1);
 
     InStream in_s(s.get_data(), s.get_offset());
     TSRequest ts_req(in_s);
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     BOOST_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
     char message[1024];
-    if (!check_sig(to_send, message, reinterpret_cast<const char *>(sig))){
+    if (!check_sig(to_send, message, reinterpret_cast<const char *>(sig1))){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -101,7 +101,8 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.rewind();
     s.out_copy_bytes(packet2, sizeof(packet2));
 
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig2[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig2);
 
     in_s = InStream(s.get_data(), s.get_offset());
     TSRequest ts_req2(in_s);
@@ -119,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    if (!check_sig(to_send2, message, sig)){
+    if (!check_sig(to_send2, message, sig2)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -205,7 +206,9 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet3, sizeof(packet3));
-    get_sig(s, sig, sizeof(sig));
+
+    uint8_t sig3[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig3);
 
     TSRequest ts_req3;
 
@@ -225,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    if (!check_sig(to_send3, message, sig)){
+    if (!check_sig(to_send3, message, sig3)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -276,7 +279,8 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet4, sizeof(packet4));
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig4[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig4);
 
     in_s = InStream(s.get_data(), s.get_offset());
     TSRequest ts_req4(in_s);
@@ -294,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
 
-    if (!check_sig(to_send4, message, sig)){
+    if (!check_sig(to_send4, message, sig4)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -319,7 +323,8 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet5, sizeof(packet5));
-    get_sig(s, sig, sizeof(sig));
+    uint8_t sig5[SslSha1::DIGEST_LENGTH];
+    get_sig(s, sig5);
 
     in_s = InStream(s.get_data(), s.get_offset());
     TSRequest ts_req5(in_s);
@@ -337,7 +342,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 
     BOOST_CHECK_EQUAL(to_send5.get_offset(), 0x5a + 2);
 
-    if (!check_sig(to_send5, message, sig)){
+    if (!check_sig(to_send5, message, sig5)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

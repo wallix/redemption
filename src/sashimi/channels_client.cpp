@@ -6467,7 +6467,7 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
     {
         SslSha1 sha1;
         sha1.update(blob.data.get(), blob.size);
-        sha1.final(buf, SHA_DIGEST_LENGTH);
+        sha1.final(buf);
         if (hlen){
             *hlen = SHA_DIGEST_LENGTH;
         }
@@ -6477,9 +6477,9 @@ int ssh_get_server_publickey_hash_value_client(const SshClientSession * client_s
     {
         SslMd5 md5;
         md5.update(blob.data.get(), blob.size);
-        md5.final(buf, MD5_DIGEST_LENGTH);
+        md5.final(buf);
         if (hlen){
-            *hlen = MD5_DIGEST_LENGTH;
+            *hlen = SslMd5::DIGEST_LENGTH;
         }
     }
     break;

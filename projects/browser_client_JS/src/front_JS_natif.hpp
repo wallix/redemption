@@ -32,7 +32,6 @@
 #include <math.h>
 
 
-
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -644,6 +643,14 @@ public:
     virtual void draw(const RDP::RAIL::CachedIcon & order) override {}
 
     virtual void draw(const RDP::RAIL::DeletedWindow & order) override {}
+
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {}
+
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {}
+
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {}
+
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {}
 
     virtual void draw(const RDPColCache   & cmd) override {}
 

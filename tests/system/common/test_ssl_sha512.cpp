@@ -27,7 +27,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSslSha512)
 {
-    uint8_t sig[64];
+    uint8_t sig[SslSha512::DIGEST_LENGTH];
 
     uint8_t data[512] = {
         /* 0000 */ 0x86, 0x79, 0x05, 0x32, 0x6c, 0x24, 0x43, 0x02,  // .y.2l$C.
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha512)
         SslSha512 sha512;
 
         sha512.update(data, sizeof(data));
-        sha512.final(sig, sizeof(sig));
+        sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha512)
         sha512.update(data + 128, 128);
         sha512.update(data + 256, 128);
         sha512.update(data + 384, 128);
-        sha512.final(sig, sizeof(sig));
+        sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA512)
     hmac.update(msg, sizeof(msg)-1);
 
     uint8_t sig[SslSha512::DIGEST_LENGTH];
-    hmac.final(sig, SslSha512::DIGEST_LENGTH);
+    hmac.final(sig);
 
     BOOST_CHECK_EQUAL(SslSha512::DIGEST_LENGTH, 64);
 

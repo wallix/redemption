@@ -27,7 +27,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSslSha1)
 {
-    uint8_t sig[20];
+    uint8_t sig[SslSha1::DIGEST_LENGTH];
 
     uint8_t data[512] = {
         /* 0000 */ 0x86, 0x79, 0x05, 0x32, 0x6c, 0x24, 0x43, 0x02,  // .y.2l$C.
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha1)
         SslSha1 sha1;
 
         sha1.update(data, sizeof(data));
-        sha1.final(sig, sizeof(sig));
+        sha1.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestSslSha1)
         sha1.update(data + 128, 128);
         sha1.update(data + 256, 128);
         sha1.update(data + 384, 128);
-        sha1.final(sig, sizeof(sig));
+        sha1.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
         BOOST_CHECK_EQUAL(memcmp(sig,
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA1)
     hmac.update(msg, sizeof(msg)-1);
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
-    hmac.final(sig, SslSha1::DIGEST_LENGTH);
+    hmac.final(sig);
 
     BOOST_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
 
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(TestSslHmacSHA1_bigkey)
     hmac.update(msg, sizeof(msg)-1);
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
-    hmac.final(sig, SslSha1::DIGEST_LENGTH);
+    hmac.final(sig);
 
     BOOST_CHECK_EQUAL(SslSha1::DIGEST_LENGTH, 20);
 
