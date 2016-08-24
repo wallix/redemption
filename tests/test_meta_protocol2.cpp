@@ -39,6 +39,25 @@ namespace proto
     template<class T>
     using internal_type_t = typename internal_type<T>::type;
 
+
+    // TODO type_traits { sizeof_, buffer+tag }
+
+    struct dyn_size {};
+    template<std::size_t i> struct limited_size {};
+
+    namespace tags {
+        class static_buffer {};
+        class dynamic_buffer {};
+        class view_buffer {};
+        class limited_buffer {};
+    }
+
+    template<class T> struct sizeof_impl : sizeof_impl<typename T::desc_type> {};
+    template<class T> using sizeof_ = typename sizeof_impl<T>::type;
+
+    template<class T> struct buffer_category_impl : buffer_category_impl<typename T::desc_type> {};
+    template<class T> using buffer_category = typename buffer_category_impl<T>::type;
+
     namespace types {
         class le_tag {};
         class be_tag {};
@@ -68,11 +87,26 @@ namespace proto
         using u64_le = integer<uint64_t, le_tag>;
         /** @} */
 
-        struct u8_or_u16_le { using type = uint16_t; };
         struct bytes { using type = array_view_const_u8; };
         struct str8_to_str16 { using type = char const *; };
         template<class T> struct pkt_sz { using type = T; };
         template<class T> struct pkt_sz_with_self { using type = T; };
+
+        template<class Cond, class T, class U>
+        struct if_ { };
+
+        namespace detail {
+            template<long long n>
+            struct less_than {
+                constexpr less_than() {}
+                template<class T> constexpr bool operator()(T i) const { return i < n; }
+            };
+        }
+        template<long long LessThan, class TInt, class UInt>
+        using variable_integer = if_<detail::less_than<LessThan>, TInt, UInt>;
+
+        //struct u8_or_u16_le { using type = uint16_t; };
+        using u8_or_u16_le = variable_integer<128, u8, u16_le>;
     }
 
     namespace ext
@@ -81,42 +115,78 @@ namespace proto
         array_view_const_u8
         adapt(types::bytes, array_view_const_char av) noexcept
         { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
+
+        // TODO
+        template<class T>
+        inline uint16_t
+        adapt(types::u8_or_u16_le, T i) noexcept
+        { return i; }
     }
 
 
-    // TODO type_traits { sizeof_, buffer+tag }
 
-    struct dyn_size {};
-    template<std::size_t i> struct limited_size {};
     namespace detail {
-        template<class T> struct sizeof_ : sizeof_<typename T::desc_type> {};
-        template<class T, class Endianess> struct sizeof_<types::integer<T, Endianess>> : size_<sizeof(T)> {};
-        template<> struct sizeof_<types::u8_or_u16_le> { using type = /*dyn_size*/limited_size<sizeof(uint16_t)>; };
-        template<> struct sizeof_<types::bytes> { using type = dyn_size; };
-        template<> struct sizeof_<types::str8_to_str16> { using type = dyn_size; };
-        template<class T> struct sizeof_<types::pkt_sz<T>> : sizeof_<T> {};
-        template<class T> struct sizeof_<types::pkt_sz_with_self<T>> : sizeof_<T> {};
+        template<class T, class U> struct common_size;
+
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<size_<n1>, size_<n2>> { using type = size_<n1+n2>; };
+
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<limited_size<n1>, limited_size<n2>> { using type = limited_size<n1+n2>; };
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<size_<n1>, limited_size<n2>> { using type = limited_size<n1+n2>; };
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<limited_size<n1>, size_<n2>> { using type = limited_size<n1+n2>; };
+
+        template<class T> struct common_size<T, dyn_size> { using type = dyn_size; };
+        template<class U> struct common_size<dyn_size, U> { using type = dyn_size; };
+        template<> struct common_size<dyn_size, dyn_size> { using type = dyn_size; };
     }
-    template<class T> using sizeof_ = typename detail::sizeof_<T>::type;
 
-    namespace tags {
-        class static_buffer {};
-        class dynamic_buffer {};
-        class view_buffer {};
-        class limited_buffer {};
+    template<class T, class Endianess> struct sizeof_impl<types::integer<T, Endianess>> : size_<sizeof(T)> {};
+
+    template<> struct sizeof_impl<types::bytes> { using type = dyn_size; };
+    template<> struct sizeof_impl<types::str8_to_str16> { using type = dyn_size; };
+    template<class T> struct sizeof_impl<types::pkt_sz<T>> : sizeof_impl<T> {};
+    template<class T> struct sizeof_impl<types::pkt_sz_with_self<T>> : sizeof_impl<T> {};
+
+    namespace detail {
+        template<class, class, class, class> struct common_buffer { using type = tags::dynamic_buffer; };
+
+        template<class T, class U, class Tag>
+        struct common_buffer<T, U, Tag, Tag> { using type = T; };
+
+        template<class T, class U>
+        struct common_buffer<T, U, tags::static_buffer, tags::static_buffer>
+        : std::conditional<std::is_same<sizeof_<T>, sizeof_<U>>{}, tags::static_buffer, tags::limited_buffer>
+        {};
+
+        template<class T, class U>
+        struct common_buffer<T, U, tags::static_buffer, tags::limited_buffer>
+        { using type = tags::limited_buffer; };
+        template<class T, class U>
+        struct common_buffer<T, U, tags::limited_buffer, tags::static_buffer>
+        { using type = tags::limited_buffer; };
     }
 
-    template<class T> struct buffer_category : buffer_category<typename T::desc_type> {};
-    template<> struct buffer_category<types::u8> { using type = tags::static_buffer; };
-    template<> struct buffer_category<types::u16_le> { using type = tags::static_buffer; };
-    template<> struct buffer_category<types::u8_or_u16_le> { using type = tags::limited_buffer; };
-    template<> struct buffer_category<types::bytes> { using type = tags::view_buffer; };
-    template<> struct buffer_category<types::str8_to_str16> { using type = tags::dynamic_buffer; };
-    template<class T> struct buffer_category<types::pkt_sz<T>> : buffer_category<T> {};
-    template<class T> struct buffer_category<types::pkt_sz_with_self<T>> : buffer_category<T> {};
-    template<class T> using buffer_category_t = typename buffer_category<T>::type;
+    template<> struct buffer_category_impl<types::u8> { using type = tags::static_buffer; };
+    template<> struct buffer_category_impl<types::u16_le> { using type = tags::static_buffer; };
+    template<> struct buffer_category_impl<types::u8_or_u16_le> { using type = tags::limited_buffer; };
+    template<> struct buffer_category_impl<types::bytes> { using type = tags::view_buffer; };
+    template<> struct buffer_category_impl<types::str8_to_str16> { using type = tags::dynamic_buffer; };
+    template<class T> struct buffer_category_impl<types::pkt_sz<T>> : buffer_category_impl<T> {};
+    template<class T> struct buffer_category_impl<types::pkt_sz_with_self<T>> : buffer_category_impl<T> {};
 
-    template<std::size_t n> using mk_iseq = std::make_integer_sequence<std::size_t, n>;
+
+    template<class Cond, class T, class U>
+    struct sizeof_impl<types::if_<Cond, T, U>>
+    : detail::common_size<sizeof_<T>, sizeof_<U>>
+    {};
+
+    template<class Cond, class T, class U>
+    struct buffer_category_impl<types::if_<Cond, T, U>>
+    : detail::common_buffer<T, U, buffer_category<T>, buffer_category<U>>
+    {};
 
 
     namespace detail {
@@ -218,6 +288,8 @@ namespace proto
 
     template<class T, class = void>
     using enable_type = T;
+
+    template<std::size_t n> using mk_iseq = std::make_integer_sequence<std::size_t, n>;
 
     template<class... Ts>
     struct packet_description
@@ -324,10 +396,10 @@ namespace detail {
     template<class T> using is_view_buffer = std::is_same<T, proto::tags::view_buffer>;
     template<class T> using is_limited_buffer = std::is_same<T, proto::tags::limited_buffer>;
 }
-template<class T> using is_static_buffer = typename detail::is_static_buffer<proto::buffer_category_t<T>>::type;
-template<class T> using is_dynamic_buffer = typename detail::is_dynamic_buffer<proto::buffer_category_t<T>>::type;
-template<class T> using is_view_buffer = typename detail::is_view_buffer<proto::buffer_category_t<T>>::type;
-template<class T> using is_limited_buffer = typename detail::is_limited_buffer<proto::buffer_category_t<T>>::type;
+template<class T> using is_static_buffer = typename detail::is_static_buffer<proto::buffer_category<T>>::type;
+template<class T> using is_dynamic_buffer = typename detail::is_dynamic_buffer<proto::buffer_category<T>>::type;
+template<class T> using is_view_buffer = typename detail::is_view_buffer<proto::buffer_category<T>>::type;
+template<class T> using is_limited_buffer = typename detail::is_limited_buffer<proto::buffer_category<T>>::type;
 
 
 struct Printer
@@ -828,7 +900,7 @@ struct Buferring2
             std::cout << "-------\n";
             (void)std::initializer_list<int>{(void(
                 this->write_type(
-                    proto::buffer_category_t<VarInfos>{}, VarInfos{}, buffer,
+                    proto::buffer_category<VarInfos>{}, VarInfos{}, buffer,
                     larg<VarInfos::ivar::value>(arg<VarInfos::ipacket::value>(pkts...)))
             ), 1)...};
         }
@@ -1067,11 +1139,18 @@ struct stream_protocol_policy
         return av;
     }
 
-    template<class T, class Desc>
-    std::size_t write_limited_buffer(uint8_t *, T, Desc)
+    template<class T, class Cond, class True, class False>
+    std::size_t write_limited_buffer(uint8_t * p, T val, proto::types::if_<Cond, True, False>)
     {
-        std::cout << " [limited_buffer]";
-        return {};
+        std::cout << " [limited_buffer] [test: " << Cond{}(val) << "]";
+        if (Cond{}(val)) {
+            write_static_buffer(p, typename True::type(val), True{});
+            return proto::sizeof_<True>{};
+        }
+        else {
+            write_static_buffer(p, typename False::type(val), False{});
+            return proto::sizeof_<False>{};
+        }
     }
 
     template<class F, class T, class Desc>
