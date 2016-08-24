@@ -55,7 +55,13 @@ namespace proto
     template<class T> struct sizeof_impl : sizeof_impl<typename T::desc_type> {};
     template<class T> using sizeof_ = typename sizeof_impl<T>::type;
 
-    template<class T> struct buffer_category_impl : buffer_category_impl<typename T::desc_type> {};
+    namespace detail {
+        template<class T> struct sizeof_to_buffer_cat { using type = tags::dynamic_buffer; };
+        template<std::size_t n> struct sizeof_to_buffer_cat<size_<n>> { using type = tags::static_buffer; };
+        template<std::size_t n> struct sizeof_to_buffer_cat<limited_size<n>> { using type = tags::limited_buffer; };
+    }
+
+    template<class T> struct buffer_category_impl : detail::sizeof_to_buffer_cat<sizeof_<T>> {};
     template<class T> using buffer_category = typename buffer_category_impl<T>::type;
 
     namespace types {
@@ -124,25 +130,6 @@ namespace proto
     }
 
 
-
-    namespace detail {
-        template<class T, class U> struct common_size;
-
-        template<std::size_t n1, std::size_t n2>
-        struct common_size<size_<n1>, size_<n2>> { using type = size_<n1+n2>; };
-
-        template<std::size_t n1, std::size_t n2>
-        struct common_size<limited_size<n1>, limited_size<n2>> { using type = limited_size<n1+n2>; };
-        template<std::size_t n1, std::size_t n2>
-        struct common_size<size_<n1>, limited_size<n2>> { using type = limited_size<n1+n2>; };
-        template<std::size_t n1, std::size_t n2>
-        struct common_size<limited_size<n1>, size_<n2>> { using type = limited_size<n1+n2>; };
-
-        template<class T> struct common_size<T, dyn_size> { using type = dyn_size; };
-        template<class U> struct common_size<dyn_size, U> { using type = dyn_size; };
-        template<> struct common_size<dyn_size, dyn_size> { using type = dyn_size; };
-    }
-
     template<class T, class Endianess> struct sizeof_impl<types::integer<T, Endianess>> : size_<sizeof(T)> {};
 
     template<> struct sizeof_impl<types::bytes> { using type = dyn_size; };
@@ -150,42 +137,33 @@ namespace proto
     template<class T> struct sizeof_impl<types::pkt_sz<T>> : sizeof_impl<T> {};
     template<class T> struct sizeof_impl<types::pkt_sz_with_self<T>> : sizeof_impl<T> {};
 
-    namespace detail {
-        template<class, class, class, class> struct common_buffer { using type = tags::dynamic_buffer; };
 
-        template<class T, class U, class Tag>
-        struct common_buffer<T, U, Tag, Tag> { using type = T; };
-
-        template<class T, class U>
-        struct common_buffer<T, U, tags::static_buffer, tags::static_buffer>
-        : std::conditional<std::is_same<sizeof_<T>, sizeof_<U>>{}, tags::static_buffer, tags::limited_buffer>
-        {};
-
-        template<class T, class U>
-        struct common_buffer<T, U, tags::static_buffer, tags::limited_buffer>
-        { using type = tags::limited_buffer; };
-        template<class T, class U>
-        struct common_buffer<T, U, tags::limited_buffer, tags::static_buffer>
-        { using type = tags::limited_buffer; };
-    }
-
-    template<> struct buffer_category_impl<types::u8> { using type = tags::static_buffer; };
-    template<> struct buffer_category_impl<types::u16_le> { using type = tags::static_buffer; };
-    template<> struct buffer_category_impl<types::u8_or_u16_le> { using type = tags::limited_buffer; };
     template<> struct buffer_category_impl<types::bytes> { using type = tags::view_buffer; };
-    template<> struct buffer_category_impl<types::str8_to_str16> { using type = tags::dynamic_buffer; };
-    template<class T> struct buffer_category_impl<types::pkt_sz<T>> : buffer_category_impl<T> {};
-    template<class T> struct buffer_category_impl<types::pkt_sz_with_self<T>> : buffer_category_impl<T> {};
 
+    namespace detail {
+        template<class T, class U> struct common_size;
+
+        template<std::size_t n>
+        struct common_size<size_<n>, size_<n>> { using type = size_<n>; };
+
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<size_<n1>, size_<n2>> { using type = limited_size<std::max(n1, n2)>; };
+
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<limited_size<n1>, limited_size<n2>> { using type = limited_size<std::max(n1, n2)>; };
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<size_<n1>, limited_size<n2>> { using type = limited_size<std::max(n1, n2)>; };
+        template<std::size_t n1, std::size_t n2>
+        struct common_size<limited_size<n1>, size_<n2>> { using type = limited_size<std::max(n1, n2)>; };
+
+        template<class T> struct common_size<T, dyn_size> { using type = dyn_size; };
+        template<class U> struct common_size<dyn_size, U> { using type = dyn_size; };
+        template<> struct common_size<dyn_size, dyn_size> { using type = dyn_size; };
+    }
 
     template<class Cond, class T, class U>
     struct sizeof_impl<types::if_<Cond, T, U>>
     : detail::common_size<sizeof_<T>, sizeof_<U>>
-    {};
-
-    template<class Cond, class T, class U>
-    struct buffer_category_impl<types::if_<Cond, T, U>>
-    : detail::common_buffer<T, U, buffer_category<T>, buffer_category<U>>
     {};
 
 
