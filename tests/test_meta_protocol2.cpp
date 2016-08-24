@@ -47,7 +47,7 @@ namespace proto
         * fixed width integer types
         * @{
         */
-        template<class T, class Tag> struct integer { using type = T; };
+        template<class T, class Endianess> struct integer { using type = T; };
 
         using s8 = integer<int8_t, void>;
         using u8 = integer<uint8_t, void>;
@@ -67,11 +67,9 @@ namespace proto
         using u64_be = integer<uint64_t, be_tag>;
         using u64_le = integer<uint64_t, le_tag>;
         /** @} */
-    }
 
-    namespace types {
         struct u8_or_u16_le { using type = uint16_t; };
-        struct bytes { using type = uint8_t const *; };
+        struct bytes { using type = array_view_const_u8; };
         struct str8_to_str16 { using type = char const *; };
         template<class T> struct pkt_sz { using type = T; };
         template<class T> struct pkt_sz_with_self { using type = T; };
@@ -80,9 +78,9 @@ namespace proto
     namespace ext
     {
         inline
-        uint8_t const *
-        adapt(types::bytes, char const * p) noexcept
-        { return reinterpret_cast<uint8_t const *>(p); }
+        array_view_const_u8
+        adapt(types::bytes, array_view_const_char av) noexcept
+        { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
     }
 
 
@@ -92,7 +90,7 @@ namespace proto
     template<std::size_t i> struct limited_size {};
     namespace detail {
         template<class T> struct sizeof_ : sizeof_<typename T::desc_type> {};
-        template<class T, class Tag> struct sizeof_<types::integer<T, Tag>> : size_<sizeof(T)> {};
+        template<class T, class Endianess> struct sizeof_<types::integer<T, Endianess>> : size_<sizeof(T)> {};
         template<> struct sizeof_<types::u8_or_u16_le> { using type = /*dyn_size*/limited_size<sizeof(uint16_t)>; };
         template<> struct sizeof_<types::bytes> { using type = dyn_size; };
         template<> struct sizeof_<types::str8_to_str16> { using type = dyn_size; };
@@ -359,6 +357,11 @@ struct Printer
     std::enable_if_t<(std::is_integral<T>{} && sizeof(T) < sizeof(int))>
     print(T const & x, int) const
     { std::cout << int(x); }
+
+    template<class T>
+    void
+    print(array_view<T> av, char) const
+    { std::cout << av.data(); }
 
     template<class T>
     void
@@ -850,15 +853,19 @@ struct Buferring2
         template<class T, std::size_t n, class Buffer, class Var>
         void write_pkt_sz_with_size_or_var(detail::pkt_sz_with_size<T, n>, Buffer & buffer, Var &)
         {
-            policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), n, var_to_desc_type<Var>{});
+            using proto_integer = typename T::type;
+            policy.write_static_buffer(
+                static_cast<uint8_t*>(buffer.iov_base),
+                typename proto_integer::type{n}, proto_integer{}
+            );
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<T>{};
             std::cout << " = " << n;
         }
 
         template<class T, class Buffer, class Var>
-        void write_pkt_sz_with_size_or_var(T, Buffer & buffer, Var & var)
+        void write_pkt_sz_with_size_or_var(T, Buffer & buffer, Var const & var)
         {
-            policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, var_to_desc_type<Var>{});
+            policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, T{});
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<T>{};
         }
 
@@ -888,7 +895,6 @@ struct Buferring2
             buffer.iov_base = const_cast<uint8_t *>(av.data());
             buffer.iov_len = av.size();
             this->sizes.data[VarInfo::ipacket::value] += av.size();
-            std::cout << "  [size: " << buffer.iov_len << "]\n";
             static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
         }
 
@@ -1038,16 +1044,25 @@ struct Buferring2
 
 struct stream_protocol_policy
 {
-    template<class T, class Desc>
-    void write_static_buffer(uint8_t *, T, Desc)
+    template<class T, class Endianess>
+    void write_static_buffer(uint8_t * p, T val, proto::types::integer<T, Endianess>)
     {
-        std::cout << " [static_buffer]";
+        std::cout << " [static_buffer] [sizeof_: " << sizeof(T) << "]";
+        using rng = std::conditional_t<
+            std::is_same<Endianess, proto::types::le_tag>{},
+            brigand::range<std::size_t, 0, sizeof(T)>,
+            brigand::reverse_range<std::size_t, sizeof(T), 0>
+        >;
+        brigand::for_each<rng>([&p, val](auto I) {
+            constexpr const std::size_t i = t_<decltype(I)>::value;
+            *p++ = (val & (0xff << i)) > i;
+        });
     }
 
-    array_view_const_u8 get_view_buffer(uint8_t const * x, proto::types::bytes)
+    array_view_const_u8 get_view_buffer(array_view_const_u8 av, proto::types::bytes)
     {
-        std::cout << " [view_buffer]";
-        return array_view_const_u8(x, 3u);
+        std::cout << " [view_buffer] [size: " << av.size() << "]";
+        return av;
     }
 
     template<class T, class Desc>
@@ -1079,7 +1094,7 @@ int main() {
     auto packet = XXX::desc(
         XXX::a = pkt.a,
         XXX::b = pkt.b,
-        XXX::c = pkt.c,
+        XXX::c = /*cstr_*/make_array_view(pkt.c),
         XXX::d = pkt.d,
         XXX::e = pkt.c,
         XXX::f = pkt.d/*,
