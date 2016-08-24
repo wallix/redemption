@@ -853,3 +853,10 @@ exe client_sc1
         $(EXE_DEPENDENCIES)
     ;
 
+exe proxy_sc1
+    :
+        tests/tcptest/Proxy_Sc1.cpp
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
