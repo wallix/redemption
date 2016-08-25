@@ -52,6 +52,34 @@ protected:
         return "RAIL_LIMIT";
     }
 
+    bool process_client_activate_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_client_activate_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ClientActivatePDU capdu;
+
+        capdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            capdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
+
     bool process_client_execute_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
@@ -75,6 +103,34 @@ protected:
 
         if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
             cepdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
+
+    bool process_client_get_application_id_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_client_get_application_id_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ClientGetApplicationIDPDU cgaipdu;
+
+        cgaipdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            cgaipdu.log(LOG_INFO);
         }
 
         return true;
@@ -136,6 +192,34 @@ protected:
         return true;
     }
 
+    bool process_client_notify_event_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_client_information_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ClientNotifyEventPDU cnepdu;
+
+        cnepdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            cnepdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
+
     bool process_client_system_parameters_update_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
@@ -159,6 +243,34 @@ protected:
 
         if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
             cspupdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
+
+    bool process_client_system_menu_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ClientSystemMenuPDU csmpdu;
+
+        csmpdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            csmpdu.log(LOG_INFO);
         }
 
         return true;
@@ -201,6 +313,18 @@ public:
 
         switch (this->client_order_type)
         {
+            case TS_RAIL_ORDER_ACTIVATE:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_message: "
+                            "Client Activate PDU");
+                }
+
+                send_message_to_server =
+                    this->process_client_activate_pdu(
+                        total_length, flags, chunk);
+            break;
+
             case TS_RAIL_ORDER_CLIENTSTATUS:
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
@@ -225,6 +349,18 @@ public:
                         total_length, flags, chunk);
             break;
 
+            case TS_RAIL_ORDER_GET_APPID_REQ:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_message: "
+                            "Client Get Application ID PDU");
+                }
+
+                send_message_to_server =
+                    this->process_client_get_application_id_pdu(
+                        total_length, flags, chunk);
+            break;
+
             case TS_RAIL_ORDER_HANDSHAKE:
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
@@ -237,6 +373,18 @@ public:
                         total_length, flags, chunk);
             break;
 
+            case TS_RAIL_ORDER_NOTIFY_EVENT:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_message: "
+                            "Client Notify Event PDU");
+                }
+
+                send_message_to_server =
+                    this->process_client_notify_event_pdu(
+                        total_length, flags, chunk);
+            break;
+
             case TS_RAIL_ORDER_SYSPARAM:
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
@@ -246,6 +394,18 @@ public:
 
                 send_message_to_server =
                     this->process_client_system_parameters_update_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case TS_RAIL_ORDER_SYSMENU:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_message: "
+                            "Client System Menu PDU");
+                }
+
+                send_message_to_server =
+                    this->process_client_system_menu_pdu(
                         total_length, flags, chunk);
             break;
 
@@ -265,6 +425,35 @@ public:
                 chunk_data_length);
         }
     }   // process_client_message
+
+    bool process_server_execute_result_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+        (void)flags;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ServerExecuteResultPDU serpdu;
+
+        serpdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            serpdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
 
     bool process_server_handshake_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
@@ -290,6 +479,64 @@ public:
 
         if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
             hspdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
+
+    bool process_server_handshake_ex_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+        (void)flags;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_server_handshake_ex_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        HandshakeExPDU hsexpdu;
+
+        hsexpdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            hsexpdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
+
+    bool process_server_min_max_info_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+        (void)flags;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_server_min_max_info_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ServerMinMaxInfoPDU smmipdu;
+
+        smmipdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            smmipdu.log(LOG_INFO);
         }
 
         return true;
@@ -398,6 +645,18 @@ public:
 
         switch (this->server_order_type)
         {
+            case TS_RAIL_ORDER_EXEC_RESULT:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_message: "
+                            "Server Execute Result PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_execute_result_pdu(
+                        total_length, flags, chunk);
+            break;
+
             case TS_RAIL_ORDER_HANDSHAKE:
                 if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
                     LOG(LOG_INFO,
@@ -407,6 +666,30 @@ public:
 
                 send_message_to_client =
                     this->process_server_handshake_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case TS_RAIL_ORDER_HANDSHAKE_EX:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_message: "
+                            "Server HandshakeEx PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_handshake_ex_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case TS_RAIL_ORDER_MINMAXINFO:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_message: "
+                            "Server Min Max Info PDU");
+                }
+
+                send_message_to_client =
+                    this->process_server_min_max_info_pdu(
                         total_length, flags, chunk);
             break;
 
