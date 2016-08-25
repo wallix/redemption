@@ -25,7 +25,13 @@
 #include "transport/transport_web_socket.hpp"
 #include "utils/parse.hpp"
 
-TransportWebSocket trans;
+
+TransportWebSocket trans(nullptr);
+
+
+//  bjam -a test_transport_web_socket |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/test_transport_web_socket.html
+
+
 
 extern "C" void run_main() {
 
@@ -44,8 +50,6 @@ extern "C" void run_main() {
     EM_ASM_({ getDataOctet(); }, 0);
 
     trans.recv(pData, len);
-
-    *pData -= 64;
 
     if ((*pData)[0 ] == 03) {EM_ASM_({ console.log('recv true'); }, 0);} else {EM_ASM_({ console.log('recv false ' + $0); }, (*pData)[0 ]);}
     if ((*pData)[10] == 42) {EM_ASM_({ console.log('recv true'); }, 0);} else {EM_ASM_({ console.log('recv false ' + $0); }, (*pData)[10]);}
@@ -67,6 +71,8 @@ extern "C" void run_main() {
     if (x == 42) {EM_ASM_({ console.log('Parse true'); }, 0);} else {EM_ASM_({ console.log('Parse false ' + $0); }, x);}
 
 }
+
+
 
 
 extern "C" void recv_value(int value) {

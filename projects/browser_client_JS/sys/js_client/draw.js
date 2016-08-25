@@ -253,16 +253,17 @@ Drawable.prototype.RDPPatBlt_0x5A = function(dx, dy, w, h, r_back, g_back, b_bac
 Drawable.prototype.bitmap = function(x, y, w, h, data, shift) {
     this._ctxS();
     var imgData = this.cctx.createImageData(w, h+1);
-    var dw = w*4;
+    var dw4 = w*4;
+    var dw3 = w*3;
     var i = 0;
     var j = 0;
     for (var dy=0; dy<h+1; dy++) {
         j = (h-dy)*dw3;
-        for (var dx=0; dx<dw; dx+=4) {
-            i = dy*dw + dx;
-            imgData.data[i+0]= data[j++];
-            imgData.data[i+1]= data[j++];
+        for (var dx=0; dx<dw4; dx+=4) {
+            i = dy*dw4 + dx;
             imgData.data[i+2]= data[j++];
+            imgData.data[i+1]= data[j++];
+            imgData.data[i+0]= data[j++];
             imgData.data[i+3]= 255;
         }
     }
@@ -359,6 +360,29 @@ Drawable.prototype.rDPMemBlt_0x66 = function(x, y, w, h, data, shift, sx, sy) {
             imgData.data[i+0] ^= data[j++];
             imgData.data[i+1] ^= data[j++];
             imgData.data[i+2] ^= data[j++];
+            imgData.data[i+3]= 255;
+        }
+    }
+    this.cctx.putImageData(imgData, x, y-1, -shift, 1, w, h);
+    this._ctxR();
+}
+
+Drawable.prototype.rDPMemBlt_0x88 = function(x, y, w, h, data, shift, sx, sy) {
+    this._ctxS();
+    var imgData=this.cctx.createImageData(w, h+1);
+    var dw = (sx+w)*4;
+    var dw3 = (sx+w)*3;
+    var dh = h+1;
+    var i = 0;
+    var j = 0;
+    for (var dy=0; dy<dh; dy++) {
+        j = (sy+h-dy)*dw3 + sx*3;
+        // TODO sx * 4 ?
+        for (var dx=sx; dx<dw; dx+=4) {
+            i = dy*dw + dx;
+            imgData.data[i+0] &= data[j++];
+            imgData.data[i+1] &= data[j++];
+            imgData.data[i+2] &= data[j++];
             imgData.data[i+3]= 255;
         }
     }

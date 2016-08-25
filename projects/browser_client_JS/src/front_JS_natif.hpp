@@ -168,10 +168,6 @@ public:
         , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
     };
 
-    enum : uint16_t {
-        KBD_FLAGS_EXTENDED = 0x0100
-    };
-
     enum: uint8_t {
         SCANCODE_ALTGR  = 0x38,
         SCANCODE_SHIFT  = 0x36,
@@ -271,9 +267,11 @@ public:
 
         this->_trans = new TransportWebSocket(this);
 
+        TimeSystem timeobj;
+
         LCGRandom gen(0);
         if (this->_trans != nullptr) {
-            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params);
+            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
             reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
         }
 
@@ -329,6 +327,7 @@ public:
     //-----------------------------
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) override {
+        //EM_ASM_({ console.log('RDPOpaqueRect ');}, 0);
         Rect rect(cmd.rect.intersect(clip).intersect(this->_info.width, this->_info.height));
         uint32_t color((uint32_t) color_decode_opaquerect(cmd.color, 16, this->mod_palette));
 
@@ -338,6 +337,7 @@ public:
 
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) override {
+        //EM_ASM_({ console.log('RDPScrBlt ');}, 0);
         const Rect rect = clip.intersect(this->_info.width, this->_info.height).intersect(cmd.rect);
         if (rect.isempty()) {
 
@@ -375,9 +375,11 @@ public:
 
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+        //EM_ASM_({ console.log('RDPMemBlt ');}, 0);
         Rect rectBmp(cmd.rect);
         const Rect& rect = clip.intersect(rectBmp);
         if (rect.isempty()){
+            return;
 
         } else {
 
@@ -425,6 +427,20 @@ public:
                         const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
 
                         EM_ASM_({drawable.rDPMemBlt_0x66($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
+                                                    rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
+                }
+                break;
+
+                case 0x88: // TODO
+                {
+                        int srcx = cmd.srcx + (rect.x - cmd.rect.x);
+                        int srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+                        Bitmap bitmapBpp(24, bitmap);
+                        const int16_t mincx = std::min<int16_t>(bitmapBpp.cx(), std::min<int16_t>(this->_info.width  - rect.x, rect.cx));
+                        const int16_t mincy = std::min<int16_t>(bitmapBpp.cy(), std::min<int16_t>(this->_info.height - rect.y, rect.cy));
+
+                        EM_ASM_({drawable.rDPMemBlt_0x88($0    , $1    , $2     , $3     , HEAPU8.subarray($4, $4 + $5 - 1), $6,  $7,  $8);},
                                                     rect.x, rect.y, mincx, mincy, bitmapBpp.data(), bitmapBpp.bmp_size(), 0, srcx,  srcy);
                 }
                 break;
@@ -575,6 +591,7 @@ public:
 
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) override {
+        //EM_ASM_({ console.log('RDPMem3Blt ');}, 0);
         const Rect& rect = clip.intersect(cmd.rect);
         if (rect.isempty() || bitmap.cx() <= 0 || bitmap.cy() <= 0){
 
@@ -598,6 +615,7 @@ public:
 
 
     virtual void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        //EM_ASM_({ console.log('RDPBitmapData ');}, 0);
 
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
                      (bitmap_data.dest_right  - bitmap_data.dest_left + 5),
@@ -786,8 +804,8 @@ extern "C" void charPressed(char code) {
 
 extern "C" void enterPressed() {
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP  , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
     }
 }
 
@@ -801,13 +819,13 @@ extern "C" void backspacePressed() {
 extern "C" void CtrlAltDelPressed() {
     //EM_ASM_({ getDataOctet(); }, 0);
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
 
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, Front_JS_Natif::KBD_FLAGS_EXTENDED | KBD_FLAG_UP, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_UP, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_UP, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_UP, 0, &(front._keymap));
     }
 }
 
