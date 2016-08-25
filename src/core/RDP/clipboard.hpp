@@ -1002,7 +1002,7 @@ struct FileContentsRequestPDU : CliprdrHeader {
         stream.out_uint32_le(streamID);
         stream.out_uint32_le(lindex);
         stream.out_uint32_le(flag);
-        stream.out_uint32_le(uint64_t(sizeRequested) << 32);
+        stream.out_uint32_le(sizeRequested >> 32);
         stream.out_uint32_le(sizeRequested);
         stream.out_uint32_le(sizeRequested);
     }

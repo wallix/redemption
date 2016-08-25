@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
     {
         const uint8_t file_list_data[] =
-            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
+            "\x05\x00\x01\x00\x58\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
@@ -69,10 +69,10 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00";
+            "\x00\x00\x00\x00\x00\x00\x00\x00";
 
         RDPECLIP::FileDescriptor fd;
-        InStream in_stream_fileList(file_list_data, 604);
+        InStream in_stream_fileList(file_list_data, 608);
         const int cItems = 1;
         //std::string namesList[cItems];
        // uint64_t sizesList[cItems];
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         //std::cout << "file name = " << namesList[0] <<  std::endl;
         std::string namesList[] = { nameUTF16 };
         uint64_t sizesList[] = { 17 };
-        std::cout << "file name = " << namesList[0] << " " << UTF16nameSize <<  std::endl;
+        //std::cout << "file name = " << namesList[0] << " " << UTF16nameSize <<  std::endl;
 
         formatDataResponsePDU.emit_fileList(ou_stream_fileList, namesList, sizesList, cItems, 0x01d1e2a0379fb504);
 
@@ -118,7 +118,13 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             std::cout << int(ou_stream_fileList.get_data()[i]) << " " << int(file_list_data[i]) <<  std::endl;
         }
 
-        BOOST_CHECK_EQUAL(expected, out_data);
+        try {
+            BOOST_CHECK_EQUAL(expected, out_data);
+        } catch (Error err) {
+            for (int i = 0; i < 604; i++) {
+                std::cout << int(ou_stream_fileList.get_data()[i]) << " " << int(file_list_data[i]) <<  std::endl;
+            }
+        }
 
     }
 

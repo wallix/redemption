@@ -52,6 +52,8 @@ enum {
 
 };
 
+
+
 /* These are for synchronization; not for keystrokes */
 enum {
     KBD_FLAG_SCROLL                = 0x0001,
