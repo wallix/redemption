@@ -105,6 +105,12 @@
 //  | TS_RAIL_ORDER_HANDSHAKE_EX    | Indicates a bi-directional HandshakeEx   |
 //  | 0x0013                        | PDU.                                     |
 //  +-------------------------------+------------------------------------------+
+//  | TS_RAIL_ORDER_ZORDER_SYNC     | Indicates a Server Z-Order Sync          |
+//  | 0x0014                        | Information PDU from server to client.   |
+//  +-------------------------------+------------------------------------------+
+//  | TS_RAIL_ORDER_CLOAK           | Indicates a Window Cloak State Change    |
+//  | 0x0015                        | PDU from client to server.               |
+//  +-------------------------------+------------------------------------------+
 
 enum {
       TS_RAIL_ORDER_EXEC            = 0x0001
@@ -125,6 +131,8 @@ enum {
     , TS_RAIL_ORDER_LANGUAGEIMEINFO = 0x0011
     , TS_RAIL_ORDER_COMPARTMENTINFO = 0x0012
     , TS_RAIL_ORDER_HANDSHAKE_EX    = 0x0013
+    , TS_RAIL_ORDER_ZORDER_SYNC     = 0x0014
+    , TS_RAIL_ORDER_CLOAK           = 0x0015
 };
 
 static inline
@@ -148,6 +156,8 @@ char const* get_RAIL_orderType_name(uint16_t orderType) {
         case TS_RAIL_ORDER_LANGUAGEIMEINFO: return "TS_RAIL_ORDER_LANGUAGEIMEINFO";
         case TS_RAIL_ORDER_COMPARTMENTINFO: return "TS_RAIL_ORDER_COMPARTMENTINFO";
         case TS_RAIL_ORDER_HANDSHAKE_EX:    return "TS_RAIL_ORDER_HANDSHAKE_EX";
+        case TS_RAIL_ORDER_ZORDER_SYNC:     return "TS_RAIL_ORDER_ZORDER_SYNC";
+        case TS_RAIL_ORDER_CLOAK:           return "TS_RAIL_ORDER_CLOAK";
         default:                            return "<unknown>";
     }
 }
@@ -1479,6 +1489,12 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
+            "SystemParam=%s(%u) ",
+            ::get_RAIL_ServerSystemParam_name(this->SystemParam_),
+            this->SystemParam_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
             "SystemParam=%s(%u) Body=\\x%02x",
             ::get_RAIL_ServerSystemParam_name(this->SystemParam_),
             this->SystemParam_, this->Body_);
@@ -2427,75 +2443,6 @@ char const* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
     }
 }
 
-class ServerMoveSizeStartPDU {
-    uint32_t WindowId        = 0;
-    uint16_t IsMoveSizeStart = 0;
-    uint16_t MoveSizeType    = 0;
-    uint16_t PosX            = 0;
-    uint16_t PosY            = 0;
-
-public:
-    void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
-        stream.out_uint16_le(this->IsMoveSizeStart);
-        stream.out_uint16_le(this->MoveSizeType);
-        stream.out_uint16_le(this->PosX);
-        stream.out_uint16_le(this->PosY);
-    }
-
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // WindowId(4) +
-                                            //  IsMoveSizeStart(2) +
-                                            //  MoveSizeType(2) + PosX(2) +
-                                            //  PosY(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Move/Size Start PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
-
-        this->WindowId        = stream.in_uint32_le();
-        this->IsMoveSizeStart = stream.in_uint16_le();
-        this->MoveSizeType    = stream.in_uint16_le();
-        this->PosX            = stream.in_uint16_le();
-        this->PosY            = stream.in_uint16_le();
-    }
-
-    static size_t size() {
-        return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
-                    //  PosX(2) + PosY(2)
-    }
-
-private:
-    inline size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeStartPDU: ");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-
-        result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX=%u PosY=%u",
-            this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
-            this->MoveSizeType, this->PosX, this->PosY);
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        return length;
-    }
-
-public:
-    inline void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-};
-
 // [MS-RDPERP] - 2.2.2.7.3 Server Move/Size End PDU
 //  (TS_RAIL_ORDER_LOCALMOVESIZE)
 // ================================================
@@ -2572,32 +2519,32 @@ public:
 // TopLeftY (2 bytes): An unsigned 16-bit integer. The y-coordinate of the
 //  moved or resized window's top-left corner.
 
-class ServerMoveSizeEndPDU {
+class ServerMoveSizeStartOrEndPDU {
     uint32_t WindowId        = 0;
     uint16_t IsMoveSizeStart = 0;
     uint16_t MoveSizeType    = 0;
-    uint16_t TopLeftX        = 0;
-    uint16_t TopLeftY        = 0;
+    uint16_t PosXOrTopLeftX  = 0;
+    uint16_t PosYOrTopLeftY  = 0;
 
 public:
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->WindowId);
         stream.out_uint16_le(this->IsMoveSizeStart);
         stream.out_uint16_le(this->MoveSizeType);
-        stream.out_uint16_le(this->TopLeftX);
-        stream.out_uint16_le(this->TopLeftY);
+        stream.out_uint16_le(this->PosXOrTopLeftX);
+        stream.out_uint16_le(this->PosYOrTopLeftY);
     }
 
     void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // WindowId(4) +
                                             //  IsMoveSizeStart(2) +
-                                            //  MoveSizeType(2) + TopLeftX(2) +
-                                            //  TopLeftY(2)
+                                            //  MoveSizeType(2) + PosX/TopLeftX(2) +
+                                            //  PosY/TopLeftY(2)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Server Move/Size End PDU: expected=%u remains=%zu",
+                    "Truncated Server Move/Size Start/End PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -2606,27 +2553,27 @@ public:
         this->WindowId        = stream.in_uint32_le();
         this->IsMoveSizeStart = stream.in_uint16_le();
         this->MoveSizeType    = stream.in_uint16_le();
-        this->TopLeftX        = stream.in_uint16_le();
-        this->TopLeftY        = stream.in_uint16_le();
+        this->PosXOrTopLeftX  = stream.in_uint16_le();
+        this->PosYOrTopLeftY  = stream.in_uint16_le();
     }
 
     static size_t size() {
         return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
-                    //  TopLeftX(2) + TopLeftY(2)
+                    //  PosX/TopLeftX(2) + PosY/TopLeftY(2)
     }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeEndPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeStartOrEndPDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) TopLeftX=%u TopLeftY=%u",
+            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
             this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
-            this->MoveSizeType, this->TopLeftX, this->TopLeftY);
+            this->MoveSizeType, this->PosXOrTopLeftX, this->PosYOrTopLeftY);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
