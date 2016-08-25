@@ -121,7 +121,9 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         try {
             BOOST_CHECK_EQUAL(expected, out_data);
         } catch (Error err) {
-
+            for (int i = 0; i < 604; i++) {
+                std::cout << int(ou_stream_fileList.get_data()[i]) << " " << int(file_list_data[i]) <<  std::endl;
+            }
         }
 
     }
