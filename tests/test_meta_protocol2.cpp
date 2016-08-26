@@ -535,7 +535,7 @@ template<class T>
 using var_type = typename detail::var_type_impl<T>::type;
 
 
-struct Buferring
+struct Buffering
 {
     template<class... Val>
     void operator()(Val ... val) const {
@@ -793,7 +793,7 @@ namespace detail
     template<std::size_t n>
     struct Buffers
     {
-        iovec data[n]{};
+        std::array<iovec, n> data {};
 
         template<class Tuple>
         Buffers(Tuple & t)
@@ -802,6 +802,27 @@ namespace detail
             brigand::for_each<mk_seq<n>>([this, &t](auto I) {
                 using i = t_<decltype(I)>;
                 this->init_buf(i{}, std::get<i::value>(t));
+            });
+        }
+
+        iovec & operator[](std::size_t i) noexcept
+        {
+            std::cout << " { data[" << i << "].len=" << this->data[i].iov_len << " | 0x" << static_cast<void*>(this->data[i].iov_base) << " }";
+            return this->data[i];
+        }
+
+        array_view<iovec const> view() const
+        {
+            return make_array_view(this->data.data(), this->data.size());
+        }
+
+        template<class Tuple>
+        void reset_ptr(Tuple & t)
+        {
+            // TODO slow
+            brigand::for_each<mk_seq<n>>([this, &t](auto I) {
+                using i = t_<decltype(I)>;
+                this->reset_buf_ptr(i{}, std::get<i::value>(t));
             });
         }
 
@@ -814,6 +835,15 @@ namespace detail
 
         template<class I>
         void init_buf(I, proto::dyn_size) {
+        }
+
+        template<class I>
+        void reset_buf_ptr(I i, uint8_t * p) {
+            this->data[i].iov_base = p;
+        }
+
+        template<class I>
+        void reset_buf_ptr(I, proto::dyn_size) {
         }
     };
 
@@ -846,8 +876,10 @@ namespace detail
     };
 }
 
+using iovec_view = array_view<detail::iovec const>;
+
 template<class Policy>
-struct Buferring2
+struct Buffering2
 {
     using iovec = detail::iovec;
 
@@ -908,7 +940,7 @@ struct Buferring2
                 write_not_dynamic_buf(
                     var_infos_is_not_dynamic<VarInfos>{},
                     VarInfos{},
-                    this->buffers.data[Ints::value],
+                    this->buffers[Ints::value],
                     pkts...
                 )
             ), 1)...};
@@ -933,6 +965,7 @@ struct Buferring2
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
             this->write_pkt_sz_with_size_or_var(desc_type<VarInfo>{}, buffer, var);
+            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type<VarInfo>>{};
             std::cout << "\n";
             if (var_info_is_pkt_sz<VarInfo>{}) {
                 this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base);
@@ -955,7 +988,6 @@ struct Buferring2
                 static_cast<uint8_t*>(buffer.iov_base),
                 typename proto_integer::type{n}, proto_integer{}
             );
-            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<T>{};
             std::cout << " = " << n;
         }
 
@@ -963,7 +995,6 @@ struct Buferring2
         void write_pkt_sz_with_size_or_var(T, iovec & buffer, Var const & var)
         {
             policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, T{});
-            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<T>{};
         }
 
         template<class VarInfo, class Var>
@@ -1007,7 +1038,7 @@ struct Buferring2
         void write_dynamic_buf(I, brigand::list<>, Pkts & ...) {
             std::cout << "--------------------------\n\n";
 
-            // TODO reset limited_buffer ptr
+            this->buffers.reset_ptr(this->buffer_tuple);
 
             this->sizes.propagate_size();
 
@@ -1023,15 +1054,17 @@ struct Buferring2
                 var_info_list_by_buffer{}
             );
             std::cout << "---------------------\n\n";
+
+            this->policy.send(this->buffers.view());
         }
 
         template<class I, class VarInfos, class... VarInfosBuffers>
         void write_dynamic_buf(I, brigand::list<VarInfos, VarInfosBuffers...>, Pkts & ... pkts) {
             using var_info = brigand::front<VarInfos>;
-            write_dyn_type(
+            this->write_dyn_type(
                 larg<var_info::ivar::value>(arg<var_info::ipacket::value>(pkts...)),
                 [this, &pkts...](array_view_const_u8 av) {
-                    auto & buffer = this->buffers.data[I::value];
+                    auto & buffer = this->buffers[I::value];
                     buffer.iov_base = const_cast<uint8_t *>(av.data());
                     buffer.iov_len = av.size();
                     this->sizes.data[var_info::ipacket::value] += av.size();
@@ -1136,22 +1169,22 @@ struct Buferring2
     void impl(std::false_type, Packets ... packets) const = delete;
 };
 
+#define LOGPRINT
+#include "utils/log.hpp"
 
 struct stream_protocol_policy
 {
     template<class T, class Endianess>
     void write_static_buffer(uint8_t * p, T val, proto::types::integer<T, Endianess>)
     {
-        std::cout << " [static_buffer] [sizeof_: " << sizeof(T) << "]";
-        using rng = std::conditional_t<
-            std::is_same<Endianess, proto::types::le_tag>{},
-            brigand::range<std::size_t, 0, sizeof(T)>,
-            brigand::reverse_range<std::size_t, sizeof(T), 0>
-        >;
+        std::cout << " [static_buffer] [sizeof_: " << sizeof(T) << "] {" << static_cast<void*>(p) << "}";
+        using rng = brigand::range<std::size_t, 0, sizeof(T)>;
+        using is_little_endian = t_<std::is_same<Endianess, proto::types::le_tag>>;
         brigand::for_each<rng>([&p, val](auto I) {
             constexpr const std::size_t i = t_<decltype(I)>::value;
-            // std::make_unsigned
-            *p++ = val >> (i * 8);
+            // TODO std::make_unsigned
+            std::cout << " { *p++ }";
+            *p++ = val >> ((is_little_endian{} ? i : sizeof(T)-1-i) * 8);
         });
     }
 
@@ -1225,9 +1258,18 @@ struct stream_protocol_policy
         std::cout << " [dynamic_buffer]";
         f(av);
     }
+
+    void send(iovec_view iovs) {
+        for (auto iov : iovs) {
+            std::cout << " [" << iov.iov_base << "]\n";
+            hexdump_c(static_cast<uint8_t const*>(iov.iov_base), iov.iov_len);
+        }
+    }
 };
 
 
+void test_old();
+void test_new();
 
 int main() {
 
@@ -1252,8 +1294,7 @@ int main() {
 
 packet.apply_for_each(Printer{});
 std::cout << "\n";
-packet.apply(Buferring{});
+packet.apply(Buffering{});
 std::cout << "\n";
-proto::apply(Buferring2<stream_protocol_policy>{}, packet, packet);
-
+proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
 }
