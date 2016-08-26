@@ -1,4 +1,4 @@
-#include <iostream>
+#include <limits>
 #include <utility>
 #include <cstdint>
 
@@ -14,6 +14,7 @@
     } v {}                                     \
 
 
+// v1.2.0 (standalone version): https://github.com/edouarda/brigand
 #define BRIGAND_NO_BOOST_SUPPORT
 #include <brigand/brigand.hpp>
 
@@ -21,10 +22,34 @@
 
 namespace proto
 {
+    namespace detail
+    {
+        template<class T, class DescType, bool = (std::is_integral<T>::value && std::is_integral<DescType>::value)>
+        struct adapt_default_type
+        {
+            static_assert(std::numeric_limits<T>::min() >= std::numeric_limits<DescType>::min(), "narrowing conversion");
+            static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<DescType>::max(), "narrowing conversion");
+            using type = DescType;
+        };
+
+        template<class T, class DescType>
+        struct adapt_default_type<T, DescType, false>
+        {
+            using type = DescType;
+        };
+
+        template<class T, T value, class DescType>
+        struct adapt_default_type<std::integral_constant<T, value>, DescType, false>
+        {
+            static_assert(DescType{value} == value, "narrowing conversion");
+            using type = DescType;
+        };
+    }
+
     namespace ext
     {
         template<class Desc, class T>
-        typename Desc::type
+        typename ::proto::detail::adapt_default_type<T, typename Desc::type>::type
         adapt(Desc, T x)
         { return x; }
     }
@@ -415,6 +440,7 @@ namespace XXX {
 }
 
 
+#include <iostream>
 
 struct Printer
 {
@@ -1292,9 +1318,55 @@ int main() {
       , 1*/
     );
 
-packet.apply_for_each(Printer{});
-std::cout << "\n";
-packet.apply(Buffering{});
-std::cout << "\n";
-proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
+    packet.apply_for_each(Printer{});
+    std::cout << "\n";
+    packet.apply(Buffering{});
+    std::cout << "\n";
+    proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
+
+    test_old();
+    std::cout << "\n\n==================\n\n";
+    test_new();
+}
+
+// #include "core/RDP/sec.hpp"
+#include "core/RDP/x224.hpp"
+
+void test_old() {
+//     uint8_t data[10];
+//     CryptContext crypt;
+
+    uint8_t buf[256];
+    OutStream out_stream(buf + 126, 126);
+    StaticOutStream<128> hstream;
+//     SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+    X224::DT_TPDU_Send(hstream, out_stream.get_offset());
+//     BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
+//     BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
+    auto p = out_stream.get_data() - hstream.get_offset();
+//     BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
+    memcpy(p, hstream.get_data(), hstream.get_offset());
+    out_stream = OutStream(p, out_stream.get_current() - p);
+    out_stream.out_skip_bytes(out_stream.get_capacity());
+}
+
+// https://github.com/jonathanpoelen/falcon.parse_number
+#include <falcon/literals/integer_constant.hpp>
+using namespace falcon::literals::integer_constant_literals;
+
+void test_new() {
+    PROTO_VAR(proto::types::u8, version);
+    PROTO_VAR(proto::types::u8, unknown);
+    PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u16_le>, pkt_len);
+    PROTO_VAR(proto::types::u8, LI);
+    PROTO_VAR(proto::types::u8, type);
+    PROTO_VAR(proto::types::u8, cat);
+
+    //proto::static_val<proto::types::u8::type>{3}; //version
+    constexpr auto desc = proto::desc(version, unknown, pkt_len, LI, type, cat);
+    //constexpr auto desc = proto::desc(version = 3_c, unknown, pkt_len, LI, type, cat);
+    //constexpr auto desc = proto::desc(proto::overridable(version = 3_c), unknown, pkt_len, LI, type, cat);
+
+    auto packet = desc(version = 3_c, unknown = 0_c, LI = 2_c, type = X224::DT_TPDU, cat = X224::EOT_EOT);
+    proto::apply(Buffering2<stream_protocol_policy>{}, packet);
 }
