@@ -1321,7 +1321,7 @@ private:
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
-            result = ::snprintf(buffer + length, size - length, " Style=%u ExtendedStyle=%u",
+            result = ::snprintf(buffer + length, size - length, " Style=0x%X ExtendedStyle=0x%X",
                 this->Style, this->ExtendedStyle);
             length += ((result < size - length) ? result : (size - length - 1));
         }

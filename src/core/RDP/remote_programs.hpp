@@ -2565,8 +2565,9 @@ private:
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=0x%X IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
-            this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
+            "WindowId=0x%X IsMoveSizeStart=%s(%u) MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
+            this->WindowId, (this->IsMoveSizeStart ? "Yes" : "No"), this->IsMoveSizeStart,
+            ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
             this->MoveSizeType, this->PosXOrTopLeftX, this->PosYOrTopLeftY);
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -2777,15 +2778,9 @@ public:
         size_t result = ::snprintf(buffer + length, size - length, "ServerGetApplicationIDResponsePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        uint8_t ApplicationId_unicode_data[512];
-        ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
-        /*const size_t size_of_ApplicationId_unicode_data = */::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->application_id.c_str()),
-            ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data) - 2 /* null-terminator */);
-
         result = ::snprintf(buffer + length, size - length,
             "WindowId=0x%X ApplicationId=\"%s\"",
-            this->WindowId, ApplicationId_unicode_data);
+            this->WindowId, this->application_id.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
