@@ -113,7 +113,7 @@ namespace proto
         /** @} */
 
         struct bytes { using type = array_view_const_u8; };
-        struct str8_to_str16 { using type = char const *; };
+        struct str8_to_str16 { using type = array_view_const_u8; };
         template<class T> struct pkt_sz { using type = T; };
         template<class T> struct pkt_sz_with_self { using type = T; };
 
@@ -139,6 +139,11 @@ namespace proto
         inline
         array_view_const_u8
         adapt(types::bytes, array_view_const_char av) noexcept
+        { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
+
+        inline
+        array_view_const_u8
+        adapt(types::str8_to_str16, array_view_const_char av) noexcept
         { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
 
         // TODO
@@ -1214,11 +1219,11 @@ struct stream_protocol_policy
         }
     }
 
-    template<class F, class T, class Desc>
-    void context_dynamic_buffer(F f, T, Desc)
+    template<class F>
+    void context_dynamic_buffer(F f, array_view_const_u8 av, proto::types::str8_to_str16)
     {
         std::cout << " [dynamic_buffer]";
-        f(array_view_const_u8{});
+        f(av);
     }
 };
 
@@ -1238,14 +1243,12 @@ int main() {
         XXX::b = pkt.b,
         XXX::c = /*cstr_*/make_array_view(pkt.c),
         XXX::d = pkt.d,
-        XXX::e = pkt.c,
+        XXX::e = /*cstr_*/make_array_view(pkt.c),
         XXX::f = pkt.d/*,
 //         XXX::sz,
         XXX::sz2
       , 1*/
     );
-
-    //proto::buffer_category<XXX::c::var::desc_type>{} = 1;
 
 packet.apply_for_each(Printer{});
 std::cout << "\n";
