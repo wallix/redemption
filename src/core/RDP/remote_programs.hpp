@@ -270,7 +270,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientInformationPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "HandshakePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -940,7 +940,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "Flags=0x%X ExecResult=\"%s\"(%u) RawResult=0x%08X ExeOrFile=\"%s\"",
+            "Flags=0x%X ExecResult=%s(%u) RawResult=0x%08X ExeOrFile=\"%s\"",
             this->Flags_, ::get_RAIL_ExecResult_name(this->ExecResult_),
             this->ExecResult_, this->RawResult_, this->exe_or_file.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
@@ -1330,7 +1330,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ClientSystemParametersUpdatePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -1478,20 +1478,14 @@ public:
     uint8_t Body() const { return this->Body_; }
 
     static size_t size() {
-        return 5;   // WindowId(4) + Body(1)
+        return 5;   // SystemParam(4) + Body(1)
     }
 
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientActivatePDU: ");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        result = ::snprintf(buffer + length, size - length,
-            "SystemParam=%s(%u) ",
-            ::get_RAIL_ServerSystemParam_name(this->SystemParam_),
-            this->SystemParam_);
+        size_t result = ::snprintf(buffer + length, size - length, "ServerSystemParametersUpdatePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -1580,7 +1574,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Enabled=%s",
+            "WindowId=0x%X Enabled=%s",
             this->WindowId_, (this->Enabled_ ? "Yes" : "No"));
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1676,7 +1670,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Left=%u Top=%u",
+            "WindowId=0x%X Left=%u Top=%u",
             this->WindowId_, this->Left_, this->Top_);
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1817,7 +1811,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Command=%s(%u)",
+            "WindowId=0x%X Command=%s(%u)",
             this->WindowId_, ::get_RAIL_Command_name(this->Command_),
             this->Command_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -2023,7 +2017,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u NotifyIconId=%u Message=%s(%u)",
+            "WindowId=0x%X NotifyIconId=%u Message=%s(%u)",
             this->WindowId_, this->NotifyIconId_, ::get_RAIL_Message_name(this->Message_),
             this->Message_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -2102,7 +2096,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u", this->WindowId_);
+            "WindowId=0x%X", this->WindowId_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -2239,7 +2233,7 @@ private:
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
+            "WindowId=0x%X MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
                 "MinTrackWidth=%u MinTrackHeight=%u MaxTrackWidth=%u "
                 "MaxTrackHeight=%u",
             this->WindowId, this->MaxWidth, this->MaxHeight, this->MaxPosX,
@@ -2571,7 +2565,7 @@ private:
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
+            "WindowId=0x%X IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
             this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
             this->MoveSizeType, this->PosXOrTopLeftX, this->PosYOrTopLeftY);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -2677,7 +2671,7 @@ private:
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Left=%u Top=%u Right=%u Bottom=%u",
+            "WindowId=0x%X Left=%u Top=%u Right=%u Bottom=%u",
             this->WindowId, this->Left, this->Top, this->Right, this->Bottom);
         length += ((result < size - length) ? result : (size - length - 1));
 
