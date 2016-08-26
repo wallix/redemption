@@ -52,7 +52,7 @@ namespace proto
         class limited_buffer {};
     }
 
-    template<class T> struct sizeof_impl : sizeof_impl<typename T::desc_type> {};
+    template<class T> struct sizeof_impl;
     template<class T> using sizeof_ = typename sizeof_impl<T>::type;
 
     namespace detail {
@@ -63,6 +63,16 @@ namespace proto
 
     template<class T> struct buffer_category_impl : detail::sizeof_to_buffer_cat<sizeof_<T>> {};
     template<class T> using buffer_category = typename buffer_category_impl<T>::type;
+
+    template<class T> using is_static_buffer
+      = typename std::is_same<tags::static_buffer, buffer_category<T>>::type;
+    template<class T> using is_limited_buffer
+      = typename std::is_same<tags::limited_buffer, buffer_category<T>>::type;
+    template<class T> using is_view_buffer
+      = typename std::is_same<tags::view_buffer, buffer_category<T>>::type;
+    template<class T> using is_dynamic_buffer
+      = typename std::is_same<tags::dynamic_buffer, buffer_category<T>>::type;
+
 
     namespace types {
         class le_tag {};
@@ -91,6 +101,15 @@ namespace proto
         using s64_le = integer<int64_t, le_tag>;
         using u64_be = integer<uint64_t, be_tag>;
         using u64_le = integer<uint64_t, le_tag>;
+        /** @} */
+
+        /**
+        * @{
+        */
+        template<class T> struct integer_encoding { using type = T; };
+
+        using u16_encoding = integer_encoding<uint16_t>;
+        using u32_encoding = integer_encoding<uint32_t>;
         /** @} */
 
         struct bytes { using type = array_view_const_u8; };
@@ -123,6 +142,17 @@ namespace proto
         { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
 
         // TODO
+        inline
+        uint16_t
+        adapt(types::u16_encoding, uint16_t i) noexcept
+        { return i; }
+
+        inline
+        uint16_t
+        adapt(types::u16_encoding, uint8_t i) noexcept
+        { return i; }
+
+        // TODO
         template<class T>
         inline uint16_t
         adapt(types::u8_or_u16_le, T i) noexcept
@@ -131,6 +161,8 @@ namespace proto
 
 
     template<class T, class Endianess> struct sizeof_impl<types::integer<T, Endianess>> : size_<sizeof(T)> {};
+
+    template<class T> struct sizeof_impl<types::integer_encoding<T>> { using type = limited_size<sizeof(T)>; };
 
     template<> struct sizeof_impl<types::bytes> { using type = dyn_size; };
     template<> struct sizeof_impl<types::str8_to_str16> { using type = dyn_size; };
@@ -159,11 +191,22 @@ namespace proto
         template<class T> struct common_size<T, dyn_size> { using type = dyn_size; };
         template<class U> struct common_size<dyn_size, U> { using type = dyn_size; };
         template<> struct common_size<dyn_size, dyn_size> { using type = dyn_size; };
+
+
+        template<class T, class U> struct common_buffer { using type = tags::dynamic_buffer; };
+        template<class T> struct common_buffer<T, T> { using type = T; };
+        template<> struct common_buffer<tags::static_buffer , tags::limited_buffer >
+        { using type = tags::limited_buffer ; };
     }
 
     template<class Cond, class T, class U>
     struct sizeof_impl<types::if_<Cond, T, U>>
     : detail::common_size<sizeof_<T>, sizeof_<U>>
+    {};
+
+    template<class Cond, class T, class U>
+    struct buffer_category_impl<types::if_<Cond, T, U>>
+    : detail::common_buffer<buffer_category<T>, buffer_category<U>>
     {};
 
 
@@ -359,7 +402,7 @@ namespace XXX {
     PROTO_VAR(proto::types::bytes, c);
     PROTO_VAR(proto::types::u16_le, d);
     PROTO_VAR(proto::types::str8_to_str16, e);
-    PROTO_VAR(proto::types::u8_or_u16_le, f);
+    PROTO_VAR(proto::types::u16_encoding, f);
     PROTO_VAR(proto::types::pkt_sz<proto::types::u8>, sz);
     PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u8>, sz2);
 
@@ -368,28 +411,16 @@ namespace XXX {
 
 
 
-namespace detail {
-    template<class T> using is_static_buffer = std::is_same<T, proto::tags::static_buffer>;
-    template<class T> using is_dynamic_buffer = std::is_same<T, proto::tags::dynamic_buffer>;
-    template<class T> using is_view_buffer = std::is_same<T, proto::tags::view_buffer>;
-    template<class T> using is_limited_buffer = std::is_same<T, proto::tags::limited_buffer>;
-}
-template<class T> using is_static_buffer = typename detail::is_static_buffer<proto::buffer_category<T>>::type;
-template<class T> using is_dynamic_buffer = typename detail::is_dynamic_buffer<proto::buffer_category<T>>::type;
-template<class T> using is_view_buffer = typename detail::is_view_buffer<proto::buffer_category<T>>::type;
-template<class T> using is_limited_buffer = typename detail::is_limited_buffer<proto::buffer_category<T>>::type;
-
-
 struct Printer
 {
     template<class var, class T>
     void operator()(proto::val<var, T> x) const {
         std::cout << var::name() << " = "; print(x.x, 1);
         std::cout
-            << "  static: " << is_static_buffer<typename var::desc_type>{}
-            << "  dyn: " << is_dynamic_buffer<typename var::desc_type>{}
-            << "  view: " << is_view_buffer<typename var::desc_type>{}
-            << "  limited: " << is_limited_buffer<typename var::desc_type>{}
+            << "  static: " << proto::is_static_buffer<typename var::desc_type>{}
+            << "  dyn: " << proto::is_dynamic_buffer<typename var::desc_type>{}
+            << "  view: " << proto::is_view_buffer<typename var::desc_type>{}
+            << "  limited: " << proto::is_limited_buffer<typename var::desc_type>{}
             << "\n";
     }
 
@@ -461,8 +492,8 @@ namespace detail {
 
 template<class T>
 using is_buffer_delimiter = brigand::bool_<
-    is_dynamic_buffer<T>::value or
-    is_view_buffer<T>::value
+    proto::is_dynamic_buffer<T>::value or
+    proto::is_view_buffer<T>::value
 >;
 
 template<class idx_var>
@@ -637,7 +668,16 @@ using make_accumulate_sizeof_list = brigand::fold<L, brigand::list<>, brigand::c
 
 namespace detail {
     template<class T, std::size_t n> struct pkt_sz_with_size { using desc_type = T; };
+}
 
+namespace proto {
+    template<class T, std::size_t n>
+    struct sizeof_impl<::detail::pkt_sz_with_size<T, n>>
+    : sizeof_impl<T>
+    {};
+}
+
+namespace detail {
     template<template<class> class IsPktSz, class Pkt, class Sz>
     struct convert_pkt_sz
     { using type = Pkt; };
@@ -698,7 +738,7 @@ template<class L>
 using buffer_from_var_infos = sizeof_to_buffer<sizeof_var_infos<L>>;
 
 template<class VarInfos>
-using var_infos_is_not_dynamic = is_dynamic_buffer<brigand::front<VarInfos>>;
+using var_infos_is_not_dynamic = proto::is_dynamic_buffer<typename brigand::front<VarInfos>::desc_type>;
 
 template<class T>
 using var_info_is_pkt_sz = proto::is_pkt_sz_cat<var_to_desc_type<T>>;
@@ -869,8 +909,8 @@ struct Buferring2
             ), 1)...};
         }
 
-        template<class... Ts>
-        static void write_not_dynamic_buf(std::true_type, Ts && ...)
+        template<class VarInfos, class... Ts>
+        static void write_not_dynamic_buf(std::true_type, VarInfos, Ts && ...)
         { std::cout << "-------\n(dyn)\n"; }
 
         template<class... VarInfos>
@@ -878,7 +918,7 @@ struct Buferring2
             std::cout << "-------\n";
             (void)std::initializer_list<int>{(void(
                 this->write_type(
-                    proto::buffer_category<VarInfos>{}, VarInfos{}, buffer,
+                    proto::buffer_category<typename VarInfos::desc_type>{}, VarInfos{}, buffer,
                     larg<VarInfos::ivar::value>(arg<VarInfos::ipacket::value>(pkts...)))
             ), 1)...};
         }
@@ -930,12 +970,9 @@ struct Buferring2
                 var.x,
                 desc_type<VarInfo>{}
             );
+            std::cout << " [len: " << len << "]\n";
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + len;
-
-            // TODO
-            len = 3;
             this->sizes.data[VarInfo::ipacket::value] += len;
-            std::cout << "  [size: " << len << "]\n";
             static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
         }
 
@@ -948,6 +985,7 @@ struct Buferring2
             buffer.iov_len = av.size();
             this->sizes.data[VarInfo::ipacket::value] += av.size();
             static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
+            std::cout << "\n";
         }
 
         template<class I, class VarInfosByBuffer>
@@ -994,7 +1032,7 @@ struct Buferring2
                     this->sizes.data[var_info::ipacket::value] += av.size();
                     // TODO
                     this->sizes.data[var_info::ipacket::value] += 3;
-                    std::cout << "  [size: " << av.size() << "]";
+                    std::cout << " [size: " << av.size() << "]";
                     // TODO assert called
                     std::cout << "\n";
                     this->write_dynamic_bufs(
@@ -1107,6 +1145,7 @@ struct stream_protocol_policy
         >;
         brigand::for_each<rng>([&p, val](auto I) {
             constexpr const std::size_t i = t_<decltype(I)>::value;
+            // std::make_unsigned
             *p++ = val >> (i * 8);
         });
     }
@@ -1118,16 +1157,60 @@ struct stream_protocol_policy
     }
 
     template<class T, class Cond, class True, class False>
-    std::size_t write_limited_buffer(uint8_t * p, T val, proto::types::if_<Cond, True, False>)
+    std::size_t write_limited_buffer(uint8_t * p, T val, proto::types::if_<Cond, True, False>);
+//     {
+//         std::cout << " [limited_buffer]";
+//         if (Cond{}(val)) {
+//             return this->write(p, /*typename True::type*/(val), True{});
+//         }
+//         else {
+//             return this->write(p, /*typename False::type*/(val), False{});
+//         }
+//     }
+
+    std::size_t write_limited_buffer(uint8_t * p, uint16_t val, proto::types::u16_encoding)
     {
-        std::cout << " [limited_buffer] [test: " << Cond{}(val) << "]";
-        if (Cond{}(val)) {
-            write_static_buffer(p, typename True::type(val), True{});
-            return proto::sizeof_<True>{};
+        assert(!(val & 0x8000));
+        std::cout << " [limited_buffer]";
+        if (val <= 127) {
+            this->write_static_buffer(p, uint8_t(val), proto::types::u8{});
+            return 1u;
         }
         else {
-            write_static_buffer(p, typename False::type(val), False{});
-            return proto::sizeof_<False>{};
+            this->write_static_buffer(p, val, proto::types::u16_be{});
+            return 2u;
+        }
+    }
+
+    std::size_t write_limited_buffer(uint8_t * p, uint32_t val, proto::types::u32_encoding)
+    {
+        assert(!(val & 0xC0000000));
+        std::cout << " [limited_buffer]";
+        if (val <= 0x3FFF  ) {
+            if (val <= 0x3F      ) {
+                this->write_static_buffer(p, uint8_t(val), proto::types::u8{});
+                return 1u;
+            }
+            else {
+                this->write_static_buffer(  p, uint8_t(0x40 | ((val >> 8 ) & 0x3F)), proto::types::u8{});
+                this->write_static_buffer(++p, uint8_t(        (val        & 0xFF)), proto::types::u8{});
+                return 2u;
+            }
+        }
+        else {
+            if (val <= 0x3FFFFF) {
+                this->write_static_buffer(  p, uint8_t(0x80 | ((val >> 16) & 0xFF)), proto::types::u8{});
+                this->write_static_buffer(++p, uint8_t(       ((val >> 8 ) & 0xFF)), proto::types::u8{});
+                this->write_static_buffer(++p, uint8_t(        (val        & 0xFF)), proto::types::u8{});
+                return 3u;
+            }
+            else {
+                this->write_static_buffer(  p, uint8_t(0xC0 | ((val >> 24) & 0x3F)), proto::types::u8{});
+                this->write_static_buffer(++p, uint8_t(0x80 | ((val >> 16) & 0x3F)), proto::types::u8{});
+                this->write_static_buffer(++p, uint8_t(       ((val >> 8 ) & 0xFF)), proto::types::u8{});
+                this->write_static_buffer(++p, uint8_t(        (val        & 0xFF)), proto::types::u8{});
+                return 4u;
+            }
         }
     }
 
@@ -1161,6 +1244,8 @@ int main() {
         XXX::sz2
       , 1*/
     );
+
+    //proto::buffer_category<XXX::c::var::desc_type>{} = 1;
 
 packet.apply_for_each(Printer{});
 std::cout << "\n";
