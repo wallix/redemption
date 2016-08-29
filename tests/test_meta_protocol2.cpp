@@ -373,29 +373,107 @@ namespace proto
     template<class Ints, class... Ts>
     struct packet;
 
-    template<class Var, class Refs>
-    std::enable_if_t<is_pkt_sz_category<desc_type<Var>>{}, Var>
-    val_or_pkt_size(Refs)
-    { return {}; }
+    template<class... Ts>
+    struct inherits : Ts...
+    {
+        template<class... Us>
+        constexpr inherits(Us && ... v)
+        : Ts{std::forward<Us>(v)}...
+        {}
+    };
+
+    template<class T>
+    struct Ref
+    {
+        constexpr Ref(T & x) noexcept : x(x) {}
+        constexpr operator T & () const noexcept { return x; }
+
+    private:
+        T & x;
+    };
+
+    // TODO using inherits
+    template<class... Val>
+    struct inherit_refs : Ref<Val>... {
+        constexpr inherit_refs(Val & ... val) : Ref<Val>{val}... {}
+    };
+
 
     template<class Var, class T>
-    std::enable_if_t<!is_pkt_sz_category<desc_type<Var>>{}, val<Var, T>&>
-    val_or_pkt_size(std::reference_wrapper<val<Var, T>> ref)
+    val<Var, T>
+    vals_to_val(val<Var, T> const &);
+
+    template<class Var, class T>
+    val<Var, T>
+    ref_to_val(Ref<val<Var, T>>);
+
+
+    template<class Var, class Vals>
+    auto
+    get_packet_value2(Vals & vals, int)
+    -> decltype(vals_to_val<Var>(vals))
+    { return vals; }
+
+    template<class Var, class Vals>
+    std::enable_if_t<is_pkt_sz_category<desc_type<Var>>::value, Var>
+    get_packet_value2(Vals &, char)
+    { return {}; }
+
+
+    template<class Var, class Refs, class Vals>
+    auto
+    get_packet_value(Refs, Vals & vals, char)
+    { return get_packet_value2<Var>(vals, 1); }
+
+    template<class Var, class Refs, class Vals>
+    auto
+    get_packet_value(Refs ref, Vals &, int)
+    -> decltype(ref_to_val<Var>(ref))
     { return ref; }
+
 
     template<class T, class = void>
     using enable_type = T;
 
     template<std::size_t n> using mk_iseq = std::make_integer_sequence<std::size_t, n>;
 
+    namespace detail
+    {
+        template<class T>
+        struct var_or_val_to_var
+        { using type = T; };
+
+        template<class Var, class T>
+        struct var_or_val_to_var<val<Var, T>>
+        { using type = Var; };
+    }
+    template<class T>
+    using var_or_val_to_var = typename detail::var_or_val_to_var<T>::type;
+
     template<class... Ts>
-    struct packet_description
+    class packet_description
     {
         using type_list = brigand::list<Ts...>;
-        using type_list_without_val = brigand::remove_if<type_list, brigand::call<is_proto_value>>;
+
+        using type_list_only_val = brigand::filter<type_list, brigand::call<is_proto_value>>;
+
+        using values_type = brigand::wrap<type_list_only_val, inherits>;
+
+        values_type values;
+
+        template<class... Us, class Refs>
+        constexpr packet_description(brigand::list<Us...>, Refs refs)
+        : values{static_cast<Us>(refs)...}
+        {}
+
+        template<class Refs>
+        constexpr packet_description(brigand::list<>, Refs)
+        : values{}
+        {}
 
         using strong_type_list = brigand::remove_if<
-            type_list,
+            brigand::transform<type_list, brigand::call<var_or_val_to_var>>,
+            //brigand::remove_if<type_list, brigand::call<is_proto_value>>,
             brigand::bind<is_pkt_sz_category, brigand::call<desc_type>>
         >;
 
@@ -404,25 +482,27 @@ namespace proto
         template<class Val>
         using check_param = enable_type<Val, void_t<check_and_return_t<contains, var_type_t<check_and_return_t<is_proto_value, Val>>>>>;
 
+    public:
+        constexpr packet_description(Ts... vals)
+        : packet_description(type_list_only_val{}, inherits<Ts...>{vals...})
+        {}
+
         template<class... Val>
         constexpr auto
         operator()(Val... values) const
         {
-            return ordering_parameter<check_param<Val>...>(values...);
+            return ordering_parameter<check_param<Val>...>({values...});
         }
 
+    private:
         template<class... Val>
         constexpr auto
-        ordering_parameter(Val... values) const
+        ordering_parameter(inherit_refs<Val...> refs) const
         {
-            // TODO externalyze
-            struct ValRefs : std::reference_wrapper<Val>... {
-                ValRefs(Val & ... val) : std::reference_wrapper<Val>{val}... {}
-            } refs {values...};
             return packet<
                 mk_iseq<sizeof...(Ts)>,
-                std::remove_reference_t<decltype(val_or_pkt_size<Ts>(refs))>...
-            >{val_or_pkt_size<Ts>(refs)...};
+                decltype(get_packet_value<var_or_val_to_var<Ts>>(refs, this->values, 1))...
+            >{get_packet_value<var_or_val_to_var<Ts>>(refs, this->values, 1)...};
         }
     };
 
@@ -438,11 +518,11 @@ namespace proto
 
     template<class... Desc>
     constexpr auto
-    desc(Desc...)
+    desc(Desc... d)
     {
         return packet_description<
             check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{};
+        >{d...};
     }
 
     template<std::size_t i, class Var>
@@ -608,6 +688,7 @@ auto & larg(L && l)
 template<class T>
 using t_ = typename T::type;
 
+// TODO
 namespace detail {
     template<class T>
     struct var_type_impl
@@ -1424,11 +1505,16 @@ void test_new() {
     PROTO_VAR(proto::types::u8, cat);
 
     //proto::static_val<proto::types::u8::type>{3}; //version
-    constexpr auto desc = proto::desc(version, unknown, pkt_len, LI, type, cat);
-//     constexpr auto desc = proto::desc(version = 3_c, unknown, pkt_len, LI, type, cat);
+//     constexpr auto desc = proto::desc(version, unknown, pkt_len, LI, type, cat);
+    constexpr auto desc = proto::desc(version = 3_c, unknown, pkt_len, LI, type, cat);
     //constexpr auto desc = proto::desc(proto::overridable(version = 3_c), unknown, pkt_len, LI, type, cat);
 
-//     auto packet = desc(unknown = 0_c, LI = 2_c, type = X224::DT_TPDU, cat = X224::EOT_EOT);
-    auto packet = desc(version = 3_c, unknown = 0_c, LI = 2_c, type = X224::DT_TPDU, cat = X224::EOT_EOT);
-    proto::apply(Buffering2<stream_protocol_policy>{}, packet);
+    {
+        auto packet = desc(unknown = 0_c, LI = 2_c, type = X224::DT_TPDU, cat = X224::EOT_EOT);
+        proto::apply(Buffering2<stream_protocol_policy>{}, packet);
+    }
+    {
+        auto packet = desc(version = 4_c, unknown = 0_c, LI = 2_c, type = X224::DT_TPDU, cat = X224::EOT_EOT);
+        proto::apply(Buffering2<stream_protocol_policy>{}, packet);
+    }
 }
