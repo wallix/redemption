@@ -18,6 +18,51 @@
 #define BRIGAND_NO_BOOST_SUPPORT
 #include <brigand/brigand.hpp>
 
+// https://github.com/jonathanpoelen/brigand/blob/ext_call/brigand/functions/lambda/call.hpp
+namespace brigand
+{
+namespace detail
+{
+    template<template<class...> class F>
+    struct call_
+    {};
+
+    template <template<class...> class F, class... Args>
+    struct apply<call_<F>, Args...>
+    {
+        using type = F<Args...>;
+    };
+
+    template<template<class...> class F>
+    struct call_impl
+    {
+        using type = call_<F>;
+    };
+
+    template<template<class> class F>
+    struct call_impl<F>
+    {
+        using type = bind<F, _1>;
+    };
+
+    template<template<class, class> class F>
+    struct call_impl<F>
+    {
+        using type = bind<F, _1, _2>;
+    };
+
+    template<template<class, class, class> class F>
+    struct call_impl<F>
+    {
+        using type = bind<F, _1, _2, _3>;
+    };
+}
+
+    template<template<class...> class F>
+    using call = typename detail::call_impl<F>::type;
+}
+
+
 #include "utils/sugar/array_view.hpp"
 
 namespace proto
@@ -49,7 +94,7 @@ namespace proto
     namespace ext
     {
         template<class Desc, class T>
-        typename ::proto::detail::adapt_default_type<T, typename Desc::type>::type
+        constexpr typename ::proto::detail::adapt_default_type<T, typename Desc::type>::type
         adapt(Desc, T x)
         { return x; }
     }
@@ -155,6 +200,7 @@ namespace proto
         template<long long LessThan, class TInt, class UInt>
         using variable_integer = if_<detail::less_than<LessThan>, TInt, UInt>;
 
+        // DEPRECATED
         //struct u8_or_u16_le { using type = uint16_t; };
         using u8_or_u16_le = variable_integer<128, u8, u16_le>;
     }
@@ -172,19 +218,19 @@ namespace proto
         { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
 
         // TODO
-        inline
+        constexpr inline
         uint16_t
         adapt(types::u16_encoding, uint16_t i) noexcept
         { return i; }
 
-        inline
+        constexpr inline
         uint16_t
         adapt(types::u16_encoding, uint8_t i) noexcept
         { return i; }
 
         // TODO
         template<class T>
-        inline uint16_t
+        constexpr inline uint16_t
         adapt(types::u8_or_u16_le, T i) noexcept
         { return i; }
     }
@@ -278,7 +324,7 @@ namespace proto
         using var_type = var;
 
         template<class U>
-        auto operator = (U y) const
+        constexpr auto operator = (U y) const
         //-> val<Derived, decltype(ext::adapt(desc_type{}, y))>
         -> val<Derived, decltype(ext::adapt(Desc{}, y))>
         { return {ext::adapt(Desc{}, y)}; }
@@ -346,8 +392,9 @@ namespace proto
     struct packet_description
     {
         using type_list = brigand::list<Ts...>;
+        using type_list_without_val = brigand::remove_if<type_list, brigand::call<is_proto_value>>;
 
-        using strong_type_list = brigand::remove<type_list, brigand::bind<brigand::not_<brigand::call<is_pkt_sz_cat>>>>;
+        using strong_type_list = brigand::remove<type_list, brigand::bind<brigand::not_, brigand::call<is_pkt_sz_cat>>>;
 
         template<class T> using contains = brigand::contains<brigand::wrap<strong_type_list, brigand::set>, T>;
 
@@ -365,6 +412,7 @@ namespace proto
         constexpr auto
         ordering_parameter(Val... values) const
         {
+            // TODO externalyze
             struct ValRefs : std::reference_wrapper<Val>... {
                 ValRefs(Val & ... val) : std::reference_wrapper<Val>{val}... {}
             } refs {values...};
@@ -375,12 +423,22 @@ namespace proto
         }
     };
 
+    template<class T>
+    struct is_empty_or_proto_val
+    : std::is_empty<T>
+    {};
+
+    template<class Var, class T>
+    struct is_empty_or_proto_val<val<Var, T>>
+    : std::true_type
+    {};
+
     template<class... Desc>
     constexpr auto
     desc(Desc...)
     {
         return packet_description<
-            check_and_return_t<std::is_empty, check_and_return_t<is_proto_variable, Desc>>...
+            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
         >{};
     }
 
@@ -1364,9 +1422,10 @@ void test_new() {
 
     //proto::static_val<proto::types::u8::type>{3}; //version
     constexpr auto desc = proto::desc(version, unknown, pkt_len, LI, type, cat);
-    //constexpr auto desc = proto::desc(version = 3_c, unknown, pkt_len, LI, type, cat);
+//     constexpr auto desc = proto::desc(version = 3_c, unknown, pkt_len, LI, type, cat);
     //constexpr auto desc = proto::desc(proto::overridable(version = 3_c), unknown, pkt_len, LI, type, cat);
 
+//     auto packet = desc(unknown = 0_c, LI = 2_c, type = X224::DT_TPDU, cat = X224::EOT_EOT);
     auto packet = desc(version = 3_c, unknown = 0_c, LI = 2_c, type = X224::DT_TPDU, cat = X224::EOT_EOT);
     proto::apply(Buffering2<stream_protocol_policy>{}, packet);
 }
