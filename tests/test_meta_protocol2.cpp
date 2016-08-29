@@ -33,33 +33,21 @@ namespace detail
         using type = F<Args...>;
     };
 
-    template<template<class...> class F>
-    struct call_impl
-    {
-        using type = call_<F>;
-    };
-
     template<template<class> class F>
-    struct call_impl<F>
-    {
-        using type = bind<F, _1>;
-    };
+    bind<F, _1> get_call_impl(call_<F>, int);
 
     template<template<class, class> class F>
-    struct call_impl<F>
-    {
-        using type = bind<F, _1, _2>;
-    };
+    bind<F, _1, _2> get_call_impl(call_<F>, int);
 
     template<template<class, class, class> class F>
-    struct call_impl<F>
-    {
-        using type = bind<F, _1, _2, _3>;
-    };
+    bind<F, _1, _2, _3> get_call_impl(call_<F>, int);
+
+    template<class F>
+    F get_call_impl(F, char);
 }
 
     template<template<class...> class F>
-    using call = typename detail::call_impl<F>::type;
+    using call = decltype(detail::get_call_impl(detail::call_<F>{}, 1));
 }
 
 
@@ -335,9 +323,13 @@ namespace proto
         using var_type = var;
 
         template<class U>
-        constexpr auto operator = (U y) const
-        -> val<Derived, decltype(trace_adapt<Derived>(Desc{}, y))>
-        { return {ext::adapt(Desc{}, y)}; }
+        constexpr auto operator = (U x) const
+        { return impl(x); }
+
+        template<class U>
+        constexpr auto impl(U x) const
+        -> val<Derived, decltype(trace_adapt<Derived>(Desc{}, x))>
+        { return {ext::adapt(Desc{}, x)}; }
     };
 
     template<class T>
