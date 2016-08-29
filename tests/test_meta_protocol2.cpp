@@ -110,8 +110,6 @@ namespace proto
     using internal_type_t = typename internal_type<T>::type;
 
 
-    // TODO type_traits { sizeof_, buffer+tag }
-
     struct dyn_size {};
     template<std::size_t i> struct limited_size {};
 
@@ -199,11 +197,30 @@ namespace proto
         }
         template<long long LessThan, class TInt, class UInt>
         using variable_integer = if_<detail::less_than<LessThan>, TInt, UInt>;
-
-        // DEPRECATED
-        //struct u8_or_u16_le { using type = uint16_t; };
-        using u8_or_u16_le = variable_integer<128, u8, u16_le>;
     }
+
+    template<class...> using void_t = void;
+
+    template<class... Ts>
+    struct inherits : Ts...
+    {
+        template<class... Us>
+        constexpr inherits(Us && ... v)
+        : Ts{std::forward<Us>(v)}...
+        {}
+    };
+
+    template<class T, class... Ts>
+    struct only
+    {
+        template<class U, class = std::enable_if_t<std::is_base_of<brigand::type_<U>, inherits<brigand::type_<T>, brigand::type_<Ts>...>>::value>>
+        constexpr only(U x)
+        : value(x)
+        {}
+
+        T value;
+        constexpr operator T () const { return value; }
+    };
 
     namespace ext
     {
@@ -217,21 +234,9 @@ namespace proto
         adapt(types::str8_to_str16, array_view_const_char av) noexcept
         { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
 
-        // TODO
         constexpr inline
         uint16_t
-        adapt(types::u16_encoding, uint16_t i) noexcept
-        { return i; }
-
-        constexpr inline
-        uint16_t
-        adapt(types::u16_encoding, uint8_t i) noexcept
-        { return i; }
-
-        // TODO
-        template<class T>
-        constexpr inline uint16_t
-        adapt(types::u8_or_u16_le, T i) noexcept
+        adapt(types::u16_encoding, only<uint16_t, uint8_t> i) noexcept
         { return i; }
     }
 
@@ -315,6 +320,12 @@ namespace proto
         T x;
     };
 
+    template<class Derived, class Desc, class T>
+    constexpr auto trace_adapt(Desc d, T x)
+    -> decltype(ext::adapt(d, x))
+    { return ext::adapt(d, x); }
+
+
     template<class Desc, class Derived>
     struct var
     {
@@ -325,15 +336,12 @@ namespace proto
 
         template<class U>
         constexpr auto operator = (U y) const
-        //-> val<Derived, decltype(ext::adapt(desc_type{}, y))>
-        -> val<Derived, decltype(ext::adapt(Desc{}, y))>
+        -> val<Derived, decltype(trace_adapt<Derived>(Desc{}, y))>
         { return {ext::adapt(Desc{}, y)}; }
     };
 
     template<class T>
-    using desc_type = typename T::desc_type;
-
-    template<class...> using void_t = void;
+    using desc_type_t = typename T::desc_type;
 
     template<class T, class = void> struct check;
     template<class T> struct check<T, std::enable_if_t<T::value>> { constexpr operator bool () { return 0; } };
@@ -344,19 +352,19 @@ namespace proto
     }
 
     namespace detail {
-        template<template<class> class Tpl, class T, class = std::true_type>
+        template<template<class...> class Tpl, class L, class = std::true_type>
         struct check_and_return_impl {};
 
-        template<template<class> class Tpl, class T>
-        struct check_and_return_impl<Tpl, T, typename Tpl<T>::type>
+        template<template<class...> class Tpl, class T, class... Ts>
+        struct check_and_return_impl<Tpl, brigand::list<T, Ts...>, typename Tpl<T, Ts...>::type>
         { using type = T; };
     }
 
-    template<template<class> class Tpl, class T>
-    struct check_and_return : detail::check_and_return_impl<Tpl, T> {};
+    template<template<class...> class Tpl, class... Ts>
+    struct check_and_return : detail::check_and_return_impl<Tpl, brigand::list<Ts...>> {};
 
-    template<template<class> class Tpl, class T>
-    using check_and_return_t = typename check_and_return<Tpl, T>::type;
+    template<template<class...> class Tpl, class T, class... Ts>
+    using check_and_return_t = typename check_and_return<Tpl, T, Ts...>::type;
 
 
     namespace detail {
@@ -372,15 +380,6 @@ namespace proto
 
     template<class Ints, class... Ts>
     struct packet;
-
-    template<class... Ts>
-    struct inherits : Ts...
-    {
-        template<class... Us>
-        constexpr inherits(Us && ... v)
-        : Ts{std::forward<Us>(v)}...
-        {}
-    };
 
     template<class T>
     struct Ref
@@ -415,7 +414,7 @@ namespace proto
     { return vals; }
 
     template<class Var, class Vals>
-    std::enable_if_t<is_pkt_sz_category<desc_type<Var>>::value, Var>
+    std::enable_if_t<is_pkt_sz_category<desc_type_t<Var>>::value, Var>
     get_packet_value2(Vals &, char)
     { return {}; }
 
@@ -471,16 +470,14 @@ namespace proto
         : values{}
         {}
 
-        using strong_type_list = brigand::remove_if<
+        using var_list = brigand::wrap<brigand::remove_if<
             brigand::transform<type_list, brigand::call<var_or_val_to_var>>,
-            //brigand::remove_if<type_list, brigand::call<is_proto_value>>,
-            brigand::bind<is_pkt_sz_category, brigand::call<desc_type>>
-        >;
-
-        template<class T> using contains = brigand::contains<brigand::wrap<strong_type_list, brigand::set>, T>;
+            //brigand::remove_if<type_list, brigand::call<is_proto_value>>, // disabled override default value
+            brigand::bind<is_pkt_sz_category, brigand::call<proto::desc_type_t>>
+        >, inherits>;
 
         template<class Val>
-        using check_param = enable_type<Val, void_t<check_and_return_t<contains, var_type_t<check_and_return_t<is_proto_value, Val>>>>>;
+        using check_param = enable_type<Val, void_t<check_and_return_t<std::is_base_of, var_type_t<check_and_return_t<is_proto_value, Val>>, var_list>>>;
 
     public:
         constexpr packet_description(Ts... vals)
@@ -688,19 +685,8 @@ auto & larg(L && l)
 template<class T>
 using t_ = typename T::type;
 
-// TODO
-namespace detail {
-    template<class T>
-    struct var_type_impl
-    { using type = T; };
-
-    template<class Var, class T>
-    struct var_type_impl<proto::val<Var, T>>
-    { using type = Var; };
-}
-
 template<class T>
-using var_type = typename detail::var_type_impl<T>::type;
+using var_type = proto::var_or_val_to_var<T>;
 
 
 struct Buffering
@@ -867,17 +853,17 @@ using convert_pkt_sz = typename detail::convert_pkt_sz<
 >::type;
 
 
-using proto::desc_type;
+using proto::desc_type_t;
 
 template<class T>
-using var_to_desc_type = desc_type<var_type<T>>;
+using var_to_desc_type = desc_type_t<var_type<T>>;
 
 template<std::size_t i>
 using i_ = std::integral_constant<std::size_t, i>;
 
 template<class L>
 using mk_sizeof_var_info_list = brigand::transform<
-    brigand::transform<L, brigand::call<desc_type>>,
+    brigand::transform<L, brigand::call<proto::desc_type_t>>,
     brigand::call<proto::sizeof_>
 >;
 
@@ -1132,8 +1118,8 @@ struct Buffering2
         void write_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            this->write_pkt_sz_with_size_or_var(desc_type<VarInfo>{}, buffer, var);
-            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type<VarInfo>>{};
+            this->write_pkt_sz_with_size_or_var(desc_type_t<VarInfo>{}, buffer, var);
+            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type_t<VarInfo>>{};
             std::cout << "\n";
             if (var_info_is_pkt_sz<VarInfo>{}) {
                 this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base);
@@ -1172,7 +1158,7 @@ struct Buffering2
             std::size_t len = policy.write_limited_buffer(
                 static_cast<uint8_t*>(buffer.iov_base),
                 var.x,
-                desc_type<VarInfo>{}
+                desc_type_t<VarInfo>{}
             );
             std::cout << " [len: " << len << "]\n";
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + len;
@@ -1184,7 +1170,7 @@ struct Buffering2
         void write_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            auto av = policy.get_view_buffer(var.x, desc_type<VarInfo>{});
+            auto av = policy.get_view_buffer(var.x, desc_type_t<VarInfo>{});
             buffer.iov_base = const_cast<uint8_t *>(av.data());
             buffer.iov_len = av.size();
             this->sizes.data[VarInfo::ipacket::value] += av.size();
