@@ -292,7 +292,7 @@ namespace proto
         {};
 
         template<class T>
-        struct is_pkt_sz<proto::types::pkt_sz<T>> : std::true_type
+        struct is_pkt_sz<types::pkt_sz<T>> : std::true_type
         {};
 
         template<class T>
@@ -300,12 +300,12 @@ namespace proto
         {};
 
         template<class T>
-        struct is_pkt_sz_with_self<proto::types::pkt_sz_with_self<T>> : std::true_type
+        struct is_pkt_sz_with_self<types::pkt_sz_with_self<T>> : std::true_type
         {};
     }
     template<class T> using is_pkt_sz = typename detail::is_pkt_sz<T>::type;
     template<class T> using is_pkt_sz_with_self = typename detail::is_pkt_sz_with_self<T>::type;
-    template<class T> using is_pkt_sz_cat = brigand::bool_<is_pkt_sz<T>{} or is_pkt_sz_with_self<T>{}>;
+    template<class T> using is_pkt_sz_category = brigand::bool_<is_pkt_sz<T>{} or is_pkt_sz_with_self<T>{}>;
 
 
     template<class Var, class T>
@@ -374,12 +374,12 @@ namespace proto
     struct packet;
 
     template<class Var, class Refs>
-    std::enable_if_t<is_pkt_sz_cat<desc_type<Var>>{}, Var>
+    std::enable_if_t<is_pkt_sz_category<desc_type<Var>>{}, Var>
     val_or_pkt_size(Refs)
     { return {}; }
 
     template<class Var, class T>
-    std::enable_if_t<!is_pkt_sz_cat<desc_type<Var>>{}, val<Var, T>&>
+    std::enable_if_t<!is_pkt_sz_category<desc_type<Var>>{}, val<Var, T>&>
     val_or_pkt_size(std::reference_wrapper<val<Var, T>> ref)
     { return ref; }
 
@@ -394,7 +394,10 @@ namespace proto
         using type_list = brigand::list<Ts...>;
         using type_list_without_val = brigand::remove_if<type_list, brigand::call<is_proto_value>>;
 
-        using strong_type_list = brigand::remove<type_list, brigand::bind<brigand::not_, brigand::call<is_pkt_sz_cat>>>;
+        using strong_type_list = brigand::remove_if<
+            type_list,
+            brigand::bind<is_pkt_sz_category, brigand::call<desc_type>>
+        >;
 
         template<class T> using contains = brigand::contains<brigand::wrap<strong_type_list, brigand::set>, T>;
 
@@ -830,7 +833,7 @@ template<class VarInfos>
 using var_infos_is_not_dynamic = proto::is_dynamic_buffer<typename brigand::front<VarInfos>::desc_type>;
 
 template<class T>
-using var_info_is_pkt_sz = proto::is_pkt_sz_cat<var_to_desc_type<T>>;
+using var_info_is_pkt_sz = proto::is_pkt_sz_category<var_to_desc_type<T>>;
 
 template<class VarInfos>
 using var_infos_has_pkt_sz = brigand::any<VarInfos, brigand::call<var_info_is_pkt_sz>>;
