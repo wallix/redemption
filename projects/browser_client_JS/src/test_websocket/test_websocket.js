@@ -25069,6 +25069,120 @@ var L = console.log;
 
 /*********************************************************************************************/
 
+
+
+/***********************/
+/* Client > RDP server */
+/***********************/
+var net = require('net');
+var tls = require('tls');
+
+
+//var targetIp =  '10.10.46.74';
+var targetIp = '127.0.0.1';
+var targetPort = process.argv[2] || 3389;
+
+
+var client = new net.Socket({
+    readable: true,
+    writable: true
+});
+
+var global_websocket;
+
+function sendBinaryData(item, index, message) {
+    L("@sendBinaryData : socketID = " + global_websocket.id + " index = " + index + " item = " + item);
+   // global_websocket.emit('data', {data:item, msg:message, index:index});
+    global_websocket.emit('data', {data:item, msg:'sending inData', index:index});
+
+}
+
+function connect_tcp() {
+
+    //client.setTimeout(30000);
+    client.setNoDelay();
+    client.setEncoding('binary');
+
+
+
+    var loc = client.connect(targetPort, targetIp, function() {
+        L('Client >> Proxy websocket : Connected to ' + targetIp);
+        L('Client >> Proxy websocket : Client socket adress : ' + client.address().address + ':' + client.address().port);
+        L('Client >> Proxy websocket : Remote info : ' + client.remoteAddress + ':' + client.remotePort);
+        L('Client >> Proxy websocket : client.fd : ' + client._handle.fd);
+        L('Client >> Proxy websocket : process pid : ' + process.pid);
+
+
+        /* print info client */
+        // console.dir(client);
+
+        client.setEncoding('binary');
+
+
+   
+        client.on('data', function(data) {
+            L('\n*******************\n');
+            // L('\n Received: ' + data.toString());
+            for(var i=0 ; i< data.length; i++ ) {
+                L("\nFOUND : \'"+ data[i] + '\'' + " = \'" + data[i].toString() + '\'');
+
+                /* Forward data to Browser */
+                //sendBinaryData(data[i], i, 'Data forwarding from RDP server');
+                
+                global_websocket.emit('data', {data:data[i], msg:'Data forwarding from RDP server', index:i});
+                L( "Data forwarding from RDP server index " + i + " data = "+ data[i]);
+            }
+
+
+
+             /* Test ok 
+                var buff_bin2 = new Buffer(inData);
+                client.write(buff_bin2);
+             */
+
+            L("client.bytesWritten = " + client.bytesWritten + " and client.bytesRead = " + client.bytesRead);
+            L('\n*******************');
+        }); /* client.on('data') */
+
+
+        client.on('error', function(err) {
+            L('clientError: ' + err);
+            client.destroy();
+        });
+
+
+        client.on('timeout', function() {
+            L('clientTimeout');
+          //  client.destroy();
+         })
+
+
+        client.on('end', function() {
+           L('client disconnected from server');
+           client.destroy();
+        });
+
+        client.on('drain', function() {
+           L(' TCP socket write buffer empty');
+           client.destroy();
+        });
+
+        client.on('close', function(had_error){
+            if(had_error) {
+                L(' socket is fully closed due to a transmission error');
+            }
+            else {
+                L(' socket is fully closed');
+            }
+        });
+
+    }); /* client.connect */ 
+
+}
+
+
+
+
 /************************/
 /* Server > html client */
 /************************/
@@ -25086,34 +25200,82 @@ var server = require('http').createServer(function(request, response) {
 
 var io = require('socket.io').listen(server);
 server.listen(8080);
-L('Server running at  http://localhost:8080 '+ server.address().address + server.address().port + '\n\n');
+L('[Proxy websocket] Server running at  http://localhost:8080 '+ server.address().address + server.address().port + '\n\n');
 
 
 io.sockets.on('connection', function (socket) {
     L('A client is connected !');
-    socket.on('disconnect', function(){ L('A client has disconnected !'); });
-    socket.on('close', function () { L("Browser gone."); });
+    
+    global_websocket = socket;
+    //L("socket id = " + socket.id);
+    //L("global_websocket id = " + global_websocket.id);
+
+
+    socket.on('disconnect', function(){ 
+        L('A client has disconnected !'); 
+    });
+
+    socket.on('close', function () { 
+        L("Browser gone."); 
+    });
+
+    socket.on('poke', function (message) {
+        L('poke event :A client is talking to me ! He says : ' + message);
+//        socket.emit('poke', {msg: 'Hi client, I\'m fine, what about you ?'});
+
+        var data = {
+                    "type":"text",
+                    "content":"0xbb",
+                    "index":0
+                    };
+        //socket.emit('event','Client ? What do you want ?');
+        socket.emit('event', {data:data, msg: 'Client ? Want some data ?', num:0 });        
+    }); 
+
+
+    /* To avoid RDPPROXY timeout : launch TCP socket connection to RDP server AFTER websocket is ok */
+    connect_tcp();
 
     socket.on('message', function (str) {
         var ob = JSON.parse(str);
         //L("Socket id = " + socket.id);
-        L("\n\n Server received from client : " + str);
+        L("\n Local proxy websocket @on.message received : " + str);
 
-        console.dir(ob);
-        L("ob.type: %s", ob.data.type);
+        //console.dir(ob);
+        //L("ob.type: %s", ob.data.type);
 
         switch(ob.data.type) {
 
             case 'type1':
-                L("Server @type1 : received from client : " + ob.data.content);
+                //L("Proxy WS @type1 : received from client : " + ob.data.content);
 
-                inData.forEach(sendBinaryData);
-                L("Server sendBinaryData done");
+                /* TEST BINARY DATA */
+                //OK inData.forEach(sendBinaryData, 'sending inData');
+                //OK  L("Server sendBinaryData done\n\n\n");
+
+                //OK   var buff_bin = new Buffer(inData);
+                //OK   buff_bin.forEach(sendBinaryData, 'sending inData');
+
+
+                /* CONNECTION_INITIATION */
+                var buff_bin_serv = new Buffer([0x03, 0x00, 0x00, 0x2C, 0x27, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69, 0x65, 0x3a, 0x20, 0x6d, 
+                                                0x73, 0x74, 0x73, 0x68, 0x61, 0x73, 0x68, 0x3d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 
+                                                0x75, 0x72, 0x0d, 0x0a]);
+
+                client.write(buff_bin_serv);
+                L("client.bytesWritten = " + client.bytesWritten + " and client.bytesRead = " + client.bytesRead + " buff_bin_serv.length = " + buff_bin_serv.length);
+                
+                for(var i=0 ; i< buff_bin_serv.length; i++ ) {
+                    //L("SEND pkt1: [" + i + "] \'" + buff_bin_serv[i] + '\'' + " = \'" + buff_bin_serv[i].toString() + '\'');
+                }
+                L("pkt 1 sent = \'" + buff_bin_serv + "\'\n\n\n\n");
 
                 break;
 
             case 'type2':
-                L("\nServer @type2 : received from client : " + ob.data.content)
+                //L("Proxy WS @type2 : received from client : " + ob.data.content);
+
+                /* TEST OK   */             
                 var number = 0;
                 while (number < 10) {
                     data = {
@@ -25126,126 +25288,68 @@ io.sockets.on('connection', function (socket) {
                     L( "socket.emit event number " + number);
                     number++;
                 }
+                /**/
+
+
+
+                /* Basic Settings Exchange */
+                /* ACTIVATE_AND_PROCESS_DATA */
+                var buff_bin_serv = new Buffer([0x03, 0x00, 0x01, 0x78, 0x02, 0xf0, 0x80, 0x7f, 0x65, 0x82, 0x01, 0x6c, 0x04, 0x01, 0x01, 0x04, 0x01, 0x01, 0x01,
+                                                0x01, 0xff, 0x30, 0x1a, 0x02, 0x01, 0x22, 0x02, 0x01, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x01, 0x00,
+                                                0x02, 0x01, 0x01, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x02, 0x30, 0x19, 0x02, 0x01, 0x01, 0x02, 0x01, 0x01, 
+                                                0x02, 0x01, 0x01, 0x02, 0x01, 0x01, 0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x02, 0x04, 0x20, 0x02, 0x01, 0x02, 
+                                                0x30, 0x1f, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x02, 0xfc, 0x17, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x01, 
+                                                0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x02, 0x04, 0x82, 0x01, 0x07, 0x00, 
+                                                0x05, 0x00, 0x14, 0x7c, 0x00, 0x01, 0x80, 0xfe, 0x00, 0x08, 0x00, 0x10, 0x00, 0x01, 0xc0, 0x00, 0x44, 0x75, 0x63, 
+                                                0x61, 0x80, 0xf0, 0x01, 0xc0, 0xd8, 0x00, 0x04, 0x00, 0x08, 0x00, 0x20, 0x03, 0x58, 0x02, 0x01, 0xca, 0x03, 0xaa, 
+                                                0x4c, 0x00, 0x00, 0x00, 0x28, 0x0a, 0x00, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x01, 0xca, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x07, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+                client.write(buff_bin_serv);
+                L("client.bytesWritten = " + client.bytesWritten + " and client.bytesRead = " + client.bytesRead + " buff_bin_serv.length = " + buff_bin_serv.length);
+
+                for(var i=0 ; i< buff_bin_serv.length; i++ ) {
+                    //L("SEND pkt2: [" + i + "] \'" + buff_bin_serv[i] + '\'' + " = \'" + buff_bin_serv[i].toString() + '\'');
+                }
+                L("pkt 2 sent = \'" + buff_bin_serv + "\'\n\n\n\n");
 
                 break;
+                
+
+            default :
+                L("\nServer @default : received from client : " + ob.data.content);
+
+
         }   
     });
 
-    socket.on('poke', function (message) {
-        L('poke event :A client is talking to me ! He says : ' + message);
-        socket.emit('event', {msg: 'Hi client, I\'m fine, what about you ?'});
-
-    }); 
-
-    function sendBinaryData(item, index) {
-        var res = String.fromCharCode(item);
-        L(index + " item " + item + " res " + res)
-        socket.emit('data', {data:item, msg:'sending inData', index:index});
-    }
-
-
-    /***********************/
-    /* Client > RDP server */
-    /***********************/
-    var net = require('net');
-    var tls = require('tls');
-
-    //var targetIp =  '10.10.46.74';
-    var targetIp = '127.0.0.1';
-    var targetPort = process.argv[2] || 3389;
-    var client = new net.Socket({
-        readable: true,
-        writable: true
-    });
-
-    client.setTimeout(30000);
-    client.setNoDelay();
-    client.setEncoding('binary');
-
-    var loc = client.connect(targetPort, targetIp, function() {
-        L('Connected to ' + targetIp);
-        L('Client socket adress : ' + client.address().address + ':' + client.address().port);
-        L('Remote info : ' + client.remoteAddress + ':' + client.remotePort);
-        L('client.fd : ' + client._handle.fd);
-        L('process pid : ' + process.pid);
-
-
-        /* print info client */
-        // console.dir(client);
-
-
-        client.setEncoding('binary');
-//        var buff = new Buffer('\x03\x00\x00\x2C\x27\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x0d\x0a', "binary");
-        var buff = new Buffer([0x03, 0x00, 0x00, 0x2C, 0x27, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69, 0x65, 0x3a, 0x20, 0x6d, 
-                               0x73, 0x74, 0x73, 0x68, 0x61, 0x73, 0x68, 0x3d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x69, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 
-                               0x75, 0x72, 0x0d, 0x0a]);
-        client.write(buff);
-        L("client.bytesWritten = " + client.bytesWritten + " and client.bytesRead = " + client.bytesRead);
-
-        client.on('data', function(data) {
-            L('\n Received: ' + data.toString());
-            for(var i=0 ; i< data.length; i++ ) {
-                L("Found: \'"+data[i] + '\'');
-            }
-            L('\n*******************');
-
-            var buff_bin = new Buffer([0x03, 0x00, 0x01, 0x78, 0x02, 0xf0, 0x80, 0x7f, 0x65, 0x82, 0x01, 0x6c, 0x04, 0x01, 0x01, 0x04, 0x01, 0x01, 0x01,
-                                       0x01, 0xff, 0x30, 0x1a, 0x02, 0x01, 0x22, 0x02, 0x01, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x01, 0x00,
-                                       0x02, 0x01, 0x01, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x02, 0x30, 0x19, 0x02, 0x01, 0x01, 0x02, 0x01, 0x01, 
-                                       0x02, 0x01, 0x01, 0x02, 0x01, 0x01, 0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x02, 0x04, 0x20, 0x02, 0x01, 0x02, 
-                                       0x30, 0x1f, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x02, 0xfc, 0x17, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x01, 
-                                       0x02, 0x01, 0x00, 0x02, 0x01, 0x01, 0x02, 0x03, 0x00, 0xff, 0xff, 0x02, 0x01, 0x02, 0x04, 0x82, 0x01, 0x07, 0x00, 
-                                       0x05, 0x00, 0x14, 0x7c, 0x00, 0x01, 0x80, 0xfe, 0x00, 0x08, 0x00, 0x10, 0x00, 0x01, 0xc0, 0x00, 0x44, 0x75, 0x63, 
-                                       0x61, 0x80, 0xf0, 0x01, 0xc0, 0xd8, 0x00, 0x04, 0x00, 0x08, 0x00, 0x20, 0x03, 0x58, 0x02, 0x01, 0xca, 0x03, 0xaa, 
-                                       0x4c, 0x00, 0x00, 0x00, 0x28, 0x0a, 0x00, 0x00, 0x74, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x01, 0xca, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x07, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
-            client.write(buff_bin);
-
-         /* Test ok 
-            var buff_bin2 = new Buffer(inData);
-            client.write(buff_bin2);
-         */
-
-            L("client.bytesWritten = " + client.bytesWritten + " and client.bytesRead = " + client.bytesRead);
-        }); /* client.on('data') */
-
-
-        client.on('clientError', function(err) {
-            L('clientError: ' + err);
-            client.destroy();
-        });
-
-
-        client.on('timeout', function() {
-            L('clientTimeout');
-            client.destroy();
-         })
-
-
-        client.on('end', function() {
-           L('client disconnected from server');
-        });
-
-    }); /* client.connect */ 
 
 }); /* io.sockets.on('connection') */
 
 
 
 /*********************************************************************************************/
-
+var accessLogStream = fs.createWriteStream(__dirname + '/error_file.log', {flags: 'a'})
 // Handle uncaughtExceptions
 process.on('uncaughtException', function (err) {
     console.error(err.stack);
-    L("Node NOT Exiting...");
+    accessLogStream.write(err.stack);
+    L('Uncaught Exception...');
+    process.exit(99);
+});
+
+process.stdout.on('error', function( err ) {
+    if (err.code == "EPIPE") {
+        process.exit(0);
+    }
 });
 

@@ -105,6 +105,12 @@
 //  | TS_RAIL_ORDER_HANDSHAKE_EX    | Indicates a bi-directional HandshakeEx   |
 //  | 0x0013                        | PDU.                                     |
 //  +-------------------------------+------------------------------------------+
+//  | TS_RAIL_ORDER_ZORDER_SYNC     | Indicates a Server Z-Order Sync          |
+//  | 0x0014                        | Information PDU from server to client.   |
+//  +-------------------------------+------------------------------------------+
+//  | TS_RAIL_ORDER_CLOAK           | Indicates a Window Cloak State Change    |
+//  | 0x0015                        | PDU from client to server.               |
+//  +-------------------------------+------------------------------------------+
 
 enum {
       TS_RAIL_ORDER_EXEC            = 0x0001
@@ -125,6 +131,8 @@ enum {
     , TS_RAIL_ORDER_LANGUAGEIMEINFO = 0x0011
     , TS_RAIL_ORDER_COMPARTMENTINFO = 0x0012
     , TS_RAIL_ORDER_HANDSHAKE_EX    = 0x0013
+    , TS_RAIL_ORDER_ZORDER_SYNC     = 0x0014
+    , TS_RAIL_ORDER_CLOAK           = 0x0015
 };
 
 static inline
@@ -148,6 +156,8 @@ char const* get_RAIL_orderType_name(uint16_t orderType) {
         case TS_RAIL_ORDER_LANGUAGEIMEINFO: return "TS_RAIL_ORDER_LANGUAGEIMEINFO";
         case TS_RAIL_ORDER_COMPARTMENTINFO: return "TS_RAIL_ORDER_COMPARTMENTINFO";
         case TS_RAIL_ORDER_HANDSHAKE_EX:    return "TS_RAIL_ORDER_HANDSHAKE_EX";
+        case TS_RAIL_ORDER_ZORDER_SYNC:     return "TS_RAIL_ORDER_ZORDER_SYNC";
+        case TS_RAIL_ORDER_CLOAK:           return "TS_RAIL_ORDER_CLOAK";
         default:                            return "<unknown>";
     }
 }
@@ -155,12 +165,29 @@ char const* get_RAIL_orderType_name(uint16_t orderType) {
 // orderLength (2 bytes): An unsigned 16-bit integer. The length of the
 //  Virtual Channel PDU, in bytes.
 
-class RAILPDUHeader_Recv {
-    uint16_t orderType_;
-    uint16_t orderLength_;
+class RAILPDUHeader {
+            uint16_t orderType_   = 0;
+    mutable uint16_t orderLength_ = 0;
+
+    mutable uint32_t   offset_of_orderLength = 0;
+    mutable OutStream* output_stream;
 
 public:
-    explicit RAILPDUHeader_Recv(InStream & stream) {
+    void emit_begin(uint16_t orderType) {
+        this->output_stream->out_uint16_le(orderType);
+
+        this->offset_of_orderLength = this->output_stream->get_offset();
+        this->output_stream->out_clear_bytes(2);
+    }
+
+    void emit_end() {
+        this->output_stream->set_out_uint16_le(
+            this->output_stream->get_offset() - this->offset_of_orderLength +
+                2 /* orderType(2) */,
+            this->offset_of_orderLength);
+    }
+
+    void receive(InStream & stream) {
         const unsigned expected = 4;    // orderType(2) + orderLength(2)
 
         if (!stream.in_check_rem(expected)) {
@@ -176,31 +203,19 @@ public:
     uint16_t orderType() const { return this->orderType_; }
 
     uint16_t orderLength() const { return this->orderLength_; }
-};
 
-class RAILPDUHeader_Send {
-    OutStream & stream;
-    uint32_t    offset_of_orderLength;
-
-public:
-    explicit RAILPDUHeader_Send(OutStream & stream)
-    : stream(stream), offset_of_orderLength(0) {}
-
-    void emit_begin(uint16_t orderType) {
-        this->stream.out_uint16_le(orderType);
-
-        this->offset_of_orderLength = this->stream.get_offset();
-        this->stream.out_clear_bytes(2);
+    static size_t size() {
+        return 4;   // orderType(2) + orderLength(2)
     }
 
-    void emit_end() {
-        this->stream.set_out_uint16_le(
-            this->stream.get_offset() - this->offset_of_orderLength +
-                2 /* orderType(2) */,
-            this->offset_of_orderLength);
+    size_t str(char * buffer, size_t size) const {
+        const size_t length =
+            ::snprintf(buffer, size,
+                       "RAILPDUHeader=(orderType_=%s(%u) orderLength=%u)",
+                       ::get_RAIL_orderType_name(this->orderType_), this->orderType_,
+                       this->orderLength_);
+        return ((length < size) ? length : size - 1);
     }
-
-    //static size_t header_length() { return 4; /* orderType(4) */ }
 };
 
 // [MS-RDPERP] - 2.2.2.2.1 Handshake PDU (TS_RAIL_ORDER_HANDSHAKE)
@@ -255,7 +270,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientInformationPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "HandshakePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -925,7 +940,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "Flags=0x%X ExecResult=\"%s\"(%u) RawResult=0x%08X ExeOrFile=\"%s\"",
+            "Flags=0x%X ExecResult=%s(%u) RawResult=0x%08X ExeOrFile=\"%s\"",
             this->Flags_, ::get_RAIL_ExecResult_name(this->ExecResult_),
             this->ExecResult_, this->RawResult_, this->exe_or_file.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
@@ -1315,7 +1330,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ClientSystemParametersUpdatePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -1463,14 +1478,14 @@ public:
     uint8_t Body() const { return this->Body_; }
 
     static size_t size() {
-        return 5;   // WindowId(4) + Body(1)
+        return 5;   // SystemParam(4) + Body(1)
     }
 
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientActivatePDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ServerSystemParametersUpdatePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -1559,7 +1574,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Enabled=%s",
+            "WindowId=0x%X Enabled=%s",
             this->WindowId_, (this->Enabled_ ? "Yes" : "No"));
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1655,7 +1670,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Left=%u Top=%u",
+            "WindowId=0x%X Left=%u Top=%u",
             this->WindowId_, this->Left_, this->Top_);
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1796,7 +1811,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Command=%s(%u)",
+            "WindowId=0x%X Command=%s(%u)",
             this->WindowId_, ::get_RAIL_Command_name(this->Command_),
             this->Command_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -2002,7 +2017,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u NotifyIconId=%u Message=%s(%u)",
+            "WindowId=0x%X NotifyIconId=%u Message=%s(%u)",
             this->WindowId_, this->NotifyIconId_, ::get_RAIL_Message_name(this->Message_),
             this->Message_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -2081,7 +2096,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u", this->WindowId_);
+            "WindowId=0x%X", this->WindowId_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -2218,7 +2233,7 @@ private:
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
+            "WindowId=0x%X MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
                 "MinTrackWidth=%u MinTrackHeight=%u MaxTrackWidth=%u "
                 "MaxTrackHeight=%u",
             this->WindowId, this->MaxWidth, this->MaxHeight, this->MaxPosX,
@@ -2422,32 +2437,108 @@ char const* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
     }
 }
 
-class ServerMoveSizeStartPDU {
+// [MS-RDPERP] - 2.2.2.7.3 Server Move/Size End PDU
+//  (TS_RAIL_ORDER_LOCALMOVESIZE)
+// ================================================
+
+// The Server Move/Size End PDU is sent by the server when a window on the
+//  server is completing a move or resize. The client uses this information
+//  to end a local move/resize of the corresponding local window.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +-------------------------------+-------------------------------+
+// |        IsMoveSizeStart        |          MoveSizeType         |
+// +-------------------------------+-------------------------------+
+// |            TopLeftX           |            TopLeftY           |
+// +-------------------------------+-------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_LOCALMOVESIZE (0x0009).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window on
+//  the server that is being moved or resized.
+
+// IsMoveSizeStart (2 bytes): An unsigned 16-bit integer. Indicates the move
+//  or resize is ending. This field MUST be set to 0.
+
+// MoveSizeType (2 bytes): An unsigned 16-bit integer. Indicates the type of
+//  the move/size.
+
+//  +-----------------------+--------------------------------------------------+
+//  | Value                 | Meaning                                          |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_LEFT        | The left edge of the window is being sized.      |
+//  | 0x0001                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_RIGHT       | The right edge of the window is being sized.     |
+//  | 0x0002                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_TOP         | The top edge of the window is being sized.       |
+//  | 0x0003                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_TOPLEFT     | The top-left corner of the window is being       |
+//  | 0x0004                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_TOPRIGHT    | The top-right corner of the window is being      |
+//  | 0x0005                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOM      | The bottom edge of the window is being sized.    |
+//  | 0x0006                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMLEFT  | The bottom-left corner of the window is being    |
+//  | 0x0007                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_BOTTOMRIGHT | The bottom-right corner of the window is being   |
+//  | 0x0008                | sized.                                           |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_MOVE        | The window is being moved by using the mouse.    |
+//  | 0x0009                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_KEYMOVE     | The window is being moved by using the keyboard. |
+//  | 0x000A                |                                                  |
+//  +-----------------------+--------------------------------------------------+
+//  | RAIL_WMSZ_KEYSIZE     | The window is being resized by using the         |
+//  | 0x000B                | keyboard.                                        |
+//  +-----------------------+--------------------------------------------------+
+
+// TopLeftX (2 bytes): An unsigned 16-bit integer. The x-coordinate of the
+//  moved or resized window's top-left corner.
+
+// TopLeftY (2 bytes): An unsigned 16-bit integer. The y-coordinate of the
+//  moved or resized window's top-left corner.
+
+class ServerMoveSizeStartOrEndPDU {
     uint32_t WindowId        = 0;
     uint16_t IsMoveSizeStart = 0;
     uint16_t MoveSizeType    = 0;
-    uint16_t PosX            = 0;
-    uint16_t PosY            = 0;
+    uint16_t PosXOrTopLeftX  = 0;
+    uint16_t PosYOrTopLeftY  = 0;
 
 public:
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->WindowId);
         stream.out_uint16_le(this->IsMoveSizeStart);
         stream.out_uint16_le(this->MoveSizeType);
-        stream.out_uint16_le(this->PosX);
-        stream.out_uint16_le(this->PosY);
+        stream.out_uint16_le(this->PosXOrTopLeftX);
+        stream.out_uint16_le(this->PosYOrTopLeftY);
     }
 
     void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // WindowId(4) +
                                             //  IsMoveSizeStart(2) +
-                                            //  MoveSizeType(2) + PosX(2) +
-                                            //  PosY(2)
+                                            //  MoveSizeType(2) + PosX/TopLeftX(2) +
+                                            //  PosY/TopLeftY(2)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Server Move/Size Start PDU: expected=%u remains=%zu",
+                    "Truncated Server Move/Size Start/End PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -2456,27 +2547,28 @@ public:
         this->WindowId        = stream.in_uint32_le();
         this->IsMoveSizeStart = stream.in_uint16_le();
         this->MoveSizeType    = stream.in_uint16_le();
-        this->PosX            = stream.in_uint16_le();
-        this->PosY            = stream.in_uint16_le();
+        this->PosXOrTopLeftX  = stream.in_uint16_le();
+        this->PosYOrTopLeftY  = stream.in_uint16_le();
     }
 
     static size_t size() {
         return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
-                    //  PosX(2) + PosY(2)
+                    //  PosX/TopLeftX(2) + PosY/TopLeftY(2)
     }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeStartPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeStartOrEndPDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX=%u PosY=%u",
-            this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
-            this->MoveSizeType, this->PosX, this->PosY);
+            "WindowId=0x%X IsMoveSizeStart=%s(%u) MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
+            this->WindowId, (this->IsMoveSizeStart ? "Yes" : "No"), this->IsMoveSizeStart,
+            ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
+            this->MoveSizeType, this->PosXOrTopLeftX, this->PosYOrTopLeftY);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -2484,6 +2576,1126 @@ private:
 
 public:
     inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.7.4 Client Window Move PDU (TS_RAIL_ORDER_WINDOWMOVE)
+// =========================================================================
+
+// The Client Window Move PDU packet is sent from the client to the server
+//  when a local window is ending a move or resize. The client communicates
+//  the locally moved or resized window's position to the server by using
+//  this packet. The server uses this information to reposition its window.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +-------------------------------+-------------------------------+
+// |              Left             |              Top              |
+// +-------------------------------+-------------------------------+
+// |             Right             |             Bottom            |
+// +-------------------------------+-------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_WINDOWMOVE (0x0008).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the window on
+//  the server corresponding to the local window that was moved or resized.
+
+// Left (2 bytes): An unsigned 16-bit integer. The x-coordinate of the
+//  top-left corner of the window's new position.
+
+// Top (2 bytes): An unsigned 16-bit integer. The y-coordinate of the
+//  top-left corner of the window's new position.
+
+// Right (2 bytes): An unsigned 16-bit integer. The x-coordinate of the
+//  bottom-right corner of the window's new position.
+
+// Bottom (2 bytes): An unsigned 16-bit integer. The y-coordinate of the
+//  bottom-right corner of the window's new position.
+
+class ClientWindowMovePDU {
+    uint32_t WindowId = 0;
+    uint16_t Left     = 0;
+    uint16_t Top      = 0;
+    uint16_t Right    = 0;
+    uint16_t Bottom   = 0;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId);
+        stream.out_uint16_le(this->Left);
+        stream.out_uint16_le(this->Top);
+        stream.out_uint16_le(this->Right);
+        stream.out_uint16_le(this->Bottom);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 12;   // WindowId(4) + Left(2) +
+                                            //  Top(2) + Right(2) + Bottom(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Client Window Move PDU: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId = stream.in_uint32_le();
+        this->Left     = stream.in_uint16_le();
+        this->Top      = stream.in_uint16_le();
+        this->Right    = stream.in_uint16_le();
+        this->Bottom   = stream.in_uint16_le();
+    }
+
+    static size_t size() {
+        return 12;  // WindowId(4) + Left(2) + Top(2) +
+                    //  Right(2) + Bottom(2)
+    }
+
+private:
+    inline size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeEndPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=0x%X Left=%u Top=%u Right=%u Bottom=%u",
+            this->WindowId, this->Left, this->Top, this->Right, this->Bottom);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    inline void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.8.1 Server Get Application ID Response PDU
+//  (TS_RAIL_ORDER_GET_APPID_RESP)
+// ==============================================================
+
+// The Server Get Application ID Response PDU is sent from a server to a
+//  client. This PDU MAY be sent to the client as a response to a Client Get
+//  Application ID PDU.
+
+// This PDU specifies the Application ID that the specified window SHOULD<16>
+//  have on the client. The client MAY ignore this PDU.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +---------------------------------------------------------------+
+// |                   ApplicationId (512 bytes)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_GET_APPID_RESP (0x000F).
+
+// WindowId (4 bytes): An unsigned 32-bit integer specifying the ID of the
+//  associated window on the server whose Application ID is being sent to the
+//  client.
+
+// ApplicationId (512 bytes): A null-terminated string of Unicode characters
+//  specifying the Application ID that the Client SHOULD associate with its
+//  window, if it supports using the Application ID for identifying and
+//  grouping windows.
+
+class ServerGetApplicationIDResponsePDU {
+    uint32_t WindowId = 0;
+
+    std::string application_id;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId);
+
+        uint8_t ApplicationId_unicode_data[512];
+        ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
+        /*const size_t size_of_ApplicationId_unicode_data = */::UTF8toUTF16(
+            reinterpret_cast<const uint8_t *>(this->application_id.c_str()),
+            ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data) - 2 /* null-terminator */);
+
+        stream.out_copy_bytes(ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data));
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 516;    // WindowId(4) + ApplicationId(512)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server Get Application ID Response PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId = stream.in_uint32_le();
+
+        uint8_t ApplicationId_utf8_string[512 / 2]; // ApplicationId(512)
+        const size_t length_of_ApplicationId_utf8_string = ::UTF16toUTF8(
+            stream.get_current(),
+            512 / 2,    // ApplicationId(512)
+            ApplicationId_utf8_string,
+            sizeof(ApplicationId_utf8_string));
+        this->application_id.assign(::char_ptr_cast(ApplicationId_utf8_string),
+            length_of_ApplicationId_utf8_string);
+    }
+
+    static size_t size() {
+        return 516; // WindowId(4) + ApplicationId(512)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerGetApplicationIDResponsePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=0x%X ApplicationId=\"%s\"",
+            this->WindowId, this->application_id.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.9.1 Language Bar Information PDU
+//  (TS_RAIL_ORDER_LANGBARINFO)
+// ====================================================
+
+// The Language Bar Information PDU is used to set the language bar status.
+//  It is sent from a client to a server or a server to a client, but only
+//  when both support the Language Bar docking capability
+//  (TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED). This PDU contains information
+//  about the language bar status.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                       LanguageBarStatus                       |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER (section 2.2.2.1) header. The
+//  orderType field of the header MUST be set to TS_RAIL_ORDER_LANGBARINFO
+//  (0x000D).
+
+// LanguageBarStatus (4 bytes): An unsigned 32-bit integer. The possible
+//  values are indicated in the table below. The server sends the
+//  LanguageBarStatus it retrieves from the local language bar:
+
+//  +--------------------------------+----------------------------------------+
+//  | Value                          | Meaning                                |
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_SHOWNORMAL              | Display the language bar as a floating |
+//  | 0x00000001                     | window. This constant cannot be        |
+//  |                                | combined with the TF_SFT_DOCK,         |
+//  |                                | TF_SFT_MINIMIZED, TF_SFT_HIDDEN, or    |
+//  |                                | TF_SFT_DESKBAND constants.             |
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_DOCK                    | Dock the language bar in its own task  |
+//  | 0x00000002                     | pane. This constant cannot be combined |
+//  |                                | with the TF_SFT_SHOWNORMAL,            |
+//  |                                | TF_SFT_MINIMIZED, TF_SFT_HIDDEN, or    |
+//  |                                | TF_SFT_DESKBAND constants.<17>         |
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_MINIMIZED               | Display the language bar as a single
+//  | 0x00000004                     | icon in the system tray. This constant
+//  |                                | cannot be combined with the
+//  |                                | TF_SFT_SHOWNORMAL, TF_SFT_DOCK,
+//  |                                | TF_SFT_HIDDEN, or TF_SFT_DESKBAND
+//  |                                | constants.
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_HIDDEN                  | Hide the language bar. This constant
+//  | 0x00000008                     | cannot be combined with the
+//  |                                | TF_SFT_SHOWNORMAL, TF_SFT_DOCK,
+//  |                                | TF_SFT_MINIMIZED, or TF_SFT_DESKBAND
+//  |                                | constants.
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_NOTRANSPARENCY          | Make the language bar opaque.
+//  | 0x00000010                     |
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_LOWTRANSPARENCY         | Make the language bar partially
+//  | 0x00000020                     | transparent.<18>
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_HIGHTRANSPARENCY        | Make the language bar highly
+//  | 0x00000040                     | transparent.<19>
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_LABELS                  | Display text labels next to language
+//  | 0x00000080                     | bar icons.
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_NOLABELS                | Hide language bar icon text labels.
+//  | 0x00000100                     |
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_EXTRAICONSONMINIMIZED   | Display text service icons on the
+//  | 0x00000200                     | taskbar when the language bar is
+//  |                                | minimized.
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_NOEXTRAICONSONMINIMIZED | Hide text service icons on the taskbar
+//  | 0x00000400                     | when the language bar is minimized.
+//  +--------------------------------+----------------------------------------+
+//  | TF_SFT_DESKBAND                | Dock the language bar in the system
+//  | 0x00000800                     | task bar. This constant cannot be
+//  |                                | combined with the TF_SFT_SHOWNORMAL,
+//  |                                | TF_SFT_DOCK, TF_SFT_MINIMIZED, or
+//  |                                | TF_SFT_HIDDEN constants.<20>
+//  +--------------------------------+----------------------------------------+
+
+enum {
+      TF_SFT_SHOWNORMAL              = 0x00000001
+    , TF_SFT_DOCK                    = 0x00000002
+    , TF_SFT_MINIMIZED               = 0x00000004
+    , TF_SFT_HIDDEN                  = 0x00000008
+    , TF_SFT_NOTRANSPARENCY          = 0x00000010
+    , TF_SFT_LOWTRANSPARENCY         = 0x00000020
+    , TF_SFT_HIGHTRANSPARENCY        = 0x00000040
+    , TF_SFT_LABELS                  = 0x00000080
+    , TF_SFT_NOLABELS                = 0x00000100
+    , TF_SFT_EXTRAICONSONMINIMIZED   = 0x00000200
+    , TF_SFT_NOEXTRAICONSONMINIMIZED = 0x00000400
+    , TF_SFT_DESKBAND                = 0x00000800
+};
+
+class LanguageBarInformationPDU {
+    uint32_t LanguageBarStatus = 0;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->LanguageBarStatus);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;    // LanguageBarStatus(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Language Bar Information PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->LanguageBarStatus = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 4;   // LanguageBarStatus(4)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "LanguageBarInformationPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "LanguageBarStatus=0x%X", this->LanguageBarStatus);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.10.1.1 Globally Unique Identifier (GUID)
+// ============================================================
+
+// The GUID structure contains 128 bits that represent a globally unique
+//  identifier that can be used to provide a distinctive reference number, as
+//  defined in [MS-DTYP] section 2.3.4.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           codecGUID1                          |
+// +-------------------------------+-------------------------------+
+// |           codecGUID2          |           codecGUID3          |
+// +---------------+---------------+---------------+---------------+
+// |   codecGUID4  |   codecGUID5  |   codecGUID6  |   codecGUID7  |
+// +---------------+---------------+---------------+---------------+
+// |   codecGUID8  |   codecGUID9  |  codecGUID10  |  codecGUID11  |
+// +---------------+---------------+---------------+---------------+
+
+// codecGUID1 (4 bytes): A 32-bit, unsigned integer. The first GUID
+//  component.
+
+// codecGUID2 (2 bytes): A 16-bit, unsigned integer. The second GUID
+//  component.
+
+// codecGUID3 (2 bytes): A 16-bit, unsigned integer. The third GUID
+//  component.
+
+// codecGUID4 (1 byte): An 8-bit, unsigned integer. The fourth GUID
+//  component.
+
+// codecGUID5 (1 byte): An 8-bit, unsigned integer. The fifth GUID component.
+
+// codecGUID6 (1 byte): An 8-bit, unsigned integer. The sixth GUID component.
+
+// codecGUID7 (1 byte): An 8-bit, unsigned integer. The seventh GUID
+//  component.
+
+// codecGUID8 (1 byte): An 8-bit, unsigned integer. The eighth GUID
+//  component.
+
+// codecGUID9 (1 byte): An 8-bit, unsigned integer. The ninth GUID component.
+
+// codecGUID10 (1 byte): An 8-bit, unsigned integer. The tenth GUID
+//  component.
+
+// codecGUID11 (1 byte): An 8-bit, unsigned integer. The eleventh GUID
+//  component.
+
+class GloballyUniqueIdentifier {
+    uint32_t codecGUID1;
+    uint16_t codecGUID2;
+    uint16_t codecGUID3;
+    uint8_t  codecGUID4;
+    uint8_t  codecGUID5;
+    uint8_t  codecGUID6;
+    uint8_t  codecGUID7;
+    uint8_t  codecGUID8;
+    uint8_t  codecGUID9;
+    uint8_t  codecGUID10;
+    uint8_t  codecGUID11;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->codecGUID1);
+        stream.out_uint16_le(this->codecGUID2);
+        stream.out_uint16_le(this->codecGUID3);
+        stream.out_uint8(this->codecGUID4);
+        stream.out_uint8(this->codecGUID5);
+        stream.out_uint8(this->codecGUID6);
+        stream.out_uint8(this->codecGUID7);
+        stream.out_uint8(this->codecGUID8);
+        stream.out_uint8(this->codecGUID9);
+        stream.out_uint8(this->codecGUID10);
+        stream.out_uint8(this->codecGUID11);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 16;   // codecGUID1(4) + codecGUID2(2) +
+                                            //  codecGUID3(2) + codecGUID4(1) +
+                                            //  codecGUID5(1) + codecGUID6(1) +
+                                            //  codecGUID7(1) + codecGUID8(1) +
+                                            //  codecGUID9(1) + codecGUID10(1) +
+                                            //  codecGUID11(1)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Globally Unique Identifier: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->codecGUID1  = stream.in_uint32_le();
+        this->codecGUID2  = stream.in_uint16_le();
+        this->codecGUID3  = stream.in_uint16_le();
+        this->codecGUID4  = stream.in_uint8();
+        this->codecGUID5  = stream.in_uint8();
+        this->codecGUID6  = stream.in_uint8();
+        this->codecGUID7  = stream.in_uint8();
+        this->codecGUID8  = stream.in_uint8();
+        this->codecGUID9  = stream.in_uint8();
+        this->codecGUID10 = stream.in_uint8();
+        this->codecGUID11 = stream.in_uint8();
+    }
+
+    static size_t size() {
+        return 16;  // codecGUID1(4) + codecGUID2(2) + codecGUID3(2) +
+                    //  codecGUID4(1) + codecGUID5(1) + codecGUID6(1) +
+                    //  codecGUID7(1) + codecGUID8(1) + codecGUID9(1) +
+                    //  codecGUID10(1) + codecGUID11(1)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "GloballyUniqueIdentifier=(");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "codecGUID1=0x%X codecGUID2=0x%X codecGUID3=0x%X "
+                "codecGUID4=0x%X codecGUID5=0x%X codecGUID6=0x%X "
+                "codecGUID7=0x%X codecGUID8=0x%X codecGUID9=0x%X "
+                "codecGUID10=0x%X codecGUID11=0x%X",
+            this->codecGUID1, this->codecGUID2, this->codecGUID3,
+            this->codecGUID4, this->codecGUID5, this->codecGUID6,
+            this->codecGUID7, this->codecGUID8, this->codecGUID9,
+            this->codecGUID10, this->codecGUID11);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length, ")");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.10.1 Language Profile Information PDU
+//  (TS_RAIL_ORDER_LANGUAGEIMEINFO)
+// =========================================================
+
+// The Language Profile Information PDU is used to send the current active
+//  language profile of the client to the server. It is only sent when both
+//  client and server support this capability
+//  (TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED). This PDU contains
+//  information about the current active language profile.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +-------------------------------+-------------------------------+
+// |                          ProfileType                          |
+// +-------------------------------+-------------------------------+
+// |           LanguageID          |LanguageProfileCLSID (16 bytes)|
+// +-------------------------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +-------------------------------+-------------------------------+
+// |              ...              |     ProfileGUID (16 bytes)    |
+// +-------------------------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +-------------------------------+-------------------------------+
+// |              ...              |         KeyboardLayout        |
+// +-------------------------------+-------------------------------+
+// |              ...              |
+// +-------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_LANGUAGEIMEINFO (0x0011).
+
+// ProfileType (4 bytes): An unsigned 4-byte integer that identifies the
+//  profile type of the language. The value SHOULD be either
+//  TF_PROFILETYPE_INPUTPROCESSOR (0x0001) or TF_PROFILETYPE_KEYBOARDLAYOUT
+/// (0x0002).
+
+//  +-------------------------------+---------------------------------------+
+//  | Value                         | Meaning                               |
+//  +-------------------------------+---------------------------------------+
+//  | TF_PROFILETYPE_INPUTPROCESSOR | Indicates that the profile type is an |
+//  | 0x00000001                    | input processor.                      |
+//  +-------------------------------+---------------------------------------+
+//  | TF_PROFILETYPE_KEYBOARDLAYOUT | Indicates that the profile type is a  |
+//  | 0x00000002                    | keyboard layout.                      |
+//  +-------------------------------+---------------------------------------+
+
+enum {
+      TF_PROFILETYPE_INPUTPROCESSOR = 0x00000001
+    , TF_PROFILETYPE_KEYBOARDLAYOUT = 0x00000002
+};
+
+// LanguageID (2 bytes): An unsigned 2-byte integer. This is the language
+//  identifier that identifies both the language and the country/region. For
+//  a list of language identifiers, see [MSDN-MUI].
+
+// LanguageProfileCLSID (16 bytes): A globally unique identifier (section
+//  2.2.2.10.1.1) that uniquely identifies the text service of the client.
+//  This field MUST be set to GUID_NULL if the ProfileType field is set to
+//  TF_PROFILETYPE_KEYBOARDLAYOUT (0x0002).
+
+//  +------------------------------------------------------------+---------------------------------------+
+//  | Value                                                      | Meaning                               |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_NULL                                                  | Indicates that there is no input      |
+//  | {0x00000000, 0x0000, 0x0000, 0x00, 0x00, 0x00, 0x00, 0x00, | processor.                            |
+//  | 0x00, 0x00, 0x00}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_MSIME_JPN                                             | Indicates that the input processor is |
+//  | {0x03B5835F, 0xF03C, 0x411B, 0x9C, 0xE2, 0xAA, 0x23, 0xE1, | Japanese.                             |
+//  | 0x17, 0x1E, 0x36}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_MSIME_KOR                                             | Indicates that the input processor is |
+//  | {0xA028AE76, 0x01B1, 0x46C2, 0x99, 0xC4, 0xAC, 0xD9, 0x85, | Korean.                               |
+//  | 0x8A, 0xE0, 0x2}                                           |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_CHSIME                                                | Indicates that the input processor is |
+//  | {0x81D4E9C9, 0x1D3B, 0x41BC, 0x9E, 0x6C, 0x4B, 0x40, 0xBF, | Chinese Simplified.                   |
+//  | 0x79, 0xE3, 0x5E}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_CHTIME                                                | Indicates that the input processor is |
+//  | {0x531FDEBF, 0x9B4C, 0x4A43, 0xA2, 0xAA, 0x96, 0x0E, 0x8F, | Chinese (Taiwanese).                  |
+//  | 0xCD, 0xC7, 0x32}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+
+// ProfileGUID (16 bytes): A globally unique identifier (section
+//  2.2.2.10.1.1) that uniquely identifies the language profile of the
+//  client. This field MUST be set to GUID_NULL if the ProfileType field is
+//  set to TF_PROFILETYPE_KEYBOARDLAYOUT (0x0002).
+
+//  +------------------------------------------------------------+---------------------------------------+
+//  | Value                                                      | Meaning                               |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_NULL                                                  | Indicates that there is no profile.   |
+//  | {0x00000000, 0x0000, 0x0000, 0x00, 0x00, 0x00, 0x00, 0x00, |                                       |
+//  | 0x00, 0x00, 0x00}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_PROFILE_NEWPHONETIC                                   | Indicates that the profile is new     |
+//  | {0xB2F9C502, 0x1742, 0x11D4, 0x97, 0x90, 0x00, 0x80, 0xC8, | phonetic.                             |
+//  | 0x82, 0x68, 0x7E}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_PROFILE_CHANGJIE                                      | Indicates that the profile is         |
+//  | {0x4BDF9F03, 0xC7D3, 0x11D4, 0xB2, 0xAB, 0x00, 0x80, 0xC8, | ChangJie.                             |
+//  | 0x82, 0x68, 0x7E}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_PROFILE_QUICK                                         | Indicates that the profile is Quick   |
+//  | {0x6024B45F, 0x5C54, 0x11D4, 0xB9, 0x21, 0x00, 0x80, 0xC8, | type.                                 |
+//  | 0x82, 0x68, 0x7E}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_PROFILE_CANTONESE                                     | Indicates that the profile is         |
+//  | {0x0AEC109C, 0x7E96, 0x11D4, 0xB2, 0xEF, 0x00, 0x80, 0xC8, | Cantonese.                            |
+//  | 0x82, 0x68, 0x7E}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_PROFILE_PINYIN                                        | Indicates that the profile is PinYin. |
+//  | {0xF3BA9077, 0x6C7E, 0x11D4, 0x97, 0xFA, 0x00, 0x80, 0xC8, |                                       |
+//  | 0x82, 0x68, 0x7E}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_PROFILE_SIMPLEFAST                                    | Indicates that the profile is         |
+//  | {0xFA550B04, 0x5AD7, 0x411F, 0xA5, 0xAC, 0xCA, 0x03, 0x8E, | SimpleFast.                           |
+//  | 0xC5, 0x15, 0xD7}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_GUID_PROFILE_MSIME_JPN                                | Indicates that the profile is         |
+//  | {0xA76C93D9, 0x5523, 0x4E90, 0xAA, 0xFA, 0x4D, 0xB1, 0x12, | Microsoft Japanese IME.               |
+//  | 0xF9, 0xAC, 0x76}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+//  | GUID_PROFILE_MSIME_KOR                                     | Indicates that the profile is         |
+//  | {0xB5FE1F02, 0xD5F2, 0x4445, 0x9C, 0x03, 0xC5, 0x68, 0xF2, | Microsoft Korean IME.                 |
+//  | 0x3C, 0x99, 0xA1}                                          |                                       |
+//  +------------------------------------------------------------+---------------------------------------+
+
+// KeyboardLayout (4 bytes): An unsigned 4-byte integer. The active input
+//  locale identifier, also known as the "HKL" (for example, 0x00010409
+//  identifies a "United States-Dvorak" keyboard layout, while 0x00020418 is
+//  a "Romanian (Programmers)" keyboard layout). For a list of input locale
+//  identifiers, see [MSFT-DIL].
+
+class LanguageProfileInformationPDU {
+    uint32_t ProfileType;
+
+    uint16_t LanguageID;
+
+    GloballyUniqueIdentifier LanguageProfileCLSID;
+    GloballyUniqueIdentifier ProfileGUID;
+
+    uint32_t KeyboardLayout;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->ProfileType);
+        stream.out_uint16_le(this->LanguageID);
+
+        this->LanguageProfileCLSID.emit(stream);
+        this->ProfileGUID.emit(stream);
+
+        stream.out_uint32_le(this->KeyboardLayout);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 6;    // ProfileType(4) + LanguageID(2)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Language Profile Information PDU (1): expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->ProfileType = stream.in_uint32_le();
+        this->LanguageID  = stream.in_uint16_le();
+
+        this->LanguageProfileCLSID.receive(stream);
+        this->ProfileGUID.receive(stream);
+
+        {
+            const unsigned expected = 4;    // KeyboardLayout(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Language Profile Information PDU (2): expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->KeyboardLayout = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 6 +  // ProfileType(4) +
+               2 +  // LanguageID(2) +
+               GloballyUniqueIdentifier::size() +   // LanguageProfileCLSID
+               GloballyUniqueIdentifier::size() +   // ProfileGUID
+               4;   // KeyboardLayout(1)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "GloballyUniqueIdentifier: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "ProfileType=%u LanguageID=0x%X ",
+            this->ProfileType, this->LanguageID);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = this->LanguageProfileCLSID.str(buffer + length, size - length);
+        result = this->ProfileGUID.str(buffer + length, size - length);
+
+        result = ::snprintf(buffer + length, size - length,
+            " KeyboardLayout=0x%X",
+            this->KeyboardLayout);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.10.2 Compartment Status Information PDU
+//  (TS_RAIL_ORDER_COMPARTMENTINFO_BODY)
+// ===========================================================
+
+// The Compartment Status Information PDU is used to send the current input
+//  method editor (IME) status information. It is sent from a client to the
+//  server, or from a server to the client, but only when client and server
+//  both support this capability (TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED).
+//  This PDU is used to send the current compartment values of the client or
+//  server and is sent only if the current language profile type is
+//  TF_PROFILETYPE_INPUTPROCESSOR (0x0001).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            ImeState                           |
+// +---------------------------------------------------------------+
+// |                          ImeConvMode                          |
+// +---------------------------------------------------------------+
+// |                        ImeSentenceMode                        |
+// +---------------------------------------------------------------+
+// |                            KANAMode                           |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER header. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_COMPARTMENTINFO (0x0012).
+
+// ImeState (4 bytes): A 32-bit, unsigned integer. Indicates the open or
+//  closed state of the IME.
+
+//  +------------------+--------------------------+
+//  | Value            | Meaning                  |
+//  +------------------+--------------------------+
+//  | IME_STATE_CLOSED | The IME state is closed. |
+//  | 0x00000000       |                          |
+//  +------------------+--------------------------+
+//  | IME_STATE_OPEN   | The IME state is open.   |
+//  | 0x00000001       |                          |
+//  +------------------+--------------------------+
+
+enum {
+      IME_STATE_CLOSED = 0x00000000
+    , IME_STATE_OPEN   = 0x00000001
+};
+
+// ImeConvMode (4 bytes): A 32-bit, unsigned integer. Indicates the IME
+//  conversion mode.
+
+//  +------------------------+-------------------------------------------------+
+//  | Value                  | Meaning                                         |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_NATIVE       | The input mode is native. If not set, the input |
+//  | 0x00000001             | mode is alphanumeric.                           |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_KATAKANA     | The input mode is Katakana. If not set, the     |
+//  | 0x00000002             | input mode is Hiragana.                         |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_FULLSHAPE    | The input mode is full-width. If not set, the   |
+//  | 0x00000008             | input mode is half-width.                       |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_ROMAN        | The input mode is Roman.                        |
+//  | 0x00000010             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_CHARCODE     | Character-code input is in effect.              |
+//  | 0x00000020             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_HANJACONVERT | Hanja conversion mode is in effect.             |
+//  | 0x00000040             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_SOFTKBD      | A soft (on-screen) keyboard is being used.      |
+//  | 0x00000080             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_NOCONVERSION | IME conversion is inactive (that is, the IME is |
+//  | 0x00000100             | closed).                                        |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_EUDC         | End-User Defined Character (EUDC) conversion    |
+//  | 0x00000200             | mode is in effect.                              |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_SYMBOL       | Symbol conversion mode is in effect.            |
+//  | 0x00000400             |                                                 |
+//  +------------------------+-------------------------------------------------+
+//  | IME_CMODE_FIXED        | Fixed conversion mode is in effect.             |
+//  | 0x00000800             |                                                 |
+//  +------------------------+-------------------------------------------------+
+
+enum {
+      IME_CMODE_NATIVE       = 0x00000001
+    , IME_CMODE_KATAKANA     = 0x00000002
+    , IME_CMODE_FULLSHAPE    = 0x00000008
+    , IME_CMODE_ROMAN        = 0x00000010
+    , IME_CMODE_CHARCODE     = 0x00000020
+    , IME_CMODE_HANJACONVERT = 0x00000040
+    , IME_CMODE_SOFTKBD      = 0x00000080
+    , IME_CMODE_NOCONVERSION = 0x00000100
+    , IME_CMODE_EUDC         = 0x00000200
+    , IME_CMODE_SYMBOL       = 0x00000400
+    , IME_CMODE_FIXED        = 0x00000800
+};
+
+// ImeSentenceMode (4 bytes): An unsigned 4-byte integer that identifies the
+//  sentence mode of the IME.
+
+//  +-------------------------+------------------------------------------------+
+//  | Flag                    | Meaning                                        |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_NONE          | Indicates that the IME uses no information for |
+//  | 0x00000000              | sentence.
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_PLURALCLAUSE  | Indicates that the IME uses plural clause      |
+//  | 0x00000001              | information to carry out conversion            |
+//  |                         | processing.                                    |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_SINGLECONVERT | Indicates that the IME carries out conversion  |
+//  | 0x00000002              | processing in single-character mode.           |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_AUTOMATIC     | Indicates that the IME carries conversion      |
+//  | 0x00000004              | processing in automatic mode.                  |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_PHRASEPREDICT | Indicates that the IME uses phrase information |
+//  | 0x00000008              | to predict the next character.                 |
+//  +-------------------------+------------------------------------------------+
+//  | IME_SMODE_CONVERSATION  | Indicates that the IME uses conversation mode. |
+//  | 0x00000010              | This is useful for chat applications.          |
+//  +-------------------------+------------------------------------------------+
+
+enum {
+      IME_SMODE_NONE          = 0x00000000
+    , IME_SMODE_PLURALCLAUSE  = 0x00000001
+    , IME_SMODE_SINGLECONVERT = 0x00000002
+    , IME_SMODE_AUTOMATIC     = 0x00000004
+    , IME_SMODE_PHRASEPREDICT = 0x00000008
+    , IME_SMODE_CONVERSATION  = 0x00000010
+};
+
+// KANAMode (4 bytes): An unsigned 4-byte integer that identifies whether the
+//  input mode is Romaji or KANA for Japanese text processors. The value is
+//  0x0000 for all non-Japanese text processors.
+
+//  +---------------+--------------------------------------------------+
+//  | Value         | Meaning                                          |
+//  +---------------+--------------------------------------------------+
+//  | KANA_MODE_OFF | Indicates that the KANA input mode is off.       |
+//  | 0x00000000    |                                                  |
+//  +---------------+--------------------------------------------------+
+//  | KANA_MODE_ON  | Indicates that the KANA input mode is activated. |
+//  | 0x00000001    |                                                  |
+//  +---------------+--------------------------------------------------+
+
+enum {
+      KANA_MODE_OFF = 0x00000000
+    , KANA_MODE_ON  = 0x00000001
+};
+
+class CompartmentStatusInformationPDU {
+    uint32_t ImeState;
+    uint32_t ImeConvMode;
+    uint32_t ImeSentenceMode;
+    uint32_t KANAMode;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->ImeState);
+        stream.out_uint32_le(this->ImeConvMode);
+        stream.out_uint32_le(this->ImeSentenceMode);
+        stream.out_uint32_le(this->KANAMode);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 16;   // ImeState(4) + ImeConvMode(4) +
+                                            //  ImeSentenceMode(4) + KANAMode(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Compartment Status Information PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->ImeState        = stream.in_uint32_le();
+        this->ImeConvMode     = stream.in_uint32_le();
+        this->ImeSentenceMode = stream.in_uint32_le();
+        this->KANAMode        = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 16;  // ImeState(4) + ImeConvMode(4) + ImeSentenceMode(4) +
+                    //  KANAMode(4)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "CompartmentStatusInformationPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "ImeState=0x%X ImeConvMode=0x%X ImeSentenceMode=0x%X KANAMode=0x%X",
+            this->ImeState, this->ImeConvMode, this->ImeSentenceMode, this->KANAMode);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.11.1 Server Z-Order Sync Information PDU
+//  (TS_RAIL_ORDER_ZORDER_SYNC)
+// ============================================================
+
+// The Z-Order Sync Information PDU is sent from the server to the client if
+//  the client has advertised support for Z-order sync in the Client
+//  Information PDU (section 2.2.2.2.2).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                         WindowIdMarker                        |
+// +---------------------------------------------------------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_ZORDER_SYNC (0x0014).
+
+// WindowIdMarker (4 bytes): An unsigned 32-bit integer. Indicates the ID of
+//  the marker window (section 3.3.1.3), which is used to manage the
+//  activation of RAIL windows as specified in section 3.2.5.2.9.2.
+
+class ServerZOrderSyncInformationPDU {
+    uint32_t WindowIdMarker;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowIdMarker);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;    // WindowIdMarker(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Server Z-Order Sync Information PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowIdMarker = stream.in_uint32_le();
+    }
+
+    static size_t size() {
+        return 4;   // WindowIdMarker(4)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "ServerZOrderSyncInformationPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowIdMarker=0x%X", this->WindowIdMarker);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPERP] - 2.2.2.12.1 Window Cloak State Change PDU
+//  (TS_RAIL_ORDER_CLOAK)
+// ======================================================
+
+// The Window Cloak State Change PDU is sent from the client to the server
+//  when a RAIL window has been cloaked or uncloaked on the client. It is
+//  only sent when both the client and server support syncing per-window
+//  cloak state (indicated by the TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED
+//  flag in the Remote Programs Capability Set (section 2.2.1.1.1). The
+//  server uses this information to sync the cloak state to the associated
+//  window on the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                              Hdr                              |
+// +---------------------------------------------------------------+
+// |                            WindowId                           |
+// +---------------+-----------------------------------------------+
+// |    Cloaked    |
+// +---------------+
+
+// Hdr (4 bytes): A TS_RAIL_PDU_HEADER structure. The orderType field of the
+//  header MUST be set to TS_RAIL_ORDER_CLOAK (0x0015).
+
+// WindowId (4 bytes): An unsigned 32-bit integer. The ID of the associated
+//  window on the server that is to be cloaked or uncloaked.
+
+// Cloaked (1 byte): An unsigned 8-bit integer that indicates whether the
+//  window SHOULD be cloaked or uncloaked.
+
+//  +-------+---------------------------------+
+//  | Value | Meaning                         |
+//  +-------+---------------------------------+
+//  | 0x00  | The window SHOULD be uncloaked. |
+//  +-------+---------------------------------+
+//  | 0x01  | The window SHOULD be cloaked.   |
+//  +-------+---------------------------------+
+
+class WindowCloakStateChangePDU {
+    uint32_t WindowId;
+    uint8_t  Cloaked;
+
+public:
+    void emit(OutStream & stream) {
+        stream.out_uint32_le(this->WindowId);
+        stream.out_uint8(this->Cloaked);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 5;    // WindowId(4) + Cloaked(1)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated Window Cloak State Change PDU: expected=%u remains=%zu (0)",
+                    expected, stream.in_remain());
+                throw Error(ERR_RAIL_PDU_TRUNCATED);
+            }
+        }
+
+        this->WindowId = stream.in_uint32_le();
+        this->Cloaked  = stream.in_uint8();
+    }
+
+    static size_t size() {
+        return 5;   // WindowId(4) + Cloaked(1)
+    }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length, "WindowCloakStateChangePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "WindowId=0x%X Cloaked=0x%X", this->WindowId, this->Cloaked);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;

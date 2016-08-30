@@ -254,7 +254,7 @@ public:
             , CF_QT_CLIENT_FILECONTENTS         = 48026
         };
         enum : int {
-              CLIPBRD_FORMAT_COUNT = 4
+              CLIPBRD_FORMAT_COUNT = 5
         };
         const std::string FILECONTENTS;
         const std::string FILEGROUPDESCRIPTORW;

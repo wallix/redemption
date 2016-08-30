@@ -35,16 +35,48 @@ public:
         {
             close(incoming_sck);
             // Actual Server code : this one is a simple generator, always sending the same message
-            const char * message = "The quick brown fox jump over the lazy dog\n";
-            unsigned len = strlen(message);
-            while(1) {
-                unsigned sent = 0;
-                while (sent < len){
+            char message[65536];
+            int count = 0;
+            unsigned len = 0;
+            bool loop = true;
+            unsigned sent = 0;
+
+            while(loop) {
+                if (sent == 0){
+                    snprintf(message, sizeof(message), "The quick brown fox jump over the lazy dog %d\n", count++);
+                    len = strlen(message);
+                }
+
+                fd_set wfds;
+                FD_ZERO(&wfds);
+                FD_SET(this->sck, &wfds);
+                struct timeval timeout;
+                timeout.tv_sec = 300; // test server runs for 5 minutes
+                timeout.tv_usec = 0;
+                int select_res = select(this->sck + 1, nullptr, &wfds, nullptr, &timeout);
+                switch (select_res){
+                case -1: // error
+                    if ((errno == EAGAIN) || (errno == EWOULDBLOCK)
+                     || (errno == EINPROGRESS) || (errno == EINTR)){
+                        continue; /* these are not really errors */
+                    }
+                    loop = false;
+                break;
+                case 0:  // timeout
+                break;
+                default:
+                {
                     int res = write(this->sck, &message[sent], len-sent);
                     if (res < 0){
+                        loop = false;
                         break;
                     }
                     sent += len;
+                    if (sent >= len){
+                        sent = 0;
+                    }
+                }
+                break;
                 }
             }
             _exit(0);
@@ -58,13 +90,13 @@ public:
 };
 
 
-int main(int argc, char * argv[]) 
+int main(int argc, char * argv[])
 {
     LOG(LOG_INFO, "Server Start\n");
     // TODO: provide server port on command line
     (void)argc; (void)argv;
     Generator g;
-    
-    Listen listener(g, 0, 5000, true, 25);  // 25 seconds to connect, or timeout
+
+    Listen listener(g, 0, 6000, true, 25);  // 25 seconds to connect, or timeout
     listener.run();
 }

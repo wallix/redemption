@@ -801,6 +801,9 @@ public:
             else {
                 LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
 
+                this->client_info.width = width;
+                this->client_info.height = height;
+
                 if (this->capture)
                 {
                     CaptureState original_capture_state = this->capture_state;
@@ -810,9 +813,6 @@ public:
 
                     this->capture_state = original_capture_state;
                 }
-
-                this->client_info.width = width;
-                this->client_info.height = height;
 
                 // TODO Why are we not calling this->flush() instead ? Looks dubious.
                 // send buffered orders

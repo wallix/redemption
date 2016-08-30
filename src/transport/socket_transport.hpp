@@ -211,9 +211,9 @@ public:
         int rv = 0;
         fd_set rfds;
 
-        FD_ZERO(&rfds);
+        io_fd_zero(rfds);
         if (this->sck > 0) {
-            FD_SET(this->sck, &rfds);
+            io_fd_set(this->sck, rfds);
             timeval time { 0, 0 };
             rv = select(this->sck + 1, &rfds, nullptr, nullptr, &time); /* don't wait */
             if (rv > 0) {
@@ -292,8 +292,8 @@ private:
                     if (try_again(errno)) {
                         fd_set fds;
                         struct timeval time = { 0, 100000 };
-                        FD_ZERO(&fds);
-                        FD_SET(this->sck, &fds);
+                        io_fd_zero(fds);
+                        io_fd_set(this->sck, fds);
                         ::select(this->sck + 1, &fds, nullptr, nullptr, &time);
                         continue;
                     }
@@ -312,10 +312,10 @@ private:
                     if (remaining_len > 0) {
                         fd_set fds;
                         struct timeval time = { 1, 0 };
-                        FD_ZERO(&fds);
-                        FD_SET(this->sck, &fds);
+                        io_fd_zero(fds);
+                        io_fd_set(this->sck, fds);
                         if ((::select(this->sck + 1, &fds, nullptr, nullptr, &time) < 1) ||
-                            !FD_ISSET(this->sck, &fds)) {
+                            !io_fd_isset(this->sck, fds)) {
                             LOG(LOG_ERR, "Recv fails on %s (%d) %zu bytes", this->name, this->sck, remaining_len);
                             return -1;
                         }
@@ -336,8 +336,8 @@ private:
                 if (try_again(errno)) {
                     fd_set wfds;
                     struct timeval time = { 0, 10000 };
-                    FD_ZERO(&wfds);
-                    FD_SET(this->sck, &wfds);
+                    io_fd_zero(wfds);
+                    io_fd_set(this->sck, wfds);
                     select(this->sck + 1, nullptr, &wfds, nullptr, &time);
                     continue;
                 }

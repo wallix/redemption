@@ -38,6 +38,6 @@ static inline size_t mod_exp(
     BigInteger x(inr, in_len);
     BigInteger y = x.powAssignUnderMod(exp, mod);
     // TODO bad format, base 10 -> base 256
-    return y.getNumber().copy(out, out_len);
+    return y.getNumber().copy(reinterpret_cast<char *>(out), out_len);
 }
 

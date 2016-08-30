@@ -29,12 +29,12 @@
 #include <sys/un.h>
 #include <arpa/inet.h> // for sockaddr_in
 #include <errno.h>
-#include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include "utils/log.hpp"
 #include "utils/invalid_socket.hpp"
+#include "utils/select.hpp"
 #include "core/server.hpp"
 
 #if !defined(IP_TRANSPARENT)
@@ -70,8 +70,8 @@ struct Listen {
                     close(this->sck);
                 }
             }
-        } sck; 
-    
+        } sck;
+
         /* reuse same port if a previous daemon was stopped */
         int allow_reuse = 1;
         setsockopt(sck.sck, SOL_SOCKET, SO_REUSEADDR, &allow_reuse, sizeof(allow_reuse));
@@ -144,8 +144,8 @@ struct Listen {
         bool loop_listener = true;
         while (loop_listener) {
             fd_set rfds;
-            FD_ZERO(&rfds);
-            FD_SET(this->sck, &rfds);
+            io_fd_zero(rfds);
+            io_fd_set(this->sck, rfds);
             struct timeval timeout;
             timeout.tv_sec = this->timeout_sec;
             timeout.tv_usec = 0;

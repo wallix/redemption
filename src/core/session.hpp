@@ -174,8 +174,8 @@ public:
                 fd_set rfds;
                 fd_set wfds;
 
-                FD_ZERO(&rfds);
-                FD_ZERO(&wfds);
+                io_fd_zero(rfds);
+                io_fd_zero(wfds);
                 timeval timeout = time_mark;
 
                 if (mm.mod->is_up_and_running() || !this->front->up_and_running) {
@@ -187,10 +187,10 @@ public:
                 if (this->client) {
                     this->client->auth_event.wait_on_fd(this->client->auth_trans.sck, rfds, max, timeout);
                 }
-                
+
                 mm.mod_transport ? mm.mod->get_event().wait_on_fd(mm.mod_transport->sck, rfds, max, timeout)
                                  : mm.mod->get_event().wait_on_timeout(timeout);
-                              
+
                 wait_obj * secondary_event = mm.mod->get_secondary_event();
                 if (secondary_event) {
                     secondary_event->wait_on_timeout(timeout);

@@ -201,7 +201,6 @@ class IconInfo {
 
 public:
     void emit(OutStream & stream) const {
-//const auto save_stream_p = stream.get_current();
         stream.out_uint16_le(this->CacheEntry);
         stream.out_uint8(this->CacheId);
 
@@ -220,12 +219,9 @@ public:
         stream.out_copy_bytes(this->bits_mask.p, this->bits_mask.sz);
         stream.out_copy_bytes(this->color_table.p, this->color_table.sz);
         stream.out_copy_bytes(this->bits_color.p, this->bits_color.sz);
-//LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
-//hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }
 
     void receive(InStream & stream) {
-//const auto save_stream_p = stream.get_current();
         {
             const unsigned expected =
                 8;  // CacheEntry(2) + CacheId(1) + Bpp(1) + Width(2) + Height(2)
@@ -296,8 +292,6 @@ public:
 
         this->bits_color = {stream.get_current(), CbBitsColor};
         stream.in_skip_bytes(CbBitsColor);
-//LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
-//hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }
 
     size_t size() const {
@@ -489,6 +483,8 @@ public:
         this->output_stream->set_out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
             this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
     }
 
     void receive(InStream & stream) {
@@ -517,7 +513,7 @@ public:
     size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
-                       "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u)",
+                       "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=0x%X)",
                        unsigned(this->OrderSize), this->FieldsPresentFlags_,
                        this->WindowId);
         return ((length < size) ? length : size - 1);
@@ -919,7 +915,7 @@ class NewOrExistingWindow {
 
 public:
     void emit(OutStream & stream) const {
-const auto save_stream_p = stream.get_current();
+const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
@@ -1319,13 +1315,13 @@ private:
         length += this->header.str(buffer + length, size - length);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
-            result = ::snprintf(buffer + length, size - length, " OwnerWindowId=%u",
+            result = ::snprintf(buffer + length, size - length, " OwnerWindowId=0x%X",
                 this->OwnerWindowId);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
-            result = ::snprintf(buffer + length, size - length, " Style=%u ExtendedStyle=%u",
+            result = ::snprintf(buffer + length, size - length, " Style=0x%X ExtendedStyle=0x%X",
                 this->Style, this->ExtendedStyle);
             length += ((result < size - length) ? result : (size - length - 1));
         }
@@ -1385,7 +1381,11 @@ private:
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
-            result = ::snprintf(buffer + length, size - length, " WindowRects=(");
+            result = ::snprintf(buffer + length, size - length, " NumWindowRects=%u",
+                this->NumWindowRects);
+            length += ((result < size - length) ? result : (size - length - 1));
+
+            result = ::snprintf(buffer + length, size - length, " (");
             length += ((result < size - length) ? result : (size - length - 1));
 
             unsigned idx = 0;
@@ -1409,7 +1409,11 @@ private:
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
-            result = ::snprintf(buffer + length, size - length, " VisibilityRects=(");
+            result = ::snprintf(buffer + length, size - length, " NumVisibilityRects=%u",
+                this->NumVisibilityRects);
+            length += ((result < size - length) ? result : (size - length - 1));
+
+            result = ::snprintf(buffer + length, size - length, " (");
             length += ((result < size - length) ? result : (size - length - 1));
 
             unsigned idx = 0;
@@ -1503,17 +1507,23 @@ class WindowIcon {
 
 public:
     void emit(OutStream & stream) const {
+const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         this->icon_info.emit(stream);
 
         this->header.emit_end();
+LOG(LOG_INFO, "Send WindowIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
+const auto save_stream_p = stream.get_current();
         this->header.receive(stream);
 
         this->icon_info.receive(stream);
+LOG(LOG_INFO, "Recv WindowIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     size_t size() const {
@@ -1611,17 +1621,27 @@ class CachedIcon {
 
 public:
     void emit(OutStream & stream) const {
+const auto save_stream_p = stream.get_current();
+
         this->header.emit_begin(stream);
 
         this->cached_icon_info.emit(stream);
 
         this->header.emit_end();
+
+LOG(LOG_INFO, "Send CachedIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
+const auto save_stream_p = stream.get_current();
+
         this->header.receive(stream);
 
         this->cached_icon_info.receive(stream);
+
+LOG(LOG_INFO, "Recv CachedIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     size_t size() const {
@@ -1696,13 +1716,23 @@ class DeletedWindow {
 
 public:
     void emit(OutStream & stream) const {
+const auto save_stream_p = stream.get_current() + 1;
+
         this->header.emit_begin(stream);
 
         this->header.emit_end();
+
+LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
+const auto save_stream_p = stream.get_current();
+
         this->header.receive(stream);
+
+LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     static size_t size() {
@@ -1811,6 +1841,8 @@ public:
         this->output_stream->set_out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
             this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
     }
 
     void receive(InStream & stream) {
@@ -1840,7 +1872,7 @@ public:
     size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,
-                       "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=%u NotifyIconId=%u)",
+                       "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=0x%X NotifyIconId=0x%X)",
                        unsigned(this->OrderSize), this->FieldsPresentFlags_,
                        this->WindowId, this->NotifyIconId);
         return ((length < size) ? length : size - 1);
@@ -2224,6 +2256,8 @@ class NewOrExistingNotificationIcons {
 
 public:
     void emit(OutStream & stream) const {
+const auto save_stream_p = stream.get_current() + 1;
+
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
@@ -2252,9 +2286,14 @@ public:
         }
 
         this->header.emit_end();
+
+LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
+const auto save_stream_p = stream.get_current();
+
         this->header.receive(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_VERSION) {
@@ -2315,6 +2354,9 @@ public:
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_CACHEDICON) {
             this->cached_icon.receive(stream);
         }
+
+LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     size_t size() const {
@@ -2449,13 +2491,23 @@ class DeletedNotificationIcons {
 
 public:
     void emit(OutStream & stream) const {
+const auto save_stream_p = stream.get_current() + 1;
+
         this->header.emit_begin(stream);
 
         this->header.emit_end();
+
+LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
+const auto save_stream_p = stream.get_current();
+
         this->header.receive(stream);
+
+LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     static size_t size() {
@@ -2546,6 +2598,8 @@ public:
         this->output_stream->set_out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
             this->offset_of_OrderSize);
+
+        this->output_stream = nullptr;
     }
 
     void receive(InStream & stream) {
@@ -2691,7 +2745,7 @@ class ActivelyMonitoredDesktop {
 
 public:
     void emit(OutStream & stream) const {
-const auto save_stream_p = stream.get_current();
+const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
@@ -2792,7 +2846,7 @@ private:
         length += this->header.str(buffer + length, size - length);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
-            result = ::snprintf(buffer + length, size - length, " ActiveWindowId=%u",
+            result = ::snprintf(buffer + length, size - length, " ActiveWindowId=0x%X",
                 this->ActiveWindowId);
             length += ((result < size - length) ? result : (size - length - 1));
         }
@@ -2809,7 +2863,7 @@ private:
                     length += ((result < size - length) ? result : (size - length - 1));
                 }
 
-                result = ::snprintf(buffer + length, size - length, "%u",
+                result = ::snprintf(buffer + length, size - length, "0x%X",
                     this->window_ids[i]);
                 length += ((result < size - length) ? result : (size - length - 1));
             }
@@ -2867,13 +2921,23 @@ class NonMonitoredDesktop {
 
 public:
     void emit(OutStream & stream) const {
+const auto save_stream_p = stream.get_current() + 1;
+
         this->header.emit_begin(stream);
 
         this->header.emit_end();
+
+LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
+const auto save_stream_p = stream.get_current();
+
         this->header.receive(stream);
+
+LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     static size_t size() {

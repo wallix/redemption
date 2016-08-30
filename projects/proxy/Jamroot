@@ -563,6 +563,7 @@ test-canonical utils/sugar/splitter.hpp ;
 test-canonical utils/sugar/strutils.hpp ;
 test-canonical utils/sugar/underlying_cast.hpp ;
 test-canonical utils/sugar/update_lock.hpp ;
+test-canonical utils/sugar/numerics/safe_conversions.hpp ;
 ## @}
 
 test-canonical utils/stream.hpp ;
