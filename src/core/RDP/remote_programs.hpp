@@ -170,10 +170,14 @@ class RAILPDUHeader {
     mutable uint16_t orderLength_ = 0;
 
     mutable uint32_t   offset_of_orderLength = 0;
-    mutable OutStream* output_stream;
+    mutable OutStream* output_stream = nullptr;
 
 public:
-    void emit_begin(uint16_t orderType) {
+    void emit_begin(OutStream & stream, uint16_t orderType) {
+        REDASSERT(this->output_stream == nullptr);
+
+        this->output_stream = &stream;
+
         this->output_stream->out_uint16_le(orderType);
 
         this->offset_of_orderLength = this->output_stream->get_offset();
@@ -261,6 +265,10 @@ public:
     }
 
     uint32_t buildNumber() const { return this->buildNumber_; }
+
+    void buildNumber(uint32_t buildNumber_) {
+        this->buildNumber_ = buildNumber_;
+    }
 
     static size_t size() {
         return 4;   // buildNumber(4)
@@ -497,7 +505,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientExecutePDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "HandshakeExPDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -556,7 +564,7 @@ public:
 //  | | | | | | | | | | |1| | | | | |
 //  |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//  |A|B|C|D|0|0|0|0|0|0|0|0|0|0|0|0|
+//  |A|B|C|D|E|0|0|0|0|0|0|0|0|0|0|0|
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 //  Where the bits are defined as:
@@ -586,12 +594,33 @@ public:
 //  | TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        | the Arguments field MUST be  |
 //  |                                           | expanded on the server.      |
 //  +-------------------------------------------+------------------------------+
+//  | E                                         | If this flag is set, the     |
+//  | TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID       | ExeOrFile field refers to an |
+//  |                                           | application user model ID.   |
+//  |                                           | If it is not set, the        |
+//  |                                           | ExeOrFile field refers to a  |
+//  |                                           | file path. This flag MUST be |
+//  |                                           | ignored if the               |
+//  |                                           | TS_RAIL_EXEC_FLAG_FILE       |
+//  |                                           | (0x0004) flag is set. An     |
+//  |                                           | application user model ID is |
+//  |                                           | a string that uniquely       |
+//  |                                           | identifies an application,   |
+//  |                                           | regardless of where the      |
+//  |                                           | application is installed on  |
+//  |                                           | the operating system. The    |
+//  |                                           | string can be used to        |
+//  |                                           | identify Windows Store       |
+//  |                                           | applications as well as      |
+//  |                                           | desktop applications.        |
+//  +-------------------------------------------+------------------------------+
 
 enum {
       TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY = 0x0001
     , TS_RAIL_EXEC_FLAG_TRANSLATE_FILES         = 0x0002
     , TS_RAIL_EXEC_FLAG_FILE                    = 0x0004
     , TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        = 0x0008
+    , TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID       = 0x0010
 };
 
 // ExeOrFileLength (2 bytes): An unsigned 16-bit integer. Specifies the
@@ -690,11 +719,19 @@ public:
 
     uint16_t Flags() const { return this->Flags_; }
 
+    void Flags(uint16_t Flags_) { this->Flags_ = Flags_; }
+
     const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
+
+    void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
 
     const char * WorkingDir() const { return this->working_dir.c_str(); }
 
+    void WorkingDir(const char * WorkingDir_) { this->working_dir = WorkingDir_; }
+
     const char * Arguments() const { return this->arguments.c_str(); }
+
+    void Arguments(const char * Arguments_) { this->arguments = Arguments_; }
 
     size_t size() const {
         size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -913,11 +950,19 @@ public:
 
     uint16_t Flags() const { return this->Flags_; }
 
+    void Flags(uint16_t Flags_) { this->Flags_ = Flags_; }
+
     uint16_t ExecResult() const { return this->ExecResult_; }
+
+    void ExecResult(uint16_t ExecResult_) { this->ExecResult_ = ExecResult_; }
 
     uint16_t RawResult() const { return this->RawResult_; }
 
+    void RawResult(uint16_t RawResult_) { this->RawResult_ = RawResult_; }
+
     const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
+
+    void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
 
     size_t size() const {
         size_t count = 12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
@@ -1475,7 +1520,11 @@ public:
 
     uint32_t SystemParam() const { return this->SystemParam_; }
 
+    void SystemParam(uint32_t SystemParam_) { this->SystemParam_ = SystemParam_; }
+
     uint8_t Body() const { return this->Body_; }
+
+    void Body(uint8_t Body_) { this->Body_ = Body_; }
 
     static size_t size() {
         return 5;   // SystemParam(4) + Body(1)
@@ -2667,7 +2716,7 @@ private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeEndPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ClientWindowMovePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
 

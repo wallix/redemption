@@ -762,8 +762,8 @@ struct LogonErrorsInfo_Recv {
     }
 
     static const char * ErrorNotificationTypeToString(
-            uint32_t ErrorNotificationData) {
-        switch (ErrorNotificationData) {
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
         case LOGON_MSG_DISCONNECT_REFUSED:
             return "LOGON_MSG_DISCONNECT_REFUSED";
         case LOGON_MSG_NO_PERMISSION:
@@ -783,8 +783,8 @@ struct LogonErrorsInfo_Recv {
     }
 
     static const char * ErrorNotificationTypeToMessage(
-            uint32_t ErrorNotificationData) {
-        switch (ErrorNotificationData) {
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
         case LOGON_MSG_DISCONNECT_REFUSED:
             return "The \"Disconnection Refused\" dialog is being displayed by Winlogon.";
         case LOGON_MSG_NO_PERMISSION:
@@ -799,13 +799,13 @@ struct LogonErrorsInfo_Recv {
             return "The logon process is continuing.";
 
         default:
-            return "Unexpected Error Notification Data.";
+            return "Unexpected Error Notification Type.";
         }
     }
 
     static const char * ErrorNotificationDataToString(
-            uint32_t ErrorNotificationType) {
-        switch (ErrorNotificationType) {
+            uint32_t ErrorNotificationData) {
+        switch (ErrorNotificationData) {
         case LOGON_FAILED_BAD_PASSWORD:
             return "LOGON_FAILED_BAD_PASSWORD";
         case LOGON_FAILED_UPDATE_PASSWORD:
@@ -825,15 +825,19 @@ struct LogonErrorsInfo_Recv {
         switch (ErrorNotificationType) {
         case LOGON_FAILED_BAD_PASSWORD:
             return "The logon process failed. "
-                "The logon credentials which were supplied are invalid.";
+                "The logon credentials which were supplied are invalid. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
         case LOGON_FAILED_UPDATE_PASSWORD:
             return "The logon process failed. "
                 "The user cannot continue with the logon process until the "
-                "password is changed.";
+                "password is changed. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
         case LOGON_FAILED_OTHER:
-            return "The logon process failed.";
+            return "The logon process failed. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
         case LOGON_WARNING:
-            return "The logon process has displayed a warning.";
+            return "The logon process has displayed a warning. "
+                "The user's focus SHOULD be directed to the WinLogon screen.";
 
         default:
             return "Unexpected Error Notification Type.";

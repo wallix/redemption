@@ -23,15 +23,14 @@
 #pragma once
 
 #include "main/version.hpp"
-#include "core/front_api.hpp"
-#include "widget2/flat_login.hpp"
-#include "internal_mod.hpp"
-#include "widget2/notify_api.hpp"
-#include "utils/translation.hpp"
-#include "copy_paste.hpp"
 #include "configs/config_access.hpp"
-#include "widget2/language_button.hpp"
-
+#include "core/front_api.hpp"
+#include "mod/internal/client_execute.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/internal_mod.hpp"
+#include "mod/internal/widget2/flat_login.hpp"
+#include "mod/internal/widget2/language_button.hpp"
+#include "mod/internal/widget2/notify_api.hpp"
 #include "utils/timeout.hpp"
 
 # include <chrono>
@@ -60,7 +59,8 @@ class FlatLoginMod : public InternalMod, public NotifyApi
     FlatLogin login;
     Timeout timeout;
 
-    CopyPaste copy_paste;
+    ClientExecute & client_execute;
+    CopyPaste       copy_paste;
 
     FlatLoginModVariables vars;
 
@@ -68,7 +68,8 @@ public:
     FlatLoginMod(
         FlatLoginModVariables vars,
         char const * username, char const * password,
-        FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now
+        FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now,
+        ClientExecute & client_execute
     )
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , language_button(
@@ -84,6 +85,7 @@ public:
             &this->language_button,
             this->font(), Translator(language(vars)), this->theme())
         , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())
+        , client_execute(client_execute)
         , vars(vars)
     {
         if (vars.get<cfg::globals::authentication_timeout>().count()) {
@@ -107,6 +109,8 @@ public:
 
     ~FlatLoginMod() override {
         this->screen.clear();
+
+        this->client_execute.reset();
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
@@ -136,6 +140,9 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi &) override {
         (void)now;
+        if (!this->client_execute && event.waked_up_by_time) {
+            this->client_execute.ready(*this);
+        }
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
@@ -158,6 +165,9 @@ public:
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
         (void)length;
+        if (this->client_execute && !strcmp(front_channel_name, CHANNELS::channel_names::rail)) {
+            this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
+        }
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
