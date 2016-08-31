@@ -675,6 +675,7 @@ namespace XXX {
 }
 
 
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include <iostream>
 
 struct Printer
@@ -973,12 +974,20 @@ namespace detail {
     { using type = proto::dyn_size; };
 
     template<std::size_t n>
+    struct uninitialized_buf
+    {
+        uninitialized_buf() {}
+        uninitialized_buf(uninitialized_buf const &) = delete;
+        uint8_t buf [n];
+    };
+
+    template<std::size_t n>
     struct sizeof_to_buffer<static_size<n>>
-    { using type = uint8_t [n]; };
+    { using type = uninitialized_buf<n>; };
 
     template<std::size_t n>
     struct sizeof_to_buffer<limited_size<n>>
-    { using type = uint8_t [n]; };
+    { using type = uninitialized_buf<n>; };
 }
 template<class T>
 using sizeof_to_buffer = typename detail::sizeof_to_buffer<T>::type;
@@ -1079,19 +1088,20 @@ namespace detail
 
     private:
         template<class I, std::size_t arr_len>
-        void init_buf(I i, uint8_t(&a)[arr_len]) {
-            std::cout << i << " - " << static_cast<void*>(a) << std::endl;
-            this->data[i].iov_base = a;
-            this->data[i].iov_len = arr_len;
+        void init_buf(I i, uninitialized_buf<arr_len> & uninit_buf) {
+            std::cout << i << " - " << static_cast<void*>(uninit_buf.buf) << std::endl;
+            this->data[i].iov_base = uninit_buf.buf;
+            //this->data[i].iov_len = arr_len;
         }
 
         template<class I>
         void init_buf(I, proto::dyn_size) {
         }
 
-        template<class I>
-        void reset_buf_ptr(I i, uint8_t * p) {
-            this->data[i].iov_base = p;
+        template<class I, std::size_t arr_len>
+        void reset_buf_ptr(I i, uninitialized_buf<arr_len> & uninit_buf) {
+            this->data[i].iov_len = static_cast<uint8_t*>(this->data[i].iov_base) - uninit_buf.buf;
+            this->data[i].iov_base = uninit_buf.buf;
         }
 
         template<class I>
@@ -1216,21 +1226,25 @@ struct Buffering2
         void write_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            this->write_pkt_sz_with_size_or_var(desc_type_t<VarInfo>{}, buffer, var);
-            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type_t<VarInfo>>{};
-            std::cout << "\n";
             if (var_info_is_pkt_sz<VarInfo>{}) {
                 this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base);
             }
+            this->write_pkt_sz_with_size_or_var(desc_type_t<VarInfo>{}, buffer, var);
+            buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type_t<VarInfo>>{};
+            std::cout << "\n";
         }
 
         template<class T, class Var>
-        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz<T>, iovec &, Var &)
-        {}
+        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz<T>, iovec & buffer, Var &)
+        {
+            std::cout << "  {" << static_cast<void*>(buffer.iov_base) << "} { noop }";
+        }
 
         template<class T, class Var>
-        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz_with_self<T>, iovec &, Var &)
-        {}
+        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz_with_self<T>, iovec & buffer, Var &)
+        {
+            std::cout << "  {" << static_cast<void*>(buffer.iov_base) << "} { noop }";
+        }
 
         template<class T, std::size_t n, class Var>
         void write_pkt_sz_with_size_or_var(detail::pkt_sz_with_size<T, n>, iovec & buffer, Var &)
@@ -1238,7 +1252,8 @@ struct Buffering2
             using proto_integer = typename T::type;
             policy.write_static_buffer(
                 static_cast<uint8_t*>(buffer.iov_base),
-                typename proto_integer::type{n}, proto_integer{}
+                checked_cast<typename proto_integer::type>(n),
+                proto_integer{}
             );
             std::cout << " = " << n;
         }
@@ -1379,7 +1394,15 @@ struct Buffering2
             using is_proto_integer = std::is_same<T, brigand::wrap<T, proto::types::integer>>;
             static_assert(is_proto_integer{}, "only proto::types::integer is supported with pkt_sz");
             // TODO
-            std::cout << "pktptrs[" << IPacket::value << "] = " << this->sizes.data[IPacket::value+1] << "\n";
+            std::cout << "pktptrs[" << IPacket::value << "] {"
+              << static_cast<void*>(this->pktptrs[IPacket::value]) << "} = "
+              << this->sizes.data[IPacket::value+1] << "\n";
+            policy.write_static_buffer(
+                this->pktptrs[IPacket::value],
+                checked_cast<typename T::type>(this->sizes.data[IPacket::value+1]),
+                T{}
+            );
+            std::cout << "\n";
         }
 
         template<class IPacket, class IVar, class T>
@@ -1387,7 +1410,15 @@ struct Buffering2
             using is_proto_integer = std::is_same<T, brigand::wrap<T, proto::types::integer>>;
             static_assert(is_proto_integer{}, "only proto::types::integer is supported with pkt_sz_with_self");
             // TODO
-            std::cout << "pktptrs[" << IPacket::value << "] = " << this->sizes.data[IPacket::value] << "\n";
+            std::cout << "pktptrs[" << IPacket::value << "] {"
+              << static_cast<void*>(this->pktptrs[IPacket::value]) << "} = "
+              << this->sizes.data[IPacket::value] << "\n";
+            policy.write_static_buffer(
+                this->pktptrs[IPacket::value],
+                checked_cast<typename T::type>(this->sizes.data[IPacket::value]),
+                T{}
+            );
+            std::cout << "\n";
         }
 
         template<class Var, class T>
@@ -1603,7 +1634,7 @@ struct stream_protocol_policy
 
     void send(iovec_view iovs) {
         for (auto iov : iovs) {
-            std::cout << " [" << iov.iov_base << "]\n";
+            std::cout << " [" << iov.iov_base << "] [len: " << iov.iov_len << "]\n";
             hexdump_c(static_cast<uint8_t const*>(iov.iov_base), iov.iov_len);
         }
     }
@@ -1676,7 +1707,7 @@ namespace x224
 {
     PROTO_VAR(proto::types::u8, version);
     PROTO_VAR(proto::types::u8, unknown);
-    PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u16_le>, pkt_len);
+    PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u16_be>, pkt_len);
     PROTO_VAR(proto::types::u8, LI);
     PROTO_VAR(proto::types::u8, type);
     PROTO_VAR(proto::types::u8, cat);
@@ -1734,7 +1765,7 @@ namespace sec
 
     inline std::size_t write_limited_buffer(uint8_t * buf, sec_send_pkt::type ctx, sec_send_pkt)
     {
-        std::cout << " [dynamic_buffer]";
+        std::cout << " [limited_buffer]";
         uint8_t * p = buf;
         if (ctx.flags) {
             p += iov_ext::write_static_buffer_as_limited_buffer(p, ctx.flags, proto::get_desc(flags));
