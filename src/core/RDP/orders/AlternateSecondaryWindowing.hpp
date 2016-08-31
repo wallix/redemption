@@ -1417,7 +1417,7 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
             return this->window_rects[idx_window_rect];
         }
 
-        REDASSERT(FALSE);
+        REDASSERT(false);
 
         return Rectangle();
     }
@@ -1449,7 +1449,7 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
             return this->visibility_rects[idx_visibility_rect];
         }
 
-        REDASSERT(FALSE);
+        REDASSERT(false);
 
         return Rectangle();
     }

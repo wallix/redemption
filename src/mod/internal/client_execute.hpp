@@ -25,6 +25,7 @@
 #include "core/front_api.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/remote_programs.hpp"
+#include "mod/mod_api.hpp"
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 

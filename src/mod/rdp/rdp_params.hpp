@@ -134,9 +134,9 @@ struct ModRDPParams {
     bool adjust_performance_flags_for_recording = false;
 
     uint16_t     client_execute_flags;
-    const char * client_execute_exe_or_file;
-    const char * client_execute_working_dir;
-    const char * client_execute_arguments;
+    const char * client_execute_exe_or_file = "";
+    const char * client_execute_working_dir = "";
+    const char * client_execute_arguments = "";
 
     uint32_t verbose;
     uint32_t cache_verbose = 0;
