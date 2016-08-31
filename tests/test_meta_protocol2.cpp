@@ -48,6 +48,9 @@ namespace detail
 
     template<template<class...> class F>
     using call = decltype(detail::get_call_impl(detail::call_<F>{}, 1));
+
+    template<class L, class P>
+    using copy_if = remove_if<L, bind<not_, P>>;
 }
 
 
@@ -888,21 +891,21 @@ using sizeof_packet = brigand::fold<
 
 namespace detail {
     template<class T>
-    struct limited_size_like_dyn_size
+    struct limited_size_to_dyn_size
     { using type = T; };
 
     template<std::size_t n>
-    struct limited_size_like_dyn_size<proto::limited_size<n>>
+    struct limited_size_to_dyn_size<proto::limited_size<n>>
     { using type = proto::dyn_size; };
 }
 template<class T>
-using limited_size_like_dyn_size = typename detail::limited_size_like_dyn_size<T>::type;
+using limited_size_to_dyn_size = typename detail::limited_size_to_dyn_size<T>::type;
 
 template<class L>
-using sizeof_packet_with_limited_size_like_dyn_size = brigand::fold<
+using sizeof_packet_with_limited_size_to_dyn_size = brigand::fold<
     brigand::transform<
         brigand::transform<L, brigand::call<proto::sizeof_>>,
-        brigand::call<limited_size_like_dyn_size>
+        brigand::call<limited_size_to_dyn_size>
     >,
     static_size<0>,
     brigand::call<add_size>
@@ -1067,10 +1070,10 @@ namespace detail
 
         iovec & operator[](std::size_t i) noexcept
         {
-            std::cout << " { data[" << i << "].len=" << this->data[i].iov_len << " | 0x" << static_cast<void*>(this->data[i].iov_base) << " }";
             return this->data[i];
         }
 
+        // TODO static_array_view<T, n>
         array_view<iovec const> view() const
         {
             return make_array_view(this->data.data(), this->data.size());
@@ -1166,12 +1169,20 @@ struct Buffering2
         using var_info_list_by_buffer = brigand::split_if<var_info_list, brigand::call<var_info_is_buffer_delimiter>>;
 
         using buffer_list = brigand::transform<var_info_list_by_buffer, brigand::call<buffer_from_var_infos>>;
-        using default_buffer_size = brigand::transform<packet_list_, brigand::call<sizeof_packet_with_limited_size_like_dyn_size>>;
+        using default_buffer_size = brigand::transform<packet_list_, brigand::call<sizeof_packet_with_limited_size_to_dyn_size>>;
 
-        // TODO rapidtuple and uninitialized
+        using pkt_sz_list = brigand::copy_if<
+            var_info_list,
+            brigand::bind<
+                proto::is_pkt_sz_category,
+                brigand::call<proto::desc_type_t>
+            >
+        >;
+
+        // TODO rapidtuple and contiguous addr
         brigand::wrap<buffer_list, std::tuple> buffer_tuple;
         detail::Buffers<brigand::size<buffer_list>::value> buffers{buffer_tuple};
-        uint8_t * pktptrs[brigand::size<packet_list>::value];
+        uint8_t * pktptrs[brigand::size<pkt_sz_list>::value];
         detail::Sizes<default_buffer_size> sizes;
         // TODO reference
         Policy policy;
@@ -1179,6 +1190,7 @@ struct Buffering2
         void impl(Pkts & ... packets)
         {
             // TODO check if pkt_sz is a static_buffer
+            std::cout << "pktptrs.size: " << (sizeof(this->pktptrs)/sizeof(this->pktptrs[0])) << "\n";
 
             std::cout << "--- write_not_dynamic_bufs ---\n";
             this->write_not_dynamic_bufs(
@@ -1209,8 +1221,8 @@ struct Buffering2
         }
 
         template<class VarInfos, class... Ts>
-        static void write_not_dynamic_buf(std::true_type, VarInfos, Ts && ...)
-        { std::cout << "-------\n(dyn)\n"; }
+        static void write_not_dynamic_buf(std::true_type, VarInfos, iovec & buffer, Ts && ...)
+        { std::cout << "-------\n(dyn) { 0x" << buffer.iov_base << " }\n"; }
 
         template<class... VarInfos>
         void write_not_dynamic_buf(std::false_type, brigand::list<VarInfos...>, iovec & buffer, Pkts & ... pkts) {
@@ -1226,29 +1238,33 @@ struct Buffering2
         void write_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            if (var_info_is_pkt_sz<VarInfo>{}) {
-                this->pktptrs[VarInfo::ipacket::value] = static_cast<uint8_t*>(buffer.iov_base);
-            }
-            this->write_pkt_sz_with_size_or_var(desc_type_t<VarInfo>{}, buffer, var);
+            this->write_pkt_sz_with_size_or_var(VarInfo{}, buffer, var);
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type_t<VarInfo>>{};
             std::cout << "\n";
         }
 
-        template<class T, class Var>
-        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz<T>, iovec & buffer, Var &)
-        {
-            std::cout << "  {" << static_cast<void*>(buffer.iov_base) << "} { noop }";
+        template<class IPacket, class IVar, class T, class Var>
+        void write_pkt_sz_with_size_or_var(
+            var_info<IPacket, IVar, proto::types::pkt_sz<T>> vinfo, iovec & buffer, Var &
+        ) {
+            constexpr auto pkt_idx = brigand::index_of<pkt_sz_list, decltype(vinfo)>::value;
+            this->pktptrs[pkt_idx] = static_cast<uint8_t*>(buffer.iov_base);
+            std::cout << "  {" << static_cast<void*>(buffer.iov_base) << "} { pktptrs[" << pkt_idx << "] }";
         }
 
-        template<class T, class Var>
-        void write_pkt_sz_with_size_or_var(proto::types::pkt_sz_with_self<T>, iovec & buffer, Var &)
-        {
-            std::cout << "  {" << static_cast<void*>(buffer.iov_base) << "} { noop }";
+        template<class IPacket, class IVar, class T, class Var>
+        void write_pkt_sz_with_size_or_var(
+            var_info<IPacket, IVar, proto::types::pkt_sz_with_self<T>> vinfo, iovec & buffer, Var &
+        ) {
+            constexpr auto pkt_idx = brigand::index_of<pkt_sz_list, decltype(vinfo)>::value;
+            this->pktptrs[pkt_idx] = static_cast<uint8_t*>(buffer.iov_base);
+            std::cout << "  {" << static_cast<void*>(buffer.iov_base) << "} { pktptrs[" << pkt_idx << "] }";
         }
 
-        template<class T, std::size_t n, class Var>
-        void write_pkt_sz_with_size_or_var(detail::pkt_sz_with_size<T, n>, iovec & buffer, Var &)
-        {
+        template<class IPacket, class IVar, class T, std::size_t n, class Var>
+        void write_pkt_sz_with_size_or_var(
+            var_info<IPacket, IVar, detail::pkt_sz_with_size<T, n>>, iovec & buffer, Var &
+        ) {
             using proto_integer = typename T::type;
             policy.write_static_buffer(
                 static_cast<uint8_t*>(buffer.iov_base),
@@ -1258,10 +1274,10 @@ struct Buffering2
             std::cout << " = " << n;
         }
 
-        template<class T, class Var>
-        void write_pkt_sz_with_size_or_var(T, iovec & buffer, Var const & var)
+        template<class VarInfo, class Var>
+        void write_pkt_sz_with_size_or_var(VarInfo, iovec & buffer, Var const & var)
         {
-            policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, T{});
+            policy.write_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, desc_type_t<VarInfo>{});
         }
 
         template<class VarInfo, class Var>
@@ -1288,7 +1304,7 @@ struct Buffering2
             buffer.iov_len = av.size();
             this->sizes.data[VarInfo::ipacket::value] += av.size();
             static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
-            std::cout << "\n";
+            std::cout << " [view: 0x" << buffer.iov_base << " | len: " << buffer.iov_len << "]\n";
         }
 
         template<class I, class VarInfosByBuffer>
@@ -1390,15 +1406,16 @@ struct Buffering2
         }
 
         template<class IPacket, class IVar, class T>
-        void write_pkt_sz_var(var_info<IPacket, IVar, proto::types::pkt_sz<T>>) {
+        void write_pkt_sz_var(var_info<IPacket, IVar, proto::types::pkt_sz<T>> vinfo) {
             using is_proto_integer = std::is_same<T, brigand::wrap<T, proto::types::integer>>;
             static_assert(is_proto_integer{}, "only proto::types::integer is supported with pkt_sz");
             // TODO
-            std::cout << "pktptrs[" << IPacket::value << "] {"
-              << static_cast<void*>(this->pktptrs[IPacket::value]) << "} = "
+            constexpr auto pkt_idx = brigand::index_of<pkt_sz_list, decltype(vinfo)>::value;
+            std::cout << "pktptrs[" << pkt_idx << "] {"
+              << static_cast<void*>(this->pktptrs[pkt_idx]) << "} = "
               << this->sizes.data[IPacket::value+1] << "\n";
             policy.write_static_buffer(
-                this->pktptrs[IPacket::value],
+                this->pktptrs[pkt_idx],
                 checked_cast<typename T::type>(this->sizes.data[IPacket::value+1]),
                 T{}
             );
@@ -1406,15 +1423,16 @@ struct Buffering2
         }
 
         template<class IPacket, class IVar, class T>
-        void write_pkt_sz_var(var_info<IPacket, IVar, proto::types::pkt_sz_with_self<T>>) {
+        void write_pkt_sz_var(var_info<IPacket, IVar, proto::types::pkt_sz_with_self<T>> vinfo) {
             using is_proto_integer = std::is_same<T, brigand::wrap<T, proto::types::integer>>;
             static_assert(is_proto_integer{}, "only proto::types::integer is supported with pkt_sz_with_self");
             // TODO
-            std::cout << "pktptrs[" << IPacket::value << "] {"
-              << static_cast<void*>(this->pktptrs[IPacket::value]) << "} = "
+            constexpr auto pkt_idx = brigand::index_of<pkt_sz_list, decltype(vinfo)>::value;
+            std::cout << "pktptrs[" << pkt_idx << "] {"
+              << static_cast<void*>(this->pktptrs[pkt_idx]) << "} = "
               << this->sizes.data[IPacket::value] << "\n";
             policy.write_static_buffer(
-                this->pktptrs[IPacket::value],
+                this->pktptrs[pkt_idx],
                 checked_cast<typename T::type>(this->sizes.data[IPacket::value]),
                 T{}
             );
@@ -1671,10 +1689,10 @@ int main() {
     std::cout << "\n";
     proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
 
-    std::cout << "\n\n======== old ========\n\n";
-    test_old();
-    std::cout << "\n\n======== new ========\n\n";
-    test_new();
+//     std::cout << "\n\n======== old ========\n\n";
+//     test_old();
+//     std::cout << "\n\n======== new ========\n\n";
+//     test_new();
 }
 
 #include "core/RDP/sec.hpp"
