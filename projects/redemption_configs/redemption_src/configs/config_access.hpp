@@ -23,6 +23,7 @@
 
 #include "config.hpp"
 #include "utils/sugar/underlying_cast.hpp"
+#include "utils/translation.hpp"
 
 #include <type_traits>
 

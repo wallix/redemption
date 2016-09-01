@@ -22,13 +22,14 @@
 
 #pragma once
 
-#include "core/front_api.hpp"
-#include "mod/mod_api.hpp"
-#include "widget2/flat_wab_close.hpp"
-#include "widget2/screen.hpp"
-#include "internal_mod.hpp"
-#include "utils/timeout.hpp"
 #include "configs/config_access.hpp"
+#include "core/front_api.hpp"
+#include "mod/internal/client_execute.hpp"
+#include "mod/mod_api.hpp"
+#include "mod/internal/widget2/flat_wab_close.hpp"
+#include "mod/internal/widget2/screen.hpp"
+#include "mod/internal/internal_mod.hpp"
+#include "utils/timeout.hpp"
 
 #include <chrono>
 
@@ -53,7 +54,6 @@ class FlatWabCloseMod : public InternalMod, public NotifyApi
     Timeout timeout;
     FlatWabCloseModVariables vars;
 
-private:
     bool showtimer;
     struct temporary_text {
         char text[255];
@@ -78,10 +78,12 @@ private:
         }
     };
 
+    ClientExecute & client_execute;
+
 public:
     FlatWabCloseMod(FlatWabCloseModVariables vars,
                     FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, time_t now,
-                    bool showtimer = false, bool back_selector = false)
+                    ClientExecute & client_execute, bool showtimer = false, bool back_selector = false)
         : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
         , close_widget(
             front, widget_rect.x, widget_rect.y, widget_rect.cx + 1, widget_rect.cy + 1,
@@ -101,6 +103,7 @@ public:
         , timeout(now, vars.get<cfg::globals::close_timeout>().count())
         , vars(vars)
         , showtimer(showtimer)
+        , client_execute(client_execute)
     {
         if (vars.get<cfg::globals::close_timeout>().count()) {
             LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
@@ -117,6 +120,8 @@ public:
 
     ~FlatWabCloseMod() override {
         this->screen.clear();
+
+        this->client_execute.reset();
     }
 
     void notify(Widget2* sender, notify_event_t event) override {
@@ -137,6 +142,10 @@ public:
     }
 
     void draw_event(time_t now, gdi::GraphicApi &) override {
+        if (!this->client_execute && event.waked_up_by_time) {
+            this->client_execute.ready(*this);
+        }
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;

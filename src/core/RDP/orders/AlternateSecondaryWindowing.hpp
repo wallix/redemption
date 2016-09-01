@@ -64,17 +64,26 @@ namespace RAIL {
 //  rectangle's bottom-right corner.
 
 class Rectangle {
-    uint16_t Left   = 0;
-    uint16_t Top    = 0;
-    uint16_t Right  = 0;
-    uint16_t Bottom = 0;
+    uint16_t Left_   = 0;
+    uint16_t Top_    = 0;
+    uint16_t Right_  = 0;
+    uint16_t Bottom_ = 0;
 
 public:
+    Rectangle() = default;
+
+    Rectangle(uint16_t Left_,  uint16_t Top_,  uint16_t Right_, uint16_t Bottom_) {
+        this->Left_   = Left_;
+        this->Top_    = Top_;
+        this->Right_  = Right_;
+        this->Bottom_ = Bottom_;
+    }
+
     void emit(OutStream & stream) const {
-        stream.out_uint16_le(this->Left);
-        stream.out_uint16_le(this->Top);
-        stream.out_uint16_le(this->Right);
-        stream.out_uint16_le(this->Bottom);
+        stream.out_uint16_le(this->Left_);
+        stream.out_uint16_le(this->Top_);
+        stream.out_uint16_le(this->Right_);
+        stream.out_uint16_le(this->Bottom_);
     }
 
     void receive(InStream & stream) {
@@ -90,10 +99,10 @@ public:
             }
         }
 
-        this->Left   = stream.in_uint16_le();
-        this->Top    = stream.in_uint16_le();
-        this->Right  = stream.in_uint16_le();
-        this->Bottom = stream.in_uint16_le();
+        this->Left_   = stream.in_uint16_le();
+        this->Top_    = stream.in_uint16_le();
+        this->Right_  = stream.in_uint16_le();
+        this->Bottom_ = stream.in_uint16_le();
     }
 
     static size_t size() {
@@ -104,8 +113,8 @@ public:
         const size_t length =
             ::snprintf(buffer, size,
                        "Rectangle=(Left=%u Top=%u Right=%u Bottom=%u)",
-                       unsigned(this->Left), unsigned(this->Top),
-                       unsigned(this->Right), unsigned(this->Bottom));
+                       unsigned(this->Left_), unsigned(this->Top_),
+                       unsigned(this->Right_), unsigned(this->Bottom_));
         return ((length < size) ? length : size - 1);
     }
 };
@@ -448,7 +457,7 @@ public:
 class WindowInformationCommonHeader {
     mutable uint16_t OrderSize           = 0;
             uint32_t FieldsPresentFlags_ = 0;
-            uint32_t WindowId            = 0;
+            uint32_t WindowId_            = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
     mutable OutStream* output_stream       = nullptr;
@@ -474,14 +483,17 @@ public:
         stream.out_skip_bytes(2); // OrderSize(2)
 
         stream.out_uint32_le(this->FieldsPresentFlags_);
-        stream.out_uint32_le(this->WindowId);
+        stream.out_uint32_le(this->WindowId_);
     }
 
     void emit_end() const {
         REDASSERT(this->output_stream != nullptr);
 
-        this->output_stream->set_out_uint16_le(
-            this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
+        this->OrderSize =   this->output_stream->get_offset()
+                          - this->offset_of_OrderSize
+                          + 1;  // Alternate Secondary Order Header(1)
+
+        this->output_stream->set_out_uint16_le(this->OrderSize,
             this->offset_of_OrderSize);
 
         this->output_stream = nullptr;
@@ -503,7 +515,7 @@ public:
 
         this->OrderSize           = stream.in_uint16_le();
         this->FieldsPresentFlags_ = stream.in_uint32_le();
-        this->WindowId            = stream.in_uint32_le();
+        this->WindowId_           = stream.in_uint32_le();
     }
 
     static size_t size() {
@@ -515,11 +527,17 @@ public:
             ::snprintf(buffer, size,
                        "CommonHeader=(OrderSize=%u FieldsPresentFlags=0x%08X WindowId=0x%X)",
                        unsigned(this->OrderSize), this->FieldsPresentFlags_,
-                       this->WindowId);
+                       this->WindowId_);
         return ((length < size) ? length : size - 1);
     }
 
     uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+
+    void FieldsPresentFlags(uint32_t FieldsPresentFlags_) { this->FieldsPresentFlags_ = FieldsPresentFlags_; }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
 };  // WindowInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.1.2.1 New or Existing Window
@@ -588,7 +606,10 @@ public:
 // | NumVisibilityRects (optional) |   VisibilityRects (variable)  |
 // +-------------------------------+-------------------------------+
 // |                              ...                              |
-// +---------------------------------------------------------------+
+// +---------------+---------------+-------------------------------+
+// |  AppBarState  |   AppBarEdge  |
+// |   (optional)  |   (optional)  |
+// +---------------+---------------+
 
 // Hdr (11 bytes): Eleven bytes. Common Window AltSec Order header,
 //  TS_WINDOW_ORDER_HEADER. The FieldsPresentFlags field of the header MUST
@@ -661,6 +682,12 @@ public:
 //  |                                     | VisibilityRects fields are         |
 //  |                                     | present.                           |
 //  +-------------------------------------+------------------------------------+
+//  | 0x00000040                          | Indicates that the AppBarState     |
+//  | WINDOW_ORDER_FIELD_APPBAR_STATE     | field is present.                  |
+//  +-------------------------------------+------------------------------------+
+//  | 0x00000001                          | Indicates that the AppBarEdge      |
+//  | WINDOW_ORDER_FIELD_APPBAR_EDGE      | field is present.                  |
+//  +-------------------------------------+------------------------------------+
 
 enum {
       WINDOW_ORDER_TYPE_WINDOW            = 0x01000000
@@ -679,6 +706,8 @@ enum {
     , WINDOW_ORDER_FIELD_WNDRECTS         = 0x00000100
     , WINDOW_ORDER_FIELD_VISOFFSET        = 0x00001000
     , WINDOW_ORDER_FIELD_VISIBILITY       = 0x00000200
+    , WINDOW_ORDER_FIELD_APPBAR_STATE     = 0x00000040
+    , WINDOW_ORDER_FIELD_APPBAR_EDGE      = 0x00000001
 };
 
 // OwnerWindowId (4 bytes): An unsigned 32-bit integer. The ID of the window
@@ -873,45 +902,79 @@ enum {
 //  is greater than 0 and the WINDOW_ORDER_FIELD_VISIBILITY flag is set in
 //  the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
 
+// AppBarState (1 byte, optional): An 8-bit unsigned integer. If this field
+//  is set to 0x01, then the window SHOULD be registered as an application
+//  desktop toolbar. If this field is set to 0x00, then the application
+//  desktop toolbar SHOULD be deregistered.
+
+//  This field is present only if the WINDOW_ORDER_FIELD_APPBAR_STATE flag is
+//  set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
+// AppBarEdge (1 byte, optional): An 8-bit unsigned integer. The value of
+//  this field indicates the edge to which the application desktop toolbar
+//  SHOULD be anchored. This field MUST be set to one of the following
+//  possible values.
+
+//  +-------+----------------------------+
+//  | Value | Meaning                    |
+//  +-------+----------------------------+
+//  | 0x00  | Anchor to the left edge.   |
+//  +-------+----------------------------+
+//  | 0x01  | Anchor to the top edge.    |
+//  +-------+----------------------------+
+//  | 0x02  | Anchor to the right edge.  |
+//  +-------+----------------------------+
+//  | 0x03  | Anchor to the bottom edge. |
+//  +-------+----------------------------+
+
+//  This field is present only if the WINDOW_ORDER_FIELD_APPBAR_EDGE flag is
+//  set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
 class NewOrExistingWindow {
+public:
     WindowInformationCommonHeader header;
 
-    uint32_t OwnerWindowId = 0;
-    uint32_t Style         = 0;
-    uint32_t ExtendedStyle = 0;
-    uint8_t  ShowState     = 0;
+private:
+    uint32_t OwnerWindowId_ = 0;
+    uint32_t Style_         = 0;
+    uint32_t ExtendedStyle_ = 0;
+    uint8_t  ShowState_     = 0;
 
     std::string title_info;
 
-    int32_t ClientOffsetX = 0;
-    int32_t ClientOffsetY = 0;
+    int32_t ClientOffsetX_ = 0;
+    int32_t ClientOffsetY_ = 0;
 
-    uint32_t ClientAreaWidth  = 0;
-    uint32_t ClientAreaHeight = 0;
+    uint32_t ClientAreaWidth_  = 0;
+    uint32_t ClientAreaHeight_ = 0;
 
-    uint8_t RPContent = 0;
+    uint8_t RPContent_ = 0;
 
-    uint32_t RootParentHandle = 0;
+    uint32_t RootParentHandle_ = 0;
 
-    int32_t WindowOffsetX = 0;
-    int32_t WindowOffsetY = 0;
+    int32_t WindowOffsetX_ = 0;
+    int32_t WindowOffsetY_ = 0;
 
-    int32_t WindowClientDeltaX = 0;
-    int32_t WindowClientDeltaY = 0;
+    int32_t WindowClientDeltaX_ = 0;
+    int32_t WindowClientDeltaY_ = 0;
 
-    uint32_t WindowWidth  = 0;
-    uint32_t WindowHeight = 0;
+    uint32_t WindowWidth_  = 0;
+    uint32_t WindowHeight_ = 0;
 
-    uint16_t NumWindowRects = 0;
+    uint16_t NumWindowRects_ = 0;
 
     std::vector<Rectangle> window_rects;
 
-    int32_t VisibleOffsetX = 0;
-    int32_t VisibleOffsetY = 0;
+    int32_t VisibleOffsetX_ = 0;
+    int32_t VisibleOffsetY_ = 0;
 
-    uint16_t NumVisibilityRects = 0;
+    uint16_t NumVisibilityRects_ = 0;
 
     std::vector<Rectangle> visibility_rects;
+
+    uint8_t AppBarState_;
+
+    uint8_t AppBarEdge_;
 
 public:
     void emit(OutStream & stream) const {
@@ -919,16 +982,16 @@ const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
-            stream.out_uint32_le(this->OwnerWindowId);
+            stream.out_uint32_le(this->OwnerWindowId_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
-            stream.out_uint32_le(this->Style);
-            stream.out_uint32_le(this->ExtendedStyle);
+            stream.out_uint32_le(this->Style_);
+            stream.out_uint32_le(this->ExtendedStyle_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
-            stream.out_uint8(this->ShowState);
+            stream.out_uint8(this->ShowState_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
@@ -937,40 +1000,40 @@ const auto save_stream_p = stream.get_current() + 1;
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
-            stream.out_uint32_le(this->ClientOffsetX);
-            stream.out_uint32_le(this->ClientOffsetY);
+            stream.out_uint32_le(this->ClientOffsetX_);
+            stream.out_uint32_le(this->ClientOffsetY_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
-            stream.out_uint32_le(this->ClientAreaWidth);
-            stream.out_uint32_le(this->ClientAreaHeight);
+            stream.out_uint32_le(this->ClientAreaWidth_);
+            stream.out_uint32_le(this->ClientAreaHeight_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
-            stream.out_uint8(this->RPContent);
+            stream.out_uint8(this->RPContent_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
-            stream.out_uint32_le(this->RootParentHandle);
+            stream.out_uint32_le(this->RootParentHandle_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
-            stream.out_sint32_le(this->WindowOffsetX);
-            stream.out_sint32_le(this->WindowOffsetY);
+            stream.out_sint32_le(this->WindowOffsetX_);
+            stream.out_sint32_le(this->WindowOffsetY_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
-            stream.out_sint32_le(this->WindowClientDeltaX);
-            stream.out_sint32_le(this->WindowClientDeltaY);
+            stream.out_sint32_le(this->WindowClientDeltaX_);
+            stream.out_sint32_le(this->WindowClientDeltaY_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
-            stream.out_uint32_le(this->WindowWidth);
-            stream.out_uint32_le(this->WindowHeight);
+            stream.out_uint32_le(this->WindowWidth_);
+            stream.out_uint32_le(this->WindowHeight_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
-            stream.out_uint16_le(this->NumWindowRects);
+            stream.out_uint16_le(this->NumWindowRects_);
 
             for (Rectangle const & rectangle : this->window_rects) {
                 rectangle.emit(stream);
@@ -978,16 +1041,24 @@ const auto save_stream_p = stream.get_current() + 1;
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
-            stream.out_sint32_le(this->VisibleOffsetX);
-            stream.out_sint32_le(this->VisibleOffsetY);
+            stream.out_sint32_le(this->VisibleOffsetX_);
+            stream.out_sint32_le(this->VisibleOffsetY_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
-            stream.out_uint16_le(this->NumVisibilityRects);
+            stream.out_uint16_le(this->NumVisibilityRects_);
 
             for (Rectangle const & rectangle : this->visibility_rects) {
                 rectangle.emit(stream);
             }
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_STATE) {
+            stream.out_uint8(this->AppBarState_);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_EDGE) {
+            stream.out_uint8(this->AppBarEdge_);
         }
 
         this->header.emit_end();
@@ -1011,7 +1082,7 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->OwnerWindowId = stream.in_uint32_le();
+            this->OwnerWindowId_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
@@ -1026,8 +1097,8 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->Style         = stream.in_uint32_le();
-            this->ExtendedStyle = stream.in_uint32_le();
+            this->Style_         = stream.in_uint32_le();
+            this->ExtendedStyle_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
@@ -1042,7 +1113,7 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->ShowState = stream.in_uint8();
+            this->ShowState_ = stream.in_uint8();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
@@ -1074,8 +1145,8 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->ClientOffsetX = stream.in_uint32_le();
-            this->ClientOffsetY = stream.in_uint32_le();
+            this->ClientOffsetX_ = stream.in_uint32_le();
+            this->ClientOffsetY_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
@@ -1090,8 +1161,8 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->ClientAreaWidth  = stream.in_uint32_le();
-            this->ClientAreaHeight = stream.in_uint32_le();
+            this->ClientAreaWidth_  = stream.in_uint32_le();
+            this->ClientAreaHeight_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
@@ -1106,7 +1177,7 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->RPContent = stream.in_uint8();
+            this->RPContent_ = stream.in_uint8();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
@@ -1121,7 +1192,7 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->RootParentHandle = stream.in_uint32_le();
+            this->RootParentHandle_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
@@ -1136,8 +1207,8 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->WindowOffsetX = stream.in_sint32_le();
-            this->WindowOffsetY = stream.in_sint32_le();
+            this->WindowOffsetX_ = stream.in_sint32_le();
+            this->WindowOffsetY_ = stream.in_sint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
@@ -1152,8 +1223,8 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->WindowClientDeltaX = stream.in_sint32_le();
-            this->WindowClientDeltaY = stream.in_sint32_le();
+            this->WindowClientDeltaX_ = stream.in_sint32_le();
+            this->WindowClientDeltaY_ = stream.in_sint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
@@ -1168,8 +1239,8 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->WindowWidth  = stream.in_uint32_le();
-            this->WindowHeight = stream.in_uint32_le();
+            this->WindowWidth_  = stream.in_uint32_le();
+            this->WindowHeight_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
@@ -1184,9 +1255,9 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->NumWindowRects = stream.in_uint16_le();
+            this->NumWindowRects_ = stream.in_uint16_le();
 
-            for (uint16_t i = 0; i < this->NumWindowRects; ++i) {
+            for (uint16_t i = 0; i < this->NumWindowRects_; ++i) {
                 Rectangle rectangle;
                 rectangle.receive(stream);
 
@@ -1206,8 +1277,8 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->VisibleOffsetX = stream.in_sint32_le();
-            this->VisibleOffsetY = stream.in_sint32_le();
+            this->VisibleOffsetX_ = stream.in_sint32_le();
+            this->VisibleOffsetY_ = stream.in_sint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
@@ -1222,18 +1293,180 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->NumVisibilityRects = stream.in_uint16_le();
+            this->NumVisibilityRects_ = stream.in_uint16_le();
 
-            for (uint16_t i = 0; i < this->NumVisibilityRects; ++i) {
+            for (uint16_t i = 0; i < this->NumVisibilityRects_; ++i) {
                 Rectangle rectangle;
                 rectangle.receive(stream);
 
                 this->visibility_rects.push_back(rectangle);
             }
         }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_STATE) {
+            {
+                const unsigned expected = 1;  // AppBarState(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (15): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->AppBarState_ = stream.in_uint8();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_EDGE) {
+            {
+                const unsigned expected = 1;  // AppBarEdge(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (16): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->AppBarEdge_ = stream.in_uint8();
+        }
 LOG(LOG_INFO, "Recv NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
+
+    uint32_t OwnerWindowId() const { return this->OwnerWindowId_; }
+
+    void OwnerWindowId(uint32_t OwnerWindowId_) { this->OwnerWindowId_ = OwnerWindowId_; }
+
+    uint32_t Style() const { return this->Style_; }
+
+    void Style(uint32_t Style_) { this->Style_ = Style_; }
+
+    uint32_t ExtendedStyle() const { return this->ExtendedStyle_; }
+
+    void ExtendedStyle(uint32_t ExtendedStyle_) { this->ExtendedStyle_ = ExtendedStyle_; }
+
+    uint8_t ShowState() const { return this->ShowState_; }
+
+    void ShowState(uint8_t ShowState_) { this->ShowState_ = ShowState_; }
+
+    const char * TitleInfo() const { return this->title_info.c_str(); }
+
+    void TitleInfo(const char * TitleInfo_) { this->title_info = TitleInfo_; }
+
+    int32_t ClientOffsetX() const { return this->ClientOffsetX_; }
+
+    void ClientOffsetX(int32_t ClientOffsetX_) { this->ClientOffsetX_ = ClientOffsetX_; }
+
+    int32_t ClientOffsetY() const { return this->ClientOffsetY_; }
+
+    void ClientOffsetY(int32_t ClientOffsetY_) { this->ClientOffsetY_ = ClientOffsetY_; }
+
+    uint32_t ClientAreaWidth() const { return this->ClientAreaWidth_; }
+
+    void ClientAreaWidth(uint32_t ClientAreaWidth_) { this->ClientAreaWidth_ = ClientAreaWidth_; }
+
+    uint32_t ClientAreaHeight() const { return this->ClientAreaHeight_; }
+
+    void ClientAreaHeight(uint32_t ClientAreaHeight_) { this->ClientAreaHeight_ = ClientAreaHeight_; }
+
+    uint8_t RPContent() const { return this->RPContent_; }
+
+    void RPContent(uint8_t RPContent_) { this->RPContent_ = RPContent_; }
+
+    uint32_t RootParentHandle() const { return this->RootParentHandle_; }
+
+    void RootParentHandle(uint32_t RootParentHandle_) { this->RootParentHandle_ = RootParentHandle_; }
+
+    int32_t WindowOffsetX() const { return this->WindowOffsetX_; }
+
+    void WindowOffsetX(int32_t WindowOffsetX_) { this->WindowOffsetX_ = WindowOffsetX_; }
+
+    int32_t WindowOffsetY() const { return this->WindowOffsetY_; }
+
+    void WindowOffsetY(int32_t WindowOffsetY_) { this->WindowOffsetY_ = WindowOffsetY_; }
+
+    int32_t WindowClientDeltaX() const { return this->WindowClientDeltaX_; }
+
+    void WindowClientDeltaX(int32_t WindowClientDeltaX_) { this->WindowClientDeltaX_ = WindowClientDeltaX_; }
+
+    int32_t WindowClientDeltaY() const { return this->WindowClientDeltaY_; }
+
+    void WindowClientDeltaY(int32_t WindowClientDeltaY_) { this->WindowClientDeltaY_ = WindowClientDeltaY_; }
+
+    uint32_t WindowWidth() const { return this->WindowWidth_; }
+
+    void WindowWidth(uint32_t WindowWidth_) { this->WindowWidth_ = WindowWidth_; }
+
+    uint32_t WindowHeight() const { return this->WindowHeight_; }
+
+    void WindowHeight(uint32_t WindowHeight_) { this->WindowHeight_ = WindowHeight_; }
+
+    uint16_t NumWindowRects() const { return this->NumWindowRects_; }
+
+    void NumWindowRects(uint16_t NumWindowRects_) {
+        this->NumWindowRects_ = NumWindowRects_;
+
+        this->window_rects.resize(this->NumWindowRects_);
+    }
+
+    Rectangle WindowRects(uint16_t idx_window_rect) const {
+        if (idx_window_rect < this->window_rects.size()) {
+            return this->window_rects[idx_window_rect];
+        }
+
+        REDASSERT(false);
+
+        return Rectangle();
+    }
+
+    void WindowRects(uint16_t idx_window_rect, Rectangle rect) {
+        if (idx_window_rect < this->window_rects.size()) {
+            this->window_rects[idx_window_rect] = rect;
+        }
+    }
+
+    int32_t VisibleOffsetX() const { return this->VisibleOffsetX_; }
+
+    void VisibleOffsetX(int32_t VisibleOffsetX_) { this->VisibleOffsetX_ = VisibleOffsetX_; }
+
+    int32_t VisibleOffsetY() const { return this->VisibleOffsetY_; }
+
+    void VisibleOffsetY(int32_t VisibleOffsetY_) { this->VisibleOffsetY_ = VisibleOffsetY_; }
+
+    uint16_t NumVisibilityRects() const { return this->NumVisibilityRects_; }
+
+    void NumVisibilityRects(uint16_t NumVisibilityRects_) {
+        this->NumVisibilityRects_ = NumVisibilityRects_;
+
+        this->visibility_rects.resize(this->NumVisibilityRects_);
+    }
+
+    Rectangle VisibilityRects(uint16_t idx_visibility_rect) const {
+        if (idx_visibility_rect < this->visibility_rects.size()) {
+            return this->visibility_rects[idx_visibility_rect];
+        }
+
+        REDASSERT(false);
+
+        return Rectangle();
+    }
+
+    void VisibilityRects(uint16_t idx_visibility_rect, Rectangle rect) {
+        if (idx_visibility_rect < this->visibility_rects.size()) {
+            this->visibility_rects[idx_visibility_rect] = rect;
+        }
+    }
+
+    uint8_t AppBarState() const { return this->AppBarState_; }
+
+    void AppBarState(uint8_t AppBarState_) { this->AppBarState_ = AppBarState_; }
+
+    uint8_t AppBarEdge() const { return this->AppBarEdge_; }
+
+    void AppBarEdge(uint8_t AppBarEdge_) { this->AppBarEdge_ = AppBarEdge_; }
 
     size_t size() const {
         size_t count = 0;
@@ -1290,7 +1523,7 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             count += 2; // NumWindowRects(2)
-            count += this->NumWindowRects * Rectangle::size();
+            count += this->NumWindowRects_ * Rectangle::size();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
@@ -1299,7 +1532,15 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             count += 2; // NumVisibilityRects(2)
-            count += this->NumVisibilityRects * Rectangle::size();
+            count += this->NumVisibilityRects_ * Rectangle::size();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_STATE) {
+            count += 1; // AppBarState(1)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_EDGE) {
+            count += 1; // AppBarEdge(1)
         }
 
         return count;
@@ -1316,19 +1557,19 @@ private:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             result = ::snprintf(buffer + length, size - length, " OwnerWindowId=0x%X",
-                this->OwnerWindowId);
+                this->OwnerWindowId_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_STYLE) {
             result = ::snprintf(buffer + length, size - length, " Style=0x%X ExtendedStyle=0x%X",
-                this->Style, this->ExtendedStyle);
+                this->Style_, this->ExtendedStyle_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_SHOW) {
             result = ::snprintf(buffer + length, size - length, " ShowState=%u",
-                unsigned(this->ShowState));
+                unsigned(this->ShowState_));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
@@ -1340,49 +1581,49 @@ private:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
             result = ::snprintf(buffer + length, size - length, " ClientOffsetX=%d ClientOffsetY=%d",
-                this->ClientOffsetX, this->ClientOffsetY);
+                this->ClientOffsetX_, this->ClientOffsetY_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             result = ::snprintf(buffer + length, size - length, " ClientAreaWidth=%u ClientAreaHeight=%u",
-                this->ClientAreaWidth, this->ClientAreaHeight);
+                this->ClientAreaWidth_, this->ClientAreaHeight_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             result = ::snprintf(buffer + length, size - length, " RPContent=%u",
-                unsigned(this->RPContent));
+                unsigned(this->RPContent_));
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ROOTPARENT) {
             result = ::snprintf(buffer + length, size - length, " RootParentHandle=%u",
-                this->RootParentHandle);
+                this->RootParentHandle_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDOFFSET) {
             result = ::snprintf(buffer + length, size - length, " WindowOffsetX=%d WindowOffsetY=%d",
-                this->WindowOffsetX, this->WindowOffsetY);
+                this->WindowOffsetX_, this->WindowOffsetY_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
             result = ::snprintf(buffer + length, size - length, " WindowClientDeltaX=%d WindowClientDeltaY=%d",
-                this->WindowClientDeltaX, this->WindowClientDeltaY);
+                this->WindowClientDeltaX_, this->WindowClientDeltaY_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDSIZE) {
             result = ::snprintf(buffer + length, size - length, " WindowWidth=%u WindowHeight=%u",
-                this->WindowWidth, this->WindowHeight);
+                this->WindowWidth_, this->WindowHeight_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDRECTS) {
             result = ::snprintf(buffer + length, size - length, " NumWindowRects=%u",
-                this->NumWindowRects);
+                this->NumWindowRects_);
             length += ((result < size - length) ? result : (size - length - 1));
 
             result = ::snprintf(buffer + length, size - length, " (");
@@ -1404,13 +1645,13 @@ private:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISOFFSET) {
             result = ::snprintf(buffer + length, size - length, " VisibleOffsetX=%d VisibleOffsetY=%d",
-                this->VisibleOffsetX, this->VisibleOffsetY);
+                this->VisibleOffsetX_, this->VisibleOffsetY_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_VISIBILITY) {
             result = ::snprintf(buffer + length, size - length, " NumVisibilityRects=%u",
-                this->NumVisibilityRects);
+                this->NumVisibilityRects_);
             length += ((result < size - length) ? result : (size - length - 1));
 
             result = ::snprintf(buffer + length, size - length, " (");
@@ -1427,6 +1668,18 @@ private:
             }
 
             result = ::snprintf(buffer + length, size - length, ")");
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_STATE) {
+            result = ::snprintf(buffer + length, size - length, " AppBarState=%u",
+                this->AppBarState_);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_EDGE) {
+            result = ::snprintf(buffer + length, size - length, " AppBarEdge=%u",
+                this->AppBarEdge_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
@@ -1722,7 +1975,7 @@ const auto save_stream_p = stream.get_current() + 1;
 
         this->header.emit_end();
 
-LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+LOG(LOG_INFO, "Send DeletedWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
@@ -1731,7 +1984,7 @@ const auto save_stream_p = stream.get_current();
 
         this->header.receive(stream);
 
-LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+LOG(LOG_INFO, "Recv DeletedWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
@@ -1838,8 +2091,11 @@ public:
     void emit_end() const {
         REDASSERT(this->output_stream != nullptr);
 
-        this->output_stream->set_out_uint16_le(
-            this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
+        this->OrderSize =   this->output_stream->get_offset()
+                          - this->offset_of_OrderSize
+                          + 1;  // Alternate Secondary Order Header(1)
+
+        this->output_stream->set_out_uint16_le(this->OrderSize,
             this->offset_of_OrderSize);
 
         this->output_stream = nullptr;
@@ -2242,13 +2498,13 @@ enum {
 class NewOrExistingNotificationIcons {
     NotificationIconInformationCommonHeader header;
 
-    uint32_t Version;
+    uint32_t Version = 0;
 
     std::string tool_tip;
 
     NotificationIconBalloonTooltip info_tip;
 
-    uint32_t State;
+    uint32_t State = 0;
 
     IconInfo icon;
 
@@ -2497,7 +2753,7 @@ const auto save_stream_p = stream.get_current() + 1;
 
         this->header.emit_end();
 
-LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+LOG(LOG_INFO, "Send DeletedNotificationIcons: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
@@ -2506,7 +2762,7 @@ const auto save_stream_p = stream.get_current();
 
         this->header.receive(stream);
 
-LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+LOG(LOG_INFO, "Recv DeletedNotificationIcons: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
@@ -2595,8 +2851,11 @@ public:
     void emit_end() const {
         REDASSERT(this->output_stream != nullptr);
 
-        this->output_stream->set_out_uint16_le(
-            this->output_stream->get_offset() - this->offset_of_OrderSize + 1 /*Alternate Secondary Order Header(1)*/,
+        this->OrderSize =   this->output_stream->get_offset()
+                          - this->offset_of_OrderSize
+                          + 1;  // Alternate Secondary Order Header(1)
+
+        this->output_stream->set_out_uint16_le(this->OrderSize,
             this->offset_of_OrderSize);
 
         this->output_stream = nullptr;
@@ -2633,6 +2892,8 @@ public:
     }
 
     uint32_t FieldsPresentFlags() const { return this->FieldsPresentFlags_; }
+
+    void FieldsPresentFlags(uint32_t FieldsPresentFlags_) { this->FieldsPresentFlags_ = FieldsPresentFlags_; }
 };  // DesktopInformationCommonHeader
 
 // [MS-RDPERP] - 2.2.1.3.3.2.1 Actively Monitored Desktop
@@ -2736,12 +2997,14 @@ enum {
 };
 
 class ActivelyMonitoredDesktop {
+public:
     DesktopInformationCommonHeader header;
 
-    uint32_t ActiveWindowId;
-    uint8_t  NumWindowIds;
+private:
+    uint32_t ActiveWindowId_ = 0;
+    uint8_t  NumWindowIds_ = 0;
 
-    uint32_t window_ids[255];
+    uint32_t window_ids_[255] = { 0 };
 
 public:
     void emit(OutStream & stream) const {
@@ -2749,14 +3012,14 @@ const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
-            stream.out_uint32_le(this->ActiveWindowId);
+            stream.out_uint32_le(this->ActiveWindowId_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
-            stream.out_uint8(this->NumWindowIds);
+            stream.out_uint8(this->NumWindowIds_);
 
-            for (uint16_t i = 0; i < this->NumWindowIds; ++i) {
-                stream.out_uint32_le(this->window_ids[i]);
+            for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
+                stream.out_uint32_le(this->window_ids_[i]);
             }
         }
 
@@ -2781,7 +3044,7 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->ActiveWindowId = stream.in_uint32_le();
+            this->ActiveWindowId_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
@@ -2796,10 +3059,10 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            this->NumWindowIds = stream.in_uint8();
+            this->NumWindowIds_ = stream.in_uint8();
 
             {
-                const unsigned expected = this->NumWindowIds * sizeof(uint32_t);    // WindowIds(variable)
+                const unsigned expected = this->NumWindowIds_ * sizeof(uint32_t);    // WindowIds(variable)
 
                 if (!stream.in_check_rem(expected)) {
                     LOG(LOG_ERR,
@@ -2809,13 +3072,25 @@ const auto save_stream_p = stream.get_current();
                 }
             }
 
-            for (uint16_t i = 0; i < this->NumWindowIds; ++i) {
-                this->window_ids[i] = stream.in_uint32_le();
+            for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
+                this->window_ids_[i] = stream.in_uint32_le();
             }
         }
 LOG(LOG_INFO, "Recv ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
+
+    uint32_t ActiveWindowId() const { return this->ActiveWindowId_; }
+
+    void ActiveWindowId(uint32_t ActiveWindowId_) { this->ActiveWindowId_ = ActiveWindowId_; }
+
+    uint8_t NumWindowIds() const { return this->NumWindowIds_; }
+
+    void NumWindowIds(uint8_t NumWindowIds_) { this->NumWindowIds_ = NumWindowIds_; }
+
+    uint32_t window_ids(uint8_t idx_window_id) { return this->window_ids_[idx_window_id]; }
+
+    void window_ids(uint8_t idx_window_id, uint32_t window_id) { this->window_ids_[idx_window_id] = window_id; }
 
     size_t size() const {
         size_t count = 0;
@@ -2827,10 +3102,10 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
         }
 
         if ((this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) &&
-            this->NumWindowIds) {
+            this->NumWindowIds_) {
             count += 1; // NumWindowIds(1)
 
-            count += this->NumWindowIds * sizeof(uint32_t); // WindowIds(variable)
+            count += this->NumWindowIds_ * sizeof(uint32_t); // WindowIds(variable)
         }
 
         return count;
@@ -2847,24 +3122,24 @@ private:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
             result = ::snprintf(buffer + length, size - length, " ActiveWindowId=0x%X",
-                this->ActiveWindowId);
+                this->ActiveWindowId_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
         if ((this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) &&
-            this->NumWindowIds) {
+            this->NumWindowIds_) {
             result = ::snprintf(buffer + length, size - length, " NumWindowIds=%u (",
-                uint(this->NumWindowIds));
+                uint(this->NumWindowIds_));
             length += ((result < size - length) ? result : (size - length - 1));
 
-            for (uint16_t i = 0; i < this->NumWindowIds; ++i) {
+            for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
                 if (i) {
                     result = ::snprintf(buffer + length, size - length, ", ");
                     length += ((result < size - length) ? result : (size - length - 1));
                 }
 
                 result = ::snprintf(buffer + length, size - length, "0x%X",
-                    this->window_ids[i]);
+                    this->window_ids_[i]);
                 length += ((result < size - length) ? result : (size - length - 1));
             }
 
@@ -2927,7 +3202,7 @@ const auto save_stream_p = stream.get_current() + 1;
 
         this->header.emit_end();
 
-LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+LOG(LOG_INFO, "Send NonMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
@@ -2936,7 +3211,7 @@ const auto save_stream_p = stream.get_current();
 
         this->header.receive(stream);
 
-LOG(LOG_INFO, "Recv IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
+LOG(LOG_INFO, "Recv NonMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 

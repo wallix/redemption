@@ -35,6 +35,7 @@
 #include "mod/vnc/vnc.hpp"
 #include "mod/xup/xup.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
+#include "mod/internal/client_execute.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "front/front.hpp"
@@ -703,7 +704,6 @@ public:
         this->mod_osd.draw_osd_message();
     }
 
-
     Front & front;
     null_mod no_mod;
     ModOSD mod_osd;
@@ -711,6 +711,8 @@ public:
     SocketTransport * mod_transport;
     Random & gen;
     TimeObj & timeobj;
+
+    ClientExecute client_execute;
 
     ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
@@ -720,6 +722,7 @@ public:
         , mod_transport(nullptr)
         , gen(gen)
         , timeobj(timeobj)
+        , client_execute(front)
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;
@@ -822,7 +825,8 @@ public:
                     this->front.client_info.width,
                     this->front.client_info.height,
                     this->front.client_info.cs_monitor
-                )
+                ),
+                this->client_execute
             ));
             if (this->verbose){
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
@@ -845,6 +849,7 @@ public:
                         this->front.client_info.cs_monitor
                     ),
                     now,
+                    this->client_execute,
                     true
                 ));
             }
@@ -867,6 +872,7 @@ public:
                         this->front.client_info.cs_monitor
                     ),
                     now,
+                    this->client_execute,
                     true,
                     true
                 ));
@@ -1040,7 +1046,8 @@ public:
                     this->front.client_info.height,
                     this->front.client_info.cs_monitor
                 ),
-                now
+                now,
+                this->client_execute
             ));
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
@@ -1055,7 +1062,7 @@ public:
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
                 char ip_addr[256];
                 in_addr s4_sin_addr;
-                int status = resolve_ipv4_address(ip, s4_sin_addr); 
+                int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
                     if (acl) {
                         acl->log4(false, "CONNECTION_FAILED");
@@ -1124,7 +1131,7 @@ public:
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
                 char ip_addr[256];
                 in_addr s4_sin_addr;
-                int status = resolve_ipv4_address(ip, s4_sin_addr); 
+                int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
                     if (acl) {
                         acl->log4(false, "CONNECTION_FAILED");
@@ -1273,6 +1280,10 @@ public:
                                                                       ((this->ini.get<cfg::video::capture_flags>() &
                                                                         (CaptureFlags::wrm | CaptureFlags::ocr)) !=
                                                                        CaptureFlags::none));
+                mod_rdp_params.client_execute_flags                = this->client_execute.Flags();
+                mod_rdp_params.client_execute_exe_or_file          = this->client_execute.ExeOrFile();
+                mod_rdp_params.client_execute_working_dir          = this->client_execute.WorkingDir();
+                mod_rdp_params.client_execute_arguments            = this->client_execute.Arguments();
 
                 try {
                     const char * const name = "RDP Target";
@@ -1321,7 +1332,7 @@ public:
 
                 char ip_addr[256];
                 in_addr s4_sin_addr;
-                int status = resolve_ipv4_address(ip, s4_sin_addr); 
+                int status = resolve_ipv4_address(ip, s4_sin_addr);
                 if (status){
                     if (acl) {
                         acl->log4(false, "CONNECTION_FAILED");

@@ -28,6 +28,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_login_mod.hpp"
 #include "../../front/fake_front.hpp"
 
@@ -42,6 +43,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front);
 
     Inifile ini;
 
@@ -49,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000));
+    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
     d.draw_event(100001, front);
 
     BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -71,6 +73,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod1)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front);
 
     Inifile ini;
 
@@ -78,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod1)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000));
+    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
     d.draw_event(100001, front);
 
     BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -99,6 +102,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod2)
     info.height = 1536;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front);
 
     Inifile ini;
 
@@ -106,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod2)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000));
+    FlatLoginMod d(ini, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute);
     d.draw_event(100001, front);
 
     BOOST_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);

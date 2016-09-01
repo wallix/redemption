@@ -31,8 +31,21 @@ private:
 
     FrontAPI& front;
 
+    uint16_t param_client_execute_flags;
+
+    std::string param_client_execute_exe_or_file;
+    std::string param_client_execute_working_dir;
+    std::string param_client_execute_arguments;
+
+    bool client_execute_pdu_sent = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
+        uint16_t client_execute_flags;
+
+        const char* client_execute_exe_or_file;
+        const char* client_execute_working_dir;
+        const char* client_execute_arguments;
     };
 
     RemoteProgramsVirtualChannel(
@@ -43,7 +56,11 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          params)
-    , front(front) {}
+    , front(front)
+    , param_client_execute_flags(params.client_execute_flags)
+    , param_client_execute_exe_or_file(params.client_execute_exe_or_file)
+    , param_client_execute_working_dir(params.client_execute_working_dir)
+    , param_client_execute_arguments(params.client_execute_arguments) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -321,6 +338,43 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
+        if (!this->client_execute_pdu_sent && !this->param_client_execute_exe_or_file.empty()) {
+            StaticOutStream<256> out_s;
+            RAILPDUHeader header;
+            header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
+
+            ClientExecutePDU cepdu;
+
+            cepdu.Flags(this->param_client_execute_flags);
+            cepdu.ExeOrFile(this->param_client_execute_exe_or_file.c_str());
+            cepdu.WorkingDir(this->param_client_execute_working_dir.c_str());
+            cepdu.Arguments(this->param_client_execute_arguments.c_str());
+
+            cepdu.emit(out_s);
+
+            header.emit_end();
+
+            const size_t   length = out_s.get_offset();
+            const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
+                                    | CHANNELS::CHANNEL_FLAG_LAST;
+
+            {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, length, flags,
+                    out_s.get_data(), length);
+            }
+            LOG(LOG_INFO,
+                "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
+                    "Send to client - Client Execute PDU");
+            cepdu.log(LOG_INFO);
+
+            this->send_message_to_server(length, flags, out_s.get_data(),
+                length);
+
+            this->client_execute_pdu_sent = true;
+        }
+
         ClientSystemParametersUpdatePDU cspupdu;
 
         cspupdu.receive(chunk);
@@ -511,6 +565,8 @@ public:
                 send_message_to_server =
                     this->process_client_execute_pdu(
                         total_length, flags, chunk);
+
+                if (send_message_to_server) this->client_execute_pdu_sent = true;
             break;
 
             case TS_RAIL_ORDER_GET_APPID_REQ:
