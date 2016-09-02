@@ -841,7 +841,7 @@ unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp 
 unit-test test_meta_protocol11 : tests/test_meta_protocol.c11.cpp crypto libboost_unit_test : ;
 unit-test test_meta_protocol : tests/test_meta_protocol.c14.cpp crypto libboost_unit_test : <cxxflags>-std=c++14 ;
 
-unit-test test_meta_protocol2 : tests/test_meta_protocol2.cpp : <cxxflags>-std=c++14 : <library>crypto ;
+unit-test test_meta_protocol2 : tests/test_meta_protocol2.cpp : $(TEST_DEPENDENCIES) <cxxflags>-std=c++14 : <library>crypto ;
 
 explicit server_sc1 client_sc1 ;
 

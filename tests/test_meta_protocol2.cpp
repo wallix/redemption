@@ -1,3 +1,9 @@
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE TestVerifier
+#include <boost/test/auto_unit_test.hpp>
+
+
 #include <limits>
 #include <utility>
 #include <cstdint>
@@ -474,7 +480,6 @@ namespace proto
         T & x;
     };
 
-    // TODO using inherits
     template<class... Val>
     struct inherit_refs : Ref<Val>... {
         constexpr inherit_refs(Val & ... val) : Ref<Val>{val}... {}
@@ -1046,6 +1051,59 @@ using is_static_size = typename detail::is_static_size<T>::type;
 template<class T>
 using is_not_static_size = typename detail::is_not_static_size<T>::type;
 
+template<class T, std::size_t n>
+struct static_array_view;
+template<class T, std::size_t n>
+struct static_array_view<T const, n>
+{
+    static_array_view(T const (&a)[n]) noexcept : av{a} {}
+    static_array_view(std::array<T, n> & a) noexcept
+      : static_array_view(reinterpret_cast<T(&)[n]>(a.front())) {}
+    static_array_view(std::array<T, n> const & a) noexcept
+      : static_array_view(reinterpret_cast<T const (&)[n]>(a.front())) {}
+
+    operator array_view<T const> () const noexcept { return {av}; }
+
+    T const * data() const noexcept { return av; }
+    std::size_t size() const noexcept { return n; }
+
+    T const * begin() const noexcept { return av; }
+    T const * end() const noexcept { return av + n; }
+
+private:
+    T const (&av)[n];
+};
+
+namespace detail
+{
+    template<class Ints, class... Ts>
+    struct tuple_buf;
+
+    template<std::size_t, class T>
+    struct tuple_element
+    { T elem; };
+
+    template<std::size_t... Ints, class... Ts>
+    struct tuple_buf<std::integer_sequence<std::size_t, Ints...>, Ts...>
+    : tuple_element<Ints, Ts>...
+    {};
+}
+template<class... Ts>
+using tuple_buf = detail::tuple_buf<std::index_sequence_for<Ts...>, Ts...>;
+
+template<std::size_t... Ints, class... Ts, class F>
+void each_element_with_index(
+    detail::tuple_buf<std::integer_sequence<std::size_t, Ints...>, Ts...> & t,
+    F && f
+) {
+    (void)std::initializer_list<int>{
+        (f(
+            static_cast<detail::tuple_element<Ints, Ts>&>(t).elem,
+            std::integral_constant<std::size_t, Ints>{}
+        ), 1)...
+    };
+}
+
 namespace detail
 {
     struct iovec {
@@ -1058,13 +1116,11 @@ namespace detail
     {
         std::array<iovec, n> data {};
 
-        template<class Tuple>
-        Buffers(Tuple & t)
+        template<class TupleBuf>
+        Buffers(TupleBuf & t)
         {
-            // TODO slow
-            brigand::for_each<mk_seq<n>>([this, &t](auto I) {
-                using i = t_<decltype(I)>;
-                this->init_buf(i{}, std::get<i::value>(t));
+            each_element_with_index(t, [this](auto & elem, auto i) {
+                this->init_buf(i, elem);
             });
         }
 
@@ -1073,19 +1129,16 @@ namespace detail
             return this->data[i];
         }
 
-        // TODO static_array_view<T, n>
-        array_view<iovec const> view() const
+        static_array_view<iovec const, n> view() const
         {
-            return make_array_view(this->data.data(), this->data.size());
+            return {this->data};
         }
 
-        template<class Tuple>
-        void reset_ptr(Tuple & t)
+        template<class TupleBuf>
+        void reset_ptr(TupleBuf & t)
         {
-            // TODO slow
-            brigand::for_each<mk_seq<n>>([this, &t](auto I) {
-                using i = t_<decltype(I)>;
-                this->reset_buf_ptr(i{}, std::get<i::value>(t));
+            each_element_with_index(t, [this](auto & elem, auto i) {
+                this->reset_buf_ptr(i, elem);
             });
         }
 
@@ -1118,7 +1171,6 @@ namespace detail
     template<class PktSz>
     struct Sizes<brigand::list<PktSz>>
     {
-        // TODO sizeof -1
         std::size_t data[2] { PktSz::value };
 
         void propagate_size()
@@ -1128,7 +1180,6 @@ namespace detail
     template<class... PktSz>
     struct Sizes<brigand::list<PktSz...>>
     {
-        // TODO sizeof -1
         std::size_t data[sizeof...(PktSz)+1] { PktSz::value... };
 
         void propagate_size()
@@ -1179,8 +1230,7 @@ struct Buffering2
             >
         >;
 
-        // TODO rapidtuple and contiguous addr
-        brigand::wrap<buffer_list, std::tuple> buffer_tuple;
+        brigand::wrap<buffer_list, tuple_buf> buffer_tuple;
         detail::Buffers<brigand::size<buffer_list>::value> buffers{buffer_tuple};
         uint8_t * pktptrs[brigand::size<pkt_sz_list>::value];
         detail::Sizes<default_buffer_size> sizes;
@@ -1189,7 +1239,6 @@ struct Buffering2
 
         void impl(Pkts & ... packets)
         {
-            // TODO check if pkt_sz is a static_buffer
             std::cout << "pktptrs.size: " << (sizeof(this->pktptrs)/sizeof(this->pktptrs[0])) << "\n";
 
             std::cout << "--- write_not_dynamic_bufs ---\n";
@@ -1341,18 +1390,27 @@ struct Buffering2
             this->policy.send(this->buffers.view());
         }
 
+
+# define PROTO_NIL
+#ifndef NDEBUG
+# define PROTO_ENABLE_IF_DEBUG(...) __VA_ARGS__
+#else
+# define PROTO_ENABLE_IF_DEBUG(...)
+#endif
         template<class I, class VarInfos, class... VarInfosBuffers>
         void write_dynamic_buf(I, brigand::list<VarInfos, VarInfosBuffers...>, Pkts & ... pkts) {
             using var_info = brigand::front<VarInfos>;
+            PROTO_ENABLE_IF_DEBUG(int dynamic_buf_ctxfunc_is_used = 0;)
             this->write_dyn_type(
                 larg<var_info::ivar::value>(arg<var_info::ipacket::value>(pkts...)),
-                [this, &pkts...](array_view_const_u8 av) {
+                [this, PROTO_ENABLE_IF_DEBUG(&dynamic_buf_ctxfunc_is_used, PROTO_NIL) &pkts...]
+                (array_view_const_u8 av) {
+                    PROTO_ENABLE_IF_DEBUG(++dynamic_buf_ctxfunc_is_used;)
                     auto & buffer = this->buffers[I::value];
                     buffer.iov_base = const_cast<uint8_t *>(av.data());
                     buffer.iov_len = av.size();
                     this->sizes.data[var_info::ipacket::value] += av.size();
                     std::cout << " [size: " << av.size() << "]";
-                    // TODO assert called
                     std::cout << "\n";
                     this->write_dynamic_bufs(
                         brigand::size_t<I::value + 1>{},
@@ -1361,7 +1419,10 @@ struct Buffering2
                     );
                 }
             );
+            assert(dynamic_buf_ctxfunc_is_used == 1);
         }
+#undef PROTO_ENABLE_IF_DEBUG
+#undef PROTO_NIL
 
         template<class Var, class Continue>
         void write_dyn_type(Var & var, Continue f) {
@@ -1473,7 +1534,31 @@ struct Buffering2
 
 struct stream_protocol_policy;
 
-namespace iov_ext
+namespace iovproto
+{
+#define PROTO_INLINE_VARIABLE(type, name) \
+    inline namespace { constexpr auto&  name = detail::static_const<type>::value; }
+namespace detail
+{
+    template<class T>
+    struct static_const
+    {
+        static constexpr T value {};
+    };
+
+    template <class T>
+    constexpr T static_const<T>::value;
+}
+
+    struct write_static_buffer_as_limited_buffer_fn
+    {
+        template<class T, class Desc>
+        std::size_t operator()(uint8_t * p, T val, Desc desc) const;
+    };
+
+    PROTO_INLINE_VARIABLE(write_static_buffer_as_limited_buffer_fn, write_static_buffer_as_limited_buffer)
+
+namespace detail
 {
     template<class T, class Endianess>
     void write_static_buffer(uint8_t * p, T val, proto::types::integer<T, Endianess>)
@@ -1493,14 +1578,6 @@ namespace iov_ext
     {
         std::cout << " [view_buffer] [size: " << av.size() << "]";
         return av;
-    }
-
-    template<class T, class Desc>
-    inline std::size_t
-    write_static_buffer_as_limited_buffer(uint8_t * p, T val, Desc desc)
-    {
-        write_static_buffer(p, val, desc);
-        return proto::sizeof_<Desc>{};
     }
 
     inline std::size_t write_limited_buffer(uint8_t * p, uint16_t val, proto::types::u16_encoding)
@@ -1585,30 +1662,59 @@ namespace iov_ext
             f({});
         }
     }
+}
 
+    struct write_static_buffer_fn
+    {
+        template<class T, class Desc>
+        void operator()(uint8_t * p, T val, Desc desc) const
+        {
+            using detail::write_static_buffer;
+            write_static_buffer(p, val, desc);
+        }
+    };
+    PROTO_INLINE_VARIABLE(write_static_buffer_fn, write_static_buffer)
+
+    struct get_view_buffer_fn
+    {
+        template<class T, class Desc>
+        auto operator()(T val, Desc desc) const
+        {
+            using detail::get_view_buffer;
+            return get_view_buffer(val, desc);
+        }
+    };
+    PROTO_INLINE_VARIABLE(get_view_buffer_fn, get_view_buffer)
+
+    struct write_limited_buffer_fn
+    {
+        template<class T, class Desc>
+        std::size_t operator()(uint8_t * p, T val, Desc desc) const
+        {
+            using detail::write_limited_buffer;
+            return write_limited_buffer(p, val, desc);
+        }
+    };
+    PROTO_INLINE_VARIABLE(write_limited_buffer_fn, write_limited_buffer)
+
+    struct context_dynamic_buffer_fn
+    {
+        template<class F, class T, class Desc>
+        void operator()(F && f, T val, Desc desc) const
+        {
+            using detail::context_dynamic_buffer;
+            context_dynamic_buffer(f, val, desc);
+        }
+    };
+    PROTO_INLINE_VARIABLE(context_dynamic_buffer_fn, context_dynamic_buffer)
 
     template<class T, class Desc>
-    void write_static_buffer_impl(uint8_t * p, T val, Desc desc)
+    std::size_t inline write_static_buffer_as_limited_buffer_fn::
+    operator()(uint8_t * p, T val, Desc desc) const
     {
+        using detail::write_static_buffer;
         write_static_buffer(p, val, desc);
-    }
-
-    template<class T, class Desc>
-    auto get_view_buffer_impl(T val, Desc desc)
-    {
-        return get_view_buffer(val, desc);
-    }
-
-    template<class T, class Desc>
-    std::size_t write_limited_buffer_impl(uint8_t * p, T val, Desc desc)
-    {
-        return write_limited_buffer(p, val, desc);
-    }
-
-    template<class F, class T, class Desc>
-    void context_dynamic_buffer_impl(F && f, T val, Desc desc)
-    {
-        context_dynamic_buffer(f, val, desc);
+        return proto::sizeof_<Desc>{};
     }
 }
 
@@ -1617,37 +1723,25 @@ struct stream_protocol_policy
     template<class T, class Desc>
     void write_static_buffer(uint8_t * p, T val, Desc desc)
     {
-        iov_ext::write_static_buffer_impl(p, val, desc);
+        iovproto::write_static_buffer(p, val, desc);
     }
 
     template<class T, class Desc>
     auto get_view_buffer(T val, Desc desc)
     {
-        return iov_ext::get_view_buffer_impl(val, desc);
+        return iovproto::get_view_buffer(val, desc);
     }
-
-    template<class T, class Cond, class True, class False>
-    std::size_t write_limited_buffer(uint8_t * p, T val, proto::types::if_<Cond, True, False>);
-//     {
-//         std::cout << " [limited_buffer]";
-//         if (Cond{}(val)) {
-//             return this->write(p, /*typename True::type*/(val), True{});
-//         }
-//         else {
-//             return this->write(p, /*typename False::type*/(val), False{});
-//         }
-//     }
 
     template<class T, class Desc>
     std::size_t write_limited_buffer(uint8_t * p, T val, Desc desc)
     {
-        return iov_ext::write_limited_buffer_impl(p, val, desc);
+        return iovproto::write_limited_buffer(p, val, desc);
     }
 
     template<class F, class T, class Desc>
     void context_dynamic_buffer(F && f, T val, Desc desc)
     {
-        iov_ext::context_dynamic_buffer_impl(f, val, desc);
+        iovproto::context_dynamic_buffer(f, val, desc);
     }
 
     void send(iovec_view iovs) {
@@ -1661,9 +1755,10 @@ struct stream_protocol_policy
 
 void test_old();
 void test_new();
+void test();
 
-int main() {
-
+BOOST_AUTO_TEST_CASE(proto_test)
+{
     struct {
         uint8_t a = 1;
         uint8_t b = 2;
@@ -1689,33 +1784,20 @@ int main() {
     std::cout << "\n";
     proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
 
-//     std::cout << "\n\n======== old ========\n\n";
-//     test_old();
-//     std::cout << "\n\n======== new ========\n\n";
-//     test_new();
+    test();
+}
+
+
+void test()
+{
+    std::cout << "\n\n======== old ========\n\n";
+    test_old();
+    std::cout << "\n\n======== new ========\n\n";
+    test_new();
 }
 
 #include "core/RDP/sec.hpp"
 #include "core/RDP/x224.hpp"
-
-void test_old() {
-    uint8_t data[10];
-    CryptContext crypt;
-
-    uint8_t buf[256];
-    OutStream out_stream(buf + 126, 126);
-    StaticOutStream<128> hstream;
-    SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
-    X224::DT_TPDU_Send(hstream, out_stream.get_offset());
-//     BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
-//     BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
-    auto p = out_stream.get_data() - hstream.get_offset();
-//     BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
-    memcpy(p, hstream.get_data(), hstream.get_offset());
-    out_stream = OutStream(p, out_stream.get_current() - p);
-    out_stream.out_skip_bytes(out_stream.get_capacity());
-    hexdump_c(out_stream.get_data(), out_stream.get_offset());
-}
 
 // https://github.com/jonathanpoelen/falcon.parse_number
 #include <falcon/literals/integer_constant.hpp>
@@ -1786,10 +1868,10 @@ namespace sec
         std::cout << " [limited_buffer]";
         uint8_t * p = buf;
         if (ctx.flags) {
-            p += iov_ext::write_static_buffer_as_limited_buffer(p, ctx.flags, proto::get_desc(flags));
+            p += iovproto::write_static_buffer_as_limited_buffer(p, ctx.flags, proto::get_desc(flags));
         }
         if (ctx.flags & SEC::SEC_ENCRYPT){
-            p += iov_ext::write_static_buffer_as_limited_buffer(p, ctx.sig, signature_fn{});
+            p += iovproto::write_static_buffer_as_limited_buffer(p, ctx.sig, signature_fn{});
         }
         return p - buf;
     }
@@ -1811,6 +1893,53 @@ namespace sec
 }
 
 
+void test_old() {
+    uint8_t data[10];
+    CryptContext crypt;
+
+    uint8_t buf[256];
+    OutStream out_stream(buf + 126, 126);
+    StaticOutStream<128> hstream;
+    SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+    X224::DT_TPDU_Send(hstream, out_stream.get_offset());
+    BOOST_REQUIRE_EQUAL(4, out_stream.get_offset());
+    BOOST_REQUIRE_EQUAL(7, hstream.get_offset());
+    auto p = out_stream.get_data() - hstream.get_offset();
+    BOOST_REQUIRE_EQUAL(11, out_stream.get_current() - p);
+    memcpy(p, hstream.get_data(), hstream.get_offset());
+    out_stream = OutStream(p, out_stream.get_current() - p);
+    out_stream.out_skip_bytes(out_stream.get_capacity());
+    hexdump_c(out_stream.get_data(), out_stream.get_offset());
+}
+
+#include "utils/sugar/bytes_t.hpp"
+inline bool check_range(const_bytes_array p, const_bytes_array mem, char * message)
+{
+    if (p.size() != mem.size() || memcmp(p.data(), mem.data(), p.size())) {
+        if (auto len = p.size()) {
+            auto sig = p.data();
+            message += std::sprintf(message, "Expected signature: \"\\x%.2x", unsigned(*sig));
+            while (--len) {
+                message += std::sprintf(message, "\\x%.2x", unsigned(*++sig));
+            }
+            message[0] = '"';
+            message[1] = 0;
+        }
+        message[0] = 0;
+        return false;
+    }
+    return true;
+}
+
+#define CHECK_RANGE(p, mem)                      \
+    {                                            \
+        char message[1024*64];                   \
+        if (!check_range(p, mem, message)) {     \
+            BOOST_CHECK_MESSAGE(false, message); \
+        }                                        \
+    }
+
+
 void test_new()
 {
     auto packet1 = x224::dt_tpdu_send();
@@ -1819,5 +1948,15 @@ void test_new()
     CryptContext crypt;
     auto packet2 = sec::sec_send(sec::flags = ~SEC::SEC_ENCRYPT, sec::crypt = crypt, sec::data = data, sec::encryptionLevel = 0_c);
 
-    proto::apply(Buffering2<stream_protocol_policy>{}, packet1, packet2);
+    struct Policy : stream_protocol_policy {
+        void send(iovec_view iovs) {
+            BOOST_CHECK_EQUAL(iovs.size(), 1);
+            CHECK_RANGE(
+                make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
+                cstr_array_view("\x03\x00\x00\x0b\x02\xf0\x80\xf7\xff\xff\xff")
+            );
+        }
+    };
+
+    proto::apply(Buffering2<Policy>{}, packet1, packet2);
 }
