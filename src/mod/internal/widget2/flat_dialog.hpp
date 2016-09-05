@@ -183,8 +183,13 @@ public:
             this->send_notify(NOTIFY_SUBMIT);
         }
         else {
-            if (this->notifier) {
-                this->notifier->notify(widget, event);
+            if (event == NOTIFY_PASTE) {
+                if (this->notifier) {
+                    this->notifier->notify(widget, event);
+                }
+            }
+            else {
+                WidgetParent::notify(widget, event);
             }
         }
     }
