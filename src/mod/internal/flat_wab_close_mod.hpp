@@ -164,5 +164,12 @@ public:
     }
 
     bool is_up_and_running() override { return true; }
+
+    void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        (void)length;
+        if (this->client_execute && !strcmp(front_channel_name, CHANNELS::channel_names::rail)) {
+            this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
+        }
+    }
 };
 

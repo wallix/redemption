@@ -1965,9 +1965,9 @@ enum {
 };
 
 class DeletedWindow {
+public:
     WindowInformationCommonHeader header;
 
-public:
     void emit(OutStream & stream) const {
 const auto save_stream_p = stream.get_current() + 1;
 

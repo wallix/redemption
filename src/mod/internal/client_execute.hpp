@@ -44,6 +44,8 @@ class ClientExecute
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
 
+    bool server_execute_result_sent = false;
+
 public:
     ClientExecute(FrontAPI & front) {
         this->front_ = &front;
@@ -154,6 +156,26 @@ public:
     }   // bool
 
     void reset() {
+        if (!this->channel_) return;
+
+        {
+            RDP::RAIL::DeletedWindow order;
+
+            order.header.FieldsPresentFlags(
+                      RDP::RAIL::WINDOW_ORDER_STATE_DELETED
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                );
+            order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+            StaticOutStream<256> out_s;
+            order.emit(out_s);
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "ClientExecute::reset: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
+
+            this->front_->draw(order);
+        }
+
+
         this->channel_ = nullptr;
     }
 
@@ -309,8 +331,8 @@ public:
 
                 this->front_->draw(order);
             }
-
-            {
+/*
+            if (!server_execute_result_sent) {
                 StaticOutStream<256> out_s;
                 RAILPDUHeader header;
                 header.emit_begin(out_s, TS_RAIL_ORDER_EXEC_RESULT);
@@ -340,8 +362,10 @@ public:
 
                 this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                               flags);
-            }
 
+                server_execute_result_sent = true;
+            }
+*/
             {
                 RDP::RAIL::ActivelyMonitoredDesktop order;
 
