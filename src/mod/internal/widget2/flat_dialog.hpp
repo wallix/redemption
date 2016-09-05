@@ -183,7 +183,9 @@ public:
             this->send_notify(NOTIFY_SUBMIT);
         }
         else {
-            WidgetParent::notify(widget, event);
+            if (this->notifier) {
+                this->notifier->notify(widget, event);
+            }
         }
     }
 

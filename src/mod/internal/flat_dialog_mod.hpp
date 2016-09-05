@@ -24,6 +24,7 @@
 
 #include "utils/translation.hpp"
 #include "core/front_api.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "configs/config.hpp"
 #include "widget2/language_button.hpp"
 #include "widget2/flat_dialog.hpp"
@@ -52,6 +53,8 @@ class FlatDialogMod : public InternalMod, public NotifyApi
 
     FlatDialogModVariables vars;
     Timeout   timeout;
+
+    CopyPaste copy_paste;
 
 public:
     FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect,
@@ -91,7 +94,11 @@ public:
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
-            default: ;
+            default:
+            if (this->copy_paste) {
+                copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
+            }
+            break;
         }
     }
 
@@ -129,6 +136,9 @@ private:
 
 public:
     void draw_event(time_t now, gdi::GraphicApi &) override {
+        if (!this->copy_paste && event.waked_up_by_time) {
+            this->copy_paste.ready(this->front);
+        }
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->accepted();
@@ -143,5 +153,12 @@ public:
     }
 
     bool is_up_and_running() override { return true; }
+
+    void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        (void)length;
+        if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
+            this->copy_paste.send_to_mod_channel(chunk, flags);
+        }
+    }
 };
 
