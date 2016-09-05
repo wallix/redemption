@@ -580,13 +580,13 @@ namespace proto
         {}
 
         template<class... Val>
-        constexpr val<vars<T, Descs...>, T> operator()(inherit_refs<Val...> refs) const
+        constexpr val<vars<T, Descs...>, typename T::type> operator()(inherit_refs<Val...> refs) const
         {
             return {{(get_packet_value<var_or_val_to_var<Descs>>(refs, this->values, 1).x)...}};
         }
 
         template<class... Val>
-        constexpr val<vars<T, Descs...>, T> operator()(Val... values) const
+        constexpr val<vars<T, Descs...>, typename T::type> operator()(Val... values) const
         {
             return (*this)(inherit_refs<Val...>{values...});
         }
@@ -1972,8 +1972,6 @@ namespace sec
     PROTO_VAR(proto::types::mutable_bytes, data);
     PROTO_VAR(proto::types::val<CryptContext&>, crypt);
 
-    //constexpr auto sec_send = proto::desc(proto::create<sec_send_pkt>(flags, data, crypt));
-
     struct sec_send_pkt
     {
         struct type
@@ -2004,20 +2002,21 @@ namespace sec
         return p - buf;
     }
 
-    PROTO_VAR(sec_send_pkt, pkt);
-
-    template<class... T>
-    auto sec_send(T... args)
-    {
-        proto::utils::selector<T...> selector{args...};
-        return proto::desc(pkt)(pkt = sec_send_pkt::type{
-            selector.get(flags),
-            {
-                selector.get(data),
-                selector.get(crypt),
-            }
-        });
-    }
+    constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>(flags, data, crypt));
+//     PROTO_VAR(sec_send_pkt, pkt);
+//
+//     template<class... T>
+//     auto sec_send(T... args)
+//     {
+//         proto::utils::selector<T...> selector{args...};
+//         return proto::desc(pkt)(pkt = sec_send_pkt::type{
+//             selector.get(flags),
+//             {
+//                 selector.get(data),
+//                 selector.get(crypt),
+//             }
+//         });
+//     }
 }
 
 
@@ -2083,6 +2082,7 @@ void test_new()
                 make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
                 cstr_array_view("\x03\x00\x00\x0b\x02\xf0\x80\xf7\xff\xff\xff")
             );
+            stream_protocol_policy::send(iovs);
         }
     };
 
