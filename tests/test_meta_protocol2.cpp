@@ -3,21 +3,11 @@
 #define BOOST_TEST_MODULE TestVerifier
 #include <boost/test/auto_unit_test.hpp>
 
+#include <iostream>
 
 #include <limits>
 #include <utility>
 #include <cstdint>
-
-#define PROTO_VAR(t, v)                        \
-    constexpr struct v                         \
-    : ::proto::var<t, v>                       \
-    {                                          \
-        using ::proto::var<t, v>::var;         \
-        using ::proto::var<t, v>::operator = ; \
-                                               \
-        static constexpr char const *          \
-        name() noexcept { return #v; }         \
-    } v {}                                     \
 
 
 // (standalone version): https://github.com/edouarda/brigand
@@ -61,41 +51,22 @@ namespace detail
 
 
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/bytes_t.hpp"
+
+
+#define PROTO_VAR(t, v)                        \
+    constexpr struct v                         \
+    : ::proto::var<t, v>                       \
+    {                                          \
+        using ::proto::var<t, v>::var;         \
+        using ::proto::var<t, v>::operator = ; \
+                                               \
+        static constexpr char const *          \
+        name() noexcept { return #v; }         \
+    } v {}                                     \
 
 namespace proto
 {
-    namespace detail
-    {
-        template<class T, class DescType, bool = (std::is_integral<T>::value && std::is_integral<DescType>::value)>
-        struct adapt_default_type
-        {
-            static_assert(std::numeric_limits<T>::min() >= std::numeric_limits<DescType>::min(), "narrowing conversion");
-            static_assert(std::numeric_limits<T>::max() <= std::numeric_limits<DescType>::max(), "narrowing conversion");
-            using type = DescType;
-        };
-
-        template<class T, class DescType>
-        struct adapt_default_type<T, DescType, false>
-        {
-            using type = DescType;
-        };
-
-        template<class T, T value, class DescType>
-        struct adapt_default_type<std::integral_constant<T, value>, DescType, false>
-        {
-            static_assert(DescType{value} == value, "narrowing conversion");
-            using type = DescType;
-        };
-    }
-
-    namespace ext
-    {
-        template<class Desc, class T>
-        constexpr typename ::proto::detail::adapt_default_type<T, typename Desc::type>::type
-        adapt(Desc, T x)
-        { return x; }
-    }
-
     template<std::size_t N>
     using size_ = std::integral_constant<std::size_t, N>;
 
@@ -157,6 +128,16 @@ namespace proto
     template<class T, class U> using common_size = typename detail::common_size<T, U>::type;
     template<class T, class U> using common_buffer = typename detail::common_buffer<T, U>::type;
 
+    template<class T>
+    using t_ = typename T::type;
+
+    template<class... Ts, class F>
+    void for_each(brigand::list<Ts...>, F && f) {
+        (void)std::initializer_list<int>{
+            (void(f(Ts{})), 1)...
+        };
+    }
+
     namespace types {
         class le_tag {};
         class be_tag {};
@@ -170,6 +151,21 @@ namespace proto
         {
             using type = T;
             using sizeof_ = size_<sizeof(T)>;
+
+            type val;
+
+            sizeof_ static_serialize(uint8_t * p) const
+            {
+                std::cout << " [static_buffer] [sizeof_: " << sizeof(T) << "] {" << static_cast<void*>(p) << "}";
+                using rng = brigand::range<std::size_t, 0, sizeof(T)>;
+                using is_little_endian = t_<std::is_same<Endianess, le_tag>>;
+                for_each(rng{}, [&p, this](auto i) {
+                    // TODO std::make_unsigned
+                    std::cout << " { *p++ }";
+                    *p++ = this->val >> ((is_little_endian{} ? i : sizeof(T)-1-i) * 8);
+                });
+                return sizeof_{};
+            }
         };
 
         using s8 = integer<int8_t, void>;
@@ -194,22 +190,87 @@ namespace proto
         /**
         * @{
         */
-        template<class T>
-        struct integer_encoding
+        struct u16_encoding
         {
-            using type = T;
-            using sizeof_ = limited_size<sizeof(T)>;
+            using type = uint16_t;
+            using sizeof_ = limited_size<sizeof(type)>;
+
+            type val;
+
+            std::size_t limited_serialize(uint8_t * p) const
+            {
+                assert(!(val & 0x8000));
+                return (val <= 127)
+                    ? u8{uint8_t(val)}.static_serialize(p)
+                    : u16_be{val}.static_serialize(p);
+            }
         };
 
-        using u16_encoding = integer_encoding<uint16_t>;
-        using u32_encoding = integer_encoding<uint32_t>;
+        struct u32_encoding
+        {
+            using type = uint32_t;
+            using sizeof_ = limited_size<sizeof(type)>;
+
+            type val;
+
+            std::size_t limited_serialize(uint8_t * p) const
+            {
+                assert(!(val & 0xC0000000));
+                auto serial = [&p](uint8_t v) { return u8{v}.static_serialize(p++); };
+                return (val <= 0x3FFF)
+                ?
+                    (val <= 0x3F)
+                    ?
+                        serial(        val       )
+                    :
+                        serial(0x40 | (val >> 8 )) +
+                        serial(        val       )
+                :
+                    (val <= 0x3FFFFF)
+                    ?
+                        serial(0x80 | (val >> 16)) +
+                        serial(        val >> 8  ) +
+                        serial(        val       )
+                    :
+                        serial(0xC0 | (val >> 24)) +
+                        serial(       (val >> 16)) +
+                        serial(        val >> 8  ) +
+                        serial(        val       )
+                ;
+            }
+        };
         /** @} */
+
+        template<class Obj, class T>
+        using enable_if_not_default_ctor_argument_t
+            = std::enable_if_t<(!std::is_same<Obj, std::remove_reference_t<T>>::value)>;
 
         struct bytes
         {
             using type = array_view_const_u8;
             using sizeof_ = dyn_size;
             using buffer_category = tags::view_buffer;
+
+            type av;
+
+            template<class T, class = enable_if_not_default_ctor_argument_t<bytes, T>>
+            constexpr bytes(T && av) noexcept
+            : av(av)
+            {}
+
+            constexpr bytes(array_view_const_u8 av) noexcept
+            : av(av)
+            {}
+
+            constexpr bytes(array_view_const_char av) noexcept
+            : av(reinterpret_cast<uint8_t const*>(av.data()), av.size())
+            {}
+
+            array_view_const_u8 get_view_buffer() const
+            {
+                std::cout << " [view_buffer] [size: " << av.size() << "]";
+                return av;
+            }
         };
 
         struct mutable_bytes
@@ -217,12 +278,46 @@ namespace proto
             using type = array_view_u8;
             using sizeof_ = dyn_size;
             using buffer_category = tags::view_buffer;
+
+            type av;
+
+            template<class T, class = enable_if_not_default_ctor_argument_t<mutable_bytes, T>>
+            constexpr mutable_bytes(T && av) noexcept
+            : av(av)
+            {}
+
+            constexpr mutable_bytes(array_view_u8 av) noexcept
+            : av(av)
+            {}
+
+            constexpr mutable_bytes(array_view_char av) noexcept
+            : av(reinterpret_cast<uint8_t *>(av.data()), av.size())
+            {}
+
+            array_view_const_u8 get_view_buffer() const
+            {
+                std::cout << " [view_buffer] [size: " << av.size() << "]";
+                return av;
+            }
         };
 
         struct str8_to_str16
         {
-            using type = array_view_const_u8;
+            using type = const_bytes_array;
             using sizeof_ = dyn_size;
+
+            type str;
+
+            constexpr str8_to_str16(const_bytes_array av) noexcept
+            : str(av)
+            {}
+
+            template<class F>
+            void dynamic_serialize(F && f) const
+            {
+                std::cout << " [dynamic_buffer]";
+                f(this->str);
+            }
         };
 
         template<class T>
@@ -257,11 +352,36 @@ namespace proto
                 tags::limited_buffer,
                 proto::buffer_category<T>
             >;
+
+            type val;
+
+            array_view_const_u8 get_view_buffer() const
+            {
+                return Cond{}(this->val) ? T{val}.get_view_buffer() : array_view_const_u8{};
+            }
+
+            std::size_t serialize_limited_buffer(uint8_t * p) const
+            {
+                return Cond{}(this->val) ? T{val}.limited_serialize(p) : 0u;
+            }
+
+            template<class F>
+            void dynamic_serialize(F && f) const
+            {
+                if (Cond{}(this->val)) {
+                    T{val}.context_dynamic_buffer(f);
+                }
+                else {
+                    f({});
+                }
+            }
         };
 
         template<class T>
-        struct val
-        {};
+        struct value
+        {
+            T val;
+        };
     }
 
     template<class... Ts>
@@ -284,52 +404,6 @@ namespace proto
         T value;
         constexpr operator T () const { return value; }
     };
-
-    namespace ext
-    {
-        inline
-        array_view_const_u8
-        adapt(types::bytes, array_view_const_char av) noexcept
-        { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
-
-        template<class T>
-        inline
-        array_view_const_u8
-        adapt(types::bytes, T && av) noexcept
-        { return array_view_const_u8{av}; }
-
-        inline
-        array_view_u8
-        adapt(types::mutable_bytes, array_view_char av) noexcept
-        { return {reinterpret_cast<uint8_t *>(av.data()), av.size()}; }
-
-        template<class T>
-        inline
-        array_view_u8
-        adapt(types::mutable_bytes, T && av) noexcept
-        { return array_view_u8{av}; }
-
-        inline
-        array_view_const_u8
-        adapt(types::str8_to_str16, array_view_const_char av) noexcept
-        { return {reinterpret_cast<uint8_t const *>(av.data()), av.size()}; }
-
-        constexpr inline
-        uint16_t
-        adapt(types::u16_encoding, only<uint16_t, uint8_t> i) noexcept
-        { return i; }
-
-        template<class Cond, class T, class U>
-        constexpr inline auto
-        adapt(types::enable_if<Cond, T>, U && x) noexcept
-        { return adapt(T{}, std::forward<U>(x)); }
-
-        template<class T, class U>
-        constexpr inline
-        T
-        adapt(types::val<T>, U && x) noexcept
-        { return std::forward<U>(x); }
-    }
 
 
     namespace detail {
@@ -390,16 +464,13 @@ namespace proto
     };
 
     template<class Derived, class Desc, class T>
-    constexpr auto trace_adapt(Desc d, T && x)
-    -> decltype(ext::adapt(d, std::forward<T>(x)))
-    { return ext::adapt(d, std::forward<T>(x)); }
+    constexpr auto make_val(T && x)
+    { return Desc{std::forward<T>(x)}; }
 
 
     template<class Desc, class Derived>
     struct var
     {
-        static_assert(std::is_empty<Desc>{}, "");
-
         using desc_type = Desc;
         using var_type = var;
 
@@ -414,8 +485,8 @@ namespace proto
 
         template<class U>
         constexpr auto impl(U && x) const
-        -> val<Derived, decltype(trace_adapt<Derived>(Desc{}, std::forward<U>(x)))>
-        { return {ext::adapt(Desc{}, std::forward<U>(x))}; }
+        -> val<Derived, decltype(make_val<Desc, Desc>(std::forward<U>(x)))>
+        { return {make_val<Desc, Desc>(std::forward<U>(x))}; }
     };
 
 
@@ -580,13 +651,13 @@ namespace proto
         {}
 
         template<class... Val>
-        constexpr val<vars<T, Descs...>, typename T::type> operator()(inherit_refs<Val...> refs) const
+        constexpr val<vars<T, Descs...>, T> operator()(inherit_refs<Val...> refs) const
         {
-            return {{(get_packet_value<var_or_val_to_var<Descs>>(refs, this->values, 1).x)...}};
+            return {T{(get_packet_value<var_or_val_to_var<Descs>>(refs, this->values, 1).x)...}};
         }
 
         template<class... Val>
-        constexpr val<vars<T, Descs...>, typename T::type> operator()(Val... values) const
+        constexpr val<vars<T, Descs...>, T> operator()(Val... values) const
         {
             return (*this)(inherit_refs<Val...>{values...});
         }
@@ -761,6 +832,7 @@ namespace proto
     }
 
     namespace utils {
+        // TODO parameters
         template<class... Ts>
         struct selector
         {
@@ -768,7 +840,7 @@ namespace proto
             {}
 
             template<class T>
-            decltype(auto) get(T) const noexcept
+            decltype(auto) operator[](T) const noexcept
             { return proto::ref_to_val<T>(refs).x; }
 
         private:
@@ -792,13 +864,13 @@ namespace XXX {
 
 
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include <iostream>
 
 struct Printer
 {
     template<class var, class T>
     void operator()(proto::val<var, T> x) const {
-        std::cout << var::name() << " = "; print(x.x, 1);
+        std::cout << var::name() << " = ";
+        print(x.x, 1);
         std::cout
             << "  static: " << proto::is_static_buffer<typename var::desc_type>{}
             << "  dyn: " << proto::is_dynamic_buffer<typename var::desc_type>{}
@@ -818,18 +890,26 @@ struct Printer
     }
 
     template<class T>
-    std::enable_if_t<(std::is_integral<T>{} && sizeof(T) < sizeof(int))>
-    print(T const & x, int) const
-    { std::cout << int(x); }
+    static auto print(T const & x, int)
+    -> decltype(void(std::cout << x.val))
+    {
+        using type = decltype(x.val);
+        using casted_type = std::conditional_t<std::is_integral<type>{} && sizeof(type) < sizeof(int), int, type&>;
+        std::cout << static_cast<casted_type>(x.val);
+    }
 
     template<class T>
-    void
-    print(array_view<T> av, char) const
-    { std::cout << av.data(); }
+    static auto print(T const & x, int)
+    -> decltype(void(std::cout << x.av.data()))
+    { std::cout << x.av.data(); }
 
     template<class T>
-    void
-    print(T const & x, char) const
+    static auto print(T const & x, int)
+    -> decltype(void(std::cout << x.str.data()))
+    { std::cout << x.str.data(); }
+
+    template<class T>
+    static void print(T const & x, char)
     { std::cout << x; }
 };
 
@@ -897,11 +977,9 @@ auto & larg(L && l)
 { return l.apply([](auto & ... v) PROTO_DECLTYPE_AUTO_RETURN(arg<i>(v...))); }
 
 template<class T>
-using t_ = typename T::type;
-
-template<class T>
 using var_type = proto::var_or_val_to_var<T>;
 
+using proto::t_;
 
 struct Buffering
 {
@@ -1427,8 +1505,7 @@ struct Buffering2
             using proto_integer = typename T::type;
             policy.serialize_static_buffer(
                 static_cast<uint8_t*>(buffer.iov_base),
-                checked_cast<typename proto_integer::type>(n),
-                proto_integer{}
+                proto_integer{checked_cast<typename proto_integer::type>(n)}
             );
             std::cout << " = " << n;
         }
@@ -1436,7 +1513,7 @@ struct Buffering2
         template<class VarInfo, class Var>
         void serialize_pkt_sz_with_size_or_var(VarInfo, iovec & buffer, Var const & var)
         {
-            policy.serialize_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x, desc_type_t<VarInfo>{});
+            policy.serialize_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x);
         }
 
         template<class VarInfo, class Var>
@@ -1445,8 +1522,7 @@ struct Buffering2
             this->print(var);
             std::size_t len = policy.serialize_limited_buffer(
                 static_cast<uint8_t*>(buffer.iov_base),
-                var.x,
-                desc_type_t<VarInfo>{}
+                var.x
             );
             std::cout << " [len: " << len << "]\n";
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + len;
@@ -1458,7 +1534,7 @@ struct Buffering2
         void serialize_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Var & var) {
             std::cout << var_type<Var>::name() << " = ";
             this->print(var);
-            auto av = policy.get_view_buffer(var.x, desc_type_t<VarInfo>{});
+            auto av = policy.get_view_buffer(var.x);
             buffer.iov_base = const_cast<uint8_t *>(av.data());
             buffer.iov_len = av.size();
             this->sizes.data[VarInfo::ipacket::value] += av.size();
@@ -1538,7 +1614,7 @@ struct Buffering2
         void serialize_dyn_type(Var & var, Continue f) {
             std::cout << var_type<Var>::name() << " = ";
             print(var);
-            policy.context_dynamic_buffer(f, var.x, var_to_desc_type<Var>{});
+            policy.context_dynamic_buffer(f, var.x);
         }
 
 
@@ -1587,8 +1663,7 @@ struct Buffering2
               << this->sizes.data[IPacket::value+1] << "\n";
             policy.serialize_static_buffer(
                 this->pktptrs[pkt_idx],
-                checked_cast<typename T::type>(this->sizes.data[IPacket::value+1]),
-                T{}
+                T{checked_cast<typename T::type>(this->sizes.data[IPacket::value+1])}
             );
             std::cout << "\n";
         }
@@ -1604,8 +1679,7 @@ struct Buffering2
               << this->sizes.data[IPacket::value] << "\n";
             policy.serialize_static_buffer(
                 this->pktptrs[pkt_idx],
-                checked_cast<typename T::type>(this->sizes.data[IPacket::value]),
-                T{}
+                T{checked_cast<typename T::type>(this->sizes.data[IPacket::value])}
             );
             std::cout << "\n";
         }
@@ -1639,219 +1713,34 @@ struct Buffering2
     void impl(std::false_type, Packets ... packets) const = delete;
 };
 
+
 #define LOGPRINT
-#include "utils/log.hpp"
-
-struct stream_protocol_policy;
-
-namespace iovproto
-{
-#define PROTO_INLINE_VARIABLE(type, name) \
-    inline namespace { constexpr auto&  name = detail::static_const<type>::value; }
-namespace detail
-{
-    template<class T>
-    struct static_const
-    {
-        static constexpr T value {};
-    };
-
-    template <class T>
-    constexpr T static_const<T>::value;
-}
-
-    struct serialize_static_buffer_as_limited_buffer_fn
-    {
-        template<class T, class Desc>
-        std::size_t operator()(uint8_t * p, T val, Desc desc) const;
-    };
-
-    PROTO_INLINE_VARIABLE(serialize_static_buffer_as_limited_buffer_fn, serialize_static_buffer_as_limited_buffer)
-
-namespace detail
-{
-    template<class T, class Endianess>
-    void serialize_static_buffer(uint8_t * p, T val, proto::types::integer<T, Endianess>)
-    {
-        std::cout << " [static_buffer] [sizeof_: " << sizeof(T) << "] {" << static_cast<void*>(p) << "}";
-        using rng = brigand::range<std::size_t, 0, sizeof(T)>;
-        using is_little_endian = t_<std::is_same<Endianess, proto::types::le_tag>>;
-        brigand::for_each<rng>([&p, val](auto I) {
-            constexpr const std::size_t i = t_<decltype(I)>::value;
-            // TODO std::make_unsigned
-            std::cout << " { *p++ }";
-            *p++ = val >> ((is_little_endian{} ? i : sizeof(T)-1-i) * 8);
-        });
-    }
-
-    inline array_view_const_u8 get_view_buffer(array_view_const_u8 av, proto::types::bytes)
-    {
-        std::cout << " [view_buffer] [size: " << av.size() << "]";
-        return av;
-    }
-
-    inline std::size_t serialize_limited_buffer(uint8_t * p, uint16_t val, proto::types::u16_encoding)
-    {
-        assert(!(val & 0x8000));
-        std::cout << " [limited_buffer]";
-        if (val <= 127) {
-            return serialize_static_buffer_as_limited_buffer(p, uint8_t(val), proto::types::u8{});
-        }
-        else {
-            return serialize_static_buffer_as_limited_buffer(p, val, proto::types::u16_be{});
-        }
-    }
-
-    inline std::size_t serialize_limited_buffer(uint8_t * p, uint32_t val, proto::types::u32_encoding)
-    {
-        assert(!(val & 0xC0000000));
-        std::cout << " [limited_buffer]";
-        if (val <= 0x3FFF  ) {
-            if (val <= 0x3F      ) {
-                serialize_static_buffer(p, uint8_t(val), proto::types::u8{});
-                return 1u;
-            }
-            else {
-                serialize_static_buffer(  p, uint8_t(0x40 | ((val >> 8 ) & 0x3F)), proto::types::u8{});
-                serialize_static_buffer(++p, uint8_t(        (val        & 0xFF)), proto::types::u8{});
-                return 2u;
-            }
-        }
-        else {
-            if (val <= 0x3FFFFF) {
-                serialize_static_buffer(  p, uint8_t(0x80 | ((val >> 16) & 0xFF)), proto::types::u8{});
-                serialize_static_buffer(++p, uint8_t(       ((val >> 8 ) & 0xFF)), proto::types::u8{});
-                serialize_static_buffer(++p, uint8_t(        (val        & 0xFF)), proto::types::u8{});
-                return 3u;
-            }
-            else {
-                serialize_static_buffer(  p, uint8_t(0xC0 | ((val >> 24) & 0x3F)), proto::types::u8{});
-                serialize_static_buffer(++p, uint8_t(0x80 | ((val >> 16) & 0x3F)), proto::types::u8{});
-                serialize_static_buffer(++p, uint8_t(       ((val >> 8 ) & 0xFF)), proto::types::u8{});
-                serialize_static_buffer(++p, uint8_t(        (val        & 0xFF)), proto::types::u8{});
-                return 4u;
-            }
-        }
-    }
-
-    template<class F>
-    void context_dynamic_buffer(F && f, array_view_const_u8 av, proto::types::str8_to_str16)
-    {
-        std::cout << " [dynamic_buffer]";
-        f(av);
-    }
-
-
-    template<class Cond, class T>
-    array_view_const_u8 get_view_buffer(typename T::type val, proto::types::enable_if<Cond, T>)
-    {
-        return Cond{}(val) ? get_view_buffer(val, T{}) : array_view_const_u8{};
-    }
-
-    template<class Cond, class T>
-    std::enable_if_t<proto::is_static_buffer<T>::value, std::size_t>
-    serialize_limited_buffer(uint8_t * p, typename T::type val, proto::types::enable_if<Cond, T>)
-    {
-        return Cond{}(val) ? serialize_static_buffer_as_limited_buffer(p, val, T{}) : 0u;
-    }
-
-    template<class Cond, class T>
-    std::enable_if_t<!proto::is_static_buffer<T>::value, std::size_t>
-    serialize_limited_buffer(uint8_t * p, typename T::type val, proto::types::enable_if<Cond, T>)
-    {
-        return Cond{}(val) ? serialize_limited_buffer(p, val, T{}) : 0u;
-    }
-
-    template<class F, class Cond, class T>
-    void context_dynamic_buffer(F && f, typename T::type val, proto::types::enable_if<Cond, T>)
-    {
-        if (Cond{}(val)) {
-            context_dynamic_buffer(f, val, T{});
-        }
-        else {
-            f({});
-        }
-    }
-}
-
-    struct serialize_static_buffer_fn
-    {
-        template<class T, class Desc>
-        void operator()(uint8_t * p, T val, Desc desc) const
-        {
-            using detail::serialize_static_buffer;
-            serialize_static_buffer(p, val, desc);
-        }
-    };
-    PROTO_INLINE_VARIABLE(serialize_static_buffer_fn, serialize_static_buffer)
-
-    struct get_view_buffer_fn
-    {
-        template<class T, class Desc>
-        auto operator()(T val, Desc desc) const
-        {
-            using detail::get_view_buffer;
-            return get_view_buffer(val, desc);
-        }
-    };
-    PROTO_INLINE_VARIABLE(get_view_buffer_fn, get_view_buffer)
-
-    struct serialize_limited_buffer_fn
-    {
-        template<class T, class Desc>
-        std::size_t operator()(uint8_t * p, T val, Desc desc) const
-        {
-            using detail::serialize_limited_buffer;
-            return serialize_limited_buffer(p, val, desc);
-        }
-    };
-    PROTO_INLINE_VARIABLE(serialize_limited_buffer_fn, serialize_limited_buffer)
-
-    struct context_dynamic_buffer_fn
-    {
-        template<class F, class T, class Desc>
-        void operator()(F && f, T val, Desc desc) const
-        {
-            using detail::context_dynamic_buffer;
-            context_dynamic_buffer(f, val, desc);
-        }
-    };
-    PROTO_INLINE_VARIABLE(context_dynamic_buffer_fn, context_dynamic_buffer)
-
-    template<class T, class Desc>
-    std::size_t inline serialize_static_buffer_as_limited_buffer_fn::
-    operator()(uint8_t * p, T val, Desc desc) const
-    {
-        using detail::serialize_static_buffer;
-        serialize_static_buffer(p, val, desc);
-        return proto::sizeof_<Desc>{};
-    }
-}
+#include "utils/log.hpp" //hexdump_c
 
 struct stream_protocol_policy
 {
-    template<class T, class Desc>
-    void serialize_static_buffer(uint8_t * p, T val, Desc desc)
+    template<class T>
+    auto serialize_static_buffer(uint8_t * p, T val)
     {
-        iovproto::serialize_static_buffer(p, val, desc);
+        return val.static_serialize(p);
     }
 
-    template<class T, class Desc>
-    auto get_view_buffer(T val, Desc desc)
+    template<class T>
+    auto get_view_buffer(T val)
     {
-        return iovproto::get_view_buffer(val, desc);
+        return val.get_view_buffer();
     }
 
-    template<class T, class Desc>
-    std::size_t serialize_limited_buffer(uint8_t * p, T val, Desc desc)
+    template<class T>
+    std::size_t serialize_limited_buffer(uint8_t * p, T val)
     {
-        return iovproto::serialize_limited_buffer(p, val, desc);
+        return val.limited_serialize(p);
     }
 
-    template<class F, class T, class Desc>
-    void context_dynamic_buffer(F && f, T val, Desc desc)
+    template<class F, class T>
+    void context_dynamic_buffer(F && f, T val)
     {
-        iovproto::context_dynamic_buffer(f, val, desc);
+        val.dynamic_serialize(f);
     }
 
     void send(iovec_view iovs) {
@@ -1936,52 +1825,46 @@ namespace sec
 {
     struct proto_signature
     {
-        // TODO type -> proto_type
-        struct type {
-            array_view_u8 av;
-            CryptContext & crypt;
-        };
-
-        using sizeof_ = proto::size_<8>;
-    };
-
-    inline void serialize_static_buffer(uint8_t * p, proto_signature::type ctx, proto_signature)
-    {
-        auto & signature = reinterpret_cast<uint8_t(&)[proto_signature::sizeof_{}]>(*p);
-        ctx.crypt.sign(ctx.av.data(), ctx.av.size(), signature);
-        ctx.crypt.decrypt(ctx.av.data(), ctx.av.size());
-    }
-
-    // TODO
-    struct proto_signature2
-    {
-        array_view_u8 av;
-        CryptContext & crypt;
+        proto::types::mutable_bytes av;
+        proto::types::value<CryptContext&> crypt;
 
         using sizeof_ = proto::size_<8>;
 
-        void serialize_static_buffer(uint8_t * p)
+        auto static_serialize(uint8_t * p) const
         {
             auto & signature = reinterpret_cast<uint8_t(&)[proto_signature::sizeof_{}]>(*p);
-            this->crypt.sign(this->av.data(), this->av.size(), signature);
-            this->crypt.decrypt(this->av.data(), this->av.size());
+            this->crypt.val.sign(this->av.av.data(), this->av.av.size(), signature);
+            this->crypt.val.decrypt(const_cast<uint8_t*>(this->av.av.data()), this->av.av.size());
+            return sizeof_{};
         }
     };
 
     PROTO_VAR(proto::types::u32_le, flags);
     PROTO_VAR(proto::types::mutable_bytes, data);
-    PROTO_VAR(proto::types::val<CryptContext&>, crypt);
+    PROTO_VAR(proto::types::value<CryptContext&>, crypt);
 
     struct sec_send_pkt
     {
-        struct type
-        {
-            uint32_t flags;
-            proto_signature::type sig;
-        };
+        proto::types::u32_le flags_;
+        proto_signature sig;
+
+        using type = sec_send_pkt;
 
         using buffer_size = proto::size_<proto_signature::sizeof_{} + proto::get_size(flags)>;
         using sizeof_ = proto::limited_size<buffer_size::value>;
+
+        std::size_t limited_serialize(uint8_t * buf) const
+        {
+            std::cout << " [limited_buffer]";
+            uint8_t * p = buf;
+            if (this->flags_.val) {
+                p += this->flags_.static_serialize(p);
+            }
+            if (this->flags_.val & SEC::SEC_ENCRYPT){
+                p += this->sig.static_serialize(p);
+            }
+            return p - buf;
+        }
     };
 
     inline std::ostream & operator <<(std::ostream & os, sec_send_pkt::type const &)
@@ -1989,34 +1872,7 @@ namespace sec
         return os << "sec_send_pkt::type";
     }
 
-    inline std::size_t serialize_limited_buffer(uint8_t * buf, sec_send_pkt::type ctx, sec_send_pkt)
-    {
-        std::cout << " [limited_buffer]";
-        uint8_t * p = buf;
-        if (ctx.flags) {
-            p += iovproto::serialize_static_buffer_as_limited_buffer(p, ctx.flags, proto::get_desc(flags));
-        }
-        if (ctx.flags & SEC::SEC_ENCRYPT){
-            p += iovproto::serialize_static_buffer_as_limited_buffer(p, ctx.sig, proto_signature{});
-        }
-        return p - buf;
-    }
-
     constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>(flags, data, crypt));
-//     PROTO_VAR(sec_send_pkt, pkt);
-//
-//     template<class... T>
-//     auto sec_send(T... args)
-//     {
-//         proto::utils::selector<T...> selector{args...};
-//         return proto::desc(pkt)(pkt = sec_send_pkt::type{
-//             selector.get(flags),
-//             {
-//                 selector.get(data),
-//                 selector.get(crypt),
-//             }
-//         });
-//     }
 }
 
 
@@ -2073,7 +1929,7 @@ void test_new()
 
     uint8_t data[10];
     CryptContext crypt;
-    auto packet2 = sec::sec_send(sec::flags = ~SEC::SEC_ENCRYPT, sec::crypt = crypt, sec::data = data);
+    auto packet2 = sec::sec_send(sec::flags = unsigned(~SEC::SEC_ENCRYPT), sec::crypt = crypt, sec::data = data);
 
     struct Policy : stream_protocol_policy {
         void send(iovec_view iovs) {
