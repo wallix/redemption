@@ -224,7 +224,7 @@ public:
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {
-                this->show_tooltip(wid, this->tr("help_message"), x, y);
+                this->show_tooltip(wid, this->tr("help_message"), x, y, this->rect);
             }
         }
 

@@ -46,9 +46,27 @@ class ClientExecute
 
     bool server_execute_result_sent = false;
 
+    Rect window_rect;
+
 public:
     ClientExecute(FrontAPI & front) {
         this->front_ = &front;
+    }
+
+
+    Rect adjust_rect(Rect rect) {
+        if (!this->front_->get_channel_list().get_by_name(channel_names::rail)) return rect;
+
+        this->window_rect.x  = rect.x + rect.cx * 10 / 100;
+        this->window_rect.y  = rect.y + rect.cy * 10 / 100;
+        this->window_rect.cx = rect.cx * 80 / 100;
+        this->window_rect.cy = rect.cy * 80 / 100;
+
+        Rect result_rect = this->window_rect.shrink(1);
+        result_rect.cx--;
+        result_rect.cy--;
+
+        return result_rect;
     }
 
 public:
@@ -428,16 +446,16 @@ public:
                 order.ExtendedStyle(0x40310);
                 order.ShowState(5);
                 order.TitleInfo("WALLIX ADMINBASTION");
-                order.ClientOffsetX(160);
-                order.ClientOffsetY(179);
-                order.WindowOffsetX(154);
-                order.WindowOffsetY(154);
+                order.ClientOffsetX(/*160*/this->window_rect.x + 6);
+                order.ClientOffsetY(/*179*/this->window_rect.y + 25);
+                order.WindowOffsetX(/*154*/this->window_rect.x);
+                order.WindowOffsetY(/*154*/this->window_rect.y);
                 order.WindowClientDeltaX(6);
                 order.WindowClientDeltaY(25);
-                order.WindowWidth(668);
-                order.WindowHeight(331);
-                order.VisibleOffsetX(154);
-                order.VisibleOffsetY(154);
+                order.WindowWidth(/*668*/this->window_rect.cx);
+                order.WindowHeight(/*331*/this->window_rect.cy);
+                order.VisibleOffsetX(/*154*/this->window_rect.x);
+                order.VisibleOffsetY(/*154*/this->window_rect.y);
                 order.NumVisibilityRects(1);
                 order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 668, 331));
 

@@ -821,11 +821,11 @@ public:
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
-                get_widget_rect(
+                this->client_execute.adjust_rect(get_widget_rect(
                     this->front.client_info.width,
                     this->front.client_info.height,
                     this->front.client_info.cs_monitor
-                ),
+                )),
                 this->client_execute
             ));
             if (this->verbose){
@@ -843,11 +843,11 @@ public:
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
-                    get_widget_rect(
+                    this->client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.width,
                         this->front.client_info.height,
                         this->front.client_info.cs_monitor
-                    ),
+                    )),
                     now,
                     this->client_execute,
                     true
@@ -866,11 +866,11 @@ public:
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
-                    get_widget_rect(
+                    this->client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.width,
                         this->front.client_info.height,
                         this->front.client_info.cs_monitor
-                    ),
+                    )),
                     now,
                     this->client_execute,
                     true,
@@ -1041,11 +1041,11 @@ public:
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
-                get_widget_rect(
+                this->client_execute.adjust_rect(get_widget_rect(
                     this->front.client_info.width,
                     this->front.client_info.height,
                     this->front.client_info.cs_monitor
-                ),
+                )),
                 now,
                 this->client_execute
             ));

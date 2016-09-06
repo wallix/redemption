@@ -383,5 +383,10 @@ public:
         }
     }
 
-
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y,
+                      Rect const & preferred_display_rect, int iter) override {
+        WidgetParent::show_tooltip(widget, text, x, y,
+            (preferred_display_rect.isempty() ? this->rect : preferred_display_rect),
+            iter);
+    }
 };
