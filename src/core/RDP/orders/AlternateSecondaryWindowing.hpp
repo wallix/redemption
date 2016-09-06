@@ -294,13 +294,45 @@ public:
         }
 
         this->bits_mask = {stream.get_current(), CbBitsMask};
+        LOG(LOG_INFO, "BitsMask: size=%u", unsigned(CbBitsMask));
+        hexdump_c(stream.get_current(), CbBitsMask);
         stream.in_skip_bytes(CbBitsMask);
 
         this->color_table = {stream.get_current(), CbColorTable};
         stream.in_skip_bytes(CbColorTable);
 
         this->bits_color = {stream.get_current(), CbBitsColor};
+        LOG(LOG_INFO, "BitsColor: size=%u", unsigned(CbBitsColor));
+        hexdump_c(stream.get_current(), CbBitsColor);
         stream.in_skip_bytes(CbBitsColor);
+    }
+
+    uint16_t CacheEntry() const { return this->CacheEntry_; }
+
+    void CacheEntry(uint16_t CacheEntry_) { this->CacheEntry_ = CacheEntry_; }
+
+    uint8_t CacheId() const { return this->CacheId_; }
+
+    void CacheId(uint8_t CacheId_) { this->CacheId_ = CacheId_; }
+
+    uint8_t  Bpp() const { return this->Bpp_; }
+
+    void Bpp(uint8_t Bpp_) { this->Bpp_ = Bpp_; }
+
+    uint16_t Width() const { return this->Width_; }
+
+    void Width(uint16_t Width_) { this->Width_ = Width_; }
+
+    uint16_t Height() const { return this->Height_; }
+
+    void Height(uint16_t Height_) { this->Height_ = Height_; }
+
+    void BitsMask(uint8_t const * data, size_t data_length) {
+        this->bits_mask = {data, data_length};
+    }
+
+    void BitsColor(uint8_t const * data, size_t data_length) {
+        this->bits_color = {data, data_length};
     }
 
     size_t size() const {

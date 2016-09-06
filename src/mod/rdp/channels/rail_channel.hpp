@@ -321,6 +321,34 @@ protected:
         return true;
     }
 
+    bool process_client_system_command_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "RemoteProgramsVirtualChannel::process_client_system_command_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ClientSystemCommandPDU cscpdu;
+
+        cscpdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            cscpdu.log(LOG_INFO);
+        }
+
+        return true;
+    }
+
     bool process_client_system_parameters_update_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
@@ -626,6 +654,18 @@ public:
 
                 send_message_to_server =
                     this->process_client_notify_event_pdu(
+                        total_length, flags, chunk);
+            break;
+
+            case TS_RAIL_ORDER_SYSCOMMAND:
+                if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_client_message: "
+                            "Client System Command PDU");
+                }
+
+                send_message_to_server =
+                    this->process_client_system_command_pdu(
                         total_length, flags, chunk);
             break;
 

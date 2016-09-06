@@ -136,7 +136,7 @@ enum {
 };
 
 static inline
-char const* get_RAIL_orderType_name(uint16_t orderType) {
+const char * get_RAIL_orderType_name(uint16_t orderType) {
     switch (orderType) {
         case TS_RAIL_ORDER_EXEC:            return "TS_RAIL_ORDER_EXEC";
         case TS_RAIL_ORDER_ACTIVATE:        return "TS_RAIL_ORDER_ACTIVATE";
@@ -886,7 +886,7 @@ enum {
 };
 
 static inline
-char const* get_RAIL_ExecResult_name(uint16_t ExecResult) {
+const char* get_RAIL_ExecResult_name(uint16_t ExecResult) {
     switch (ExecResult) {
         case RAIL_EXEC_S_OK:               return "RAIL_EXEC_S_OK";
         case RAIL_EXEC_E_HOOK_NOT_LOADED:  return "RAIL_EXEC_E_HOOK_NOT_LOADED";
@@ -1041,7 +1041,7 @@ class HighContrastSystemInformationStructure {
 public:
     HighContrastSystemInformationStructure() = default;
 
-    HighContrastSystemInformationStructure(uint32_t Flags_, char const* ColorScheme_)
+    HighContrastSystemInformationStructure(uint32_t Flags_, const char* ColorScheme_)
     : Flags_(Flags_)
     , color_scheme(ColorScheme_) {}
 
@@ -1254,7 +1254,7 @@ enum {
 //  +------------------------+------------------------------------------------+
 
 static inline
-char const* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
+const char* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
     switch (SystemParam) {
         case SPI_SETDRAGFULLWINDOWS: return "SPI_SETDRAGFULLWINDOWS";
         case SPI_SETKEYBOARDCUES:    return "SPI_SETKEYBOARDCUES";
@@ -1483,7 +1483,7 @@ enum {
 //  +-------------------------+------------------------------------------------+
 
 static inline
-char const* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
+const char* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
     switch (SystemParam) {
         case SPI_SETSCREENSAVEACTIVE: return "SPI_SETSCREENSAVEACTIVE";
         case SPI_SETSCREENSAVESECURE: return "SPI_SETSCREENSAVESECURE";
@@ -1804,7 +1804,7 @@ enum {
 };
 
 static inline
-char const* get_RAIL_Command_name(uint16_t Command) {
+const char* get_RAIL_Command_name(uint16_t Command) {
     switch (Command) {
         case SC_SIZE:     return "SC_SIZE";
         case SC_MOVE:     return "SC_MOVE";
@@ -2000,7 +2000,7 @@ enum {
 };
 
 static inline
-char const* get_RAIL_Message_name(uint32_t Message) {
+const char* get_RAIL_Message_name(uint32_t Message) {
     switch (Message) {
         case WM_LBUTTONDOWN:       return "WM_LBUTTONDOWN";
         case WM_LBUTTONUP:         return "WM_LBUTTONUP";
@@ -2469,7 +2469,7 @@ enum {
 //  +-----------------------+-------------------------------------------------+
 
 static inline
-char const* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
+const char* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
     switch (MoveSizeType) {
         case RAIL_WMSZ_LEFT:        return "RAIL_WMSZ_LEFT";
         case RAIL_WMSZ_RIGHT:       return "RAIL_WMSZ_RIGHT";
@@ -2776,13 +2776,13 @@ public:
 //  grouping windows.
 
 class ServerGetApplicationIDResponsePDU {
-    uint32_t WindowId = 0;
+    uint32_t WindowId_ = 0;
 
     std::string application_id;
 
 public:
     void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
+        stream.out_uint32_le(this->WindowId_);
 
         uint8_t ApplicationId_unicode_data[512];
         ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
@@ -2805,7 +2805,7 @@ public:
             }
         }
 
-        this->WindowId = stream.in_uint32_le();
+        this->WindowId_ = stream.in_uint32_le();
 
         uint8_t ApplicationId_utf8_string[512 / 2]; // ApplicationId(512)
         const size_t length_of_ApplicationId_utf8_string = ::UTF16toUTF8(
@@ -2816,6 +2816,14 @@ public:
         this->application_id.assign(::char_ptr_cast(ApplicationId_utf8_string),
             length_of_ApplicationId_utf8_string);
     }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
+
+    const char* ApplicationId() const { return this->application_id.c_str(); }
+
+    void ApplicationId(const char * ApplicationId_) { this->application_id = ApplicationId_; }
 
     static size_t size() {
         return 516; // WindowId(4) + ApplicationId(512)
@@ -2829,7 +2837,7 @@ public:
 
         result = ::snprintf(buffer + length, size - length,
             "WindowId=0x%X ApplicationId=\"%s\"",
-            this->WindowId, this->application_id.c_str());
+            this->WindowId_, this->application_id.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
