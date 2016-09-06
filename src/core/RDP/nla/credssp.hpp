@@ -137,8 +137,8 @@ struct TSRequest final {
     }
 
     int ber_sizeof(int length) {
-        length += BER::sizeof_integer(2);
-        length += BER::sizeof_contextual_tag(3);
+        length += BER::sizeof_integer(this->version);
+        length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->version));
         return length;
     }
 
@@ -166,7 +166,7 @@ struct TSRequest final {
         BER::write_sequence_tag(stream, ts_request_length);
 
         /* [0] version */
-        BER::write_contextual_tag(stream, 0, 3, true);
+        BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->version), true);
         BER::write_integer(stream, this->version);
 
         /* [1] negoTokens (NegoData) */
@@ -749,7 +749,7 @@ struct TSSmartCardCreds {
  * }
  */
 struct TSCredentials {
-    int credType;
+    uint32_t credType;
     TSPasswordCreds passCreds;
     // For now, TSCredentials can only contains TSPasswordCreds (not TSSmartCardCreds)
 
@@ -773,8 +773,8 @@ struct TSCredentials {
 
     int ber_sizeof() {
         int size = 0;
-        size += BER::sizeof_integer(1);
-        size += BER::sizeof_contextual_tag(BER::sizeof_integer(1));
+        size += BER::sizeof_integer(this->credType);
+        size += BER::sizeof_contextual_tag(BER::sizeof_integer(this->credType));
         size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->passCreds.ber_sizeof()));
         return size;
     }
@@ -791,8 +791,8 @@ struct TSCredentials {
         size += BER::write_sequence_tag(ts_credentials, innerSize);
 
         /* [0] credType (INTEGER) */
-        size += BER::write_contextual_tag(ts_credentials, 0, BER::sizeof_integer(1), true);
-        size += BER::write_integer(ts_credentials, 1);
+        size += BER::write_contextual_tag(ts_credentials, 0, BER::sizeof_integer(this->credType), true);
+        size += BER::write_integer(ts_credentials, this->credType);
 
         /* [1] credentials (OCTET STRING) */
 
@@ -809,7 +809,6 @@ struct TSCredentials {
     void recv(InStream & ts_credentials) {
         // ts_credentials is decrypted and should be decrypted before calling recv
         int length;
-        uint32_t integer_length;
         int ts_password_creds_length;
 
         /* TSCredentials (SEQUENCE) */
@@ -817,7 +816,7 @@ struct TSCredentials {
 
         /* [0] credType (INTEGER) */
         BER::read_contextual_tag(ts_credentials, 0, length, true);
-        BER::read_integer(ts_credentials, integer_length);
+        BER::read_integer(ts_credentials, this->credType);
 
         /* [1] credentials (OCTET STRING) */
         BER::read_contextual_tag(ts_credentials, 1, length, true);
@@ -843,5 +842,3 @@ struct TSCredentials {
 //     uint8_t domainHint[256];
 
 // };
-
-
