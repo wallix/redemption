@@ -27,21 +27,21 @@ struct bytes_t
 {
     bytes_t() = default;
 
-    constexpr bytes_t(char * data) noexcept
+    bytes_t(char * data) noexcept
     : data_(reinterpret_cast<uint8_t*>(data))
     {}
 
-    constexpr bytes_t(uint8_t * data) noexcept
+    bytes_t(uint8_t * data) noexcept
     : data_(data)
     {}
 
-    constexpr char * to_charp() const noexcept { return reinterpret_cast<char *>(this->data_); }
-    constexpr uint8_t * to_u8p() const noexcept { return this->data_; }
+    char * to_charp() const noexcept { return reinterpret_cast<char *>(this->data_); }
+    uint8_t * to_u8p() const noexcept { return this->data_; }
 
-    constexpr operator char * () const noexcept { return reinterpret_cast<char *>(this->data_); }
-    constexpr operator uint8_t * () const noexcept { return this->data_; }
+    operator char * () const noexcept { return reinterpret_cast<char *>(this->data_); }
+    operator uint8_t * () const noexcept { return this->data_; }
 
-    constexpr explicit operator bool () const noexcept { return this->data_; }
+    explicit operator bool () const noexcept { return this->data_; }
 
 private:
     uint8_t * data_ = nullptr;
@@ -51,7 +51,7 @@ struct const_bytes_t
 {
     constexpr const_bytes_t() = default;
 
-    constexpr const_bytes_t(char const * data) noexcept
+    const_bytes_t(char const * data) noexcept
     : data_(reinterpret_cast<uint8_t const *>(data))
     {}
 
@@ -59,14 +59,14 @@ struct const_bytes_t
     : data_(data)
     {}
 
-    constexpr const_bytes_t(bytes_t bytes) noexcept
+    const_bytes_t(bytes_t bytes) noexcept
     : data_(bytes)
     {}
 
-    constexpr char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data_); }
+    char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data_); }
     constexpr uint8_t const * to_u8p() const noexcept { return this->data_; }
 
-    constexpr operator char const * () const noexcept { return reinterpret_cast<char const *>(this->data_); }
+    operator char const * () const noexcept { return reinterpret_cast<char const *>(this->data_); }
     constexpr operator uint8_t const * () const noexcept { return this->data_; }
 
     constexpr explicit operator bool () const noexcept { return this->data_; }
@@ -81,24 +81,24 @@ struct bytes_array : array_view<uint8_t>
     bytes_array() = default;
     bytes_array(bytes_array const &) = default;
 
-    constexpr bytes_array(array_view<char> v) noexcept
+    bytes_array(array_view<char> v) noexcept
     : array_view<uint8_t>({reinterpret_cast<uint8_t *>(v.data()), v.size()})
     {}
 
-    constexpr bytes_array(array_view<uint8_t> v) noexcept
+    bytes_array(array_view<uint8_t> v) noexcept
     : array_view<uint8_t>(v)
     {}
 
     template<class T>
-    constexpr bytes_array(T & v) noexcept
+    bytes_array(T & v) noexcept
     : bytes_array(make_array_view(v))
     {}
 
-    constexpr bytes_array(bytes_t p, std::size_t sz)
+    bytes_array(bytes_t p, std::size_t sz)
     : array_view<uint8_t>(p.to_u8p(), sz)
     {}
 
-    constexpr bytes_array(bytes_t p, bytes_t pright)
+    bytes_array(bytes_t p, bytes_t pright)
     : array_view<uint8_t>(p.to_u8p(), pright.to_u8p())
     {}
 
@@ -126,7 +126,7 @@ struct const_bytes_array : array_view<const uint8_t>
     const_bytes_array() = default;
     const_bytes_array(const_bytes_array const &) = default;
 
-    constexpr const_bytes_array(array_view<const char> v) noexcept
+    const_bytes_array(array_view<const char> v) noexcept
     : array_view<const uint8_t>({reinterpret_cast<uint8_t const *>(v.data()), v.size()})
     {}
 

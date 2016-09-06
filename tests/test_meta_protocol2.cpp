@@ -138,6 +138,18 @@ namespace proto
         };
     }
 
+
+    // clang narrowing checker... (cf: safe_int<T> = T)
+    template<class T>
+    struct safe_int
+    {
+        T val;
+
+        template<class U> constexpr safe_int(U x) noexcept : val{x} {}
+
+        operator T () const { return val; }
+    };
+
     namespace types {
         class le_tag {};
         class be_tag {};
@@ -152,7 +164,9 @@ namespace proto
             using type = T;
             using sizeof_ = size_<sizeof(T)>;
 
-            type val;
+            static_assert(std::is_integral<T>::value, "");
+
+            safe_int<type> val;
 
             sizeof_ static_serialize(uint8_t * p) const
             {
@@ -166,6 +180,16 @@ namespace proto
                 });
                 return sizeof_{};
             }
+        };
+
+        template<class E, class ProtoType>
+        struct enum_ : ProtoType
+        {
+            static_assert(std::is_enum<E>::value, "");
+
+            using type = E;
+
+            constexpr enum_(E e) noexcept : ProtoType{typename ProtoType::type(e)} {}
         };
 
         using s8 = integer<int8_t, void>;
@@ -185,6 +209,24 @@ namespace proto
         using s64_le = integer<int64_t, le_tag>;
         using u64_be = integer<uint64_t, be_tag>;
         using u64_le = integer<uint64_t, le_tag>;
+
+        template<class E> using enum_s8 = enum_<E, s8>;
+        template<class E> using enum_u8 = enum_<E, u8>;
+
+        template<class E> using enum_s16_be = enum_<E, s16_be>;
+        template<class E> using enum_s16_le = enum_<E, s16_le>;
+        template<class E> using enum_u16_be = enum_<E, u16_be>;
+        template<class E> using enum_u16_le = enum_<E, u16_le>;
+
+        template<class E> using enum_s32_be = enum_<E, s32_be>;
+        template<class E> using enum_s32_le = enum_<E, s32_le>;
+        template<class E> using enum_u32_be = enum_<E, u32_be>;
+        template<class E> using enum_u32_le = enum_<E, u32_le>;
+
+        template<class E> using enum_s64_be = enum_<E, s64_be>;
+        template<class E> using enum_s64_le = enum_<E, s64_le>;
+        template<class E> using enum_u64_be = enum_<E, u64_be>;
+        template<class E> using enum_u64_le = enum_<E, u64_le>;
         /** @} */
 
         /**
@@ -195,7 +237,7 @@ namespace proto
             using type = uint16_t;
             using sizeof_ = limited_size<sizeof(type)>;
 
-            type val;
+            safe_int<type> val;
 
             std::size_t limited_serialize(uint8_t * p) const
             {
@@ -205,13 +247,14 @@ namespace proto
                     : u16_be{val}.static_serialize(p);
             }
         };
+        template<class E> using enum_u16_encoding = enum_<E, u16_encoding>;
 
         struct u32_encoding
         {
             using type = uint32_t;
             using sizeof_ = limited_size<sizeof(type)>;
 
-            type val;
+            safe_int<type> val;
 
             std::size_t limited_serialize(uint8_t * p) const
             {
@@ -239,6 +282,7 @@ namespace proto
                 ;
             }
         };
+        template<class E> using enum_u32_encoding = enum_<E, u32_encoding>;
         /** @} */
 
         template<class Obj, class T>
@@ -262,7 +306,7 @@ namespace proto
             : av(av)
             {}
 
-            constexpr bytes(array_view_const_char av) noexcept
+            bytes(array_view_const_char av) noexcept
             : av(reinterpret_cast<uint8_t const*>(av.data()), av.size())
             {}
 
@@ -290,7 +334,7 @@ namespace proto
             : av(av)
             {}
 
-            constexpr mutable_bytes(array_view_char av) noexcept
+            mutable_bytes(array_view_char av) noexcept
             : av(reinterpret_cast<uint8_t *>(av.data()), av.size())
             {}
 
@@ -653,7 +697,14 @@ namespace proto
         template<class... Val>
         constexpr val<vars<T, Descs...>, T> operator()(inherit_refs<Val...> refs) const
         {
+#ifdef __clang__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wmissing-braces"
+#endif
             return {T{(get_packet_value<var_or_val_to_var<Descs>>(refs, this->values, 1).x)...}};
+#ifdef __clang__
+# pragma GCC diagnostic pop
+#endif
         }
 
         template<class... Val>
@@ -780,7 +831,7 @@ namespace proto
     template<class T>
     using is_empty_or_proto_data = brigand::bool_<
         is_creator<T>::value or
-        is_proto_variable<T>::value and (is_proto_value<T>::value or std::is_empty<T>::value)
+        (is_proto_variable<T>::value and (is_proto_value<T>::value or std::is_empty<T>::value))
     >;
 
     template<class... Desc>
@@ -894,7 +945,12 @@ struct Printer
     -> decltype(void(std::cout << x.val))
     {
         using type = decltype(x.val);
-        using casted_type = std::conditional_t<std::is_integral<type>{} && sizeof(type) < sizeof(int), int, type&>;
+        using casted_type = std::conditional_t<
+            std::is_same<type, unsigned char>::value ||
+            std::is_same<type, proto::safe_int<unsigned char>>::value,
+            int,
+            type const &
+        >;
         std::cout << static_cast<casted_type>(x.val);
     }
 
@@ -1808,8 +1864,8 @@ namespace x224
     PROTO_VAR(proto::types::u8, unknown);
     PROTO_VAR(proto::types::pkt_sz_with_self<proto::types::u16_be>, pkt_len);
     PROTO_VAR(proto::types::u8, LI);
-    PROTO_VAR(proto::types::u8, type);
-    PROTO_VAR(proto::types::u8, cat);
+    PROTO_VAR(proto::types::enum_u8<decltype(X224::DT_TPDU)>, type);
+    PROTO_VAR(proto::types::enum_u8<decltype(X224::EOT_EOT)>, cat);
 
     constexpr auto dt_tpdu_send = proto::desc(
         version = 3_c,
@@ -1929,7 +1985,11 @@ void test_new()
 
     uint8_t data[10];
     CryptContext crypt;
-    auto packet2 = sec::sec_send(sec::flags = unsigned(~SEC::SEC_ENCRYPT), sec::crypt = crypt, sec::data = data);
+    auto packet2 = sec::sec_send(
+        sec::flags = uint32_t(~SEC::SEC_ENCRYPT),
+        sec::crypt = crypt,
+        sec::data = data
+    );
 
     struct Policy : stream_protocol_policy {
         void send(iovec_view iovs) {
