@@ -197,11 +197,11 @@ public:
 //  This field is optional.
 
 class IconInfo {
-    uint16_t CacheEntry = 0;
-    uint8_t  CacheId    = 0;
-    uint8_t  Bpp        = 0;
-    uint16_t Width      = 0;
-    uint16_t Height     = 0;
+    uint16_t CacheEntry_ = 0;
+    uint8_t  CacheId_    = 0;
+    uint8_t  Bpp_        = 0;
+    uint16_t Width_      = 0;
+    uint16_t Height_     = 0;
 
     struct array_view { uint8_t const * p; std::size_t sz; };
     array_view bits_mask {nullptr, 0u};
@@ -210,15 +210,15 @@ class IconInfo {
 
 public:
     void emit(OutStream & stream) const {
-        stream.out_uint16_le(this->CacheEntry);
-        stream.out_uint8(this->CacheId);
+        stream.out_uint16_le(this->CacheEntry_);
+        stream.out_uint8(this->CacheId_);
 
-        stream.out_uint8(this->Bpp);
+        stream.out_uint8(this->Bpp_);
 
-        stream.out_uint16_le(this->Width);
-        stream.out_uint16_le(this->Height);
+        stream.out_uint16_le(this->Width_);
+        stream.out_uint16_le(this->Height_);
 
-        if ((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) {
+        if ((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8)) {
             stream.out_uint16_le(this->color_table.sz);
         }
 
@@ -243,15 +243,15 @@ public:
             }
         }
 
-        this->CacheEntry = stream.in_uint16_le();
-        this->CacheId    = stream.in_uint8();
+        this->CacheEntry_ = stream.in_uint16_le();
+        this->CacheId_    = stream.in_uint8();
 
-        this->Bpp = stream.in_uint8();
+        this->Bpp_ = stream.in_uint8();
 
-        this->Width  = stream.in_uint16_le();
-        this->Height = stream.in_uint16_le();
+        this->Width_  = stream.in_uint16_le();
+        this->Height_ = stream.in_uint16_le();
 
-        if ((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) {
+        if ((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8)) {
             const unsigned expected = 2;  // CbColorTable(2)
 
             if (!stream.in_check_rem(expected)) {
@@ -263,7 +263,7 @@ public:
         }
 
         const uint16_t CbColorTable =
-            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ?
+            (((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8)) ?
              stream.in_uint16_le() : 0);
 
         {
@@ -305,10 +305,10 @@ public:
 
     size_t size() const {
         return 9 +  // CacheEntry(2) + CacheId(2) + Bpp(1) + Width(2) + Height(2)
-            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? 2 /* CbColorTable(2) */ : 0) +
+            (((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8)) ? 2 /* CbColorTable(2) */ : 0) +
             4 + // CbBitsMask(2) + CbBitsColor(2)
             this->bits_mask.sz +
-            (((this->Bpp == 1) || (this->Bpp == 4) || (this->Bpp == 8)) ? this->color_table.sz : 0) +
+            (((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8)) ? this->color_table.sz : 0) +
             this->bits_color.sz;
     }
 
@@ -318,8 +318,8 @@ public:
         size_t result = ::snprintf(
             buffer + length, size - length,
             "IconInfo=(CacheEntry=%u CacheId=%u Bpp=%u Width=%u Height=%u",
-            unsigned(this->CacheEntry), unsigned(this->CacheId), unsigned(this->Bpp),
-            unsigned(this->Width), unsigned(this->Height));
+            unsigned(this->CacheEntry_), unsigned(this->CacheId_), unsigned(this->Bpp_),
+            unsigned(this->Width_), unsigned(this->Height_));
         length += (
                    (result < (size - length)) ?
                    result :
@@ -1754,11 +1754,11 @@ enum {
 //  the window's icon.
 
 class WindowIcon {
+public:
     WindowInformationCommonHeader header;
 
     IconInfo icon_info;
 
-public:
     void emit(OutStream & stream) const {
 const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);

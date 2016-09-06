@@ -76,7 +76,10 @@ public:
             }
         }
         else if (this->tooltip == nullptr) {
-            Rect display_rect = this->rect.intersect(preferred_display_rect);
+            Rect display_rect = this->rect;
+            if (!preferred_display_rect.isempty()) {
+                display_rect.intersect(preferred_display_rect);
+            }
             this->tooltip = new WidgetTooltip(this->drawable,
                                               x, y,
                                               *this, widget,
