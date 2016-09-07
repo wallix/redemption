@@ -506,6 +506,7 @@ namespace proto
     struct val
     {
         using var_type = Var;
+        Var var;
         T x;
     };
 
@@ -533,7 +534,7 @@ namespace proto
         template<class U>
         constexpr auto impl(U && x) const
         -> val<Derived, decltype(make_val<Desc, Desc>(std::forward<U>(x)))>
-        { return {make_val<Desc, Desc>(std::forward<U>(x))}; }
+        { return {Derived{}, make_val<Desc, Desc>(std::forward<U>(x))}; }
     };
 
 
@@ -688,12 +689,32 @@ namespace proto
         }
     }
 
-    template<class T, class... Var>
+    class unamed {};
+
+    template<class T, class Varname, class... Var>
     struct vars
-    : var<T, vars<T, Var...>>
+    : var<T, vars<T, Varname, Var...>>
     {
         using ::proto::var<T, vars>::var;
         using ::proto::var<T, vars>::operator = ;
+
+        constexpr vars(char const * varname) noexcept : varname(varname) {}
+
+        constexpr char const *
+        name() const noexcept
+        { return this->varname; }
+
+        char const * varname;
+    };
+
+    template<class T, class... Var>
+    struct vars<T, unamed, Var...>
+    : var<T, vars<T, unamed, Var...>>
+    {
+        using ::proto::var<T, vars>::var;
+        using ::proto::var<T, vars>::operator = ;
+
+        constexpr vars(unamed) noexcept {}
 
         static constexpr auto
         name() noexcept
@@ -720,45 +741,51 @@ namespace proto
         }
     };
 
-    template<class T, class... Descs>
+    template<class T, class Varname, class... Descs>
     class creator
     {
         using type_list = brigand::list<Descs...>;
         using type_list_only_val = brigand::filter<type_list, brigand::call<is_proto_value>>;
         using desc_value_tuple = brigand::wrap<type_list_only_val, inherits>;
 
+        Varname varname;
         desc_value_tuple values;
 
         template<class... Us, class Refs>
-        constexpr creator(brigand::list<Us...>, Refs refs)
-        : values{static_cast<Us>(refs)...}
+        constexpr creator(Varname varname, brigand::list<Us...>, Refs refs)
+        : varname{varname}
+        , values{static_cast<Us>(refs)...}
         {}
 
         template<class Refs>
-        constexpr creator(brigand::list<>, Refs)
-        : values{}
+        constexpr creator(Varname varname, brigand::list<>, Refs)
+        : varname{varname}
+        , values{}
         {}
 
     public:
-        constexpr creator(Descs... descs)
-        : creator(type_list_only_val{}, inherits<Descs...>{descs...})
+        constexpr creator(Varname varname, Descs... descs)
+        : creator(varname, type_list_only_val{}, inherits<Descs...>{descs...})
         {}
 
         template<class... Val>
-        constexpr val<vars<T, Descs...>, T> operator()(inherit_refs<Val...> refs) const
+        constexpr val<vars<T, Varname, Descs...>, T> operator()(inherit_refs<Val...> refs) const
         {
 #ifdef __clang__
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wmissing-braces"
 #endif
-            return {T{(get_packet_value<var_or_val_to_var<Descs>>(refs, this->values, 1).x)...}};
+            return {
+                vars<T, Varname, Descs...>{varname},
+                T{(get_packet_value<var_or_val_to_var<Descs>>(refs, this->values, 1).x)...}
+            };
 #ifdef __clang__
 # pragma GCC diagnostic pop
 #endif
         }
 
         template<class... Val>
-        constexpr val<vars<T, Descs...>, T> operator()(Val... values) const
+        constexpr val<vars<T, Varname, Descs...>, T> operator()(Val... values) const
         {
             return (*this)(inherit_refs<Val...>{values...});
         }
@@ -771,8 +798,8 @@ namespace proto
         struct flatten_description_to_list_impl
         { using type = brigand::list<var_or_val_to_var<T>>; };
 
-        template<class T, class... Descs>
-        struct flatten_description_to_list_impl<creator<T, Descs...>>
+        template<class T, class Varname, class... Descs>
+        struct flatten_description_to_list_impl<creator<T, Varname, Descs...>>
         { using type = brigand::list<var_or_val_to_var<Descs>...>; };
 
         template<class T>
@@ -793,18 +820,19 @@ namespace proto
         { return get_packet_value<var_or_val_to_var<T>>(refs, vals, 1); }
     };
 
-    template<class T, class... Descs>
-    struct packet_param_to_val_class<creator<T, Descs...>>
+    template<class T, class Varname, class... Descs>
+    struct packet_param_to_val_class<creator<T, Varname, Descs...>>
     {
         template<class Refs>
-        static auto impl(Refs refs, creator<T, Descs...> c)
+        static auto impl(Refs refs, creator<T, Varname, Descs...> c)
         { return c(refs); }
     };
 
     namespace detail
     {
         template<class T> struct is_creator : std::false_type {};
-        template<class T, class... Descs> struct is_creator<creator<T, Descs...>> : std::true_type {};
+        template<class T, class Varname, class... Descs>
+        struct is_creator<creator<T, Varname, Descs...>> : std::true_type {};
     }
     template<class T>
     using is_creator = typename detail::is_creator<T>::type;
@@ -874,13 +902,20 @@ namespace proto
     constexpr auto
     creater(Desc... d)
     {
-        return creator<T, check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...>{d...};
+        return creator<T, unamed, check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...>{unamed{}, d...};
+    }
+
+    template<class T, class... Desc>
+    constexpr auto
+    creater(char const * name, Desc... d)
+    {
+        return creator<T, char const *, check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...>{name, d...};
     }
 
     template<class T>
     using is_empty_or_proto_data = brigand::bool_<
         is_creator<T>::value or
-        (is_proto_variable<T>::value and (is_proto_value<T>::value or std::is_empty<T>::value))
+        (is_proto_variable<T>::value and is_empty_or_proto_val<T>::value)
     >;
 
     template<class... Desc>
@@ -968,7 +1003,7 @@ struct Printer
 {
     template<class var, class T>
     void operator()(proto::val<var, T> x) const {
-        std::cout << var::name() << " = ";
+        std::cout << x.var.name() << " = ";
         print(x.x, 1);
         std::cout
             << "  static: " << proto::is_static_buffer<typename var::desc_type>{}
@@ -1575,11 +1610,11 @@ struct Buffering2
             ), 1)...};
         }
 
-        template<class VarInfo, class Var>
-        void serialize_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Var & var) {
-            std::cout << var_type<Var>::name() << " = ";
-            this->print(var);
-            this->serialize_pkt_sz_with_size_or_var(VarInfo{}, buffer, var);
+        template<class VarInfo, class Val>
+        void serialize_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Val & val) {
+            std::cout << name(val) << " = ";
+            this->print(val);
+            this->serialize_pkt_sz_with_size_or_var(VarInfo{}, buffer, val);
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type_t<VarInfo>>{};
             std::cout << "\n";
         }
@@ -1620,13 +1655,13 @@ struct Buffering2
             policy.serialize_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x);
         }
 
-        template<class VarInfo, class Var>
-        void serialize_type(proto::tags::limited_buffer, VarInfo, iovec & buffer, Var & var) {
-            std::cout << var_type<Var>::name() << " = ";
-            this->print(var);
+        template<class VarInfo, class Val>
+        void serialize_type(proto::tags::limited_buffer, VarInfo, iovec & buffer, Val & val) {
+            std::cout << name(val) << " = ";
+            this->print(val);
             std::size_t len = policy.serialize_limited_buffer(
                 static_cast<uint8_t*>(buffer.iov_base),
-                var.x
+                val.x
             );
             std::cout << " [len: " << len << "]\n";
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + len;
@@ -1634,11 +1669,11 @@ struct Buffering2
             static_assert(!var_info_is_pkt_sz<VarInfo>{}, "");
         }
 
-        template<class VarInfo, class Var>
-        void serialize_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Var & var) {
-            std::cout << var_type<Var>::name() << " = ";
-            this->print(var);
-            auto av = policy.get_view_buffer(var.x);
+        template<class VarInfo, class Val>
+        void serialize_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Val & val) {
+            std::cout << name(val) << " = ";
+            this->print(val);
+            auto av = policy.get_view_buffer(val.x);
             buffer.iov_base = const_cast<uint8_t *>(av.data());
             buffer.iov_len = av.size();
             this->sizes.data[VarInfo::ipacket::value] += av.size();
@@ -1714,11 +1749,11 @@ struct Buffering2
 #undef PROTO_ENABLE_IF_DEBUG
 #undef PROTO_NIL
 
-        template<class Var, class Continue>
-        void serialize_dyn_type(Var & var, Continue f) {
-            std::cout << var_type<Var>::name() << " = ";
-            print(var);
-            policy.context_dynamic_buffer(f, var.x);
+        template<class Val, class Continue>
+        void serialize_dyn_type(Val & val, Continue f) {
+            std::cout << name(val) << " = ";
+            print(val);
+            policy.context_dynamic_buffer(f, val.x);
         }
 
 
@@ -1788,16 +1823,30 @@ struct Buffering2
             std::cout << "\n";
         }
 
+
+        template<class Var, class T>
+        auto name(proto::val<Var, T> const & val)
+        { return val.var.name(); }
+
+        template<class T, class Derived>
+        static char const * name(proto::var<proto::types::pkt_sz<T>, Derived>)
+        { return Derived::name(); }
+
+        template<class T, class Derived>
+        static char const * name(proto::var<proto::types::pkt_sz_with_self<T>, Derived>)
+        { return Derived::name(); }
+
+
         template<class Var, class T>
         static void print(proto::val<Var, T> const & x)
         { Printer{}.print(x.x, 1); }
 
-        template<class T, class tag>
-        static void print(proto::var<proto::types::pkt_sz<T>, tag>)
+        template<class T, class Derived>
+        static void print(proto::var<proto::types::pkt_sz<T>, Derived>)
         { std::cout << "[pkt_sz]"; }
 
-        template<class T, class tag>
-        static void print(proto::var<proto::types::pkt_sz_with_self<T>, tag>)
+        template<class T, class Derived>
+        static void print(proto::var<proto::types::pkt_sz_with_self<T>, Derived>)
         { std::cout << "[pkt_sz_with_self]"; }
 
         static void print_buffer_type(proto::tags::static_buffer) { std::cout << "[static_buffer]"; }
@@ -1974,7 +2023,8 @@ namespace sec
         return os << "sec_send_pkt";
     }
 
-    constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>(flags, data, crypt));
+    //constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>(flags, data, crypt));
+    constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>("blahblah", flags, data, crypt));
 
     // TODO
     // constexpr auto sec_send2 = proto::desc(
