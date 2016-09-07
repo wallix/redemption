@@ -887,11 +887,12 @@ public:
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
-                    get_widget_rect(
+                    this->client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.width,
                         this->front.client_info.height,
                         this->front.client_info.cs_monitor
-                    )
+                    )),
+                    this->client_execute
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
@@ -993,14 +994,15 @@ public:
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
-                    get_widget_rect(
+                    this->client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.width,
                         this->front.client_info.height,
                         this->front.client_info.cs_monitor
-                    ),
+                    )),
                     caption,
                     message,
                     now,
+                    this->client_execute,
                     showform,
                     flag
                 ));
