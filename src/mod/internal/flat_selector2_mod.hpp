@@ -24,9 +24,9 @@
 #include "core/front_api.hpp"
 #include "configs/config.hpp"
 #include "configs/config_access.hpp"
-#include "mod/internal/client_execute.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/internal_mod.hpp"
+#include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget2/flat_selector2.hpp"
 #include "mod/internal/widget2/language_button.hpp"
 
@@ -51,7 +51,7 @@ using FlatSelector2ModVariables = vcfg::variables<
     vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
-class FlatSelector2Mod : public InternalMod, public NotifyApi
+class FlatSelector2Mod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
     WidgetSelectorFlat2 selector;
@@ -62,8 +62,7 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
 
     FlatSelector2ModVariables vars;
 
-    ClientExecute & client_execute;
-    CopyPaste       copy_paste;
+    CopyPaste copy_paste;
 
     bool waiting_for_next_module = false;
 
@@ -81,7 +80,7 @@ class FlatSelector2Mod : public InternalMod, public NotifyApi
 
 public:
     FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, ClientExecute & client_execute)
-        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->selector, front, front, this->font(), this->theme())
         , selector(
             front, temporary_login(vars).buffer,
@@ -101,7 +100,6 @@ public:
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , vars(vars)
-        , client_execute(client_execute)
     {
         this->selector.set_widget_focus(&this->selector.selector_lines, Widget2::focus_reason_tabkey);
         this->screen.add_widget(&this->selector);
@@ -120,8 +118,6 @@ public:
 
     ~FlatSelector2Mod() override {
         this->screen.clear();
-
-        this->client_execute.reset();
     }
 
     void ask_page()
@@ -350,11 +346,9 @@ public:
     }
 
 
-    void draw_event(time_t now, gdi::GraphicApi &) override {
-        (void)now;
-        if (!this->client_execute && event.waked_up_by_time) {
-            this->client_execute.ready(*this);
-        }
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
         if (!this->copy_paste && event.waked_up_by_time) {
             this->copy_paste.ready(this->front);
         }
@@ -364,10 +358,8 @@ public:
     bool is_up_and_running() override { return true; }
 
     void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
-        (void)length;
-        if (this->client_execute && !strcmp(front_channel_name, CHANNELS::channel_names::rail)) {
-            this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
-        }
+        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
+
         if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
