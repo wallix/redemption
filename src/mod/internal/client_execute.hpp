@@ -198,6 +198,111 @@ public:
         this->channel_ = nullptr;
     }
 
+    void enable() {
+        {
+            RDP::RAIL::ActivelyMonitoredDesktop order;
+
+            order.header.FieldsPresentFlags(
+                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
+                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND
+                );
+
+            order.ActiveWindowId(INTERNAL_MODULE_WINDOW_ID);
+
+            StaticOutStream<256> out_s;
+            order.emit(out_s);
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "ClientExecute::enable: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+
+            this->front_->draw(order);
+        }
+
+        {
+            RDP::RAIL::ActivelyMonitoredDesktop order;
+
+            order.header.FieldsPresentFlags(
+                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
+                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER
+                );
+
+            order.NumWindowIds(1);
+            order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
+
+            StaticOutStream<256> out_s;
+            order.emit(out_s);
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "ClientExecute::enable: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+
+            this->front_->draw(order);
+        }
+    }
+
+    void process_client_activate_pdu(uint32_t total_length,
+        uint32_t flags, InStream& chunk)
+    {
+        (void)total_length;
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
+                LOG(LOG_ERR,
+                    "ClientExecute::process_client_activate_pdu: "
+                        "Truncated orderLength, need=2 remains=%zu",
+                    chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            chunk.in_skip_bytes(2); // orderLength(2)
+        }
+
+        ClientActivatePDU capdu;
+
+        capdu.receive(chunk);
+
+        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+            capdu.log(LOG_INFO);
+        }
+
+        if ((capdu.WindowId() == INTERNAL_MODULE_WINDOW_ID) &&
+            (capdu.Enabled() == 0)) {
+            {
+                RDP::RAIL::ActivelyMonitoredDesktop order;
+
+                order.header.FieldsPresentFlags(
+                        RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
+                        RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND
+                    );
+
+                order.ActiveWindowId(0xFFFFFFFF);
+
+                StaticOutStream<256> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+
+                this->front_->draw(order);
+            }
+
+            {
+                RDP::RAIL::ActivelyMonitoredDesktop order;
+
+                order.header.FieldsPresentFlags(
+                        RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
+                        RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER
+                    );
+
+                order.NumWindowIds(1);
+                order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
+
+                StaticOutStream<256> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+
+                this->front_->draw(order);
+            }
+        }
+    }
+
     void process_client_execute_pdu(uint32_t total_length,
             uint32_t flags, InStream& chunk) {
         (void)total_length;
@@ -781,8 +886,8 @@ public:
                             "Client Activate PDU");
                 }
 
-//                this->process_client_activate_pdu(
-//                    length, flags, chunk);
+                this->process_client_activate_pdu(
+                    length, flags, chunk);
             break;
 
             case TS_RAIL_ORDER_CLIENTSTATUS:

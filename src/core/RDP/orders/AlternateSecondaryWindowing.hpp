@@ -294,16 +294,16 @@ public:
         }
 
         this->bits_mask = {stream.get_current(), CbBitsMask};
-        LOG(LOG_INFO, "BitsMask: size=%u", unsigned(CbBitsMask));
-        hexdump_c(stream.get_current(), CbBitsMask);
+        //LOG(LOG_INFO, "BitsMask: size=%u", unsigned(CbBitsMask));
+        //hexdump_c(stream.get_current(), CbBitsMask);
         stream.in_skip_bytes(CbBitsMask);
 
         this->color_table = {stream.get_current(), CbColorTable};
         stream.in_skip_bytes(CbColorTable);
 
         this->bits_color = {stream.get_current(), CbBitsColor};
-        LOG(LOG_INFO, "BitsColor: size=%u", unsigned(CbBitsColor));
-        hexdump_c(stream.get_current(), CbBitsColor);
+        //LOG(LOG_INFO, "BitsColor: size=%u", unsigned(CbBitsColor));
+        //hexdump_c(stream.get_current(), CbBitsColor);
         stream.in_skip_bytes(CbBitsColor);
     }
 
