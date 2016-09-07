@@ -378,6 +378,7 @@ namespace proto
             using sizeof_ = proto::sizeof_<T>;
         };
 
+        // TODO unimplemented
         template<class Cond, class True, class False>
         struct if_
         {
@@ -386,6 +387,7 @@ namespace proto
             using buffer_category = common_buffer<proto::buffer_category<True>, proto::buffer_category<False>>;
         };
 
+        // TODO unimplemented
         template<class Cond, class T>
         struct enable_if
         {
@@ -520,11 +522,12 @@ namespace proto
 
         template<class U>
         constexpr auto operator = (U && x) const
-//         {
-//             return val<Derived, decltype(trace_adapt<Derived>(Desc{}, std::forward<U>(x)))>{
-//                 trace_adapt<Derived>(Desc{}, std::forward<U>(x))
-//             };
-//         }
+        // Clang bug
+        // {
+        //     return val<Derived, decltype(trace_adapt<Derived>(Desc{}, std::forward<U>(x)))>{
+        //         trace_adapt<Derived>(Desc{}, std::forward<U>(x))
+        //     };
+        // }
         { return impl(std::forward<U>(x)); }
 
         template<class U>
@@ -654,6 +657,37 @@ namespace proto
     template<class T>
     using var_or_val_to_var = typename detail::var_or_val_to_var_impl<T>::type;
 
+    namespace cexp
+    {
+        constexpr std::size_t strlen(char const * s)
+        {
+            std::size_t n = 0;
+            while (*s) {
+                ++n;
+                s++;
+            }
+            return n;
+        }
+
+        constexpr std::size_t strcpy(char * dst, char const * src)
+        {
+            char * p = dst;
+            while (*src) {
+                *p++ = *src++;
+            }
+            return p - dst;
+        }
+
+        template<class T, class... Ts>
+        constexpr T fold(T a, Ts... as)
+        {
+            (void)std::initializer_list<int>{
+                (void(a += as), 1)...
+            };
+            return a;
+        }
+    }
+
     template<class T, class... Var>
     struct vars
     : var<T, vars<T, Var...>>
@@ -661,11 +695,28 @@ namespace proto
         using ::proto::var<T, vars>::var;
         using ::proto::var<T, vars>::operator = ;
 
-        static constexpr char const *
+        static constexpr auto
         name() noexcept
         {
-            // TODO
-            return "unimplemented name";
+            struct Name
+            {
+                char s[cexp::fold(cexp::strlen(Var::name())...) + 4 + sizeof...(Var)];
+
+                constexpr Name()
+                {
+                    char * p = s;
+                    *p++ = '{';
+                    (void)std::initializer_list<int>{
+                        (void(p += cexp::strcpy(&(p[0] = ' ') + 1, Var::name()) + 1), 1)...
+                    };
+                    *p++ = ' ';
+                    *p++ = '}';
+                    *p = 0;
+                }
+
+                constexpr operator char const * () const noexcept { return s; }
+            };
+            return Name();
         }
     };
 
@@ -674,10 +725,9 @@ namespace proto
     {
         using type_list = brigand::list<Descs...>;
         using type_list_only_val = brigand::filter<type_list, brigand::call<is_proto_value>>;
-        using values_type = brigand::wrap<type_list_only_val, inherits>;
+        using desc_value_tuple = brigand::wrap<type_list_only_val, inherits>;
 
-        // TODO desc_tuple descs;
-        values_type values;
+        desc_value_tuple values;
 
         template<class... Us, class Refs>
         constexpr creator(brigand::list<Us...>, Refs refs)
@@ -770,10 +820,9 @@ namespace proto
 
         using type_list_only_val_or_creator = brigand::filter<type_list, brigand::call<is_proto_value_or_proto_creator>>;
 
-        using values_type = brigand::wrap<type_list_only_val_or_creator, inherits>;
+        using desc_value_tuple = brigand::wrap<type_list_only_val_or_creator, inherits>;
 
-        // TODO desc_tuple descs;
-        values_type values;
+        desc_value_tuple values;
 
         template<class... Us, class Refs>
         constexpr packet_description(brigand::list<Us...>, Refs refs)
@@ -883,11 +932,10 @@ namespace proto
     }
 
     namespace utils {
-        // TODO parameters
         template<class... Ts>
-        struct selector
+        struct parameters
         {
-            selector(Ts & ... x) : refs{x...}
+            parameters(Ts & ... x) : refs{x...}
             {}
 
             template<class T>
@@ -1904,8 +1952,6 @@ namespace sec
         proto::types::u32_le flags_;
         proto_signature sig;
 
-        using type = sec_send_pkt;
-
         using buffer_size = proto::size_<proto_signature::sizeof_{} + proto::get_size(flags)>;
         using sizeof_ = proto::limited_size<buffer_size::value>;
 
@@ -1923,12 +1969,19 @@ namespace sec
         }
     };
 
-    inline std::ostream & operator <<(std::ostream & os, sec_send_pkt::type const &)
+    inline std::ostream & operator <<(std::ostream & os, sec_send_pkt const &)
     {
-        return os << "sec_send_pkt::type";
+        return os << "sec_send_pkt";
     }
 
     constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>(flags, data, crypt));
+
+    // TODO
+    // constexpr auto sec_send2 = proto::desc(
+    //     proto::filter::if_true(flags),
+    //     proto::filter::if_(proto::params[flags] & SEC::SEC_ENCRYPT)
+    //         [proto::creater<proto_signature>(data, crypt)]
+    // );
 }
 
 
