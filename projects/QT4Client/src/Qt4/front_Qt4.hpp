@@ -204,7 +204,7 @@ public:
     };
 
     enum : int {
-        PDU_MAX_SIZE    = 1600
+        PDU_MAX_SIZE    = 3000
       , PDU_HEADER_SIZE =    8
     };
 
@@ -214,7 +214,7 @@ public:
     };
 
     enum : int {
-        LIST_FILES_MAX_SIZE = 5
+        LIST_FILES_MAX_SIZE = 400
       , MAX_MONITOR_COUNT   = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
@@ -280,12 +280,14 @@ public:
         }
     }                           _clipbrd_formats_list;
     int                         _cItems;
-    int                         _streamID;
-    struct {
+    int                         _lindexToRequest;
+    int                         _streamIDToRequest;
+    struct CB_in_Files {
         int         size;
         std::string name;
-
-    }                           _items_list[LIST_FILES_MAX_SIZE];
+    };
+    typedef struct CB_in_Files CB_in_Files;
+    std::vector<CB_in_Files>       _items_list;
 
 
 
@@ -312,8 +314,6 @@ public:
 
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool) override;
 
-    //std::string HTMLtoText(const std::string & html);
-
     void send_to_clipboard_Buffer(InStream & chunk);
 
     void send_textBuffer_to_clipboard();
@@ -322,13 +322,13 @@ public:
 
     void empty_buffer() override;
 
-    void cut_data_to_send(int total_length, OutStream & out_streamfirst, int firstPartSize);
+    void cut_clipboard_data_to_send(int total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t * data);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
-    void show_in_stream(int flags, InStream & chunk);
+    void show_in_stream(int flags, InStream & chunk, size_t length);
 
-    void show_out_stream(int flags, OutStream & chunk);
+    void show_out_stream(int flags, OutStream & chunk, size_t length);
 
     Screen_Qt * getMainScreen();
 

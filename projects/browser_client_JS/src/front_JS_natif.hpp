@@ -82,7 +82,9 @@
 
 // nodejs --stack-size=250568 sandbox/test_websocket.js
 
+//  nodejs sandbox/websocket.js
 
+//  nodejs
 
 class Front_JS_Natif : public FrontAPI
 {
@@ -162,22 +164,6 @@ public:
     //int                  _bufferRDPClipboardMetaFilePicBPP;
     //const Keylayout_r  * _keylayout;
 
-
-    enum : uint8_t {
-          FASTPATH_INPUT_KBDFLAGS_RELEASE  = 0x01
-        , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
-    };
-
-    enum: uint8_t {
-        SCANCODE_ALTGR  = 0x38,
-        SCANCODE_SHIFT  = 0x36,
-        SCANCODE_ENTER  = 0x1C,
-        SCANCODE_BK_SPC = 0x0E,
-        SCANCODE_CTRL   = 0x1D,
-        SCANCODE_DELETE = 0x53
-    };
-
-
     //bool setClientInfo() ;
 
     //void writeClientInfo() ;
@@ -249,9 +235,9 @@ public:
     void connect(char * ip, char * user, char * password, int port) {
 
         Inifile ini;
-        ModRDPParams mod_rdp_params( user                   //"administrateur"
-                                   , password               //"S3cur3!1nux"
-                                   , ip                     //"10.10.47.35"
+        ModRDPParams mod_rdp_params( user
+                                   , password
+                                   , ip
                                    , "192.168.1.100"
                                    , 7
                                    , 511
@@ -308,7 +294,7 @@ public:
         y = z;
     }
 
-    int switchRGBA(int bgr) {
+    /*int switchRGBA(int bgr) {
 
         uint8_t b = bgr >> 24;
         uint8_t g = bgr >> 16;
@@ -316,7 +302,7 @@ public:
         uint8_t a = bgr;
 
         return ( (r << 24) + (g << 16) + (b << 8) + a );
-    }
+    }*/
 
 
 
@@ -764,19 +750,13 @@ public:
 
 /*
     void wheelEvent() {}
-
-    void RefreshPressed() {}
-
-    void RefreshReleased() {}
-
-    void refresh(int x, int y, int w, int h);
 */
 
 };
 
 
 
-Front_JS_Natif front(0);
+Front_JS_Natif front(0x04000000 | 0x40000000);
 
 
 
@@ -804,28 +784,34 @@ extern "C" void charPressed(char code) {
 
 extern "C" void enterPressed() {
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ENTER, 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
     }
 }
 
 extern "C" void backspacePressed() {
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_DOWN , 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_BK_SPC, 0, KBD_FLAG_UP   , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_BK_SPC, 0, KBD_FLAG_DOWN , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_BK_SPC, 0, KBD_FLAG_UP   , 0, &(front._keymap));
     }
 }
 
 extern "C" void CtrlAltDelPressed() {
-    //EM_ASM_({ getDataOctet(); }, 0);
     if (front._mod !=  nullptr) {
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_DOWN, 0, &(front._keymap));
 
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_UP, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_UP, 0, &(front._keymap));
-        front._mod->rdp_input_scancode(Front_JS_Natif::SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_UP, 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_ALTGR , 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_DELETE, 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
+        front._mod->rdp_input_scancode(KBD_SCANCODE_CTRL  , 0, KBD_FLAG_EXT | KBD_FLAG_UP  , 0, &(front._keymap));
+    }
+}
+
+extern "C" void refreshPressed() {
+    if (front._mod !=  nullptr) {
+        Rect rect(0, 0, front._info.width, front._info.height);
+        front._mod->rdp_input_invalidate(rect);
     }
 }
 
@@ -841,13 +827,14 @@ extern "C" void connexion(char * ip, char * user, char * password, int port) {
     front.connect(ip, user, password, port);
 }
 
-extern "C" void disconnexion() {
+extern "C" void disconnection() {
     front.disconnect();
 }
 
-extern "C" void recv_value(int value) {
+extern "C" void recv_value(uint8_t data) {
     if (front._trans !=  nullptr) {
-        static_cast<TransportWebSocket *>(front._trans)->setBufferValue(value);
+        static_cast<TransportWebSocket *>(front._trans)->setBufferValue(data);
+        //EM_ASM_({ console.log("Client : received from Server : "+$0); }, data);
     }
 }
 

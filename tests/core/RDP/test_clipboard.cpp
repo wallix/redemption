@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
     {
         const uint8_t file_list_data[] =
-            "\x05\x00\x01\x00\x58\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
+            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
@@ -176,11 +176,11 @@ BOOST_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
     mfpd.receive(in_stream_metaFilePic);
 
     BOOST_CHECK_EQUAL(mfpd.recordSize, 180033);
-    BOOST_CHECK_EQUAL(mfpd.type, 2881);
-    BOOST_CHECK_EQUAL(mfpd.height, 300);
-    BOOST_CHECK_EQUAL(mfpd.width, 400);
-    BOOST_CHECK_EQUAL(mfpd.bpp, 24);
-    BOOST_CHECK_EQUAL(mfpd.imageSize, 360000);
+    BOOST_CHECK_EQUAL(mfpd.type      , 2881);
+    BOOST_CHECK_EQUAL(mfpd.height    , 300);
+    BOOST_CHECK_EQUAL(mfpd.width     , 400);
+    BOOST_CHECK_EQUAL(mfpd.bpp       , 24);
+    BOOST_CHECK_EQUAL(mfpd.imageSize , 360000);
 }
 
 

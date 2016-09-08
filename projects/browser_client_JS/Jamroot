@@ -20,33 +20,33 @@ project redjs
 
 using emscripten ;
 
-install pentamino
-    : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
-    : <location>./sandbox
-    ;
+#install pentamino
+#    : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html
+#    : <location>./sandbox
+#    ;
 
-objjs penta.bc
-    :
-    src/ftests/penta.cpp
-    :
-    <cxxflags>-g3
-    ;
+#objjs penta.bc
+#    :
+#    src/ftests/penta.cpp
+#    :
+#    <cxxflags>-g3
+#    ;
 
-exejs pentamino.js : penta.bc :
-    <cxxflags>-g3
-    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
-    <cxxflags>"--shell-file templates/penta_template.html"
- ;
+#exejs pentamino.js : penta.bc :
+#    <cxxflags>-g3
+#    <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
+#    <cxxflags>"--shell-file templates/penta_template.html"
+# ;
 
 actions nothing { }
 
-make pentamino.html : pentamino.js : nothing ;
-make pentamino.html.mem : pentamino.js : @nothing ;
+#make pentamino.html : pentamino.js : nothing ;
+#make pentamino.html.mem : pentamino.js : @nothing ;
 
 
 
 install client_rdp_JS_natif
-    : [ glob ./sys/js_client/* ] client_rdp_JS_natif.js client_rdp_JS_natif.html #client_rdp_JS_natif.html.mem
+    : [ glob ./sys/js_client/* ] client_rdp_JS_natif.js client_rdp_JS_natif.html 
     : <location>./sandbox
     ;
 
@@ -56,7 +56,7 @@ install client_rdp_JS_natif
 #    ;
 
 install test_transport_web_socket
-    : [ glob ./sys/js_client/* ] test_transport_web_socket.js test_transport_web_socket.html #test_transport_web_socket.html.mem
+    : [ glob ./sys/js_client/* ] test_transport_web_socket.js test_transport_web_socket.html 
     : <location>./sandbox
     ;
 
@@ -105,7 +105,7 @@ exejs client_rdp_JS_natif.js
         <cxxflags>"-s ALLOW_MEMORY_GROWTH=1"
         <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"--llvm-opts 3 --llvm-lto 0"
-	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_connexion','_recv_value','_disconnexion','_CtrlAltDelPressed']\""
+	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_refreshPressed','_connexion','_recv_value','_disconnection','_CtrlAltDelPressed']\""
      ;
 
 exejs test_transport_web_socket.js

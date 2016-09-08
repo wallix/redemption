@@ -71,7 +71,8 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _bufferRDPCLipboardMetaFilePic_height(0)
     , _clipbrd_formats_list()
     , _cItems(0)
-    , _streamID(0)
+    , _lindexToRequest(0)
+    , _streamIDToRequest(0)
 {
     if(this->setClientInfo()) {
         this->writeClientInfo();
@@ -149,7 +150,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         this->connect();
 
     } else {
-        std::cout << "Argument(s) requied to connect: ";
+        std::cout << "Argument(s) required to connect: ";
         if (!(commandIsValid & Front_Qt::NAME_GOTTEN)) {
             std::cout << "-n [user_name] ";
         }
@@ -459,7 +460,8 @@ bool Front_Qt::eventFilter(QObject *, QEvent *e, int screen_index)  {
 void Front_Qt::connexionPressed() {}
 
 void Front_Qt::RefreshPressed() {
-    this->refresh(0, 0, this->_info.width * this->_monitorCount, this->_info.height);
+    Rect rect(0, 0, this->_info.width * this->_monitorCount, this->_info.height);
+    this->_callback->rdp_input_invalidate(rect);
 }
 
 void Front_Qt::RefreshReleased() {}
@@ -467,25 +469,20 @@ void Front_Qt::RefreshReleased() {}
 void Front_Qt::CtrlAltDelPressed() {
     int flag = Keymap2::KBDFLAGS_EXTENDED;
 
-    this->send_rdp_scanCode(0x38, flag);  // ALT
-    this->send_rdp_scanCode(0x1D, flag);  // CTRL
-    this->send_rdp_scanCode(0x53, flag);  // DELETE
+    this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);     // ALT
+    this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);     // CTRL
+    this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);  // DELETE
 }
 
 void Front_Qt::CtrlAltDelReleased() {
     int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
 
-    this->send_rdp_scanCode(0x38, flag);  // ALT
-    this->send_rdp_scanCode(0x1D, flag);  // CTRL
-    this->send_rdp_scanCode(0x53, flag);  // DELETE
+    this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);     // ALT
+    this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);     // CTRL
+    this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);  // DELETE
 }
 
 void Front_Qt::disconnexionPressed() {}
-
-void Front_Qt::refresh(int x, int y, int w, int h) {
-    Rect rect(x, y, w, h);
-    this->_callback->rdp_input_invalidate(rect);
-}
 
 void Front_Qt::send_rdp_scanCode(int keyCode, int flag) {
     Keymap2::DecodedKeys decoded_keys = this->_keymap.event(flag, keyCode, this->_ctrl_alt_delete);
@@ -1750,10 +1747,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     InStream chunk(out_stream.get_data(), total_length);
 
                     this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                                                chunk,
-                                                                                total_length,
-                                                                                CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                                );
+                                                         chunk,
+                                                         total_length,
+                                                         CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                        );
                     std::cout << "client >> Clipboard Capabilities PDU" << std::endl;
 
                     this->_monitorCount = this->_info.cs_monitor.monitorCount;
@@ -1811,80 +1808,80 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         std::cout << " FAILED" <<  std::endl;
                     } else {
                         std::cout <<  std::endl;
-                    }
 
-                    int formatAvailable = chunk.in_uint32_le();
+                        int formatAvailable = chunk.in_uint32_le();
 
-                    bool isSharedFormat = false;
+                        bool isSharedFormat = false;
 
-                    while (formatAvailable > 0) {
-                        uint32_t formatID = chunk.in_uint32_le();
-                        formatAvailable -=  4;
+                        while (formatAvailable > 0) {
+                            uint32_t formatID = chunk.in_uint32_le();
+                            formatAvailable -=  4;
 
-                        uint16_t utf16_string[120];
-                        int k(0);
-                        bool isEndString = false;
-                        while (!isEndString) {
-                            u_int16_t bit(chunk.in_uint16_le());
-                            if (bit == 0) {
-                                isEndString = true;
+                            uint16_t utf16_string[120];
+                            int k(0);
+                            bool isEndString = false;
+                            while (!isEndString) {
+                                u_int16_t bit(chunk.in_uint16_le());
+                                if (bit == 0) {
+                                    isEndString = true;
+                                }
+                                utf16_string[k] = bit;
+                                k++;
+                                formatAvailable -=  2;
                             }
-                            utf16_string[k] = bit;
-                            k++;
-                            formatAvailable -=  2;
-                        }
-                        this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), k*2);
-                        std::cout << " Format ID = " << formatID << ", name = \"" << this->_requestedFormatName << "\"";
+                            this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), k*2);
+                            std::cout << " Format ID = " << formatID << ", name = \"" << this->_requestedFormatName << "\"";
 
-                        for (int j = 0; j < Clipbrd_formats_list::CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
-                            if (this->_clipbrd_formats_list.IDs[j] == formatID) {
+                            for (int j = 0; j < Clipbrd_formats_list::CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
+                                if (this->_clipbrd_formats_list.IDs[j] == formatID) {
+                                    this->_requestedFormatId = formatID;
+                                    isSharedFormat = true;
+                                    std::cout <<  " pick!";
+                                    formatAvailable = 0;
+                                }
+                            }
+
+                            if (this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW && !isSharedFormat) {
                                 this->_requestedFormatId = formatID;
                                 isSharedFormat = true;
                                 std::cout <<  " pick!";
                                 formatAvailable = 0;
                             }
+
+                            std::cout << std::endl;
                         }
 
-                        if (this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW && !isSharedFormat) {
-                            this->_requestedFormatId = formatID;
-                            isSharedFormat = true;
-                            std::cout <<  " pick!";
-                            formatAvailable = 0;
-                        }
+                        RDPECLIP::FormatListResponsePDU formatListResponsePDU(true);
+                        StaticOutStream<256> out_stream;
+                        formatListResponsePDU.emit(out_stream);
+                        const uint32_t total_length_FormatListResponsePDU = out_stream.get_offset();
 
-                        std::cout << std::endl;
+                        InStream chunk(out_stream.get_data(), total_length_FormatListResponsePDU);
+
+                        this->_callback->send_to_mod_channel(channel_names::cliprdr,
+                                                             chunk,
+                                                             total_length_FormatListResponsePDU,
+                                                             CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                            );
+
+                        std::cout << "client >> Format List Response PDU" << std::endl;
+
+
+                        RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(this->_requestedFormatId);
+                        StaticOutStream<256> out_streamRequest;
+                        formatDataRequestPDU.emit(out_streamRequest);
+                        const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
+
+                        InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
+
+                        this->_callback->send_to_mod_channel(channel_names::cliprdr,
+                                                             chunkRequest,
+                                                             total_length_FormatDataRequestPDU,
+                                                             CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                            );
+
+                        std::cout << "client >> Format Data Request PDU" << std::endl;
                     }
-
-                    RDPECLIP::FormatListResponsePDU formatListResponsePDU(true);
-                    StaticOutStream<256> out_stream;
-                    formatListResponsePDU.emit(out_stream);
-                    const uint32_t total_length_FormatListResponsePDU = out_stream.get_offset();
-
-                    InStream chunk(out_stream.get_data(), total_length_FormatListResponsePDU);
-
-                    this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                         chunk,
-                                                         total_length_FormatListResponsePDU,
-                                                         CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                        );
-
-                    std::cout << "client >> Format List Response PDU" << std::endl;
-
-
-                    RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(this->_requestedFormatId);
-                    StaticOutStream<256> out_streamRequest;
-                    formatDataRequestPDU.emit(out_streamRequest);
-                    const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
-
-                    InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
-
-                    this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                         chunkRequest,
-                                                         total_length_FormatDataRequestPDU,
-                                                         CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                        );
-
-                    std::cout << "client >> Format Data Request PDU" << std::endl;
                 }
 
             break;
@@ -1906,11 +1903,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         std::cout << " FAILED" <<  std::endl;
                     } else {
                         std::cout <<  std::endl;
+
+                        this->process_server_clipboard_data(flags, chunk);
                     }
                 }
-
-                this->process_server_clipboard_data(flags, chunk);
-                this->show_in_stream(flags, chunk_series);
 
             break;
 
@@ -1928,70 +1924,104 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     std::cout << " FAILED" <<  std::endl;
                 } else {
                     std::cout <<  std::endl;
-                }
 
-                chunk.in_skip_bytes(4);
-                int first_part_data_size(0);
-                uint32_t total_length(0);
-                StaticOutStream<PDU_MAX_SIZE> out_streamfirst;
+                    chunk.in_skip_bytes(4);
+                    int first_part_data_size(0);
+                    uint32_t total_length(0);
+                    StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                    uint8_t * complete_data = nullptr;
 
-                if (this->_connector->_bufferTypeID == chunk.in_uint32_le()) {
+                    if (this->_connector->_bufferTypeID == chunk.in_uint32_le()) {
 
-                    total_length = this->_connector->_length + PDU_HEADER_SIZE;
+                        total_length = this->_connector->_cliboard_data_length + PDU_HEADER_SIZE;
 
-                    switch(this->_connector->_bufferTypeID) {
+                        switch(this->_connector->_bufferTypeID) {
 
-                        case RDPECLIP::CF_METAFILEPICT:
-                        {
-                            first_part_data_size = PASTE_PIC_CONTENT_SIZE;
-                            total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
+                            case RDPECLIP::CF_METAFILEPICT:
+                            {
+                                first_part_data_size = PASTE_PIC_CONTENT_SIZE;
+                                total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
 
-                            RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
-                            formatDataResponsePDU.emit_metaFilePic( out_streamfirst
-                                                                  , this->_connector->_length
-                                                                  , this->_connector->_bufferImage->width()
-                                                                  , this->_connector->_bufferImage->height()
-                                                                  , this->_connector->_bufferImage->depth()
-                                                                  );
-                        }
-                        break;
+                                RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
+                                formatDataResponsePDU.emit_metaFilePic( out_stream_first_part
+                                                                      , this->_connector->_cliboard_data_length
+                                                                      , this->_connector->_bufferImage->width()
+                                                                      , this->_connector->_bufferImage->height()
+                                                                      , this->_connector->_bufferImage->depth()
+                                                                      );
+                                complete_data = this->_connector->_chunk.get();
+                            }
+                            break;
 
-                        case RDPECLIP::CF_TEXT:
-                        case RDPECLIP::CF_UNICODETEXT:
-                        {
-                            first_part_data_size = PASTE_TEXT_CONTENT_SIZE;
+                            case RDPECLIP::CF_TEXT:
+                            case RDPECLIP::CF_UNICODETEXT:
+                            {
+                                first_part_data_size = PASTE_TEXT_CONTENT_SIZE;
 
-                            RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
-                            formatDataResponsePDU.emit_text(out_streamfirst, this->_connector->_length);
-                        }
-                        break;
-
-                        case Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
-                        {
-                            uint64_t time = 0x01d1e2a0379fb504;
-                            first_part_data_size = 0;
-                            total_length  = (RDPECLIP::FileDescriptor::size() * this->_connector->_cItems) + 4;
-                            RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
-                            std::cout << "filename=" << this->_connector->_files_list.names[0] << std::endl;
-                            formatDataResponsePDU.emit_fileList( out_streamfirst
-                                                               , this->_connector->_files_list.names
-                                                               , this->_connector->_files_list.sizes
-                                                               , this->_connector->_cItems
-                                                               , time
+                                RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
+                                formatDataResponsePDU.emit_text( out_stream_first_part
+                                                               , this->_connector->_cliboard_data_length
                                                                );
-                            this->show_out_stream(flags, out_streamfirst);
+                                complete_data = this->_connector->_chunk.get();
+                            }
+                            break;
 
+                            case Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+                            {
+                                const uint64_t time = 0x01d1e2a0379fb504;
+                                first_part_data_size = 12;
+                                total_length  = (RDPECLIP::FileDescriptor::size() * this->_connector->_cItems)+16;
+                                int total_length32 = (total_length/4)+1;
+                                out_stream_first_part.out_uint32_le(this->_connector->_cItems);
+                                std::unique_ptr<uint32_t[]> out_data = std::make_unique<uint32_t[]>(total_length32);
+                                int index(0);
+                                for (int i = 0; i <  this->_connector->_cItems; i++) {
+                                    Connector_Qt::CB_out_File & file = this->_connector->_items_list[i];
+                                    int step_item(RDPECLIP::FileDescriptor::size() *i);
+
+                                    out_data[step_item] = RDPECLIP::FD_SHOWPROGRESSUI |
+                                                          RDPECLIP::FD_FILESIZE       |
+                                                          RDPECLIP::FD_WRITESTIME     |
+                                                          RDPECLIP::FD_ATTRIBUTES;
+                                    index++;
+                                    for (int j = 0; j < 32; j++) {
+                                        index += j;
+                                        out_data[step_item + index] = 0;
+                                    }
+                                    index++;
+                                    out_data[step_item + index] = RDPECLIP::FILE_ATTRIBUTE_ARCHIVE;
+                                    index++;
+                                    for (int j = 0; j < 16; j++) {
+                                        index += j;
+                                        out_data[step_item + index] = 0;
+                                    }
+                                    index++;
+
+                                    fd.lastWriteTime  = time;
+                                    fd.fileSizeHigh   = file.size >> 32;
+                                    fd.fileSizeLow    = file.size;
+                                    fd.file_name      = file.name;
+                                }
+                                out_data[total_length32-1] = 0;
+                                complete_data = reinterpret_cast<uint8_t *>(out_data);
+                            }
+                            break;
+
+                            default:
+                                std::cout <<  "unknow buffer format ID " << int(this->_connector->_bufferTypeID) << std::endl;
+                            break;
                         }
-                        break;
 
-                        default:
-                            std::cout <<  "unknow buffer format ID " << int(this->_connector->_bufferTypeID) << std::endl;
-                        break;
                     }
+                    this->cut_clipboard_data_to_send( total_length
+                                                    , out_stream_first_part
+                                                    , first_part_data_size
+                                                    , complete_data
+                                                    );
+
+                    std::cout << "client >> Format Data Response PDU" << std::endl;
 
                 }
-
-                this->cut_data_to_send(total_length, out_streamfirst, first_part_data_size);
             }
 
             break;
@@ -2001,8 +2031,57 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                 if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                     std::cout << " FAILED" <<  std::endl;
                 } else {
-                    std::cout <<  std::endl;
+
+                    chunk.in_skip_bytes(4);                 // data_len
+                    int streamID(chunk.in_uint32_le());
+                    int lindex(chunk.in_uint32_le());
+
+                    RDPECLIP::FileContentsResponse fileContentsResponse(true);
+
+                    switch (chunk.in_uint32_le()) {         // flag
+
+                        case RDPECLIP::FILECONTENTS_SIZE :
+                        {
+                            std::cout << " SIZE streamID=" << streamID << " lindex=" << lindex <<  std::endl;
+                            StaticOutStream<32> out_stream;
+                            fileContentsResponse.emit_size( out_stream
+                                                          , streamID
+                                                          , this->_connector->_items_list[lindex].size
+                                                          );
+
+                            InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                            this->_callback->send_to_mod_channel(channel_names::cliprdr
+                                                                , chunk_to_send
+                                                                , out_stream.get_offset()
+                                                                , CHANNELS::CHANNEL_FLAG_LAST |       CHANNELS::CHANNEL_FLAG_FIRST |  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                                );
+
+                            std::cout << "client >> File Contents Response PDU SIZE streamID=" << streamID << " lindex=" << lindex << std::endl;
+                        }
+                        break;
+
+                        case RDPECLIP::FILECONTENTS_RANGE :
+                        {
+                            std::cout << " RANGE streamID=" << streamID << " lindex=" << lindex <<  std::endl;
+                            StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                            uint32_t first_part_data_size(this->_connector->_items_list[lindex].size);
+                            if (first_part_data_size > PDU_MAX_SIZE - 12) {
+                                first_part_data_size = PDU_MAX_SIZE - 12;
+                            }
+                            fileContentsResponse.emit_range(out_stream_first_part, streamID, first_part_data_size);
+
+                            std::cout << "client >> File Contents Response PDU RANGE streamID=" << streamID << " lindex=" << lindex << std::endl;
+                            this->cut_clipboard_data_to_send(first_part_data_size + 12,
+                                                             out_stream_first_part,
+                                                             first_part_data_size,
+                                                             reinterpret_cast<uint8_t *>(this->_connector->_items_list[lindex].chunk)
+                                                            );
+                        }
+                        break;
+                    }
                 }
+
+
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE:
@@ -2012,14 +2091,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         std::cout << " FAILED" <<  std::endl;
                     } else {
                         std::cout <<  std::endl;
+
+                        if(this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW) {
+                            this->_requestedFormatId = Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS;
+                            this->process_server_clipboard_data(flags, chunk);
+                        }
                     }
                 }
-
-                if(this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW) {
-                    this->_requestedFormatId = Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS;
-                    this->process_server_clipboard_data(flags, chunk);
-                }
-
             break;
 
             default:
@@ -2031,14 +2109,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 }
 
 
-void Front_Qt::show_out_stream(int flags, OutStream & chunk) {
+void Front_Qt::show_out_stream(int flags, OutStream & chunk, size_t length) {
     uint8_t * data = chunk.get_data();
 
-    std::cout <<  std::hex << "flag=0x" << flags << std::endl;
+    std::cout <<  std::hex << "flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
     std::cout << "\"";
-    for (int i = 0; i < 604; i++) {
+    for (size_t i = 0; i < length; i++) {
         int byte(data[i]);
-        if ((i % 20) == 0 && i != 0) {
+        if ((i % 16) == 0 && i != 0) {
             std::cout << "\"" << std::endl << "\"";
         }
 
@@ -2051,12 +2129,12 @@ void Front_Qt::show_out_stream(int flags, OutStream & chunk) {
     std::cout << "\"" << std::dec << std::endl;
 }
 
-void Front_Qt::show_in_stream(int flags, InStream & chunk) {
-    std::cout <<  std::hex << "flag=0x" << flags << std::endl;
+void Front_Qt::show_in_stream(int flags, InStream & chunk, size_t length) {
+    std::cout <<  std::hex << "flag=0x" << flags << " total_length=" << std::dec << int(length) <<  std::hex <<  std::endl;
     std::cout << "\"";
-    for (int i = 0; i < 604; i++) {
+    for (size_t i = 0; i < length; i++) {
         int byte(chunk.in_uint8());
-        if ((i % 20) == 0 && i != 0) {
+        if ((i % 16) == 0 && i != 0) {
             std::cout << "\"" << std::endl << "\"";
         }
 
@@ -2153,7 +2231,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->_bufferRDPClipboardChannelSizeTotal -= 4;
                 this->_cItems = chunk.in_uint32_le();
-                this->_streamID = 0;
+                this->_lindexToRequest = 0;
             }
 
             this->send_to_clipboard_Buffer(chunk);
@@ -2165,13 +2243,20 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
 
                 for (int i = 0; i < this->_cItems; i++) {
                     fd.receive(stream);
-                    this->_items_list[i].size = fd.file_size();
-                    this->_items_list[i].name = fd.fileName();
+                    CB_in_Files file;
+                    file.size = fd.file_size();
+                    file.name = fd.fileName();
+                    this->_items_list.push_back(file);
                 }
 
                 RDPECLIP::FileContentsRequestPDU fileContentsRequest(true);
                 StaticOutStream<32> out_streamRequest;
-                fileContentsRequest.emit(out_streamRequest,this->_streamID, RDPECLIP::FILECONTENTS_RANGE, this->_streamID, this->_items_list[this->_streamID].size);
+                fileContentsRequest.emit(out_streamRequest
+                                        , this->_streamIDToRequest
+                                        , RDPECLIP::FILECONTENTS_RANGE
+                                        , this->_lindexToRequest
+                                        , this->_items_list[this->_lindexToRequest].size
+                                        );
                 const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
 
                 InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
@@ -2184,73 +2269,72 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
                                                      CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                     );
 
-                std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE " << this->_streamID << std::endl;
+                std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_streamIDToRequest << " lindex=" << this->_lindexToRequest << std::endl;
 
                 this->empty_buffer();
-
             }
         break;
 
         case Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                this->_bufferRDPClipboardChannelSizeTotal -= 4;
-                this->_streamID = chunk.in_uint32_le();
+                this->_bufferRDPClipboardChannelSizeTotal = this->_items_list[this->_lindexToRequest].size;
+                this->_streamIDToRequest = chunk.in_uint32_le();
+                this->_bufferRDPClipboardChannel = std::make_unique<uint8_t[]>(this->_bufferRDPClipboardChannelSizeTotal);
             }
 
             this->send_to_clipboard_Buffer(chunk);
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
 
-                std::ofstream oFile(this->_items_list[this->_streamID].name, std::ios::out | std::ios::binary);
+                std::ofstream oFile(this->_items_list[this->_lindexToRequest].name, std::ios::out | std::ios::binary);
                 if(oFile.is_open()) {
+                    std::cout << "writing file " << this->_items_list[this->_lindexToRequest].name << std::endl;
                     oFile.write(reinterpret_cast<char *>(this->_bufferRDPClipboardChannel.get()), this->_bufferRDPClipboardChannelSizeTotal);
                     oFile.close();
                 }
+                this->_lindexToRequest++;
 
-                this->_streamID++;
-                if (this->_streamID >= this->_cItems) {
+                if (this->_lindexToRequest >= this->_cItems) {
 
                     std::string TEST_TEMP_PATH(TEST_TEMP_PATH_TEST);
-
                     std::string str;
                     for (int i = 0; i < this->_cItems; i++) {
                         if (i > 0) {
                             str +=  "\n";
                         }
-
                         str += TEST_TEMP_PATH + this->_items_list[i].name;
                     }
                     this->_connector->_local_clipboard_stream = false;
                     this->_connector->setClipboard(str, true);
                     this->_connector->_local_clipboard_stream = true;
-                    this->empty_buffer();
 
                 } else {
-
+                    this->_streamIDToRequest++;
                     RDPECLIP::FileContentsRequestPDU fileContentsRequest(true);
                     StaticOutStream<32> out_streamRequest;
-                    fileContentsRequest.emit(out_streamRequest, this->_streamID, RDPECLIP::FILECONTENTS_RANGE, this->_streamID, this->_items_list[this->_streamID].size);
+                    fileContentsRequest.emit(out_streamRequest, this->_streamIDToRequest, RDPECLIP::FILECONTENTS_RANGE, this->_lindexToRequest, this->_items_list[this->_lindexToRequest].size);
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
 
                     InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
                     this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                                                chunkRequest,
-                                                                                total_length_FormatDataRequestPDU,
-                                                                                CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                                CHANNELS::CHANNEL_FLAG_FIRST |
-                                                                                CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                                );
+                                                         chunkRequest,
+                                                         total_length_FormatDataRequestPDU,
+                                                         CHANNELS::CHANNEL_FLAG_LAST  |
+                                                         CHANNELS::CHANNEL_FLAG_FIRST |
+                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                        );
 
-                    std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE " << this->_streamID << std::endl;
+                    std::cout << "client >> File Contents Resquest PDU FILECONTENTS_RANGE streamID=" << this->_streamIDToRequest << " lindex=" << this->_lindexToRequest << std::endl;
                 }
+
+                this->empty_buffer();
             }
         break;
 
         default:
             if (strcmp(this->_requestedFormatName.c_str(), RDPECLIP::get_format_short_name(RDPECLIP::SF_TEXT_HTML)) == 0) {
-
                 this->send_to_clipboard_Buffer(chunk);
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -2317,50 +2401,8 @@ void Front_Qt::empty_buffer() {
     this->_bufferRDPCLipboardMetaFilePic_width  = 0;
     this->_bufferRDPCLipboardMetaFilePic_height = 0;
     this->_bufferRDPClipboardChannelSize        = 0;
-    this->_streamID                             = 0;
 }
 
-/*
-// TODO array_view
-std::string Front_Qt::HTMLtoText(const std::string & html) {
-    // TODO char
-    std::string openDelimiter(">");
-    // TODO char
-    std::string endDelimiter("<");
-    std::string tmp(html + "<");
-    std::string str;
-
-    int pos0(0);
-    int posEnd(0);*/
-    /** TODO so complex...
-     * first = html.begin();
-     * last = html.end();
-     * while(first != last) {
-     *  auto delim1 = std::find(first, last, '<');
-     *  auto delim2 = std::find(delim1, last, '>');
-     *  new_str.insert(new_str.end(), first, delim1);
-     *  first = delim2;
-     *  if (first != last) {
-     *      ++first;
-     *  }
-     }
-     */
-    /*
-    while (pos0 != -1 && posEnd != -1) {
-        pos0 = tmp.find(openDelimiter);
-        if (pos0 != -1) {
-            tmp = tmp.substr(pos0 + 1, tmp.length());
-        }
-
-        posEnd = tmp.find(endDelimiter);
-        str = str + tmp.substr(0, posEnd);
-        if (posEnd != -1) {
-           tmp = tmp.substr(posEnd + 1, tmp.length());
-        }
-    }
-
-    return str;
-} */
 
 void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size, bool isLong) {
 
@@ -2374,17 +2416,16 @@ void Front_Qt::send_FormatListPDU(uint32_t const * formatIDs, std::string const 
     const uint32_t total_length = out_stream.get_offset();
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
-    this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                         chunk,
-                                         total_length,
-                                         CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                        );
+    this->_callback->send_to_mod_channel( channel_names::cliprdr
+                                        , chunk
+                                        , total_length
+                                        , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |   CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
     std::cout << "client >> Format List PDU" << std::endl;
 }
 
 
-void Front_Qt::cut_data_to_send(int total_length, OutStream & out_streamfirst, int first_part_data_size){
+void Front_Qt::cut_clipboard_data_to_send(int total_length, OutStream & out_stream_first_part, int first_part_data_size, uint8_t * data){
 
     // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 
@@ -2437,37 +2478,37 @@ void Front_Qt::cut_data_to_send(int total_length, OutStream & out_streamfirst, i
         const int remains_PDU  (total_length % PDU_MAX_SIZE);
         int data_sent(0);
 
-        out_streamfirst.out_copy_bytes(this->_connector->_chunk.get(), first_part_data_size);
+        out_stream_first_part.out_copy_bytes(data, first_part_data_size);
         data_sent += first_part_data_size;
 
-        InStream chunkFirst(out_streamfirst.get_data(), out_streamfirst.get_offset());
+        InStream chunkFirst(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
         this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                                    chunkFirst,
-                                                                    total_length,
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                    );
-        std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
+                                             chunkFirst,
+                                             total_length,
+                                             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                            );
+        std::cout << "client >> Data PDU " << data_sent << " / " << total_length << std::endl;
 
         for (int i = 0; i < cmpt_PDU_part - 1; i++) {
             StaticOutStream<PDU_MAX_SIZE> out_stream;
 
-            out_stream.out_copy_bytes(this->_connector->_chunk.get() + data_sent, PDU_MAX_SIZE);
+            out_stream.out_copy_bytes(data + data_sent, PDU_MAX_SIZE);
             data_sent += PDU_MAX_SIZE;
 
             InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
             this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                                        chunk,
-                                                                        total_length,
-                                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                        );
-            std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
+                                                 chunk,
+                                                 total_length,
+                                                 CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                );
+            std::cout << "client >> Data PDU " << data_sent << " / " << total_length << std::endl;
         }
 
         StaticOutStream<PDU_MAX_SIZE> out_streamLast;
 
-        out_streamLast.out_copy_bytes(this->_connector->_chunk.get() + data_sent, remains_PDU);
+        out_streamLast.out_copy_bytes(data + data_sent, remains_PDU);
         if (this->_connector->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
             out_streamLast.out_uint32_le(3);
             out_streamLast.out_uint16_le(0);
@@ -2477,24 +2518,26 @@ void Front_Qt::cut_data_to_send(int total_length, OutStream & out_streamfirst, i
         InStream chunk(out_streamLast.get_data(), out_streamLast.get_offset());
 
         this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                                    chunk,
-                                                                    total_length,
-                                                                    CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                    );
-        std::cout << "client >> Format Data Response PDU  " << data_sent << " / " << this->_connector->_length << std::endl;
+                                             chunk,
+                                             total_length,
+                                             CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                            );
+        std::cout << "client >> Data PDU " << data_sent << " / " << total_length << std::endl;
 
     } else {
 
-        out_streamfirst.out_copy_bytes(this->_connector->_chunk.get(), this->_connector->_length);
+        out_stream_first_part.out_copy_bytes(data, first_part_data_size);
 
-        InStream chunk(out_streamfirst.get_data(), out_streamfirst.get_offset());
+        InStream chunk(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
+
+        //this->show_out_stream(0, out_stream_first_part, total_length);
 
         this->_callback->send_to_mod_channel(channel_names::cliprdr,
-                                                                    chunk,
-                                                                    total_length,
-                                                                    CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                    );
-        std::cout << "client >> Format Data Response PDU  " << this->_connector->_length << " / " << this->_connector->_length << std::endl;
+                                             chunk,
+                                             total_length,
+                                             CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                            );
+        std::cout << "client >> Data PDU  " << total_length << " / " << total_length << std::endl;
     }
 }
 

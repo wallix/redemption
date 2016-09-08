@@ -1009,15 +1009,53 @@ struct FileContentsRequestPDU : CliprdrHeader {
 };
 
 
+
+    // 2.2.5.4 File Contents Response PDU (CLIPRDR_FILECONTENTS_RESPONSE)
+
+    // The File Contents Response PDU is sent as a reply to the File Contents Request PDU. It is used to indicate whether processing of the File Contents Request PDU was successful. If the processing was successful, the File Contents Response PDU includes either a file size or extracted file data, based on the operation requested in the corresponding File Contents Request PDU.
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                          clipHeader                           |
+    // +---------------------------------------------------------------+
+    // |                             ...                               |
+    // +---------------------------------------------------------------+
+    // |                           streamId                            |
+    // +---------------------------------------------------------------+
+    // |              requestedFileContentsData (variable)             |
+    // +---------------------------------------------------------------+
+    // |                             ...                               |
+    // +---------------------------------------------------------------+
+
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009). The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in the msgFlags field of the Clipboard PDU Header.
+
+    // streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the File Contents Response PDU with the corresponding File Contents Request PDU. The File Contents Request PDU that triggered the response MUST contain an identical value in the streamId field.
+
+    // requestedFileContentsData (variable): This field contains a variable number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001) operation, the requestedFileContentsData field holds a 64-bit, unsigned integer containing the size of the file. In the case of a FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData field contains a byte-stream of data extracted from the file.
+
 struct FileContentsResponse : CliprdrHeader {
     explicit FileContentsResponse(bool response_ok = false)
-    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
+    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
     {}
 
     void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
-//         stream.out_uint32_le(0);
-//         stream.out_uint64_le(0);
+    }
+
+    void emit_size(OutStream & stream, uint32_t streamID, uint64_t size) {
+        this->dataLen_ += 12;
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(streamID);
+        stream.out_uint64_le(size);
+        stream.out_uint32_le(0);
+    }
+
+    void emit_range(OutStream & stream, uint32_t streamID, uint64_t size) {
+        this->dataLen_ += size;                          //  requestedFileContentsData range
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(streamID);
     }
 };
 
@@ -1177,6 +1215,8 @@ enum FileAttributes : uint32_t {
 //  contains the name of the file.
 
 class FileDescriptor {
+
+public:
     uint32_t flags;
     uint32_t fileAttributes;
     uint64_t lastWriteTime;
@@ -1686,6 +1726,26 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             );
     }
 
+
+    // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
+
+    //  The CLIPRDR_FILELIST structure is used to describe a list of files, each file in the list being represented by a File Descriptor (section 2.2.5.2.3.1).
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                            cItems                             |
+    // +---------------------------------------------------------------+
+    // |                 fileDescriptorArray (variable)                |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+
+    // cItems (4 bytes): An unsigned 32-bit integer that specifies the number of entries in the fileDescriptorArray field.
+
+    // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
+
     enum : int {
         FILE_DESCRIPTOR_SIZE = 596
     };
@@ -1693,7 +1753,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     // Files List
     // TODO std::string* + int* -> array_view { name, size };
     void emit_fileList(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems, uint64_t time) {
-        this->dataLen_ = (cItems * FILE_DESCRIPTOR_SIZE) + 4;
+        this->dataLen_ = (cItems * FILE_DESCRIPTOR_SIZE);
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(cItems);
         for (int i = 0; i < cItems; i++) {
@@ -1711,8 +1771,9 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             size_t size(namesList[i].size());
             //REDASSERT(namesList[i].size() <= 520);
             stream.out_copy_bytes(namesList[i].data(), size);
-            stream.out_clear_bytes(524 - size);
+            stream.out_clear_bytes(520 - size);
         }
+        stream.out_uint32_le(0);
     }
 
     void emit_text(OutStream & stream, uint32_t length) {

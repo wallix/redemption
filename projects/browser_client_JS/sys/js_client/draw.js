@@ -49,6 +49,10 @@ function CTRL_ALT_DELETE() {
     _CtrlAltDelPressed();
 }
 
+function refreshPressed() {
+    _refreshPressed();
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -481,7 +485,7 @@ function disconnecting() {
 
     // socket.onclose();
 
-    _disconnexion();
+    _disconnection();
 }
 /*
 function init_socket(ip, user, password, port) { // ip = string; port = int

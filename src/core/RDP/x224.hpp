@@ -334,7 +334,7 @@ namespace X224
             // TODO We should have less calls to read, one to get length, the other to get data, other short packets are error
 
             t.recv(end, 1);
-            
+
             nbbytes++;
             uint8_t tpkt_version = data.in_uint8();
             int action = tpkt_version & 0x03;
@@ -756,6 +756,7 @@ namespace X224
     {
         CR_TPDU_Send(OutStream & stream, const char * cookie, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_requestedProtocols)
         {
+
             stream.out_uint8(0x03); // version 3
             stream.out_uint8(0x00);
             size_t cookie_len = strlen(cookie);
@@ -1103,8 +1104,10 @@ namespace X224
         }
     }; // END CLASS CC_TPDU_Recv
 
+
     struct CC_TPDU_Send
     {
+
         CC_TPDU_Send(OutStream & stream, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
         {
             stream.out_uint8(0x03); // version 3
@@ -1170,6 +1173,7 @@ namespace X224
                 stream.out_uint16_le(8);
                 stream.out_uint32_le(rdp_neg_code);
             }
+
         }
     };
 

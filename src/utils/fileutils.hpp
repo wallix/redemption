@@ -33,6 +33,7 @@
 
 #include <string>
 
+#include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
 
