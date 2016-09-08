@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
     RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
 
 
-    {
+    /*{
         const uint8_t file_list_data[] =
             "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             }
         }
 
-    }
+    } */
 
 
 
