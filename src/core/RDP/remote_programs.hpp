@@ -105,6 +105,12 @@
 //  | TS_RAIL_ORDER_HANDSHAKE_EX    | Indicates a bi-directional HandshakeEx   |
 //  | 0x0013                        | PDU.                                     |
 //  +-------------------------------+------------------------------------------+
+//  | TS_RAIL_ORDER_ZORDER_SYNC     | Indicates a Server Z-Order Sync          |
+//  | 0x0014                        | Information PDU from server to client.   |
+//  +-------------------------------+------------------------------------------+
+//  | TS_RAIL_ORDER_CLOAK           | Indicates a Window Cloak State Change    |
+//  | 0x0015                        | PDU from client to server.               |
+//  +-------------------------------+------------------------------------------+
 
 enum {
       TS_RAIL_ORDER_EXEC            = 0x0001
@@ -125,10 +131,12 @@ enum {
     , TS_RAIL_ORDER_LANGUAGEIMEINFO = 0x0011
     , TS_RAIL_ORDER_COMPARTMENTINFO = 0x0012
     , TS_RAIL_ORDER_HANDSHAKE_EX    = 0x0013
+    , TS_RAIL_ORDER_ZORDER_SYNC     = 0x0014
+    , TS_RAIL_ORDER_CLOAK           = 0x0015
 };
 
 static inline
-char const* get_RAIL_orderType_name(uint16_t orderType) {
+const char * get_RAIL_orderType_name(uint16_t orderType) {
     switch (orderType) {
         case TS_RAIL_ORDER_EXEC:            return "TS_RAIL_ORDER_EXEC";
         case TS_RAIL_ORDER_ACTIVATE:        return "TS_RAIL_ORDER_ACTIVATE";
@@ -148,6 +156,8 @@ char const* get_RAIL_orderType_name(uint16_t orderType) {
         case TS_RAIL_ORDER_LANGUAGEIMEINFO: return "TS_RAIL_ORDER_LANGUAGEIMEINFO";
         case TS_RAIL_ORDER_COMPARTMENTINFO: return "TS_RAIL_ORDER_COMPARTMENTINFO";
         case TS_RAIL_ORDER_HANDSHAKE_EX:    return "TS_RAIL_ORDER_HANDSHAKE_EX";
+        case TS_RAIL_ORDER_ZORDER_SYNC:     return "TS_RAIL_ORDER_ZORDER_SYNC";
+        case TS_RAIL_ORDER_CLOAK:           return "TS_RAIL_ORDER_CLOAK";
         default:                            return "<unknown>";
     }
 }
@@ -160,10 +170,14 @@ class RAILPDUHeader {
     mutable uint16_t orderLength_ = 0;
 
     mutable uint32_t   offset_of_orderLength = 0;
-    mutable OutStream* output_stream;
+    mutable OutStream* output_stream = nullptr;
 
 public:
-    void emit_begin(uint16_t orderType) {
+    void emit_begin(OutStream & stream, uint16_t orderType) {
+        REDASSERT(this->output_stream == nullptr);
+
+        this->output_stream = &stream;
+
         this->output_stream->out_uint16_le(orderType);
 
         this->offset_of_orderLength = this->output_stream->get_offset();
@@ -252,6 +266,10 @@ public:
 
     uint32_t buildNumber() const { return this->buildNumber_; }
 
+    void buildNumber(uint32_t buildNumber_) {
+        this->buildNumber_ = buildNumber_;
+    }
+
     static size_t size() {
         return 4;   // buildNumber(4)
     }
@@ -260,7 +278,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientInformationPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "HandshakePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -487,7 +505,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientExecutePDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "HandshakeExPDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -546,7 +564,7 @@ public:
 //  | | | | | | | | | | |1| | | | | |
 //  |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//  |A|B|C|D|0|0|0|0|0|0|0|0|0|0|0|0|
+//  |A|B|C|D|E|0|0|0|0|0|0|0|0|0|0|0|
 //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 //  Where the bits are defined as:
@@ -576,12 +594,33 @@ public:
 //  | TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        | the Arguments field MUST be  |
 //  |                                           | expanded on the server.      |
 //  +-------------------------------------------+------------------------------+
+//  | E                                         | If this flag is set, the     |
+//  | TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID       | ExeOrFile field refers to an |
+//  |                                           | application user model ID.   |
+//  |                                           | If it is not set, the        |
+//  |                                           | ExeOrFile field refers to a  |
+//  |                                           | file path. This flag MUST be |
+//  |                                           | ignored if the               |
+//  |                                           | TS_RAIL_EXEC_FLAG_FILE       |
+//  |                                           | (0x0004) flag is set. An     |
+//  |                                           | application user model ID is |
+//  |                                           | a string that uniquely       |
+//  |                                           | identifies an application,   |
+//  |                                           | regardless of where the      |
+//  |                                           | application is installed on  |
+//  |                                           | the operating system. The    |
+//  |                                           | string can be used to        |
+//  |                                           | identify Windows Store       |
+//  |                                           | applications as well as      |
+//  |                                           | desktop applications.        |
+//  +-------------------------------------------+------------------------------+
 
 enum {
       TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY = 0x0001
     , TS_RAIL_EXEC_FLAG_TRANSLATE_FILES         = 0x0002
     , TS_RAIL_EXEC_FLAG_FILE                    = 0x0004
     , TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS        = 0x0008
+    , TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID       = 0x0010
 };
 
 // ExeOrFileLength (2 bytes): An unsigned 16-bit integer. Specifies the
@@ -680,11 +719,19 @@ public:
 
     uint16_t Flags() const { return this->Flags_; }
 
+    void Flags(uint16_t Flags_) { this->Flags_ = Flags_; }
+
     const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
+
+    void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
 
     const char * WorkingDir() const { return this->working_dir.c_str(); }
 
+    void WorkingDir(const char * WorkingDir_) { this->working_dir = WorkingDir_; }
+
     const char * Arguments() const { return this->arguments.c_str(); }
+
+    void Arguments(const char * Arguments_) { this->arguments = Arguments_; }
 
     size_t size() const {
         size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -839,7 +886,7 @@ enum {
 };
 
 static inline
-char const* get_RAIL_ExecResult_name(uint16_t ExecResult) {
+const char* get_RAIL_ExecResult_name(uint16_t ExecResult) {
     switch (ExecResult) {
         case RAIL_EXEC_S_OK:               return "RAIL_EXEC_S_OK";
         case RAIL_EXEC_E_HOOK_NOT_LOADED:  return "RAIL_EXEC_E_HOOK_NOT_LOADED";
@@ -903,11 +950,19 @@ public:
 
     uint16_t Flags() const { return this->Flags_; }
 
+    void Flags(uint16_t Flags_) { this->Flags_ = Flags_; }
+
     uint16_t ExecResult() const { return this->ExecResult_; }
+
+    void ExecResult(uint16_t ExecResult_) { this->ExecResult_ = ExecResult_; }
 
     uint16_t RawResult() const { return this->RawResult_; }
 
+    void RawResult(uint16_t RawResult_) { this->RawResult_ = RawResult_; }
+
     const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
+
+    void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
 
     size_t size() const {
         size_t count = 12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
@@ -930,7 +985,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "Flags=0x%X ExecResult=\"%s\"(%u) RawResult=0x%08X ExeOrFile=\"%s\"",
+            "Flags=0x%X ExecResult=%s(%u) RawResult=0x%08X ExeOrFile=\"%s\"",
             this->Flags_, ::get_RAIL_ExecResult_name(this->ExecResult_),
             this->ExecResult_, this->RawResult_, this->exe_or_file.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
@@ -986,7 +1041,7 @@ class HighContrastSystemInformationStructure {
 public:
     HighContrastSystemInformationStructure() = default;
 
-    HighContrastSystemInformationStructure(uint32_t Flags_, char const* ColorScheme_)
+    HighContrastSystemInformationStructure(uint32_t Flags_, const char* ColorScheme_)
     : Flags_(Flags_)
     , color_scheme(ColorScheme_) {}
 
@@ -1199,7 +1254,7 @@ enum {
 //  +------------------------+------------------------------------------------+
 
 static inline
-char const* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
+const char* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
     switch (SystemParam) {
         case SPI_SETDRAGFULLWINDOWS: return "SPI_SETDRAGFULLWINDOWS";
         case SPI_SETKEYBOARDCUES:    return "SPI_SETKEYBOARDCUES";
@@ -1320,7 +1375,7 @@ private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "NonMonitoredDesktop: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ClientSystemParametersUpdatePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -1428,7 +1483,7 @@ enum {
 //  +-------------------------+------------------------------------------------+
 
 static inline
-char const* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
+const char* get_RAIL_ServerSystemParam_name(uint32_t SystemParam) {
     switch (SystemParam) {
         case SPI_SETSCREENSAVEACTIVE: return "SPI_SETSCREENSAVEACTIVE";
         case SPI_SETSCREENSAVESECURE: return "SPI_SETSCREENSAVESECURE";
@@ -1465,17 +1520,21 @@ public:
 
     uint32_t SystemParam() const { return this->SystemParam_; }
 
+    void SystemParam(uint32_t SystemParam_) { this->SystemParam_ = SystemParam_; }
+
     uint8_t Body() const { return this->Body_; }
 
+    void Body(uint8_t Body_) { this->Body_ = Body_; }
+
     static size_t size() {
-        return 5;   // WindowId(4) + Body(1)
+        return 5;   // SystemParam(4) + Body(1)
     }
 
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ClientActivatePDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ServerSystemParametersUpdatePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
@@ -1564,7 +1623,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Enabled=%s",
+            "WindowId=0x%X Enabled=%s",
             this->WindowId_, (this->Enabled_ ? "Yes" : "No"));
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1660,7 +1719,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Left=%u Top=%u",
+            "WindowId=0x%X Left=%u Top=%u",
             this->WindowId_, this->Left_, this->Top_);
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -1745,7 +1804,7 @@ enum {
 };
 
 static inline
-char const* get_RAIL_Command_name(uint16_t Command) {
+const char* get_RAIL_Command_name(uint16_t Command) {
     switch (Command) {
         case SC_SIZE:     return "SC_SIZE";
         case SC_MOVE:     return "SC_MOVE";
@@ -1801,7 +1860,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Command=%s(%u)",
+            "WindowId=0x%X Command=%s(%u)",
             this->WindowId_, ::get_RAIL_Command_name(this->Command_),
             this->Command_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -1941,7 +2000,7 @@ enum {
 };
 
 static inline
-char const* get_RAIL_Message_name(uint32_t Message) {
+const char* get_RAIL_Message_name(uint32_t Message) {
     switch (Message) {
         case WM_LBUTTONDOWN:       return "WM_LBUTTONDOWN";
         case WM_LBUTTONUP:         return "WM_LBUTTONUP";
@@ -2007,7 +2066,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u NotifyIconId=%u Message=%s(%u)",
+            "WindowId=0x%X NotifyIconId=%u Message=%s(%u)",
             this->WindowId_, this->NotifyIconId_, ::get_RAIL_Message_name(this->Message_),
             this->Message_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -2086,7 +2145,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u", this->WindowId_);
+            "WindowId=0x%X", this->WindowId_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -2223,7 +2282,7 @@ private:
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
+            "WindowId=0x%X MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
                 "MinTrackWidth=%u MinTrackHeight=%u MaxTrackWidth=%u "
                 "MaxTrackHeight=%u",
             this->WindowId, this->MaxWidth, this->MaxHeight, this->MaxPosX,
@@ -2410,7 +2469,7 @@ enum {
 //  +-----------------------+-------------------------------------------------+
 
 static inline
-char const* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
+const char* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
     switch (MoveSizeType) {
         case RAIL_WMSZ_LEFT:        return "RAIL_WMSZ_LEFT";
         case RAIL_WMSZ_RIGHT:       return "RAIL_WMSZ_RIGHT";
@@ -2426,75 +2485,6 @@ char const* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
         default:                    return "<unknown>";
     }
 }
-
-class ServerMoveSizeStartPDU {
-    uint32_t WindowId        = 0;
-    uint16_t IsMoveSizeStart = 0;
-    uint16_t MoveSizeType    = 0;
-    uint16_t PosX            = 0;
-    uint16_t PosY            = 0;
-
-public:
-    void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
-        stream.out_uint16_le(this->IsMoveSizeStart);
-        stream.out_uint16_le(this->MoveSizeType);
-        stream.out_uint16_le(this->PosX);
-        stream.out_uint16_le(this->PosY);
-    }
-
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // WindowId(4) +
-                                            //  IsMoveSizeStart(2) +
-                                            //  MoveSizeType(2) + PosX(2) +
-                                            //  PosY(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Move/Size Start PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
-
-        this->WindowId        = stream.in_uint32_le();
-        this->IsMoveSizeStart = stream.in_uint16_le();
-        this->MoveSizeType    = stream.in_uint16_le();
-        this->PosX            = stream.in_uint16_le();
-        this->PosY            = stream.in_uint16_le();
-    }
-
-    static size_t size() {
-        return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
-                    //  PosX(2) + PosY(2)
-    }
-
-private:
-    inline size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeStartPDU: ");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-
-        result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) PosX=%u PosY=%u",
-            this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
-            this->MoveSizeType, this->PosX, this->PosY);
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        return length;
-    }
-
-public:
-    inline void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-};
 
 // [MS-RDPERP] - 2.2.2.7.3 Server Move/Size End PDU
 //  (TS_RAIL_ORDER_LOCALMOVESIZE)
@@ -2572,32 +2562,32 @@ public:
 // TopLeftY (2 bytes): An unsigned 16-bit integer. The y-coordinate of the
 //  moved or resized window's top-left corner.
 
-class ServerMoveSizeEndPDU {
+class ServerMoveSizeStartOrEndPDU {
     uint32_t WindowId        = 0;
     uint16_t IsMoveSizeStart = 0;
     uint16_t MoveSizeType    = 0;
-    uint16_t TopLeftX        = 0;
-    uint16_t TopLeftY        = 0;
+    uint16_t PosXOrTopLeftX  = 0;
+    uint16_t PosYOrTopLeftY  = 0;
 
 public:
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->WindowId);
         stream.out_uint16_le(this->IsMoveSizeStart);
         stream.out_uint16_le(this->MoveSizeType);
-        stream.out_uint16_le(this->TopLeftX);
-        stream.out_uint16_le(this->TopLeftY);
+        stream.out_uint16_le(this->PosXOrTopLeftX);
+        stream.out_uint16_le(this->PosYOrTopLeftY);
     }
 
     void receive(InStream & stream) {
         {
             const unsigned expected = 12;   // WindowId(4) +
                                             //  IsMoveSizeStart(2) +
-                                            //  MoveSizeType(2) + TopLeftX(2) +
-                                            //  TopLeftY(2)
+                                            //  MoveSizeType(2) + PosX/TopLeftX(2) +
+                                            //  PosY/TopLeftY(2)
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated Server Move/Size End PDU: expected=%u remains=%zu",
+                    "Truncated Server Move/Size Start/End PDU: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RAIL_PDU_TRUNCATED);
             }
@@ -2606,27 +2596,28 @@ public:
         this->WindowId        = stream.in_uint32_le();
         this->IsMoveSizeStart = stream.in_uint16_le();
         this->MoveSizeType    = stream.in_uint16_le();
-        this->TopLeftX        = stream.in_uint16_le();
-        this->TopLeftY        = stream.in_uint16_le();
+        this->PosXOrTopLeftX  = stream.in_uint16_le();
+        this->PosYOrTopLeftY  = stream.in_uint16_le();
     }
 
     static size_t size() {
         return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
-                    //  TopLeftX(2) + TopLeftY(2)
+                    //  PosX/TopLeftX(2) + PosY/TopLeftY(2)
     }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeEndPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeStartOrEndPDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u IsMoveSizeStart=%u MoveSizeType=%s(%u) TopLeftX=%u TopLeftY=%u",
-            this->WindowId, this->IsMoveSizeStart, ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
-            this->MoveSizeType, this->TopLeftX, this->TopLeftY);
+            "WindowId=0x%X IsMoveSizeStart=%s(%u) MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
+            this->WindowId, (this->IsMoveSizeStart ? "Yes" : "No"), this->IsMoveSizeStart,
+            ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
+            this->MoveSizeType, this->PosXOrTopLeftX, this->PosYOrTopLeftY);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -2725,12 +2716,12 @@ private:
     inline size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
-        size_t result = ::snprintf(buffer + length, size - length, "ServerMoveSizeEndPDU: ");
+        size_t result = ::snprintf(buffer + length, size - length, "ClientWindowMovePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=%u Left=%u Top=%u Right=%u Bottom=%u",
+            "WindowId=0x%X Left=%u Top=%u Right=%u Bottom=%u",
             this->WindowId, this->Left, this->Top, this->Right, this->Bottom);
         length += ((result < size - length) ? result : (size - length - 1));
 
@@ -2785,13 +2776,13 @@ public:
 //  grouping windows.
 
 class ServerGetApplicationIDResponsePDU {
-    uint32_t WindowId = 0;
+    uint32_t WindowId_ = 0;
 
     std::string application_id;
 
 public:
     void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
+        stream.out_uint32_le(this->WindowId_);
 
         uint8_t ApplicationId_unicode_data[512];
         ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
@@ -2814,7 +2805,7 @@ public:
             }
         }
 
-        this->WindowId = stream.in_uint32_le();
+        this->WindowId_ = stream.in_uint32_le();
 
         uint8_t ApplicationId_utf8_string[512 / 2]; // ApplicationId(512)
         const size_t length_of_ApplicationId_utf8_string = ::UTF16toUTF8(
@@ -2826,6 +2817,14 @@ public:
             length_of_ApplicationId_utf8_string);
     }
 
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
+
+    const char* ApplicationId() const { return this->application_id.c_str(); }
+
+    void ApplicationId(const char * ApplicationId_) { this->application_id = ApplicationId_; }
+
     static size_t size() {
         return 516; // WindowId(4) + ApplicationId(512)
     }
@@ -2836,15 +2835,9 @@ public:
         size_t result = ::snprintf(buffer + length, size - length, "ServerGetApplicationIDResponsePDU: ");
         length += ((result < size - length) ? result : (size - length - 1));
 
-        uint8_t ApplicationId_unicode_data[512];
-        ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
-        /*const size_t size_of_ApplicationId_unicode_data = */::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->application_id.c_str()),
-            ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data) - 2 /* null-terminator */);
-
         result = ::snprintf(buffer + length, size - length,
             "WindowId=0x%X ApplicationId=\"%s\"",
-            this->WindowId, ApplicationId_unicode_data);
+            this->WindowId_, this->application_id.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;

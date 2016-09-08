@@ -61,7 +61,7 @@ private:
         { return !(*this == k); }
     };
 
-    typedef std::array<value_type, 56> trans_t;
+    typedef std::array<value_type, 57> trans_t;
 
     language_t lang;
     trans_t trans;
@@ -87,6 +87,7 @@ private:
         }},
         {"protocol", {"Protocol", "Protocole"}},
         {"target_group", {"Target Group", "Groupe"}},
+        {"authorization", {"Authorization", "Autorisation"}},
         {"target", {"Target", "Cible"}},
         {"close_time", {"Close Time", "Date de clôture"}},
         {"logout", {"Logout", "Déconnexion"}},
@@ -257,4 +258,3 @@ inline Translation::language_t language(Inifile const & ini) {
 inline Translation::language_t language(Language lang) {
     return static_cast<Translation::language_t>(lang);
 }
-

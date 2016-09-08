@@ -22,17 +22,16 @@
 
 #pragma once
 
-#include "utils/translation.hpp"
 #include "core/front_api.hpp"
 #include "configs/config.hpp"
-#include "widget2/language_button.hpp"
-#include "widget2/flat_dialog.hpp"
-#include "widget2/screen.hpp"
 #include "configs/config_access.hpp"
-#include "internal_mod.hpp"
+#include "mod/internal/copy_paste.hpp"
+#include "mod/internal/locally_integrable_mod.hpp"
+#include "mod/internal/widget2/flat_dialog.hpp"
+#include "mod/internal/widget2/language_button.hpp"
+#include "mod/internal/widget2/screen.hpp"
 #include "utils/timeout.hpp"
-
-
+#include "utils/translation.hpp"
 
 using FlatDialogModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
@@ -45,7 +44,7 @@ using FlatDialogModVariables = vcfg::variables<
     vcfg::var<cfg::theme,                               vcfg::accessmode::get>
 >;
 
-class FlatDialogMod : public InternalMod, public NotifyApi
+class FlatDialogMod : public LocallyIntegrableMod, public NotifyApi
 {
     LanguageButton language_button;
     FlatDialog dialog_widget;
@@ -53,11 +52,13 @@ class FlatDialogMod : public InternalMod, public NotifyApi
     FlatDialogModVariables vars;
     Timeout   timeout;
 
+    CopyPaste copy_paste;
+
 public:
     FlatDialogMod(FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect,
                   const char * caption, const char * message, const char * cancel_text,
-                  time_t now, ChallengeOpt has_challenge = NO_CHALLENGE)
-        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+                  time_t now, ClientExecute & client_execute, ChallengeOpt has_challenge = NO_CHALLENGE)
+        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , language_button(
             vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget,
             front, front, this->font(), this->theme())
@@ -91,7 +92,11 @@ public:
         switch (event) {
             case NOTIFY_SUBMIT: this->accepted(); break;
             case NOTIFY_CANCEL: this->refused(); break;
-            default: ;
+            default:
+            if (this->copy_paste) {
+                copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
+            }
+            break;
         }
     }
 
@@ -128,7 +133,12 @@ private:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi &) override {
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
+        if (!this->copy_paste && event.waked_up_by_time) {
+            this->copy_paste.ready(this->front);
+        }
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->accepted();
@@ -143,5 +153,13 @@ public:
     }
 
     bool is_up_and_running() override { return true; }
+
+    void send_to_mod_channel(const char * front_channel_name, InStream& chunk, size_t length, uint32_t flags) override {
+        LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
+
+        if (this->copy_paste && !strcmp(front_channel_name, CHANNELS::channel_names::cliprdr)) {
+            this->copy_paste.send_to_mod_channel(chunk, flags);
+        }
+    }
 };
 

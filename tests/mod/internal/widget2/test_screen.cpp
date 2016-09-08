@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wscreen.show_tooltip(nullptr, "tooltip test", 30, 35);
+    wscreen.show_tooltip(nullptr, "tooltip test", 30, 35, Rect(0, 0, 0, 0));
 
     wscreen.rdp_input_invalidate(wscreen.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen12.png");
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wscreen.show_tooltip(nullptr, nullptr, 30, 35);
+    wscreen.show_tooltip(nullptr, nullptr, 30, 35, Rect(0, 0, 0, 0));
     wscreen.rdp_input_invalidate(wscreen.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen13.png");
     if (!check_sig(drawable.gd.impl(), message,

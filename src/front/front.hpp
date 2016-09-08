@@ -2902,7 +2902,7 @@ private:
 
                 if (this->client_info.remote_program) {
                     RailCaps rail_caps;
-                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
+                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
                     if (this->verbose) {
                         rail_caps.log("Sending to client");
                     }
@@ -2910,7 +2910,7 @@ private:
                     caps_count++;
 
                     WindowListCaps window_list_caps;
-                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
                     window_list_caps.NumIconCaches = 3;
                     window_list_caps.NumIconCacheEntries = 12;
                     if (this->verbose) {

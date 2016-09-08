@@ -28,6 +28,7 @@
 #define LOGNULL
 //#define LOGPRINT
 
+#include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_dialog_mod.hpp"
 #include "../../front/fake_front.hpp"
 
@@ -42,13 +43,14 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front);
 
     Inifile             ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0, client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -67,13 +69,14 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front);
 
     Inifile             ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -91,13 +94,14 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     info.height = 600;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front);
 
     Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
 
 
     bool    ctrl_alt_del;
@@ -135,13 +139,14 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
     info.height = 1200;
 
     FakeFront front(info, 0);
+    ClientExecute client_execute(front);
 
     Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
 
 
     bool    ctrl_alt_del;

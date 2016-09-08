@@ -116,7 +116,7 @@ public:
         , less_than_800(this->rect.cx < 800)
         , device_label(drawable, TEXT_MARGIN, VERTICAL_MARGIN, *this, nullptr, device_name,
                        true, -10, theme.global.fgcolor, theme.global.bgcolor, font)
-        , target_group_label(drawable, 0, 0, *this, nullptr, TR("target_group", lang), true,
+        , target_group_label(drawable, 0, 0, *this, nullptr, TR("authorization", lang), true,
                               -10, theme.selector_label.fgcolor,
                              theme.selector_label.bgcolor, font, 5)
         , target_label(drawable, 0, 0, *this, nullptr, TR("target", lang), true, -10,
@@ -383,6 +383,10 @@ public:
         }
     }
 
-
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y,
+                      Rect const & preferred_display_rect, int iter) override {
+        WidgetParent::show_tooltip(widget, text, x, y,
+            (preferred_display_rect.isempty() ? this->rect : preferred_display_rect),
+            iter);
+    }
 };
-

@@ -136,7 +136,7 @@ public:
                 // TODO: tm.height unused ?
                 gdi::TextMetrics tm(this->font, this->buffer);
                 if (tm.width > this->rect.cx) {
-                    this->show_tooltip(this, this->buffer, x, y);
+                    this->show_tooltip(this, this->buffer, x, y, Rect(0, 0, 0, 0));
                 }
             }
         }
