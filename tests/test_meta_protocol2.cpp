@@ -81,7 +81,8 @@ namespace proto
     struct dyn_size {};
     template<std::size_t i> struct limited_size {};
 
-    namespace tags {
+    namespace tags
+    {
         class static_buffer {};
         class dynamic_buffer {};
         class view_buffer {};
@@ -94,7 +95,8 @@ namespace proto
 
     template<class...> using void_t = void;
 
-    namespace detail {
+    namespace detail
+    {
         template<class T> struct sizeof_to_buffer_cat { using type = tags::dynamic_buffer; };
         template<std::size_t n> struct sizeof_to_buffer_cat<size_<n>> { using type = tags::static_buffer; };
         template<std::size_t n> struct sizeof_to_buffer_cat<limited_size<n>> { using type = tags::limited_buffer; };
@@ -429,6 +431,7 @@ namespace proto
             T val;
         };
     }
+
 
     template<class... Ts>
     struct inherits : Ts...
@@ -791,6 +794,48 @@ namespace proto
         }
     };
 
+    template<class... Ts>
+    struct subpacket_value
+    {
+        using sizeof_ = brigand::fold<
+            brigand::list<proto::sizeof_<desc_type_t<Ts>>...>,
+            size_<0>,
+            brigand::call<common_size>
+        >;
+
+        constexpr subpacket_value(desc_type_t<Ts>... v) : values{v...} {}
+
+        inherits<desc_type_t<Ts>...> values;
+
+        std::size_t limited_serialize(uint8_t * p) const
+        {
+            std::size_t sz = 0;
+            (void)std::initializer_list<int>{
+                (sz += static_cast<Ts>(this->values).serialize(p + sz))...
+            };
+            return sz;
+        }
+
+        std::size_t static_serialize(uint8_t * p) const
+        {
+            std::size_t sz = 0;
+            (void)std::initializer_list<int>{
+                (sz += serialize(p + sz, static_cast<Ts>(this->values)))...
+            };
+            return sz;
+        }
+
+    private:
+        template<class T>
+        static std::enable_if_t<is_static_buffer<T>::value, std::size_t>
+        serialize(uint8_t * p, T const & x)
+        { return x.static_serialize(p); }
+
+        template<class T>
+        static std::enable_if_t<!is_static_buffer<T>::value, std::size_t>
+        serialize(uint8_t * p, T const & x)
+        { return x.limited_serialize(p); }
+    };
 
     namespace detail
     {
@@ -912,6 +957,28 @@ namespace proto
         return creator<T, char const *, check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...>{name, d...};
     }
 
+    template<class... Desc>
+    constexpr auto
+    compose(Desc... d)
+    {
+        return creator<
+            subpacket_value<typename Desc::var_type...>,
+            unamed,
+            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
+        >{unamed{}, d...};
+    }
+
+    template<class... Desc>
+    constexpr auto
+    compose(char const * name, Desc... d)
+    {
+        return creator<
+            subpacket_value<typename Desc::var_type...>,
+            char const *,
+            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
+        >{name, d...};
+    }
+
     template<class T>
     using is_empty_or_proto_data = brigand::bool_<
         is_creator<T>::value or
@@ -966,7 +1033,9 @@ namespace proto
         f(pkts...);
     }
 
-    namespace utils {
+
+    namespace utils
+    {
         template<class... Ts>
         struct parameters
         {
@@ -980,6 +1049,135 @@ namespace proto
         private:
             proto::inherit_refs<Ts...> refs;
         };
+    }
+
+
+    constexpr struct params_
+    {
+        template<class T>
+        struct param {};
+
+        constexpr params_() noexcept {}
+
+        template<class Desc, class Derived>
+        auto operator[](var<Desc, Derived>) const noexcept {
+            return param<Derived>{};
+        }
+    } params;
+
+    namespace lazy
+    {
+#define PROTO_LAZY_BINARY_OP(name, op)                  \
+        template<class T, class U>                      \
+        struct name                                     \
+        {                                               \
+            template<class Params>                      \
+            decltype(auto) operator()(Params p) const { \
+                return x(p) op y(p);                    \
+            }                                           \
+                                                        \
+            T x;                                        \
+            U y;                                        \
+        }
+
+        PROTO_LAZY_BINARY_OP(bit_and, &);
+
+#undef PROTO_LAZY_BINARY_OP
+
+        template<class T>
+        struct val
+        {
+            template<class Params>
+            decltype(auto) operator()(Params) const {
+                return x;
+            }
+
+            T x;
+        };
+
+        template<class Var>
+        struct param
+        {
+            template<class Params>
+            decltype(auto) operator()(Params p) const {
+                return p[Var{}].val;
+            }
+        };
+    }
+
+    template<class T, class U>
+    lazy::bit_and<lazy::param<T>, lazy::val<U>>
+    constexpr operator & (params_::param<T>, U && x)
+    { return {{}, x}; }
+
+    namespace filters
+    {
+        namespace detail
+        {
+            template<class Val>
+            struct only_if_true
+            {
+                using sizeof_ = dyn_size;
+                using buffer_category = tags::view_buffer;
+
+                std::size_t limited_serialize(uint8_t * p) const;
+
+                array_view_const_u8 get_view_buffer() const;
+
+                template<class F>
+                void dynamic_serialize(F && f) const;
+
+                bool is_ok;
+                Val val;
+            };
+
+            template<class Cond, class Var>
+            struct if_act
+            {
+                template<class Params>
+                constexpr auto operator()(Params params) const
+                {
+                    return only_if_true<decltype(params[var])>{bool(cond(params)), params[var]};
+                }
+
+                Cond cond;
+                Var var;
+            };
+
+            template<class Cond>
+            struct if_
+            {
+                template<class Var>
+                auto operator[](Var var) const
+                {
+                    return if_act<Cond, check_and_return_t<is_empty_or_proto_data, Var>>{cond, var};
+                }
+
+                Cond cond;
+            };
+
+            template<class Var>
+            struct param_to_bool
+            {
+                template<class Params>
+                constexpr bool operator()(Params params) const
+                {
+                    return bool(lazy::param<Var>{}(params));
+                }
+            };
+        }
+
+        template<class Cond>
+        auto if_(Cond cond)
+        {
+            return detail::if_<Cond>{cond};
+        }
+
+        template<class Var>
+        auto if_true(Var v)
+        {
+            return if_(detail::param_to_bool<Var>{})[v];
+        }
     }
 }
 
@@ -2028,8 +2226,8 @@ namespace sec
 
     // TODO
     // constexpr auto sec_send2 = proto::desc(
-    //     proto::filter::if_true(flags),
-    //     proto::filter::if_(proto::params[flags] & SEC::SEC_ENCRYPT)
+    //     proto::filters::if_true(flags),
+    //     proto::filters::if_(proto::params[flags] & SEC::SEC_ENCRYPT)
     //         [proto::creater<proto_signature>(data, crypt)]
     // );
 }
@@ -2106,4 +2304,14 @@ void test_new()
     };
 
     proto::apply(Buffering2<Policy>{}, packet1, packet2);
+
+
+    auto v = x224::LI = 1_c;
+    proto::utils::parameters<decltype(v)> p{v};
+    proto::filters::if_true(x224::LI)(p);
+
+    proto::filters::if_(proto::params[x224::LI] & 1_c)
+    [x224::LI]
+    (p)
+    ;
 }
