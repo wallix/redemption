@@ -1846,7 +1846,7 @@ public:
 
     uint32_t WindowId() const { return this->WindowId_; }
 
-    int16_t Command() const { return this->Command_; }
+    uint16_t Command() const { return this->Command_; }
 
     static size_t size() {
         return 6;   // WindowId(4) + Command(2)
@@ -1860,7 +1860,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "WindowId=0x%X Command=%s(%u)",
+            "WindowId=0x%X Command=%s(0x%04X)",
             this->WindowId_, ::get_RAIL_Command_name(this->Command_),
             this->Command_);
         length += ((result < size - length) ? result : (size - length - 1));
