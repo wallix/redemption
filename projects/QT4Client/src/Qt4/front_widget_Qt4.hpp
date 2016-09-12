@@ -1048,10 +1048,15 @@ public:
     struct CB_out_File {
         uint64_t     size;
         std::string  name;
+        std::string  nameUTF8;
         char *       chunk;
+
+        ~CB_out_File() {
+            delete[] (chunk);
+        }
     };
-    typedef struct CB_out_File CB_out_File;
     std::vector<CB_out_File>    _items_list;
+    std::vector<std::string>    _temp_files_list;
 
 
     Connector_Qt(Front_Qt * front, QWidget * parent)
@@ -1183,53 +1188,56 @@ public:
         }
     }
 
-    void setClipboard(std::string & str, bool path) { // Paste text or file to client
-        if (path) {
-
-            QClipboard *cb = QApplication::clipboard();
-            QMimeData* newMimeData = new QMimeData();
-            const QMimeData* oldMimeData = cb->mimeData();
-            QStringList ll = oldMimeData->formats();
-            for (int i = 0; i < ll.size(); i++) {
-                newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-            }
-            QList<QUrl> list;
-
-            const std::string delimiter = "\n";
-            uint32_t pos = 0;
-            while (pos <= str.size()) {
-                pos = str.find(delimiter);
-                std::string path = str.substr(0, pos);
-                str = str.substr(pos+1, str.size());
-                QString fileName(path.c_str());
-                newMimeData->setText(fileName);
-                list.append(QUrl::fromLocalFile(fileName));
-                QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(fileName).toEncoded());
-                newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-            }
-
-            newMimeData->setUrls(list);
-            cb->setMimeData(newMimeData);
-
-        } else {
-
-            this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+    void write_clipboard_temp_file(std::string fileName, uint8_t * data, size_t data_len) {
+        std::string filePath(this->_front->CB_TEMP_DIR + fileName);
+        std::string filePath_mem(filePath);
+        this->_temp_files_list.push_back(filePath_mem);
+        std::ofstream oFile(filePath, std::ios::out | std::ios::binary);
+        if(oFile.is_open()) {
+            oFile.write(reinterpret_cast<char *>(data), data_len);
+            oFile.close();
         }
     }
 
-    void setClipboard(const QImage & image) {               // Paste image to client
+    void setClipboard_files(std::vector<Front_Qt::CB_in_Files> items_list) {
+        QClipboard *cb = QApplication::clipboard();
+        QMimeData* newMimeData = new QMimeData();
+        const QMimeData* oldMimeData = cb->mimeData();
+        QStringList ll = oldMimeData->formats();
+        for (int i = 0; i < ll.size(); i++) {
+            newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
+        }
+        QList<QUrl> list;
+        for (size_t i = 0; i < items_list.size(); i++) {
+            std::string path(this->_front->CB_TEMP_DIR + items_list[i].name);
+            QString qpath(path.c_str());
+            list.append(QUrl::fromLocalFile(qpath));
+            QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(qpath).toEncoded());
+            newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
+        }
+
+        newMimeData->setUrls(list);
+        cb->setMimeData(newMimeData);
+    }
+
+    void setClipboard_text(std::string & str) {
+        this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+    }
+
+    void setClipboard_image(const QImage & image) {               // Paste image to client
         this->_clipboard->setImage(image, QClipboard::Clipboard);
     }
 
     void emptyBuffer() {
         this->_bufferTypeID = 0;
         this->_cliboard_data_length = 0;
-        /*for (int i  = 0; i < Front_Qt::LIST_FILES_MAX_SIZE; i++) {
-            char * buff = this->_files_list.chunk[i];
-            if (buff !=  nullptr) {
-                delete[](buff);
+        for (size_t i = 0; i < _temp_files_list.size(); i++) {
+            if (remove(this->_temp_files_list[i].c_str()) != 0) {
+                std::cout <<  "error " << _temp_files_list[i] <<  std::endl;
             }
-        }*/
+        }
+        this->_temp_files_list.clear();
+        this->_items_list.clear();
     }
 
     void send_FormatListPDU(bool isLongFormat) {
@@ -1237,6 +1245,8 @@ public:
         std::string formatListDataShortName[] = { this->_bufferTypeLongName, this->_front->_clipbrd_formats_list.FILECONTENTS};
         this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, isLongFormat);
     }
+
+
 
 
 public Q_SLOTS:
@@ -1271,13 +1281,12 @@ public Q_SLOTS:
 
                 if (str.at(0) == '/') {
 
-                    this->_items_list.clear();
                     this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
 
                     // retrieve each path
                     const std::string delimiter = "\n";
-                    int i = 0;
+                    this->_cItems = 0;
                     uint32_t pos = 0;
                     while (pos <= str.size()) {
                         pos = str.find(delimiter);
@@ -1318,16 +1327,16 @@ public Q_SLOTS:
                                 }
                                 posName--;
                             }
-                            std::string name = path.substr(posName+2, path.size());
-                            int UTF8nameSize(name.size() * 2);
+                            file.nameUTF8 = path.substr(posName+2, path.size());
+                            //std::string name = file.nameUTF8;
+                            int UTF8nameSize(file.nameUTF8.size() *2);
                             if (UTF8nameSize > 520) {
                                 UTF8nameSize = 520;
                             }
                             uint8_t UTF16nameData[520];
-                            int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(name.c_str()), UTF16nameData, UTF8nameSize);
+                            int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(file.nameUTF8.c_str()), UTF16nameData, UTF8nameSize);
                             file.name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
-
-                            i++;
+                            this->_cItems++;
                             this->_items_list.push_back(file);
 
                         } else {
@@ -1335,7 +1344,6 @@ public Q_SLOTS:
                         }
                     }
 
-                    this->_cItems = i;
                     this->send_FormatListPDU(true);
 
 

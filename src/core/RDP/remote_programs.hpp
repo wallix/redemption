@@ -1271,11 +1271,10 @@ const char* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
 class ClientSystemParametersUpdatePDU {
     uint32_t                                SystemParam_;
     uint8_t                                 body_b;
-    RDP::RAIL::Rectangle                    body_r;
+    RDP::RAIL::Rectangle                    body_r_;
     HighContrastSystemInformationStructure  body_hcsis;
 
 public:
-
     void emit(OutStream & stream) {
         stream.out_uint32_le(this->SystemParam_);
 
@@ -1290,7 +1289,7 @@ public:
             case SPI_SETWORKAREA:
             case RAIL_SPI_DISPLAYCHANGE:
             case RAIL_SPI_TASKBARPOS:
-                this->body_r.emit(stream);
+                this->body_r_.emit(stream);
                 break;
 
             case SPI_SETHIGHCONTRAST:
@@ -1335,7 +1334,7 @@ public:
             case SPI_SETWORKAREA:
             case RAIL_SPI_DISPLAYCHANGE:
             case RAIL_SPI_TASKBARPOS:
-                this->body_r.receive(stream);
+                this->body_r_.receive(stream);
                 break;
 
             case SPI_SETHIGHCONTRAST:
@@ -1345,6 +1344,10 @@ public:
     }
 
     uint32_t SystemParam() const { return this->SystemParam_; }
+
+    RDP::RAIL::Rectangle const & body_r() const {
+        return this->body_r_;
+    }
 
     size_t size() const {
         size_t count = 4;   // SystemParam(4)
@@ -1360,7 +1363,7 @@ public:
             case SPI_SETWORKAREA:
             case RAIL_SPI_DISPLAYCHANGE:
             case RAIL_SPI_TASKBARPOS:
-                count += this->body_r.size();   // Body(variable)
+                count += this->body_r_.size();   // Body(variable)
                 break;
 
             case SPI_SETHIGHCONTRAST:
@@ -1398,7 +1401,7 @@ private:
             case SPI_SETWORKAREA:
             case RAIL_SPI_DISPLAYCHANGE:
             case RAIL_SPI_TASKBARPOS:
-                result = this->body_r.str(buffer + length, size - length);
+                result = this->body_r_.str(buffer + length, size - length);
                 length += ((result < size - length) ? result : (size - length - 1));
                 break;
 
@@ -1538,9 +1541,10 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "SystemParam=%s(%u) Body=\\x%02x",
+            "SystemParam=%s(%u) Body=%s(\\x%02x)",
             ::get_RAIL_ServerSystemParam_name(this->SystemParam_),
-            this->SystemParam_, this->Body_);
+            this->SystemParam_, (this->Body_ ? "TRUE" : "FALSE"),
+            this->Body_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -2216,27 +2220,27 @@ public:
 //  to which the window can be resized.
 
 class ServerMinMaxInfoPDU {
-    uint32_t WindowId       = 0;
-    uint16_t MaxWidth       = 0;
-    uint16_t MaxHeight      = 0;
-    uint16_t MaxPosX        = 0;
-    uint16_t MaxPosY        = 0;
-    uint16_t MinTrackWidth  = 0;
-    uint16_t MinTrackHeight = 0;
-    uint16_t MaxTrackWidth  = 0;
-    uint16_t MaxTrackHeight = 0;
+    uint32_t WindowId_       = 0;
+    uint16_t MaxWidth_       = 0;
+    uint16_t MaxHeight_      = 0;
+    uint16_t MaxPosX_        = 0;
+    uint16_t MaxPosY_        = 0;
+    uint16_t MinTrackWidth_  = 0;
+    uint16_t MinTrackHeight_ = 0;
+    uint16_t MaxTrackWidth_  = 0;
+    uint16_t MaxTrackHeight_ = 0;
 
 public:
     void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
-        stream.out_uint16_le(this->MaxWidth);
-        stream.out_uint16_le(this->MaxHeight);
-        stream.out_uint16_le(this->MaxPosX);
-        stream.out_uint16_le(this->MaxPosY);
-        stream.out_uint16_le(this->MinTrackWidth);
-        stream.out_uint16_le(this->MinTrackHeight);
-        stream.out_uint16_le(this->MaxTrackWidth);
-        stream.out_uint16_le(this->MaxTrackHeight);
+        stream.out_uint32_le(this->WindowId_);
+        stream.out_uint16_le(this->MaxWidth_);
+        stream.out_uint16_le(this->MaxHeight_);
+        stream.out_uint16_le(this->MaxPosX_);
+        stream.out_uint16_le(this->MaxPosY_);
+        stream.out_uint16_le(this->MinTrackWidth_);
+        stream.out_uint16_le(this->MinTrackHeight_);
+        stream.out_uint16_le(this->MaxTrackWidth_);
+        stream.out_uint16_le(this->MaxTrackHeight_);
     }
 
     void receive(InStream & stream) {
@@ -2255,15 +2259,15 @@ public:
             }
         }
 
-        this->WindowId       = stream.in_uint32_le();
-        this->MaxWidth       = stream.in_uint16_le();
-        this->MaxHeight      = stream.in_uint16_le();
-        this->MaxPosX        = stream.in_uint16_le();
-        this->MaxPosY        = stream.in_uint16_le();
-        this->MinTrackWidth  = stream.in_uint16_le();
-        this->MinTrackHeight = stream.in_uint16_le();
-        this->MaxTrackWidth  = stream.in_uint16_le();
-        this->MaxTrackHeight = stream.in_uint16_le();
+        this->WindowId_       = stream.in_uint32_le();
+        this->MaxWidth_       = stream.in_uint16_le();
+        this->MaxHeight_      = stream.in_uint16_le();
+        this->MaxPosX_        = stream.in_uint16_le();
+        this->MaxPosY_        = stream.in_uint16_le();
+        this->MinTrackWidth_  = stream.in_uint16_le();
+        this->MinTrackHeight_ = stream.in_uint16_le();
+        this->MaxTrackWidth_  = stream.in_uint16_le();
+        this->MaxTrackHeight_ = stream.in_uint16_le();
     }
 
     static size_t size() {
@@ -2272,6 +2276,42 @@ public:
                     //  MinTrackHeight(2) + MaxTrackWidth(2) +
                     //  MaxTrackHeight(2)
     }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
+
+    uint16_t MaxWidth() const { return this->MaxWidth_; }
+
+    void MaxWidth(uint16_t MaxWidth_) { this->MaxWidth_ = MaxWidth_; }
+
+    uint16_t MaxHeight() const { return this->MaxHeight_; }
+
+    void MaxHeight(uint16_t MaxHeight_) { this->MaxHeight_ = MaxHeight_; }
+
+    uint16_t MaxPosX() const { return this->MaxPosX_; }
+
+    void MaxPosX(uint16_t MaxPosX_) { this->MaxPosX_ = MaxPosX_; }
+
+    uint16_t MaxPosY() const { return this->MaxPosY_; }
+
+    void MaxPosY(uint16_t MaxPosY_) { this->MaxPosY_ = MaxPosY_; }
+
+    uint16_t MinTrackWidth() const { return this->MinTrackWidth_; }
+
+    void MinTrackWidth(uint16_t MinTrackWidth_) { this->MinTrackWidth_ = MinTrackWidth_; }
+
+    uint16_t MinTrackHeight() const { return this->MinTrackHeight_; }
+
+    void MinTrackHeight(uint16_t MinTrackHeight_) { this->MinTrackHeight_ = MinTrackHeight_; }
+
+    uint16_t MaxTrackWidth() const { return this->MaxTrackWidth_; }
+
+    void MaxTrackWidth(uint16_t MaxTrackWidth_) { this->MaxTrackWidth_ = MaxTrackWidth_; }
+
+    uint16_t MaxTrackHeight() const { return this->MaxTrackHeight_; }
+
+    void MaxTrackHeight(uint16_t MaxTrackHeight_) { this->MaxTrackHeight_ = MaxTrackHeight_; }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
@@ -2285,9 +2325,9 @@ private:
             "WindowId=0x%X MaxWidth=%u MaxHeight=%u MaxPosX=%u MaxPosY=%u "
                 "MinTrackWidth=%u MinTrackHeight=%u MaxTrackWidth=%u "
                 "MaxTrackHeight=%u",
-            this->WindowId, this->MaxWidth, this->MaxHeight, this->MaxPosX,
-            this->MaxPosY, this->MinTrackWidth, this->MinTrackHeight,
-            this->MaxTrackWidth, this->MaxTrackHeight);
+            this->WindowId_, this->MaxWidth_, this->MaxHeight_, this->MaxPosX_,
+            this->MaxPosY_, this->MinTrackWidth_, this->MinTrackHeight_,
+            this->MaxTrackWidth_, this->MaxTrackHeight_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -2563,19 +2603,19 @@ const char* get_RAIL_MoveSizeType_name(uint16_t MoveSizeType) {
 //  moved or resized window's top-left corner.
 
 class ServerMoveSizeStartOrEndPDU {
-    uint32_t WindowId        = 0;
-    uint16_t IsMoveSizeStart = 0;
-    uint16_t MoveSizeType    = 0;
-    uint16_t PosXOrTopLeftX  = 0;
-    uint16_t PosYOrTopLeftY  = 0;
+    uint32_t WindowId_        = 0;
+    uint16_t IsMoveSizeStart_ = 0;
+    uint16_t MoveSizeType_    = 0;
+    uint16_t PosXOrTopLeftX_  = 0;
+    uint16_t PosYOrTopLeftY_  = 0;
 
 public:
     void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
-        stream.out_uint16_le(this->IsMoveSizeStart);
-        stream.out_uint16_le(this->MoveSizeType);
-        stream.out_uint16_le(this->PosXOrTopLeftX);
-        stream.out_uint16_le(this->PosYOrTopLeftY);
+        stream.out_uint32_le(this->WindowId_);
+        stream.out_uint16_le(this->IsMoveSizeStart_);
+        stream.out_uint16_le(this->MoveSizeType_);
+        stream.out_uint16_le(this->PosXOrTopLeftX_);
+        stream.out_uint16_le(this->PosYOrTopLeftY_);
     }
 
     void receive(InStream & stream) {
@@ -2593,17 +2633,37 @@ public:
             }
         }
 
-        this->WindowId        = stream.in_uint32_le();
-        this->IsMoveSizeStart = stream.in_uint16_le();
-        this->MoveSizeType    = stream.in_uint16_le();
-        this->PosXOrTopLeftX  = stream.in_uint16_le();
-        this->PosYOrTopLeftY  = stream.in_uint16_le();
+        this->WindowId_        = stream.in_uint32_le();
+        this->IsMoveSizeStart_ = stream.in_uint16_le();
+        this->MoveSizeType_    = stream.in_uint16_le();
+        this->PosXOrTopLeftX_  = stream.in_uint16_le();
+        this->PosYOrTopLeftY_  = stream.in_uint16_le();
     }
 
     static size_t size() {
         return 12;  // WindowId(4) + IsMoveSizeStart(2) + MoveSizeType(2) +
                     //  PosX/TopLeftX(2) + PosY/TopLeftY(2)
     }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
+
+    uint16_t IsMoveSizeStart() const { return this->IsMoveSizeStart_; }
+
+    void IsMoveSizeStart(uint16_t IsMoveSizeStart_) { this->IsMoveSizeStart_ = IsMoveSizeStart_; }
+
+    uint16_t MoveSizeType() const { return this->MoveSizeType_; }
+
+    void MoveSizeType(uint16_t MoveSizeType_) { this->MoveSizeType_ = MoveSizeType_; }
+
+    uint16_t PosXOrTopLeftX() const { return this->PosXOrTopLeftX_; }
+
+    void PosXOrTopLeftX(uint16_t PosXOrTopLeftX_) { this->PosXOrTopLeftX_ = PosXOrTopLeftX_; }
+
+    uint16_t PosYOrTopLeftY() const { return this->PosYOrTopLeftY_; }
+
+    void PosYOrTopLeftY(uint16_t PosYOrTopLeftY_) { this->PosYOrTopLeftY_ = PosYOrTopLeftY_; }
 
 private:
     inline size_t str(char * buffer, size_t size) const {
@@ -2615,9 +2675,9 @@ private:
 
         result = ::snprintf(buffer + length, size - length,
             "WindowId=0x%X IsMoveSizeStart=%s(%u) MoveSizeType=%s(%u) PosX/TopLeftX=%u PosY/TopLeftY=%u",
-            this->WindowId, (this->IsMoveSizeStart ? "Yes" : "No"), this->IsMoveSizeStart,
-            ::get_RAIL_MoveSizeType_name(this->MoveSizeType),
-            this->MoveSizeType, this->PosXOrTopLeftX, this->PosYOrTopLeftY);
+            this->WindowId_, (this->IsMoveSizeStart_ ? "Yes" : "No"), this->IsMoveSizeStart_,
+            ::get_RAIL_MoveSizeType_name(this->MoveSizeType_),
+            this->MoveSizeType_, this->PosXOrTopLeftX_, this->PosYOrTopLeftY_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
