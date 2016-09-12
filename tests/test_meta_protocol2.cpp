@@ -487,6 +487,7 @@ namespace proto
     {
         using desc_type = Desc;
         using var_type = var;
+        using arguments = brigand::list<Derived>;
 
         template<class U>
         constexpr auto operator = (U && x) const
@@ -699,11 +700,23 @@ namespace proto
         constexpr char const * name() const noexcept { return s; }
     };
 
+
+    template<class T, class = void>
+    struct get_arguments
+    { using type = brigand::list<>; };
+
+    template<class T>
+    struct get_arguments<T, void_t<typename T::arguments>>
+    { using type = typename T::arguments; };
+
+    template<class T>
+    using get_arguments_t = typename get_arguments<T>::type;
+
+
     template<class T, class CtxName, class... Descs>
     struct creator
     {
-        // TODO get_recursive_proto_var
-        using type_list = brigand::list<Descs...>;
+        using arguments = brigand::append<get_arguments_t<Descs>...>;
 
         CtxName ctx_name;
         inherits<Descs...> values;
@@ -834,13 +847,28 @@ namespace proto
     template<class... Ts>
     struct packet_description
     {
+        using arguments = brigand::append<get_arguments_t<Ts>...>;
+
         inherits<Ts...> values;
+
+        template<class Val>
+        using check_param = std::enable_if_t<
+            brigand::any<
+                arguments,
+                brigand::bind<
+                    std::is_same,
+                    brigand::_1,
+                    brigand::pin<var_type_t<Val>>
+                >
+            >::value,
+            Val
+        >;
 
         template<class... Val>
         constexpr auto
         operator()(Val... values) const
         {
-            return ordering_parameter<Val...>({values...});
+            return ordering_parameter<check_param<Val>...>({values...});
         }
 
     private:
@@ -1079,6 +1107,8 @@ namespace proto
             template<class Cond, class Var>
             struct if_act
             {
+                using arguments = brigand::append<get_arguments_t<Var>, get_arguments_t<Cond>>;
+
                 template<class Params>
                 constexpr auto to_proto_value(Params params) const
                 {
@@ -1112,6 +1142,8 @@ namespace proto
             template<class Var>
             struct param_to_bool
             {
+                using arguments = brigand::append<get_arguments_t<Var>>;
+
                 template<class Params>
                 constexpr bool operator()(Params params) const
                 {
