@@ -58,7 +58,6 @@ namespace detail
     constexpr struct v                         \
     : ::proto::var<t, v>                       \
     {                                          \
-        using ::proto::var<t, v>::var;         \
         using ::proto::var<t, v>::operator = ; \
                                                \
         static constexpr char const *          \
@@ -662,7 +661,6 @@ namespace proto
     struct vars
     : var<T, vars<T, Varname, Descs...>>
     {
-        using ::proto::var<T, vars>::var;
         using ::proto::var<T, vars>::operator = ;
 
         constexpr vars(char const * varname) noexcept : varname(varname) {}
@@ -683,27 +681,29 @@ namespace proto
 
         constexpr vars(unamed) noexcept {}
 
-        static constexpr auto
+        struct Name
+        {
+            char s[cexp::fold(cexp::strlen(Descs::name())...) + 4 + sizeof...(Descs)];
+
+            constexpr Name()
+            {
+                char * p = s;
+                *p++ = '{';
+                (void)std::initializer_list<int>{
+                    (void(p += cexp::strcpy(&(p[0] = ' ') + 1, Descs::name()) + 1), 1)...
+                };
+                *p++ = ' ';
+                *p++ = '}';
+                *p = 0;
+            }
+
+            friend std::ostream & operator <<(std::ostream & os, Name const & name)
+            { return os << name.s; }
+        };
+
+        static constexpr Name
         name() noexcept
         {
-            struct Name
-            {
-                char s[cexp::fold(cexp::strlen(Descs::name())...) + 4 + sizeof...(Descs)];
-
-                constexpr Name()
-                {
-                    char * p = s;
-                    *p++ = '{';
-                    (void)std::initializer_list<int>{
-                        (void(p += cexp::strcpy(&(p[0] = ' ') + 1, Descs::name()) + 1), 1)...
-                    };
-                    *p++ = ' ';
-                    *p++ = '}';
-                    *p = 0;
-                }
-
-                constexpr operator char const * () const noexcept { return s; }
-            };
             return Name();
         }
     };
@@ -721,17 +721,17 @@ namespace proto
         constexpr val<vars<T, Varname, Descs...>, T>
         to_proto_value(Params params) const
         {
-#ifdef __clang__
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wmissing-braces"
-#endif
+// #ifdef __clang__
+// # pragma GCC diagnostic push
+// # pragma GCC diagnostic ignored "-Wmissing-braces"
+// #endif
             return {
                 vars<T, Varname, Descs...>{varname},
                 T{static_cast<Descs const &>(this->values).to_proto_value(params).x...}
             };
-#ifdef __clang__
-# pragma GCC diagnostic pop
-#endif
+// #ifdef __clang__
+// # pragma GCC diagnostic pop
+// #endif
         }
     };
 
@@ -1020,7 +1020,7 @@ namespace proto
     template<class T, class U>
     lazy::bit_and<lazy::param<T>, lazy::val<U>>
     constexpr operator & (params_::param<T>, U && x)
-    { return {{}, x}; }
+    { return {{}, {x}}; }
 
     namespace filters
     {
@@ -2124,9 +2124,9 @@ BOOST_AUTO_TEST_CASE(proto_test)
 
     packet.apply_for_each(Printer{});
     std::cout << "\n";
-//     packet.apply(Buffering{});
-//     std::cout << "\n";
-//     proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
+    packet.apply(Buffering{});
+    std::cout << "\n";
+    proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
 
     test();
 }
@@ -2192,33 +2192,6 @@ namespace sec
     PROTO_VAR(proto::types::u32_le, flags);
     PROTO_VAR(proto::types::mutable_bytes, data);
     PROTO_VAR(proto::types::value<CryptContext&>, crypt);
-
-    struct sec_send_pkt
-    {
-        proto::types::u32_le flags_;
-        proto_signature sig;
-
-        using buffer_size = proto::size_<proto_signature::sizeof_{} + proto::get_size(flags)>;
-        using sizeof_ = proto::limited_size<buffer_size::value>;
-
-        std::size_t limited_serialize(uint8_t * buf) const
-        {
-            std::cout << " [limited_buffer]";
-            uint8_t * p = buf;
-            if (this->flags_.val) {
-                p += this->flags_.static_serialize(p);
-            }
-            if (this->flags_.val & SEC::SEC_ENCRYPT){
-                p += this->sig.static_serialize(p);
-            }
-            return p - buf;
-        }
-    };
-
-    inline std::ostream & operator <<(std::ostream & os, sec_send_pkt const &)
-    {
-        return os << "sec_send_pkt";
-    }
 
     constexpr auto sec_send = proto::desc(
         proto::filters::if_true(flags),
