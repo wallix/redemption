@@ -657,68 +657,59 @@ namespace proto
 
     class unamed {};
 
-    template<class T, class Varname, class... Descs>
-    struct vars
-    : var<T, vars<T, Varname, Descs...>>
+    template<class Desc, class CtxName>
+    struct named_var
+    : var<Desc, named_var<Desc, CtxName>>
     {
-        using ::proto::var<T, vars>::operator = ;
+        using ::proto::var<Desc, named_var>::operator = ;
 
-        constexpr vars(char const * varname) noexcept : varname(varname) {}
+        constexpr named_var(CtxName ctx_name) noexcept : ctx_name(ctx_name) {}
 
-        constexpr char const *
-        name() const noexcept
-        { return this->varname; }
+        constexpr auto name() const noexcept
+        { return this->ctx_name.name(); }
 
-        char const * varname;
+        CtxName ctx_name;
     };
 
-    template<class T, class... Descs>
-    struct vars<T, unamed, Descs...>
-    : var<T, vars<T, unamed, Descs...>>
+    struct ctx_c_str_name
     {
-        using ::proto::var<T, vars>::var;
-        using ::proto::var<T, vars>::operator = ;
+        char const * s;
 
-        constexpr vars(unamed) noexcept {}
+        constexpr char const * name() const noexcept { return s; }
+    };
 
-        struct Name
+    template<class... Vars>
+    struct ctx_vars_name
+    {
+        char s[cexp::fold(cexp::strlen(Vars::name())...) + 4 + sizeof...(Vars)];
+
+        constexpr ctx_vars_name()
+        : s{}
         {
-            char s[cexp::fold(cexp::strlen(Descs::name())...) + 4 + sizeof...(Descs)];
-
-            constexpr Name()
-            {
-                char * p = s;
-                *p++ = '{';
-                (void)std::initializer_list<int>{
-                    (void(p += cexp::strcpy(&(p[0] = ' ') + 1, Descs::name()) + 1), 1)...
-                };
-                *p++ = ' ';
-                *p++ = '}';
-                *p = 0;
-            }
-
-            friend std::ostream & operator <<(std::ostream & os, Name const & name)
-            { return os << name.s; }
-        };
-
-        static constexpr Name
-        name() noexcept
-        {
-            return Name();
+            char * p = s;
+            *p++ = '{';
+            (void)std::initializer_list<int>{
+                (void(p += cexp::strcpy(&(p[0] = ' ') + 1, Vars::name()) + 1), 1)...
+            };
+            *p++ = ' ';
+            *p++ = '}';
+            //*p = 0;
         }
+
+        constexpr char const * name() const noexcept { return s; }
     };
 
-    template<class T, class Varname, class... Descs>
+    template<class T, class CtxName, class... Descs>
     struct creator
     {
         // TODO get_recursive_proto_var
         using type_list = brigand::list<Descs...>;
 
-        Varname varname;
+        CtxName ctx_name;
         inherits<Descs...> values;
 
         template<class Params>
-        constexpr val<vars<T, Varname, Descs...>, T>
+        constexpr val<named_var<T, CtxName>, T>
         to_proto_value(Params params) const
         {
 // #ifdef __clang__
@@ -726,7 +717,7 @@ namespace proto
 // # pragma GCC diagnostic ignored "-Wmissing-braces"
 // #endif
             return {
-                vars<T, Varname, Descs...>{varname},
+                named_var<T, CtxName>{this->ctx_name},
                 T{static_cast<Descs const &>(this->values).to_proto_value(params).x...}
             };
 // #ifdef __clang__
@@ -784,8 +775,8 @@ namespace proto
         struct flatten_description_to_list_impl
         { using type = brigand::list<var_or_val_to_var<T>>; };
 
-        template<class T, class Varname, class... Descs>
-        struct flatten_description_to_list_impl<creator<T, Varname, Descs...>>
+        template<class T, class CtxName, class... Descs>
+        struct flatten_description_to_list_impl<creator<T, CtxName, Descs...>>
         { using type = brigand::list<var_or_val_to_var<Descs>...>; };
 
         template<class T>
@@ -873,9 +864,9 @@ namespace proto
     creater(Desc... d)
     {
         return creator<
-            T, unamed,
+            T, ctx_vars_name<Desc...>,
             check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{unamed{}, {d...}};
+        >{{}, {d...}};
     }
 
     template<class T, class... Desc>
@@ -883,9 +874,9 @@ namespace proto
     creater(char const * name, Desc... d)
     {
         return creator<
-            T, char const *,
+            T, ctx_c_str_name,
             check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{name, {d...}};
+        >{{name}, {d...}};
     }
 
     template<class... Desc>
@@ -893,9 +884,9 @@ namespace proto
     compose(Desc... d)
     {
         return creator<
-            subpacket_value<typename Desc::var_type...>, unamed,
+            subpacket_value<typename Desc::var_type...>, ctx_vars_name<Desc...>,
             check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{unamed{}, {d...}};
+        >{{}, {d...}};
     }
 
     template<class... Desc>
@@ -903,9 +894,9 @@ namespace proto
     compose(char const * name, Desc... d)
     {
         return creator<
-            subpacket_value<typename Desc::var_type...>, char const *,
+            subpacket_value<typename Desc::var_type...>, ctx_c_str_name,
             check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{name, {d...}};
+        >{{name}, {d...}};
     }
 
     template<class T>
@@ -1026,23 +1017,6 @@ namespace proto
     {
         namespace detail
         {
-            // TODO + vars = named_ctx_var
-            template<class Var, class T>
-            struct if_var
-            : var<T, if_var<Var, T>>
-            {
-                using ::proto::var<T, if_var>::operator = ;
-
-                constexpr if_var(Var var) noexcept
-                : var(var)
-                {}
-
-                constexpr auto name() const noexcept
-                { return this->var.name(); }
-
-                Var var;
-            };
-
             struct static_
             {
                 template<class Val>
@@ -1111,7 +1085,8 @@ namespace proto
                     auto value = this->var.to_proto_value(params);
                     using proto_val  = decltype(value);
                     using new_value_type = only_if_true<typename proto_val::value_type>;
-                    using new_var_type = if_var<typename proto_val::var_type, new_value_type>;
+                    using context_name_type = typename proto_val::var_type;
+                    using new_var_type = named_var<new_value_type, context_name_type>;
                     return val<new_var_type, new_value_type>{
                         {value.var},
                         {bool(cond(params)), value.x}
