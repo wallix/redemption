@@ -455,7 +455,8 @@ namespace proto
     };
 
 
-    namespace detail {
+    namespace detail
+    {
         template<class T, class U> struct common_size;
 
         template<std::size_t n>
@@ -511,6 +512,11 @@ namespace proto
         using var_type = Var;
         Var var;
         T x;
+
+        template<class Params>
+        constexpr val
+        to_proto_value(Params) const
+        { return *this; }
     };
 
     template<class Derived, class Desc, class T>
@@ -534,10 +540,37 @@ namespace proto
         // }
         { return impl(std::forward<U>(x)); }
 
+        template<class Params>
+        decltype(auto) to_proto_value(Params params) const noexcept
+        { return params.template get_proto_value<Derived>(); }
+
+    private:
         template<class U>
         constexpr auto impl(U && x) const
         -> val<Derived, decltype(make_val<Desc, Desc>(std::forward<U>(x)))>
         { return {Derived{}, make_val<Desc, Desc>(std::forward<U>(x))}; }
+    };
+
+    template<class Desc, class Derived>
+    struct var<types::pkt_sz<Desc>, Derived>
+    {
+        using desc_type = types::pkt_sz<Desc>;
+        using var_type = var;
+
+        template<class Params>
+        Derived to_proto_value(Params) const noexcept
+        { return static_cast<Derived const &>(*this); }
+    };
+
+    template<class Desc, class Derived>
+    struct var<types::pkt_sz_with_self<Desc>, Derived>
+    {
+        using desc_type = types::pkt_sz_with_self<Desc>;
+        using var_type = var;
+
+        template<class Params>
+        Derived to_proto_value(Params) const noexcept
+        { return static_cast<Derived const &>(*this); }
     };
 
 
@@ -611,36 +644,8 @@ namespace proto
 
     template<class Var, class T>
     val<Var, T>
-    vals_to_val(val<Var, T> const &);
-
-    template<class Var, class T>
-    val<Var, T>
     ref_to_val(Ref<val<Var, T>> x)
     { return x; }
-
-
-    template<class Var, class Vals>
-    auto
-    get_packet_value2(Vals & vals, int)
-    -> decltype(vals_to_val<Var>(vals))
-    { return vals; }
-
-    template<class Var, class Vals>
-    std::enable_if_t<is_pkt_sz_category<desc_type_t<Var>>::value, Var>
-    get_packet_value2(Vals &, char)
-    { return {}; }
-
-
-    template<class Var, class Refs, class Vals>
-    auto
-    get_packet_value(Refs, Vals & vals, char)
-    { return get_packet_value2<Var>(vals, 1); }
-
-    template<class Var, class Refs, class Vals>
-    auto
-    get_packet_value(Refs refs, Vals &, int)
-    -> decltype(ref_to_val<Var>(refs))
-    { return refs; }
 
 
     template<class T, class = void>
@@ -694,9 +699,9 @@ namespace proto
 
     class unamed {};
 
-    template<class T, class Varname, class... Var>
+    template<class T, class Varname, class... Descs>
     struct vars
-    : var<T, vars<T, Varname, Var...>>
+    : var<T, vars<T, Varname, Descs...>>
     {
         using ::proto::var<T, vars>::var;
         using ::proto::var<T, vars>::operator = ;
@@ -710,9 +715,9 @@ namespace proto
         char const * varname;
     };
 
-    template<class T, class... Var>
-    struct vars<T, unamed, Var...>
-    : var<T, vars<T, unamed, Var...>>
+    template<class T, class... Descs>
+    struct vars<T, unamed, Descs...>
+    : var<T, vars<T, unamed, Descs...>>
     {
         using ::proto::var<T, vars>::var;
         using ::proto::var<T, vars>::operator = ;
@@ -724,14 +729,14 @@ namespace proto
         {
             struct Name
             {
-                char s[cexp::fold(cexp::strlen(Var::name())...) + 4 + sizeof...(Var)];
+                char s[cexp::fold(cexp::strlen(Descs::name())...) + 4 + sizeof...(Descs)];
 
                 constexpr Name()
                 {
                     char * p = s;
                     *p++ = '{';
                     (void)std::initializer_list<int>{
-                        (void(p += cexp::strcpy(&(p[0] = ' ') + 1, Var::name()) + 1), 1)...
+                        (void(p += cexp::strcpy(&(p[0] = ' ') + 1, Descs::name()) + 1), 1)...
                     };
                     *p++ = ' ';
                     *p++ = '}';
@@ -745,34 +750,17 @@ namespace proto
     };
 
     template<class T, class Varname, class... Descs>
-    class creator
+    struct creator
     {
+        // TODO get_recursive_proto_var
         using type_list = brigand::list<Descs...>;
-        using type_list_only_val = brigand::filter<type_list, brigand::call<is_proto_value>>;
-        using desc_value_tuple = brigand::wrap<type_list_only_val, inherits>;
 
         Varname varname;
-        desc_value_tuple values;
+        inherits<Descs...> values;
 
-        template<class... Us, class Refs>
-        constexpr creator(Varname varname, brigand::list<Us...>, Refs refs)
-        : varname{varname}
-        , values{static_cast<Us>(refs)...}
-        {}
-
-        template<class Refs>
-        constexpr creator(Varname varname, brigand::list<>, Refs)
-        : varname{varname}
-        , values{}
-        {}
-
-    public:
-        constexpr creator(Varname varname, Descs... descs)
-        : creator(varname, type_list_only_val{}, inherits<Descs...>{descs...})
-        {}
-
-        template<class... Val>
-        constexpr val<vars<T, Varname, Descs...>, T> operator()(inherit_refs<Val...> refs) const
+        template<class Params>
+        constexpr val<vars<T, Varname, Descs...>, T>
+        to_proto_value(Params params) const
         {
 #ifdef __clang__
 # pragma GCC diagnostic push
@@ -780,17 +768,11 @@ namespace proto
 #endif
             return {
                 vars<T, Varname, Descs...>{varname},
-                T{(get_packet_value<var_or_val_to_var<Descs>>(refs, this->values, 1).x)...}
+                T{static_cast<Descs const &>(this->values).to_proto_value(params).x...}
             };
 #ifdef __clang__
 # pragma GCC diagnostic pop
 #endif
-        }
-
-        template<class... Val>
-        constexpr val<vars<T, Varname, Descs...>, T> operator()(Val... values) const
-        {
-            return (*this)(inherit_refs<Val...>{values...});
         }
     };
 
@@ -857,22 +839,6 @@ namespace proto
     >;
 
 
-    template<class T>
-    struct packet_param_to_val_class
-    {
-        template<class Refs, class Vals>
-        static auto impl(Refs refs, Vals & vals)
-        { return get_packet_value<var_or_val_to_var<T>>(refs, vals, 1); }
-    };
-
-    template<class T, class Varname, class... Descs>
-    struct packet_param_to_val_class<creator<T, Varname, Descs...>>
-    {
-        template<class Refs>
-        static auto impl(Refs refs, creator<T, Varname, Descs...> c)
-        { return c(refs); }
-    };
-
     namespace detail
     {
         template<class T> struct is_creator : std::false_type {};
@@ -886,26 +852,44 @@ namespace proto
     using is_proto_value_or_proto_creator = brigand::bool_<is_proto_value<T>::value or is_creator<T>::value>;
 
 
-    template<class... Ts>
-    class packet_description
+    namespace utils
     {
+        template<class... Ts>
+        struct parameters
+        {
+            parameters(Ts & ... x) : refs{x...}
+            {}
+
+            template<class T>
+            decltype(auto) operator[](T const &) const noexcept
+            { return proto::ref_to_val<T>(refs).x; }
+
+            template<class T>
+            decltype(auto) get_proto_value(T const &) const noexcept
+            { return proto::ref_to_val<T>(refs); }
+
+            template<class T>
+            decltype(auto) get_proto_value() const noexcept
+            { return proto::ref_to_val<T>(refs); }
+
+            template<class T>
+            T & cast() const noexcept
+            { return static_cast<Ref<T>>(refs); }
+
+        private:
+            proto::inherit_refs<Ts...> refs;
+        };
+    }
+
+    template<class... Ts>
+    struct packet_description
+    {
+    private:
         using type_list = brigand::list<Ts...>;
 
         using type_list_only_val_or_creator = brigand::filter<type_list, brigand::call<is_proto_value_or_proto_creator>>;
 
         using desc_value_tuple = brigand::wrap<type_list_only_val_or_creator, inherits>;
-
-        desc_value_tuple values;
-
-        template<class... Us, class Refs>
-        constexpr packet_description(brigand::list<Us...>, Refs refs)
-        : values{static_cast<Us>(refs)...}
-        {}
-
-        template<class Refs>
-        constexpr packet_description(brigand::list<>, Refs)
-        : values{}
-        {}
 
         using var_list = brigand::wrap<brigand::remove_if<
             flatten_packet_description<type_list>,
@@ -916,9 +900,7 @@ namespace proto
         using check_param = enable_type<Val, void_t<check_and_return_t<std::is_base_of, var_type_t<check_and_return_t<is_proto_value, Val>>, var_list>>>;
 
     public:
-        constexpr packet_description(Ts... vals)
-        : packet_description(type_list_only_val_or_creator{}, inherits<Ts...>{vals...})
-        {}
+        inherits<Ts...> values;
 
         template<class... Val>
         constexpr auto
@@ -930,12 +912,12 @@ namespace proto
     private:
         template<class... Val>
         constexpr auto
-        ordering_parameter(inherit_refs<Val...> refs) const
+        ordering_parameter(utils::parameters<Val...> params) const
         {
             return packet<
                 mk_iseq<sizeof...(Ts)>,
-                decltype(packet_param_to_val_class<Ts>::impl(refs, this->values))...
-            >{packet_param_to_val_class<Ts>::impl(refs, this->values)...};
+                decltype(static_cast<Ts const &>(this->values).to_proto_value(params))...
+            >{(static_cast<Ts const &>(this->values).to_proto_value(params))...};
         }
     };
 
@@ -947,14 +929,20 @@ namespace proto
     constexpr auto
     creater(Desc... d)
     {
-        return creator<T, unamed, check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...>{unamed{}, d...};
+        return creator<
+            T, unamed,
+            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
+        >{unamed{}, {d...}};
     }
 
     template<class T, class... Desc>
     constexpr auto
     creater(char const * name, Desc... d)
     {
-        return creator<T, char const *, check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...>{name, d...};
+        return creator<
+            T, char const *,
+            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
+        >{name, {d...}};
     }
 
     template<class... Desc>
@@ -962,10 +950,9 @@ namespace proto
     compose(Desc... d)
     {
         return creator<
-            subpacket_value<typename Desc::var_type...>,
-            unamed,
+            subpacket_value<typename Desc::var_type...>, unamed,
             check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{unamed{}, d...};
+        >{unamed{}, {d...}};
     }
 
     template<class... Desc>
@@ -973,10 +960,9 @@ namespace proto
     compose(char const * name, Desc... d)
     {
         return creator<
-            subpacket_value<typename Desc::var_type...>,
-            char const *,
+            subpacket_value<typename Desc::var_type...>, char const *,
             check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{name, d...};
+        >{name, {d...}};
     }
 
     template<class T>
@@ -989,7 +975,7 @@ namespace proto
     constexpr auto
     desc(Desc... d)
     {
-        return packet_description<check_and_return_t<is_empty_or_proto_data, Desc>...>{d...};
+        return packet_description<check_and_return_t<is_empty_or_proto_data, Desc>...>{{d...}};
     }
 
     template<std::size_t i, class Var>
@@ -1031,24 +1017,6 @@ namespace proto
     {
         PROTO_CHECKS(is_proto_packet, Pkts);
         f(pkts...);
-    }
-
-
-    namespace utils
-    {
-        template<class... Ts>
-        struct parameters
-        {
-            parameters(Ts & ... x) : refs{x...}
-            {}
-
-            template<class T>
-            decltype(auto) operator[](T) const noexcept
-            { return proto::ref_to_val<T>(refs).x; }
-
-        private:
-            proto::inherit_refs<Ts...> refs;
-        };
     }
 
 
@@ -2305,13 +2273,12 @@ void test_new()
 
     proto::apply(Buffering2<Policy>{}, packet1, packet2);
 
-
-    auto v = x224::LI = 1_c;
-    proto::utils::parameters<decltype(v)> p{v};
-    proto::filters::if_true(x224::LI)(p);
-
-    proto::filters::if_(proto::params[x224::LI] & 1_c)
-    [x224::LI]
-    (p)
-    ;
+//     auto v = x224::LI = 1_c;
+//     proto::utils::parameters<decltype(v)> p{v};
+//     proto::filters::if_true(x224::LI)(p);
+//
+//     proto::filters::if_(proto::params[x224::LI] & 1_c)
+//     [x224::LI]
+//     (p)
+//     ;
 }
