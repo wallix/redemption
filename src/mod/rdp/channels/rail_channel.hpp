@@ -366,6 +366,14 @@ protected:
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
+        ClientSystemParametersUpdatePDU cspupdu;
+
+        cspupdu.receive(chunk);
+
+        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
+            cspupdu.log(LOG_INFO);
+        }
+
         if (!this->client_execute_pdu_sent && !this->param_client_execute_exe_or_file.empty()) {
             StaticOutStream<256> out_s;
             RAILPDUHeader header;
@@ -394,21 +402,13 @@ protected:
             }
             LOG(LOG_INFO,
                 "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                    "Send to client - Client Execute PDU");
+                    "Send to server - Client Execute PDU");
             cepdu.log(LOG_INFO);
 
             this->send_message_to_server(length, flags, out_s.get_data(),
                 length);
 
             this->client_execute_pdu_sent = true;
-        }
-
-        ClientSystemParametersUpdatePDU cspupdu;
-
-        cspupdu.receive(chunk);
-
-        if (this->verbose & MODRDP_LOGLEVEL_RAIL) {
-            cspupdu.log(LOG_INFO);
         }
 
         return true;

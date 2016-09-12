@@ -39,6 +39,12 @@ struct LocallyIntegrableMod : public InternalMod {
         this->client_execute.reset();
     }
 
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
+        InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+
+        this->client_execute.input_mouse(device_flags, x, y);
+    }
+
     void rdp_input_scancode(long param1, long param2, long param3, long param4,
             Keymap2 * keymap) override {
         InternalMod::rdp_input_scancode(param1, param2, param3, param4, keymap);
@@ -53,6 +59,7 @@ struct LocallyIntegrableMod : public InternalMod {
                 this->alt_key_pressed = false;
             }
             else if ((param1 == 62) && !param3) {
+                LOG(LOG_INFO, "Close by user (Alt+F4)");
                 throw Error(ERR_WIDGET);    // F4 key pressed
             }
         }
