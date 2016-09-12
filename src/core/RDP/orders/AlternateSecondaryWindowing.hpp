@@ -694,7 +694,7 @@ public:
 //  |                                     | present.                           |
 //  +-------------------------------------+------------------------------------+
 //  | 0x00008000                          | Indicates that the                 |
-//  | WINDOW_ORDER_FIELD_WNDCLIENTDELTA   | WindowClientDeltaX and             |
+//  | WINDOW_ORDER_FIELD_CLIENTDELTA      | WindowClientDeltaX and             |
 //  |                                     | WindowClientDeltaY fields are      |
 //  |                                     | present.                           |
 //  +-------------------------------------+------------------------------------+
@@ -733,7 +733,7 @@ enum {
     , WINDOW_ORDER_FIELD_RPCONTENT        = 0x00020000
     , WINDOW_ORDER_FIELD_ROOTPARENT       = 0x00040000
     , WINDOW_ORDER_FIELD_WNDOFFSET        = 0x00000800
-    , WINDOW_ORDER_FIELD_WNDCLIENTDELTA   = 0x00008000
+    , WINDOW_ORDER_FIELD_CLIENTDELTA      = 0x00008000
     , WINDOW_ORDER_FIELD_WNDSIZE          = 0x00000400
     , WINDOW_ORDER_FIELD_WNDRECTS         = 0x00000100
     , WINDOW_ORDER_FIELD_VISOFFSET        = 0x00001000
@@ -1054,7 +1054,7 @@ const auto save_stream_p = stream.get_current() + 1;
             stream.out_sint32_le(this->WindowOffsetY_);
         }
 
-        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTDELTA) {
             stream.out_sint32_le(this->WindowClientDeltaX_);
             stream.out_sint32_le(this->WindowClientDeltaY_);
         }
@@ -1243,7 +1243,7 @@ const auto save_stream_p = stream.get_current();
             this->WindowOffsetY_ = stream.in_sint32_le();
         }
 
-        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTDELTA) {
             {
                 const unsigned expected = 8;  // WindowClientDeltaX(4) + WindowClientDeltaY(4)
 
@@ -1545,7 +1545,7 @@ hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
             count += 8; // WindowOffsetX(4) + WindowOffsetY(4)
         }
 
-        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTDELTA) {
             count += 8; // WindowClientDeltaX(4) + WindowClientDeltaY(4)
         }
 
@@ -1641,7 +1641,7 @@ private:
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
-        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_WNDCLIENTDELTA) {
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTDELTA) {
             result = ::snprintf(buffer + length, size - length, " WindowClientDeltaX=%d WindowClientDeltaY=%d",
                 this->WindowClientDeltaX_, this->WindowClientDeltaY_);
             length += ((result < size - length) ? result : (size - length - 1));

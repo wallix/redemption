@@ -26,6 +26,8 @@
 struct LocallyIntegrableMod : public InternalMod {
     ClientExecute & client_execute;
 
+    bool alt_key_pressed = false;
+
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
@@ -35,6 +37,25 @@ struct LocallyIntegrableMod : public InternalMod {
 
     ~LocallyIntegrableMod() override {
         this->client_execute.reset();
+    }
+
+    void rdp_input_scancode(long param1, long param2, long param3, long param4,
+            Keymap2 * keymap) override {
+        InternalMod::rdp_input_scancode(param1, param2, param3, param4, keymap);
+
+        if (!this->alt_key_pressed) {
+            if ((param1 == 56) && !param3) {
+                this->alt_key_pressed = true;
+            }
+        }
+        else {
+            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
+                this->alt_key_pressed = false;
+            }
+            else if ((param1 == 62) && !param3) {
+                throw Error(ERR_WIDGET);    // F4 key pressed
+            }
+        }
     }
 
     void draw_event(time_t, gdi::GraphicApi &) override {

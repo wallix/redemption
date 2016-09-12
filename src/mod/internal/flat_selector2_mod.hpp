@@ -343,8 +343,9 @@ public:
         else {
             this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
-    }
 
+        LocallyIntegrableMod::rdp_input_scancode(param1, param2, param3, param4, keymap);
+    }
 
     void draw_event(time_t now, gdi::GraphicApi & gapi) override {
         LocallyIntegrableMod::draw_event(now, gapi);
