@@ -380,51 +380,6 @@ namespace proto
             using sizeof_ = proto::sizeof_<T>;
         };
 
-        // TODO unimplemented
-        template<class Cond, class True, class False>
-        struct if_
-        {
-            //using type =
-            using sizeof_ = common_size<proto::sizeof_<True>, proto::sizeof_<False>>;
-            using buffer_category = common_buffer<proto::buffer_category<True>, proto::buffer_category<False>>;
-        };
-
-        // TODO unimplemented
-        template<class Cond, class T>
-        struct enable_if
-        {
-            using type = typename T::type;
-            using sizeof_ = common_size<proto::sizeof_<T>, size_<0>>;
-            using buffer_category = std::conditional_t<
-                is_static_buffer<T>::value,
-                tags::limited_buffer,
-                proto::buffer_category<T>
-            >;
-
-            type val;
-
-            array_view_const_u8 get_view_buffer() const
-            {
-                return Cond{}(this->val) ? T{val}.get_view_buffer() : array_view_const_u8{};
-            }
-
-            std::size_t serialize_limited_buffer(uint8_t * p) const
-            {
-                return Cond{}(this->val) ? T{val}.limited_serialize(p) : 0u;
-            }
-
-            template<class F>
-            void dynamic_serialize(F && f) const
-            {
-                if (Cond{}(this->val)) {
-                    T{val}.context_dynamic_buffer(f);
-                }
-                else {
-                    f({});
-                }
-            }
-        };
-
         template<class T>
         struct value
         {
@@ -481,6 +436,8 @@ namespace proto
         template<class T> struct common_buffer<T, T> { using type = T; };
         template<> struct common_buffer<tags::static_buffer, tags::limited_buffer>
         { using type = tags::limited_buffer ; };
+        template<> struct common_buffer<tags::limited_buffer, tags::static_buffer>
+        { using type = tags::limited_buffer ; };
     }
 
 
@@ -510,6 +467,8 @@ namespace proto
     struct val
     {
         using var_type = Var;
+        using value_type = T;
+
         Var var;
         T x;
 
@@ -643,7 +602,7 @@ namespace proto
 
 
     template<class Var, class T>
-    val<Var, T>
+    constexpr val<Var, T>
     ref_to_val(Ref<val<Var, T>> x)
     { return x; }
 
@@ -861,19 +820,19 @@ namespace proto
             {}
 
             template<class T>
-            decltype(auto) operator[](T const &) const noexcept
+            constexpr decltype(auto) operator[](T const &) const noexcept
             { return proto::ref_to_val<T>(refs).x; }
 
             template<class T>
-            decltype(auto) get_proto_value(T const &) const noexcept
+            constexpr decltype(auto) get_proto_value(T const &) const noexcept
             { return proto::ref_to_val<T>(refs); }
 
             template<class T>
-            decltype(auto) get_proto_value() const noexcept
+            constexpr decltype(auto) get_proto_value() const noexcept
             { return proto::ref_to_val<T>(refs); }
 
             template<class T>
-            T & cast() const noexcept
+            constexpr T & cast() const noexcept
             { return static_cast<Ref<T>>(refs); }
 
         private:
@@ -884,29 +843,13 @@ namespace proto
     template<class... Ts>
     struct packet_description
     {
-    private:
-        using type_list = brigand::list<Ts...>;
-
-        using type_list_only_val_or_creator = brigand::filter<type_list, brigand::call<is_proto_value_or_proto_creator>>;
-
-        using desc_value_tuple = brigand::wrap<type_list_only_val_or_creator, inherits>;
-
-        using var_list = brigand::wrap<brigand::remove_if<
-            flatten_packet_description<type_list>,
-            brigand::bind<is_pkt_sz_category, brigand::call<proto::desc_type_t>>
-        >, inherits>;
-
-        template<class Val>
-        using check_param = enable_type<Val, void_t<check_and_return_t<std::is_base_of, var_type_t<check_and_return_t<is_proto_value, Val>>, var_list>>>;
-
-    public:
         inherits<Ts...> values;
 
         template<class... Val>
         constexpr auto
         operator()(Val... values) const
         {
-            return ordering_parameter<check_param<Val>...>({values...});
+            return ordering_parameter<Val...>({values...});
         }
 
     private:
@@ -975,7 +918,7 @@ namespace proto
     constexpr auto
     desc(Desc... d)
     {
-        return packet_description<check_and_return_t<is_empty_or_proto_data, Desc>...>{{d...}};
+        return packet_description<Desc...>{{d...}};
     }
 
     template<std::size_t i, class Var>
@@ -1028,24 +971,25 @@ namespace proto
         constexpr params_() noexcept {}
 
         template<class Desc, class Derived>
-        auto operator[](var<Desc, Derived>) const noexcept {
-            return param<Derived>{};
+        constexpr param<Derived> operator[](var<Desc, Derived>) const noexcept {
+            return {};
         }
     } params;
 
     namespace lazy
     {
-#define PROTO_LAZY_BINARY_OP(name, op)                  \
-        template<class T, class U>                      \
-        struct name                                     \
-        {                                               \
-            template<class Params>                      \
-            decltype(auto) operator()(Params p) const { \
-                return x(p) op y(p);                    \
-            }                                           \
-                                                        \
-            T x;                                        \
-            U y;                                        \
+#define PROTO_LAZY_BINARY_OP(name, op)   \
+        template<class T, class U>       \
+        struct name                      \
+        {                                \
+            template<class Params>       \
+            constexpr decltype(auto)     \
+            operator()(Params p) const { \
+                return x(p) op y(p);     \
+            }                            \
+                                         \
+            T x;                         \
+            U y;                         \
         }
 
         PROTO_LAZY_BINARY_OP(bit_and, &);
@@ -1056,7 +1000,7 @@ namespace proto
         struct val
         {
             template<class Params>
-            decltype(auto) operator()(Params) const {
+            constexpr decltype(auto) operator()(Params) const {
                 return x;
             }
 
@@ -1067,7 +1011,7 @@ namespace proto
         struct param
         {
             template<class Params>
-            decltype(auto) operator()(Params p) const {
+            constexpr decltype(auto) operator()(Params p) const {
                 return p[Var{}].val;
             }
         };
@@ -1082,30 +1026,96 @@ namespace proto
     {
         namespace detail
         {
+            // TODO + vars = named_ctx_var
+            template<class Var, class T>
+            struct if_var
+            : var<T, if_var<Var, T>>
+            {
+                using ::proto::var<T, if_var>::operator = ;
+
+                constexpr if_var(Var var) noexcept
+                : var(var)
+                {}
+
+                constexpr auto name() const noexcept
+                { return this->var.name(); }
+
+                Var var;
+            };
+
+            struct static_
+            {
+                template<class Val>
+                static std::size_t impl(Val const & val, uint8_t * p)
+                {
+                    return val.static_serialize(p);
+                }
+            };
+            struct limited_
+            {
+                template<class Val>
+                static std::size_t impl(Val const & val, uint8_t * p)
+                {
+                    return val.limited_serialize(p);
+                }
+            };
+
+            template<class T>
+            using static_or_limited_serializer = std::conditional_t<is_static_buffer<T>::value, static_, limited_>;
+
             template<class Val>
             struct only_if_true
             {
-                using sizeof_ = dyn_size;
-                using buffer_category = tags::view_buffer;
+                using sizeof_ = proto::common_size<proto::sizeof_<Val>, limited_size<0>>;
+                using buffer_category = typename std::conditional_t<
+                    is_view_buffer<Val>::value,
+                    proto::detail::buffer_category_impl<Val>,
+                    proto::detail::common_buffer<
+                        tags::limited_buffer,
+                        proto::buffer_category<Val>
+                    >
+                >::type;
 
-                std::size_t limited_serialize(uint8_t * p) const;
+                std::size_t limited_serialize(uint8_t * p) const
+                {
+                    using serializer = static_or_limited_serializer<Val>;
+                    if (this->is_ok) {
+                        return serializer::impl(this->val_ok, p);
+                    }
+                    return 0;
+                }
 
-                array_view_const_u8 get_view_buffer() const;
+                array_view_const_u8 get_view_buffer() const
+                {
+                    return this->is_ok ? this->val_ok.get_view_buffer() : array_view_const_u8{};
+                }
 
                 template<class F>
-                void dynamic_serialize(F && f) const;
+                void dynamic_serialize(F && f) const
+                {
+                    if (this->is_ok) {
+                        this->val_ok.dynamic_serialize(f);
+                    }
+                }
 
                 bool is_ok;
-                Val val;
+                Val val_ok;
             };
 
             template<class Cond, class Var>
             struct if_act
             {
                 template<class Params>
-                constexpr auto operator()(Params params) const
+                constexpr auto to_proto_value(Params params) const
                 {
-                    return only_if_true<decltype(params[var])>{bool(cond(params)), params[var]};
+                    auto value = this->var.to_proto_value(params);
+                    using proto_val  = decltype(value);
+                    using new_value_type = only_if_true<typename proto_val::value_type>;
+                    using new_var_type = if_var<typename proto_val::var_type, new_value_type>;
+                    return val<new_var_type, new_value_type>{
+                        {value.var},
+                        {bool(cond(params)), value.x}
+                    };
                 }
 
                 Cond cond;
@@ -1116,7 +1126,7 @@ namespace proto
             struct if_
             {
                 template<class Var>
-                auto operator[](Var var) const
+                constexpr auto operator[](Var var) const
                 {
                     return if_act<Cond, check_and_return_t<is_empty_or_proto_data, Var>>{cond, var};
                 }
@@ -1136,13 +1146,13 @@ namespace proto
         }
 
         template<class Cond>
-        auto if_(Cond cond)
+        constexpr auto if_(Cond cond)
         {
             return detail::if_<Cond>{cond};
         }
 
         template<class Var>
-        auto if_true(Var v)
+        constexpr auto if_true(Var v)
         {
             return if_(detail::param_to_bool<Var>{})[v];
         }
@@ -1214,17 +1224,32 @@ struct Printer
     { std::cout << x.str.data(); }
 
     template<class T>
+    static auto print(T const & x, int)
+    -> decltype(void(std::cout << x.is_ok))
+    { std::cout << x.is_ok << " ?: "; print(x.val_ok, 1); }
+
+    template<class T>
     static void print(T const & x, char)
     { std::cout << x; }
 };
 
 
-namespace brigand {
-    namespace detail {
+namespace brigand
+{
+    namespace detail
+    {
+        template<class L>
+        struct splitted_list
+        { using type = list<L>; };
+
+        template<>
+        struct splitted_list<list<>>
+        { using type = list<>; };
+
         template<class Seq, class Pred, class I = index_if<Seq, Pred>>
         struct split_if_impl
         : append_impl<
-            list<front<split_at<Seq, I>>>,
+            typename splitted_list<front<split_at<Seq, I>>>::type,
             list<list<front<front<pop_front<split_at<Seq, I>>>>>>,
             typename split_if_impl<pop_front<front<pop_front<split_at<Seq, I>>>>, Pred>::type
         >
@@ -1710,6 +1735,7 @@ struct Buffering2
         using var_list = brigand::wrap<packet_list, brigand::append>;
         using ivar_list = brigand::wrap<brigand::transform<packet_count_list, brigand::call<mk_seq2>>, brigand::append>;
         using var_info_list = brigand::transform<ipacket_list, ivar_list, var_list, brigand::call<var_info>>;
+
         using var_info_list_by_buffer = brigand::split_if<var_info_list, brigand::call<var_info_is_buffer_delimiter>>;
 
         using buffer_list = brigand::transform<var_info_list_by_buffer, brigand::call<buffer_from_var_infos>>;
@@ -1725,14 +1751,14 @@ struct Buffering2
 
         brigand::wrap<buffer_list, tuple_buf> buffer_tuple;
         detail::Buffers<brigand::size<buffer_list>::value> buffers{buffer_tuple};
-        uint8_t * pktptrs[brigand::size<pkt_sz_list>::value];
+        std::array<uint8_t *, brigand::size<pkt_sz_list>::value> pktptrs;
         detail::Sizes<default_buffer_size> sizes;
         // TODO reference
         Policy policy;
 
         void impl(Pkts & ... packets)
         {
-            std::cout << "pktptrs.size: " << (sizeof(this->pktptrs)/sizeof(this->pktptrs[0])) << "\n";
+            std::cout << "pktptrs.size: " << this->pktptrs.size() << "\n";
 
             std::cout << "--- serialize_not_dynamic_bufs ---\n";
             this->serialize_not_dynamic_bufs(
@@ -2005,7 +2031,7 @@ struct Buffering2
 
         template<class Var, class T>
         static void print(proto::val<Var, T> const & x)
-        { Printer{}.print(x.x, 1); }
+        { Printer::print(x.x, 1); }
 
         template<class T, class Derived>
         static void print(proto::var<proto::types::pkt_sz<T>, Derived>)
@@ -2098,9 +2124,9 @@ BOOST_AUTO_TEST_CASE(proto_test)
 
     packet.apply_for_each(Printer{});
     std::cout << "\n";
-    packet.apply(Buffering{});
-    std::cout << "\n";
-    proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
+//     packet.apply(Buffering{});
+//     std::cout << "\n";
+//     proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
 
     test();
 }
@@ -2158,6 +2184,11 @@ namespace sec
         }
     };
 
+    inline std::ostream & operator <<(std::ostream & os, proto_signature const &)
+    {
+        return os << "proto_signature";
+    }
+
     PROTO_VAR(proto::types::u32_le, flags);
     PROTO_VAR(proto::types::mutable_bytes, data);
     PROTO_VAR(proto::types::value<CryptContext&>, crypt);
@@ -2189,15 +2220,11 @@ namespace sec
         return os << "sec_send_pkt";
     }
 
-    //constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>(flags, data, crypt));
-    constexpr auto sec_send = proto::desc(proto::creater<sec_send_pkt>("blahblah", flags, data, crypt));
-
-    // TODO
-    // constexpr auto sec_send2 = proto::desc(
-    //     proto::filters::if_true(flags),
-    //     proto::filters::if_(proto::params[flags] & SEC::SEC_ENCRYPT)
-    //         [proto::creater<proto_signature>(data, crypt)]
-    // );
+    constexpr auto sec_send = proto::desc(
+        proto::filters::if_true(flags),
+        proto::filters::if_(proto::params[flags] & SEC::SEC_ENCRYPT)
+            [proto::creater<proto_signature>(data, crypt)]
+    );
 }
 
 
@@ -2272,13 +2299,4 @@ void test_new()
     };
 
     proto::apply(Buffering2<Policy>{}, packet1, packet2);
-
-//     auto v = x224::LI = 1_c;
-//     proto::utils::parameters<decltype(v)> p{v};
-//     proto::filters::if_true(x224::LI)(p);
-//
-//     proto::filters::if_(proto::params[x224::LI] & 1_c)
-//     [x224::LI]
-//     (p)
-//     ;
 }
