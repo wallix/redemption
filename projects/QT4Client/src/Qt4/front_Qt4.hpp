@@ -79,6 +79,10 @@
 #pragma GCC diagnostic pop
 #endif
 
+
+#define USER_CONF_PATH "userConfig.config"
+#define TEMP_PATH_TEST "/home/cmoroldo/Bureau/redemption/projects/QT4Client/clipboard_temp/"
+
 class Form_Qt;
 class Screen_Qt;
 class Connector_Qt;
@@ -140,6 +144,7 @@ public:
     Qt_ScanCode_KeyMap   _qtRDPKeymap;
     int                  _fps;
     int                  _monitorCount;
+    const std::string    CB_TEMP_DIR;
 
 
     Front_Qt_API( bool param1
@@ -153,6 +158,7 @@ public:
     , _qtRDPKeymap()
     , _fps(30)
     , _monitorCount(1)
+    , CB_TEMP_DIR(TEMP_PATH_TEST)
 
     {
         this->_to_client_sender._front = this;
@@ -204,7 +210,7 @@ public:
     };
 
     enum : int {
-        PDU_MAX_SIZE    = 3000
+        PDU_MAX_SIZE    = 1600
       , PDU_HEADER_SIZE =    8
     };
 
@@ -286,8 +292,8 @@ public:
         int         size;
         std::string name;
     };
-    typedef struct CB_in_Files CB_in_Files;
-    std::vector<CB_in_Files>       _items_list;
+    std::vector<CB_in_Files>    _items_list;
+    bool                        _waiting_for_data;
 
 
 

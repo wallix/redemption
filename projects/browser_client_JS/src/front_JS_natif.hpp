@@ -84,7 +84,6 @@
 
 //  nodejs sandbox/websocket.js
 
-//  nodejs
 
 class Front_JS_Natif : public FrontAPI
 {
