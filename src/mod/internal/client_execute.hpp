@@ -58,6 +58,9 @@ class ClientExecute
     bool mouse_button1_pressed = false;
     bool mouse_moved           = false;
 
+    uint16_t front_width  = 0;
+    uint16_t front_height = 0;
+
 public:
     ClientExecute(FrontAPI & front) {
         this->front_ = &front;
@@ -95,12 +98,14 @@ public:
         rect.cx -= 2;
         rect.cy--;
 
-LOG(LOG_INFO, "ClientExecute::input_invalidate: r(%u, %u, %u, %u)",
+LOG(LOG_INFO, "ClientExecute::input_invalidate: r(%d, %d, %u, %u)",
     r.x, r.y, r.cx, r.cy);
-LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%u, %u, %u, %u)",
+LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%d, %d, %u, %u)",
     rect.x, rect.y, rect.cx, rect.cy);
 
         if (!r.has_intersection(rect)) return;
+
+LOG(LOG_INFO, "ClientExecute::input_invalidate: has_intersection");
 
         {
             RDPOpaqueRect order(rect, 0xFFFFFF);
@@ -350,21 +355,18 @@ LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%u, %u, %u, %u)",
                         this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
                     }
 
-                    this->mod_->rdp_input_invalidate(
-                        Rect(
-                                this->window_rect.x,
-                                this->window_rect.y,
-                                this->window_rect.x + this->window_rect.cx,
-                                this->window_rect.y + this->window_rect.cy
-                            ));
+                    this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
                 }
             }
         }
     }
 
 public:
-    void ready(mod_api & mod) {
+    void ready(mod_api & mod, uint16_t front_width, uint16_t front_height) {
         this->mod_ = &mod;
+
+        this->front_width  = front_width;
+        this->front_height = front_height;
 
         if (!this->channel_) {
             this->channel_ = this->front_->get_channel_list().get_by_name(channel_names::rail);
