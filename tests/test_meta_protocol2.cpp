@@ -115,12 +115,12 @@ namespace proto
 
     namespace detail
     {
-        template<class T, class U> struct common_size;
-        template<class T, class U> struct common_buffer;
+        template<class T, class U> struct common_size_impl;
+        template<class T, class U> struct common_buffer_impl;
     }
 
-    template<class T, class U> using common_size = typename detail::common_size<T, U>::type;
-    template<class T, class U> using common_buffer = typename detail::common_buffer<T, U>::type;
+    template<class T, class U> using common_size = typename detail::common_size_impl<T, U>::type;
+    template<class T, class U> using common_buffer = typename detail::common_buffer_impl<T, U>::type;
 
     template<class T>
     using t_ = typename T::type;
@@ -392,31 +392,29 @@ namespace proto
 
     namespace detail
     {
-        template<class T, class U> struct common_size;
-
         template<std::size_t n>
-        struct common_size<size_<n>, size_<n>> { using type = size_<n>; };
+        struct common_size_impl<size_<n>, size_<n>> { using type = size_<n>; };
 
         template<std::size_t n1, std::size_t n2>
-        struct common_size<size_<n1>, size_<n2>> { using type = limited_size<std::max(n1, n2)>; };
+        struct common_size_impl<size_<n1>, size_<n2>> { using type = limited_size<std::max(n1, n2)>; };
 
         template<std::size_t n1, std::size_t n2>
-        struct common_size<limited_size<n1>, limited_size<n2>> { using type = limited_size<std::max(n1, n2)>; };
+        struct common_size_impl<limited_size<n1>, limited_size<n2>> { using type = limited_size<std::max(n1, n2)>; };
         template<std::size_t n1, std::size_t n2>
-        struct common_size<size_<n1>, limited_size<n2>> { using type = limited_size<std::max(n1, n2)>; };
+        struct common_size_impl<size_<n1>, limited_size<n2>> { using type = limited_size<std::max(n1, n2)>; };
         template<std::size_t n1, std::size_t n2>
-        struct common_size<limited_size<n1>, size_<n2>> { using type = limited_size<std::max(n1, n2)>; };
+        struct common_size_impl<limited_size<n1>, size_<n2>> { using type = limited_size<std::max(n1, n2)>; };
 
-        template<class T> struct common_size<T, dyn_size> { using type = dyn_size; };
-        template<class U> struct common_size<dyn_size, U> { using type = dyn_size; };
-        template<> struct common_size<dyn_size, dyn_size> { using type = dyn_size; };
+        template<class T> struct common_size_impl<T, dyn_size> { using type = dyn_size; };
+        template<class U> struct common_size_impl<dyn_size, U> { using type = dyn_size; };
+        template<> struct common_size_impl<dyn_size, dyn_size> { using type = dyn_size; };
 
 
-        template<class T, class U> struct common_buffer { using type = tags::dynamic_buffer; };
-        template<class T> struct common_buffer<T, T> { using type = T; };
-        template<> struct common_buffer<tags::static_buffer, tags::limited_buffer>
+        template<class T, class U> struct common_buffer_impl { using type = tags::dynamic_buffer; };
+        template<class T> struct common_buffer_impl<T, T> { using type = T; };
+        template<> struct common_buffer_impl<tags::static_buffer, tags::limited_buffer>
         { using type = tags::limited_buffer ; };
-        template<> struct common_buffer<tags::limited_buffer, tags::static_buffer>
+        template<> struct common_buffer_impl<tags::limited_buffer, tags::static_buffer>
         { using type = tags::limited_buffer ; };
 
 
@@ -623,49 +621,66 @@ namespace proto
         }
     };
 
-    // TODO
-    template<class... Ts>
-    struct subpacket_value
+
+    template<class T>
+    std::enable_if_t<is_static_buffer<T>::value, std::size_t>
+    static_or_limited_serialize(uint8_t * p, T const & x)
+    { return x.static_serialize(p); }
+
+    template<class T>
+    std::enable_if_t<!is_static_buffer<T>::value, std::size_t>
+    static_or_limited_serialize(uint8_t * p, T const & x)
+    { return x.limited_serialize(p); }
+
+
+    namespace detail
     {
-        using sizeof_ = brigand::fold<
-            brigand::list<proto::sizeof_<desc_type_t<Ts>>...>,
-            size_<0>,
-            brigand::call<common_size>
-        >;
+        template<class Ints, class... Ts>
+        struct compose_impl;
 
-        constexpr subpacket_value(desc_type_t<Ts>... v) : values{v...} {}
+        template<std::size_t, class T>
+        struct indexed_value
+        { T x; };
 
-        inherits<desc_type_t<Ts>...> values;
-
-        std::size_t limited_serialize(uint8_t * p) const
+        template<std::size_t... Ints, class... Ts>
+        struct compose_impl<std::integer_sequence<std::size_t, Ints...>, Ts...>
         {
-            std::size_t sz = 0;
-            (void)std::initializer_list<int>{
-                (sz += serialize(p + sz, static_cast<Ts>(this->values)))...
-            };
-            return sz;
-        }
+            using sizeof_ = brigand::fold<
+                brigand::list<proto::sizeof_<Ts>...>,
+                size_<0>,
+                brigand::call<common_size>
+            >;
 
-        std::size_t static_serialize(uint8_t * p) const
-        {
-            std::size_t sz = 0;
-            (void)std::initializer_list<int>{
-                (sz += serialize(p + sz, static_cast<Ts>(this->values)))...
-            };
-            return sz;
-        }
+            constexpr compose_impl(Ts... v) : values{v...} {}
 
-    private:
-        template<class T>
-        static std::enable_if_t<is_static_buffer<T>::value, std::size_t>
-        serialize(uint8_t * p, T const & x)
-        { return x.static_serialize(p); }
+            std::size_t limited_serialize(uint8_t * p) const { return serialize(p); }
 
-        template<class T>
-        static std::enable_if_t<!is_static_buffer<T>::value, std::size_t>
-        serialize(uint8_t * p, T const & x)
-        { return x.limited_serialize(p); }
-    };
+            std::size_t static_serialize(uint8_t * p) const { return serialize(p); }
+
+        private:
+            inherits<indexed_value<Ints, Ts>...> values;
+
+            std::size_t serialize(uint8_t * p) const
+            {
+                std::size_t sz = 0;
+                (void)std::initializer_list<int>{
+                    ((sz += static_or_limited_serialize(
+                        p + sz,
+                        static_cast<indexed_value<Ints, Ts> const &>(this->values).x
+                    )), 1)...
+                };
+                return sz;
+            }
+        };
+
+        template<class Ints, class... Ts>
+        std::ostream & operator <<(std::ostream & os, compose_impl<Ints, Ts...> const &)
+        { return os << "compose"; }
+
+    }
+
+    template<class... Ts>
+    using compose = detail::compose_impl<std::index_sequence_for<Ts...>, Ts...>;
 
     namespace utils
     {
@@ -785,14 +800,16 @@ namespace proto
     constexpr auto
     compose(Desc... d)
     {
-        return creator<subpacket_value<typename Desc::var_type...>, ctx_vars_name<Desc...>, Desc...>{{}, {d...}};
+        using subtype = compose<desc_type_t<var_type_t<Desc>>...>;
+        return creator<subtype, ctx_vars_name<Desc...>, Desc...>{{}, {d...}};
     }
 
     template<class... Desc>
     constexpr auto
     compose(char const * name, Desc... d)
     {
-        return creator<subpacket_value<typename Desc::var_type...>, ctx_c_str_name, Desc...>{{name}, {d...}};
+        using subtype = compose<desc_type_t<var_type_t<Desc>>...>;
+        return creator<subtype, ctx_c_str_name, Desc...>{{name}, {d...}};
     }
 
     template<class... Desc>
@@ -815,33 +832,25 @@ namespace proto
     }
 
 
-    constexpr struct params_
-    {
-        template<class T>
-        struct param {};
-
-        constexpr params_() noexcept {}
-
-        template<class Desc, class Derived>
-        constexpr param<Derived> operator[](var<Desc, Derived>) const noexcept {
-            return {};
-        }
-    } params;
-
     namespace dsl
     {
-#define PROTO_LAZY_BINARY_OP(name, op)   \
-        template<class T, class U>       \
-        struct name                      \
-        {                                \
-            template<class Params>       \
-            constexpr decltype(auto)     \
-            operator()(Params p) const { \
-                return x(p) op y(p);     \
-            }                            \
-                                         \
-            T x;                         \
-            U y;                         \
+#define PROTO_LAZY_BINARY_OP(name, op)         \
+        template<class T, class U>             \
+        struct name                            \
+        {                                      \
+            using arguments = brigand::append< \
+                get_arguments_t<T>,            \
+                get_arguments_t<U>             \
+            >;                                 \
+                                               \
+            template<class Params>             \
+            constexpr decltype(auto)           \
+            operator()(Params p) const {       \
+                return x(p) op y(p);           \
+            }                                  \
+                                               \
+            T x;                               \
+            U y;                               \
         }
 
         PROTO_LAZY_BINARY_OP(bit_and, &);
@@ -849,7 +858,7 @@ namespace proto
 #undef PROTO_LAZY_BINARY_OP
 
         template<class T>
-        struct val
+        struct value
         {
             template<class Params>
             constexpr decltype(auto) operator()(Params) const {
@@ -860,8 +869,10 @@ namespace proto
         };
 
         template<class Var>
-        struct value
+        struct param
         {
+            using arguments = brigand::list<Var>;
+
             template<class Params>
             constexpr decltype(auto) operator()(Params p) const {
                 return p[Var{}].val;
@@ -870,34 +881,24 @@ namespace proto
     }
 
     template<class T, class U>
-    dsl::bit_and<dsl::value<T>, dsl::val<U>>
-    constexpr operator & (params_::param<T>, U && x)
+    dsl::bit_and<dsl::param<T>, dsl::value<U>>
+    constexpr operator & (dsl::param<T>, U && x)
     { return {{}, {x}}; }
+
+    constexpr struct params_
+    {
+        constexpr params_() noexcept {}
+
+        template<class Desc, class Derived>
+        constexpr dsl::param<Derived> operator[](var<Desc, Derived>) const noexcept {
+            return {};
+        }
+    } params;
 
     namespace filters
     {
         namespace detail
         {
-            struct static_
-            {
-                template<class Val>
-                static std::size_t impl(Val const & val, uint8_t * p)
-                {
-                    return val.static_serialize(p);
-                }
-            };
-            struct limited_
-            {
-                template<class Val>
-                static std::size_t impl(Val const & val, uint8_t * p)
-                {
-                    return val.limited_serialize(p);
-                }
-            };
-
-            template<class T>
-            using static_or_limited_serializer = std::conditional_t<is_static_buffer<T>::value, static_, limited_>;
-
             template<class Val>
             struct only_if_true
             {
@@ -905,7 +906,7 @@ namespace proto
                 using buffer_category = typename std::conditional_t<
                     is_view_buffer<Val>::value,
                     proto::detail::buffer_category_impl<Val>,
-                    proto::detail::common_buffer<
+                    proto::detail::common_buffer_impl<
                         tags::limited_buffer,
                         proto::buffer_category<Val>
                     >
@@ -913,9 +914,8 @@ namespace proto
 
                 std::size_t limited_serialize(uint8_t * p) const
                 {
-                    using serializer = static_or_limited_serializer<Val>;
                     if (this->is_ok) {
-                        return serializer::impl(this->val_ok, p);
+                        return static_or_limited_serialize(p, this->val_ok);
                     }
                     return 0;
                 }
@@ -975,7 +975,7 @@ namespace proto
             template<class Var>
             struct param_to_bool
             {
-                using arguments = brigand::append<get_arguments_t<Var>>;
+                using arguments = get_arguments_t<Var>;
 
                 template<class Params>
                 constexpr bool operator()(Params params) const
@@ -1941,6 +1941,7 @@ struct stream_protocol_policy
 
 void test_old();
 void test_new();
+void other_test();
 void test();
 
 BOOST_AUTO_TEST_CASE(proto_test)
@@ -1971,6 +1972,7 @@ BOOST_AUTO_TEST_CASE(proto_test)
     proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
 
     test();
+    other_test();
 }
 
 
@@ -2114,4 +2116,15 @@ void test_new()
     };
 
     proto::apply(Buffering2<Policy>{}, packet1, packet2);
+}
+
+void other_test()
+{
+    PROTO_VAR(proto::types::u8, a);
+    PROTO_VAR(proto::types::u8, b);
+    constexpr auto bl = proto::desc(
+        proto::filters::if_(proto::params[a])
+            [proto::compose(a, b)]
+    );
+    proto::apply(Buffering2<stream_protocol_policy>{}, bl(a = 1_c, b = 1_c));
 }
