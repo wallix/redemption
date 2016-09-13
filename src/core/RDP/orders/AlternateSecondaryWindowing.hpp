@@ -109,6 +109,14 @@ public:
         return 8;   /* Left(2) + Top(2) + Right(2) + Bottom(2) */
     }
 
+    uint16_t Left() const { return this->Left_; }
+
+    uint16_t Top() const { return this->Top_; }
+
+    uint16_t Right() const { return this->Right_; }
+
+    uint16_t Bottom() const { return this->Bottom_; }
+
     size_t str(char * buffer, size_t size) const {
         const size_t length =
             ::snprintf(buffer, size,

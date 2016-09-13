@@ -1054,8 +1054,10 @@
 
 <body id="wrapper">
 
+<!--
     <script src="node_modules/socket.io/node_modules/socket.io-client/socket.io.js"></script>
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
+-->
 
     <script>
 
@@ -1076,9 +1078,6 @@
         portTarget     = document.getElementById("port").value;
 
 
-
-
-
         /* SOCKET CONNECTION */
 
         /* Test */
@@ -1091,8 +1090,6 @@
 
         /* Connection */
         //socket = io.connect(url);
-        socket = new WebSocket("ws://localhost:8080", "rdp-protocol");
-        socket.binaryType = 'arraybuffer';
         /* Connection */
 
 
@@ -1106,25 +1103,32 @@
         document.getElementById("form").style = "display:none";
         document.getElementById("emscripten_canvas").style = "display:block";
 
-        _connexion(pip, puser, ppassword, port);
+		socket = new WebSocket("ws://localhost:8080", "rdp-protocol");
+        socket.binaryType = 'arraybuffer';
 
-
+		socket.addEventListener('open', function (event) { // receive from server
+        	_connexion(pip, puser, ppassword, port);
+		});
 
         socket.addEventListener('message', function (event) { // receive from server
             //var len = ( ((data[4] << 12) | (data[5] << 8) | (data[6] << 4) | data[7])) *2;
             var data = new Uint8Array(event.data);
-            var len = (data[2] << 4) | data[3];
+            //var len = (data[2] << 4) | data[3];
 
-             console.log("Client : received from Server("+len+") : "+data[0]+", "+data[1]+", "+data[2]+", "+data[3]+", "+data[4]);
+			var text = "";
+            console.log('Received Binary Message of ' + data.length + ' bytes');
+            for (var i = 0 ; i < data.length ; ++i){
+                text += ":" + (data[i]+0x10000).toString(16).substr(-2);
+            }
+             console.log("Client : Server Says : "+text);
 
             /*for (var i = 0; i < len; i+=2) {
                 _recv_value((data[i] << 4) | data [i+1]);
             }*/
-            for (var i = 0; i < len; i++) {
+            for (var i = 0; i < data.length; i++) {
                 _recv_value(data[i]);
             }
         });
-
 
         socket.addEventListener('disconnect', function() {
           console.log('disconnected from server');
@@ -1132,13 +1136,22 @@
 
       }
 
-      function send_to_serveur(data, size) { // Send to server
+	  function send_to_serveur(data, size) { // Send to server
       //var test_data = [ 3, 0, 0, 30, 25, 224, 0, 0, 0, 0, 0, 67, 111, 111, 107, 105, 101, 58, 32, 109, 115, 116, 115, 104, 97, 115, 104, 61, 13 ];
 
-      console.log("\nData sent to server : "+data[0]+", "+data[1]+", "+data[2]+", "+data[3]+", "+data[4]+", "+data[5]+", "+data[6]+", "+data[7]+", "+data[8]+", "+data[9]+", "+data[10]+", "+data[11]+", "+data[12]+", "+data[13]+", "+data[14]+", "+data[15]+", "+data[16]+", "+data[17]+", "+data[18]+", "+data[19]+", "+data[20]+", "+data[21]+", "+data[22]+", "+data[23]+", "+data[24]+", "+data[25]+", "+data[26]+", "+data[27]+", "+data[28]+", "+data[29]+"...");
+			console.log("Sending "+size+" bytes to server");
+
+			// TODO: as we are waiting websocket ready before connecting, the test below should not be necessary now
             if (socket.readyState == 1){
+				var text = "";
+				for (var i = 0 ; i < data.length ; ++i){
+					text += ":" + (data[i]+0x10000).toString(16).substr(-2);
+				}
+		  		console.log("Data Sent to Server : "+text);
                 socket.send(data); //, { binary: true });
             } else {
+				//TODO: replace that with onready event from websocket
+				console.log("Waiting for server to be ready");
                 setInterval(function() { send_to_serveur(data, size); }, 1000);
             }
             //socket.send(JSON.stringify({data:data, msg:'message : sending data', index:0}));
@@ -1284,4 +1297,3 @@
 
 </body>
 </html>
-

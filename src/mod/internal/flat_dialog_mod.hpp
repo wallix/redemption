@@ -161,5 +161,13 @@ public:
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->dialog_widget.move_xy(left - this->dialog_widget.rect.x, top - this->dialog_widget.rect.y);
+
+        this->dialog_widget.rect.x  = left;
+        this->dialog_widget.rect.y  = top;
+        this->dialog_widget.rect.cx = width + 1;
+        this->dialog_widget.rect.cy = height + 1;
+    }
+};

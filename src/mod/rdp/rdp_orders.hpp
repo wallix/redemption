@@ -555,6 +555,7 @@ public:
                 case DESTBLT:
                     this->destblt.receive(stream, header);
                     gd.draw(this->destblt, cmd_clip);
+                    //this->destblt.log(LOG_INFO, cmd_clip);
                     break;
                 case MULTIDSTBLT:
                     this->multidstblt.receive(stream, header);
@@ -579,18 +580,22 @@ public:
                 case PATBLT:
                     this->patblt.receive(stream, header);
                     gd.draw(this->patblt, cmd_clip);
+                    //this->patblt.log(LOG_INFO, cmd_clip);
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
                     gd.draw(this->scrblt, cmd_clip);
+                    //this->scrblt.log(LOG_INFO, cmd_clip);
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
                     gd.draw(this->lineto, cmd_clip);
+                    //this->lineto.log(LOG_INFO, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
                     gd.draw(this->opaquerect, cmd_clip);
+                    //this->opaquerect.log(LOG_INFO, cmd_clip);
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
@@ -641,10 +646,12 @@ public:
                 case POLYLINE:
                     this->polyline.receive(stream, header);
                     gd.draw(this->polyline, cmd_clip);
+                    //this->polyline.log(LOG_INFO, cmd_clip);
                     break;
                 case ELLIPSESC:
                     this->ellipseSC.receive(stream, header);
                     gd.draw(this->ellipseSC, cmd_clip);
+                    //this->ellipseSC.log(LOG_INFO, cmd_clip);
                     break;
                 default:
                     /* error unknown order */
