@@ -39,6 +39,12 @@ struct LocallyIntegrableMod : public InternalMod {
         this->client_execute.reset();
     }
 
+    void rdp_input_invalidate(const Rect& r) override {
+        InternalMod::rdp_input_invalidate(r);
+
+        this->client_execute.input_invalidate(r, this->font());
+    }
+
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
 

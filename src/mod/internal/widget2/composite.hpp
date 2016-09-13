@@ -19,7 +19,7 @@
  *              Meng Tan, Raphael Zhou
  */
 
-#pragma once 
+#pragma once
 
 #include "widget.hpp"
 #include "keyboard/keymap2.hpp"
