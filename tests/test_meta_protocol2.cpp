@@ -516,51 +516,7 @@ namespace proto
       ::proto::check<Tpl<Ts>>{}...       \
     }
 
-    namespace detail
-    {
-        template<template<class...> class Tpl, class L, class = std::true_type>
-        struct check_and_return_impl {};
-
-        template<template<class...> class Tpl, class T, class... Ts>
-        struct check_and_return_impl<Tpl, brigand::list<T, Ts...>, typename Tpl<T, Ts...>::type>
-        { using type = T; };
-    }
-
-    template<template<class...> class Tpl, class... Ts>
-    struct check_and_return : detail::check_and_return_impl<Tpl, brigand::list<Ts...>> {};
-
-    template<template<class...> class Tpl, class T, class... Ts>
-    using check_and_return_t = typename check_and_return<Tpl, T, Ts...>::type;
-
-
-    namespace detail
-    {
-        template<class T, class = void> struct is_proto_variable_impl : std::false_type {};
-        template<class T> struct is_proto_variable_impl<T, void_t<typename T::var_type>> : std::true_type {};
-
-        template<class T> struct is_proto_value_impl : std::false_type {};
-        template<class Var, class T> struct is_proto_value_impl<val<Var, T>> : std::true_type {};
-    }
-    template<class T> using is_proto_variable = typename detail::is_proto_variable_impl<T>::type;
-    template<class T> using is_proto_value = typename detail::is_proto_value_impl<T>::type;
-
     template<class T> using var_type_t = typename T::var_type;
-
-    template<class Ints, class... Ts>
-    struct packet;
-
-    namespace detail
-    {
-        template<class T>
-        struct var_or_val_to_var_impl
-        { using type = T; };
-
-        template<class Var, class T>
-        struct var_or_val_to_var_impl<val<Var, T>>
-        { using type = Var; };
-    }
-    template<class T>
-    using var_or_val_to_var = typename detail::var_or_val_to_var_impl<T>::type;
 
     namespace cexp
     {
@@ -711,17 +667,6 @@ namespace proto
         { return x.limited_serialize(p); }
     };
 
-
-    namespace detail
-    {
-        template<class T> struct is_creator : std::false_type {};
-        template<class T, class Varname, class... Descs>
-        struct is_creator<creator<T, Varname, Descs...>> : std::true_type {};
-    }
-    template<class T>
-    using is_creator = typename detail::is_creator<T>::type;
-
-
     namespace utils
     {
         namespace detail
@@ -760,6 +705,31 @@ namespace proto
     }
 
     template<class... Ts>
+    struct packet
+    : private Ts...
+    {
+        using type_list = brigand::list<Ts...>;
+
+        constexpr packet(Ts... args)
+        : Ts{std::move(args)}...
+        {}
+
+        template<class F>
+        void apply_for_each(F f)
+        {
+            (void)std::initializer_list<int>{
+                (void(f(static_cast<Ts&>(*this))), 1)...
+            };
+        }
+
+        template<class F>
+        decltype(auto) apply(F f)
+        {
+            return f(static_cast<Ts&>(*this)...);
+        }
+    };
+
+    template<class... Ts>
     struct packet_description
     {
         using arguments = brigand::append<get_arguments_t<Ts>...>;
@@ -792,61 +762,38 @@ namespace proto
         ordering_parameter(utils::parameters<Val...> params) const
         {
             return packet<
-                std::make_integer_sequence<std::size_t, sizeof...(Ts)>,
                 decltype(static_cast<Ts const &>(this->values).to_proto_value(params))...
             >{(static_cast<Ts const &>(this->values).to_proto_value(params))...};
         }
     };
 
-
-    template<class T>
-    using is_empty_or_proto_val = brigand::bool_<is_proto_value<T>::value or std::is_empty<T>::value>;
-
     template<class T, class... Desc>
     constexpr auto
     creater(Desc... d)
     {
-        return creator<
-            T, ctx_vars_name<Desc...>,
-            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{{}, {d...}};
+        return creator<T, ctx_vars_name<Desc...>, Desc...>{{}, {d...}};
     }
 
     template<class T, class... Desc>
     constexpr auto
     creater(char const * name, Desc... d)
     {
-        return creator<
-            T, ctx_c_str_name,
-            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{{name}, {d...}};
+        return creator<T, ctx_c_str_name, Desc...>{{name}, {d...}};
     }
 
     template<class... Desc>
     constexpr auto
     compose(Desc... d)
     {
-        return creator<
-            subpacket_value<typename Desc::var_type...>, ctx_vars_name<Desc...>,
-            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{{}, {d...}};
+        return creator<subpacket_value<typename Desc::var_type...>, ctx_vars_name<Desc...>, Desc...>{{}, {d...}};
     }
 
     template<class... Desc>
     constexpr auto
     compose(char const * name, Desc... d)
     {
-        return creator<
-            subpacket_value<typename Desc::var_type...>, ctx_c_str_name,
-            check_and_return_t<is_empty_or_proto_val, check_and_return_t<is_proto_variable, Desc>>...
-        >{{name}, {d...}};
+        return creator<subpacket_value<typename Desc::var_type...>, ctx_c_str_name, Desc...>{{name}, {d...}};
     }
-
-    template<class T>
-    using is_empty_or_proto_data = brigand::bool_<
-        is_creator<T>::value or
-        (is_proto_variable<T>::value and is_empty_or_proto_val<T>::value)
-    >;
 
     template<class... Desc>
     constexpr auto
@@ -855,39 +802,10 @@ namespace proto
         return packet_description<Desc...>{{d...}};
     }
 
-    template<std::size_t i, class Var>
-    struct value_desc {
-        Var x;
-    };
-
-    template<std::size_t... Ints, class... Ts>
-    struct packet<std::integer_sequence<std::size_t, Ints...>, Ts...>
-    : value_desc<Ints, Ts>...
-    {
-        using type_list = brigand::list<Ts...>;
-
-        constexpr packet(Ts... args)
-        : value_desc<Ints, Ts>{args}...
-        {}
-
-        template<class F>
-        void apply_for_each(F f)
-        {
-            (void)std::initializer_list<int>{
-                (void(f(static_cast<value_desc<Ints, Ts>&>(*this).x)), 1)...
-            };
-        }
-
-        template<class F>
-        decltype(auto) apply(F f)
-        {
-            return f(static_cast<value_desc<Ints, Ts>&>(*this).x...);
-        }
-    };
 
     template<class T> struct is_proto_packet : std::false_type {};
-    template<class Ints, class... Ts>
-    struct is_proto_packet<packet<Ints, Ts...>> : std::true_type {};
+    template<class... Ts>
+    struct is_proto_packet<packet<Ts...>> : std::true_type {};
 
     template<class F, class... Pkts>
     void apply(F f, Pkts ... pkts)
@@ -1048,7 +966,7 @@ namespace proto
                 template<class Var>
                 constexpr auto operator[](Var var) const
                 {
-                    return if_act<Cond, check_and_return_t<is_empty_or_proto_data, Var>>{cond, var};
+                    return if_act<Cond, Var>{cond, var};
                 }
 
                 Cond cond;
@@ -1227,9 +1145,6 @@ auto & arg(T & ... args)
 template<std::size_t i, class L>
 auto & larg(L && l)
 { return l.apply([](auto & ... v) PROTO_DECLTYPE_AUTO_RETURN(arg<i>(v...))); }
-
-template<class T>
-using var_type = proto::var_or_val_to_var<T>;
 
 using proto::t_;
 
@@ -1447,16 +1362,10 @@ template<class L>
 using buffer_from_var_infos = sizeof_to_buffer<sizeof_var_infos<L>>;
 
 template<class VarInfos>
-using var_infos_is_not_dynamic = proto::is_dynamic_buffer<typename brigand::front<VarInfos>::desc_type>;
+using var_infos_is_not_dynamic = proto::is_dynamic_buffer<desc_type_t<brigand::front<VarInfos>>>;
 
 template<class T>
-using var_to_desc_type = desc_type_t<var_type<T>>;
-
-template<class T>
-using var_to_desc_type2 = desc_type_t<proto::var_type_t<T>>;
-
-template<class T>
-using var_info_is_pkt_sz = proto::is_pkt_sz_category<var_to_desc_type<T>>;
+using var_info_is_pkt_sz = proto::is_pkt_sz_category<desc_type_t<T>>;
 
 template<class VarInfos>
 using var_infos_has_pkt_sz = brigand::any<VarInfos, brigand::call<var_info_is_pkt_sz>>;
@@ -1638,6 +1547,8 @@ namespace detail
 
 using iovec_view = array_view<detail::iovec const>;
 
+template<class T>
+using var_to_desc_type = desc_type_t<proto::var_type_t<T>>;
 
 template<class Policy>
 struct Buffering2
@@ -1647,7 +1558,7 @@ struct Buffering2
     template<class... Pkts>
     struct Impl
     {
-        using packet_list_ = brigand::list<brigand::transform<typename Pkts::type_list, brigand::call<var_to_desc_type2>>...>;
+        using packet_list_ = brigand::list<brigand::transform<typename Pkts::type_list, brigand::call<var_to_desc_type>>...>;
         using sizeof_by_packet = brigand::transform<packet_list_, brigand::call<sizeof_packet>>;
         using accu_sizeof_by_packet = make_accumulate_sizeof_list<sizeof_by_packet>;
         using packet_list = brigand::transform<
