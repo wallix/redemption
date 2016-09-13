@@ -157,5 +157,13 @@ public:
     }
 
     bool is_up_and_running() override { return true; }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->close_widget.move_xy(left - this->close_widget.rect.x, top - this->close_widget.rect.y);
+
+        this->close_widget.rect.x  = left;
+        this->close_widget.rect.y  = top;
+        this->close_widget.rect.cx = width + 1;
+        this->close_widget.rect.cy = height + 1;
+    }
+};

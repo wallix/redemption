@@ -65,10 +65,12 @@ public:
     Rect adjust_rect(Rect rect) {
         if (!this->front_->get_channel_list().get_by_name(channel_names::rail)) return rect;
 
-        this->window_rect.x  = rect.x + rect.cx * 10 / 100;
-        this->window_rect.y  = rect.y + rect.cy * 10 / 100;
-        this->window_rect.cx = rect.cx * 80 / 100;
-        this->window_rect.cy = rect.cy * 80 / 100;
+        if (this->window_rect.isempty()) {
+            this->window_rect.x  = rect.x + rect.cx * 10 / 100;
+            this->window_rect.y  = rect.y + rect.cy * 10 / 100;
+            this->window_rect.cx = rect.cx * 80 / 100;
+            this->window_rect.cy = rect.cy * 80 / 100;
+        }
 
         Rect result_rect = this->window_rect.shrink(1);
         result_rect.cx--;
@@ -238,15 +240,26 @@ public:
                     LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
 
                     this->front_->draw(order);
-
-                    this->mod_->rdp_input_invalidate(
-                        Rect(
-                                this->window_rect.x,
-                                this->window_rect.y,
-                                this->window_rect.x + this->window_rect.cx,
-                                this->window_rect.y + this->window_rect.cy
-                            ));
                 }
+
+                {
+                    Rect result_rect = this->window_rect.shrink(1);
+                    result_rect.cx--;
+                    result_rect.cy--;
+
+                    result_rect.y  += 24;
+                    result_rect.cy -= 24;
+
+                    this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
+                }
+
+                this->mod_->rdp_input_invalidate(
+                    Rect(
+                            this->window_rect.x,
+                            this->window_rect.y,
+                            this->window_rect.x + this->window_rect.cx,
+                            this->window_rect.y + this->window_rect.cy
+                        ));
             }
         }
     }
@@ -710,7 +723,7 @@ public:
                         order.NumVisibilityRects(1);
                         order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 160, 24));
                         order.ShowState(2);
-                        order.Style(0x34EF0000);
+                        order.Style(0x34EE0000);
                         order.ExtendedStyle(0x40310);
 
                         StaticOutStream<1024> out_s;
@@ -753,7 +766,7 @@ public:
                     order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
                     order.OwnerWindowId(0x0);
-                    order.Style(0x14EF0000);
+                    order.Style(0x14EE0000);
                     order.ExtendedStyle(0x40310);
                     order.ShowState(5);
                     order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
@@ -960,7 +973,7 @@ public:
                 order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
                 order.OwnerWindowId(0x0);
-                order.Style(0x14EF0000);
+                order.Style(0x14EE0000);
                 order.ExtendedStyle(0x40310);
                 order.ShowState(5);
                 order.TitleInfo(INTERNAL_MODULE_WINDOW_TITLE);
