@@ -931,6 +931,9 @@ namespace proto
                     if (this->is_ok) {
                         this->val_ok.dynamic_serialize(f);
                     }
+                    else {
+                        f();
+                    }
                 }
 
                 bool is_ok;
