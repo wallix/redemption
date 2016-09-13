@@ -77,6 +77,13 @@ namespace { namespace compiler_aux_ {
 #  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL(( \
         LOG_FORMAT_CHECK(__VA_ARGS__), priority))
 
+#elif defined(LOGASMJS) && defined(EM_ASM)
+#  define LOG(priority, ...) LOGCHECK__REDEMPTION__INTERNAL(( \
+        LOG_FORMAT_CHECK(__VA_ARGS__),                                           \
+        LOGPRINT__REDEMPTION__ASMJS(priority, "%s (%d/%d) -- " __VA_ARGS__),  \
+        1                                                                        \
+    ))
+
 #else
 #  define LOG(priority, ...)                                                     \
     LOGCHECK__REDEMPTION__INTERNAL((                                             \
@@ -124,6 +131,23 @@ namespace {
             #pragma GCC diagnostic pop
         #endif
         puts("");
+    }
+
+    template<class... Ts>
+    void LOGPRINT__REDEMPTION__ASMJS(int priority, char const * format, Ts const & ... args)
+    {
+        #ifdef __GNUG__
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+        #endif
+        char buffer[4096];
+        int len = snprintf(buffer, sizeof(buffer)-2, format, prioritynames[priority], getpid(), getpid(), args...);
+        #ifdef __GNUG__
+            #pragma GCC diagnostic pop
+        #endif
+        buffer[len] = '\n';
+        buffer[len+1] = 0;
+        EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
     }
 
     template<class... Ts>
