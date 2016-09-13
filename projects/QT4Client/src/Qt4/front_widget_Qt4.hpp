@@ -53,6 +53,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QMimeData>
 #include <QtCore/QUrl>
+#include <QtGui/QCompleter>
 
 
 #define KEY_SETTING_PATH "keySetting.config"
@@ -147,7 +148,7 @@ public:
         this->_layoutView = new QFormLayout(this->_viewTab);
 
 
-        this->_bppComboBox.addItem("32", 32);
+        //this->_bppComboBox.addItem("32", 32);
         this->_bppComboBox.addItem("24", 24);
         this->_bppComboBox.addItem("16", 16);
         this->_bppComboBox.addItem("15", 15);
@@ -495,6 +496,7 @@ public:
     QCheckBox            _pwdCheckBox;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
+    QCompleter         * _completer;
     struct {
         std::string title;
         std::string IP;
@@ -534,10 +536,13 @@ public:
         this->setFixedSize(this->_width, this->_height);
 
         this->setAccountData();
+
         if (this->_pwdCheckBoxChecked) {
             this->_pwdCheckBox.setCheckState(Qt::Checked);
         }
+        //this->_IPField.setCompleter(this->_completer);
         this->_IPCombobox.setLineEdit(&(this->_IPField));
+        //this->_IPCombobox.setCompleter(this->_completer);
         this->QObject::connect(&(this->_IPCombobox), SIGNAL(currentIndexChanged(int)) , this, SLOT(targetPicked(int)));
 
         this->_PWDField.setEchoMode(QLineEdit::Password);
@@ -627,10 +632,13 @@ public:
 
             this->_IPCombobox.clear();
             this->_IPCombobox.addItem(QString(""), 0);
+            QStringList stringList;
             for (int i = 0; i < this->_accountNB; i++) {
                 std::string title(this->_accountData[i].IP + std::string(" - ")+ this->_accountData[i].name);
                 this->_IPCombobox.addItem(QString(title.c_str()), i+1);
+                stringList << title.c_str();
             }
+            this->_completer = new QCompleter(stringList, this);
         }
     }
 
@@ -1051,11 +1059,18 @@ public:
         std::string  nameUTF8;
         char *       chunk;
 
+        CB_out_File()
+          : size(0)
+          , name("")
+          , nameUTF8("")
+          , chunk(nullptr)
+        {}
+
         ~CB_out_File() {
             delete[] (chunk);
         }
     };
-    std::vector<CB_out_File>    _items_list;
+    std::vector<CB_out_File *>  _items_list;
     std::vector<std::string>    _temp_files_list;
 
 
@@ -1237,6 +1252,9 @@ public:
             }
         }
         this->_temp_files_list.clear();
+        for (size_t i = 0; i < _items_list.size(); i++) {
+            delete(this->_items_list[i]);
+        }
         this->_items_list.clear();
     }
 
@@ -1313,10 +1331,10 @@ public Q_SLOTS:
                         std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
                         if (iFile.is_open()) {
 
-                            CB_out_File file;
-                            file.size  = size;
-                            file.chunk = new char[file.size];
-                            iFile.read(file.chunk, file.size);
+                            CB_out_File * file = new CB_out_File();
+                            file->size  = size;
+                            file->chunk = new char[file->size];
+                            iFile.read(file->chunk, file->size);
                             iFile.close();
 
                             int posName(path.size()-1);
@@ -1327,15 +1345,15 @@ public Q_SLOTS:
                                 }
                                 posName--;
                             }
-                            file.nameUTF8 = path.substr(posName+2, path.size());
-                            //std::string name = file.nameUTF8;
-                            int UTF8nameSize(file.nameUTF8.size() *2);
+                            file->nameUTF8 = path.substr(posName+2, path.size());
+                            //std::string name = file->nameUTF8;
+                            int UTF8nameSize(file->nameUTF8.size() *2);
                             if (UTF8nameSize > 520) {
                                 UTF8nameSize = 520;
                             }
                             uint8_t UTF16nameData[520];
-                            int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(file.nameUTF8.c_str()), UTF16nameData, UTF8nameSize);
-                            file.name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+                            int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str()), UTF16nameData, UTF8nameSize);
+                            file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
                             this->_cItems++;
                             this->_items_list.push_back(file);
 
