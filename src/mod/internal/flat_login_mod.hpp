@@ -163,5 +163,13 @@ public:
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->login.move_xy(left - this->login.rect.x, top - this->login.rect.y);
+
+        this->login.rect.x  = left;
+        this->login.rect.y  = top;
+        this->login.rect.cx = width + 1;
+        this->login.rect.cy = height + 1;
+    }
+};

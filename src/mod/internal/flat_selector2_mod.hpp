@@ -365,5 +365,13 @@ public:
             this->copy_paste.send_to_mod_channel(chunk, flags);
         }
     }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->selector.move_xy(left - this->selector.rect.x, top - this->selector.rect.y);
+
+        this->selector.rect.x  = left;
+        this->selector.rect.y  = top;
+        this->selector.rect.cx = width + 1;
+        this->selector.rect.cy = height + 1;
+    }
+};

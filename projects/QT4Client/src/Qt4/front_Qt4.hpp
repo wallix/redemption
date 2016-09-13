@@ -81,7 +81,7 @@
 
 
 #define USER_CONF_PATH "userConfig.config"
-#define TEMP_PATH_TEST "/home/cmoroldo/Bureau/redemption/projects/QT4Client/clipboard_temp/"
+#define TEMP_PATH_TEST "/clipboard_temp/"
 
 class Form_Qt;
 class Screen_Qt;
@@ -328,7 +328,7 @@ public:
 
     void empty_buffer() override;
 
-    void cut_clipboard_data_to_send(int total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t * data);
+    void cut_clipboard_data_to_send(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t * data);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
