@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <cinttypes>
 
 #include "utils/stream.hpp"
@@ -1758,11 +1759,11 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
 
     void emit_fileList(OutStream & stream, int cItems, std::string name, uint64_t size) {
-         this->dataLen_ = (cItems * FILE_DESCRIPTOR_SIZE);
-         CliprdrHeader::emit(stream);
-         stream.out_uint32_le(cItems);
+        this->dataLen_ = FILE_DESCRIPTOR_SIZE + 4;
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(cItems);
 
-         stream.out_uint32_le(FD_SHOWPROGRESSUI |
+        stream.out_uint32_le(FD_SHOWPROGRESSUI |
                                  FD_FILESIZE       |
                                  FD_WRITESTIME     |
                                  FD_ATTRIBUTES
@@ -1774,36 +1775,13 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_uint32_le(size >> 32);
         stream.out_uint32_le(size);
         size_t sizeName(name.size());
-        stream.out_copy_bytes(name.data(), sizeName);
+        if (sizeName > 520) {
+            sizeName = 520;
+        }
+        stream.out_copy_bytes(name.data(), sizeName);;
         stream.out_clear_bytes(520 - sizeName);
     }
-
-    // Files List
-    // TODO std::string* + int* -> array_view { name, size };
-    void emit_fileList_b(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems, uint64_t time) {
-        this->dataLen_ = (cItems * FILE_DESCRIPTOR_SIZE);
-        CliprdrHeader::emit(stream);
-        stream.out_uint32_le(cItems);
-        for (int i = 0; i < cItems; i++) {
-            stream.out_uint32_le(FD_SHOWPROGRESSUI |
-                                 FD_FILESIZE       |
-                                 FD_WRITESTIME     |
-                                 FD_ATTRIBUTES
-                                );
-            stream.out_clear_bytes(32);
-            stream.out_uint32_le(FILE_ATTRIBUTE_ARCHIVE);
-            stream.out_clear_bytes(16);
-            stream.out_uint64_le(time);
-            stream.out_uint32_le(sizesList[i] >> 32);
-            stream.out_uint32_le(sizesList[i]);
-            size_t size(namesList[i].size());
-            //REDASSERT(namesList[i].size() <= 520);
-            stream.out_copy_bytes(namesList[i].data(), size);
-            stream.out_clear_bytes(520 - size);
-        }
-        stream.out_uint32_le(0);
-    }
-
+    
     void emit_text(OutStream & stream, uint32_t length) {
         this->dataLen_ = length;
         CliprdrHeader::emit(stream);
