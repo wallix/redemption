@@ -69,13 +69,6 @@ namespace proto
     template<std::size_t N>
     using size_ = std::integral_constant<std::size_t, N>;
 
-    template<class T>
-    struct internal_type
-    { using type = typename T::type; };
-
-    template<class T>
-    using internal_type_t = typename internal_type<T>::type;
-
 
     struct dyn_size {};
     template<std::size_t i> struct limited_size {};
@@ -140,7 +133,7 @@ namespace proto
     }
 
 
-    // clang narrowing checker... (cf: safe_int<T> = T)
+    // clang narrowing checker with std::intgral_constant... (cf: safe_int<T> = T)
     template<class T>
     struct safe_int
     {
@@ -396,18 +389,6 @@ namespace proto
         {}
     };
 
-    template<class T, class... Ts>
-    struct only
-    {
-        template<class U, class = std::enable_if_t<std::is_base_of<brigand::type_<U>, inherits<brigand::type_<T>, brigand::type_<Ts>...>>::value>>
-        constexpr only(U x)
-        : value(x)
-        {}
-
-        T value;
-        constexpr operator T () const { return value; }
-    };
-
 
     namespace detail
     {
@@ -437,25 +418,13 @@ namespace proto
         { using type = tags::limited_buffer ; };
         template<> struct common_buffer<tags::limited_buffer, tags::static_buffer>
         { using type = tags::limited_buffer ; };
-    }
 
 
-    namespace detail {
-        template<class T>
-        struct is_pkt_sz : std::false_type
-        {};
+        template<class T> struct is_pkt_sz : std::false_type {};
+        template<class T> struct is_pkt_sz<types::pkt_sz<T>> : std::true_type {};
 
-        template<class T>
-        struct is_pkt_sz<types::pkt_sz<T>> : std::true_type
-        {};
-
-        template<class T>
-        struct is_pkt_sz_with_self : std::false_type
-        {};
-
-        template<class T>
-        struct is_pkt_sz_with_self<types::pkt_sz_with_self<T>> : std::true_type
-        {};
+        template<class T> struct is_pkt_sz_with_self : std::false_type {};
+        template<class T> struct is_pkt_sz_with_self<types::pkt_sz_with_self<T>> : std::true_type {};
     }
     template<class T> using is_pkt_sz = typename detail::is_pkt_sz<T>::type;
     template<class T> using is_pkt_sz_with_self = typename detail::is_pkt_sz_with_self<T>::type;
@@ -475,6 +444,9 @@ namespace proto
         constexpr val
         to_proto_value(Params) const
         { return *this; }
+
+        decltype(auto) name() const noexcept
+        { return this->var.name(); }
     };
 
     template<class Derived, class Desc, class T>
@@ -486,7 +458,7 @@ namespace proto
     struct var
     {
         using desc_type = Desc;
-        using var_type = var;
+        using var_type = Derived;
         using arguments = brigand::list<Derived>;
 
         template<class U>
@@ -514,7 +486,7 @@ namespace proto
     struct var<types::pkt_sz<Desc>, Derived>
     {
         using desc_type = types::pkt_sz<Desc>;
-        using var_type = var;
+        using var_type = Derived;
 
         template<class Params>
         Derived to_proto_value(Params) const noexcept
@@ -525,21 +497,12 @@ namespace proto
     struct var<types::pkt_sz_with_self<Desc>, Derived>
     {
         using desc_type = types::pkt_sz_with_self<Desc>;
-        using var_type = var;
+        using var_type = Derived;
 
         template<class Params>
         Derived to_proto_value(Params) const noexcept
         { return static_cast<Derived const &>(*this); }
     };
-
-
-    template<class Desc, class Derived>
-    constexpr sizeof_<Desc> get_size(var<Desc, Derived>)
-    { return {}; }
-
-    template<class Desc, class Derived>
-    constexpr Desc get_desc(var<Desc, Derived>)
-    { return {}; }
 
 
     template<class T>
@@ -553,7 +516,8 @@ namespace proto
       ::proto::check<Tpl<Ts>>{}...       \
     }
 
-    namespace detail {
+    namespace detail
+    {
         template<template<class...> class Tpl, class L, class = std::true_type>
         struct check_and_return_impl {};
 
@@ -569,7 +533,8 @@ namespace proto
     using check_and_return_t = typename check_and_return<Tpl, T, Ts...>::type;
 
 
-    namespace detail {
+    namespace detail
+    {
         template<class T, class = void> struct is_proto_variable_impl : std::false_type {};
         template<class T> struct is_proto_variable_impl<T, void_t<typename T::var_type>> : std::true_type {};
 
@@ -583,34 +548,6 @@ namespace proto
 
     template<class Ints, class... Ts>
     struct packet;
-
-    template<class T>
-    struct Ref
-    {
-        constexpr Ref(T & x) noexcept : x(x) {}
-        constexpr operator T & () const noexcept { return x; }
-        constexpr T & get() const noexcept { return x; }
-
-    private:
-        T & x;
-    };
-
-    template<class... Val>
-    struct inherit_refs : Ref<Val>... {
-        constexpr inherit_refs(Val & ... val) : Ref<Val>{val}... {}
-    };
-
-
-    template<class Var, class T>
-    constexpr val<Var, T>
-    ref_to_val(Ref<val<Var, T>> x)
-    { return x; }
-
-
-    template<class T, class = void>
-    using enable_type = T;
-
-    template<std::size_t n> using mk_iseq = std::make_integer_sequence<std::size_t, n>;
 
     namespace detail
     {
@@ -655,8 +592,6 @@ namespace proto
             return a;
         }
     }
-
-    class unamed {};
 
     template<class Desc, class CtxName>
     struct named_var
@@ -725,20 +660,14 @@ namespace proto
         constexpr val<named_var<T, CtxName>, T>
         to_proto_value(Params params) const
         {
-// #ifdef __clang__
-// # pragma GCC diagnostic push
-// # pragma GCC diagnostic ignored "-Wmissing-braces"
-// #endif
             return {
                 named_var<T, CtxName>{this->ctx_name},
                 T{static_cast<Descs const &>(this->values).to_proto_value(params).x...}
             };
-// #ifdef __clang__
-// # pragma GCC diagnostic pop
-// #endif
         }
     };
 
+    // TODO
     template<class... Ts>
     struct subpacket_value
     {
@@ -756,7 +685,7 @@ namespace proto
         {
             std::size_t sz = 0;
             (void)std::initializer_list<int>{
-                (sz += static_cast<Ts>(this->values).serialize(p + sz))...
+                (sz += serialize(p + sz, static_cast<Ts>(this->values)))...
             };
             return sz;
         }
@@ -782,25 +711,6 @@ namespace proto
         { return x.limited_serialize(p); }
     };
 
-    namespace detail
-    {
-        template<class T>
-        struct flatten_description_to_list_impl
-        { using type = brigand::list<var_or_val_to_var<T>>; };
-
-        template<class T, class CtxName, class... Descs>
-        struct flatten_description_to_list_impl<creator<T, CtxName, Descs...>>
-        { using type = brigand::list<var_or_val_to_var<Descs>...>; };
-
-        template<class T>
-        using flatten_description_to_list_t = typename flatten_description_to_list_impl<T>::type;
-    }
-    template<class L>
-    using flatten_packet_description = brigand::wrap<
-        brigand::transform<L, brigand::call<detail::flatten_description_to_list_t>>,
-        brigand::append
-    >;
-
 
     namespace detail
     {
@@ -811,12 +721,21 @@ namespace proto
     template<class T>
     using is_creator = typename detail::is_creator<T>::type;
 
-    template<class T>
-    using is_proto_value_or_proto_creator = brigand::bool_<is_proto_value<T>::value or is_creator<T>::value>;
-
 
     namespace utils
     {
+        namespace detail
+        {
+            template<class T>
+            struct ref
+            { T & x; };
+
+            template<class Var, class T>
+            constexpr val<Var, T>
+            ref_to_val(ref<val<Var, T>> r)
+            { return r.x; }
+        }
+
         template<class... Ts>
         struct parameters
         {
@@ -825,22 +744,18 @@ namespace proto
 
             template<class T>
             constexpr decltype(auto) operator[](T const &) const noexcept
-            { return proto::ref_to_val<T>(refs).x; }
+            { return detail::ref_to_val<T>(refs).x; }
 
             template<class T>
             constexpr decltype(auto) get_proto_value(T const &) const noexcept
-            { return proto::ref_to_val<T>(refs); }
+            { return detail::ref_to_val<T>(refs); }
 
             template<class T>
             constexpr decltype(auto) get_proto_value() const noexcept
-            { return proto::ref_to_val<T>(refs); }
-
-            template<class T>
-            constexpr T & cast() const noexcept
-            { return static_cast<Ref<T>>(refs); }
+            { return detail::ref_to_val<T>(refs); }
 
         private:
-            proto::inherit_refs<Ts...> refs;
+            proto::inherits<detail::ref<Ts>...> refs;
         };
     }
 
@@ -877,7 +792,7 @@ namespace proto
         ordering_parameter(utils::parameters<Val...> params) const
         {
             return packet<
-                mk_iseq<sizeof...(Ts)>,
+                std::make_integer_sequence<std::size_t, sizeof...(Ts)>,
                 decltype(static_cast<Ts const &>(this->values).to_proto_value(params))...
             >{(static_cast<Ts const &>(this->values).to_proto_value(params))...};
         }
@@ -995,7 +910,7 @@ namespace proto
         }
     } params;
 
-    namespace lazy
+    namespace dsl
     {
 #define PROTO_LAZY_BINARY_OP(name, op)   \
         template<class T, class U>       \
@@ -1027,7 +942,7 @@ namespace proto
         };
 
         template<class Var>
-        struct param
+        struct value
         {
             template<class Params>
             constexpr decltype(auto) operator()(Params p) const {
@@ -1037,7 +952,7 @@ namespace proto
     }
 
     template<class T, class U>
-    lazy::bit_and<lazy::param<T>, lazy::val<U>>
+    dsl::bit_and<dsl::value<T>, dsl::val<U>>
     constexpr operator & (params_::param<T>, U && x)
     { return {{}, {x}}; }
 
@@ -1147,7 +1062,7 @@ namespace proto
                 template<class Params>
                 constexpr bool operator()(Params params) const
                 {
-                    return bool(lazy::param<Var>{}(params));
+                    return bool(params[Var{}].val);
                 }
             };
         }
@@ -1323,7 +1238,7 @@ struct Buffering
     template<class... Val>
     void operator()(Val ... val) const {
         using iseq = brigand::range<size_t, 0, sizeof...(val)>;
-        using list = brigand::list<var_type<Val>...>;
+        using list = brigand::list<proto::var_type_t<Val>...>;
         using list_pair = brigand::transform<iseq, list, brigand::call<brigand::pair>>;
         using list_by_buffer = brigand::split_if<list_pair, brigand::call<pair_is_buffer_delimiter>>;
 
@@ -1331,8 +1246,9 @@ struct Buffering
             std::cout << '[';
             brigand::for_each<t_<decltype(g)>>([&val...](auto v) {
                 using pair_type = t_<decltype(v)>;
-                std::cout << pair_type::second_type::name() << " = ";
-                print(arg<pair_type::first_type::value>(val...));
+                auto & value = arg<pair_type::first_type::value>(val...);
+                std::cout << value.name() << " = ";
+                print(value);
                 std::cout << ", ";
             });
             std::cout << "]\n";
@@ -1484,9 +1400,6 @@ using convert_pkt_sz = typename detail::convert_pkt_sz<
 
 using proto::desc_type_t;
 
-template<class T>
-using var_to_desc_type = desc_type_t<var_type<T>>;
-
 template<std::size_t i>
 using i_ = std::integral_constant<std::size_t, i>;
 
@@ -1535,6 +1448,12 @@ using buffer_from_var_infos = sizeof_to_buffer<sizeof_var_infos<L>>;
 
 template<class VarInfos>
 using var_infos_is_not_dynamic = proto::is_dynamic_buffer<typename brigand::front<VarInfos>::desc_type>;
+
+template<class T>
+using var_to_desc_type = desc_type_t<var_type<T>>;
+
+template<class T>
+using var_to_desc_type2 = desc_type_t<proto::var_type_t<T>>;
 
 template<class T>
 using var_info_is_pkt_sz = proto::is_pkt_sz_category<var_to_desc_type<T>>;
@@ -1719,6 +1638,7 @@ namespace detail
 
 using iovec_view = array_view<detail::iovec const>;
 
+
 template<class Policy>
 struct Buffering2
 {
@@ -1727,7 +1647,7 @@ struct Buffering2
     template<class... Pkts>
     struct Impl
     {
-        using packet_list_ = brigand::list<brigand::transform<typename Pkts::type_list, brigand::call<var_to_desc_type>>...>;
+        using packet_list_ = brigand::list<brigand::transform<typename Pkts::type_list, brigand::call<var_to_desc_type2>>...>;
         using sizeof_by_packet = brigand::transform<packet_list_, brigand::call<sizeof_packet>>;
         using accu_sizeof_by_packet = make_accumulate_sizeof_list<sizeof_by_packet>;
         using packet_list = brigand::transform<
@@ -1760,8 +1680,9 @@ struct Buffering2
         detail::Buffers<brigand::size<buffer_list>::value> buffers{buffer_tuple};
         std::array<uint8_t *, brigand::size<pkt_sz_list>::value> pktptrs;
         detail::Sizes<default_buffer_size> sizes;
-        // TODO reference
-        Policy policy;
+        Policy const & policy;
+
+        Impl(Policy const & policy) noexcept : policy(policy) {}
 
         void impl(Pkts & ... packets)
         {
@@ -2054,10 +1975,12 @@ struct Buffering2
         static void print_buffer_type(proto::tags::limited_buffer) { std::cout << "[limited_buffer]"; }
     };
 
+    Policy policy;
 
     template<class... Packets>
-    void operator()(Packets ... packets) const {
-        Impl<Packets...> impl;
+    void operator()(Packets ... packets) const
+    {
+        Impl<Packets...> impl{this->policy};
         impl.impl(packets...);
     }
 
@@ -2072,30 +1995,31 @@ struct Buffering2
 struct stream_protocol_policy
 {
     template<class T>
-    auto serialize_static_buffer(uint8_t * p, T val)
+    static auto serialize_static_buffer(uint8_t * p, T val)
     {
         return val.static_serialize(p);
     }
 
     template<class T>
-    auto get_view_buffer(T val)
+    static auto get_view_buffer(T val)
     {
         return val.get_view_buffer();
     }
 
     template<class T>
-    std::size_t serialize_limited_buffer(uint8_t * p, T val)
+    static std::size_t serialize_limited_buffer(uint8_t * p, T val)
     {
         return val.limited_serialize(p);
     }
 
     template<class F, class T>
-    void context_dynamic_buffer(F && f, T val)
+    static void context_dynamic_buffer(F && f, T val)
     {
         val.dynamic_serialize(f);
     }
 
-    void send(iovec_view iovs) {
+    static void send(iovec_view iovs)
+    {
         for (auto iov : iovs) {
             std::cout << " [" << iov.iov_base << "] [len: " << iov.iov_len << "]\n";
             hexdump_c(static_cast<uint8_t const*>(iov.iov_base), iov.iov_len);
@@ -2268,7 +2192,7 @@ void test_new()
     );
 
     struct Policy : stream_protocol_policy {
-        void send(iovec_view iovs) {
+        static void send(iovec_view iovs) {
             BOOST_CHECK_EQUAL(iovs.size(), 1);
             CHECK_RANGE(
                 make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
