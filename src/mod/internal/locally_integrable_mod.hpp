@@ -47,7 +47,7 @@ struct LocallyIntegrableMod : public InternalMod {
     void rdp_input_invalidate(const Rect& r) override {
         InternalMod::rdp_input_invalidate(r);
 
-        this->client_execute.input_invalidate(r, this->font());
+        this->client_execute.input_invalidate(r);
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
@@ -78,7 +78,7 @@ struct LocallyIntegrableMod : public InternalMod {
 
     void draw_event(time_t, gdi::GraphicApi &) override {
         if (!this->client_execute && event.waked_up_by_time) {
-            this->client_execute.ready(*this, this->front_width, this->front_height);
+            this->client_execute.ready(*this, this->front_width, this->front_height, this->font());
         }
     }
 
