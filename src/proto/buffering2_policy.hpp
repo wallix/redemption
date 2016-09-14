@@ -27,7 +27,7 @@
 
 namespace proto_buffering2 {
 
-using proto_buffering::arg;
+// using proto_buffering::arg;
 using proto_buffering::is_buffer_delimiter;
 
 
@@ -37,9 +37,24 @@ using proto_buffering::is_buffer_delimiter;
 #define PROTO_DECLTYPE_AUTO_RETURN(...) -> decltype(__VA_ARGS__) { return (__VA_ARGS__); }
 #endif
 
+namespace detail {
+    template<class T> struct arg_impl;
+    template<class... Ts>
+    struct arg_impl<brigand::list<Ts...>>
+    {
+        template<class T> static T const & impl(Ts..., T const & x, ...) { return x; }
+    };
+
+    struct any_ { template<class T> constexpr any_(T const &) noexcept {} };
+}
+
+template<std::size_t i, class... T>
+auto const & arg(T const & ... args)
+{ return detail::arg_impl<brigand::filled_list<detail::any_, i>>::impl(args...); }
+
 template<std::size_t i, class L>
-auto & larg(L && l)
-{ return l.apply([](auto & ... v) PROTO_DECLTYPE_AUTO_RETURN(arg<i>(v...))); }
+auto const & larg(L const & l)
+{ return l.apply([](auto const & ... v) PROTO_DECLTYPE_AUTO_RETURN(arg<i>(v...))); }
 
 
 template<std::size_t n>
@@ -454,7 +469,7 @@ struct Buffering2
 
         Impl(Policy const & policy) noexcept : policy(policy) {}
 
-        void impl(Pkts ... packets)
+        void impl(Pkts const & ... packets)
         {
             /**///std::cout << "pktptrs.size: " << this->pktptrs.size() << "\n";
 
@@ -475,7 +490,7 @@ struct Buffering2
         }
 
         template<class... VarInfos, class... Ints>
-        void serialize_not_dynamic_bufs(brigand::list<VarInfos...>, brigand::list<Ints...>, Pkts & ... pkts) {
+        void serialize_not_dynamic_bufs(brigand::list<VarInfos...>, brigand::list<Ints...>, Pkts const & ... pkts) {
             (void)std::initializer_list<int>{(void(
                 serialize_not_dynamic_buf(
                     var_infos_is_not_dynamic<VarInfos>{},
@@ -493,7 +508,7 @@ struct Buffering2
         }
 
         template<class... VarInfos>
-        void serialize_not_dynamic_buf(std::false_type, brigand::list<VarInfos...>, iovec & buffer, Pkts & ... pkts) {
+        void serialize_not_dynamic_buf(std::false_type, brigand::list<VarInfos...>, iovec & buffer, Pkts const & ... pkts) {
             /**///std::cout << "-------\n";
             (void)std::initializer_list<int>{(void(
                 this->serialize_type(
@@ -513,7 +528,7 @@ struct Buffering2
 
         template<class IPacket, class IVar, class T, class Var>
         void serialize_pkt_sz_with_size_or_var(
-            var_info<IPacket, IVar, proto::types::pkt_sz<T>> vinfo, iovec & buffer, Var &
+            var_info<IPacket, IVar, proto::types::pkt_sz<T>> vinfo, iovec & buffer, Var const &
         ) {
             constexpr auto pkt_idx = brigand::index_of<pkt_sz_list, decltype(vinfo)>::value;
             this->pktptrs[pkt_idx] = static_cast<uint8_t*>(buffer.iov_base);
@@ -522,7 +537,7 @@ struct Buffering2
 
         template<class IPacket, class IVar, class T, class Var>
         void serialize_pkt_sz_with_size_or_var(
-            var_info<IPacket, IVar, proto::types::pkt_sz_with_self<T>> vinfo, iovec & buffer, Var &
+            var_info<IPacket, IVar, proto::types::pkt_sz_with_self<T>> vinfo, iovec & buffer, Var const &
         ) {
             constexpr auto pkt_idx = brigand::index_of<pkt_sz_list, decltype(vinfo)>::value;
             this->pktptrs[pkt_idx] = static_cast<uint8_t*>(buffer.iov_base);
@@ -531,7 +546,7 @@ struct Buffering2
 
         template<class IPacket, class IVar, class T, std::size_t n, class Var>
         void serialize_pkt_sz_with_size_or_var(
-            var_info<IPacket, IVar, detail::pkt_sz_with_size<T, n>>, iovec & buffer, Var &
+            var_info<IPacket, IVar, detail::pkt_sz_with_size<T, n>>, iovec & buffer, Var const &
         ) {
             using proto_integer = typename T::type;
             policy.serialize_static_buffer(
@@ -562,7 +577,7 @@ struct Buffering2
         }
 
         template<class VarInfo, class Val>
-        void serialize_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Val & val) {
+        void serialize_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Val const & val) {
             /**///std::cout << name(val) << " = ";
             /**///this->print(val);
             auto av = policy.get_view_buffer(val.x);
@@ -574,7 +589,7 @@ struct Buffering2
         }
 
         template<class I, class VarInfosByBuffer>
-        void serialize_dynamic_bufs(I, VarInfosByBuffer, Pkts & ... pkts) {
+        void serialize_dynamic_bufs(I, VarInfosByBuffer, Pkts const & ... pkts) {
             using new_list = brigand::find<VarInfosByBuffer, brigand::call<var_infos_is_not_dynamic>>;
             using old_size = brigand::size<VarInfosByBuffer>;
             using new_size = brigand::size<new_list>;
@@ -584,7 +599,7 @@ struct Buffering2
         }
 
         template<class I>
-        void serialize_dynamic_buf(I, brigand::list<>, Pkts & ...) {
+        void serialize_dynamic_buf(I, brigand::list<>, Pkts const & ...) {
             /**///std::cout << "--------------------------\n\n";
 
             this->buffers.reset_ptr(this->buffer_tuple);
@@ -615,7 +630,7 @@ struct Buffering2
 # define PROTO_ENABLE_IF_DEBUG(...)
 #endif
         template<class I, class VarInfos, class... VarInfosBuffers>
-        void serialize_dynamic_buf(I, brigand::list<VarInfos, VarInfosBuffers...>, Pkts & ... pkts) {
+        void serialize_dynamic_buf(I, brigand::list<VarInfos, VarInfosBuffers...>, Pkts const & ... pkts) {
             using var_info = brigand::front<VarInfos>;
             PROTO_ENABLE_IF_DEBUG(int dynamic_buf_ctxfunc_is_used = 0;)
             this->serialize_dyn_type(

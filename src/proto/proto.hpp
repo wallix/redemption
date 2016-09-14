@@ -794,9 +794,9 @@ namespace proto
         }
 
         template<class F>
-        decltype(auto) apply(F f)
+        decltype(auto) apply(F f) const
         {
-            return f(static_cast<Ts&>(*this)...);
+            return f(static_cast<Ts const &>(*this)...);
         }
     };
 

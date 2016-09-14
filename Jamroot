@@ -838,7 +838,7 @@ unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp 
 #    ;
 
 
-unit-test test_meta_protocol2 : tests/test_meta_protocol2.cpp : $(TEST_DEPENDENCIES) <cxxflags>-std=c++14 : <library>crypto ;
+unit-test test_meta_protocol2 : tests/test_meta_protocol2.cpp : $(TEST_DEPENDENCIES) <cxxflags>-std=c++14 : <library>crypto <library>openssl ;
 
 explicit server_sc1 client_sc1 ;
 

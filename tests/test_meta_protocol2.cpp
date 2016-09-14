@@ -228,12 +228,11 @@ static void clobber() {
 
 
 
-void test1(uint8_t * p) {
-    alignas(4) uint8_t data[10];
-    CryptContext crypt;
+void test1(uint8_t * p, CryptContext & crypt, uint32_t c) {
+    uint8_t data[10];
     auto packet1 = x224::dt_tpdu_send();
     auto packet2 = sec::sec_send(
-        sec::flags = uint32_t(~SEC::SEC_ENCRYPT),
+        sec::flags = c/*uint32_t(~SEC::SEC_ENCRYPT)*/,
         sec::crypt = crypt,
         sec::data = data
     );
@@ -252,15 +251,14 @@ void test1(uint8_t * p) {
     proto::apply(Buffering2<Policy>{p}, packet1, packet2);
 }
 
-void test2(uint8_t * p) {
+void test2(uint8_t * p, CryptContext & crypt, uint32_t c) {
     uint8_t data[10];
-    CryptContext crypt;
     uint8_t buf[256];
     OutStream out_stream(buf + 126, 126);
     StaticOutStream<128> hstream;
 //         escape(out_stream.get_data());
 //         escape(hstream.get_data());
-    SEC::Sec_Send(out_stream, data, 10, ~SEC::SEC_ENCRYPT, crypt, 0);
+    SEC::Sec_Send(out_stream, data, 10, c, crypt, 0);
     X224::DT_TPDU_Send(hstream, out_stream.get_offset());
     auto bufp = out_stream.get_data() - hstream.get_offset();
     memcpy(bufp, hstream.get_data(), hstream.get_offset());
@@ -271,28 +269,44 @@ void test2(uint8_t * p) {
 //         clobber();
 }
 
+#include "openssl_tls.hpp"
+
 void bench()
 {
+    SSL_load_error_strings();
+    SSL_library_init();
+
     auto bench = [](auto test) {
         std::vector<long long> v;
 
-        //unsigned imax = 100;
-        unsigned imax = 500;
+        CryptContext crypt;
+        crypt.encryptionMethod = 1;
+        memcpy(crypt.key, "\xd1\x26\x9e\x63\xec\x51\x65\x1d\x89\x5c\x5a\x2a\x29\xef\x08\x4c", 16);
+        memcpy(crypt.update_key, crypt.key, 16);
+
+        crypt.rc4.set_key(crypt.key, (crypt.encryptionMethod==1)?8:16);
+
+        srand(0);
+
+        unsigned imax = 100;
+        //unsigned imax = 500;
         for (unsigned i = 0; i < imax; ++i) {
             //alignas(4) uint8_t data[2621];
             alignas(4) uint8_t data[262144];
             //alignas(4) uint8_t data[1048576];
             auto p = data;
-            test(p);
+            test(p, crypt, 0);
             auto sz = 12;
 
             using resolution_clock = std::chrono::steady_clock; // std::chrono::high_resolution_clock;
 
             auto t1 = resolution_clock::now();
 
+            uint32_t r = 0;
+
             while (static_cast<size_t>(p - data + sz) < sizeof(data)) {
                 escape(p);
-                test(p);
+                test(p, crypt, r);
                 clobber();
                 p += sz;
             }
@@ -304,8 +318,8 @@ void bench()
         return v;
     };
 
-     auto v2 = bench(test2);
      auto v1 = bench(test1);
+     auto v2 = bench(test2);
 
      std::sort(v1.begin(), v1.end());
      std::sort(v2.begin(), v2.end());
