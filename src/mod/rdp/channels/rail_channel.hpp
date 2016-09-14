@@ -23,13 +23,15 @@
 
 #include "mod/rdp/channels/base_channel.hpp"
 
+class FrontAPI;
+
 class RemoteProgramsVirtualChannel : public BaseVirtualChannel
 {
 private:
     uint16_t client_order_type = 0;
     uint16_t server_order_type = 0;
 
-    FrontAPI& front;
+    //FrontAPI& front;
 
     uint16_t param_client_execute_flags;
 
@@ -51,12 +53,12 @@ public:
     RemoteProgramsVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        FrontAPI& front,
+        FrontAPI& /*front*/,
         const Params & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          params)
-    , front(front)
+    //, front(front)
     , param_client_execute_flags(params.client_execute_flags)
     , param_client_execute_exe_or_file(params.client_execute_exe_or_file)
     , param_client_execute_working_dir(params.client_execute_working_dir)

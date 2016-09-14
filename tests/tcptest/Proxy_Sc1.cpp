@@ -77,19 +77,19 @@ public:
                 // (useless to read if we can't send). Another way to achieve that
                 // is to only read when a buffer has been sent.
                 fd_set rfds, wfds;
-                FD_ZERO(&rfds);
-                FD_ZERO(&wfds);
+                io_fd_zero(rfds);
+                io_fd_zero(wfds);
                 if (front_to_target_end == 0){
-                    FD_SET(frontsck, &rfds);
+                    io_fd_set(frontsck, rfds);
                 }
                 else {
-                    FD_SET(targetsck, &wfds);
+                    io_fd_set(targetsck, wfds);
                 }
                 if (target_to_front_end == 0){
-                    FD_SET(targetsck, &rfds);
+                    io_fd_set(targetsck, rfds);
                 }
                 else {
-                    FD_SET(frontsck, &wfds);
+                    io_fd_set(frontsck, wfds);
                 }
                 int select_res = select(std::max(targetsck, frontsck) + 1, &rfds, &wfds, nullptr, &timeout);
                 switch (select_res){
@@ -104,7 +104,7 @@ public:
                 break;
                 default:
                 {
-                    if (FD_ISSET(targetsck, &rfds)){
+                    if (io_fd_isset(targetsck, rfds)){
                         LOG(LOG_INFO, "Data to read on targetsck");
                         int res = read(targetsck, &target_to_front_buffer[0], sizeof(target_to_front_buffer)-target_to_front_end);
                         if (res > 0){
@@ -129,7 +129,7 @@ public:
                         }
                     }
 
-                    if (FD_ISSET(targetsck, &wfds)){
+                    if (io_fd_isset(targetsck, wfds)){
                         LOG(LOG_INFO, "Ready to write on targetsck");
                         int res = write(targetsck,
                                         &front_to_target_buffer[front_to_target_start],
@@ -153,7 +153,7 @@ public:
                             }
                         }
                     }
-                    if (FD_ISSET(frontsck, &rfds)){
+                    if (io_fd_isset(frontsck, rfds)){
                         LOG(LOG_INFO, "Data to read on frontsck");
                         int res = read(frontsck, &front_to_target_buffer[0], sizeof(front_to_target_buffer)-front_to_target_end);
                         if (res > 0){
@@ -178,7 +178,7 @@ public:
                         }
                     }
 
-                    if (FD_ISSET(frontsck, &wfds)){
+                    if (io_fd_isset(frontsck, wfds)){
                         LOG(LOG_INFO, "Ready to write on frontsck");
                         int res = write(frontsck,
                                         &target_to_front_buffer[target_to_front_start],
@@ -207,10 +207,8 @@ public:
             }
             _exit(0);
         }
-        break;
         default: // Listener
             return Server::START_OK;
-        break;
         }
     }
 };
