@@ -28,8 +28,19 @@
 namespace proto_buffering2 {
 
 using proto_buffering::arg;
-using proto_buffering::larg;
 using proto_buffering::is_buffer_delimiter;
+
+
+#ifdef IN_IDE_PARSER
+#define PROTO_DECLTYPE_AUTO_RETURN(expr) -> decltype(expr) { return (expr); }
+#else
+#define PROTO_DECLTYPE_AUTO_RETURN(...) -> decltype(__VA_ARGS__) { return (__VA_ARGS__); }
+#endif
+
+template<std::size_t i, class L>
+auto & larg(L && l)
+{ return l.apply([](auto & ... v) PROTO_DECLTYPE_AUTO_RETURN(arg<i>(v...))); }
+
 
 template<std::size_t n>
 using mk_seq = brigand::range<std::size_t, 0, n>;
@@ -443,7 +454,7 @@ struct Buffering2
 
         Impl(Policy const & policy) noexcept : policy(policy) {}
 
-        void impl(Pkts & ... packets)
+        void impl(Pkts ... packets)
         {
             /**///std::cout << "pktptrs.size: " << this->pktptrs.size() << "\n";
 
@@ -757,14 +768,11 @@ struct Buffering2
     Policy policy;
 
     template<class... Packets>
-    void operator()(Packets ... packets) const
+    void operator()(Packets const & ... packets) const
     {
         Impl<Packets...> impl{this->policy};
         impl.impl(packets...);
     }
-
-    template<class... Packets>
-    void impl(std::false_type, Packets ... packets) const = delete;
 };
 
 struct stream_protocol_policy

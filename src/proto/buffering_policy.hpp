@@ -46,16 +46,6 @@ template<std::size_t i, class... T>
 auto & arg(T & ... args)
 { return *detail::arg_impl<brigand::filled_list<void const *, i>>::impl(&args...); }
 
-#ifdef IN_IDE_PARSER
-#define PROTO_DECLTYPE_AUTO_RETURN(expr) -> decltype(expr) { return (expr); }
-#else
-#define PROTO_DECLTYPE_AUTO_RETURN(...) -> decltype(__VA_ARGS__) { return (__VA_ARGS__); }
-#endif
-
-template<std::size_t i, class L>
-auto & larg(L && l)
-{ return l.apply([](auto & ... v) PROTO_DECLTYPE_AUTO_RETURN(arg<i>(v...))); }
-
 using proto::t_;
 
 struct Buffering

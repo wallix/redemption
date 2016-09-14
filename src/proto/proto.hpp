@@ -881,7 +881,7 @@ namespace proto
     struct is_proto_packet<packet<Ts...>> : std::true_type {};
 
     template<class F, class... Pkts>
-    void apply(F f, Pkts ... pkts)
+    void apply(F f, Pkts const & ... pkts)
     {
         PROTO_CHECKS(is_proto_packet, Pkts);
         f(pkts...);
