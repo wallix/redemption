@@ -75,14 +75,14 @@ public:
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
                         password, -14, theme.edit.fgcolor,
                         theme.edit.bgcolor, theme.edit.focus_color,
-                        font,
-                        -1u, 1, 1, true, (width <= 640) ? label_text_password : nullptr)
+                        font, label_text_password, (width <= 640),
+                        -1u, 1, 1, true)
         , login_label(drawable, 0, 0, *this, nullptr, label_text_login, true, -11,
                       theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
                      login, -12, theme.edit.fgcolor, theme.edit.bgcolor,
-                     theme.edit.focus_color, font, -1u, 1, 1, false,
-                     (width <= 640) ? label_text_login : nullptr)
+                     theme.edit.focus_color, font,
+                      label_text_login, (width <= 640), -1u, 1, 1, false)
         // , img(drawable, 0, 0, theme.global.logo_path, *this, nullptr, -10)
         , img(drawable, 0, 0,
               theme.global.logo ? theme.global.logo_path :
