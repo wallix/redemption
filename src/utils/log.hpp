@@ -133,6 +133,7 @@ namespace {
         puts("");
     }
 
+#if defined(LOGASMJS) && defined(EM_ASM)
     template<class... Ts>
     void LOGPRINT__REDEMPTION__ASMJS(int priority, char const * format, Ts const & ... args)
     {
@@ -149,6 +150,7 @@ namespace {
         buffer[len+1] = 0;
         EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
     }
+#endif  // #if defined(LOGASMJS) && defined(EM_ASM)
 
     template<class... Ts>
     void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
