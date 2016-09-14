@@ -88,6 +88,7 @@ void other_test();
 void test();
 void bench();
 
+#include "proto/buffering_policy.hpp"
 #include "proto/buffering2_policy.hpp"
 
 BOOST_AUTO_TEST_CASE(proto_test)
@@ -228,7 +229,7 @@ static void clobber() {
 
 
 
-void test1(uint8_t * p, CryptContext & crypt, uint32_t c) {
+inline void test1(uint8_t * p, CryptContext & crypt, uint32_t c) {
     uint8_t data[10];
     auto packet1 = x224::dt_tpdu_send();
     auto packet2 = sec::sec_send(
@@ -251,7 +252,7 @@ void test1(uint8_t * p, CryptContext & crypt, uint32_t c) {
     proto::apply(Buffering2<Policy>{p}, packet1, packet2);
 }
 
-void test2(uint8_t * p, CryptContext & crypt, uint32_t c) {
+inline void test2(uint8_t * p, CryptContext & crypt, uint32_t c) {
     uint8_t data[10];
     uint8_t buf[256];
     OutStream out_stream(buf + 126, 126);
