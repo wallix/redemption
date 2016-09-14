@@ -1,4 +1,5 @@
 
+import os ;
 
 path-constant SRCDIR : ../../src ;
 path-constant INCLUDEDIR : ../../include ;
@@ -17,6 +18,11 @@ project redjs
     <cxxflags>-Wall
     : default-build release
     ;
+
+# to set $(EMSCRIPTEN) run:
+# source emsdk_portable/emsdk_env.sh
+# the variable will be extracted from env
+constant EMSCRIPTEN : [ os.environ EMSCRIPTEN ] ;
 
 using emscripten ;
 
@@ -64,22 +70,29 @@ install test_transport_web_socket
 
 #objjs test_rdp_client_test_card_JS_SDL.bc
 #	: src/test_rdp_client_test_card_JS_SDL.cpp
-#	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+#	: <include>$(EMSCRIPTEN)/system/include
 #	;
+
 
 objjs test_rdp_client_test_card_JS_natif.bc
 	: src/test_rdp_client_test_card_JS_natif.cpp
-	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+	: <include>$(EMSCRIPTEN)/system/include
 	;
+
+objjs rdp_client.bc
+	: src/rdp_client.cpp
+	: <include>$(EMSCRIPTEN)/system/include
+	;
+
 
 objjs bitmap_data_allocator.bc
 	: $(SRCDIR)/utils/bitmap_data_allocator.cpp
-	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+	: <include>$(EMSCRIPTEN)/system/include
 	;
 
 objjs test_transport_web_socket.bc
 	: src/test_transport_web_socket.cpp
-	: <include>/home/cmoroldo/emsdk_portable/emscripten/master/system/include
+	: <include>$(EMSCRIPTEN)/system/include
 	;
 
 
@@ -96,14 +109,15 @@ objjs test_transport_web_socket.bc
 
 exejs client_rdp_JS_natif.js
      :
-        test_rdp_client_test_card_JS_natif.bc
+        rdp_client.bc
         bitmap_data_allocator.bc
      :
         <cxxflags>"-Werror"
-        <cxxflags>"-02"
+        <cxxflags>"-01"
         <cxxflags>"-s ASSERTIONS=2"
         <cxxflags>"-s ALLOW_MEMORY_GROWTH=1"
-        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
+        <cxxflags>"--shell-file templates/template_client_rdp_js_natif.html"
+#        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"--llvm-opts 3 --llvm-lto 0"
 	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_refreshPressed','_connexion','_recv_value','_disconnection','_CtrlAltDelPressed']\""
      ;

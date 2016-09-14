@@ -32,6 +32,112 @@
 #include "module_manager.hpp"
 #include "front/front.hpp"
 
+#  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
+        ip_client, ip_target, user, device, service, account, priority, format,  \
+        ...                                                                      \
+    )                                                                            \
+    LOGCHECK__REDEMPTION__INTERNAL((                                             \
+        LOG_FORMAT_CHECK(format, __VA_ARGS__),                                   \
+        LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(                                \
+            normal_log,                                                          \
+            session_log,                                                         \
+            session_type, type, session_id, ip_client, ip_target,                \
+            user, device, service, account, priority,                            \
+            "%s (%d/%d) -- type='%s'%s" format,                                  \
+            "[%s Session] "                                                      \
+                "type='%s' "                                                     \
+                "session_id='%s' "                                               \
+                "client_ip='%s' "                                                \
+                "target_ip='%s' "                                                \
+                "user='%s' "                                                     \
+                "device='%s' "                                                   \
+                "service='%s' "                                                  \
+                "account='%s'%s"                                                 \
+                format,                                                          \
+            ((*format) ? " " : ""),                                              \
+            __VA_ARGS__                                                          \
+        ), 1)                                                                    \
+    )
+
+namespace {
+    template<class... Ts>
+    void LOGSYSLOG__REDEMPTION__SESSION__INTERNAL(
+        bool normal_log,
+        bool session_log,
+
+        const char * session_type,
+        const char * type,
+        const char * session_id,
+        const char * ip_client,
+        const char * ip_target,
+        const char * user,
+        const char * device,
+        const char * service,
+        const char * account,
+
+        int priority,
+        const char *format_with_pid,
+        const char *format2,
+        Ts const & ... args
+    ) {
+        #ifdef __GNUG__
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+        #endif
+        if (normal_log) {
+            syslog(
+                priority, format_with_pid,
+                prioritynames[priority], getpid(), getpid(),
+                type, args...
+            );
+        }
+        if (session_log) {
+            syslog(
+                priority, format2,
+                session_type,
+                type,
+                session_id,
+                ip_client,
+                ip_target,
+                user,
+                device,
+                service,
+                account,
+                args...
+             );
+        }
+        #ifdef __GNUG__
+            #pragma GCC diagnostic pop
+        #endif
+    }
+
+    inline void LOGNULL__REDEMPTION__SESSION__INTERNAL(
+        bool normal_log,
+        bool session_log,
+        char const * session_type,
+        char const * type,
+        char const * session_id,
+        char const * ip_client,
+        char const * ip_target,
+        char const * user,
+        char const * device,
+        char const * service,
+        char const * account
+    ) {
+        (void)normal_log;
+        (void)session_log;
+        (void)session_type;
+        (void)type;
+        (void)session_id;
+        (void)ip_client;
+        (void)ip_target;
+        (void)user;
+        (void)device;
+        (void)service;
+        (void)account;
+    }
+}
+
 class KeepAlive {
     // Keep alive Variables
     int  grace_delay;
