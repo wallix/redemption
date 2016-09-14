@@ -25,3 +25,4 @@ password.py
 /tools/valgrind-filter/valgrind-filter
 *~
 /projects/proxy/tools/redcryptofile/redcryptofile.so
+/.gdb_history
