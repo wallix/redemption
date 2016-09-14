@@ -185,7 +185,7 @@ public:
         if (!title_bar_pressed && !minimize_box_pressed && !close_box_pressed &&
             (pointerFlags & (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1))) {
             if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
-                RDPOpaqueRect order(this->minimize_box_rect, 0xE5E5E5);
+                RDPOpaqueRect order(this->minimize_box_rect, 0xCBCACA);
 
                 this->front_->draw(order, this->minimize_box_rect);
 
@@ -196,7 +196,7 @@ public:
                                           this->minimize_box_rect.y + 3,
                                           "−",
                                           0x000000,
-                                          0xE5E5E5,
+                                          0xCBCACA,
                                           this->minimize_box_rect
                                           );
                 }
@@ -316,7 +316,7 @@ public:
                 }
                 else if (this->minimize_box_pressed) {
                     if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
-                        RDPOpaqueRect order(this->minimize_box_rect, 0xE5E5E5);
+                        RDPOpaqueRect order(this->minimize_box_rect, 0xCBCACA);
 
                         this->front_->draw(order, this->minimize_box_rect);
 
@@ -327,7 +327,7 @@ public:
                                                   this->minimize_box_rect.y + 3,
                                                   "−",
                                                   0x000000,
-                                                  0xE5E5E5,
+                                                  0xCBCACA,
                                                   this->minimize_box_rect
                                                   );
                         }
