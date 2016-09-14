@@ -25,6 +25,11 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/log.hpp" //hexdump_c
 
+
+#ifdef __clang__
+# include <tuple>
+#endif
+
 namespace proto_buffering2 {
 
 // using proto_buffering::arg;
@@ -37,20 +42,26 @@ using proto_buffering::is_buffer_delimiter;
 #define PROTO_DECLTYPE_AUTO_RETURN(...) -> decltype(__VA_ARGS__) { return (__VA_ARGS__); }
 #endif
 
+#ifndef __clang__
 namespace detail {
     template<class T> struct arg_impl;
     template<class... Ts>
     struct arg_impl<brigand::list<Ts...>>
     {
-        template<class T> static T const & impl(Ts..., T const & x, ...) { return x; }
+        template<class T> static T * impl(Ts..., T * x, ...) { return x; }
     };
-
-    struct any_ { template<class T> constexpr any_(T const &) noexcept {} };
 }
+#endif
 
 template<std::size_t i, class... T>
 auto const & arg(T const & ... args)
-{ return detail::arg_impl<brigand::filled_list<detail::any_, i>>::impl(args...); }
+{
+#ifdef __clang__
+    return std::get<i>(std::forward_as_tuple(args...));
+#else
+    return *detail::arg_impl<brigand::filled_list<void const *, i>>::impl(&args...);
+#endif
+}
 
 template<std::size_t i, class L>
 auto const & larg(L const & l)

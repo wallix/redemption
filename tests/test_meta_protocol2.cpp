@@ -302,7 +302,7 @@ void bench()
 
             auto t1 = resolution_clock::now();
 
-            uint32_t r = 0;
+            uint32_t r = rand();
 
             while (static_cast<size_t>(p - data + sz) < sizeof(data)) {
                 escape(p);
