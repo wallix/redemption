@@ -128,12 +128,6 @@ public:
             total_height += this->challenge->cy() + 10;
             y += this->challenge->cy() + 10;
             this->set_widget_focus(this->challenge, focus_reason_tabkey);
-
-            if (extra_button) {
-                this->add_widget(extra_button);
-                extra_button->set_button_x(left + 60);
-                extra_button->set_button_y(top + total_height + 250);
-            }
         }
 
 
@@ -160,7 +154,14 @@ public:
 
         if (!has_challenge)
             this->set_widget_focus(&this->ok, focus_reason_tabkey);
+        else {
+            if (extra_button) {
+                this->add_widget(extra_button);
 
+                extra_button->set_button_x(left + 60);
+                extra_button->set_button_y(top + height - 60);
+            }
+        }
     }
 
     ~FlatDialog() override {
@@ -183,7 +184,14 @@ public:
             this->send_notify(NOTIFY_SUBMIT);
         }
         else {
-            WidgetParent::notify(widget, event);
+            if (event == NOTIFY_PASTE) {
+                if (this->notifier) {
+                    this->notifier->notify(widget, event);
+                }
+            }
+            else {
+                WidgetParent::notify(widget, event);
+            }
         }
     }
 

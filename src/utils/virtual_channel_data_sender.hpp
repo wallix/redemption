@@ -32,7 +32,7 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
         LOG(LOG_INFO, "Sending on channel (-1) n bytes");
     }
     else {
-        LOG(LOG_INFO, "Recv done on rdpdr (-1) n bytes");
+        LOG(LOG_INFO, "Recv done on channel (-1) n bytes");
     }
     const uint32_t dest = (from_or_to_client
                            ? 0  // Client
@@ -50,7 +50,7 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
         LOG(LOG_INFO, "Sent dumped on channel (-1) n bytes");
     }
     else {
-        LOG(LOG_INFO, "Dump done on rdpdr (-1) n bytes");
+        LOG(LOG_INFO, "Dump done on channel (-1) n bytes");
     }
 }
 

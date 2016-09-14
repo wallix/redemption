@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestTSCredentials)
+BOOST_AUTO_TEST_CASE(TestTSCredentialsPassword)
 {
 
     uint8_t domain[] = "flatland";
@@ -366,8 +366,9 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
 
     StaticOutStream<65536> s;
 
-    ts_cred.emit(s);
+    int emited = ts_cred.emit(s);
     BOOST_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
+    BOOST_CHECK_EQUAL(s.get_offset(), emited);
 
     TSCredentials ts_cred_received;
 
@@ -400,4 +401,70 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
                       reinterpret_cast<const char*>(user2));
     BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.password),
                       reinterpret_cast<const char*>(pass2));
+}
+
+BOOST_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
+{
+
+    uint8_t pin[] = "3615";
+    uint8_t userHint[] = "aka";
+    uint8_t domainHint[] = "grandparc";
+
+    uint8_t cardName[] = "passepartout";
+    uint8_t readerName[] = "acrobat";
+    uint8_t containerName[] = "docker";
+    uint8_t cspName[] = "what";
+    uint32_t keySpec = 32;
+
+    TSCredentials ts_cred(pin, sizeof(pin),
+                          userHint, sizeof(userHint),
+                          domainHint, sizeof(domainHint),
+                          keySpec, cardName, sizeof(cardName),
+                          readerName, sizeof(readerName),
+                          containerName, sizeof(containerName),
+                          cspName, sizeof(cspName));
+
+    StaticOutStream<65536> s;
+
+    int emited = ts_cred.emit(s);
+    BOOST_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
+    BOOST_CHECK_EQUAL(s.get_offset(), emited);
+
+    TSCredentials ts_cred_received;
+
+    InStream in_s(s.get_data(), s.get_offset());
+    ts_cred_received.recv(in_s);
+
+    BOOST_CHECK_EQUAL(ts_cred_received.credType, 2);
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.pin_length,
+                      sizeof(pin));
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.userHint_length,
+                      sizeof(userHint));
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint_length,
+                      sizeof(domainHint));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.pin),
+                      reinterpret_cast<const char*>(pin));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.userHint),
+                      reinterpret_cast<const char*>(userHint));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.domainHint),
+                      reinterpret_cast<const char*>(domainHint));
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec,
+                      keySpec);
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cardName_length,
+                      sizeof(cardName));
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.readerName_length,
+                      sizeof(readerName));
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.containerName_length,
+                      sizeof(containerName));
+    BOOST_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cspName_length,
+                      sizeof(cspName));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.cardName),
+                      reinterpret_cast<const char*>(cardName));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.readerName),
+                      reinterpret_cast<const char*>(readerName));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.containerName),
+                      reinterpret_cast<const char*>(containerName));
+    BOOST_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.cspName),
+                      reinterpret_cast<const char*>(cspName));
+
 }

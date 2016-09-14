@@ -22,14 +22,14 @@
 
 #pragma once
 
-#include "utils/translation.hpp"
-#include "core/front_api.hpp"
 #include "configs/config.hpp"
-#include "widget2/flat_interactive_target.hpp"
-#include "widget2/screen.hpp"
-#include "internal_mod.hpp"
 #include "configs/config_access.hpp"
-#include "widget2/language_button.hpp"
+#include "core/front_api.hpp"
+#include "mod/internal/locally_integrable_mod.hpp"
+#include "utils/translation.hpp"
+#include "mod/internal/widget2/flat_interactive_target.hpp"
+#include "mod/internal/widget2/language_button.hpp"
+#include "mod/internal/widget2/screen.hpp"
 
 using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_user,                vcfg::accessmode::is_asked | vcfg::accessmode::set | vcfg::accessmode::get>,
@@ -43,7 +43,7 @@ using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>
 >;
 
-class InteractiveTargetMod : public InternalMod, public NotifyApi
+class InteractiveTargetMod : public LocallyIntegrableMod, public NotifyApi
 {
     bool ask_device;
     bool ask_login;
@@ -55,8 +55,8 @@ class InteractiveTargetMod : public InternalMod, public NotifyApi
     InteractiveTargetModVariables vars;
 
 public:
-    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect)
-        : InternalMod(front, width, height, vars.get<cfg::font>(), vars.get<cfg::theme>())
+    InteractiveTargetMod(InteractiveTargetModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, ClientExecute & client_execute)
+        : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
         , ask_device(vars.is_asked<cfg::context::target_host>())
         , ask_login(vars.is_asked<cfg::globals::target_user>())
         , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
@@ -134,11 +134,20 @@ private:
     }
 
 public:
-    void draw_event(time_t now, gdi::GraphicApi &) override {
-        (void)now;
+    void draw_event(time_t now, gdi::GraphicApi & gapi) override {
+        LocallyIntegrableMod::draw_event(now, gapi);
+
         this->event.reset();
     }
 
     bool is_up_and_running() override { return true; }
-};
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
+        this->challenge.move_xy(left - this->challenge.rect.x, top - this->challenge.rect.y);
+
+        this->challenge.rect.x  = left;
+        this->challenge.rect.y  = top;
+        this->challenge.rect.cx = width + 1;
+        this->challenge.rect.cy = height + 1;
+    }
+};

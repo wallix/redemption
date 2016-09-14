@@ -318,7 +318,7 @@ private:
             case Qt::Key_Menu       : this->scanCode = 0x5D; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  MENU APPS
     //------------------------------------------------------------------------------------------------------------------------
         //---------------------------------------------
-        //    Not mod neither char keys NO Extended
+        //    Not mod neither char keys NOT Extended
         //---------------------------------------------
             case Qt::Key_Return               : this->scanCode = 0x1C; break; //  ENTER
             case Qt::Key_Backspace            : this->scanCode = 0x0E; break; //  BKSP

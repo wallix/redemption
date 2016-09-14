@@ -113,13 +113,14 @@ public:
         return (&this->parent == this);
     }
 
-    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int iter = 10) {
+    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y,
+                              Rect const & preferred_display_rect, int iter = 10) {
         if (iter > 0) {
-            this->parent.show_tooltip(widget, text, x, y, iter - 1);
+            this->parent.show_tooltip(widget, text, x, y, preferred_display_rect, iter - 1);
         }
     }
     void hide_tooltip() {
-        this->show_tooltip(this, nullptr, 0, 0);
+        this->show_tooltip(this, nullptr, 0, 0, Rect(0, 0, 0, 0));
     }
 
     Widget2 * last_widget_at_pos(int16_t x, int16_t y) {

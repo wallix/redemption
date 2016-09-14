@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <cinttypes>
 
 #include "utils/stream.hpp"
@@ -666,6 +667,11 @@ struct ServerMonitorReadyPDU : public CliprdrHeader {
 //  names are in ASCII 8 format, then the msgFlags field of the clipHeader
 //  must contain the CB_ASCII_NAMES (0x0004) flag.
 
+enum : int {
+    FORMAT_LIST_MAX_SIZE = 32
+  , SHORT_NAME_MAX_SIZE  = 32
+};
+
 struct FormatListPDU : public CliprdrHeader {
     bool contians_data_in_text_format        = false;
     bool contians_data_in_unicodetext_format = false;
@@ -681,40 +687,47 @@ struct FormatListPDU : public CliprdrHeader {
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
         stream.out_uint32_le(CF_TEXT);
-        stream.out_clear_bytes(32); // formatName(32)
+        stream.out_clear_bytes(SHORT_NAME_MAX_SIZE); // formatName(32)
     }
 
     void emit_short(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDataShortName, std::size_t formatListData_size) {
-        this->dataLen_ = 36;    /* formatId(4) + formatName(32) */
-        CliprdrHeader::emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
-        if (formatListData_size > 32) {
-            formatListData_size = 32;
+        if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
+            formatListData_size = FORMAT_LIST_MAX_SIZE;
         }
+
+        this->dataLen_ = formatListData_size * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+        CliprdrHeader::emit(stream);
+
+
         for (std::size_t i = 0; i < formatListData_size; i++) {
             stream.out_uint32_le(formatListData[i]);
             std::string const & currentStr = formatListDataShortName[i];
-            REDASSERT(currentStr.size() <= 32);
+            REDASSERT(currentStr.size() <= SHORT_NAME_MAX_SIZE);
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
-            stream.out_clear_bytes(32 - currentStr.size()); // formatName(32)
+            stream.out_clear_bytes(SHORT_NAME_MAX_SIZE - currentStr.size()); // formatName(32)
         }
     }
 
     void emit_long(OutStream & stream, uint32_t const * formatListData, std::string const * formatListDatalongName, std::size_t formatListData_size) {
-        this->dataLen_ = 46*formatListData_size;    /* formatId(4) + formatName(42) */
+        if (formatListData_size > FORMAT_LIST_MAX_SIZE) {
+            formatListData_size = FORMAT_LIST_MAX_SIZE;
+        }
+
+        for (std::size_t i = 0; i < formatListData_size; i++) {
+            this->dataLen_ += formatListDatalongName[i].size() + 4;    /* formatId(4) + formatName(variable) */
+        }
+        REDASSERT(this->dataLen_ <= 1024);
         CliprdrHeader::emit(stream);
 
-        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
-        if (formatListData_size > 32) {
-            formatListData_size = 32;
-        }
         for (std::size_t i = 0; i < formatListData_size; i++) {
             stream.out_uint32_le(formatListData[i]);
             std::string const & currentStr = formatListDatalongName[i];
             //REDASSERT(currentStr.size() <= 32);
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
-            stream.out_clear_bytes(42 - currentStr.size()); // formatName(32)
+            //stream.out_clear_bytes(42 - currentStr.size()); // formatName(32)
+            //stream.out_clear_bytes(4);
         }
     }
 
@@ -983,29 +996,67 @@ struct FileContentsRequestPDU : CliprdrHeader {
     : CliprdrHeader( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
     {}
 
-    void emit(OutStream & stream, int streamID, int flag, int lindex, int sizeRequested) {
+    void emit(OutStream & stream, int streamID, int flag, int lindex, uint64_t sizeRequested) {
         stream.out_uint16_le(this->msgType_);
         stream.out_uint16_le(this->msgFlags_);
         stream.out_uint32_le(this->dataLen_);
         stream.out_uint32_le(streamID);
         stream.out_uint32_le(lindex);
         stream.out_uint32_le(flag);
-        stream.out_uint32_le(uint64_t(sizeRequested) << 32);
+        stream.out_uint32_le(sizeRequested >> 32);
         stream.out_uint32_le(sizeRequested);
         stream.out_uint32_le(sizeRequested);
     }
 };
 
 
+
+    // 2.2.5.4 File Contents Response PDU (CLIPRDR_FILECONTENTS_RESPONSE)
+
+    // The File Contents Response PDU is sent as a reply to the File Contents Request PDU. It is used to indicate whether processing of the File Contents Request PDU was successful. If the processing was successful, the File Contents Response PDU includes either a file size or extracted file data, based on the operation requested in the corresponding File Contents Request PDU.
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                          clipHeader                           |
+    // +---------------------------------------------------------------+
+    // |                             ...                               |
+    // +---------------------------------------------------------------+
+    // |                           streamId                            |
+    // +---------------------------------------------------------------+
+    // |              requestedFileContentsData (variable)             |
+    // +---------------------------------------------------------------+
+    // |                             ...                               |
+    // +---------------------------------------------------------------+
+
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009). The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in the msgFlags field of the Clipboard PDU Header.
+
+    // streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the File Contents Response PDU with the corresponding File Contents Request PDU. The File Contents Request PDU that triggered the response MUST contain an identical value in the streamId field.
+
+    // requestedFileContentsData (variable): This field contains a variable number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001) operation, the requestedFileContentsData field holds a 64-bit, unsigned integer containing the size of the file. In the case of a FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData field contains a byte-stream of data extracted from the file.
+
 struct FileContentsResponse : CliprdrHeader {
     explicit FileContentsResponse(bool response_ok = false)
-    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 0)
+    : CliprdrHeader( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
     {}
 
     void emit(OutStream & stream) {
         CliprdrHeader::emit(stream);
-//         stream.out_uint32_le(0);
-//         stream.out_uint64_le(0);
+    }
+
+    void emit_size(OutStream & stream, uint32_t streamID, uint64_t size) {
+        this->dataLen_ += 12;
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(streamID);
+        stream.out_uint64_le(size);
+        stream.out_uint32_le(0);
+    }
+
+    void emit_range(OutStream & stream, uint32_t streamID, uint64_t size) {
+        this->dataLen_ += size;                          //  requestedFileContentsData range
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(streamID);
     }
 };
 
@@ -1165,6 +1216,8 @@ enum FileAttributes : uint32_t {
 //  contains the name of the file.
 
 class FileDescriptor {
+
+public:
     uint32_t flags;
     uint32_t fileAttributes;
     uint64_t lastWriteTime;
@@ -1631,6 +1684,10 @@ enum : uint32_t {
     FILE_ATTRIBUTE_NORMAL    = 0x0080
 };
 
+enum : uint64_t {
+    TIME64_FILE_LIST = 0x01d1e2a0379fb504
+};
+
 struct FormatDataResponsePDU : public CliprdrHeader {
 
     const double ARBITRARY_SCALE = 26.46;
@@ -1674,36 +1731,57 @@ struct FormatDataResponsePDU : public CliprdrHeader {
             );
     }
 
+
+
+
+    // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
+
+    //  The CLIPRDR_FILELIST structure is used to describe a list of files, each file in the list being represented by a File Descriptor (section 2.2.5.2.3.1).
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                            cItems                             |
+    // +---------------------------------------------------------------+
+    // |                 fileDescriptorArray (variable)                |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+
+    // cItems (4 bytes): An unsigned 32-bit integer that specifies the number of entries in the fileDescriptorArray field.
+
+    // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
+
     enum : int {
-        FILE_DESCRIPTOR_SIZE = 592
+        FILE_DESCRIPTOR_SIZE = 596
     };
 
-    // Files List
-    // TODO std::string* + int* -> array_view { name, size };
-    void emit_fileList(OutStream & stream, std::string * namesList, uint64_t * sizesList, int cItems, uint64_t time) {
-        this->dataLen_ = (cItems * FILE_DESCRIPTOR_SIZE) + 4;
+
+    void emit_fileList(OutStream & stream, int cItems, std::string name, uint64_t size) {
+        this->dataLen_ = FILE_DESCRIPTOR_SIZE + 4;
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(cItems);
-        for (int i = 0; i < cItems; i++) {
-            stream.out_uint32_le(FD_SHOWPROGRESSUI |
+
+        stream.out_uint32_le(FD_SHOWPROGRESSUI |
                                  FD_FILESIZE       |
-                                 //FD_WRITESTIME     |
+                                 FD_WRITESTIME     |
                                  FD_ATTRIBUTES
                                 );
-            stream.out_clear_bytes(32);
-            stream.out_uint32_le(FILE_ATTRIBUTE_NORMAL);
-            stream.out_clear_bytes(16);
-            stream.out_uint64_le(time);
-            stream.out_uint32_le(sizesList[i] >> 32);
-            stream.out_uint32_le(sizesList[i]);
-            size_t size(namesList[i].size());
-            stream.out_copy_bytes(namesList[i].data(), size);
-            REDASSERT(namesList[i].size() <= 520);
-            stream.out_clear_bytes(520 - size);
+        stream.out_clear_bytes(32);
+        stream.out_uint32_le(FILE_ATTRIBUTE_ARCHIVE);
+        stream.out_clear_bytes(16);
+        stream.out_uint64_le(TIME64_FILE_LIST);
+        stream.out_uint32_le(size >> 32);
+        stream.out_uint32_le(size);
+        size_t sizeName(name.size());
+        if (sizeName > 520) {
+            sizeName = 520;
         }
-
+        stream.out_copy_bytes(name.data(), sizeName);;
+        stream.out_clear_bytes(520 - sizeName);
     }
-
+    
     void emit_text(OutStream & stream, uint32_t length) {
         this->dataLen_ = length;
         CliprdrHeader::emit(stream);
@@ -2200,6 +2278,69 @@ public:
     }
 
 };  // class MetaFilePicDescriptor
+
+
+// 2.2.4.1 Lock Clipboard Data PDU (CLIPRDR_LOCK_CLIPDATA)
+
+// The Lock Clipboard Data PDU can be sent at any point in time after the clipboard capabilities and temporary directory have been exchanged in the Clipboard Initialization Sequence (section 1.3.2.1) by a Local Clipboard Owner (section 1.3.2.2.1). The purpose of this PDU is to request that the Shared Clipboard Owner (section 1.3.2.2.1) retain all File Stream (section 1.3.1.1.5) data on the clipboard until the Unlock Clipboard Data PDU (section 2.2.4.2) is received. This ensures that File Stream data can be requested by the Local Owner in a subsequent File Contents Paste Sequence (section 1.3.2.2.3) by using the File Contents Request PDU (section 2.2.5.3) even when the Shared Owner clipboard has changed and the File Stream data is no longer available.
+
+ // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+ // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+ // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ // |                          clipHeader                           |
+ // +---------------------------------------------------------------+
+ // |                              ...                              |
+ // +---------------------------------------------------------------+
+ // |                          clipDataId                           |
+ // +-------------------------------+-------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_LOCK_CLIPDATA (0x000A), while the msgFlags field MUST be set to 0x0000.
+
+// clipDataId (4 bytes): An unsigned, 32-bit integer that is used to tag File Stream data on the Shared Owner clipboard so that it can be requested in a subsequent File Contents Request PDU (section 2.2.5.3).
+
+struct LockClipboardDataPDU : public CliprdrHeader {
+    explicit LockClipboardDataPDU()
+    : CliprdrHeader(CB_LOCK_CLIPDATA, 0, 4)
+    {}
+
+    void emit(OutStream & stream, uint32_t streamDataID) {
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(streamDataID);
+    }
+};
+
+
+
+ // 2.2.4.2 Unlock Clipboard Data PDU (CLIPRDR_UNLOCK_CLIPDATA)
+
+ // The Unlock Clipboard Data PDU can be sent at any point in time after the Clipboard Initialization Sequence (section 1.3.2.1) by a Local Clipboard Owner (section 1.3.2.2.1). The purpose of this PDU is to notify the Shared Clipboard Owner (section 1.3.2.2.1) that File Stream data that was locked in response to the Lock Clipboard Data PDU (section 2.2.4.1) can be released.
+
+ // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+ // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+ // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ // |                          clipHeader                           |
+ // +---------------------------------------------------------------+
+ // |                              ...                              |
+ // +---------------------------------------------------------------+
+ // |                          clipDataId                           |
+ // +-------------------------------+-------------------------------+
+
+ // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_UNLOCK_CLIPDATA (0x000B), while the msgFlags field MUST be set to 0x0000.
+
+ // clipDataId (4 bytes): An unsigned, 32-bit integer that identifies the File Stream data that was locked by the Lock Clipboard Data PDU (section 2.2.4.1) and can now be released.
+
+struct UnlockClipboardDataPDU : public CliprdrHeader {
+    explicit UnlockClipboardDataPDU()
+    : CliprdrHeader(CB_UNLOCK_CLIPDATA, 0, 4)
+    {}
+
+    void emit(OutStream & stream, uint32_t streamDataID) {
+        CliprdrHeader::emit(stream);
+        stream.out_uint32_le(streamDataID);
+    }
+};
 
 
 }   // namespace RDPECLIP

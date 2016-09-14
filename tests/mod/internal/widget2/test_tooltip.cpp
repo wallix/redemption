@@ -73,7 +73,7 @@ void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScre
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget2 * wid = parent->widget_at_pos(x, y);
         if (wid == w) {
-            parent->show_tooltip(w, text, x, y);
+            parent->show_tooltip(w, text, x, y, Rect(0, 0, 0, 0));
         }
     }
 

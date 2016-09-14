@@ -36,13 +36,15 @@ public:
     WidgetEdit * editbox;
     WidgetLabel * label;
 
+    bool use_label;
+
     WidgetEditValid(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
                     int group_id, int fgcolor, int bgcolor,
-                    int focus_color, Font const & font, std::size_t edit_position = -1,
+                    int focus_color, Font const & font,
+                    const char * title, bool use_title, std::size_t edit_position = -1,
                     // TODO re-enable
-                    int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false,
-                    const char * title = nullptr)
+                    int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
                  group_id, bgcolor, focus_color, focus_color, font, 6, 2)
@@ -55,6 +57,7 @@ public:
         , label(title ? new WidgetLabel(drawable, 0, 0, *this, nullptr, title, true,
                                         group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
                 : nullptr)
+        , use_label(use_title)
     {
         this->button.set_button_x(this->editbox->lx() - 1);
         this->editbox->set_edit_cy(this->button.cy());
@@ -128,7 +131,7 @@ public:
 
     void draw(const Rect& clip) override {
         this->editbox->draw(clip);
-        if (this->label) {
+        if (this->label && this->use_label) {
             if (this->editbox->num_chars == 0) {
                 this->label->draw(clip);
                 this->editbox->draw_current_cursor();
@@ -207,7 +210,7 @@ public:
         }
         if ((event == NOTIFY_TEXT_CHANGED) &&
             (widget == this->editbox) &&
-            (this->label)) {
+            this->label && this->use_label) {
             if (this->editbox->num_chars == 1) {
                 this->editbox->draw(this->rect);
             }

@@ -133,6 +133,11 @@ struct ModRDPParams {
 
     bool adjust_performance_flags_for_recording = false;
 
+    uint16_t     client_execute_flags;
+    const char * client_execute_exe_or_file = "";
+    const char * client_execute_working_dir = "";
+    const char * client_execute_arguments = "";
+
     uint32_t verbose;
     uint32_t cache_verbose = 0;
 
@@ -273,6 +278,12 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,          allow_using_multiple_monitors);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,          adjust_performance_flags_for_recording);
+
+        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    client_execute_flags);
+
+        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_exe_or_file);
+        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_working_dir);
+        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_arguments);
 
         RDP_PARAMS_LOG("0x%08X", RDP_PARAMS_LOG_GET, verbose);
         RDP_PARAMS_LOG("0x%08X", RDP_PARAMS_LOG_GET, cache_verbose);

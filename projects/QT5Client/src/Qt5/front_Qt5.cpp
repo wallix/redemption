@@ -2351,9 +2351,6 @@ void Front_Qt::call_Draw() {
 // APPLICATION
 int main(int argc, char** argv){
 
-    //" -name QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389";
-
-    //bjam -a client_rdp_Qt4 |& grep error || bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd 'S3cur3!1nux' -ip 10.10.46.88 -p 3389
 
     QApplication app(argc, argv);
 

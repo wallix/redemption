@@ -654,6 +654,11 @@ protected:
 
     GCC::UserData::CSMonitor cs_monitor;
 
+    uint16_t    client_execute_flags;
+    std::string client_execute_exe_or_file;
+    std::string client_execute_working_dir;
+    std::string client_execute_arguments;
+
 public:
     mod_rdp( Transport & trans
            , FrontAPI & front
@@ -785,6 +790,10 @@ public:
                           mod_rdp_params.verbose
                          )
         , cs_monitor(info.cs_monitor)
+        , client_execute_flags(mod_rdp_params.client_execute_flags)
+        , client_execute_exe_or_file(mod_rdp_params.client_execute_exe_or_file)
+        , client_execute_working_dir(mod_rdp_params.client_execute_working_dir)
+        , client_execute_arguments(mod_rdp_params.client_execute_arguments)
     {
         if (this->verbose & 1) {
             if (!enable_transparent_mode) {
@@ -1383,6 +1392,15 @@ protected:
             this->max_clipboard_data;
         remote_programs_virtual_channel_params.verbose                         =
             this->verbose;
+
+        remote_programs_virtual_channel_params.client_execute_flags            =
+            this->client_execute_flags;
+        remote_programs_virtual_channel_params.client_execute_exe_or_file      =
+            this->client_execute_exe_or_file.c_str();
+        remote_programs_virtual_channel_params.client_execute_working_dir      =
+            this->client_execute_working_dir.c_str();
+        remote_programs_virtual_channel_params.client_execute_arguments        =
+            this->client_execute_arguments.c_str();
 
         return remote_programs_virtual_channel_params;
     }
@@ -3785,6 +3803,7 @@ public:
                 order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc       ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb       ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline        ? 1 : 0);
+                //order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]         = 1;
                 order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc       ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
@@ -3976,14 +3995,14 @@ public:
 
                 if (this->remote_program) {
                     RailCaps rail_caps;
-                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED;
+                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
                     if (this->verbose & 1) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
                     WindowListCaps window_list_caps;
-                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+                    window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
                     window_list_caps.NumIconCaches = 3;
                     window_list_caps.NumIconCacheEntries = 12;
                     if (this->verbose & 1) {
@@ -5403,6 +5422,24 @@ public:
 
                     this->enable_fastpath_client_input_event =
                         (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
+                }
+                break;
+            case CAPSTYPE_RAIL:
+                {
+                    RailCaps rail_caps;
+                    rail_caps.recv(stream, capset_length);
+                    if (this->verbose & 1) {
+                        rail_caps.log("Received from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_WINDOW:
+                {
+                    WindowListCaps window_list_caps;
+                    window_list_caps.recv(stream, capset_length);
+                    if (this->verbose & 1) {
+                        window_list_caps.log("Received from server");
+                    }
                 }
                 break;
             default:

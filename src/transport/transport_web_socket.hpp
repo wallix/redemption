@@ -67,11 +67,21 @@ class TransportWebSocket :  public Transport
 
 
     void do_send(const char * const buffer, size_t len) override {
-        EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1 - 1), $1); }, buffer, len);
+        //EM_ASM_({ console.log('Data sent to server: '+$0+', '+$1+', '+$2+', '+$3+', '+$4+'...'); }, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
+        /*EM_ASM_({ console.log('Data sent to server: '); }, 0);
+        for (size_t i = 0; i < len; i++) {
+            EM_ASM_({ console.log($0+", "); }, buffer[i]);
+        }*/
+
+        EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1), $1); }, buffer, len);
     }
 
     void do_recv(char ** pbuffer, size_t len) override {
+
         if (this->buffer !=  nullptr) {
+
+            //EM_ASM_({ console.log('Data recv from server: '+$0+', '+$1+', '+$2+', '+$3+', '+$4+'...'); }, this->buffer[0], this->buffer[1], this->buffer[2], this->buffer[3], this->buffer[4]);
+
             int lenMax(len);
 
             if (lenMax > 0) {
@@ -111,21 +121,24 @@ public:
 
     void setBufferValue(uint8_t octet) {
 
-    //      Format of the TPKT packet header
-    //
-    //           -----------------------------
-    //           |         0000 0011         | 1
-    //           -----------------------------
-    //           |         Reserved 2        | 2
-    //           -----------------------------
-    //           | Most significant octet    | 3
-    //           |    of TPKT length         |
-    //           -----------------------------
-    //           | least significant octet   | 4
-    //           |       of TPKT length      |
-    //           -----------------------------
-    //           :         TPDU              : 5-?
-    //           - - - - - - - - - - - - - - -
+    //            Format of the TPKT packet header
+
+    //           +---+---+---+---+---+---+---+---+
+    //           | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+    //           +---+---+---+---+---+---+---+---+
+    //           |            0000 0011          |
+    //           +-------------------------------+
+    //           |            Reserved 2         |
+    //           +-------------------------------+
+    //           |    Most significant octet     |
+    //           |        of TPKT length         |
+    //           +-------------------------------+
+    //           |    least significant octet    |
+    //           |        of TPKT length         |
+    //           +-------------------------------+
+    //           |         TPDU(variable)  ...   |
+    //           --------------------------------+
+
 
         switch (this->pduState) {
             case PUD_HEADER_EMPTY: if (octet == PDU_HEADER_FLAG) {

@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     size_t edit_pos = 2;
 
     WidgetEditValid wedit(drawable.gd, x, y, cx, parent, notifier, "test1", id,
-                          fg_color, bg_color, ANTHRACITE, font, edit_pos, xtext, ytext);
+                          fg_color, bg_color, ANTHRACITE, font, nullptr, false, edit_pos, xtext, ytext);
 
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
     // ask to widget to redraw at it's current position
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     size_t edit_pos = -1;
 
     WidgetEditValid wedit(drawable.gd, x, y, cx, parent, notifier, nullptr, id,
-                          fg_color, bg_color, ANTHRACITE, font, edit_pos, xtext, ytext);
+                          fg_color, bg_color, ANTHRACITE, font, nullptr, false, edit_pos, xtext, ytext);
 
     parent.add_widget(&wedit);
     // ask to widget to redraw at it's current position
@@ -179,9 +179,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, font, 0);
+    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, font, nullptr, false, 0);
 
-    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, font, 0);
+    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, font, nullptr, false, 0);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -266,9 +266,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, font, 0, 0, 0, false, "edition1");
+    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, font, "edition1", true, 0, 0, 0, false);
 
-    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, font, 0, 0, 0, false, "edition2");
+    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, font, "edition2", true, 0, 0, 0, false);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -390,9 +390,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, font, 0, 0, 0, true, "edition1");
+    WidgetEditValid wedit1(drawable.gd, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, font, "edition1", true, 0, 0, 0, true);
 
-    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, font, 0, 0, 0, true, "edition2");
+    WidgetEditValid wedit2(drawable.gd, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, font, "edition2", true, 0, 0, 0, true);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEditValid wedit(drawable.gd, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE, font);
+    WidgetEditValid wedit(drawable.gd, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE, font, nullptr, false);
 
     parent.add_widget(&wedit);
     parent.set_widget_focus(&wedit, Widget2::focus_reason_tabkey);
