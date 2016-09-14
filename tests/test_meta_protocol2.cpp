@@ -91,6 +91,19 @@ void bench();
 #include "proto/buffering_policy.hpp"
 #include "proto/buffering2_policy.hpp"
 
+#include "utils/log.hpp" //hexdump_c
+
+struct log_policy : buffering2_policy_base
+{
+    static void send(iovec_view iovs)
+    {
+        for (auto iov : iovs) {
+            PROTO_TRACE(" [" << iov.iov_base << "] [len: " << iov.iov_len << "]\n");
+            hexdump_c(static_cast<uint8_t const*>(iov.iov_base), iov.iov_len);
+        }
+    }
+};
+
 BOOST_AUTO_TEST_CASE(proto_test)
 {
     struct {
@@ -116,7 +129,7 @@ BOOST_AUTO_TEST_CASE(proto_test)
     std::cout << "\n";
     packet.apply(Buffering{});
     std::cout << "\n";
-    proto::apply(Buffering2<stream_protocol_policy>{}, packet, packet);
+    proto::apply(Buffering2<log_policy>{}, packet, packet);
 
     test();
     other_test();
@@ -192,14 +205,14 @@ void test_new()
         sec::data = data
     );
 
-    struct Policy : stream_protocol_policy {
+    struct Policy : log_policy {
         static void send(iovec_view iovs) {
             BOOST_CHECK_EQUAL(iovs.size(), 1);
             CHECK_RANGE(
                 make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
                 cstr_array_view("\x03\x00\x00\x0b\x02\xf0\x80\xf7\xff\xff\xff")
             );
-            stream_protocol_policy::send(iovs);
+            log_policy::send(iovs);
         }
     };
 
@@ -214,7 +227,7 @@ void other_test()
         proto::if_(proto::params[a])
             [proto::composer(a, b)]
     );
-    proto::apply(Buffering2<stream_protocol_policy>{}, bl(a = 1_c, b = 1_c));
+    proto::apply(Buffering2<log_policy>{}, bl(a = 1_c, b = 1_c));
 }
 
 #include <chrono>
@@ -237,7 +250,7 @@ inline void test1(uint8_t * p, CryptContext & crypt, uint32_t c) {
         sec::crypt = crypt,
         sec::data = data
     );
-    struct Policy : stream_protocol_policy {
+    struct Policy : buffering2_policy_base {
         void send(iovec_view iovs) const {
             //escape(data);
             for (auto iovec : iovs) {

@@ -23,8 +23,6 @@
 
 #include "proto/proto.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-// TODO
-#include "utils/log.hpp" //hexdump_c
 
 #if defined(IN_IDE_PARSER)
 # define PROTO_TRACE(a...) std::cout << a
@@ -602,7 +600,7 @@ struct Buffering2
             var_info<IPacket, IVar, detail::pkt_sz_with_size<T, n>>, iovec & buffer, Var const &
         ) {
             using proto_integer = typename T::type;
-            policy.serialize_static_buffer(
+            policy.static_serialize(
                 static_cast<uint8_t*>(buffer.iov_base),
                 proto_integer{checked_cast<typename proto_integer::type>(n)}
             );
@@ -612,14 +610,14 @@ struct Buffering2
         template<class VarInfo, class Var>
         void serialize_pkt_sz_with_size_or_var(VarInfo, iovec & buffer, Var const & var)
         {
-            policy.serialize_static_buffer(static_cast<uint8_t*>(buffer.iov_base), var.x);
+            policy.static_serialize(static_cast<uint8_t*>(buffer.iov_base), var.x);
         }
 
         template<class VarInfo, class Val>
         void serialize_type(proto::tags::limited_buffer, VarInfo, iovec & buffer, Val const & val) {
             PROTO_TRACE(name(val) << " = ");
             /**///this->print(val);
-            std::size_t len = policy.serialize_limited_buffer(
+            std::size_t len = policy.limited_serialize(
                 static_cast<uint8_t*>(buffer.iov_base),
                 val.x
             );
@@ -711,7 +709,7 @@ struct Buffering2
         void serialize_dyn_type(Val & val, Continue f) {
             PROTO_TRACE(name(val) << " = ");
             /**///this->print(val);
-            this->policy.context_dynamic_buffer(f, val.x);
+            this->policy.dynamic_serialize(f, val.x);
         }
 
 
@@ -758,7 +756,7 @@ struct Buffering2
                 << static_cast<void*>(this->pktptrs[pkt_idx]) << "} = "
                 << this->sizes.data[IPacket::value+1] << "\n"
             );
-            policy.serialize_static_buffer(
+            policy.static_serialize(
                 this->pktptrs[pkt_idx],
                 T{checked_cast<typename T::type>(this->sizes.data[IPacket::value+1])}
             );
@@ -774,7 +772,7 @@ struct Buffering2
                 << static_cast<void*>(this->pktptrs[pkt_idx]) << "} = "
                 << this->sizes.data[IPacket::value] << "\n"
             );
-            policy.serialize_static_buffer(
+            policy.static_serialize(
                 this->pktptrs[pkt_idx],
                 T{checked_cast<typename T::type>(this->sizes.data[IPacket::value])}
             );
@@ -842,10 +840,10 @@ struct Buffering2
     }
 };
 
-struct stream_protocol_policy
+struct base_policy
 {
     template<class T>
-    static auto serialize_static_buffer(uint8_t * p, T const & val)
+    static auto static_serialize(uint8_t * p, T const & val)
     {
         return val.static_serialize(p);
     }
@@ -857,30 +855,23 @@ struct stream_protocol_policy
     }
 
     template<class T>
-    static std::size_t serialize_limited_buffer(uint8_t * p, T const & val)
+    static std::size_t limited_serialize(uint8_t * p, T const & val)
     {
         return val.limited_serialize(p);
     }
 
     template<class F, class T>
-    static void context_dynamic_buffer(F && f, T const & val)
+    static void dynamic_serialize(F && f, T const & val)
     {
         val.dynamic_serialize(f);
     }
 
-    // TODO
-    static void send(iovec_view iovs)
-    {
-        for (auto iov : iovs) {
-            PROTO_TRACE(" [" << iov.iov_base << "] [len: " << iov.iov_len << "]\n");
-            hexdump_c(static_cast<uint8_t const*>(iov.iov_base), iov.iov_len);
-        }
-    }
+    static void send(iovec_view iovs) = delete; // please, overrided this function
 };
 
 }
 
-using proto_buffering2::stream_protocol_policy;
+using buffering2_policy_base = proto_buffering2::base_policy;
 using proto_buffering2::Buffering2;
 using proto_buffering2::iovec_view;
 template<std::size_t n>
