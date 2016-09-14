@@ -276,10 +276,11 @@ void bench()
     auto bench = [](auto test) {
         std::vector<long long> v;
 
-        unsigned imax = 100;
+        //unsigned imax = 100;
+        unsigned imax = 500;
         for (unsigned i = 0; i < imax; ++i) {
-            alignas(4) uint8_t data[2621];
-            //alignas(4) uint8_t data[262144];
+            //alignas(4) uint8_t data[2621];
+            alignas(4) uint8_t data[262144];
             //alignas(4) uint8_t data[1048576];
             auto p = data;
             test(p);

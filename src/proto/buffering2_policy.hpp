@@ -505,7 +505,7 @@ struct Buffering2
         template<class VarInfo, class Val>
         void serialize_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Val & val) {
             /**///std::cout << name(val) << " = ";
-            this->print(val);
+            /**///this->print(val);
             this->serialize_pkt_sz_with_size_or_var(VarInfo{}, buffer, val);
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type_t<VarInfo>>{};
             /**///std::cout << "\n";
@@ -548,9 +548,9 @@ struct Buffering2
         }
 
         template<class VarInfo, class Val>
-        void serialize_type(proto::tags::limited_buffer, VarInfo, iovec & buffer, Val & val) {
+        void serialize_type(proto::tags::limited_buffer, VarInfo, iovec & buffer, Val const & val) {
             /**///std::cout << name(val) << " = ";
-            this->print(val);
+            /**///this->print(val);
             std::size_t len = policy.serialize_limited_buffer(
                 static_cast<uint8_t*>(buffer.iov_base),
                 val.x
@@ -564,7 +564,7 @@ struct Buffering2
         template<class VarInfo, class Val>
         void serialize_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Val & val) {
             /**///std::cout << name(val) << " = ";
-            this->print(val);
+            /**///this->print(val);
             auto av = policy.get_view_buffer(val.x);
             buffer.iov_base = const_cast<uint8_t *>(av.data());
             buffer.iov_len = av.size();
@@ -644,8 +644,8 @@ struct Buffering2
         template<class Val, class Continue>
         void serialize_dyn_type(Val & val, Continue f) {
             /**///std::cout << name(val) << " = ";
-            print(val);
-            policy.context_dynamic_buffer(f, val.x);
+            /**///this->print(val);
+            this->policy.context_dynamic_buffer(f, val.x);
         }
 
 
@@ -778,25 +778,25 @@ struct Buffering2
 struct stream_protocol_policy
 {
     template<class T>
-    static auto serialize_static_buffer(uint8_t * p, T val)
+    static auto serialize_static_buffer(uint8_t * p, T const & val)
     {
         return val.static_serialize(p);
     }
 
     template<class T>
-    static auto get_view_buffer(T val)
+    static auto get_view_buffer(T const & val)
     {
         return val.get_view_buffer();
     }
 
     template<class T>
-    static std::size_t serialize_limited_buffer(uint8_t * p, T val)
+    static std::size_t serialize_limited_buffer(uint8_t * p, T const & val)
     {
         return val.limited_serialize(p);
     }
 
     template<class F, class T>
-    static void context_dynamic_buffer(F && f, T val)
+    static void context_dynamic_buffer(F && f, T const & val)
     {
         val.dynamic_serialize(f);
     }
