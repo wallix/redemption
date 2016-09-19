@@ -116,7 +116,7 @@ public:
             gdi::TextMetrics tm(this->font, this->label.buffer);
             this->w_text = tm.width;
             this->h_text = tm.height;
-            if (this->label.auto_resize) {
+            if (this->label.auto_resize_) {
                 this->rect.cx = this->label.x_text * 2 + this->w_text;
                 this->rect.cy = this->label.y_text * 2 + this->h_text;
                 if (this->buffer_size == 1) {
@@ -154,7 +154,7 @@ public:
             gdi::TextMetrics tm(this->font, this->label.buffer);
             this->w_text = tm.width;
             this->h_text = tm.height;
-            if (this->label.auto_resize) {
+            if (this->label.auto_resize_) {
                 this->rect.cx = this->label.x_text * 2 + this->w_text;
                 this->rect.cy = this->label.y_text * 2 + this->h_text;
                 if (this->buffer_size == 1) {
