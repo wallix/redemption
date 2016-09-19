@@ -473,6 +473,18 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{1};
         };
+        // Log redirection in a file
+        // type: bool
+        struct session_log_redirection {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "session_log"; }
+            static constexpr char const * name() { return "session_log_redirection"; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{0};
+        };
         // type: KeyboardInputMaskingLevel
         struct keyboard_input_masking_level {
             static constexpr bool is_readable() { return 0; }
@@ -2766,6 +2778,7 @@ struct globals
 
 struct session_log
 : cfg::session_log::enable_session_log
+, cfg::session_log::session_log_redirection
 , cfg::session_log::keyboard_input_masking_level
 { static constexpr bool is_section = true; };
 

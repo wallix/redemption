@@ -28,12 +28,17 @@ struct LocallyIntegrableMod : public InternalMod {
 
     bool alt_key_pressed = false;
 
+    uint16_t front_width;
+    uint16_t front_height;
+
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
                          Theme const & theme = Theme())
     : InternalMod(front, front_width, front_height, font, theme)
-    , client_execute(client_execute) {}
+    , client_execute(client_execute)
+    , front_width(front_width)
+    , front_height(front_height) {}
 
     ~LocallyIntegrableMod() override {
         this->client_execute.reset();
@@ -42,7 +47,7 @@ struct LocallyIntegrableMod : public InternalMod {
     void rdp_input_invalidate(const Rect& r) override {
         InternalMod::rdp_input_invalidate(r);
 
-        this->client_execute.input_invalidate(r, this->font());
+        this->client_execute.input_invalidate(r);
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
@@ -73,7 +78,7 @@ struct LocallyIntegrableMod : public InternalMod {
 
     void draw_event(time_t, gdi::GraphicApi &) override {
         if (!this->client_execute && event.waked_up_by_time) {
-            this->client_execute.ready(*this);
+            this->client_execute.ready(*this, this->front_width, this->front_height, this->font());
         }
     }
 

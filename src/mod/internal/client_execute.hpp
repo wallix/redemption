@@ -24,6 +24,7 @@
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/stream.hpp"
@@ -32,11 +33,15 @@
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
 
+#define TITLE_BAR_HEIGHT       24
+#define TITLE_BAR_BUTTON_WIDTH 37
+
 class ClientExecute
 {
           FrontAPI             * front_   = nullptr;
           mod_api              * mod_     = nullptr;
     const CHANNELS::ChannelDef * channel_ = nullptr;
+    const Font                 * font_    = nullptr;
 
     uint16_t client_order_type = 0;
 
@@ -54,9 +59,17 @@ class ClientExecute
     uint16_t captured_mouse_y = 0;
 
     Rect window_rect;
+    Rect title_bar_rect;
+    Rect close_box_rect;
+    Rect minimize_box_rect;
 
-    bool mouse_button1_pressed = false;
-    bool mouse_moved           = false;
+    bool title_bar_pressed    = false;
+    bool mouse_moved          = false;
+    bool minimize_box_pressed = false;
+    bool close_box_pressed    = false;
+
+    uint16_t front_width  = 0;
+    uint16_t front_height = 0;
 
 public:
     ClientExecute(FrontAPI & front) {
@@ -71,99 +84,94 @@ public:
             this->window_rect.y  = rect.y + rect.cy * 10 / 100;
             this->window_rect.cx = rect.cx * 80 / 100;
             this->window_rect.cy = rect.cy * 80 / 100;
+
+            this->title_bar_rect = this->window_rect;
+            this->title_bar_rect.cy = TITLE_BAR_HEIGHT;
+            this->title_bar_rect.x++;
+            this->title_bar_rect.y++;
+            this->title_bar_rect.cx -= 2;
+            this->title_bar_rect.cy--;
+
+            this->minimize_box_rect     = this->title_bar_rect;
+            this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 2;
+            this->minimize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
+
+
+            this->close_box_rect     = this->title_bar_rect;
+            this->close_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH;
+            this->close_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
         }
 
         Rect result_rect = this->window_rect.shrink(1);
         result_rect.cx--;
         result_rect.cy--;
 
-        result_rect.y  += 24;
-        result_rect.cy -= 24;
+        result_rect.y  += TITLE_BAR_HEIGHT;
+        result_rect.cy -= TITLE_BAR_HEIGHT;
 
         return result_rect;
     }
 
-    void input_invalidate(const Rect& r, Font const & font) {
+    void input_invalidate(const Rect& r) {
         LOG(LOG_INFO, "ClientExecute::input_invalidate");
 
         if (!this->channel_) return;
 
-        Rect rect = this->window_rect;
-        rect.cy = 24;
-        rect.x++;
-        rect.y++;
-        rect.cx -= 2;
-        rect.cy--;
-
-LOG(LOG_INFO, "ClientExecute::input_invalidate: r(%u, %u, %u, %u)",
-    r.x, r.y, r.cx, r.cy);
-LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%u, %u, %u, %u)",
-    rect.x, rect.y, rect.cx, rect.cy);
-
-        if (!r.has_intersection(rect)) return;
+        if (!r.has_intersection(this->title_bar_rect)) return;
 
         {
-            RDPOpaqueRect order(rect, 0xFFFFFF);
+            RDPOpaqueRect order(this->title_bar_rect, 0xFFFFFF);
 
             this->front_->draw(order, r);
         }
 
-        gdi::server_draw_text(*this->front_,
-                              font,
-                              rect.x + 5,
-                              rect.y + 3,
-                              INTERNAL_MODULE_WINDOW_TITLE,
-                              0x000000,
-                              0xFFFFFF,
-                              r
-                              );
-
-        {
-            Rect button_rect = rect;
-
-            int diff = rect.cx - 37;
-
-            button_rect.x  += diff;
-            button_rect.cx  = 37;
-
-            RDPOpaqueRect order(button_rect, 0x2311E8);
-
-            this->front_->draw(order, r);
-
+        if (this->font_) {
             gdi::server_draw_text(*this->front_,
-                                  font,
-                                  rect.x + rect.cx - 24,
-                                  rect.y + 3,
-                                  "x",
-                                  0xFFFFFF,
-                                  0x2311E8,
-                                  r
-                                  );
-        }
-
-        {
-            Rect button_rect = rect;
-
-            int diff = rect.cx - 37 * 2;
-
-            button_rect.x  += diff;
-            button_rect.cx  = 37;
-
-            RDPOpaqueRect order(button_rect, 0xE5E5E5);
-
-            this->front_->draw(order, r);
-
-            gdi::server_draw_text(*this->front_,
-                                  font,
-                                  rect.x + rect.cx - 24 - 37,
-                                  rect.y + 3,
-                                  "−",
+                                  *this->font_,
+                                  this->title_bar_rect.x + 5,
+                                  this->title_bar_rect.y + 3,
+                                  INTERNAL_MODULE_WINDOW_TITLE,
                                   0x000000,
-                                  0xE5E5E5,
+                                  0xFFFFFF,
                                   r
                                   );
         }
 
+        {
+            RDPOpaqueRect order(this->minimize_box_rect, 0xFFFFFF);
+
+            this->front_->draw(order, r);
+
+            if (this->font_) {
+                gdi::server_draw_text(*this->front_,
+                                      *this->font_,
+                                      this->minimize_box_rect.x + 12,
+                                      this->minimize_box_rect.y + 3,
+                                      "−",
+                                      0x000000,
+                                      0xFFFFFF,
+                                      r
+                                      );
+            }
+        }
+
+        {
+            RDPOpaqueRect order(this->close_box_rect, 0xFFFFFF);
+
+            this->front_->draw(order, r);
+
+            if (this->font_) {
+                gdi::server_draw_text(*this->front_,
+                                      *this->font_,
+                                      this->close_box_rect.x + 13,
+                                      this->close_box_rect.y + 3,
+                                      "x",
+                                      0x000000,
+                                      0xFFFFFF,
+                                      r
+                                      );
+            }
+        }
 
         this->front_->sync();
     }
@@ -174,15 +182,54 @@ LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%u, %u, %u, %u)",
         //LOG(LOG_INFO, "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u",
         //    pointerFlags, xPos, yPos);
 
-        Rect rect = this->window_rect;
-        rect.cy = 24;
+        if (!title_bar_pressed && !minimize_box_pressed && !close_box_pressed &&
+            (pointerFlags & (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1))) {
+            if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
+                RDPOpaqueRect order(this->minimize_box_rect, 0xCBCACA);
 
-        if (!mouse_button1_pressed) {
-            if ((pointerFlags & (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) &&
-                rect.contains_pt(xPos, yPos)) {
-                this->mouse_button1_pressed = true;
+                this->front_->draw(order, this->minimize_box_rect);
 
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed");
+                if (this->font_) {
+                    gdi::server_draw_text(*this->front_,
+                                          *this->font_,
+                                          this->minimize_box_rect.x + 12,
+                                          this->minimize_box_rect.y + 3,
+                                          "−",
+                                          0x000000,
+                                          0xCBCACA,
+                                          this->minimize_box_rect
+                                          );
+                }
+
+                this->front_->sync();
+
+                this->minimize_box_pressed = true;
+            }
+            else if (this->close_box_rect.contains_pt(xPos, yPos)) {
+                RDPOpaqueRect order(this->close_box_rect, 0x2311E8);
+
+                this->front_->draw(order, this->close_box_rect);
+
+                if (this->font_) {
+                    gdi::server_draw_text(*this->front_,
+                                          *this->font_,
+                                          this->close_box_rect.x + 13,
+                                          this->close_box_rect.y + 3,
+                                          "x",
+                                          0xFFFFFF,
+                                          0x2311E8,
+                                          this->close_box_rect
+                                          );
+                }
+
+                this->front_->sync();
+
+                this->close_box_pressed = true;
+            }
+            else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
+                this->title_bar_pressed = true;
+
+                LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar");
 
                 this->captured_mouse_x = xPos;
                 this->captured_mouse_y = yPos;
@@ -190,93 +237,45 @@ LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%u, %u, %u, %u)",
         }
         else {
             if (pointerFlags == SlowPath::PTRFLAGS_MOVE) {
-                {
-                    StaticOutStream<256> out_s;
-                    RAILPDUHeader header;
-                    header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
-
-                    ServerMinMaxInfoPDU smmipdu;
-
-                    smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-                    smmipdu.MaxWidth(this->work_area_rect.cx - 1);
-                    smmipdu.MaxHeight(this->work_area_rect.cy - 1);
-                    smmipdu.MaxPosX(0);
-                    smmipdu.MaxPosX(0);
-                    smmipdu.MinTrackWidth(640);
-                    smmipdu.MinTrackHeight(480);
-                    smmipdu.MaxTrackWidth(this->work_area_rect.cx - 1);
-                    smmipdu.MaxTrackHeight(this->work_area_rect.cy - 1);
-
-                    smmipdu.emit(out_s);
-
-                    header.emit_end();
-
-                    const size_t   length     = out_s.get_offset();
-                    const size_t   chunk_size = length;
-                    const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                                | CHANNELS::CHANNEL_FLAG_LAST;
-
+                if (this->title_bar_pressed) {
                     {
-                        const bool send              = true;
-                        const bool from_or_to_client = true;
-                        ::msgdump_c(send, from_or_to_client, length, flags,
-                            out_s.get_data(), length);
+                        StaticOutStream<256> out_s;
+                        RAILPDUHeader header;
+                        header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
+
+                        ServerMinMaxInfoPDU smmipdu;
+
+                        smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                        smmipdu.MaxWidth(this->work_area_rect.cx - 1);
+                        smmipdu.MaxHeight(this->work_area_rect.cy - 1);
+                        smmipdu.MaxPosX(0);
+                        smmipdu.MaxPosX(0);
+                        smmipdu.MinTrackWidth(640);
+                        smmipdu.MinTrackHeight(480);
+                        smmipdu.MaxTrackWidth(this->work_area_rect.cx - 1);
+                        smmipdu.MaxTrackHeight(this->work_area_rect.cy - 1);
+
+                        smmipdu.emit(out_s);
+
+                        header.emit_end();
+
+                        const size_t   length     = out_s.get_offset();
+                        const size_t   chunk_size = length;
+                        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                                    | CHANNELS::CHANNEL_FLAG_LAST;
+
+                        {
+                            const bool send              = true;
+                            const bool from_or_to_client = true;
+                            ::msgdump_c(send, from_or_to_client, length, flags,
+                                out_s.get_data(), length);
+                        }
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU");
+                        smmipdu.log(LOG_INFO);
+
+                        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                                      flags);
                     }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU");
-                    smmipdu.log(LOG_INFO);
-
-                    this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                                  flags);
-                }
-
-                {
-                    StaticOutStream<256> out_s;
-                    RAILPDUHeader header;
-                    header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
-
-                    ServerMoveSizeStartOrEndPDU smssoepdu;
-
-                    smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-                    smssoepdu.IsMoveSizeStart(1);
-                    smssoepdu.MoveSizeType(RAIL_WMSZ_MOVE);
-                    smssoepdu.PosXOrTopLeftX(xPos - this->window_rect.x);
-                    smssoepdu.PosYOrTopLeftY(yPos - this->window_rect.y);
-
-                    smssoepdu.emit(out_s);
-
-                    header.emit_end();
-
-                    const size_t   length     = out_s.get_offset();
-                    const size_t   chunk_size = length;
-                    const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                                | CHANNELS::CHANNEL_FLAG_LAST;
-
-                    {
-                        const bool send              = true;
-                        const bool from_or_to_client = true;
-                        ::msgdump_c(send, from_or_to_client, length, flags,
-                            out_s.get_data(), length);
-                    }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU");
-                    smssoepdu.log(LOG_INFO);
-
-                    this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                                  flags);
-                }
-
-                this->mouse_moved = true;
-            }
-            else if (!(pointerFlags & SlowPath::PTRFLAGS_DOWN) &&
-                (pointerFlags & SlowPath::PTRFLAGS_BUTTON1)) {
-                this->mouse_button1_pressed = false;
-
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released");
-
-                if (this->mouse_moved) {
-                    this->mouse_moved = false;
-
-                    this->window_rect.x += (xPos - captured_mouse_x);
-                    this->window_rect.y += (yPos - captured_mouse_y);
 
                     {
                         StaticOutStream<256> out_s;
@@ -286,10 +285,10 @@ LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%u, %u, %u, %u)",
                         ServerMoveSizeStartOrEndPDU smssoepdu;
 
                         smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-                        smssoepdu.IsMoveSizeStart(0);
+                        smssoepdu.IsMoveSizeStart(1);
                         smssoepdu.MoveSizeType(RAIL_WMSZ_MOVE);
-                        smssoepdu.PosXOrTopLeftX(this->window_rect.x);
-                        smssoepdu.PosYOrTopLeftY(this->window_rect.y);
+                        smssoepdu.PosXOrTopLeftX(xPos - this->window_rect.x);
+                        smssoepdu.PosYOrTopLeftY(yPos - this->window_rect.y);
 
                         smssoepdu.emit(out_s);
 
@@ -313,58 +312,299 @@ LOG(LOG_INFO, "ClientExecute::input_invalidate: rect(%u, %u, %u, %u)",
                                                       flags);
                     }
 
+                    this->mouse_moved = true;
+                }
+                else if (this->minimize_box_pressed) {
+                    if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
+                        RDPOpaqueRect order(this->minimize_box_rect, 0xCBCACA);
+
+                        this->front_->draw(order, this->minimize_box_rect);
+
+                        if (this->font_) {
+                            gdi::server_draw_text(*this->front_,
+                                                  *this->font_,
+                                                  this->minimize_box_rect.x + 12,
+                                                  this->minimize_box_rect.y + 3,
+                                                  "−",
+                                                  0x000000,
+                                                  0xCBCACA,
+                                                  this->minimize_box_rect
+                                                  );
+                        }
+
+                        this->front_->sync();
+                    }
+                    else {
+                        RDPOpaqueRect order(this->minimize_box_rect, 0xFFFFFF);
+
+                        this->front_->draw(order, this->minimize_box_rect);
+
+                        if (this->font_) {
+                            gdi::server_draw_text(*this->front_,
+                                                  *this->font_,
+                                                  this->minimize_box_rect.x + 12,
+                                                  this->minimize_box_rect.y + 3,
+                                                  "−",
+                                                  0x000000,
+                                                  0xFFFFFF,
+                                                  this->minimize_box_rect
+                                                  );
+                        }
+
+                        this->front_->sync();
+                    }
+                }
+                else if (this->close_box_pressed) {
+                    if (this->close_box_rect.contains_pt(xPos, yPos)) {
+                        RDPOpaqueRect order(this->close_box_rect, 0x2311E8);
+
+                        this->front_->draw(order, this->close_box_rect);
+
+                        if (this->font_) {
+                            gdi::server_draw_text(*this->front_,
+                                                  *this->font_,
+                                                  this->close_box_rect.x + 13,
+                                                  this->close_box_rect.y + 3,
+                                                  "x",
+                                                  0xFFFFFF,
+                                                  0x2311E8,
+                                                  this->close_box_rect
+                                                  );
+                        }
+
+                        this->front_->sync();
+                    }
+                    else {
+                        RDPOpaqueRect order(this->close_box_rect, 0xFFFFFF);
+
+                        this->front_->draw(order, this->close_box_rect);
+
+                        if (this->font_) {
+                            gdi::server_draw_text(*this->front_,
+                                                  *this->font_,
+                                                  this->close_box_rect.x + 13,
+                                                  this->close_box_rect.y + 3,
+                                                  "x",
+                                                  0x000000,
+                                                  0xFFFFFF,
+                                                  this->close_box_rect
+                                                  );
+                        }
+
+                        this->front_->sync();
+                    }
+                }
+            }
+            else if (!(pointerFlags & SlowPath::PTRFLAGS_DOWN) &&
+                     (pointerFlags & SlowPath::PTRFLAGS_BUTTON1)) {
+                if (this->title_bar_pressed) {
+                    this->title_bar_pressed = false;
+
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released");
+
+                    if (this->mouse_moved) {
+                        this->mouse_moved = false;
+
+                        int const diff_x = (xPos - captured_mouse_x);
+                        int const diff_y = (yPos - captured_mouse_y);
+
+                        this->window_rect.x       += diff_x;
+                        this->window_rect.y       += diff_y;
+                        this->title_bar_rect.x    += diff_x;
+                        this->title_bar_rect.y    += diff_y;
+                        this->minimize_box_rect.x += diff_x;
+                        this->minimize_box_rect.y += diff_y;
+                        this->close_box_rect.x    += diff_x;
+                        this->close_box_rect.y    += diff_y;
+
+                        {
+                            StaticOutStream<256> out_s;
+                            RAILPDUHeader header;
+                            header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
+
+                            ServerMoveSizeStartOrEndPDU smssoepdu;
+
+                            smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                            smssoepdu.IsMoveSizeStart(0);
+                            smssoepdu.MoveSizeType(RAIL_WMSZ_MOVE);
+                            smssoepdu.PosXOrTopLeftX(this->window_rect.x);
+                            smssoepdu.PosYOrTopLeftY(this->window_rect.y);
+
+                            smssoepdu.emit(out_s);
+
+                            header.emit_end();
+
+                            const size_t   length     = out_s.get_offset();
+                            const size_t   chunk_size = length;
+                            const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                                        | CHANNELS::CHANNEL_FLAG_LAST;
+
+                            {
+                                const bool send              = true;
+                                const bool from_or_to_client = true;
+                                ::msgdump_c(send, from_or_to_client, length, flags,
+                                    out_s.get_data(), length);
+                            }
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU");
+                            smssoepdu.log(LOG_INFO);
+
+                            this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                                          flags);
+                        }
+
+                        {
+                            RDP::RAIL::NewOrExistingWindow order;
+
+                            order.header.FieldsPresentFlags(
+                                      RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                                );
+                            order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                            order.ClientOffsetX(this->window_rect.x + 6);
+                            order.ClientOffsetY(this->window_rect.y + 25);
+                            order.WindowOffsetX(this->window_rect.x);
+                            order.WindowOffsetY(this->window_rect.y);
+                            order.VisibleOffsetX(this->window_rect.x);
+                            order.VisibleOffsetY(this->window_rect.y);
+
+                            StaticOutStream<1024> out_s;
+                            order.emit(out_s);
+                            order.log(LOG_INFO);
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+
+                            this->front_->draw(order);
+                        }
+
+                        {
+                            Rect result_rect = this->window_rect.shrink(1);
+                            result_rect.cx--;
+                            result_rect.cy--;
+
+                            result_rect.y  += 24;
+                            result_rect.cy -= 24;
+
+                            this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
+                        }
+
+                        this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+                    }
+                }
+                else if (this->minimize_box_pressed) {
+                    this->minimize_box_pressed = false;
+
                     {
+                        RDPOpaqueRect order(this->minimize_box_rect, 0xFFFFFF);
+
+                        this->front_->draw(order, this->minimize_box_rect);
+
+                        if (this->font_) {
+                            gdi::server_draw_text(*this->front_,
+                                                  *this->font_,
+                                                  this->minimize_box_rect.x + 12,
+                                                  this->minimize_box_rect.y + 3,
+                                                  "−",
+                                                  0x000000,
+                                                  0xFFFFFF,
+                                                  this->minimize_box_rect
+                                                  );
+                        }
+
+                        this->front_->sync();
+                    }
+
+                    if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
                         RDP::RAIL::NewOrExistingWindow order;
 
                         order.header.FieldsPresentFlags(
                                   RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
                                 | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                                | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                                | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                                | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
                             );
                         order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-                        order.ClientOffsetX(/*160*/this->window_rect.x + 6);
-                        order.ClientOffsetY(/*179*/this->window_rect.y + 25);
-                        order.WindowOffsetX(/*154*/this->window_rect.x);
-                        order.WindowOffsetY(/*154*/this->window_rect.y);
-                        order.VisibleOffsetX(/*154*/this->window_rect.x);
-                        order.VisibleOffsetY(/*154*/this->window_rect.y);
+                        order.ClientAreaWidth(0);
+                        order.ClientAreaHeight(0);
+                        order.WindowClientDeltaX(0);
+                        order.WindowClientDeltaY(0);
+                        order.ClientOffsetX(0);
+                        order.ClientOffsetY(800);
+                        order.VisibleOffsetX(0);
+                        order.VisibleOffsetY(800);
+                        order.WindowWidth(160);
+                        order.WindowHeight(24);
+                        order.WindowOffsetX(0);
+                        order.WindowOffsetY(800);
+                        order.NumVisibilityRects(1);
+                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 160, 24));
+                        order.ShowState(2);
+                        order.Style(0x34EE0000);
+                        order.ExtendedStyle(0x40310);
 
                         StaticOutStream<1024> out_s;
                         order.emit(out_s);
                         order.log(LOG_INFO);
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                        LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
 
                         this->front_->draw(order);
+
+                        this->mod_->rdp_input_invalidate(
+                            Rect(
+                                    this->window_rect.x,
+                                    this->window_rect.y,
+                                    this->window_rect.x + this->window_rect.cx,
+                                    this->window_rect.y + this->window_rect.cy
+                                ));
                     }
+                }
+                else if (this->close_box_pressed) {
+                    this->close_box_pressed = false;
 
                     {
-                        Rect result_rect = this->window_rect.shrink(1);
-                        result_rect.cx--;
-                        result_rect.cy--;
+                        RDPOpaqueRect order(this->close_box_rect, 0xFFFFFF);
 
-                        result_rect.y  += 24;
-                        result_rect.cy -= 24;
+                        this->front_->draw(order, this->close_box_rect);
 
-                        this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
+                        if (this->font_) {
+                            gdi::server_draw_text(*this->front_,
+                                                  *this->font_,
+                                                  this->close_box_rect.x + 13,
+                                                  this->close_box_rect.y + 3,
+                                                  "x",
+                                                  0x000000,
+                                                  0xFFFFFF,
+                                                  this->close_box_rect
+                                                  );
+                        }
+
+                        this->front_->sync();
                     }
 
-                    this->mod_->rdp_input_invalidate(
-                        Rect(
-                                this->window_rect.x,
-                                this->window_rect.y,
-                                this->window_rect.x + this->window_rect.cx,
-                                this->window_rect.y + this->window_rect.cy
-                            ));
+                    if (this->close_box_rect.contains_pt(xPos, yPos)) {
+                        LOG(LOG_INFO, "Close by user (Close Box)");
+                        throw Error(ERR_WIDGET);    // Close Box pressed
+                    }
                 }
             }
         }
     }
 
 public:
-    void ready(mod_api & mod) {
-        this->mod_ = &mod;
+    void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font) {
+        this->mod_  = &mod;
+        this->font_ = &font;
+
+        this->front_width  = front_width;
+        this->front_height = front_height;
 
         if (!this->channel_) {
             this->channel_ = this->front_->get_channel_list().get_by_name(channel_names::rail);
@@ -488,47 +728,6 @@ public:
 
 
         this->channel_ = nullptr;
-    }
-
-    void enable() {
-        if (!this->channel_) return;
-
-        {
-            RDP::RAIL::ActivelyMonitoredDesktop order;
-
-            order.header.FieldsPresentFlags(
-                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
-                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND
-                );
-
-            order.ActiveWindowId(INTERNAL_MODULE_WINDOW_ID);
-
-            StaticOutStream<256> out_s;
-            order.emit(out_s);
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "ClientExecute::enable: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-
-            this->front_->draw(order);
-        }
-
-        {
-            RDP::RAIL::ActivelyMonitoredDesktop order;
-
-            order.header.FieldsPresentFlags(
-                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
-                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER
-                );
-
-            order.NumWindowIds(1);
-            order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
-
-            StaticOutStream<256> out_s;
-            order.emit(out_s);
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "ClientExecute::enable: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-
-            this->front_->draw(order);
-        }
     }
 
     void process_client_activate_pdu(uint32_t total_length,
@@ -834,7 +1033,6 @@ public:
                         this->front_->draw(order);
                     }
 
-
                     this->mod_->rdp_input_invalidate(
                         Rect(
                                 this->window_rect.x,
@@ -978,42 +1176,6 @@ public:
 
                 this->front_->draw(order);
             }
-
-/*
-            if (!server_execute_result_sent) {
-                StaticOutStream<256> out_s;
-                RAILPDUHeader header;
-                header.emit_begin(out_s, TS_RAIL_ORDER_EXEC_RESULT);
-
-                ServerExecuteResultPDU server_execute_result_pdu;
-                server_execute_result_pdu.Flags(this->client_execute_flags);
-                server_execute_result_pdu.ExecResult(RAIL_EXEC_S_OK);
-                server_execute_result_pdu.RawResult(0);
-                server_execute_result_pdu.ExeOrFile(this->client_execute_exe_or_file.c_str());
-                server_execute_result_pdu.emit(out_s);
-
-                header.emit_end();
-
-                const size_t   length     = out_s.get_offset();
-                const size_t   chunk_size = length;
-                const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
-                                            | CHANNELS::CHANNEL_FLAG_LAST;
-
-                {
-                    const bool send              = true;
-                    const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, length, flags,
-                        out_s.get_data(), length);
-                }
-                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server Execute Result PDU");
-                server_execute_result_pdu.log(LOG_INFO);
-
-                this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                              flags);
-
-                server_execute_result_sent = true;
-            }
-*/
 
             {
                 RDP::RAIL::ActivelyMonitoredDesktop order;

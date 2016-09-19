@@ -104,6 +104,10 @@
 
 "#enable_session_log = 1\n\n"
 
+"# Log redirection in a file\n"
+"#_hidden\n"
+"#session_log_redirection = 0\n\n"
+
 "#   0: keyboard input are not masked\n"
 "#   1: only passwords are masked\n"
 "#   2: passwords and unidentified texts are masked\n"

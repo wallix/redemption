@@ -77,19 +77,19 @@ public:
                  theme.global.fgcolor, theme.global.bgcolor, font)
         , device_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
                       theme.edit.fgcolor, theme.edit.bgcolor,
-                      theme.edit.focus_color, font, -1u, 1, 1)
+                      theme.edit.focus_color, font, nullptr, false, -1u, 1, 1)
         , login_label(drawable, 0, 0, *this, nullptr, text_login, true, -13,
                       theme.global.fgcolor, theme.global.bgcolor, font)
         , login(drawable, 0, 0, *this, nullptr, login_str, true, -13,
                 theme.global.fgcolor, theme.global.bgcolor, font)
         , login_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
                      theme.edit.fgcolor, theme.edit.bgcolor,
-                     theme.edit.focus_color, font, -1u, 1, 1)
+                     theme.edit.focus_color, font, nullptr, false, -1u, 1, 1)
         , password_label(drawable, 0, 0, *this, nullptr, text_password, true, -13,
                          theme.global.fgcolor, theme.global.bgcolor, font)
         , password_edit(drawable, 0, 0, 400, *this, this, nullptr, -14,
                         theme.edit.fgcolor, theme.edit.bgcolor,
-                        theme.edit.focus_color, font, -1u, 1, 1, true)
+                        theme.edit.focus_color, font, nullptr, false, -1u, 1, 1, true)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     theme.global.separator_color)
         , last_interactive((ask_login || ask_password)?&this->password_edit:&this->device_edit)
