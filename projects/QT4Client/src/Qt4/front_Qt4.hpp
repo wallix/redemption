@@ -220,8 +220,7 @@ public:
     };
 
     enum : int {
-        LIST_FILES_MAX_SIZE = 400
-      , MAX_MONITOR_COUNT   = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
+        MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
 
@@ -328,7 +327,7 @@ public:
 
     void empty_buffer() override;
 
-    void cut_clipboard_data_to_send(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t * data);
+    void cut_clipboard_data_to_send(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
