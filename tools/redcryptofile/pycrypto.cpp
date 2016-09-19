@@ -957,9 +957,11 @@ static PyMethodDef redcryptoFileMethods[] = {
     {nullptr, nullptr, 0, nullptr}
 };
 
+__attribute__((__visibility__("default")))
 PyMODINIT_FUNC
 initredcryptofile(void);
 
+__attribute__((__visibility__("default")))
 PyMODINIT_FUNC
 initredcryptofile(void)
 {
