@@ -1690,7 +1690,7 @@ enum : uint64_t {
 
 struct FormatDataResponsePDU : public CliprdrHeader {
 
-    const double ARBITRARY_SCALE = 26.46;
+    const double ARBITRARY_SCALE = 40;                      //26.46;
 
     FormatDataResponsePDU()
         : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
@@ -1761,6 +1761,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     void emit_fileList(OutStream & stream, int cItems, std::string name, uint64_t size) {
         this->dataLen_ = FILE_DESCRIPTOR_SIZE + 4;
         CliprdrHeader::emit(stream);
+
         stream.out_uint32_le(cItems);
 
         stream.out_uint32_le(FD_SHOWPROGRESSUI |
@@ -1781,18 +1782,17 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         stream.out_copy_bytes(name.data(), sizeName);;
         stream.out_clear_bytes(520 - sizeName);
     }
-    
+
     void emit_text(OutStream & stream, uint32_t length) {
         this->dataLen_ = length;
         CliprdrHeader::emit(stream);
     }
 
     void emit_metaFilePic(OutStream & stream, uint32_t data_length, uint16_t width, uint16_t height, uint16_t depth) {
-        stream.out_uint16_le(this->msgType_);
-        stream.out_uint16_le(this->msgFlags_);
+        this->dataLen_ = data_length + METAFILE_HEADERS_SIZE;
+        CliprdrHeader::emit(stream);
 
         const int largeRecordWordsSize((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-        stream.out_uint32_le(data_length + METAFILE_HEADERS_SIZE);
 
 
         // 2.2.5.2.1 Packed Metafile Payload
@@ -1843,7 +1843,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         //  | 0x00000005                 | positive y is up.                          |
         //  |                            |                                            |
         //  +----------------------------+--------------------------------------------+
-        //  | 0x00000006                 | Each logical unit is mapped to 1/20 of a   |
+        //  | MM_TWIPS                   | Each logical unit is mapped to 1/20 of a   |
         //  |                            | printer's point (1/1440 of an inch), also  |
         //  | 0x00000006                 | called a twip. Positive x is to the right; |
         //  |                            | positive y is up.                          |                                                   //  |                            |                                            |

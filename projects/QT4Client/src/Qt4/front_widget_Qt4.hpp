@@ -1259,8 +1259,8 @@ public:
     }
 
     void send_FormatListPDU(bool isLongFormat) {
-        uint32_t formatIDs[]                  = { this->_bufferTypeID, Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS };
-        std::string formatListDataShortName[] = { this->_bufferTypeLongName, this->_front->_clipbrd_formats_list.FILECONTENTS};
+        uint32_t formatIDs[]                  = { this->_bufferTypeID };
+        std::string formatListDataShortName[] = { this->_bufferTypeLongName };
         this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, isLongFormat);
     }
 
@@ -1281,13 +1281,18 @@ public Q_SLOTS:
                 this->emptyBuffer();
                 this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
                 this->_bufferTypeLongName = "";
-                this->_bufferImage = new QImage(this->_clipboard->image());
+                QImage bufferImageTmp(this->_clipboard->image());
+                bufferImageTmp = bufferImageTmp.convertToFormat(QImage::Format_RGB888);
+                bufferImageTmp = bufferImageTmp.rgbSwapped();
+                this->_bufferImage = new QImage(bufferImageTmp);
+
                 this->_cliboard_data_length = this->_bufferImage->byteCount();
-                uint8_t * image_data = this->_bufferImage->bits();
-                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length);
-                for (uint32_t i = 0; i < this->_cliboard_data_length; i++) {
-                    this->_chunk[i] = image_data[i];
-                }
+                //QRect trect(0, 0, this->_bufferImage->width(), this->_bufferImage->height());
+                //this->_front->_screen[0]->paintCache().drawImage(trect, *(this->_bufferImage));
+                /*this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length);
+                for (size_t i = 0; i < this->_cliboard_data_length; i++) {
+                    this->_chunk[i] = this->_bufferImage->bits()[i];
+                }*/
 
                 this->send_FormatListPDU(false);
 
@@ -1379,7 +1384,7 @@ public Q_SLOTS:
                         pos = tmp.find("\n"); // for linux install
                     }
 
-                    size_t size((str.length() + cmptCR*2) * 4);
+                    size_t size( (str.length() + cmptCR*2) * 4 );
 
                     this->_chunk  = std::make_unique<uint8_t[]>(size);
                     // UTF8toUTF16_CrLf for linux install
