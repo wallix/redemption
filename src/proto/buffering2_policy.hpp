@@ -22,19 +22,20 @@
 
 
 #include "proto/proto.hpp"
+#include "proto/iovec.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #if defined(IN_IDE_PARSER)
-# define PROTO_TRACE(a...) std::cout << a
-# define PROTO_TRACE_EXE(a...) a
+# define PROTO_TRACE std::cout <<
+# define PROTO_ENABLE_IF_TRACE
 #elif defined(ENABLE_PROTO_TRACE)
 # include "proto/printer_policy.hpp"
 # include <iostream>
 # define PROTO_TRACE(...) std::cout << __VA_ARGS__
-# define PROTO_TRACE_EXE(...) __VA_ARGS__
+# define PROTO_ENABLE_IF_TRACE(...) __VA_ARGS__
 #else
 # define PROTO_TRACE(...) void(0)
-# define PROTO_TRACE_EXE(...) void(0)
+# define PROTO_ENABLE_IF_TRACE(...) void(0)
 #endif
 
 #ifdef __clang__
@@ -357,11 +358,6 @@ void each_element_with_index(
 
 namespace detail
 {
-    struct iovec {
-        void  *iov_base;
-        size_t iov_len;
-    };
-
     template<std::size_t n>
     struct Buffers
     {
@@ -443,16 +439,12 @@ namespace detail
     };
 }
 
-using iovec_view = array_view<detail::iovec const>;
-
 template<class T>
 using var_to_desc_type = desc_type_t<proto::var_type_t<T>>;
 
 template<class Policy>
 struct Buffering2
 {
-    using iovec = detail::iovec;
-
     template<class... Pkts>
     struct Impl
     {
@@ -571,7 +563,7 @@ struct Buffering2
         template<class VarInfo, class Val>
         void serialize_type(proto::tags::static_buffer, VarInfo, iovec & buffer, Val & val) {
             PROTO_TRACE(name(val) << " = ");
-            /**///this->print(val);
+            PROTO_ENABLE_IF_TRACE(this->print(val));
             this->serialize_pkt_sz_with_size_or_var(VarInfo{}, buffer, val);
             buffer.iov_base = static_cast<uint8_t*>(buffer.iov_base) + proto::sizeof_<desc_type_t<VarInfo>>{};
             PROTO_TRACE("\n");
@@ -616,7 +608,7 @@ struct Buffering2
         template<class VarInfo, class Val>
         void serialize_type(proto::tags::limited_buffer, VarInfo, iovec & buffer, Val const & val) {
             PROTO_TRACE(name(val) << " = ");
-            /**///this->print(val);
+            PROTO_ENABLE_IF_TRACE(this->print(val));
             std::size_t len = policy.limited_serialize(
                 static_cast<uint8_t*>(buffer.iov_base),
                 val.x
@@ -630,7 +622,7 @@ struct Buffering2
         template<class VarInfo, class Val>
         void serialize_type(proto::tags::view_buffer, VarInfo, iovec & buffer, Val const & val) {
             PROTO_TRACE(name(val) << " = ");
-            /**///this->print(val);
+            PROTO_ENABLE_IF_TRACE(this->print(val));
             auto av = policy.get_view_buffer(val.x);
             buffer.iov_base = const_cast<uint8_t *>(av.data());
             buffer.iov_len = av.size();
@@ -658,7 +650,7 @@ struct Buffering2
             this->sizes.propagate_size();
 
             PROTO_TRACE("sizes: ");
-            PROTO_TRACE_EXE(for (auto i : this->sizes.data) PROTO_TRACE(i << " "));
+            PROTO_ENABLE_IF_TRACE(for (auto i : this->sizes.data) PROTO_TRACE(i << " "));
             PROTO_TRACE("\n\n");
 
             PROTO_TRACE("--- serialize_pkt_szs ---\n");
@@ -708,7 +700,7 @@ struct Buffering2
         template<class Val, class Continue>
         void serialize_dyn_type(Val & val, Continue f) {
             PROTO_TRACE(name(val) << " = ");
-            /**///this->print(val);
+            PROTO_ENABLE_IF_TRACE(this->print(val));
             this->policy.dynamic_serialize(f, val.x);
         }
 
@@ -796,7 +788,7 @@ struct Buffering2
         template<class Var, class T>
         static void print(proto::val<Var, T> const & x)
         {
-            PROTO_TRACE_EXE(Printer::print(x.x, 1));
+            PROTO_ENABLE_IF_TRACE(Printer::print(x.x, 1));
             (void)x;
         }
 
@@ -866,13 +858,12 @@ struct base_policy
         val.dynamic_serialize(f);
     }
 
-    static void send(iovec_view iovs) = delete; // please, overrided this function
+    static void send(iovec_array iovs) = delete; // please, overrided this function
 };
 
 }
 
 using buffering2_policy_base = proto_buffering2::base_policy;
 using proto_buffering2::Buffering2;
-using proto_buffering2::iovec_view;
 template<std::size_t n>
-using static_iovec_view = proto_buffering2::static_array_view<iovec_view, n>;
+using static_iovec_array = proto_buffering2::static_array_view<iovec_array, n>;

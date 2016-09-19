@@ -95,7 +95,7 @@ void bench();
 
 struct log_policy : buffering2_policy_base
 {
-    static void send(iovec_view iovs)
+    static void send(iovec_array iovs)
     {
         for (auto iov : iovs) {
             PROTO_TRACE(" [" << iov.iov_base << "] [len: " << iov.iov_len << "]\n");
@@ -206,7 +206,7 @@ void test_new()
     );
 
     struct Policy : log_policy {
-        static void send(iovec_view iovs) {
+        static void send(iovec_array iovs) {
             BOOST_CHECK_EQUAL(iovs.size(), 1);
             CHECK_RANGE(
                 make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
@@ -251,7 +251,7 @@ inline void test1(uint8_t * p, CryptContext & crypt, uint32_t c) {
         sec::data = data
     );
     struct Policy : buffering2_policy_base {
-        void send(iovec_view iovs) const {
+        void send(iovec_array iovs) const {
             //escape(data);
             for (auto iovec : iovs) {
                 memcpy(p, iovec.iov_base, iovec.iov_len);
