@@ -26,7 +26,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #if defined(IN_IDE_PARSER)
-# define PROTO_TRACE std::cout <<
+# define PROTO_TRACE std::cout << 0+
 # define PROTO_ENABLE_IF_TRACE
 #elif defined(ENABLE_PROTO_TRACE)
 # include "proto/printer_policy.hpp"
@@ -65,8 +65,10 @@ template<std::size_t i, class... T>
 auto const & arg(T const & ... args)
 {
 #ifdef __clang__
+    // inlining with clang
     return std::get<i>(std::forward_as_tuple(args...));
 #else
+    // not inlining with clang
     return *detail::arg_impl<brigand::filled_list<void const *, i>>::impl(&args...);
 #endif
 }

@@ -90,6 +90,7 @@ void bench();
 
 #include "proto/buffering_policy.hpp"
 #include "proto/buffering2_policy.hpp"
+#include "proto/buffering3_policy.hpp"
 
 #include "utils/log.hpp" //hexdump_c
 
@@ -206,17 +207,40 @@ void test_new()
     );
 
     struct Policy : log_policy {
-        static void send(iovec_array iovs) {
+        void send(iovec_array iovs) const {
             BOOST_CHECK_EQUAL(iovs.size(), 1);
             CHECK_RANGE(
                 make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
                 cstr_array_view("\x03\x00\x00\x0b\x02\xf0\x80\xf7\xff\xff\xff")
             );
             log_policy::send(iovs);
+            this->used = true;
         }
+
+        Policy(bool & used) : used(used) {}
+        bool & used;
     };
 
-    proto::apply(Buffering2<Policy>{}, packet1, packet2);
+    bool used = false;
+    proto::apply(Buffering2<Policy>{used}, packet1, packet2);
+    BOOST_CHECK(used);
+
+
+    struct Policy2 : log_policy {
+        void send(array_view_u8 av) const {
+            CHECK_RANGE(av, cstr_array_view("\x03\x00\x00\x0b\x02\xf0\x80\xf7\xff\xff\xff"));
+            iovec iov{av.data(), av.size()};
+            log_policy::send(iovec_array{&iov, 1u});
+            this->used = true;
+        }
+        Policy2(bool & used) : used(used) {}
+        bool & used;
+    };
+
+    uint8_t buf[1024];
+    used = false;
+    proto::apply(Buffering3<Policy2>{{used}, {buf}}, packet1, packet2);
+    BOOST_CHECK(used);
 }
 
 void other_test()
