@@ -293,6 +293,7 @@ public:
     };
     std::vector<CB_in_Files>    _items_list;
     bool                        _waiting_for_data;
+    int                         _lindex;
 
 
 

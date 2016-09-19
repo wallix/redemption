@@ -73,6 +73,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _lindexToRequest(0)
     , _streamIDToRequest(0)
     , _waiting_for_data(false)
+    , _lindex(0)
 {
     if(this->setClientInfo()) {
         this->writeClientInfo();
@@ -2063,6 +2064,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             {
                                 std::cout << " SIZE streamID=" << streamID << " lindex=" << lindex <<  std::endl;
                                 StaticOutStream<32> out_stream;
+
                                 fileContentsResponse.emit_size( out_stream
                                                               , streamID
                                                               , this->_connector->_items_list[lindex]->size
@@ -2084,10 +2086,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             {
                                 std::cout << " RANGE streamID=" << streamID << " lindex=" << lindex <<  std::endl;
                                 StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                                this->_connector->_cliboard_data_length = this->_connector->_items_list[lindex]->size;
                                 int total_length(this->_connector->_items_list[lindex]->size + 12);
                                 int first_part_data_size(this->_connector->_items_list[lindex]->size);
                                 first_part_data_size = PDU_MAX_SIZE - 12;
-                                fileContentsResponse.emit_range(out_stream_first_part, streamID, total_length - 12);
+                                fileContentsResponse.emit_range( out_stream_first_part, streamID
+                                                               , this->_connector->_items_list[lindex]->size
+                                                               );
 
                                 std::cout << "client >> File Contents Response PDU RANGE streamID=" << streamID << " lindex=" << lindex << std::endl;
 
@@ -2097,6 +2102,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , reinterpret_cast<uint8_t *>(
                                                                   this->_connector->_items_list[lindex]->chunk)
                                                                 );
+                                //this->_lindex++;
+
                             }
                             break;
                         }
@@ -2509,7 +2516,7 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
 
         const int cmpt_PDU_part(total_length / PDU_MAX_SIZE);
         const int remains_PDU  (total_length % PDU_MAX_SIZE);
-        int data_sent(out_stream_first_part.get_offset());
+        int data_sent(0);
         out_stream_first_part.out_copy_bytes(data, first_part_data_size);
         data_sent += first_part_data_size;
         InStream chunk_first(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
@@ -2520,7 +2527,7 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
                                             , CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                             );
 
-        std::cout << "client >> Data PDU " << data_sent << " / " << total_length << std::endl;
+        std::cout << "client >> Data PDU " << data_sent << " / " << this->_connector->_cliboard_data_length << std::endl;
 
         for (int i = 0; i < cmpt_PDU_part - 1; i++) {
             StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
@@ -2534,7 +2541,7 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
                                                 , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
 
-            std::cout << "client >> Data PDU " << data_sent << " / " << total_length << std::endl;
+            std::cout << "client >> Data PDU " << data_sent << " / " << this->_connector->_cliboard_data_length << std::endl;
         }
 
         StaticOutStream<PDU_MAX_SIZE> out_stream_last_part;
@@ -2543,6 +2550,7 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
         if (this->_connector->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
             out_stream_last_part.out_uint32_le(3);
             out_stream_last_part.out_uint16_le(0);
+            data_sent += 6;
         }
         data_sent += remains_PDU;
         InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
@@ -2553,7 +2561,7 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
                                             , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                             );
 
-        std::cout << "client >> Data PDU " << data_sent << " / " << total_length << std::endl;
+        std::cout << "client >> Data PDU " << data_sent << " / " << this->_connector->_cliboard_data_length << std::endl;
 
     } else {
 
@@ -2570,10 +2578,9 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
                                               CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                             );
 
-        std::cout << "client >> Data PDU  " << total_length << " / " << total_length << std::endl;
+        std::cout << "client >> Data PDU  " << this->_connector->_cliboard_data_length << " / " << this->_connector->_cliboard_data_length << std::endl;
     }
 }
-
 
 void Front_Qt::begin_update() {
     //if (this->verbose > 10) {
