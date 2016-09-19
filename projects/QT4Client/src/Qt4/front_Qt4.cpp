@@ -1914,13 +1914,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                         chunk.in_skip_bytes(4);
                         int first_part_data_size(0);
-                        uint32_t total_length(0);
+                        uint32_t total_length(this->_connector->_cliboard_data_length + PDU_HEADER_SIZE);
                         StaticOutStream<PDU_MAX_SIZE> out_stream_first_part;
+                        RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
 
                         if (this->_connector->_bufferTypeID == chunk.in_uint32_le()) {
 
-                            total_length = this->_connector->_cliboard_data_length + PDU_HEADER_SIZE;
-                            RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
+
 
                             std::cout << "client >> Format Data Response PDU" << std::endl;
 
@@ -1944,7 +1944,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     this->cut_clipboard_data_to_send( total_length
                                                                     , out_stream_first_part
                                                                     , first_part_data_size
-                                                                    , this->_connector->_bufferImage->constBits()
+                                                                    , this->_connector->_bufferImage->bits()
                                                                     //this->_connector->_chunk.get()
                                                                     );
                                 }
