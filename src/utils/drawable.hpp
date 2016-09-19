@@ -969,6 +969,7 @@ struct DrawablePointer {
 
         this->hotspot_x = hotspot_x;
         this->hotspot_y = hotspot_y;
+        //printf("hotspot_x=%d hotspot_y=%d\n", hotspot_x, hotspot_y);
 
         bool               non_transparent_pixel;
         uint8_t          * current_data               = this->data;
@@ -1011,6 +1012,8 @@ struct DrawablePointer {
             }
             //printf("\n");
         }
+
+        //hexdump_c(pointer_mask, 128);
     }
 
     struct ContiguousPixelsView {
