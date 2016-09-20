@@ -1834,7 +1834,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             formatListResponsePDU.emit(out_stream);
                             InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
-                            this->_callback->send_to_mod_channel(channel_names::cliprdr
+                            this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                 , chunk
                                                                 , out_stream.get_offset()
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
@@ -1848,7 +1848,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             lockClipboardDataPDU.emit(out_stream_lock, 0);
                             InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
 
-                            this->_callback->send_to_mod_channel(channel_names::cliprdr
+                            this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                 , chunk_lock
                                                                 , out_stream_lock.get_offset()
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
@@ -1862,7 +1862,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             formatDataRequestPDU.emit(out_streamRequest);
                             InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
 
-                            this->_callback->send_to_mod_channel(channel_names::cliprdr
+                            this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                 , chunkRequest
                                                                 , out_streamRequest.get_offset()
                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
@@ -1949,10 +1949,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           );
 
                                     this->process_client_clipboard_outdata( total_length
-                                                                    , out_stream_first_part
-                                                                    , first_part_data_size
-                                                                    , this->_connector->_bufferImage->bits()
-                                                                    );
+                                                                          , out_stream_first_part
+                                                                          , first_part_data_size
+                                                                          , this->_connector->_bufferImage->bits()
+                                                                          );
                                 }
                                 break;
 
@@ -1969,10 +1969,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                    );
 
                                     this->process_client_clipboard_outdata( total_length
-                                                                    , out_stream_first_part
-                                                                    , first_part_data_size
-                                                                    , this->_connector->_chunk.get()
-                                                                    );
+                                                                          , out_stream_first_part
+                                                                          , first_part_data_size
+                                                                          , this->_connector->_chunk.get()
+                                                                          );
                                 }
                                 break;
 
@@ -2107,11 +2107,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 std::cout << "client >> File Contents Response PDU RANGE streamID=" << streamID << " lindex=" << lindex << std::endl;
 
                                 this->process_client_clipboard_outdata( total_length
-                                                                , out_stream_first_part
-                                                                , first_part_data_size
-                                                                , reinterpret_cast<uint8_t *>(
-                                                                  this->_connector->_items_list[lindex]->chunk)
-                                                                );
+                                                                      , out_stream_first_part
+                                                                      , first_part_data_size
+                                                                      , reinterpret_cast<uint8_t *>(
+                                                                        this->_connector->_items_list[lindex]->chunk)
+                                                                      );
                             }
                             break;
                         }
