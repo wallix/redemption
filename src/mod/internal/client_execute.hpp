@@ -281,7 +281,21 @@ public:
 
         if ((MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) &&
             (pointerFlags & (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1))) {
-            if (this->south.contains_pt(xPos, yPos)) {
+            if (this->north.contains_pt(xPos, yPos)) {
+                this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTH;
+            }
+            else if (this->north_west_north.contains_pt(xPos, yPos) ||
+                     this->north_west_west.contains_pt(xPos, yPos)) {
+                this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHWEST;
+            }
+            else if (this->west.contains_pt(xPos, yPos)) {
+                this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_WEST;
+            }
+            else if (this->south_west_west.contains_pt(xPos, yPos) ||
+                     this->south_west_south.contains_pt(xPos, yPos)) {
+                this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTHWEST;
+            }
+            else if (this->south.contains_pt(xPos, yPos)) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_SOUTH;
             }
             else if (this->south_east_south.contains_pt(xPos, yPos) ||
@@ -290,6 +304,10 @@ public:
             }
             else if (this->east.contains_pt(xPos, yPos)) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_EAST;
+            }
+            else if (this->north_east_east.contains_pt(xPos, yPos) ||
+                     this->north_east_north.contains_pt(xPos, yPos)) {
+                this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTHEAST;
             }
 
             if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) {
@@ -1726,35 +1744,10 @@ public:
         this->update_rects();
 
         if ((INTERNAL_MODULE_WINDOW_ID == cwmpdu.WindowId()) &&
-            (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) &&
-            (MOUSE_BUTTON_PRESSED_TITLEBAR != this->pressed_mouse_button) &&
+            (MOUSE_BUTTON_PRESSED_NONE        != this->pressed_mouse_button) &&
+            (MOUSE_BUTTON_PRESSED_TITLEBAR    != this->pressed_mouse_button) &&
             (MOUSE_BUTTON_PRESSED_MINIMIZEBOX != this->pressed_mouse_button) &&
-            (MOUSE_BUTTON_PRESSED_CLOSEBOX != this->pressed_mouse_button)) {
-            {
-                RDP::RAIL::NewOrExistingWindow order;
-
-                order.header.FieldsPresentFlags(
-                          RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
-                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
-                    );
-                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
-
-                order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-                order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-                order.WindowWidth(this->window_rect.cx);
-                order.WindowHeight(this->window_rect.cy);
-                order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
-
-                StaticOutStream<1024> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
-
-                this->front_->draw(order);
-            }
+            (MOUSE_BUTTON_PRESSED_CLOSEBOX    != this->pressed_mouse_button)) {
 
             int move_size_type = 0;
             switch (this->pressed_mouse_button) {
@@ -1766,6 +1759,56 @@ public:
                 case MOUSE_BUTTON_PRESSED_SOUTHEAST: move_size_type = RAIL_WMSZ_BOTTOMRIGHT; break;
                 case MOUSE_BUTTON_PRESSED_EAST:      move_size_type = RAIL_WMSZ_RIGHT;       break;
                 case MOUSE_BUTTON_PRESSED_NORTHEAST: move_size_type = RAIL_WMSZ_TOPRIGHT;    break;
+            }
+
+            const bool window_moved = (
+                       (RAIL_WMSZ_TOP        == move_size_type)
+                    || (RAIL_WMSZ_TOPLEFT    == move_size_type)
+                    || (RAIL_WMSZ_LEFT       == move_size_type)
+                    || (RAIL_WMSZ_BOTTOMLEFT == move_size_type)
+                    || (RAIL_WMSZ_TOPRIGHT   == move_size_type)
+                );
+
+            {
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                          RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | ( window_moved
+                          ? (
+                               RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                             | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                             | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                            )
+                          : 0)
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
+                order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
+                order.WindowWidth(this->window_rect.cx);
+                order.WindowHeight(this->window_rect.cy);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+
+                if (window_moved) {
+                    order.ClientOffsetX(this->window_rect.x + 6);
+                    order.ClientOffsetY(this->window_rect.y + 25);
+                    order.WindowOffsetX(this->window_rect.x);
+                    order.WindowOffsetY(this->window_rect.y);
+                    order.VisibleOffsetX(this->window_rect.x);
+                    order.VisibleOffsetY(this->window_rect.y);
+                }
+
+                StaticOutStream<1024> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+
+                this->front_->draw(order);
             }
 
             if (0 != move_size_type)
