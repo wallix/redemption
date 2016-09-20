@@ -43,7 +43,7 @@ class WidgetSelectorFlat2 : public WidgetParent
 {
 public:
     int bg_color;
-    const bool less_than_800;
+    bool less_than_800;
     WidgetLabel device_label;
     WidgetLabel target_group_label;
     WidgetLabel target_label;
@@ -102,6 +102,9 @@ IDX_PROTOCOL,
         FILTER_SEPARATOR = 5,
         NAV_SEPARATOR = 15
     };
+
+    WidgetFlatButton * extra_button;
+
 public:
     WidgetSelectorFlat2(gdi::GraphicApi & drawable,
                         const char * device_name, int16_t left, int16_t top, uint16_t width,
@@ -179,8 +182,9 @@ public:
                   theme.global.fgcolor, theme.global.bgcolor,
                   theme.global.focus_color, font, 6, 2)
         , font(font)
-        ,left(left)
-        ,top(top)
+        , left(left)
+        , top(top)
+        , extra_button(extra_button)
     {
         this->impl = &composite_array;
 
@@ -214,6 +218,30 @@ public:
 
     ~WidgetSelectorFlat2() override {
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->rect.x  = left;
+        this->rect.y  = top;
+        this->rect.cx = width;
+        this->rect.cy = height;
+
+        this->left = left;
+        this->top  = top;
+
+        this->device_label.rect.x = left + TEXT_MARGIN;
+        this->device_label.rect.y = top + VERTICAL_MARGIN;
+
+        this->less_than_800 = (this->rect.cx < 800);
+
+        this->selector_lines.rect.cx = width - (this->less_than_800 ? 0 : 30);
+
+        if (this->extra_button) {
+            this->extra_button->set_button_x(left + 60);
+            this->extra_button->set_button_y(top + height - 60);
+        }
+
+        this->rearrange();
     }
 
     int get_bg_color() const override {

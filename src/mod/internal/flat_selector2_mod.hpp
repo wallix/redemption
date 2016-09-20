@@ -367,11 +367,16 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->selector.move_xy(left - this->selector.rect.x, top - this->selector.rect.y);
+        this->selector.move_size_widget(left, top, width + 1, height + 1);
 
-        this->selector.rect.x  = left;
-        this->selector.rect.y  = top;
-        this->selector.rect.cx = width + 1;
-        this->selector.rect.cy = height + 1;
+        uint16_t available_height = (this->selector.first_page.dy() - 10) - this->selector.selector_lines.dy();
+        gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
+        uint16_t line_height = tm.height + 2 * (
+                                this->selector.selector_lines.border
+                             +  this->selector.selector_lines.y_padding_label);
+
+        this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
+        this->ask_page();
+        this->selector.refresh(this->selector.rect);
     }
 };
