@@ -52,6 +52,8 @@ public:
 
     CompositeArray composite_array;
 
+    WidgetFlatButton * extra_button;
+
 private:
     Translator tr;
 
@@ -59,6 +61,8 @@ private:
     // WidgetImage wimage;
     // WidgetVScrollBar vbar;
     // WidgetHScrollBar hbar;
+
+    bool labels_added = false;
 
 public:
     FlatLogin(gdi::GraphicApi & drawable,
@@ -106,6 +110,7 @@ public:
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
+        , extra_button(extra_button)
         , tr(tr)
     {
         this->impl = &composite_array;
@@ -117,6 +122,8 @@ public:
         if (width > 640) {
             this->add_widget(&this->login_label);
             this->add_widget(&this->password_label);
+
+            this->labels_added = true;
         }
         else {
             this->password_label.rect.cx = 0;
@@ -187,6 +194,83 @@ public:
 
     ~FlatLogin() override {
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->rect.x  = left;
+        this->rect.y  = top;
+        this->rect.cx = width;
+        this->rect.cy = height;
+
+        this->password_edit.use_title(width >= 420);
+        this->password_edit.rect.cx = ((width >= 420) ? 400 : width - 20);
+
+        this->login_edit.use_title(width >= 420);
+        login_edit.rect.cx = ((width >= 420) ? 400 : width - 20);
+
+        if (width > 640) {
+            if (!this->labels_added) {
+                this->add_widget(&this->login_label);
+                this->add_widget(&this->password_label);
+
+                this->labels_added = true;
+            }
+
+            this->login_label.auto_resize();
+            this->password_label.auto_resize();
+        }
+        else {
+            if (this->labels_added) {
+                this->remove_widget(&this->login_label);
+                this->remove_widget(&this->password_label);
+
+                this->labels_added = false;
+            }
+
+            this->login_label.rect.cx    = 0;
+            this->password_label.rect.cx = 0;
+        }
+
+        int cbloc_w = std::max(this->password_label.rect.cx + this->password_edit.rect.cx + 10,
+                               this->login_label.rect.cx + this->login_edit.rect.cx + 10);
+        int cbloc_h = std::max(this->password_label.rect.cy + this->login_label.rect.cy + 20,
+                               this->password_edit.rect.cy + this->login_edit.rect.cy + 20);
+
+        int x_cbloc = (width  - cbloc_w) / 2;
+        int y_cbloc = (height - cbloc_h) / 2;
+
+        this->login_label.set_xy(left + x_cbloc, top + y_cbloc);
+        this->password_label.set_xy(left + x_cbloc, top + height / 2);
+        int labels_w = std::max(this->password_label.rect.cx, this->login_label.rect.cx);
+        this->login_edit.set_xy(left + x_cbloc + labels_w + 10, top + y_cbloc);
+        this->password_edit.set_xy(left + x_cbloc + labels_w + 10, top + height / 2);
+
+        this->login_label.rect.y += (this->login_edit.cy() - this->login_label.cy()) / 2;
+        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
+
+
+        this->error_message_label.rect.x  = this->login_edit.rect.x;
+        this->error_message_label.rect.y  = this->login_edit.rect.y - 22;
+        this->error_message_label.rect.cx = this->login_edit.rect.cx;
+
+        // Bottom bloc positioning
+        // Logo and Version
+        int bottom_height = (height - cbloc_h) / 2;
+        int bbloc_h = this->img.rect.cy + 10 + this->version_label.rect.cy;
+        int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
+            ?(height - (bbloc_h + 10))
+            :(height/2 + cbloc_h/2 + bottom_height/2);
+        this->img.set_xy(left + (width - this->img.rect.cx) / 2, top + y_bbloc);
+        this->version_label.set_xy(left + (width - this->version_label.rect.cx) / 2,
+                                   top + y_bbloc + this->img.rect.cy + 10);
+
+        this->helpicon.set_button_x(left + width - 60);
+        this->helpicon.set_button_y(top + height - 60);
+
+        if (this->extra_button) {
+            this->extra_button->set_button_x(left + 60);
+            this->extra_button->set_button_y(top + height - 60);
+        }
     }
 
     int get_bg_color() const override {

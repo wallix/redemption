@@ -552,6 +552,9 @@ public:
             this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
 
+        const bool log_redir =
+            this->ini.get<cfg::session_log::session_log_redirection>();
+
         LOG_SESSION( duplicate_with_pid
                    , session_log
 
