@@ -1942,11 +1942,13 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           , this->_connector->_bufferImage->depth()
                                                                           );
 
+                                                                        this->show_out_stream(0, out_stream_first_part, out_stream_first_part.get_offset());
+
+
                                     this->cut_clipboard_data_to_send( total_length
                                                                     , out_stream_first_part
                                                                     , first_part_data_size
                                                                     , this->_connector->_bufferImage->bits()
-                                                                    //this->_connector->_chunk.get()
                                                                     );
                                 }
                                 break;
@@ -1960,7 +1962,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     }
                                     total_length += 2;
                                     formatDataResponsePDU.emit_text( out_stream_first_part
-                                                                   , this->_connector->_cliboard_data_length+2
+                                                                   , this->_connector->_cliboard_data_length
                                                                    );
 
                                     this->cut_clipboard_data_to_send( total_length
@@ -1974,15 +1976,15 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 case Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
                                 {
                                     int data_sent(0);
-                                    first_part_data_size = 12;
-                                    total_length += (RDPECLIP::FileDescriptor::size() * this->_connector->_cItems)+8;
+                                    first_part_data_size = PDU_HEADER_SIZE + 4;
+                                    total_length = (RDPECLIP::FileDescriptor::size() * this->_connector->_cItems) + 8 + PDU_HEADER_SIZE;
                                     int flag_first(CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                                     Connector_Qt::CB_out_File * file = this->_connector->_items_list[0];
                                     formatDataResponsePDU.emit_fileList( out_stream_first_part
                                                                        , this->_connector->_cItems
                                                                        , file->name
                                                                        , file->size
-                                                                       );;
+                                                                       );
 
                                     if (this->_connector->_cItems == 1) {
                                         flag_first = flag_first | CHANNELS::CHANNEL_FLAG_LAST;
@@ -2002,6 +2004,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
 
                                     RDPECLIP::FileDescriptor fd;
                                     for (int i = 1; i < this->_connector->_cItems; i++) {
+
                                         StaticOutStream<PDU_MAX_SIZE> out_stream_next_part;
                                         file = this->_connector->_items_list[i];
                                         int flag_next(CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
@@ -2013,7 +2016,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         fd.fileAttributes = RDPECLIP::FILE_ATTRIBUTES_ARCHIVE;
                                         fd.lastWriteTime  = RDPECLIP::TIME64_FILE_LIST;
                                         fd.fileSizeHigh   = file->size >> 32;
-                                        fd.fileSizeLow    = file->size;
+                                        fd.fileSizeLow    = file->size;;
                                         fd.file_name      = file->nameUTF8;
                                         fd.emit(out_stream_next_part);
 
@@ -2089,8 +2092,12 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 this->_connector->_cliboard_data_length = this->_connector->_items_list[lindex]->size;
                                 int total_length(this->_connector->_items_list[lindex]->size + 12);
                                 int first_part_data_size(this->_connector->_items_list[lindex]->size);
-                                first_part_data_size = PDU_MAX_SIZE - 12;
-                                fileContentsResponse.emit_range( out_stream_first_part, streamID
+                                first_part_data_size = this->_connector->_items_list[lindex]->size;
+                                if (first_part_data_size > PDU_MAX_SIZE - 12) {
+                                    first_part_data_size = PDU_MAX_SIZE - 12;
+                                }
+                                fileContentsResponse.emit_range( out_stream_first_part
+                                                               , streamID
                                                                , this->_connector->_items_list[lindex]->size
                                                                );
 
@@ -2102,8 +2109,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                 , reinterpret_cast<uint8_t *>(
                                                                   this->_connector->_items_list[lindex]->chunk)
                                                                 );
-                                //this->_lindex++;
-
                             }
                             break;
                         }
@@ -2338,7 +2343,7 @@ void Front_Qt::process_server_clipboard_data(int flags, InStream & chunk) {
                     unlockClipboardDataPDU.emit(out_stream_unlock, 0);
                     InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
 
-                    this->_callback->send_to_mod_channel(channel_names::cliprdr
+                    this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunk_unlock
                                                         , out_stream_unlock.get_offset()
                                                         , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
@@ -2545,12 +2550,10 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
         }
 
         StaticOutStream<PDU_MAX_SIZE> out_stream_last_part;
-
         out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
         if (this->_connector->_bufferTypeID == RDPECLIP::CF_METAFILEPICT) {
             out_stream_last_part.out_uint32_le(3);
             out_stream_last_part.out_uint16_le(0);
-            data_sent += 6;
         }
         data_sent += remains_PDU;
         InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
@@ -2565,7 +2568,7 @@ void Front_Qt::cut_clipboard_data_to_send(uint64_t total_length, OutStream & out
 
     } else {
 
-        out_stream_first_part.out_copy_bytes(data, first_part_data_size);
+        out_stream_first_part.out_copy_bytes(data, this->_connector->_cliboard_data_length);
         if (this->_connector->_bufferTypeID == RDPECLIP::CF_UNICODETEXT) {
             out_stream_first_part.out_uint16_le(0);
         }

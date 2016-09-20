@@ -47,7 +47,7 @@ constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
 constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
 constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
-constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
+constant CERT_PREFIX : [ setvar CERT_PREFIX : $(ETC_PREFIX)/cert ] ;
 constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
@@ -57,7 +57,6 @@ constant PNG_DEBUG : <variant>debug:<library>png ;
 rule defines ( properties * )
 {
     local defs ;
-    defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
@@ -92,7 +91,6 @@ project redemption
     : requirements
 
     <include>src
-    # TODO move to system
     <include>src/system/$(SYSTEM_TYPE)
     # TODO move to system
     <include>src/headers
@@ -165,6 +163,30 @@ install install-lib
     : <location>$(INSTALLDIR)/usr/lib
     ;
 
+
+constant COMMON_OBJ_DEPENDENCIES :
+    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
+    <define>CFG_PATH='\"$(ETC_PREFIX)\"'
+;
+constant LIB_DEPENDENCIES :
+    $(COMMON_OBJ_DEPENDENCIES)
+    <cxxflags>-fPIC
+    <cxxflags>-fvisibility=hidden
+;
+constant EXE_DEPENDENCIES :
+    $(COMMON_OBJ_DEPENDENCIES)
+    $(GCOV)
+;
+constant TEST_DEPENDENCIES :
+    $(GCOV)
+    <library>libboost_unit_test
+    <include>tests
+    <cxxflags>-frtti
+    <define>SHARE_PATH='\"./tests/fixtures\"'
+    <define>CFG_PATH='\"./etc/rdpproxy\"'
+;
+
+
 actions gen_redcryptofile {
     echo "$(>)" "$(<)" ;
     cp "$(>)" "$(<)"
@@ -176,10 +198,9 @@ explicit pycryptofile redcryptofile.so ;
 lib pycryptofile :
         tools/redcryptofile/pycrypto.cpp
     :
+        $(LIB_DEPENDENCIES)
         <define>REDPYTHON_BINDING
         <include>$(PYTHON_INCLUDE)
-        <cxxflags>-fPIC
-        <cflags>-fPIC
         <link>shared
         <library>snappy
         <library>python2
@@ -220,19 +241,6 @@ obj mainloop : src/core/mainloop.cpp ;
 obj d3des : src/utils/d3des.cpp ;
 obj bitmap : src/utils/bitmap_data_allocator.cpp ;
 obj program_options : modules/program_options/src/program_options.cpp ;
-
-
-constant LIB_TEST_DEPENDENCY : <library>libboost_unit_test ;
-constant COMMON_OBJ_DEPENDENCIES : <define>SHARE_PATH='\"$(SHARE_PREFIX)\"' ;
-constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
-constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
-constant TEST_DEPENDENCIES :
-    $(LIB_TEST_DEPENDENCY)
-    $(GCOV)
-    <include>tests
-    <cxxflags>-frtti
-    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
-;
 
 
 #
@@ -837,6 +845,10 @@ unit-test test_graphic_cmd_converter : tests/gdi/test_graphic_cmd_converter.cpp 
 #    : <cxxflags>-fPIC
 #    ;
 
+
+unit-test test_meta_protocol2 : tests/test_meta_protocol2.cpp : $(TEST_DEPENDENCIES) <cxxflags>-std=c++14 : <library>crypto <library>openssl ;
+explicit test_meta_protocol2 ;
+
 explicit server_sc1 client_sc1 ;
 
 exe server_sc1
@@ -859,4 +871,3 @@ exe proxy_sc1
     :
         $(EXE_DEPENDENCIES)
     ;
-

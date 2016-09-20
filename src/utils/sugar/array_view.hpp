@@ -71,16 +71,16 @@ struct array_view
 
     constexpr std::size_t size() const noexcept { return this->sz; }
 
-    type * data() noexcept { return this->p; }
+    /*c++14 constexpr*/ type * data() noexcept { return this->p; }
     constexpr type const * data() const noexcept { return this->p; }
 
-    type * begin() { return this->p; }
-    type * end() { return this->p + this->sz; }
+    /*c++14 constexpr*/ type * begin() { return this->p; }
+    /*c++14 constexpr*/ type * end() { return this->p + this->sz; }
     constexpr type const * begin() const { return this->p; }
     constexpr type const * end() const { return this->p + this->sz; }
 
-    type & operator[](std::size_t i) { assert(i < this->size()); return this->p[i]; }
-    type const & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
+    /*c++14 constexpr*/ type & operator[](std::size_t i) { assert(i < this->size()); return this->p[i]; }
+    /*c++14 constexpr*/ type const & operator[](std::size_t i) const { assert(i < this->size()); return this->p[i]; }
 
 private:
     type * p        = nullptr;

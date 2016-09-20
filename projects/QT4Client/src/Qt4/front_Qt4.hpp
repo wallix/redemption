@@ -81,7 +81,7 @@
 
 
 #define USER_CONF_PATH "userConfig.config"
-#define TEMP_PATH_TEST "/clipboard_temp/"
+#define TEMP_PATH_TEST "/home/cmoroldo/Bureau/redemption/projects/QT4Client/clipboard_temp/"
 
 class Form_Qt;
 class Screen_Qt;

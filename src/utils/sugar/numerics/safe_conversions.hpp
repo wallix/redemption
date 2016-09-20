@@ -32,9 +32,11 @@ template <class Dst, class Src>
 {
     static_assert(std::is_integral<Src>::value, "Argument must be an integral.");
     static_assert(std::is_integral<Dst>::value, "Dst must be an integral.");
+#ifndef NDEBUG
     using dst_limits = std::numeric_limits<Dst>;
     assert(dst_limits::max() >= value);
     assert(dst_limits::min() <= value);
+# endif
     return static_cast<Dst>(value);
 }
 
