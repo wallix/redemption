@@ -202,11 +202,11 @@ public:
         this->rect.cx = width;
         this->rect.cy = height;
 
-        this->password_edit.use_title(width >= 420);
+        this->password_edit.use_title(width < 640);
         this->password_edit.rect.cx = ((width >= 420) ? 400 : width - 20);
 
-        this->login_edit.use_title(width >= 420);
-        login_edit.rect.cx = ((width >= 420) ? 400 : width - 20);
+        this->login_edit.use_title(width < 640);
+        this->login_edit.rect.cx = ((width >= 420) ? 400 : width - 20);
 
         if (width > 640) {
             if (!this->labels_added) {
