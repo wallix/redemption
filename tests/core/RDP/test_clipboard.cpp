@@ -37,6 +37,19 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
     RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(true);
 
     {
+        //  emit_fileList
+        StaticOutStream<1024> ou_stream_fileList;
+
+        uint8_t UTF16nameData[20];
+        std::string nameUTF8("abcde.txt");
+        int UTF16nameSize = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
+        std::string nameUTF16 = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+        std::string name = nameUTF16 ;
+        uint64_t size = 17 ;
+        const int cItems = 1;
+
+        formatDataResponsePDU.emit_fileList(ou_stream_fileList, cItems, name, size);
+
         const uint8_t file_list_data[] =
             "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -72,50 +85,13 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
         RDPECLIP::FileDescriptor fd;
         InStream in_stream_fileList(file_list_data, 608);
-        const int cItems = 1;
-        //std::string namesList[cItems];
-       // uint64_t sizesList[cItems];
-
         for (int i = 0; i < cItems; i++) {
             fd.receive(in_stream_fileList);
-            //sizesList[i] = fd.file_size();
-            //namesList[i] = fd.fileName();
         }
-
-        //std::cout << "file name = " << namesList[0] <<  std::endl;
-
-        //uint8_t fileName_unicode_data[520];                // fileName(520)
-
-        //size_t size_of_fileName_unicode_data = ::UTF8toUTF16(
-        //    reinterpret_cast<const uint8_t *>(namesList[0].c_str()),
-        //    fileName_unicode_data, sizeof(fileName_unicode_data));
-
-        //namesList[0] = std::string(reinterpret_cast<char *>(fileName_unicode_data), size_of_fileName_unicode_data);
-
-        //std::cout << "file name = " << namesList[0] <<  std::endl;
-
-        //  emit_fileList
-        StaticOutStream<1024> ou_stream_fileList;
-
-        uint8_t UTF16nameData[20];
-        std::string nameUTF8("abcde.txt");
-        int UTF16nameSize = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
-        std::string nameUTF16 = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
-        //namesList[0] = nameUTF16;
-        //std::cout << "file name = " << namesList[0] <<  std::endl;
-        std::string name = nameUTF16 ;
-        uint64_t size = 17 ;
-        //std::cout << "file name = " << namesList[0] << " " << UTF16nameSize <<  std::endl;
-
-        formatDataResponsePDU.emit_fileList(ou_stream_fileList, cItems, name, size);
 
         std::string out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 604);
 
         std::string expected(reinterpret_cast<const char *>(file_list_data), 604);
-
-        for (int i = 0; i < 604; i++) {
-            std::cout << int(ou_stream_fileList.get_data()[i]) << " " << int(file_list_data[i]) <<  std::endl;
-        }
 
         try {
             BOOST_CHECK_EQUAL(expected, out_data);
@@ -124,7 +100,6 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
                 std::cout << int(ou_stream_fileList.get_data()[i]) << " " << int(file_list_data[i]) <<  std::endl;
             }
         }
-
     }
 
 
@@ -143,7 +118,6 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         std::string out_data(reinterpret_cast<char *>(ou_stream_metaFilePic.get_data()), 130);
 
         const char metafilepic_out_data[] =
-
             "\x05\x00\x01\x00\xb6\xbc\x00\x00\x08\x00\x00\x00\x60\x22\x00\x00"
             "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
             "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"

@@ -125,15 +125,20 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
                                  };
 
     this->_clipbrd_formats_list.add_format( Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS
-                                          , this->_clipbrd_formats_list.FILECONTENTS);
+                                          , this->_clipbrd_formats_list.FILECONTENTS
+                                          );
     this->_clipbrd_formats_list.add_format( Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                          , this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW);
+                                          , this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW
+                                          );
     this->_clipbrd_formats_list.add_format( RDPECLIP::CF_UNICODETEXT
-                                          , std::string("\0\0", 2));
+                                          , std::string("\0\0", 2)
+                                          );
     this->_clipbrd_formats_list.add_format( RDPECLIP::CF_TEXT
-                                          , std::string("\0\0", 2));
+                                          , std::string("\0\0", 2)
+                                          );
     this->_clipbrd_formats_list.add_format( RDPECLIP::CF_METAFILEPICT
-                                          , std::string("\0\0", 2));
+                                          , std::string("\0\0", 2)
+                                          );
 
     this->_to_client_sender._channel = channel;
     this->_cl.push_back(channel);
