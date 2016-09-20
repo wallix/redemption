@@ -261,6 +261,9 @@ public:
         enum : int {
               CLIPBRD_FORMAT_COUNT = 5
         };
+        
+        const double      ARBITRARY_SCALE = 40;  //  module MetaFilePic resolution,
+                                                 //  40 empirically keep original resolution.
         const std::string FILECONTENTS;
         const std::string FILEGROUPDESCRIPTORW;
         uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
@@ -316,7 +319,7 @@ public:
 
     void send_buffer_to_clipboard();
 
-    void process_server_clipboard_data(int flags, InStream & chunk);
+    void process_server_clipboard_indata(int flags, InStream & chunk);
 
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool) override;
 
@@ -328,7 +331,7 @@ public:
 
     void empty_buffer() override;
 
-    void cut_clipboard_data_to_send(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data);
+    void process_client_clipboard_outdata(uint64_t total_length, OutStream & out_streamfirst, int firstPartSize, uint8_t const * data);
 
     virtual void set_pointer(Pointer const & cursor) override;
 
