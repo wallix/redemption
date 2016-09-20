@@ -112,8 +112,9 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         int width=220;
         int bpp=24;
         int data_lenght = height * width * 3;
+        const double ARBITRARY_SCALE = 40;
 
-        formatDataResponsePDU.emit_metaFilePic(ou_stream_metaFilePic, data_lenght, width, height, bpp);
+        formatDataResponsePDU.emit_metaFilePic(ou_stream_metaFilePic, data_lenght, width, height, bpp, ARBITRARY_SCALE);
 
         std::string out_data(reinterpret_cast<char *>(ou_stream_metaFilePic.get_data()), 130);
 
@@ -148,8 +149,6 @@ BOOST_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
         "\x90\x01\x00\x00\xd4\xfe\xff\xff\x01\x00\x18\x00\x00\x00\x00\x00"
         "\x40\x7e\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-
-
 
     InStream in_stream_metaFilePic(metafilepic_in_data, 140);
     RDPECLIP::MetaFilePicDescriptor mfpd;

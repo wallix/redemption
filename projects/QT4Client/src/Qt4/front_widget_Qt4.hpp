@@ -1278,7 +1278,10 @@ public Q_SLOTS:
         if (this->_callback != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
 
-            if (mimeData->hasImage()){                      // Image copy
+            if (mimeData->hasImage()){
+            //==================
+            //    IMAGE COPY
+            //==================
                 this->emptyBuffer();
 
                 this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
@@ -1294,12 +1297,14 @@ public Q_SLOTS:
 
 
             } else if (mimeData->hasText()){                //  File or Text copy
-                this->emptyBuffer();
 
+                this->emptyBuffer();
                 std::string str(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData());
 
-                if (str.at(0) == '/') {                     // File copy
-
+                if (str.at(0) == '/') {
+                //==================
+                //    FILE COPY
+                //==================
                     this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
 
@@ -1366,8 +1371,10 @@ public Q_SLOTS:
                     this->send_FormatListPDU(true);
 
 
-                } else {                                    // Text copy
-
+                } else {
+                //==================
+                //    TEXT COPY
+                //==================
                     this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
                     this->_bufferTypeLongName = "";
 

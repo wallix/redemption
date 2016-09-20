@@ -1783,7 +1783,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         CliprdrHeader::emit(stream);
     }
 
-    void emit_metaFilePic(OutStream & stream, uint32_t data_length, uint16_t width, uint16_t height, uint16_t depth) {
+    void emit_metaFilePic(OutStream & stream, uint32_t data_length, uint16_t width, uint16_t height, uint16_t depth, const double ARBITRARY_SCALE) {
         this->dataLen_ = data_length + METAFILE_HEADERS_SIZE;
         CliprdrHeader::emit(stream);
 
@@ -1863,8 +1863,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         // metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2.
 
         stream.out_uint32_le(MM_ANISOTROPIC);
-        stream.out_uint32_le(int(double(width)  * this->ARBITRARY_SCALE));
-        stream.out_uint32_le(int(double(height) * this->ARBITRARY_SCALE));
+        stream.out_uint32_le(int(double(width)  * ARBITRARY_SCALE));
+        stream.out_uint32_le(int(double(height) * ARBITRARY_SCALE));
 
 
         // 3.2.1 META_HEADER Example
