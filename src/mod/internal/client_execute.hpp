@@ -25,6 +25,7 @@
 #include "core/front_api.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/stream.hpp"
@@ -392,6 +393,47 @@ public:
                         }
 
                         this->front_->sync();
+                    }
+                }
+                else {
+                    Rect north(this->window_rect.x + 24, this->window_rect.y, this->window_rect.cx - 24 * 2, 4);
+
+                    Rect north_west_north(this->window_rect.x, this->window_rect.y, 24, 4);
+                    Rect north_west_west(this->window_rect.x, this->window_rect.y, 4, 24);
+
+                    Rect west(this->window_rect.x, this->window_rect.y + 24, 4, this->window_rect.cy - 24 * 2);
+
+                    Rect south_west_west(this->window_rect.x, this->window_rect.y + this->window_rect.cy - 24, 4, 24);
+                    Rect south_west_south(this->window_rect.x, this->window_rect.y + this->window_rect.cy - 4, 24, 4);
+
+                    Rect south(this->window_rect.x + 24, this->window_rect.y + this->window_rect.cy -4, this->window_rect.cx - 24 * 2, 4);
+
+                    if (north.contains_pt(xPos, yPos)) {
+                        Pointer cursor(Pointer::POINTER_SIZENS);
+
+                        this->front_->set_pointer(cursor);
+                    }
+                    else if (north_west_north.contains_pt(xPos, yPos) ||
+                             north_west_west.contains_pt(xPos, yPos)) {
+                        Pointer cursor(Pointer::POINTER_SIZENWSE);
+
+                        this->front_->set_pointer(cursor);
+                    }
+                    else if (west.contains_pt(xPos, yPos)) {
+                        Pointer cursor(Pointer::POINTER_SIZEWE);
+
+                        this->front_->set_pointer(cursor);
+                    }
+                    else if (south_west_west.contains_pt(xPos, yPos) ||
+                             south_west_south.contains_pt(xPos, yPos)) {
+                        Pointer cursor(Pointer::POINTER_SIZENESW);
+
+                        this->front_->set_pointer(cursor);
+                    }
+                    else {
+                        Pointer cursor(Pointer::POINTER_NORMAL);
+
+                        this->front_->set_pointer(cursor);
                     }
                 }
             }

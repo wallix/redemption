@@ -36,7 +36,7 @@ public:
     WidgetEdit * editbox;
     WidgetLabel * label;
 
-    bool use_label;
+    bool use_label_;
 
     WidgetEditValid(gdi::GraphicApi & drawable, int16_t x, int16_t y, uint16_t cx,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
@@ -57,7 +57,7 @@ public:
         , label(title ? new WidgetLabel(drawable, 0, 0, *this, nullptr, title, true,
                                         group_id, MEDIUM_GREY, bgcolor, font, 1, 2)
                 : nullptr)
-        , use_label(use_title)
+        , use_label_(use_title)
     {
         this->button.set_button_x(this->editbox->lx() - 1);
         this->editbox->set_edit_cy(this->button.cy());
@@ -83,6 +83,10 @@ public:
             delete this->label;
             this->label = nullptr;
         }
+    }
+
+    void use_title(bool use) {
+        this->use_label_ = use;
     }
 
     virtual void set_text(const char * text/*, int position = 0*/)
@@ -131,7 +135,7 @@ public:
 
     void draw(const Rect& clip) override {
         this->editbox->draw(clip);
-        if (this->label && this->use_label) {
+        if (this->label && this->use_label_) {
             if (this->editbox->num_chars == 0) {
                 this->label->draw(clip);
                 this->editbox->draw_current_cursor();
@@ -210,7 +214,7 @@ public:
         }
         if ((event == NOTIFY_TEXT_CHANGED) &&
             (widget == this->editbox) &&
-            this->label && this->use_label) {
+            this->label && this->use_label_) {
             if (this->editbox->num_chars == 1) {
                 this->editbox->draw(this->rect);
             }
