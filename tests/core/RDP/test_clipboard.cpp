@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         std::string name = nameUTF16 ;
         uint64_t size = 17 ;
         const int cItems = 1;
-
+ 
         formatDataResponsePDU.emit_fileList(ou_stream_fileList, cItems, name, size);
 
         const uint8_t file_list_data[] =

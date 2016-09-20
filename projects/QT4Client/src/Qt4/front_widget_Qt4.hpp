@@ -1223,6 +1223,7 @@ public:
             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
         }
         QList<QUrl> list;
+        std::cout << "path on clipboard items_list.size()=" << int(items_list.size()) <<  std::endl;
         for (size_t i = 0; i < items_list.size(); i++) {
             std::string path(this->_front->CB_TEMP_DIR + items_list[i].name);
             std::cout << "path on clipboard " << path <<  std::endl;
