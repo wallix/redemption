@@ -1303,9 +1303,9 @@ public Q_SLOTS:
                 std::string str(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData());
 
                 if (str.at(0) == '/') {
-                //==================
-                //    FILE COPY
-                //==================
+            //==================
+            //    FILE COPY
+            //==================
                     this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
 
@@ -1373,9 +1373,9 @@ public Q_SLOTS:
 
 
                 } else {
-                //==================
-                //    TEXT COPY
-                //==================
+            //==================
+            //    TEXT COPY
+            //==================
                     this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
                     this->_bufferTypeLongName = "";
 
