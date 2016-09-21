@@ -1045,7 +1045,7 @@ struct FileContentsResponse : CliprdrHeader {
         CliprdrHeader::emit(stream);
     }
 
-    void emit_size(OutStream & stream, uint32_t streamID, uint64_t size) {
+    void emit_size(OutStream & stream, const uint32_t streamID, const uint64_t size) {
         this->dataLen_ += 12;
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(streamID);
@@ -1053,7 +1053,7 @@ struct FileContentsResponse : CliprdrHeader {
         stream.out_uint32_le(0);
     }
 
-    void emit_range(OutStream & stream, uint32_t streamID, uint64_t size) {
+    void emit_range(OutStream & stream, const uint32_t streamID, const uint64_t size) {
         this->dataLen_ += size;                          //  requestedFileContentsData range
         CliprdrHeader::emit(stream);
         stream.out_uint32_le(streamID);
@@ -1753,8 +1753,8 @@ struct FormatDataResponsePDU : public CliprdrHeader {
 
     // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
 
-    void emit_fileList(OutStream & stream, int cItems, std::string name, uint64_t size) {
-        this->dataLen_ = FileDescriptor::size() + 4;
+    void emit_fileList(OutStream & stream, const int cItems, const std::string name, const uint64_t size) {
+        this->dataLen_ = (FileDescriptor::size() * cItems) + 4;
         CliprdrHeader::emit(stream);
 
         stream.out_uint32_le(cItems);
@@ -1783,7 +1783,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
         CliprdrHeader::emit(stream);
     }
 
-    void emit_metaFilePic(OutStream & stream, uint32_t data_length, uint16_t width, uint16_t height, uint16_t depth, const double ARBITRARY_SCALE) {
+    void emit_metaFilePic(OutStream & stream, const uint32_t data_length, const uint16_t width, const uint16_t height, const uint16_t depth, const double ARBITRARY_SCALE) {
         this->dataLen_ = data_length + METAFILE_HEADERS_SIZE;
         CliprdrHeader::emit(stream);
 

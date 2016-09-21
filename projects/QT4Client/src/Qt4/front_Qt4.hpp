@@ -261,14 +261,14 @@ public:
         enum : int {
               CLIPBRD_FORMAT_COUNT = 5
         };
-        
-        const double      ARBITRARY_SCALE = 40;  //  module MetaFilePic resolution,
-                                                 //  40 empirically keep original resolution.
+
         const std::string FILECONTENTS;
         const std::string FILEGROUPDESCRIPTORW;
         uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
         std::string       names[CLIPBRD_FORMAT_COUNT];
         int index = 0;
+        const double      ARBITRARY_SCALE;  //  module MetaFilePic resolution, value=40 is
+                                            //  empirically close to original resolution.
 
         Clipbrd_formats_list()
           : FILECONTENTS(
@@ -277,6 +277,7 @@ public:
           , FILEGROUPDESCRIPTORW(
               "F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0"
             , 42)
+          , ARBITRARY_SCALE(40)
         {}
 
         void add_format(uint32_t ID, const std::string & name) {

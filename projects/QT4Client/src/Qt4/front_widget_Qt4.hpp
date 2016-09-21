@@ -1223,6 +1223,8 @@ public:
             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
         }
         QList<QUrl> list;
+        
+        std::cout << "path on clipboard items_list.size()=" << int(items_list.size()) <<  std::endl;
         for (size_t i = 0; i < items_list.size(); i++) {
             std::string path(this->_front->CB_TEMP_DIR + items_list[i].name);
             std::cout << "path on clipboard " << path <<  std::endl;
@@ -1294,6 +1296,8 @@ public Q_SLOTS:
                 this->_cliboard_data_length = this->_bufferImage->byteCount();
 
                 this->send_FormatListPDU(false);
+            //==========================================================================
+
 
 
             } else if (mimeData->hasText()){                //  File or Text copy
@@ -1302,9 +1306,9 @@ public Q_SLOTS:
                 std::string str(this->_clipboard->text(QClipboard::Clipboard).toUtf8().constData());
 
                 if (str.at(0) == '/') {
-                //==================
-                //    FILE COPY
-                //==================
+            //==================
+            //    FILE COPY
+            //==================
                     this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
 
@@ -1369,12 +1373,14 @@ public Q_SLOTS:
                     }
 
                     this->send_FormatListPDU(true);
+            //==========================================================================
+
 
 
                 } else {
-                //==================
-                //    TEXT COPY
-                //==================
+            //==================
+            //    TEXT COPY
+            //==================
                     this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
                     this->_bufferTypeLongName = "";
 
@@ -1395,6 +1401,9 @@ public Q_SLOTS:
                     this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size) + 2;
 
                     this->send_FormatListPDU(false);
+            //==========================================================================
+
+
 
                 }
             }
