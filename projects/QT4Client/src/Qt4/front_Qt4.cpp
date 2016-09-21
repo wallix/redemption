@@ -1273,10 +1273,10 @@ void Front_Qt::draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bi
                     rowYCoord--;
                 }
             }
-            break;
+        break;
 
         default: std::cout << "RDPMem3Blt (" << std::hex << int(cmd.rop) << ")" << std::endl;
-            break;
+        break;
     }
 }
 

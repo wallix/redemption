@@ -1222,19 +1222,26 @@ public:
         for (int i = 0; i < ll.size(); i++) {
             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
         }
-        QList<QUrl> list;
-        
-        std::cout << "path on clipboard items_list.size()=" << int(items_list.size()) <<  std::endl;
+
+        //QList<QUrl> list;
+        //std::string paths("");
+        //QByteArray gnomeFormat = QByteArray("copy\n");
         for (size_t i = 0; i < items_list.size(); i++) {
             std::string path(this->_front->CB_TEMP_DIR + items_list[i].name);
-            std::cout << "path on clipboard " << path <<  std::endl;
+            std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
-            list.append(QUrl::fromLocalFile(qpath));
-            QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(qpath).toEncoded());
+            //list.append(QUrl::fromLocalFile(qpath));
+            //paths = std::string(paths + path);
+            QByteArray gnomeFormat = QByteArray("copy\n");
+            gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
             newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
+                //paths = std::string(path + std::string("\n"));
         }
 
-        newMimeData->setUrls(list);
+        //QString qpath(paths.c_str());
+        //QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(qpaths).toEncoded());
+        //newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
+        //newMimeData->setUrls(list);
         cb->setMimeData(newMimeData);
     }
 
