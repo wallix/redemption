@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/wait_obj.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/internal_mod.hpp"
 
@@ -30,6 +31,17 @@ struct LocallyIntegrableMod : public InternalMod {
 
     uint16_t front_width;
     uint16_t front_height;
+
+    enum {
+        DCSTATE_WAIT,
+        DCSTATE_FIRST_CLICK_DOWN,
+        DCSTATE_FIRST_CLICK_RELEASE,
+        DCSTATE_SECOND_CLICK_DOWN
+    };
+
+    int dc_state = DCSTATE_WAIT;
+
+    wait_obj secondary_event;
 
     LocallyIntegrableMod(FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
@@ -44,6 +56,13 @@ struct LocallyIntegrableMod : public InternalMod {
         this->client_execute.reset();
     }
 
+    wait_obj * get_secondary_event() override {
+        if (!this->secondary_event.object_and_time)
+            return nullptr;
+
+        return &this->secondary_event;
+    }
+
     void rdp_input_invalidate(const Rect& r) override {
         InternalMod::rdp_input_invalidate(r);
 
@@ -54,6 +73,60 @@ struct LocallyIntegrableMod : public InternalMod {
         InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
 
         this->client_execute.input_mouse(device_flags, x, y);
+
+        switch (this->dc_state) {
+            case DCSTATE_WAIT:
+                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
+
+                    this->secondary_event.set(1500000);
+
+                    this->secondary_event.object_and_time  = true;
+                    this->secondary_event.waked_up_by_time = false;
+                }
+            break;
+
+            case DCSTATE_FIRST_CLICK_DOWN:
+                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                    this->dc_state = DCSTATE_FIRST_CLICK_RELEASE;
+                }
+                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                }
+                else {
+                    this->cancel_double_click_detection();
+                }
+            break;
+
+            case DCSTATE_FIRST_CLICK_RELEASE:
+                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    this->dc_state = DCSTATE_SECOND_CLICK_DOWN;
+                }
+                else {
+                    this->cancel_double_click_detection();
+                }
+            break;
+
+            case DCSTATE_SECOND_CLICK_DOWN:
+                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                    this->dc_state = DCSTATE_WAIT;
+
+                    this->client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y);
+
+                    this->cancel_double_click_detection();
+                }
+                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                }
+                else {
+                    this->cancel_double_click_detection();
+                }
+            break;
+
+            default:
+                REDASSERT(false);
+
+                this->cancel_double_click_detection();
+            break;
+        }
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4,
@@ -77,8 +150,13 @@ struct LocallyIntegrableMod : public InternalMod {
     }
 
     void draw_event(time_t, gdi::GraphicApi &) override {
-        if (!this->client_execute && event.waked_up_by_time) {
+        if (!this->client_execute && this->event.waked_up_by_time) {
             this->client_execute.ready(*this, this->front_width, this->front_height, this->font());
+        }
+
+        if (this->secondary_event.object_and_time &&
+            this->secondary_event.waked_up_by_time) {
+            this->cancel_double_click_detection();
         }
     }
 
@@ -86,5 +164,15 @@ struct LocallyIntegrableMod : public InternalMod {
         if (this->client_execute && !strcmp(front_channel_name, CHANNELS::channel_names::rail)) {
             this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }
+    }
+
+private:
+    void cancel_double_click_detection() {
+        this->secondary_event.reset();
+
+        this->secondary_event.object_and_time  = false;
+        this->secondary_event.waked_up_by_time = false;
+
+        this->dc_state = DCSTATE_WAIT;
     }
 };
