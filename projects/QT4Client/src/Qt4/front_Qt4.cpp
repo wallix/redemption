@@ -1997,12 +1997,14 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     InStream chunk_first_part( out_stream_first_part.get_data()
                                                              , out_stream_first_part.get_offset()
                                                              );
+
                                     this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                         , chunk_first_part
                                                                         , total_length
                                                                         , flag_first
                                                                         );
                                     data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
+
                                     std::cout << "client >> Data PDU  " << data_sent << " / " << total_length << std::endl;
 
                                     RDPECLIP::FileDescriptor fd;
@@ -2019,7 +2021,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         fd.fileAttributes = RDPECLIP::FILE_ATTRIBUTES_ARCHIVE;
                                         fd.lastWriteTime  = RDPECLIP::TIME64_FILE_LIST;
                                         fd.fileSizeHigh   = file->size >> 32;
-                                        fd.fileSizeLow    = file->size;;
+                                        fd.fileSizeLow    = file->size;
+
                                         fd.file_name      = file->nameUTF8;
                                         fd.emit(out_stream_next_part);
 
@@ -2032,6 +2035,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                         InStream chunk_next_part( out_stream_next_part.get_data()
                                                                 , out_stream_next_part.get_offset()
                                                                 );
+
                                         this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                                             , chunk_next_part
                                                                             , total_length

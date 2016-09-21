@@ -1223,6 +1223,7 @@ public:
             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
         }
         QList<QUrl> list;
+        
         std::cout << "path on clipboard items_list.size()=" << int(items_list.size()) <<  std::endl;
         for (size_t i = 0; i < items_list.size(); i++) {
             std::string path(this->_front->CB_TEMP_DIR + items_list[i].name);
@@ -1295,6 +1296,8 @@ public Q_SLOTS:
                 this->_cliboard_data_length = this->_bufferImage->byteCount();
 
                 this->send_FormatListPDU(false);
+            //==========================================================================
+
 
 
             } else if (mimeData->hasText()){                //  File or Text copy
@@ -1370,6 +1373,8 @@ public Q_SLOTS:
                     }
 
                     this->send_FormatListPDU(true);
+            //==========================================================================
+
 
 
                 } else {
@@ -1396,6 +1401,9 @@ public Q_SLOTS:
                     this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size) + 2;
 
                     this->send_FormatListPDU(false);
+            //==========================================================================
+
+
 
                 }
             }

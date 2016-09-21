@@ -1754,7 +1754,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
     // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
 
     void emit_fileList(OutStream & stream, const int cItems, const std::string name, const uint64_t size) {
-        this->dataLen_ = FileDescriptor::size() + 4;
+        this->dataLen_ = (FileDescriptor::size() * cItems) + 4;
         CliprdrHeader::emit(stream);
 
         stream.out_uint32_le(cItems);
