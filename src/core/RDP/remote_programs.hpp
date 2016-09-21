@@ -2732,19 +2732,19 @@ public:
 //  bottom-right corner of the window's new position.
 
 class ClientWindowMovePDU {
-    uint32_t WindowId = 0;
-    uint16_t Left     = 0;
-    uint16_t Top      = 0;
-    uint16_t Right    = 0;
-    uint16_t Bottom   = 0;
+    uint32_t WindowId_ = 0;
+    uint16_t Left_     = 0;
+    uint16_t Top_      = 0;
+    uint16_t Right_    = 0;
+    uint16_t Bottom_   = 0;
 
 public:
     void emit(OutStream & stream) {
-        stream.out_uint32_le(this->WindowId);
-        stream.out_uint16_le(this->Left);
-        stream.out_uint16_le(this->Top);
-        stream.out_uint16_le(this->Right);
-        stream.out_uint16_le(this->Bottom);
+        stream.out_uint32_le(this->WindowId_);
+        stream.out_uint16_le(this->Left_);
+        stream.out_uint16_le(this->Top_);
+        stream.out_uint16_le(this->Right_);
+        stream.out_uint16_le(this->Bottom_);
     }
 
     void receive(InStream & stream) {
@@ -2760,12 +2760,22 @@ public:
             }
         }
 
-        this->WindowId = stream.in_uint32_le();
-        this->Left     = stream.in_uint16_le();
-        this->Top      = stream.in_uint16_le();
-        this->Right    = stream.in_uint16_le();
-        this->Bottom   = stream.in_uint16_le();
+        this->WindowId_ = stream.in_uint32_le();
+        this->Left_     = stream.in_uint16_le();
+        this->Top_      = stream.in_uint16_le();
+        this->Right_    = stream.in_uint16_le();
+        this->Bottom_   = stream.in_uint16_le();
     }
+
+    uint32_t WindowId() const { return this->WindowId_; }
+
+    uint16_t Left() const { return this->Left_; }
+
+    uint16_t Top() const { return this->Top_; }
+
+    uint16_t Right() const { return this->Right_; }
+
+    uint16_t Bottom() const { return this->Bottom_; }
 
     static size_t size() {
         return 12;  // WindowId(4) + Left(2) + Top(2) +
@@ -2782,7 +2792,7 @@ private:
 
         result = ::snprintf(buffer + length, size - length,
             "WindowId=0x%X Left=%u Top=%u Right=%u Bottom=%u",
-            this->WindowId, this->Left, this->Top, this->Right, this->Bottom);
+            this->WindowId_, this->Left_, this->Top_, this->Right_, this->Bottom_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;

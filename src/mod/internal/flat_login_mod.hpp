@@ -165,11 +165,6 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->login.move_xy(left - this->login.rect.x, top - this->login.rect.y);
-
-        this->login.rect.x  = left;
-        this->login.rect.y  = top;
-        this->login.rect.cx = width + 1;
-        this->login.rect.cy = height + 1;
+        this->login.move_size_widget(left, top, width + 1, height + 1);
     }
 };
