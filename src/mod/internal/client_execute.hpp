@@ -103,6 +103,8 @@ class ClientExecute
     uint16_t front_width  = 0;
     uint16_t front_height = 0;
 
+    bool full_window_drag_enabled = false;
+
 public:
     ClientExecute(FrontAPI & front) {
         this->front_ = &front;
@@ -361,7 +363,7 @@ public:
                         ::msgdump_c(send, from_or_to_client, length, flags,
                             out_s.get_data(), length);
                     }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU");
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (0)");
                     smmipdu.log(LOG_INFO);
 
                     this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
@@ -396,7 +398,7 @@ public:
                         ::msgdump_c(send, from_or_to_client, length, flags,
                             out_s.get_data(), length);
                     }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU");
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (0)");
                     smssoepdu.log(LOG_INFO);
 
                     this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
@@ -489,7 +491,7 @@ public:
                             ::msgdump_c(send, from_or_to_client, length, flags,
                                 out_s.get_data(), length);
                         }
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU");
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (1)");
                         smmipdu.log(LOG_INFO);
 
                         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
@@ -524,7 +526,7 @@ public:
                             ::msgdump_c(send, from_or_to_client, length, flags,
                                 out_s.get_data(), length);
                         }
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU");
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (1)");
                         smssoepdu.log(LOG_INFO);
 
                         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
@@ -695,7 +697,7 @@ public:
                                 ::msgdump_c(send, from_or_to_client, length, flags,
                                     out_s.get_data(), length);
                             }
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU");
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (0)");
                             smssoepdu.log(LOG_INFO);
 
                             this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
@@ -723,7 +725,7 @@ public:
                             StaticOutStream<1024> out_s;
                             order.emit(out_s);
                             order.log(LOG_INFO);
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
 
                             this->front_->draw(order);
                         }
@@ -886,7 +888,7 @@ public:
                             ::msgdump_c(send, from_or_to_client, length, flags,
                                 out_s.get_data(), length);
                         }
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU");
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (1)");
                         smssoepdu.log(LOG_INFO);
 
                         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
@@ -934,7 +936,7 @@ public:
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
 
                     this->front_->draw(order);
                 }
@@ -1436,7 +1438,7 @@ public:
                     order.VisibleOffsetX(this->window_rect.x);
                     order.VisibleOffsetY(this->window_rect.y);
                     order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 668, 331));
+                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
@@ -1607,7 +1609,7 @@ public:
                 order.VisibleOffsetX(this->window_rect.x);
                 order.VisibleOffsetY(this->window_rect.y);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 668, 331));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
@@ -1808,7 +1810,7 @@ public:
                         this->window_rect.x + this->window_rect.cx,
                         this->window_rect.y + this->window_rect.cy
                     ));
-        }
+        }   // if (cspupdu.SystemParam() == SPI_SETWORKAREA)
         else if (cspupdu.SystemParam() == RAIL_SPI_TASKBARPOS) {
             RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
 
@@ -1820,7 +1822,11 @@ public:
             LOG(LOG_INFO, "TaskBarRect: (%u, %u, %u, %u)",
                 this->task_bar_rect.x, this->task_bar_rect.y,
                 this->task_bar_rect.cx, this->task_bar_rect.cy);
-        }
+        }   // else if (cspupdu.SystemParam() == RAIL_SPI_TASKBARPOS)
+        else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS) {
+            this->full_window_drag_enabled =
+                (cspupdu.body_b() != 0);
+        }   // else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS)
     }   // process_client_system_parameters_update_pdu
 
 
@@ -1904,7 +1910,7 @@ public:
                 StaticOutStream<1024> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
 
                 this->front_->draw(order);
             }
@@ -1938,7 +1944,7 @@ public:
                     ::msgdump_c(send, from_or_to_client, length, flags,
                         out_s.get_data(), length);
                 }
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU");
+                LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (2)");
                 smssoepdu.log(LOG_INFO);
 
                 this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
