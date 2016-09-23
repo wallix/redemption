@@ -85,7 +85,8 @@
 
 class Form_Qt;
 class Screen_Qt;
-class Connector_Qt;
+class Mod_Qt;
+class ClipBoard_Qt;
 
 
 class Front_Qt_API : public FrontAPI
@@ -193,6 +194,7 @@ public:
     virtual bool can_be_pause_capture() override { return true; }
     virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
+    virtual void emptyLocalBuffer() = 0;
 };
 
 
@@ -231,7 +233,8 @@ public:
     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
 
     // Connexion socket members
-    Connector_Qt       * _connector;
+    Mod_Qt             * _mod_qt;
+    ClipBoard_Qt       * _clipboard_qt;
     int                  _timer;
     bool                 _connected;
     bool                 _monitorCountNegociated;
@@ -341,6 +344,8 @@ public:
     void show_out_stream(int flags, OutStream & chunk, size_t length);
 
     Screen_Qt * getMainScreen();
+
+    virtual void emptyLocalBuffer();
 
 
 
