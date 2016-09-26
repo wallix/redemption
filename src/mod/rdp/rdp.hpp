@@ -2557,7 +2557,7 @@ public:
         }    
     }
 
-    void io_static_and_virtual_channels()
+    void io_static_and_virtual_channels(time_t now)
     {
         #ifdef __EMSCRIPTEN__
    
@@ -2939,7 +2939,7 @@ public:
                     break;
 
                 case MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS:
-                    this->io_static_and_virtual_channels();
+                    this->io_static_and_virtual_channels(now);
                     break;
 
                 case MOD_RDP_GET_LICENSE:
