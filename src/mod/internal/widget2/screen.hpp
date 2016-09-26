@@ -78,8 +78,9 @@ public:
         else if (this->tooltip == nullptr) {
             Rect display_rect = this->rect;
             if (!preferred_display_rect.isempty()) {
-                display_rect.intersect(preferred_display_rect);
+                display_rect = this->rect.intersect(preferred_display_rect);
             }
+
             this->tooltip = new WidgetTooltip(this->drawable,
                                               x, y,
                                               *this, widget,
@@ -90,7 +91,6 @@ public:
                                               this->font);
             int w = this->tooltip->get_tooltip_cx();
             int h = this->tooltip->get_tooltip_cy();
-//            int sw = this->rect.cx;
             int sw = display_rect.x + display_rect.cx;
             int posx = ((x + w) > sw)?(sw - w):x;
             int posy = (y > h)?(y - h):0;
