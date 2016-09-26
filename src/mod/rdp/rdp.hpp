@@ -2112,172 +2112,159 @@ public:
         }        
     }
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
-        if ((!this->event.waked_up_by_time &&
-             (!this->session_probe_virtual_channel_p ||
-              !this->session_probe_virtual_channel_p->is_event_signaled())) ||
-            ((this->state == MOD_RDP_NEGO) &&
-             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
-              (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
-            try{
-                char * hostname = this->hostname;
-                switch (this->state){
-                case MOD_RDP_NEGO:
-                    this->early_tls_security_exchange();
-                    break;
+    void basic_settings_exchange()
+    {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
+        }
 
-                case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
-                    }
+        {
+            constexpr std::size_t array_size = 65536;
 
-                    {
-                        constexpr std::size_t array_size = 65536;
+            uint8_t array[array_size];
 
-                        uint8_t array[array_size];
+            uint8_t * end = array;
 
-                        uint8_t * end = array;
+            X224::RecvFactory f(this->nego.trans, &end, array_size);
+            InStream x224_data(array, end - array);
 
-                        X224::RecvFactory f(this->nego.trans, &end, array_size);
-                        InStream x224_data(array, end - array);
+            X224::DT_TPDU_Recv x224(x224_data);
 
-                        X224::DT_TPDU_Recv x224(x224_data);
+            MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
+            GCC::Create_Response_Recv gcc_cr(mcs.payload);
+            while (gcc_cr.payload.in_check_rem(4)) {
+                GCC::UserData::RecvFactory f(gcc_cr.payload);
 
-                        MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
-                        GCC::Create_Response_Recv gcc_cr(mcs.payload);
-                        while (gcc_cr.payload.in_check_rem(4)) {
-                            GCC::UserData::RecvFactory f(gcc_cr.payload);
-
-                            switch (f.tag) {
-                            case SC_CORE:
+                switch (f.tag) {
+                case SC_CORE:
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
-                                {
-                                    GCC::UserData::SCCore sc_core;
-                                    sc_core.recv(f.payload);
-                                    if (this->verbose & 1) {
-                                        sc_core.log("Received from server");
-                                    }
-                                    if (0x0080001 == sc_core.version){ // can't use rdp5
-                                        this->use_rdp5 = 0;
-                                    }
-                                }
-                                break;
-                            case SC_SECURITY:
-                                LOG(LOG_INFO, "=================== SC_SECURITY =============");
-                                {
-                                    GCC::UserData::SCSecurity sc_sec1;
-                                    sc_sec1.recv(f.payload);
+                    {
+                        GCC::UserData::SCCore sc_core;
+                        sc_core.recv(f.payload);
+                        if (this->verbose & 1) {
+                            sc_core.log("Received from server");
+                        }
+                        if (0x0080001 == sc_core.version){ // can't use rdp5
+                            this->use_rdp5 = 0;
+                        }
+                    }
+                    break;
+                case SC_SECURITY:
+                    LOG(LOG_INFO, "=================== SC_SECURITY =============");
+                    {
+                        GCC::UserData::SCSecurity sc_sec1;
+                        sc_sec1.recv(f.payload);
 
-                                    if (this->verbose & 1) {
-                                        sc_sec1.log("Received from server");
-                                    }
+                        if (this->verbose & 1) {
+                            sc_sec1.log("Received from server");
+                        }
 
-                                    this->encryptionLevel = sc_sec1.encryptionLevel;
-                                    this->encryptionMethod = sc_sec1.encryptionMethod;
-                                    if (sc_sec1.encryptionLevel == 0
-                                        &&  sc_sec1.encryptionMethod == 0) { /* no encryption */
-                                        LOG(LOG_INFO, "No encryption");
-                                    }
-                                    else {
+                        this->encryptionLevel = sc_sec1.encryptionLevel;
+                        this->encryptionMethod = sc_sec1.encryptionMethod;
+                        if (sc_sec1.encryptionLevel == 0
+                            &&  sc_sec1.encryptionMethod == 0) { /* no encryption */
+                            LOG(LOG_INFO, "No encryption");
+                        }
+                        else {
 
-                                        uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
-                                        uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
-                                        uint8_t exponent[SEC_EXPONENT_SIZE] = {};
+                            uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
+                            uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
+                            uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
-                                        memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
+                            memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
 //                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
-                                        // serverCertificate (variable): The variable-length certificate containing the
-                                        //  server's public key information. The length in bytes is given by the
-                                        // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
-                                        // both set to 0 then this field MUST NOT be present.
+                            // serverCertificate (variable): The variable-length certificate containing the
+                            //  server's public key information. The length in bytes is given by the
+                            // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
+                            // both set to 0 then this field MUST NOT be present.
 
-                                        /* RSA info */
-                                        if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
+                            /* RSA info */
+                            if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
 //                                        LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_VERSION_1");
 
-                                            memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                                            memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
-                                                   sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
+                                memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
+                                memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
+                                       sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
 
-                                            this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
+                                this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
 
-                                        }
-                                        else {
-                                            #ifndef __EMSCRIPTEN__
+                            }
+                            else {
+                                #ifndef __EMSCRIPTEN__
 
 //                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
-                                            uint32_t certcount = sc_sec1.x509.certCount;
-                                            if (certcount < 2){
-                                                LOG(LOG_ERR, "Server didn't send enough X509 certificates");
-                                                throw Error(ERR_SEC);
-                                            }
+                                uint32_t certcount = sc_sec1.x509.certCount;
+                                if (certcount < 2){
+                                    LOG(LOG_ERR, "Server didn't send enough X509 certificates");
+                                    throw Error(ERR_SEC);
+                                }
 
-                                            uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
-                                            X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
-                                            (void)cert_len;
+                                uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
+                                X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
+                                (void)cert_len;
 
-                                            // TODO CGR: Currently, we don't use the CA Certificate, we should
-                                            // TODO *) Verify the server certificate (server_cert) with the CA certificate.
-                                            // TODO *) Store the CA Certificate with the hostname of the server we are connecting to as key, and compare it when we connect the next time, in order to prevent MITM-attacks.
+                                // TODO CGR: Currently, we don't use the CA Certificate, we should
+                                // TODO *) Verify the server certificate (server_cert) with the CA certificate.
+                                // TODO *) Store the CA Certificate with the hostname of the server we are connecting to as key, and compare it when we connect the next time, in order to prevent MITM-attacks.
 
-                                            /* By some reason, Microsoft sets the OID of the Public RSA key to
-                                                the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
+                                /* By some reason, Microsoft sets the OID of the Public RSA key to
+                                    the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
 
-                                                Kudos to Richard Levitte for the following (. intuitive .)
-                                                lines of code that resets the OID and let's us extract the key. */
+                                    Kudos to Richard Levitte for the following (. intuitive .)
+                                    lines of code that resets the OID and let's us extract the key. */
 
-                                            int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-                                            if ((nid == NID_md5WithRSAEncryption)
-                                                || (nid == NID_shaWithRSAEncryption)){
-                                                ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
-                                                cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
-                                            }
+                                int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
+                                if ((nid == NID_md5WithRSAEncryption)
+                                    || (nid == NID_shaWithRSAEncryption)){
+                                    ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
+                                    cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
+                                }
 
 //                                            LOG(LOG_INFO, "================= SC_SECURITY X509_get_pubkey");
 
-                                            EVP_PKEY * epk = X509_get_pubkey(cert);
-                                            if (nullptr == epk){
-                                                LOG(LOG_ERR, "Failed to extract public key from certificate\n");
-                                                throw Error(ERR_SEC);
-                                            }
+                                EVP_PKEY * epk = X509_get_pubkey(cert);
+                                if (nullptr == epk){
+                                    LOG(LOG_ERR, "Failed to extract public key from certificate\n");
+                                    throw Error(ERR_SEC);
+                                }
 
-                                            RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
-                                            EVP_PKEY_free(epk);
-                                            this->server_public_key_len = RSA_size(server_public_key);
+                                RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
+                                EVP_PKEY_free(epk);
+                                this->server_public_key_len = RSA_size(server_public_key);
 
-                                            if (nullptr == server_public_key){
-                                                LOG(LOG_ERR, "Failed to parse X509 server key");
-                                                throw Error(ERR_SEC);
-                                            }
+                                if (nullptr == server_public_key){
+                                    LOG(LOG_ERR, "Failed to parse X509 server key");
+                                    throw Error(ERR_SEC);
+                                }
 
-                                            if ((this->server_public_key_len < SEC_MODULUS_SIZE)
-                                            ||  (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-                                                LOG(LOG_ERR, "Wrong server public key size (%u bits)", this->server_public_key_len * 8);
-                                                throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
-                                            }
+                                if ((this->server_public_key_len < SEC_MODULUS_SIZE)
+                                ||  (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                                    LOG(LOG_ERR, "Wrong server public key size (%u bits)", this->server_public_key_len * 8);
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
+                                }
 
-                                            if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE)
-                                                ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
-                                                LOG(LOG_ERR, "Failed to extract RSA exponent and modulus");
-                                                throw Error(ERR_SEC);
-                                            }
+                                if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE)
+                                    ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
+                                    LOG(LOG_ERR, "Failed to extract RSA exponent and modulus");
+                                    throw Error(ERR_SEC);
+                                }
 
-                                            int len_e = BN_bn2bin(server_public_key->e, exponent);
-                                            int len_n = BN_bn2bin(server_public_key->n, modulus);
-                                            reverseit(exponent, len_e);
-                                            reverseit(modulus, len_n);
-                                            RSA_free(server_public_key);
+                                int len_e = BN_bn2bin(server_public_key->e, exponent);
+                                int len_n = BN_bn2bin(server_public_key->n, modulus);
+                                reverseit(exponent, len_e);
+                                reverseit(modulus, len_n);
+                                RSA_free(server_public_key);
 
-                                            #endif
-                                        }
+                                #endif
+                            }
 
-                                        uint8_t client_random[SEC_RANDOM_SIZE];
-                                        memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
+                            uint8_t client_random[SEC_RANDOM_SIZE];
+                            memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
 
-                                        /* Generate a client random, and determine encryption keys */
-                                        this->gen.random(client_random, SEC_RANDOM_SIZE);
+                            /* Generate a client random, and determine encryption keys */
+                            this->gen.random(client_random, SEC_RANDOM_SIZE);
 
-                                        ssllib ssl;
+                            ssllib ssl;
 
 //                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
 //                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
@@ -2295,137 +2282,154 @@ public:
 //                                        LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
 //                                            static_cast<unsigned>(SEC_EXPONENT_SIZE));
 
-                                        ssl.rsa_encrypt(
-                                            this->client_crypt_random,
-                                            SEC_RANDOM_SIZE,
-                                            client_random,
-                                            this->server_public_key_len,
-                                            modulus,
-                                            SEC_EXPONENT_SIZE,
-                                            exponent);
+                            ssl.rsa_encrypt(
+                                this->client_crypt_random,
+                                SEC_RANDOM_SIZE,
+                                client_random,
+                                this->server_public_key_len,
+                                modulus,
+                                SEC_EXPONENT_SIZE,
+                                exponent);
 
 //                                        LOG(LOG_INFO, "================= SC_SECURITY client_crypt_random");
 //                                        hexdump(this->client_crypt_random, sizeof(this->client_crypt_random));
 //                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
 //                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
 
-                                        SEC::KeyBlock key_block(client_random, serverRandom);
-                                        memcpy(encrypt.sign_key, key_block.blob0, 16);
-                                        if (sc_sec1.encryptionMethod == 1){
-                                            ssl.sec_make_40bit(encrypt.sign_key);
-                                        }
-                                        this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
-                                        this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);
-                                    }
-                                }
-                                break;
-                            case SC_NET:
+                            SEC::KeyBlock key_block(client_random, serverRandom);
+                            memcpy(encrypt.sign_key, key_block.blob0, 16);
+                            if (sc_sec1.encryptionMethod == 1){
+                                ssl.sec_make_40bit(encrypt.sign_key);
+                            }
+                            this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
+                            this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);
+                        }
+                    }
+                    break;
+                case SC_NET:
 //                            LOG(LOG_INFO, "=================== SC_NET =============");
 
-                                {
-                                    GCC::UserData::SCNet sc_net;
-                                    sc_net.recv(f.payload, this->bogus_sc_net_size);
+                    {
+                        GCC::UserData::SCNet sc_net;
+                        sc_net.recv(f.payload, this->bogus_sc_net_size);
 
-                                    /* We assume that the channel_id array is confirmed in the same order
-                                       that it has been sent. If there are any channels not confirmed, they're
-                                       going to be the last channels on the array sent in MCS Connect Initial */
-                                    if (this->verbose & 16){
-                                        LOG(LOG_INFO, "server_channels_count=%" PRIu16 " sent_channels_count=%zu",
-                                            sc_net.channelCount,
-                                            mod_channel_list.size());
-                                    }
-                                    for (uint32_t index = 0; index < sc_net.channelCount; index++) {
-                                        if (this->verbose & 16){
-                                            this->mod_channel_list[index].log(index);
-                                        }
-                                        this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
-                                    }
-                                    if (this->verbose & 1) {
-                                        sc_net.log("Received from server");
-                                    }
-                                }
-                                break;
-                            default:
-                                LOG(LOG_ERR, "unsupported GCC UserData response tag 0x%x", f.tag);
-                                throw Error(ERR_GCC);
+                        /* We assume that the channel_id array is confirmed in the same order
+                           that it has been sent. If there are any channels not confirmed, they're
+                           going to be the last channels on the array sent in MCS Connect Initial */
+                        if (this->verbose & 16){
+                            LOG(LOG_INFO, "server_channels_count=%" PRIu16 " sent_channels_count=%zu",
+                                sc_net.channelCount,
+                                mod_channel_list.size());
+                        }
+                        for (uint32_t index = 0; index < sc_net.channelCount; index++) {
+                            if (this->verbose & 16){
+                                this->mod_channel_list[index].log(index);
                             }
+                            this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                         }
-
-                        if (gcc_cr.payload.in_check_rem(1)) {
-                            LOG(LOG_ERR, "Error while parsing GCC UserData : short header");
-                            throw Error(ERR_GCC);
+                        if (this->verbose & 1) {
+                            sc_net.log("Received from server");
                         }
                     }
+                    break;
+                default:
+                    LOG(LOG_ERR, "unsupported GCC UserData response tag 0x%x", f.tag);
+                    throw Error(ERR_GCC);
+                }
+            }
 
-                    if (this->verbose & (1|16)){
-                        LOG(LOG_INFO, "mod_rdp::Channel Connection");
-                    }
+            if (gcc_cr.payload.in_check_rem(1)) {
+                LOG(LOG_ERR, "Error while parsing GCC UserData : short header");
+                throw Error(ERR_GCC);
+            }
+        }
 
-                    // Channel Connection
-                    // ------------------
-                    // Channel Connection: The client sends an MCS Erect Domain Request PDU,
-                    // followed by an MCS Attach User Request PDU to attach the primary user
-                    // identity to the MCS domain.
+        if (this->verbose & (1|16)){
+            LOG(LOG_INFO, "mod_rdp::Channel Connection");
+        }
 
-                    // The server responds with an MCS Attach User Response PDU containing the user
-                    // channel ID.
+        // Channel Connection
+        // ------------------
+        // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+        // followed by an MCS Attach User Request PDU to attach the primary user
+        // identity to the MCS domain.
 
-                    // The client then proceeds to join the :
-                    // - user channel,
-                    // - the input/output (I/O) channel
-                    // - and all of the static virtual channels
+        // The server responds with an MCS Attach User Response PDU containing the user
+        // channel ID.
 
-                    // (the I/O and static virtual channel IDs are obtained from the data embedded
-                    //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+        // The client then proceeds to join the :
+        // - user channel,
+        // - the input/output (I/O) channel
+        // - and all of the static virtual channels
 
-                    // The server confirms each channel with an MCS Channel Join Confirm PDU.
-                    // (The client only sends a Channel Join Request after it has received the
-                    // Channel Join Confirm for the previously sent request.)
+        // (the I/O and static virtual channel IDs are obtained from the data embedded
+        //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
 
-                    // From this point, all subsequent data sent from the client to the server is
-                    // wrapped in an MCS Send Data Request PDU, while data sent from the server to
-                    //  the client is wrapped in an MCS Send Data Indication PDU. This is in
-                    // addition to the data being wrapped by an X.224 Data PDU.
+        // The server confirms each channel with an MCS Channel Join Confirm PDU.
+        // (The client only sends a Channel Join Request after it has received the
+        // Channel Join Confirm for the previously sent request.)
 
-                    // Client                                                     Server
-                    //    |-------MCS Erect Domain Request PDU--------------------> |
-                    //    |-------MCS Attach User Request PDU---------------------> |
+        // From this point, all subsequent data sent from the client to the server is
+        // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+        //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+        // addition to the data being wrapped by an X.224 Data PDU.
 
-                    //    | <-----MCS Attach User Confirm PDU---------------------- |
+        // Client                                                     Server
+        //    |-------MCS Erect Domain Request PDU--------------------> |
+        //    |-------MCS Attach User Request PDU---------------------> |
 
-                    //    |-------MCS Channel Join Request PDU--------------------> |
-                    //    | <-----MCS Channel Join Confirm PDU--------------------- |
+        //    | <-----MCS Attach User Confirm PDU---------------------- |
 
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
-                    }
-                    write_packets(
-                        this->nego.trans,
-                        [](StreamSize<256>, OutStream & mcs_header){
-                            MCS::ErectDomainRequest_Send mcs(
-                                static_cast<OutPerStream&>(mcs_header),
-                                0, 0, MCS::PER_ENCODING
-                            );
-                            (void)mcs;
-                        },
-                        write_x224_dt_tpdu_fn{}
-                    );
+        //    |-------MCS Channel Join Request PDU--------------------> |
+        //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "Send MCS::AttachUserRequest");
-                    }
-                    write_packets(
-                        this->nego.trans,
-                        [](StreamSize<256>, OutStream & mcs_data){
-                            MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
-                            (void)mcs;
-                        },
-                        write_x224_dt_tpdu_fn{}
-                    );
-                    this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
-                    }
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
+        }
+        write_packets(
+            this->nego.trans,
+            [](StreamSize<256>, OutStream & mcs_header){
+                MCS::ErectDomainRequest_Send mcs(
+                    static_cast<OutPerStream&>(mcs_header),
+                    0, 0, MCS::PER_ENCODING
+                );
+                (void)mcs;
+            },
+            write_x224_dt_tpdu_fn{}
+        );
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "Send MCS::AttachUserRequest");
+        }
+        write_packets(
+            this->nego.trans,
+            [](StreamSize<256>, OutStream & mcs_data){
+                MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
+                (void)mcs;
+            },
+            write_x224_dt_tpdu_fn{}
+        );
+        this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
+        }
+    }
+
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+        if ((!this->event.waked_up_by_time &&
+             (!this->session_probe_virtual_channel_p ||
+              !this->session_probe_virtual_channel_p->is_event_signaled())) ||
+            ((this->state == MOD_RDP_NEGO) &&
+             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
+              (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
+            try{
+                switch (this->state){
+                case MOD_RDP_NEGO:
+                    this->early_tls_security_exchange();
+                    break;
+
+                case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
+                    this->basic_settings_exchange();
                     break;
 
                 case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
