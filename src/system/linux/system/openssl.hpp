@@ -834,6 +834,10 @@ struct TLSContext
             throw Error(checking_exception);
         }
 
+        if (error_message) {
+            error_message->clear();
+        }
+
         LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
     }
 
@@ -1198,7 +1202,7 @@ struct TLSContext
 
                 default:
                 {
-                    LOG(LOG_INFO, "Failure in SSL library");
+                    LOG(LOG_INFO, "Failure in SSL library, error=%ld", error);
                     uint32_t errcount = 0;
                     errcount++;
                     LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));

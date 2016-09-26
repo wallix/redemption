@@ -1165,7 +1165,8 @@ public:
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
             }   // else if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
         }   // else if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
-        else if (pointerFlags & PTRFLAGS_EX_DOUBLE_CLICK) {
+        else if ((pointerFlags & PTRFLAGS_EX_DOUBLE_CLICK) &&
+                 this->south.contains_pt(xPos, yPos)) {
             this->window_rect.y  = 0;
             this->window_rect.cy = this->work_area_rect.cy - 1;
 

@@ -428,7 +428,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         // auth_error_message is left as std::string type because SocketTransport and ReplayMod
         // take it as argument on constructor and modify it as a std::string
-        W.member(type_<std::string>(), "auth_error_message", r);
+        W.member(type_<std::string>(), "auth_error_message");
         W.sep();
         W.member(type_<bool>(), "selector", set(false), r);
         W.member(type_<unsigned>(), "selector_current_page", set(1), rw);

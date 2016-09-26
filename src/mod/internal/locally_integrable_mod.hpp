@@ -72,6 +72,8 @@ struct LocallyIntegrableMod : public InternalMod {
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override {
         InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
 
+LOG(LOG_INFO, "device_flags=0x%X", device_flags);
+
         this->client_execute.input_mouse(device_flags, x, y);
 
         switch (this->dc_state) {

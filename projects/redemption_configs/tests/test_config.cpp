@@ -1935,11 +1935,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL("1280", ini.get_acl_field(AUTHID_CONTEXT_OPT_WIDTH).c_str());
 
 
-    ini.get_acl_field(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE).set(cstr_array_view("Message d'erreur."));
-
-    BOOST_CHECK_EQUAL("Message d'erreur.", ini.get<cfg::context::auth_error_message>());
-
-
     // selector, ...
     ini.get_acl_field(AUTHID_CONTEXT_SELECTOR).ask();
     ini.get_acl_field(AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE).ask();
@@ -2185,7 +2180,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
    BOOST_CHECK_EQUAL(AUTHID_UNKNOWN, authid_from_string("8899676"));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_DISPLAY_MESSAGE, authid_from_string(string_from_authid(AUTHID_CONTEXT_DISPLAY_MESSAGE)));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_ACCEPT_MESSAGE, authid_from_string(string_from_authid(AUTHID_CONTEXT_ACCEPT_MESSAGE)));
-   BOOST_CHECK_EQUAL(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE, authid_from_string(string_from_authid(AUTHID_CONTEXT_AUTH_ERROR_MESSAGE)));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_MODE_CONSOLE, authid_from_string(string_from_authid(AUTHID_CONTEXT_MODE_CONSOLE)));
    BOOST_CHECK_EQUAL(AUTHID_CONTEXT_TIMEZONE, authid_from_string(string_from_authid(AUTHID_CONTEXT_TIMEZONE)));
 }
