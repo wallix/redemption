@@ -1270,7 +1270,7 @@ const char* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
 
 class ClientSystemParametersUpdatePDU {
     uint32_t                                SystemParam_;
-    uint8_t                                 body_b;
+    uint8_t                                 body_b_;
     RDP::RAIL::Rectangle                    body_r_;
     HighContrastSystemInformationStructure  body_hcsis;
 
@@ -1283,7 +1283,7 @@ public:
             case SPI_SETKEYBOARDCUES:
             case SPI_SETKEYBOARDPREF:
             case SPI_SETMOUSEBUTTONSWAP:
-                stream.out_uint8(this->body_b);
+                stream.out_uint8(this->body_b_);
                 break;
 
             case SPI_SETWORKAREA:
@@ -1328,7 +1328,7 @@ public:
                     }
                 }
 
-                this->body_b = stream.in_uint8();
+                this->body_b_ = stream.in_uint8();
                 break;
 
             case SPI_SETWORKAREA:
@@ -1348,6 +1348,8 @@ public:
     RDP::RAIL::Rectangle const & body_r() const {
         return this->body_r_;
     }
+
+    uint8_t body_b() const { return this->body_b_; }
 
     size_t size() const {
         size_t count = 4;   // SystemParam(4)
@@ -1394,7 +1396,7 @@ private:
             case SPI_SETMOUSEBUTTONSWAP:
                 result = ::snprintf(buffer + length, size - length,
                     "Body=%s(%u) ",
-                    (this->body_b ? "TRUE" : "FALSE"), this->body_b);
+                    (this->body_b_ ? "TRUE" : "FALSE"), this->body_b_);
                 length += ((result < size - length) ? result : (size - length - 1));
                 break;
 

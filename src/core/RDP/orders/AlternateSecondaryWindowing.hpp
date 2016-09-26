@@ -234,7 +234,9 @@ public:
         stream.out_uint16_le(this->bits_color.sz);
 
         stream.out_copy_bytes(this->bits_mask.p, this->bits_mask.sz);
-        stream.out_copy_bytes(this->color_table.p, this->color_table.sz);
+        if ((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8)) {
+            stream.out_copy_bytes(this->color_table.p, this->color_table.sz);
+        }
         stream.out_copy_bytes(this->bits_color.p, this->bits_color.sz);
     }
 
