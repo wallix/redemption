@@ -398,6 +398,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::u32>(), "bitmap_update");
         W.member(A, type_<types::u32>(), "performance");
         W.member(A, type_<types::u32>(), "pass_dialog_box");
+        W.member(A, type_<types::u32>(), "mod_internal");
         W.sep();
         W.member(A, type_<unsigned>(), spec::type_<bool>(), "config", set(2));
     });

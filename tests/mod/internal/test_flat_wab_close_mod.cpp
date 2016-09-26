@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front);
+    ClientExecute client_execute(front, 0);
 
     Inifile ini;
 
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod2)
     info.height = 1536;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front);
+    ClientExecute client_execute(front, 0);
 
     Inifile ini;
 
