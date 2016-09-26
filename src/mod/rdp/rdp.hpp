@@ -259,9 +259,9 @@ protected:
           MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
-#ifdef __EMSCRIPTEN__
+//#ifdef __EMSCRIPTEN__
         , MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS
-#endif
+//#endif
         , MOD_RDP_GET_LICENSE
         , MOD_RDP_CONNECTED
     };
@@ -2414,6 +2414,508 @@ public:
             LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
         }
     }
+    
+    void channel_connection_attach_user(time_t now)
+    {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
+        }
+        {
+            {
+                constexpr size_t array_size = AUTOSIZE;
+                uint8_t array[array_size];
+                uint8_t * end = array;
+                X224::RecvFactory f(this->nego.trans, &end, array_size);
+                InStream stream(array, end - array);
+                X224::DT_TPDU_Recv x224(stream);
+                InStream & mcs_cjcf_data = x224.payload;
+                MCS::AttachUserConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
+                if (mcs.initiator_flag){
+                    this->userid = mcs.initiator;
+                }
+            }
+
+            {
+                size_t num_channels = this->mod_channel_list.size();
+
+            #ifndef __EMSCRIPTEN__
+
+                uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
+                channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
+                channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
+                for (size_t index = 0; index < num_channels; index++){
+                    channels_id[index+2] = this->mod_channel_list[index].chanid;
+                }
+
+                for (size_t index = 0; index < num_channels+2; index++) {
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
+                    }
+                    write_packets(
+                        this->nego.trans,
+                        [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
+                            MCS::ChannelJoinRequest_Send mcs(
+                                mcs_cjrq_data, this->userid,
+                                channels_id[index], MCS::PER_ENCODING
+                            );
+                            (void)mcs;
+                        },
+                        write_x224_dt_tpdu_fn{}
+                    );
+                    constexpr size_t array_size = AUTOSIZE;
+                    uint8_t array[array_size];
+                    uint8_t * end = array;
+                    X224::RecvFactory f(this->nego.trans, &end, array_size);
+                    InStream x224_data(array, end - array);
+                    X224::DT_TPDU_Recv x224(x224_data);
+                    InStream & mcs_cjcf_data = x224.payload;
+                    MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
+                    // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
+                    }
+                }
+            #else
+                this->index_JS = 0;
+                this->num_channels_JS = num_channels + 2;
+            #endif
+            }
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User end");
+            }
+
+            // RDP Security Commencement
+            // -------------------------
+
+            // RDP Security Commencement: If standard RDP security methods are being
+            // employed and encryption is in force (this is determined by examining the data
+            // embedded in the GCC Conference Create Response packet) then the client sends
+            // a Security Exchange PDU containing an encrypted 32-byte random number to the
+            // server. This random number is encrypted with the public key of the server
+            // (the server's public key, as well as a 32-byte server-generated random
+            // number, are both obtained from the data embedded in the GCC Conference Create
+            //  Response packet).
+
+            // The client and server then utilize the two 32-byte random numbers to generate
+            // session keys which are used to encrypt and validate the integrity of
+            // subsequent RDP traffic.
+
+            // From this point, all subsequent RDP traffic can be encrypted and a security
+            // header is include " with the data if encryption is in force (the Client Info
+            // and licensing PDUs are an exception in that they always have a security
+            // header). The Security Header follows the X.224 and MCS Headers and indicates
+            // whether the attached data is encrypted.
+
+            // Even if encryption is in force server-to-client traffic may not always be
+            // encrypted, while client-to-server traffic will always be encrypted by
+            // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+            // however).
+
+            // Client                                                     Server
+            //    |------Security Exchange PDU ---------------------------> |
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
+            }
+
+            if (this->encryptionLevel){
+                if (this->verbose & 1){
+                    LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
+                        this->server_public_key_len);
+                }
+
+                this->send_data_request(
+                    GCC::MCS_GLOBAL_CHANNEL,
+                    dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                        SEC::SecExchangePacket_Send mcs(
+                            stream, this->client_crypt_random, this->server_public_key_len
+                        );
+                        (void)mcs;
+                    })
+                );
+            }
+
+            // Secure Settings Exchange
+            // ------------------------
+
+            // Secure Settings Exchange: Secure client data (such as the username,
+            // password and auto-reconnect cookie) is sent to the server using the Client
+            // Info PDU.
+
+            // Client                                                     Server
+            //    |------ Client Info PDU      ---------------------------> |
+
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
+            }
+
+            this->send_client_info_pdu(now);
+        #ifndef __EMSCRIPTEN__
+            this->state = MOD_RDP_GET_LICENSE;
+        #else
+            this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+        #endif
+        }    
+    }
+
+    void io_static_and_virtual_channels()
+    {
+        #ifdef __EMSCRIPTEN__
+   
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::IO Static and Virtual Channels");
+        }
+        {
+            uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
+            channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
+            channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
+
+            size_t index = this->index_JS;
+            write_packets(
+                this->nego.trans,
+                [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
+                    MCS::ChannelJoinRequest_Send mcs(
+                        mcs_cjrq_data, this->userid,
+                        channels_id[index], MCS::PER_ENCODING
+                    );
+                    (void)mcs;
+                },
+                write_x224_dt_tpdu_fn{}
+            );
+
+            constexpr size_t array_size = AUTOSIZE;
+            uint8_t array[array_size];
+            uint8_t * end = array;
+            X224::RecvFactory f(this->nego.trans, &end, array_size);
+            InStream x224_data(array, end - array);
+            X224::DT_TPDU_Recv x224(x224_data);
+            InStream & mcs_cjcf_data = x224.payload;
+            MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
+            // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
+
+            if (this->encryptionLevel){
+                if (this->verbose & 1){
+                    LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
+                        this->server_public_key_len);
+                }
+
+                this->send_data_request(
+                    GCC::MCS_GLOBAL_CHANNEL,
+                    dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                        SEC::SecExchangePacket_Send mcs(
+                            stream, this->client_crypt_random, this->server_public_key_len
+                        );
+                        (void)mcs;
+                    })
+                );
+            }
+
+            this->send_client_info_pdu(now);
+
+            this->num_channels_JS--;
+            this->index_JS++;
+
+            if (this->num_channels_JS == 0) {
+                this->state = MOD_RDP_GET_LICENSE;
+            } else {
+                this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
+            }
+        }
+        #endif
+    }
+
+    void get_license()
+    {
+        if (this->verbose & 2){
+            LOG(LOG_INFO, "mod_rdp::Licensing");
+        }
+        // Licensing
+        // ---------
+
+        // Licensing: The goal of the licensing exchange is to transfer a
+        // license from the server to the client.
+
+        // The client should store this license and on subsequent
+        // connections send the license to the server for validation.
+        // However, in some situations the client may not be issued a
+        // license to store. In effect, the packets exchanged during this
+        // phase of the protocol depend on the licensing mechanisms
+        // employed by the server. Within the context of this document
+        // we will assume that the client will not be issued a license to
+        // store. For details regarding more advanced licensing scenarios
+        // that take place during the Licensing Phase, see [MS-RDPELE].
+
+        // Client                                                     Server
+        //    | <------ License Error PDU Valid Client ---------------- |
+
+        // 2.2.1.12 Server License Error PDU - Valid Client
+        // ================================================
+
+        // The License Error (Valid Client) PDU is an RDP Connection Sequence PDU sent
+        // from server to client during the Licensing phase of the RDP Connection
+        // Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence
+        // phases). This licensing PDU indicates that the server will not issue the
+        // client a license to store and that the Licensing Phase has ended
+        // successfully. This is one possible licensing PDU that may be sent during the
+        // Licensing Phase (see [MS-RDPELE] section 2.2.2 for a list of all permissible
+        // licensing PDUs).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] section 13.7.
+
+        // mcsSDin (variable): Variable-length PER-encoded MCS Domain PDU (DomainMCSPDU)
+        // which encapsulates an MCS Send Data Indication structure (SDin, choice 26
+        // from DomainMCSPDU), as specified in [T125] section 11.33 (the ASN.1 structure
+        // definitions are given in [T125] section 7, parts 7 and 10). The userData
+        // field of the MCS Send Data Indication contains a Security Header and a Valid
+        // Client License Data (section 2.2.1.12.1) structure.
+
+        // securityHeader (variable): Security header. The format of the security header
+        // depends on the Encryption Level and Encryption Method selected by the server
+        // (sections 5.3.2 and 2.2.1.4.3).
+
+        // This field MUST contain one of the following headers:
+        //  - Basic Security Header (section 2.2.8.1.1.2.1) if the Encryption Level
+        // selected by the server is ENCRYPTION_LEVEL_NONE (0) or ENCRYPTION_LEVEL_LOW
+        // (1) and the embedded flags field does not contain the SEC_ENCRYPT (0x0008)
+        // flag.
+        //  - Non-FIPS Security Header (section 2.2.8.1.1.2.2) if the Encryption Method
+        // selected by the server is ENCRYPTION_METHOD_40BIT (0x00000001),
+        // ENCRYPTION_METHOD_56BIT (0x00000008), or ENCRYPTION_METHOD_128BIT
+        // (0x00000002) and the embedded flags field contains the SEC_ENCRYPT (0x0008)
+        // flag.
+        //  - FIPS Security Header (section 2.2.8.1.1.2.3) if the Encryption Method
+        // selected by the server is ENCRYPTION_METHOD_FIPS (0x00000010) and the
+        // embedded flags field contains the SEC_ENCRYPT (0x0008) flag.
+
+        // If the Encryption Level is set to ENCRYPTION_LEVEL_CLIENT_COMPATIBLE (2),
+        // ENCRYPTION_LEVEL_HIGH (3), or ENCRYPTION_LEVEL_FIPS (4) and the flags field
+        // of the security header does not contain the SEC_ENCRYPT (0x0008) flag (the
+        // licensing PDU is not encrypted), then the field MUST contain a Basic Security
+        // Header. This MUST be the case if SEC_LICENSE_ENCRYPT_SC (0x0200) flag was not
+        // set on the Security Exchange PDU (section 2.2.1.10).
+
+        // The flags field of the security header MUST contain the SEC_LICENSE_PKT
+        // (0x0080) flag (see Basic (TS_SECURITY_HEADER)).
+
+        // validClientLicenseData (variable): The actual contents of the License Error
+        // (Valid Client) PDU, as specified in section 2.2.1.12.1.
+
+        {
+            const char * hostname = this->hostname;
+            const char * username;
+            char username_a_domain[512];
+            if (this->domain[0]) {
+                snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->username, this->domain);
+                username = username_a_domain;
+            }
+            else {
+                username = this->username;
+            }
+            LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+
+            constexpr size_t array_size = AUTOSIZE;
+            uint8_t array[array_size];
+            uint8_t * end = array;
+            X224::RecvFactory f(this->nego.trans, &end, array_size);
+            InStream stream(array, end - array);
+            X224::DT_TPDU_Recv x224(stream);
+            // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
+            //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+            MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+
+            if (sec.flags & SEC::SEC_LICENSE_PKT) {
+                LIC::RecvFactory flic(sec.payload);
+
+                switch (flic.tag) {
+                case LIC::LICENSE_REQUEST:
+                    if (this->verbose & 2) {
+                        LOG(LOG_INFO, "Rdp::License Request");
+                    }
+                    {
+                        LIC::LicenseRequest_Recv lic(sec.payload);
+                        uint8_t null_data[SEC_MODULUS_SIZE];
+                        memset(null_data, 0, sizeof(null_data));
+                        /* We currently use null client keys. This is a bit naughty but, hey,
+                           the security of license negotiation isn't exactly paramount. */
+                        SEC::SessionKey keyblock(null_data, null_data, lic.server_random);
+
+                        /* Store first 16 bytes of session key as MAC secret */
+                        memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
+                        memcpy(this->lic_layer_license_key, keyblock.get_LicensingEncryptionKey(), 16);
+                    }
+                    this->send_data_request(
+                        GCC::MCS_GLOBAL_CHANNEL,
+                        [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
+                            if (this->lic_layer_license_size > 0) {
+                                uint8_t hwid[LIC::LICENSE_HWID_SIZE];
+                                buf_out_uint32(hwid, 2);
+                                memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+
+                                /* Generate a signature for the HWID buffer */
+                                uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
+
+                                uint8_t lenhdr[4];
+                                buf_out_uint32(lenhdr, sizeof(hwid));
+
+                                Sign sign(this->lic_layer_license_sign_key, 16);
+                                sign.update(lenhdr, sizeof(lenhdr));
+                                sign.update(hwid, sizeof(hwid));
+
+                                static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
+                                sign.final(signature, sizeof(signature));
+
+
+                                /* Now encrypt the HWID */
+
+                                SslRC4 rc4;
+                                rc4.set_key(this->lic_layer_license_key, 16);
+
+                                // in, out
+                                rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
+
+                                LIC::ClientLicenseInfo_Send(
+                                    lic_data, this->use_rdp5?3:2,
+                                    this->lic_layer_license_size,
+                                    this->lic_layer_license_data.get(),
+                                    hwid, signature
+                                );
+                            }
+                            else {
+                                LIC::NewLicenseRequest_Send(
+                                    lic_data, this->use_rdp5?3:2, username, hostname
+                                );
+                            }
+                        },
+                        write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
+                    );
+                    break;
+                case LIC::PLATFORM_CHALLENGE:
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "Rdp::Platform Challenge");
+                    }
+                    {
+                        LIC::PlatformChallenge_Recv lic(sec.payload);
+
+                        uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
+                        uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
+                        uint8_t hwid[LIC::LICENSE_HWID_SIZE];
+                        uint8_t crypt_hwid[LIC::LICENSE_HWID_SIZE];
+                        uint8_t out_sig[LIC::LICENSE_SIGNATURE_SIZE];
+
+                        memcpy(out_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
+                        /* Decrypt the token. It should read TEST in Unicode. */
+                        memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
+                        SslRC4 rc4_decrypt_token;
+                        rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
+                        // size, in, out
+                        rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
+
+                        /* Generate a signature for a buffer of token and HWID */
+                        buf_out_uint32(hwid, 2);
+                        memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+
+                        uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
+                        memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
+                        memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
+
+                        uint8_t lenhdr[4];
+                        buf_out_uint32(lenhdr, sizeof(sealed_buffer));
+
+                        Sign sign(this->lic_layer_license_sign_key, 16);
+                        sign.update(lenhdr, sizeof(lenhdr));
+                        sign.update(sealed_buffer, sizeof(sealed_buffer));
+
+                        static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
+                        sign.final(out_sig, sizeof(out_sig));
+
+                        /* Now encrypt the HWID */
+                        memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
+                        SslRC4 rc4_hwid;
+                        rc4_hwid.set_key(this->lic_layer_license_key, 16);
+                        // size, in, out
+                        rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
+
+                        this->send_data_request(
+                            GCC::MCS_GLOBAL_CHANNEL,
+                            [&, this](StreamSize<65535 - 1024>, OutStream & lic_data) {
+                                LIC::ClientPlatformChallengeResponse_Send(
+                                    lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig
+                                );
+                            },
+                            write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
+                        );
+                    }
+                    break;
+                case LIC::NEW_LICENSE:
+                    {
+                        if (this->verbose & 2){
+                            LOG(LOG_INFO, "Rdp::New License");
+                        }
+
+                        LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
+
+                        // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that
+                            this->state = MOD_RDP_CONNECTED;
+
+                        LOG(LOG_WARNING, "New license not saved");
+                    }
+                    break;
+                case LIC::UPGRADE_LICENSE:
+                    {
+                        if (this->verbose & 2){
+                            LOG(LOG_INFO, "Rdp::Upgrade License");
+                        }
+                        LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
+
+                        LOG(LOG_WARNING, "Upgraded license not saved");
+                    }
+                    break;
+                case LIC::ERROR_ALERT:
+                    {
+                        if (this->verbose & 2){
+                            LOG(LOG_INFO, "Rdp::Get license status");
+                        }
+                        LIC::ErrorAlert_Recv lic(sec.payload);
+                        if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT)
+                            && (lic.validClientMessage.dwStateTransition == LIC::ST_NO_TRANSITION)){
+                            this->state = MOD_RDP_CONNECTED;
+                        }
+                        else {
+                            LOG(LOG_ERR, "RDP::License Alert: error=%u transition=%u",
+                                lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+                        }
+                        this->state = MOD_RDP_CONNECTED;
+                    }
+                    break;
+                default:
+                    {
+                        LOG(LOG_ERR, "Unexpected license tag sent from server (tag = %x)", flic.tag);
+                        throw Error(ERR_SEC);
+                    }
+                    break;
+                }
+
+                if (sec.payload.get_current() != sec.payload.get_data_end()){
+                    LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
+                    throw Error(ERR_SEC);
+                }
+            }
+            else {
+                LOG(LOG_WARNING, "Failed to get expected license negotiation PDU");
+                hexdump(x224.payload.get_data(), x224.payload.get_capacity());
+                //throw Error(ERR_SEC);
+                this->state = MOD_RDP_CONNECTED;
+                hexdump(sec.payload.get_data(), sec.payload.get_capacity());
+            }
+        }
+    
+    }
+
 
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         if ((!this->event.waked_up_by_time &&
@@ -2433,502 +2935,15 @@ public:
                     break;
 
                 case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
-                    }
-                    {
-                        {
-                            constexpr size_t array_size = AUTOSIZE;
-                            uint8_t array[array_size];
-                            uint8_t * end = array;
-                            X224::RecvFactory f(this->nego.trans, &end, array_size);
-                            InStream stream(array, end - array);
-                            X224::DT_TPDU_Recv x224(stream);
-                            InStream & mcs_cjcf_data = x224.payload;
-                            MCS::AttachUserConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                            if (mcs.initiator_flag){
-                                this->userid = mcs.initiator;
-                            }
-                        }
-
-                        {
-                            size_t num_channels = this->mod_channel_list.size();
-
-    #ifndef __EMSCRIPTEN__
-
-                            uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
-                            channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
-                            channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
-                            for (size_t index = 0; index < num_channels; index++){
-                                channels_id[index+2] = this->mod_channel_list[index].chanid;
-                            }
-
-                            for (size_t index = 0; index < num_channels+2; index++) {
-                                if (this->verbose & 16){
-                                    LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
-                                }
-                                write_packets(
-                                    this->nego.trans,
-                                    [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
-                                        MCS::ChannelJoinRequest_Send mcs(
-                                            mcs_cjrq_data, this->userid,
-                                            channels_id[index], MCS::PER_ENCODING
-                                        );
-                                        (void)mcs;
-                                    },
-                                    write_x224_dt_tpdu_fn{}
-                                );
-                                constexpr size_t array_size = AUTOSIZE;
-                                uint8_t array[array_size];
-                                uint8_t * end = array;
-                                X224::RecvFactory f(this->nego.trans, &end, array_size);
-                                InStream x224_data(array, end - array);
-                                X224::DT_TPDU_Recv x224(x224_data);
-                                InStream & mcs_cjcf_data = x224.payload;
-                                MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                                // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
-                                if (this->verbose & 16){
-                                    LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, index, mcs.channelId);
-                                }
-                            }
-    #else
-                            this->index_JS = 0;
-                            this->num_channels_JS = num_channels + 2;
-    #endif
-                        }
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User end");
-                        }
-
-                        // RDP Security Commencement
-                        // -------------------------
-
-                        // RDP Security Commencement: If standard RDP security methods are being
-                        // employed and encryption is in force (this is determined by examining the data
-                        // embedded in the GCC Conference Create Response packet) then the client sends
-                        // a Security Exchange PDU containing an encrypted 32-byte random number to the
-                        // server. This random number is encrypted with the public key of the server
-                        // (the server's public key, as well as a 32-byte server-generated random
-                        // number, are both obtained from the data embedded in the GCC Conference Create
-                        //  Response packet).
-
-                        // The client and server then utilize the two 32-byte random numbers to generate
-                        // session keys which are used to encrypt and validate the integrity of
-                        // subsequent RDP traffic.
-
-                        // From this point, all subsequent RDP traffic can be encrypted and a security
-                        // header is include " with the data if encryption is in force (the Client Info
-                        // and licensing PDUs are an exception in that they always have a security
-                        // header). The Security Header follows the X.224 and MCS Headers and indicates
-                        // whether the attached data is encrypted.
-
-                        // Even if encryption is in force server-to-client traffic may not always be
-                        // encrypted, while client-to-server traffic will always be encrypted by
-                        // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-                        // however).
-
-                        // Client                                                     Server
-                        //    |------Security Exchange PDU ---------------------------> |
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
-                        }
-
-                        if (this->encryptionLevel){
-                            if (this->verbose & 1){
-                                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
-                                    this->server_public_key_len);
-                            }
-
-                            this->send_data_request(
-                                GCC::MCS_GLOBAL_CHANNEL,
-                                dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
-                                    SEC::SecExchangePacket_Send mcs(
-                                        stream, this->client_crypt_random, this->server_public_key_len
-                                    );
-                                    (void)mcs;
-                                })
-                            );
-                        }
-
-                        // Secure Settings Exchange
-                        // ------------------------
-
-                        // Secure Settings Exchange: Secure client data (such as the username,
-                        // password and auto-reconnect cookie) is sent to the server using the Client
-                        // Info PDU.
-
-                        // Client                                                     Server
-                        //    |------ Client Info PDU      ---------------------------> |
-
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
-                        }
-
-                        this->send_client_info_pdu(now);
-    #ifndef __EMSCRIPTEN__
-                        this->state = MOD_RDP_GET_LICENSE;
-    #else
-                        this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
-    #endif
-                    }
+                    this->channel_connection_attach_user(now);
                     break;
-
-    #ifdef __EMSCRIPTEN__
 
                 case MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS:
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "mod_rdp::IO Static and Virtual Channels");
-                    }
-                    {
-                        uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
-                        channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
-                        channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
-
-                        size_t index = this->index_JS;
-                        write_packets(
-                            this->nego.trans,
-                            [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
-                                MCS::ChannelJoinRequest_Send mcs(
-                                    mcs_cjrq_data, this->userid,
-                                    channels_id[index], MCS::PER_ENCODING
-                                );
-                                (void)mcs;
-                            },
-                            write_x224_dt_tpdu_fn{}
-                        );
-
-                        constexpr size_t array_size = AUTOSIZE;
-                        uint8_t array[array_size];
-                        uint8_t * end = array;
-                        X224::RecvFactory f(this->nego.trans, &end, array_size);
-                        InStream x224_data(array, end - array);
-                        X224::DT_TPDU_Recv x224(x224_data);
-                        InStream & mcs_cjcf_data = x224.payload;
-                        MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                        // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
-
-                        if (this->encryptionLevel){
-                            if (this->verbose & 1){
-                                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
-                                    this->server_public_key_len);
-                            }
-
-                            this->send_data_request(
-                                GCC::MCS_GLOBAL_CHANNEL,
-                                dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
-                                    SEC::SecExchangePacket_Send mcs(
-                                        stream, this->client_crypt_random, this->server_public_key_len
-                                    );
-                                    (void)mcs;
-                                })
-                            );
-                        }
-
-                        this->send_client_info_pdu(now);
-
-                        this->num_channels_JS--;
-                        this->index_JS++;
-
-                        if (this->num_channels_JS == 0) {
-                            this->state = MOD_RDP_GET_LICENSE;
-                        } else {
-                            this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
-                        }
-                    }
-
+                    this->io_static_and_virtual_channels();
                     break;
-    #endif
 
                 case MOD_RDP_GET_LICENSE:
-
-                    if (this->verbose & 2){
-                        LOG(LOG_INFO, "mod_rdp::Licensing");
-                    }
-                    // Licensing
-                    // ---------
-
-                    // Licensing: The goal of the licensing exchange is to transfer a
-                    // license from the server to the client.
-
-                    // The client should store this license and on subsequent
-                    // connections send the license to the server for validation.
-                    // However, in some situations the client may not be issued a
-                    // license to store. In effect, the packets exchanged during this
-                    // phase of the protocol depend on the licensing mechanisms
-                    // employed by the server. Within the context of this document
-                    // we will assume that the client will not be issued a license to
-                    // store. For details regarding more advanced licensing scenarios
-                    // that take place during the Licensing Phase, see [MS-RDPELE].
-
-                    // Client                                                     Server
-                    //    | <------ License Error PDU Valid Client ---------------- |
-
-                    // 2.2.1.12 Server License Error PDU - Valid Client
-                    // ================================================
-
-                    // The License Error (Valid Client) PDU is an RDP Connection Sequence PDU sent
-                    // from server to client during the Licensing phase of the RDP Connection
-                    // Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence
-                    // phases). This licensing PDU indicates that the server will not issue the
-                    // client a license to store and that the Licensing Phase has ended
-                    // successfully. This is one possible licensing PDU that may be sent during the
-                    // Licensing Phase (see [MS-RDPELE] section 2.2.2 for a list of all permissible
-                    // licensing PDUs).
-
-                    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-                    // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] section 13.7.
-
-                    // mcsSDin (variable): Variable-length PER-encoded MCS Domain PDU (DomainMCSPDU)
-                    // which encapsulates an MCS Send Data Indication structure (SDin, choice 26
-                    // from DomainMCSPDU), as specified in [T125] section 11.33 (the ASN.1 structure
-                    // definitions are given in [T125] section 7, parts 7 and 10). The userData
-                    // field of the MCS Send Data Indication contains a Security Header and a Valid
-                    // Client License Data (section 2.2.1.12.1) structure.
-
-                    // securityHeader (variable): Security header. The format of the security header
-                    // depends on the Encryption Level and Encryption Method selected by the server
-                    // (sections 5.3.2 and 2.2.1.4.3).
-
-                    // This field MUST contain one of the following headers:
-                    //  - Basic Security Header (section 2.2.8.1.1.2.1) if the Encryption Level
-                    // selected by the server is ENCRYPTION_LEVEL_NONE (0) or ENCRYPTION_LEVEL_LOW
-                    // (1) and the embedded flags field does not contain the SEC_ENCRYPT (0x0008)
-                    // flag.
-                    //  - Non-FIPS Security Header (section 2.2.8.1.1.2.2) if the Encryption Method
-                    // selected by the server is ENCRYPTION_METHOD_40BIT (0x00000001),
-                    // ENCRYPTION_METHOD_56BIT (0x00000008), or ENCRYPTION_METHOD_128BIT
-                    // (0x00000002) and the embedded flags field contains the SEC_ENCRYPT (0x0008)
-                    // flag.
-                    //  - FIPS Security Header (section 2.2.8.1.1.2.3) if the Encryption Method
-                    // selected by the server is ENCRYPTION_METHOD_FIPS (0x00000010) and the
-                    // embedded flags field contains the SEC_ENCRYPT (0x0008) flag.
-
-                    // If the Encryption Level is set to ENCRYPTION_LEVEL_CLIENT_COMPATIBLE (2),
-                    // ENCRYPTION_LEVEL_HIGH (3), or ENCRYPTION_LEVEL_FIPS (4) and the flags field
-                    // of the security header does not contain the SEC_ENCRYPT (0x0008) flag (the
-                    // licensing PDU is not encrypted), then the field MUST contain a Basic Security
-                    // Header. This MUST be the case if SEC_LICENSE_ENCRYPT_SC (0x0200) flag was not
-                    // set on the Security Exchange PDU (section 2.2.1.10).
-
-                    // The flags field of the security header MUST contain the SEC_LICENSE_PKT
-                    // (0x0080) flag (see Basic (TS_SECURITY_HEADER)).
-
-                    // validClientLicenseData (variable): The actual contents of the License Error
-                    // (Valid Client) PDU, as specified in section 2.2.1.12.1.
-
-                    {
-                        const char * hostname = this->hostname;
-                        const char * username;
-                        char username_a_domain[512];
-                        if (this->domain[0]) {
-                            snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->username, this->domain);
-                            username = username_a_domain;
-                        }
-                        else {
-                            username = this->username;
-                        }
-                        LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
-                        // read tpktHeader (4 bytes = 3 0 len)
-                        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-
-                        constexpr size_t array_size = AUTOSIZE;
-                        uint8_t array[array_size];
-                        uint8_t * end = array;
-                        X224::RecvFactory f(this->nego.trans, &end, array_size);
-                        InStream stream(array, end - array);
-                        X224::DT_TPDU_Recv x224(stream);
-                        // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
-                        //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-                        MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
-                        SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
-
-                        if (sec.flags & SEC::SEC_LICENSE_PKT) {
-                            LIC::RecvFactory flic(sec.payload);
-
-                            switch (flic.tag) {
-                            case LIC::LICENSE_REQUEST:
-                                if (this->verbose & 2) {
-                                    LOG(LOG_INFO, "Rdp::License Request");
-                                }
-                                {
-                                    LIC::LicenseRequest_Recv lic(sec.payload);
-                                    uint8_t null_data[SEC_MODULUS_SIZE];
-                                    memset(null_data, 0, sizeof(null_data));
-                                    /* We currently use null client keys. This is a bit naughty but, hey,
-                                       the security of license negotiation isn't exactly paramount. */
-                                    SEC::SessionKey keyblock(null_data, null_data, lic.server_random);
-
-                                    /* Store first 16 bytes of session key as MAC secret */
-                                    memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
-                                    memcpy(this->lic_layer_license_key, keyblock.get_LicensingEncryptionKey(), 16);
-                                }
-                                this->send_data_request(
-                                    GCC::MCS_GLOBAL_CHANNEL,
-                                    [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
-                                        if (this->lic_layer_license_size > 0) {
-                                            uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                                            buf_out_uint32(hwid, 2);
-                                            memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
-
-                                            /* Generate a signature for the HWID buffer */
-                                            uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
-
-                                            uint8_t lenhdr[4];
-                                            buf_out_uint32(lenhdr, sizeof(hwid));
-
-                                            Sign sign(this->lic_layer_license_sign_key, 16);
-                                            sign.update(lenhdr, sizeof(lenhdr));
-                                            sign.update(hwid, sizeof(hwid));
-
-                                            static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
-                                            sign.final(signature, sizeof(signature));
-
-
-                                            /* Now encrypt the HWID */
-
-                                            SslRC4 rc4;
-                                            rc4.set_key(this->lic_layer_license_key, 16);
-
-                                            // in, out
-                                            rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
-
-                                            LIC::ClientLicenseInfo_Send(
-                                                lic_data, this->use_rdp5?3:2,
-                                                this->lic_layer_license_size,
-                                                this->lic_layer_license_data.get(),
-                                                hwid, signature
-                                            );
-                                        }
-                                        else {
-                                            LIC::NewLicenseRequest_Send(
-                                                lic_data, this->use_rdp5?3:2, username, hostname
-                                            );
-                                        }
-                                    },
-                                    write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
-                                );
-                                break;
-                            case LIC::PLATFORM_CHALLENGE:
-                                if (this->verbose & 2){
-                                    LOG(LOG_INFO, "Rdp::Platform Challenge");
-                                }
-                                {
-                                    LIC::PlatformChallenge_Recv lic(sec.payload);
-
-                                    uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
-                                    uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
-                                    uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                                    uint8_t crypt_hwid[LIC::LICENSE_HWID_SIZE];
-                                    uint8_t out_sig[LIC::LICENSE_SIGNATURE_SIZE];
-
-                                    memcpy(out_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
-                                    /* Decrypt the token. It should read TEST in Unicode. */
-                                    memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
-                                    SslRC4 rc4_decrypt_token;
-                                    rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
-                                    // size, in, out
-                                    rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
-
-                                    /* Generate a signature for a buffer of token and HWID */
-                                    buf_out_uint32(hwid, 2);
-                                    memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
-
-                                    uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
-                                    memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
-                                    memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
-
-                                    uint8_t lenhdr[4];
-                                    buf_out_uint32(lenhdr, sizeof(sealed_buffer));
-
-                                    Sign sign(this->lic_layer_license_sign_key, 16);
-                                    sign.update(lenhdr, sizeof(lenhdr));
-                                    sign.update(sealed_buffer, sizeof(sealed_buffer));
-
-                                    static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE), "");
-                                    sign.final(out_sig, sizeof(out_sig));
-
-                                    /* Now encrypt the HWID */
-                                    memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
-                                    SslRC4 rc4_hwid;
-                                    rc4_hwid.set_key(this->lic_layer_license_key, 16);
-                                    // size, in, out
-                                    rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
-
-                                    this->send_data_request(
-                                        GCC::MCS_GLOBAL_CHANNEL,
-                                        [&, this](StreamSize<65535 - 1024>, OutStream & lic_data) {
-                                            LIC::ClientPlatformChallengeResponse_Send(
-                                                lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig
-                                            );
-                                        },
-                                        write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
-                                    );
-                                }
-                                break;
-                            case LIC::NEW_LICENSE:
-                                {
-                                    if (this->verbose & 2){
-                                        LOG(LOG_INFO, "Rdp::New License");
-                                    }
-
-                                    LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
-
-                                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that
-                                        this->state = MOD_RDP_CONNECTED;
-
-                                    LOG(LOG_WARNING, "New license not saved");
-                                }
-                                break;
-                            case LIC::UPGRADE_LICENSE:
-                                {
-                                    if (this->verbose & 2){
-                                        LOG(LOG_INFO, "Rdp::Upgrade License");
-                                    }
-                                    LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
-
-                                    LOG(LOG_WARNING, "Upgraded license not saved");
-                                }
-                                break;
-                            case LIC::ERROR_ALERT:
-                                {
-                                    if (this->verbose & 2){
-                                        LOG(LOG_INFO, "Rdp::Get license status");
-                                    }
-                                    LIC::ErrorAlert_Recv lic(sec.payload);
-                                    if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT)
-                                        && (lic.validClientMessage.dwStateTransition == LIC::ST_NO_TRANSITION)){
-                                        this->state = MOD_RDP_CONNECTED;
-                                    }
-                                    else {
-                                        LOG(LOG_ERR, "RDP::License Alert: error=%u transition=%u",
-                                            lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
-                                    }
-                                    this->state = MOD_RDP_CONNECTED;
-                                }
-                                break;
-                            default:
-                                {
-                                    LOG(LOG_ERR, "Unexpected license tag sent from server (tag = %x)", flic.tag);
-                                    throw Error(ERR_SEC);
-                                }
-                                break;
-                            }
-
-                            if (sec.payload.get_current() != sec.payload.get_data_end()){
-                                LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
-                                throw Error(ERR_SEC);
-                            }
-                        }
-                        else {
-                            LOG(LOG_WARNING, "Failed to get expected license negotiation PDU");
-                            hexdump(x224.payload.get_data(), x224.payload.get_capacity());
-                            //throw Error(ERR_SEC);
-                            this->state = MOD_RDP_CONNECTED;
-                            hexdump(sec.payload.get_data(), sec.payload.get_capacity());
-                        }
-                    }
+                    this->get_license();
                     break;
 
                     // Capabilities Exchange
