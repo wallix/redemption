@@ -105,7 +105,7 @@
 "#enable_session_log = 1\n\n"
 
 "# Log redirection in a file\n"
-"#_hidden\n"
+"#_advanced\n"
 "#session_log_redirection = 0\n\n"
 
 "#   0: keyboard input are not masked\n"

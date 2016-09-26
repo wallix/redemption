@@ -321,9 +321,10 @@ struct RdpNego
         InStream stream(array, end - array);
         X224::CC_TPDU_Recv x224(stream);
 
-        if (x224.rdp_neg_type == 0){
+        if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
             this->tls = false;
             this->state = NEGO_STATE_FINAL;
+            LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
             return;
         }
         this->selected_protocol = x224.rdp_neg_code;
@@ -449,7 +450,6 @@ struct RdpNego
             this->state = NEGO_STATE_FINAL;
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
-
     }
 
 

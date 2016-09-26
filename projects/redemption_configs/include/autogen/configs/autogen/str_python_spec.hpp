@@ -105,7 +105,7 @@
 "enable_session_log = boolean(default=True)\n\n"
 
 "# Log redirection in a file\n"
-"#_hidden\n"
+"#_advanced\n"
 "session_log_redirection = boolean(default=False)\n\n"
 
 "#   0: keyboard input are not masked\n"
