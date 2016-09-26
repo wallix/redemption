@@ -625,6 +625,9 @@
 "pass_dialog_box = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"mod_internal = integer(min=0, default=0)\n\n"
+
+"#_advanced\n"
 "config = boolean(default=True)\n\n"
 
 "[translation]\n\n"

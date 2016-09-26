@@ -26,6 +26,10 @@
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 
+enum {
+    MODINTERNAL_LOGLEVEL_CLIENTEXECUTE = 0x00000001
+};
+
 struct InternalMod : public mod_api {
 public:
     uint16_t front_width;

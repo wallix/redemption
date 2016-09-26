@@ -27,6 +27,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
+#include "mod/internal/internal_mod.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
@@ -110,8 +111,11 @@ class ClientExecute
 
     bool full_window_drag_enabled = false;
 
+    uint32_t verbose;
+
 public:
-    ClientExecute(FrontAPI & front) {
+    ClientExecute(FrontAPI & front, uint32_t verbose)
+    : verbose(verbose) {
         this->front_ = &front;
     }   // ClientExecute
 
@@ -219,7 +223,7 @@ private:
 
 public:
     void input_invalidate(const Rect& r) {
-        LOG(LOG_INFO, "ClientExecute::input_invalidate");
+        //LOG(LOG_INFO, "ClientExecute::input_invalidate");
 
         if (!this->channel_) return;
 
@@ -358,17 +362,19 @@ public:
                     const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                 | CHANNELS::CHANNEL_FLAG_LAST;
 
-                    {
-                        const bool send              = true;
-                        const bool from_or_to_client = true;
-                        ::msgdump_c(send, from_or_to_client, length, flags,
-                            out_s.get_data(), length);
-                    }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (0)");
-                    smmipdu.log(LOG_INFO);
+                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        {
+                            const bool send              = true;
+                            const bool from_or_to_client = true;
+                            ::msgdump_c(send, from_or_to_client, length, flags,
+                                out_s.get_data(), length);
+                        }
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (0)");
+                        smmipdu.log(LOG_INFO);
 
-                    this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                                  flags);
+                        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                                      flags);
+                    }
                 }
 
                 {
@@ -393,14 +399,16 @@ public:
                     const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                 | CHANNELS::CHANNEL_FLAG_LAST;
 
-                    {
-                        const bool send              = true;
-                        const bool from_or_to_client = true;
-                        ::msgdump_c(send, from_or_to_client, length, flags,
-                            out_s.get_data(), length);
+                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        {
+                            const bool send              = true;
+                            const bool from_or_to_client = true;
+                            ::msgdump_c(send, from_or_to_client, length, flags,
+                                out_s.get_data(), length);
+                        }
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (0)");
+                        smssoepdu.log(LOG_INFO);
                     }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (0)");
-                    smssoepdu.log(LOG_INFO);
 
                     this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                                   flags);
@@ -456,7 +464,9 @@ public:
             else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_TITLEBAR;
 
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar");
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 pressed on title bar");
+                }
 
                 this->captured_mouse_x = xPos;
                 this->captured_mouse_y = yPos;
@@ -660,10 +670,12 @@ public:
                     order.NumVisibilityRects(1);
                     order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
-                    StaticOutStream<1024> out_s;
-                    order.emit(out_s);
-                    order.log(LOG_INFO);
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        StaticOutStream<1024> out_s;
+                        order.emit(out_s);
+                        order.log(LOG_INFO);
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+                    }
 
                     this->front_->draw(order);
 
@@ -751,14 +763,16 @@ public:
                         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
-                        {
-                            const bool send              = true;
-                            const bool from_or_to_client = true;
-                            ::msgdump_c(send, from_or_to_client, length, flags,
-                                out_s.get_data(), length);
+                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                            {
+                                const bool send              = true;
+                                const bool from_or_to_client = true;
+                                ::msgdump_c(send, from_or_to_client, length, flags,
+                                    out_s.get_data(), length);
+                            }
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (1)");
+                            smmipdu.log(LOG_INFO);
                         }
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (1)");
-                        smmipdu.log(LOG_INFO);
 
                         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                                       flags);
@@ -786,14 +800,16 @@ public:
                         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
-                        {
-                            const bool send              = true;
-                            const bool from_or_to_client = true;
-                            ::msgdump_c(send, from_or_to_client, length, flags,
-                                out_s.get_data(), length);
+                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                            {
+                                const bool send              = true;
+                                const bool from_or_to_client = true;
+                                ::msgdump_c(send, from_or_to_client, length, flags,
+                                    out_s.get_data(), length);
+                            }
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (1)");
+                            smssoepdu.log(LOG_INFO);
                         }
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (1)");
-                        smssoepdu.log(LOG_INFO);
 
                         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                                       flags);
@@ -923,7 +939,9 @@ public:
             if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released");
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released");
+                }
 
                 if (this->mouse_moved) {
                     this->mouse_moved = false;
@@ -958,14 +976,16 @@ public:
                         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
-                        {
-                            const bool send              = true;
-                            const bool from_or_to_client = true;
-                            ::msgdump_c(send, from_or_to_client, length, flags,
-                                out_s.get_data(), length);
+                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                            {
+                                const bool send              = true;
+                                const bool from_or_to_client = true;
+                                ::msgdump_c(send, from_or_to_client, length, flags,
+                                    out_s.get_data(), length);
+                            }
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (0)");
+                            smssoepdu.log(LOG_INFO);
                         }
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (0)");
-                        smssoepdu.log(LOG_INFO);
 
                         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                                       flags);
@@ -989,10 +1009,12 @@ public:
                         order.VisibleOffsetX(this->window_rect.x);
                         order.VisibleOffsetY(this->window_rect.y);
 
-                        StaticOutStream<1024> out_s;
-                        order.emit(out_s);
-                        order.log(LOG_INFO);
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
+                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                            StaticOutStream<1024> out_s;
+                            order.emit(out_s);
+                            order.log(LOG_INFO);
+                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
+                        }
 
                         this->front_->draw(order);
                     }
@@ -1069,10 +1091,12 @@ public:
                     order.Style(0x34EE0000);
                     order.ExtendedStyle(0x40310);
 
-                    StaticOutStream<1024> out_s;
-                    order.emit(out_s);
-                    order.log(LOG_INFO);
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
+                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        StaticOutStream<1024> out_s;
+                        order.emit(out_s);
+                        order.log(LOG_INFO);
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
+                    }
 
                     this->front_->draw(order);
 
@@ -1149,14 +1173,16 @@ public:
                     const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                                 | CHANNELS::CHANNEL_FLAG_LAST;
 
-                    {
-                        const bool send              = true;
-                        const bool from_or_to_client = true;
-                        ::msgdump_c(send, from_or_to_client, length, flags,
-                            out_s.get_data(), length);
+                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        {
+                            const bool send              = true;
+                            const bool from_or_to_client = true;
+                            ::msgdump_c(send, from_or_to_client, length, flags,
+                                out_s.get_data(), length);
+                        }
+                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (1)");
+                        smssoepdu.log(LOG_INFO);
                     }
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (1)");
-                    smssoepdu.log(LOG_INFO);
 
                     this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                                   flags);
@@ -1165,7 +1191,8 @@ public:
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
             }   // else if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
         }   // else if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
-        else if (pointerFlags & PTRFLAGS_EX_DOUBLE_CLICK) {
+        else if ((pointerFlags & PTRFLAGS_EX_DOUBLE_CLICK) &&
+                 this->south.contains_pt(xPos, yPos)) {
             this->window_rect.y  = 0;
             this->window_rect.cy = this->work_area_rect.cy - 1;
 
@@ -1199,10 +1226,12 @@ public:
                 order.VisibleOffsetX(this->window_rect.x);
                 order.VisibleOffsetY(this->window_rect.y);
 
-                StaticOutStream<1024> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -1252,14 +1281,16 @@ public:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags,
-                    out_s.get_data(), length);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server Handshake PDU");
+                handshake_pdu.log(LOG_INFO);
             }
-            LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server Handshake PDU");
-            handshake_pdu.log(LOG_INFO);
 
             this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                           flags);
@@ -1282,14 +1313,16 @@ public:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags,
-                    out_s.get_data(), length);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
+                server_system_parameters_update_pdu.log(LOG_INFO);
             }
-            LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
-            server_system_parameters_update_pdu.log(LOG_INFO);
 
             this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                           flags);
@@ -1312,14 +1345,16 @@ public:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags,
-                    out_s.get_data(), length);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
+                server_system_parameters_update_pdu.log(LOG_INFO);
             }
-            LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server System Parameters Update PDU");
-            server_system_parameters_update_pdu.log(LOG_INFO);
 
             this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                           flags);
@@ -1342,10 +1377,12 @@ public:
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-            StaticOutStream<256> out_s;
-            order.emit(out_s);
-            order.log(LOG_INFO);
-            LOG(LOG_INFO, "ClientExecute::reset: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                StaticOutStream<256> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "ClientExecute::reset: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
 
             this->front_->draw(order);
         }
@@ -1375,7 +1412,7 @@ public:
 
         capdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             capdu.log(LOG_INFO);
         }
 
@@ -1391,10 +1428,12 @@ public:
 
                 order.ActiveWindowId(0xFFFFFFFF);
 
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<256> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -1410,10 +1449,12 @@ public:
                 order.NumWindowIds(1);
                 order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
 
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<256> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -1442,7 +1483,7 @@ public:
 
         cepdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             cepdu.log(LOG_INFO);
         }
 
@@ -1474,7 +1515,7 @@ public:
 
         cgaipdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             cgaipdu.log(LOG_INFO);
         }
 
@@ -1495,16 +1536,18 @@ public:
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags,
-                    out_s.get_data(), length);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags,
+                        out_s.get_data(), length);
+                }
+                LOG(LOG_INFO,
+                    "ClientExecute::process_client_get_application_id_pdu: "
+                        "Send to client - Server Get Application ID Response PDU");
+                server_get_application_id_response_pdu.log(LOG_INFO);
             }
-            LOG(LOG_INFO,
-                "ClientExecute::process_client_get_application_id_pdu: "
-                    "Send to client - Server Get Application ID Response PDU");
-            server_get_application_id_response_pdu.log(LOG_INFO);
 
             this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                           flags);
@@ -1535,7 +1578,7 @@ public:
 
         hspdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             hspdu.log(LOG_INFO);
         }
     }   // process_client_handshake_pdu
@@ -1563,7 +1606,7 @@ public:
 
         cipdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             cipdu.log(LOG_INFO);
         }
     }   // process_client_information_pdu
@@ -1589,7 +1632,7 @@ public:
 
         cscpdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL)*/ {
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             cscpdu.log(LOG_INFO);
         }
 
@@ -1606,10 +1649,12 @@ public:
 
                         order.ActiveWindowId(0xFFFFFFFF);
 
-                        StaticOutStream<256> out_s;
-                        order.emit(out_s);
-                        order.log(LOG_INFO);
-                        LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                            StaticOutStream<256> out_s;
+                            order.emit(out_s);
+                            order.log(LOG_INFO);
+                            LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                        }
 
                         this->front_->draw(order);
                     }
@@ -1649,10 +1694,12 @@ public:
                         order.Style(0x34EE0000);
                         order.ExtendedStyle(0x40310);
 
-                        StaticOutStream<1024> out_s;
-                        order.emit(out_s);
-                        order.log(LOG_INFO);
-                        LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                            StaticOutStream<1024> out_s;
+                            order.emit(out_s);
+                            order.log(LOG_INFO);
+                            LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+                        }
 
                         this->front_->draw(order);
                     }
@@ -1705,10 +1752,12 @@ public:
                     order.NumVisibilityRects(1);
                     order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
-                    StaticOutStream<1024> out_s;
-                    order.emit(out_s);
-                    order.log(LOG_INFO);
-                    LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
+                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                        StaticOutStream<1024> out_s;
+                        order.emit(out_s);
+                        order.log(LOG_INFO);
+                        LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
+                    }
 
                     this->front_->draw(order);
 
@@ -1747,7 +1796,7 @@ public:
 
         cspupdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             cspupdu.log(LOG_INFO);
         }
 
@@ -1759,9 +1808,11 @@ public:
             this->work_area_rect.cx = body_r.Right() - body_r.Left();
             this->work_area_rect.cy = body_r.Bottom() - body_r.Top();
 
-            LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
-                this->work_area_rect.x, this->work_area_rect.y,
-                this->work_area_rect.cx, this->work_area_rect.cy);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                LOG(LOG_INFO, "WorkAreaRect: (%u, %u, %u, %u)",
+                    this->work_area_rect.x, this->work_area_rect.y,
+                    this->work_area_rect.cx, this->work_area_rect.cy);
+            }
 
             {
                 RDP::RAIL::ActivelyMonitoredDesktop order;
@@ -1777,10 +1828,12 @@ public:
                 order.ActiveWindowId(0xFFFFFFFF);
                 order.NumWindowIds(0);
 
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<256> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -1793,10 +1846,12 @@ public:
                         RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED
                     );
 
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<256> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -1812,10 +1867,12 @@ public:
                 order.ActiveWindowId(INTERNAL_MODULE_WINDOW_ID);
                 order.NumWindowIds(0);
 
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<256> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -1831,10 +1888,12 @@ public:
                 order.NumWindowIds(1);
                 order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
 
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<256> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -1876,10 +1935,12 @@ public:
                 order.NumVisibilityRects(1);
                 order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
 
-                StaticOutStream<1024> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -2044,7 +2105,7 @@ public:
                     };
                 order.icon_info.BitsColor(BitsColor, sizeof(BitsColor));
 
-                {
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     StaticOutStream<8192> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2058,7 +2119,7 @@ public:
                         | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
                     );
 
-                {
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     StaticOutStream<8192> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
@@ -2084,16 +2145,17 @@ public:
             this->task_bar_rect.cx = body_r.Right() - body_r.Left();
             this->task_bar_rect.cy = body_r.Bottom() - body_r.Top();
 
-            LOG(LOG_INFO, "TaskBarRect: (%u, %u, %u, %u)",
-                this->task_bar_rect.x, this->task_bar_rect.y,
-                this->task_bar_rect.cx, this->task_bar_rect.cy);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                LOG(LOG_INFO, "TaskBarRect: (%u, %u, %u, %u)",
+                    this->task_bar_rect.x, this->task_bar_rect.y,
+                    this->task_bar_rect.cx, this->task_bar_rect.cy);
+            }
         }   // else if (cspupdu.SystemParam() == RAIL_SPI_TASKBARPOS)
         else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS) {
             this->full_window_drag_enabled =
                 (cspupdu.body_b() != 0);
         }   // else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS)
     }   // process_client_system_parameters_update_pdu
-
 
     void process_client_window_move_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
@@ -2116,7 +2178,7 @@ public:
 
         cwmpdu.receive(chunk);
 
-        /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             cwmpdu.log(LOG_INFO);
         }
 
@@ -2172,10 +2234,12 @@ public:
                 order.VisibleOffsetX(this->window_rect.x);
                 order.VisibleOffsetY(this->window_rect.y);
 
-                StaticOutStream<1024> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+                }
 
                 this->front_->draw(order);
             }
@@ -2203,14 +2267,16 @@ public:
                 const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                             | CHANNELS::CHANNEL_FLAG_LAST;
 
-                {
-                    const bool send              = true;
-                    const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, length, flags,
-                        out_s.get_data(), length);
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    {
+                        const bool send              = true;
+                        const bool from_or_to_client = true;
+                        ::msgdump_c(send, from_or_to_client, length, flags,
+                            out_s.get_data(), length);
+                    }
+                    LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send to client - Server Move/Size End PDU");
+                    smssoepdu.log(LOG_INFO);
                 }
-                LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send to client - Server Move/Size End PDU");
-                smssoepdu.log(LOG_INFO);
 
                 this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                               flags);
@@ -2234,12 +2300,14 @@ public:
     }   // process_client_window_move_pdu
 
     void send_to_mod_rail_channel(size_t length, InStream & chunk, uint32_t flags) {
-        LOG(LOG_INFO,
-            "ClientExecute::send_to_mod_rail_channel: "
-                "total_length=%zu flags=0x%08X chunk_data_length=%zu",
-            length, flags, chunk.get_capacity());
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            LOG(LOG_INFO,
+                "ClientExecute::send_to_mod_rail_channel: "
+                    "total_length=%zu flags=0x%08X chunk_data_length=%zu",
+                length, flags, chunk.get_capacity());
+        }
 
-        {
+        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             const bool send              = false;
             const bool from_or_to_client = true;
             ::msgdump_c(send, from_or_to_client, length, flags,
@@ -2261,7 +2329,7 @@ public:
         switch (this->client_order_type)
         {
             case TS_RAIL_ORDER_ACTIVATE:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Activate PDU");
@@ -2272,7 +2340,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_CLIENTSTATUS:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Information PDU");
@@ -2282,30 +2350,30 @@ public:
                     length, flags, chunk);
             break;
 
-            case TS_RAIL_ORDER_COMPARTMENTINFO:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
-                    LOG(LOG_INFO,
-                        "ClientExecute::send_to_mod_rail_channel: "
-                            "Client Compartment Status Information PDU");
-                }
+            //case TS_RAIL_ORDER_COMPARTMENTINFO:
+            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //        LOG(LOG_INFO,
+            //            "ClientExecute::send_to_mod_rail_channel: "
+            //                "Client Compartment Status Information PDU");
+            //    }
+            //
+            //    this->process_client_compartment_status_information_pdu(
+            //        length, flags, chunk);
+            //break;
 
-//                this->process_client_compartment_status_information_pdu(
-//                    length, flags, chunk);
-            break;
-
-            case TS_RAIL_ORDER_CLOAK:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
-                    LOG(LOG_INFO,
-                        "ClientExecute::send_to_mod_rail_channel: "
-                            "Client Window Cloak State Change PDU");
-                }
-
-//                this->process_client_window_cloak_state_change_pdu(
-//                    length, flags, chunk);
-            break;
+            //case TS_RAIL_ORDER_CLOAK:
+            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //        LOG(LOG_INFO,
+            //            "ClientExecute::send_to_mod_rail_channel: "
+            //                "Client Window Cloak State Change PDU");
+            //    }
+            //
+            //    this->process_client_window_cloak_state_change_pdu(
+            //        length, flags, chunk);
+            //break;
 
             case TS_RAIL_ORDER_EXEC:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Execute PDU");
@@ -2316,7 +2384,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_GET_APPID_REQ:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Get Application ID PDU");
@@ -2327,7 +2395,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_HANDSHAKE:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Handshake PDU");
@@ -2337,41 +2405,41 @@ public:
                     length, flags, chunk);
             break;
 
-            case TS_RAIL_ORDER_LANGBARINFO:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
-                    LOG(LOG_INFO,
-                        "ClientExecute::send_to_mod_rail_channel: "
-                            "Client Language Bar Information PDU");
-                }
+            //case TS_RAIL_ORDER_LANGBARINFO:
+            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //        LOG(LOG_INFO,
+            //            "ClientExecute::send_to_mod_rail_channel: "
+            //                "Client Language Bar Information PDU");
+            //    }
+            //
+            //    this->process_client_language_bar_information_pdu(
+            //        length, flags, chunk);
+            //break;
 
-//                this->process_client_language_bar_information_pdu(
-//                    length, flags, chunk);
-            break;
+            //case TS_RAIL_ORDER_LANGUAGEIMEINFO:
+            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //        LOG(LOG_INFO,
+            //            "ClientExecute::send_to_mod_rail_channel: "
+            //                "Client Language Profile Information PDU");
+            //    }
+            //
+            //    this->process_client_language_profile_information_pdu(
+            //        length, flags, chunk);
+            //break;
 
-            case TS_RAIL_ORDER_LANGUAGEIMEINFO:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
-                    LOG(LOG_INFO,
-                        "ClientExecute::send_to_mod_rail_channel: "
-                            "Client Language Profile Information PDU");
-                }
-
-//                this->process_client_language_profile_information_pdu(
-//                    length, flags, chunk);
-            break;
-
-            case TS_RAIL_ORDER_NOTIFY_EVENT:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
-                    LOG(LOG_INFO,
-                        "ClientExecute::send_to_mod_rail_channel: "
-                            "Client Notify Event PDU");
-                }
-
-//                this->process_client_notify_event_pdu(
-//                    length, flags, chunk);
-            break;
+            //case TS_RAIL_ORDER_NOTIFY_EVENT:
+            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //        LOG(LOG_INFO,
+            //            "ClientExecute::send_to_mod_rail_channel: "
+            //                "Client Notify Event PDU");
+            //    }
+            //
+            //    this->process_client_notify_event_pdu(
+            //        length, flags, chunk);
+            //break;
 
             case TS_RAIL_ORDER_SYSCOMMAND:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client System Command PDU");
@@ -2382,7 +2450,7 @@ public:
             break;
 
             case TS_RAIL_ORDER_SYSPARAM:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client System Parameters Update PDU");
@@ -2392,19 +2460,19 @@ public:
                     length, flags, chunk);
             break;
 
-            case TS_RAIL_ORDER_SYSMENU:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
-                    LOG(LOG_INFO,
-                        "ClientExecute::send_to_mod_rail_channel: "
-                            "Client System Menu PDU");
-                }
-
-//                this->process_client_system_menu_pdu(
-//                    length, flags, chunk);
-            break;
+            //case TS_RAIL_ORDER_SYSMENU:
+            //    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+            //        LOG(LOG_INFO,
+            //            "ClientExecute::send_to_mod_rail_channel: "
+            //                "Client System Menu PDU");
+            //    }
+            //
+            //    this->process_client_system_menu_pdu(
+            //        length, flags, chunk);
+            //break;
 
             case TS_RAIL_ORDER_WINDOWMOVE:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Client Window Move PDU");
@@ -2415,7 +2483,7 @@ public:
             break;
 
             default:
-                /*if (this->verbose & MODRDP_LOGLEVEL_RAIL) */{
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
                     LOG(LOG_INFO,
                         "ClientExecute::send_to_mod_rail_channel: "
                             "Delivering unprocessed messages %s(%u) to server.",

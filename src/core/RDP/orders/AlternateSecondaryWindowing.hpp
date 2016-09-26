@@ -1020,7 +1020,7 @@ private:
 
 public:
     void emit(OutStream & stream) const {
-const auto save_stream_p = stream.get_current() + 1;
+        //const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
@@ -1104,12 +1104,12 @@ const auto save_stream_p = stream.get_current() + 1;
         }
 
         this->header.emit_end();
-LOG(LOG_INFO, "Send NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Send NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
-const auto save_stream_p = stream.get_current();
+        //const auto save_stream_p = stream.get_current();
         this->header.receive(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
@@ -1374,8 +1374,8 @@ const auto save_stream_p = stream.get_current();
 
             this->AppBarEdge_ = stream.in_uint8();
         }
-LOG(LOG_INFO, "Recv NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Recv NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     uint32_t OwnerWindowId() const { return this->OwnerWindowId_; }
@@ -1802,23 +1802,23 @@ public:
     IconInfo icon_info;
 
     void emit(OutStream & stream) const {
-const auto save_stream_p = stream.get_current() + 1;
+        //const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         this->icon_info.emit(stream);
 
         this->header.emit_end();
-LOG(LOG_INFO, "Send WindowIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Send WindowIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
-const auto save_stream_p = stream.get_current();
+        //const auto save_stream_p = stream.get_current();
         this->header.receive(stream);
 
         this->icon_info.receive(stream);
-LOG(LOG_INFO, "Recv WindowIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Recv WindowIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     size_t size() const {
@@ -2011,23 +2011,23 @@ public:
     WindowInformationCommonHeader header;
 
     void emit(OutStream & stream) const {
-const auto save_stream_p = stream.get_current() + 1;
+        //const auto save_stream_p = stream.get_current() + 1;
 
         this->header.emit_begin(stream);
 
         this->header.emit_end();
 
-LOG(LOG_INFO, "Send DeletedWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Send DeletedWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
-const auto save_stream_p = stream.get_current();
+        //const auto save_stream_p = stream.get_current();
 
         this->header.receive(stream);
 
-LOG(LOG_INFO, "Recv DeletedWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Recv DeletedWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     static size_t size() {
@@ -3050,7 +3050,7 @@ private:
 
 public:
     void emit(OutStream & stream) const {
-const auto save_stream_p = stream.get_current() + 1;
+        //const auto save_stream_p = stream.get_current() + 1;
         this->header.emit_begin(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
@@ -3066,12 +3066,12 @@ const auto save_stream_p = stream.get_current() + 1;
         }
 
         this->header.emit_end();
-LOG(LOG_INFO, "Send ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Send ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
-const auto save_stream_p = stream.get_current();
+        //const auto save_stream_p = stream.get_current();
         this->header.receive(stream);
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
@@ -3118,8 +3118,8 @@ const auto save_stream_p = stream.get_current();
                 this->window_ids_[i] = stream.in_uint32_le();
             }
         }
-LOG(LOG_INFO, "Recv ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Recv ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     uint32_t ActiveWindowId() const { return this->ActiveWindowId_; }
