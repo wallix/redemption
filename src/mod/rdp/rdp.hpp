@@ -1809,6 +1809,309 @@ public:
         return this->event;
     }
 
+    void early_tls_security_exchange()
+    {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
+        }
+
+        char * hostname = this->hostname;
+
+        switch (this->nego.state){
+        case RdpNego::NEGO_STATE_INITIAL:
+        case RdpNego::NEGO_STATE_NLA:
+        case RdpNego::NEGO_STATE_TLS:
+        case RdpNego::NEGO_STATE_RDP:
+        default:
+            LOG(LOG_INFO, "this->nego.server_event start");
+            this->nego.server_event(
+                    this->server_cert_store,
+                    this->server_cert_check,
+                    this->server_notifier,
+                    this->certif_path.get()
+                );
+            LOG(LOG_INFO, "this->nego.server_event end");
+            break;
+        case RdpNego::NEGO_STATE_FINAL:
+            // Basic Settings Exchange
+            // -----------------------
+
+            // Basic Settings Exchange: Basic settings are exchanged between the client and
+            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+            // Connect Initial PDU contains a GCC Conference Create Request, while the
+            // Connect Response PDU contains a GCC Conference Create Response.
+
+            // These two Generic Conference Control (GCC) packets contain concatenated
+            // blocks of settings data (such as core data, security data and network data)
+            // which are read by client and server
+
+
+            // Client                                                     Server
+            //    |--------------MCS Connect Initial PDU with-------------> |
+            //                   GCC Conference Create Request
+            //    | <------------MCS Connect Response PDU with------------- |
+            //                   GCC conference Create Response
+
+            /* Generic Conference Control (T.124) ConferenceCreateRequest */
+            write_packets(
+                this->nego.trans,
+                [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
+                    // ------------------------------------------------------------
+                    GCC::UserData::CSCore cs_core;
+
+                    Rect primary_monitor_rect =
+                        this->cs_monitor.get_primary_monitor_rect();
+
+                    cs_core.version = this->use_rdp5?0x00080004:0x00080001;
+                    const bool single_monitor =
+                        (!this->allow_using_multiple_monitors ||
+                         (this->cs_monitor.monitorCount < 2));
+                    cs_core.desktopWidth  = (single_monitor ? this->front_width : primary_monitor_rect.cx + 1);
+                    cs_core.desktopHeight = (single_monitor ? this->front_height : primary_monitor_rect.cy + 1);
+                    //cs_core.highColorDepth = this->front_bpp;
+                    cs_core.highColorDepth = ((this->front_bpp == 32)
+                        ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
+                    cs_core.keyboardLayout = this->keylayout;
+                    if (this->front_bpp == 32) {
+                        cs_core.supportedColorDepths = 15;
+                        cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
+                    }
+                    if (!single_monitor) {
+                        LOG(LOG_INFO, "not a single_monitor");
+                        cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+                    }
+
+                    uint16_t hostlen = strlen(hostname);
+                    uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
+                    for (size_t i = 0; i < maxhostlen ; i++){
+                        cs_core.clientName[i] = hostname[i];
+                    }
+                    memset(&(cs_core.clientName[maxhostlen]), 0, (16 - maxhostlen) * sizeof(uint16_t));
+
+                    if (this->nego.tls){
+                        cs_core.serverSelectedProtocol = this->nego.selected_protocol;
+                    }
+                    if (this->verbose & 1) {
+                        cs_core.log("Sending to Server");
+                    }
+                    LOG(LOG_INFO, "before cs_core.emit(stream);");
+                    cs_core.emit(stream);
+                    LOG(LOG_INFO, "after cs_core.emit(stream);");
+                    // ------------------------------------------------------------
+
+                    GCC::UserData::CSCluster cs_cluster;
+                    // TODO CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?
+                    if (this->server_redirection_support) {
+                        LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
+                        if (!this->nego.tls){
+                            cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
+                            cs_cluster.flags |= (2 << 2); // REDIRECTION V3
+                        } else {
+                            cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
+                            cs_cluster.flags |= (3 << 2);  // REDIRECTION V4
+                        }
+                        if (this->redir_info.valid) {
+                            cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                            cs_cluster.redirectedSessionID = this->redir_info.session_id;
+                            LOG(LOG_INFO, "Effective Redirection SessionId=%u",
+                                cs_cluster.redirectedSessionID);
+                        }
+                    }
+                    if (this->console_session) {
+                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                    }
+                    // if (!this->nego.tls){
+                    //     if (this->console_session){
+                    //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+                    //     }
+                    //     else {
+                    //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+                    //     }
+                    //     }
+                    // else {
+                    //     cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
+                    //     if (this->console_session){
+                    //         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
+                    //     }
+                    // }
+                    if (this->verbose & 1) {
+                        cs_cluster.log("Sending to server");
+                    }
+                    cs_cluster.emit(stream);
+                    // ------------------------------------------------------------
+                    GCC::UserData::CSSecurity cs_security;
+                    if (this->verbose & 1) {
+                        cs_security.log("Sending to server");
+                    }
+                    cs_security.emit(stream);
+                    // ------------------------------------------------------------
+
+                    const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
+                    size_t num_channels = channel_list.size();
+                    if ((num_channels > 0) || this->enable_auth_channel ||
+                        this->file_system_drive_manager.HasManagedDrive()) {
+                        /* Here we need to put channel information in order
+                        to redirect channel data
+                        from client to server passing through the "proxy" */
+                        GCC::UserData::CSNet cs_net;
+                        cs_net.channelCount = num_channels;
+                        bool has_cliprdr_channel = false;
+                        bool has_rdpdr_channel   = false;
+                        bool has_rdpsnd_channel  = false;
+                        for (size_t index = 0; index < num_channels; index++) {
+                            const CHANNELS::ChannelDef & channel_item = channel_list[index];
+                            if (this->authorization_channels.is_authorized(channel_item.name) ||
+                                ((!strcmp(channel_item.name, channel_names::rdpdr) ||
+                                  !strcmp(channel_item.name, channel_names::rdpsnd)) &&
+                                this->file_system_drive_manager.HasManagedDrive())
+                            ) {
+                                if (!strcmp(channel_item.name, channel_names::cliprdr)) {
+                                    has_cliprdr_channel = true;
+                                }
+                                else if (!strcmp(channel_item.name, channel_names::rdpdr)) {
+                                    has_rdpdr_channel = true;
+                                }
+                                else if (!strcmp(channel_item.name, channel_names::rdpsnd)) {
+                                    has_rdpsnd_channel = true;
+                                }
+                                memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
+                            }
+                            else {
+                                memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
+                            }
+                            cs_net.channelDefArray[index].options = channel_item.flags;
+                            CHANNELS::ChannelDef def;
+                            memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                            def.flags = channel_item.flags;
+                            if (this->verbose & 16) {
+                                def.log(index);
+                            }
+                            this->mod_channel_list.push_back(def);
+                        }
+
+                        // Inject a new channel for file system virtual channel (rdpdr)
+                        if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
+                            ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                    sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                    "%s", channel_names::rdpdr);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                  GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
+                            CHANNELS::ChannelDef def;
+                            ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (this->verbose & 16){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
+
+                        // Inject a new channel for clipboard channel (cliprdr)
+                        if (!has_cliprdr_channel && this->session_probe_use_clipboard_based_launcher) {
+                            ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                    sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                    "%s", channel_names::cliprdr);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                  GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
+                            CHANNELS::ChannelDef def;
+                            ::snprintf(def.name, sizeof(def.name), "%s", channel_names::cliprdr);
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (this->verbose & 16){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
+
+                        // The RDPDR channel advertised by the client is ONLY accepted by the RDP
+                        //  server 2012 if the RDPSND channel is also advertised.
+                        if (!has_rdpsnd_channel &&
+                            this->file_system_drive_manager.HasManagedDrive()) {
+                            ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
+                                    sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
+                                    "%s", channel_names::rdpsnd);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                  GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
+                            CHANNELS::ChannelDef def;
+                            ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (this->verbose & 16){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
+
+                        // Inject a new channel for auth_channel virtual channel (wablauncher)
+                        if (this->enable_auth_channel) {
+                            REDASSERT(this->auth_channel[0]);
+                            memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                            CHANNELS::ChannelDef def;
+                            memcpy(def.name, this->auth_channel, 8);
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (this->verbose & 16){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
+
+                        if (this->enable_session_probe) {
+                            const char * session_probe_channel_name = "sespro\0\0";
+                            memcpy(cs_net.channelDefArray[cs_net.channelCount].name, session_probe_channel_name, 8);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                            CHANNELS::ChannelDef def;
+                            memcpy(def.name, session_probe_channel_name, 8);
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (this->verbose & 16){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
+
+                        if (this->verbose & 1) {
+                            cs_net.log("Sending to server");
+                        }
+                        cs_net.emit(stream);
+                    }
+
+                    if (!single_monitor) {
+                        //if (this->verbose & 1) {
+                            this->cs_monitor.log("Sending to server");
+                        //}
+                        this->cs_monitor.emit(stream);
+                    }
+                },
+                [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
+                    GCC::Create_Request_Send(
+                        static_cast<OutPerStream&>(gcc_header),
+                        packet_size
+                    );
+                },
+                [this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+                    MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
+                    (void)mcs;
+                },
+                write_x224_dt_tpdu_fn{}
+            );
+
+            this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
+            break;
+
+        }
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange end");
+        }        
+    }
+
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         if ((!this->event.waked_up_by_time &&
              (!this->session_probe_virtual_channel_p ||
@@ -1820,299 +2123,7 @@ public:
                 char * hostname = this->hostname;
                 switch (this->state){
                 case MOD_RDP_NEGO:
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
-                    }
-                    switch (this->nego.state){
-                    case RdpNego::NEGO_STATE_INITIAL:
-                    case RdpNego::NEGO_STATE_NLA:
-                    case RdpNego::NEGO_STATE_TLS:
-                    case RdpNego::NEGO_STATE_RDP:
-                    default:
-                        LOG(LOG_INFO, "this->nego.server_event start");
-                        this->nego.server_event(
-                                this->server_cert_store,
-                                this->server_cert_check,
-                                this->server_notifier,
-                                this->certif_path.get()
-                            );
-                        LOG(LOG_INFO, "this->nego.server_event end");
-                        break;
-                    case RdpNego::NEGO_STATE_FINAL:
-                        // Basic Settings Exchange
-                        // -----------------------
-
-                        // Basic Settings Exchange: Basic settings are exchanged between the client and
-                        // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-                        // Connect Initial PDU contains a GCC Conference Create Request, while the
-                        // Connect Response PDU contains a GCC Conference Create Response.
-
-                        // These two Generic Conference Control (GCC) packets contain concatenated
-                        // blocks of settings data (such as core data, security data and network data)
-                        // which are read by client and server
-
-
-                        // Client                                                     Server
-                        //    |--------------MCS Connect Initial PDU with-------------> |
-                        //                   GCC Conference Create Request
-                        //    | <------------MCS Connect Response PDU with------------- |
-                        //                   GCC conference Create Response
-
-                        /* Generic Conference Control (T.124) ConferenceCreateRequest */
-                        write_packets(
-                            this->nego.trans,
-                            [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
-                                // ------------------------------------------------------------
-                                GCC::UserData::CSCore cs_core;
-
-                                Rect primary_monitor_rect =
-                                    this->cs_monitor.get_primary_monitor_rect();
-
-                                cs_core.version = this->use_rdp5?0x00080004:0x00080001;
-                                const bool single_monitor =
-                                    (!this->allow_using_multiple_monitors ||
-                                     (this->cs_monitor.monitorCount < 2));
-                                cs_core.desktopWidth  = (single_monitor ? this->front_width : primary_monitor_rect.cx + 1);
-                                cs_core.desktopHeight = (single_monitor ? this->front_height : primary_monitor_rect.cy + 1);
-                                //cs_core.highColorDepth = this->front_bpp;
-                                cs_core.highColorDepth = ((this->front_bpp == 32)
-                                    ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
-                                cs_core.keyboardLayout = this->keylayout;
-                                if (this->front_bpp == 32) {
-                                    cs_core.supportedColorDepths = 15;
-                                    cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
-                                }
-                                if (!single_monitor) {
-                                    LOG(LOG_INFO, "not a single_monitor");
-                                    cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
-                                }
-
-                                uint16_t hostlen = strlen(hostname);
-                                uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
-                                for (size_t i = 0; i < maxhostlen ; i++){
-                                    cs_core.clientName[i] = hostname[i];
-                                }
-                                memset(&(cs_core.clientName[maxhostlen]), 0, (16 - maxhostlen) * sizeof(uint16_t));
-
-                                if (this->nego.tls){
-                                    cs_core.serverSelectedProtocol = this->nego.selected_protocol;
-                                }
-                                if (this->verbose & 1) {
-                                    cs_core.log("Sending to Server");
-                                }
-                                LOG(LOG_INFO, "before cs_core.emit(stream);");
-                                cs_core.emit(stream);
-                                LOG(LOG_INFO, "after cs_core.emit(stream);");
-                                // ------------------------------------------------------------
-
-                                GCC::UserData::CSCluster cs_cluster;
-                                // TODO CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?
-                                if (this->server_redirection_support) {
-                                    LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
-                                    if (!this->nego.tls){
-                                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
-                                        cs_cluster.flags |= (2 << 2); // REDIRECTION V3
-                                    } else {
-                                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTION_SUPPORTED;
-                                        cs_cluster.flags |= (3 << 2);  // REDIRECTION V4
-                                    }
-                                    if (this->redir_info.valid) {
-                                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
-                                        cs_cluster.redirectedSessionID = this->redir_info.session_id;
-                                        LOG(LOG_INFO, "Effective Redirection SessionId=%u",
-                                            cs_cluster.redirectedSessionID);
-                                    }
-                                }
-                                if (this->console_session) {
-                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
-                                }
-                                // if (!this->nego.tls){
-                                //     if (this->console_session){
-                                //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
-                                //     }
-                                //     else {
-                                //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
-                                //     }
-                                //     }
-                                // else {
-                                //     cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
-                                //     if (this->console_session){
-                                //         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
-                                //     }
-                                // }
-                                if (this->verbose & 1) {
-                                    cs_cluster.log("Sending to server");
-                                }
-                                cs_cluster.emit(stream);
-                                // ------------------------------------------------------------
-                                GCC::UserData::CSSecurity cs_security;
-                                if (this->verbose & 1) {
-                                    cs_security.log("Sending to server");
-                                }
-                                cs_security.emit(stream);
-                                // ------------------------------------------------------------
-
-                                const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
-                                size_t num_channels = channel_list.size();
-                                if ((num_channels > 0) || this->enable_auth_channel ||
-                                    this->file_system_drive_manager.HasManagedDrive()) {
-                                    /* Here we need to put channel information in order
-                                    to redirect channel data
-                                    from client to server passing through the "proxy" */
-                                    GCC::UserData::CSNet cs_net;
-                                    cs_net.channelCount = num_channels;
-                                    bool has_cliprdr_channel = false;
-                                    bool has_rdpdr_channel   = false;
-                                    bool has_rdpsnd_channel  = false;
-                                    for (size_t index = 0; index < num_channels; index++) {
-                                        const CHANNELS::ChannelDef & channel_item = channel_list[index];
-                                        if (this->authorization_channels.is_authorized(channel_item.name) ||
-                                            ((!strcmp(channel_item.name, channel_names::rdpdr) ||
-                                              !strcmp(channel_item.name, channel_names::rdpsnd)) &&
-                                            this->file_system_drive_manager.HasManagedDrive())
-                                        ) {
-                                            if (!strcmp(channel_item.name, channel_names::cliprdr)) {
-                                                has_cliprdr_channel = true;
-                                            }
-                                            else if (!strcmp(channel_item.name, channel_names::rdpdr)) {
-                                                has_rdpdr_channel = true;
-                                            }
-                                            else if (!strcmp(channel_item.name, channel_names::rdpsnd)) {
-                                                has_rdpsnd_channel = true;
-                                            }
-                                            memcpy(cs_net.channelDefArray[index].name, channel_item.name, 8);
-                                        }
-                                        else {
-                                            memcpy(cs_net.channelDefArray[index].name, "\0\0\0\0\0\0\0", 8);
-                                        }
-                                        cs_net.channelDefArray[index].options = channel_item.flags;
-                                        CHANNELS::ChannelDef def;
-                                        memcpy(def.name, cs_net.channelDefArray[index].name, 8);
-                                        def.flags = channel_item.flags;
-                                        if (this->verbose & 16) {
-                                            def.log(index);
-                                        }
-                                        this->mod_channel_list.push_back(def);
-                                    }
-
-                                    // Inject a new channel for file system virtual channel (rdpdr)
-                                    if (!has_rdpdr_channel && this->file_system_drive_manager.HasManagedDrive()) {
-                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                                "%s", channel_names::rdpdr);
-                                        cs_net.channelDefArray[cs_net.channelCount].options =
-                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
-                                        CHANNELS::ChannelDef def;
-                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpdr);
-                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                        if (this->verbose & 16){
-                                            def.log(cs_net.channelCount);
-                                        }
-                                        this->mod_channel_list.push_back(def);
-                                        cs_net.channelCount++;
-                                    }
-
-                                    // Inject a new channel for clipboard channel (cliprdr)
-                                    if (!has_cliprdr_channel && this->session_probe_use_clipboard_based_launcher) {
-                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                                "%s", channel_names::cliprdr);
-                                        cs_net.channelDefArray[cs_net.channelCount].options =
-                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
-                                            | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
-                                        CHANNELS::ChannelDef def;
-                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::cliprdr);
-                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                        if (this->verbose & 16){
-                                            def.log(cs_net.channelCount);
-                                        }
-                                        this->mod_channel_list.push_back(def);
-                                        cs_net.channelCount++;
-                                    }
-
-                                    // The RDPDR channel advertised by the client is ONLY accepted by the RDP
-                                    //  server 2012 if the RDPSND channel is also advertised.
-                                    if (!has_rdpsnd_channel &&
-                                        this->file_system_drive_manager.HasManagedDrive()) {
-                                        ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
-                                                sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
-                                                "%s", channel_names::rdpsnd);
-                                        cs_net.channelDefArray[cs_net.channelCount].options =
-                                              GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                                            | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
-                                        CHANNELS::ChannelDef def;
-                                        ::snprintf(def.name, sizeof(def.name), "%s", channel_names::rdpsnd);
-                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                        if (this->verbose & 16){
-                                            def.log(cs_net.channelCount);
-                                        }
-                                        this->mod_channel_list.push_back(def);
-                                        cs_net.channelCount++;
-                                    }
-
-                                    // Inject a new channel for auth_channel virtual channel (wablauncher)
-                                    if (this->enable_auth_channel) {
-                                        REDASSERT(this->auth_channel[0]);
-                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel, 8);
-                                        cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                                        CHANNELS::ChannelDef def;
-                                        memcpy(def.name, this->auth_channel, 8);
-                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                        if (this->verbose & 16){
-                                            def.log(cs_net.channelCount);
-                                        }
-                                        this->mod_channel_list.push_back(def);
-                                        cs_net.channelCount++;
-                                    }
-
-                                    if (this->enable_session_probe) {
-                                        const char * session_probe_channel_name = "sespro\0\0";
-                                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, session_probe_channel_name, 8);
-                                        cs_net.channelDefArray[cs_net.channelCount].options =
-                                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
-                                        CHANNELS::ChannelDef def;
-                                        memcpy(def.name, session_probe_channel_name, 8);
-                                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
-                                        if (this->verbose & 16){
-                                            def.log(cs_net.channelCount);
-                                        }
-                                        this->mod_channel_list.push_back(def);
-                                        cs_net.channelCount++;
-                                    }
-
-                                    if (this->verbose & 1) {
-                                        cs_net.log("Sending to server");
-                                    }
-                                    cs_net.emit(stream);
-                                }
-
-                                if (!single_monitor) {
-                                    //if (this->verbose & 1) {
-                                        this->cs_monitor.log("Sending to server");
-                                    //}
-                                    this->cs_monitor.emit(stream);
-                                }
-                            },
-                            [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
-                                GCC::Create_Request_Send(
-                                    static_cast<OutPerStream&>(gcc_header),
-                                    packet_size
-                                );
-                            },
-                            [this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
-                                MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
-                                (void)mcs;
-                            },
-                            write_x224_dt_tpdu_fn{}
-                        );
-
-                        this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
-                        break;
-
-                    }
+                    this->early_tls_security_exchange();
                     break;
 
                 case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
@@ -2412,7 +2423,9 @@ public:
                         write_x224_dt_tpdu_fn{}
                     );
                     this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
-
+                    if (this->verbose & 1){
+                        LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
+                    }
                     break;
 
                 case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
@@ -2478,6 +2491,9 @@ public:
                             this->index_JS = 0;
                             this->num_channels_JS = num_channels + 2;
     #endif
+                        }
+                        if (this->verbose & 1){
+                            LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User end");
                         }
 
                         // RDP Security Commencement
@@ -2551,11 +2567,14 @@ public:
                         this->state = MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS;
     #endif
                     }
-                            break;
+                    break;
 
     #ifdef __EMSCRIPTEN__
 
                 case MOD_RDP_IO_STATIC_AND_VIRTUALS_CHANNELS:
+                    if (this->verbose & 1){
+                        LOG(LOG_INFO, "mod_rdp::IO Static and Virtual Channels");
+                    }
                     {
                         uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
                         channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
