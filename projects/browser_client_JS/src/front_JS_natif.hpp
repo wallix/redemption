@@ -231,39 +231,6 @@ public:
     */
 
 
-    void connect(char * ip, char * user, char * password, int port) {
-
-        Inifile ini;
-        ModRDPParams mod_rdp_params( user
-                                   , password
-                                   , ip
-                                   , "192.168.1.100"
-                                   , 7
-                                   , 511
-                                   );
-        mod_rdp_params.device_id                       = "device_id";
-        mod_rdp_params.enable_tls                      = false;
-        mod_rdp_params.enable_nla                      = false;
-        mod_rdp_params.enable_fastpath                 = false;
-        mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_bitmap_update            = true;
-        mod_rdp_params.enable_new_pointer              = false;
-        mod_rdp_params.server_redirection_support      = true;
-
-        this->_trans = new TransportWebSocket(this);
-
-        TimeSystem timeobj;
-
-        LCGRandom gen(0);
-        if (this->_trans != nullptr) {
-            this->_mod = new mod_rdp(*(this->_trans), *(this), this->_info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
-            reinterpret_cast<TransportWebSocket *>(this->_trans)->setMod(this->_mod);
-        }
-
-        //while (!this->_mod->is_up_and_running()) {;
-            this->_mod->draw_event(time(nullptr), *(this));
-        //}
-    }
 
     void disconnect() {
         delete(this->_mod);
@@ -823,7 +790,37 @@ extern "C" void refreshPressed() {
 //--------------------------------
 
 extern "C" void connexion(char * ip, char * user, char * password, int port) {
-    front.connect(ip, user, password, port);
+    Inifile ini;
+    ModRDPParams mod_rdp_params( user
+                               , password
+                               , ip
+                               , "192.168.1.100"
+                               , 7
+                               , 511
+                               );
+    mod_rdp_params.device_id                       = "device_id";
+    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_nla                      = false;
+    mod_rdp_params.enable_fastpath                 = false;
+    mod_rdp_params.enable_mem3blt                  = false;
+    mod_rdp_params.enable_bitmap_update            = true;
+    mod_rdp_params.enable_new_pointer              = false;
+    mod_rdp_params.server_redirection_support      = true;
+
+    front._trans = new TransportWebSocket(&front);
+
+    TimeSystem timeobj;
+
+    LCGRandom gen(0);
+    if (front._trans != nullptr) {
+        front._mod = new mod_rdp(*(front._trans), front, front._info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj, mod_rdp_params);
+        reinterpret_cast<TransportWebSocket *>(front._trans)->setMod(front._mod);
+    }
+
+    while (!front._mod->is_up_and_running()) {
+        sleep(1);
+        front._mod->draw_event(time(nullptr), front);
+    }
 }
 
 extern "C" void disconnection() {

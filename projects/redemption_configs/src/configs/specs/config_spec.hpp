@@ -136,7 +136,7 @@ void config_spec_definition(Writer && W)
     W.section("session_log", [&]
     {
         W.member(V, type_<bool>(), "enable_session_log", set(true));
-        W.member(H, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(false));
+        W.member(A, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(false));
         W.sep();
         W.member(A, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::fully_masked));
     });
@@ -398,6 +398,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::u32>(), "bitmap_update");
         W.member(A, type_<types::u32>(), "performance");
         W.member(A, type_<types::u32>(), "pass_dialog_box");
+        W.member(A, type_<types::u32>(), "mod_internal");
         W.sep();
         W.member(A, type_<unsigned>(), spec::type_<bool>(), "config", set(2));
     });
@@ -428,7 +429,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         // auth_error_message is left as std::string type because SocketTransport and ReplayMod
         // take it as argument on constructor and modify it as a std::string
-        W.member(type_<std::string>(), "auth_error_message", r);
+        W.member(type_<std::string>(), "auth_error_message");
         W.sep();
         W.member(type_<bool>(), "selector", set(false), r);
         W.member(type_<unsigned>(), "selector_current_page", set(1), rw);

@@ -105,7 +105,7 @@
 "enable_session_log = boolean(default=True)\n\n"
 
 "# Log redirection in a file\n"
-"#_hidden\n"
+"#_advanced\n"
 "session_log_redirection = boolean(default=False)\n\n"
 
 "#   0: keyboard input are not masked\n"
@@ -623,6 +623,9 @@
 
 "#_advanced\n"
 "pass_dialog_box = integer(min=0, default=0)\n\n"
+
+"#_advanced\n"
+"mod_internal = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
 "config = boolean(default=True)\n\n"

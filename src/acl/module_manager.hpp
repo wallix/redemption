@@ -722,7 +722,7 @@ public:
         , mod_transport(nullptr)
         , gen(gen)
         , timeobj(timeobj)
-        , client_execute(front)
+        , client_execute(front, ini.get<cfg::debug::mod_internal>())
     {
         this->no_mod.get_event().reset();
         this->mod = &this->no_mod;

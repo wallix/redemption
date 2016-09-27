@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front);
+    ClientExecute client_execute(front, 0);
 
     Inifile             ini;
     ini.set_acl<cfg::context::target_host>("somehost");
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front);
+    ClientExecute client_execute(front, 0);
 
     Inifile             ini;
 
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     info.height = 600;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front);
+    ClientExecute client_execute(front, 0);
 
     Inifile ini;
     ini.set_acl<cfg::context::target_host>("somehost");
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge2)
     info.height = 1200;
 
     FakeFront front(info, 0);
-    ClientExecute client_execute(front);
+    ClientExecute client_execute(front, 0);
 
     Inifile ini;
     ini.set_acl<cfg::context::target_host>("somehost");

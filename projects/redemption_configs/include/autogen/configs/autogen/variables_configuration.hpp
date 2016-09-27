@@ -1933,6 +1933,17 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{};
         };
+        // type: uint32_t
+        struct mod_internal {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "debug"; }
+            static constexpr char const * name() { return "mod_internal"; }
+            using type = uint32_t;
+            using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
         // type: unsigned int
         struct config {
             static constexpr bool is_readable() { return 0; }
@@ -2091,17 +2102,14 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{800};
         };
-        // AUTHID_CONTEXT_AUTH_ERROR_MESSAGE
         // type: std::string
         struct auth_error_message {
-            static constexpr bool is_readable() { return 1; }
+            static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_error_message"; }
-            static constexpr unsigned index() { return 57; }
             using type = std::string;
-            using sesman_and_spec_type = std::string;
-            using mapped_type = sesman_and_spec_type;
+            using mapped_type = type;
             type value{};
         };
         // AUTHID_CONTEXT_SELECTOR
@@ -2111,7 +2119,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector"; }
-            static constexpr unsigned index() { return 58; }
+            static constexpr unsigned index() { return 57; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2124,7 +2132,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_current_page"; }
-            static constexpr unsigned index() { return 59; }
+            static constexpr unsigned index() { return 58; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
             using mapped_type = sesman_and_spec_type;
@@ -2137,7 +2145,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_device_filter"; }
-            static constexpr unsigned index() { return 60; }
+            static constexpr unsigned index() { return 59; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2150,7 +2158,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_group_filter"; }
-            static constexpr unsigned index() { return 61; }
+            static constexpr unsigned index() { return 60; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2163,7 +2171,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_proto_filter"; }
-            static constexpr unsigned index() { return 62; }
+            static constexpr unsigned index() { return 61; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2176,7 +2184,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_lines_per_page"; }
-            static constexpr unsigned index() { return 63; }
+            static constexpr unsigned index() { return 62; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
             using mapped_type = sesman_and_spec_type;
@@ -2189,7 +2197,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "selector_number_of_pages"; }
-            static constexpr unsigned index() { return 64; }
+            static constexpr unsigned index() { return 63; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
             using mapped_type = sesman_and_spec_type;
@@ -2202,7 +2210,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_password"; }
-            static constexpr unsigned index() { return 65; }
+            static constexpr unsigned index() { return 64; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2215,7 +2223,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_host"; }
-            static constexpr unsigned index() { return 66; }
+            static constexpr unsigned index() { return 65; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2228,7 +2236,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_service"; }
-            static constexpr unsigned index() { return 67; }
+            static constexpr unsigned index() { return 66; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2241,7 +2249,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_port"; }
-            static constexpr unsigned index() { return 68; }
+            static constexpr unsigned index() { return 67; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
             using mapped_type = sesman_and_spec_type;
@@ -2254,7 +2262,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "target_protocol"; }
-            static constexpr unsigned index() { return 69; }
+            static constexpr unsigned index() { return 68; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2267,7 +2275,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "password"; }
-            static constexpr unsigned index() { return 70; }
+            static constexpr unsigned index() { return 69; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2280,7 +2288,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "reporting"; }
-            static constexpr unsigned index() { return 71; }
+            static constexpr unsigned index() { return 70; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2293,7 +2301,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_channel_answer"; }
-            static constexpr unsigned index() { return 72; }
+            static constexpr unsigned index() { return 71; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2306,7 +2314,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "auth_channel_target"; }
-            static constexpr unsigned index() { return 73; }
+            static constexpr unsigned index() { return 72; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2319,7 +2327,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "message"; }
-            static constexpr unsigned index() { return 74; }
+            static constexpr unsigned index() { return 73; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2332,7 +2340,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "accept_message"; }
-            static constexpr unsigned index() { return 75; }
+            static constexpr unsigned index() { return 74; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2345,7 +2353,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "display_message"; }
-            static constexpr unsigned index() { return 76; }
+            static constexpr unsigned index() { return 75; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2358,7 +2366,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "rejected"; }
-            static constexpr unsigned index() { return 77; }
+            static constexpr unsigned index() { return 76; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2371,7 +2379,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "authenticated"; }
-            static constexpr unsigned index() { return 78; }
+            static constexpr unsigned index() { return 77; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2384,7 +2392,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "keepalive"; }
-            static constexpr unsigned index() { return 79; }
+            static constexpr unsigned index() { return 78; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2397,7 +2405,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "session_id"; }
-            static constexpr unsigned index() { return 80; }
+            static constexpr unsigned index() { return 79; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2410,7 +2418,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "end_date_cnx"; }
-            static constexpr unsigned index() { return 81; }
+            static constexpr unsigned index() { return 80; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
             using mapped_type = sesman_and_spec_type;
@@ -2423,7 +2431,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "end_time"; }
-            static constexpr unsigned index() { return 82; }
+            static constexpr unsigned index() { return 81; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2436,7 +2444,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "mode_console"; }
-            static constexpr unsigned index() { return 83; }
+            static constexpr unsigned index() { return 82; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2449,7 +2457,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "timezone"; }
-            static constexpr unsigned index() { return 84; }
+            static constexpr unsigned index() { return 83; }
             using type = int;
             using sesman_and_spec_type = int;
             using mapped_type = sesman_and_spec_type;
@@ -2462,7 +2470,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "real_target_device"; }
-            static constexpr unsigned index() { return 85; }
+            static constexpr unsigned index() { return 84; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2475,7 +2483,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "authentication_challenge"; }
-            static constexpr unsigned index() { return 86; }
+            static constexpr unsigned index() { return 85; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2488,7 +2496,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "ticket"; }
-            static constexpr unsigned index() { return 87; }
+            static constexpr unsigned index() { return 86; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2501,7 +2509,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "comment"; }
-            static constexpr unsigned index() { return 88; }
+            static constexpr unsigned index() { return 87; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2514,7 +2522,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "duration"; }
-            static constexpr unsigned index() { return 89; }
+            static constexpr unsigned index() { return 88; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2527,7 +2535,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "waitinforeturn"; }
-            static constexpr unsigned index() { return 90; }
+            static constexpr unsigned index() { return 89; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2540,7 +2548,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "showform"; }
-            static constexpr unsigned index() { return 91; }
+            static constexpr unsigned index() { return 90; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2553,7 +2561,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "formflag"; }
-            static constexpr unsigned index() { return 92; }
+            static constexpr unsigned index() { return 91; }
             using type = unsigned int;
             using sesman_and_spec_type = unsigned int;
             using mapped_type = sesman_and_spec_type;
@@ -2566,7 +2574,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "module"; }
-            static constexpr unsigned index() { return 93; }
+            static constexpr unsigned index() { return 92; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2579,7 +2587,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "forcemodule"; }
-            static constexpr unsigned index() { return 94; }
+            static constexpr unsigned index() { return 93; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2592,7 +2600,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "proxy_opt"; }
-            static constexpr unsigned index() { return 95; }
+            static constexpr unsigned index() { return 94; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2605,7 +2613,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "pattern_kill"; }
-            static constexpr unsigned index() { return 96; }
+            static constexpr unsigned index() { return 95; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2618,7 +2626,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "pattern_notify"; }
-            static constexpr unsigned index() { return 97; }
+            static constexpr unsigned index() { return 96; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2631,7 +2639,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "opt_message"; }
-            static constexpr unsigned index() { return 98; }
+            static constexpr unsigned index() { return 97; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2644,7 +2652,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "outbound_connection_monitoring_rules"; }
-            static constexpr unsigned index() { return 99; }
+            static constexpr unsigned index() { return 98; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2657,7 +2665,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "process_monitoring_rules"; }
-            static constexpr unsigned index() { return 100; }
+            static constexpr unsigned index() { return 99; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2680,7 +2688,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason"; }
-            static constexpr unsigned index() { return 101; }
+            static constexpr unsigned index() { return 100; }
             using type = std::string;
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
@@ -2693,7 +2701,7 @@ namespace cfg {
             static constexpr bool is_writable() { return 1; }
             static constexpr char const * section() { return "context"; }
             static constexpr char const * name() { return "disconnect_reason_ack"; }
-            static constexpr unsigned index() { return 102; }
+            static constexpr unsigned index() { return 101; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2917,6 +2925,7 @@ struct debug
 , cfg::debug::bitmap_update
 , cfg::debug::performance
 , cfg::debug::pass_dialog_box
+, cfg::debug::mod_internal
 , cfg::debug::config
 { static constexpr bool is_section = true; };
 
@@ -3066,7 +3075,6 @@ using VariablesAclPack = Pack<
 , cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width
-, cfg::context::auth_error_message
 , cfg::context::selector
 , cfg::context::selector_current_page
 , cfg::context::selector_device_filter
