@@ -109,14 +109,48 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         }
     }
 
-    for (int i = 0; i < this->_monitorCount; i++) {
-        this->_info.cs_monitor.monitorDefArray[i].left   = this->_width * i ;
-        this->_info.cs_monitor.monitorDefArray[i].top    = 0;
-        this->_info.cs_monitor.monitorDefArray[i].right  = (this->_width * (i + 1)) - 1;
-        this->_info.cs_monitor.monitorDefArray[i].bottom = this->_height - 1;
-        this->_info.cs_monitor.monitorDefArray[i].flags  = 0;
+    QDesktopWidget* desktop = QApplication::desktop();
+    int screen_count(desktop->screenCount());
+    std::cout << "screen_count = " << screen_count << std::endl;
+    if (this->_monitorCount > screen_count) {
+        this->_monitorCount = screen_count;
     }
-    this->_info.cs_monitor.monitorDefArray[0].flags  = GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY;
+
+    if (this->_span) {
+
+        this->_info.width  = 0;
+        this->_info.height = 0;
+
+        for (int i = 0; i < this->_monitorCount; i++) {
+            const QRect rect = desktop->screenGeometry(i);
+
+            this->_info.cs_monitor.monitorDefArray[i].left   = this->_info.width;
+            this->_info.width  += rect.width();
+            if (this->_info.height < rect.height()) {
+                this->_info.height = rect.height();
+            }
+            // 0;
+            this->_info.cs_monitor.monitorDefArray[i].top    = rect.top();
+            this->_info.cs_monitor.monitorDefArray[i].right  = this->_info.width + rect.width() - 1;
+            this->_info.cs_monitor.monitorDefArray[i].bottom = rect.height() - 1 - BUTTON_HEIGHT;
+
+            this->_info.cs_monitor.monitorDefArray[i].flags  = 0;
+
+            this->_screen_dimensions[i].x   = 0;
+            this->_screen_dimensions[i].y   = 0;
+            this->_screen_dimensions[i].cx  = rect.width();
+            this->_screen_dimensions[i].cy  = rect.height();
+        }
+        this->_info.cs_monitor.monitorDefArray[0].flags  = GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY;
+        this->_info.height -= BUTTON_HEIGHT;
+
+        /*for (int i = 0; i < this->_monitorCount; i++) {
+            const QRect rect = desktop->screenGeometry(i);
+
+            this->_info.cs_monitor.monitorDefArray[i].top = rect.top() + this->_info.height - this->_info.cs_monitor.monitorDefArray[i].bottom;
+            this->_screen_dimensions[i].y = rect.top()
+        }*/
+    }
 
     CHANNELS::ChannelDef channel { channel_names::cliprdr
                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -336,21 +370,30 @@ void Front_Qt::closeFromScreen(int screen_index) {
 }
 
 bool Front_Qt::connect() {
+
     if (this->_mod_qt->connect()) {
+        if (!this->_span) {
+            this->_screen_dimensions[0].cx = this->_info.width;
+            this->_screen_dimensions[0].cy = this->_info.height;
+        }
         this->_connected = true;
         this->_form->hide();
 
+
         this->_screen[0] = new Screen_Qt(this);
-        this->_screen[0]->show();
+        //this->_screen[0]->show();
+        //this->_cache = new QPixmap(this->_info.width, this->_info.height);
 
         if (!this->_monitorCountNegociated) {
             for (int i = 1; i < this->_monitorCount; i++) {
                 this->_screen[i] = new Screen_Qt(this, i);
                 this->_screen[i]->show();
             }
-            this->_screen[0]->activateWindow();
+            //this->_screen[0]->activateWindow();
             this->_monitorCountNegociated = true;
         }
+
+        this->_screen[0]->show();
 
         this->_mod_qt->listen();
 
@@ -1752,6 +1795,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             this->_monitorCountNegociated = true;
 
                         }*/
+                        this->_monitorCountNegociated = true;
                     }
                     {
                         this->send_FormatListPDU(this->_clipbrd_formats_list.IDs, this->_clipbrd_formats_list.names, Clipbrd_formats_list::CLIPBRD_FORMAT_COUNT, true);
@@ -2661,7 +2705,7 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
-    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n QA\\administrateur -pwd "$testmdp" -ip 10.10.46.88 -p 3389
+    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n admin -pwd "$testmdp" -ip 10.10.40.22 -p 3389
 
     QApplication app(argc, argv);
 

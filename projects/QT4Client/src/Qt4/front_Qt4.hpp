@@ -126,6 +126,15 @@ private:
 
 
 public:
+
+    enum : int {
+        BUTTON_HEIGHT = 20
+    };
+
+    enum : int {
+        MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
+    };
+
     uint32_t          verbose;
     ClientInfo        _info;
     int               _width;
@@ -146,6 +155,9 @@ public:
     int                  _fps;
     int                  _monitorCount;
     const std::string    CB_TEMP_DIR;
+    QPixmap            * _cache;
+    bool                 _span;
+    Rect                 _screen_dimensions[MAX_MONITOR_COUNT];
 
 
     Front_Qt_API( bool param1
@@ -160,7 +172,8 @@ public:
     , _fps(30)
     , _monitorCount(1)
     , CB_TEMP_DIR(TEMP_PATH_TEST)
-
+    , _cache(nullptr)
+    , _span(false)
     {
         this->_to_client_sender._front = this;
     }
@@ -219,10 +232,6 @@ public:
     enum : int {
         PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
       , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
-    };
-
-    enum : int {
-        MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
 

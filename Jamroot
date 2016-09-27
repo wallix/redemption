@@ -350,6 +350,23 @@ exe rdpclient
         $(EXE_DEPENDENCIES)
     ;
 
+exe rdpclientcli
+    : src/ftests/test_client_redemption_cli/test_client_redemption_cli.cpp
+	src/ftests/test_client_redemption_cli/test_client_redemption_cli.hpp
+        program_options
+        bitmap
+        openssl
+        crypto
+        png
+        z
+        dl
+        snappy
+        krb5
+        gssglue
+    :
+        $(EXE_DEPENDENCIES)
+    ;
+
 exe redrec
     :
         src/main/redrec.cpp
