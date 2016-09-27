@@ -495,6 +495,88 @@ public:
 
                     switch (this->pressed_mouse_button) {
                         case MOUSE_BUTTON_PRESSED_TITLEBAR:
+                            if (!this->mouse_moved) {
+                                {
+                                    StaticOutStream<256> out_s;
+                                    RAILPDUHeader header;
+                                    header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
+
+                                    ServerMinMaxInfoPDU smmipdu;
+
+                                    smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                                    smmipdu.MaxWidth(this->work_area_rect.cx - 1);
+                                    smmipdu.MaxHeight(this->work_area_rect.cy - 1);
+                                    smmipdu.MaxPosX(0);
+                                    smmipdu.MaxPosX(0);
+                                    smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
+                                    smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
+                                    smmipdu.MaxTrackWidth(this->work_area_rect.cx - 1);
+                                    smmipdu.MaxTrackHeight(this->work_area_rect.cy - 1);
+
+                                    smmipdu.emit(out_s);
+
+                                    header.emit_end();
+
+                                    const size_t   length     = out_s.get_offset();
+                                    const size_t   chunk_size = length;
+                                    const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                                                | CHANNELS::CHANNEL_FLAG_LAST;
+
+                                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                                        {
+                                            const bool send              = true;
+                                            const bool from_or_to_client = true;
+                                            ::msgdump_c(send, from_or_to_client, length, flags,
+                                                out_s.get_data(), length);
+                                        }
+                                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Min Max Info PDU (1)");
+                                        smmipdu.log(LOG_INFO);
+                                    }
+
+                                    this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                                                  flags);
+                                }
+
+                                {
+                                    StaticOutStream<256> out_s;
+                                    RAILPDUHeader header;
+                                    header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
+
+                                    ServerMoveSizeStartOrEndPDU smssoepdu;
+
+                                    smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                                    smssoepdu.IsMoveSizeStart(1);
+                                    smssoepdu.MoveSizeType(RAIL_WMSZ_MOVE);
+                                    smssoepdu.PosXOrTopLeftX(xPos - this->window_rect.x);
+                                    smssoepdu.PosYOrTopLeftY(yPos - this->window_rect.y);
+
+                                    smssoepdu.emit(out_s);
+
+                                    header.emit_end();
+
+                                    const size_t   length     = out_s.get_offset();
+                                    const size_t   chunk_size = length;
+                                    const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                                                | CHANNELS::CHANNEL_FLAG_LAST;
+
+                                    if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                                        {
+                                            const bool send              = true;
+                                            const bool from_or_to_client = true;
+                                            ::msgdump_c(send, from_or_to_client, length, flags,
+                                                out_s.get_data(), length);
+                                        }
+                                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size Start PDU (1)");
+                                        smssoepdu.log(LOG_INFO);
+                                    }
+
+                                    this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+                                                                  flags);
+                                }
+
+                                this->mouse_moved = true;
+                            }
+
                             offset_x = xPos - this->captured_mouse_x;
                             offset_y = yPos - this->captured_mouse_y;
 
@@ -733,9 +815,8 @@ public:
                         this->front_->set_pointer(cursor);
                     }
                 }
-
-            }
-            else {  // if (this->full_window_drag_enabled)
+            }   // if (this->full_window_drag_enabled)
+            else {
                 if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
                     {
                         StaticOutStream<256> out_s;
@@ -946,11 +1027,11 @@ public:
                 if (this->mouse_moved) {
                     this->mouse_moved = false;
 
-                    int const diff_x = (xPos - captured_mouse_x);
-                    int const diff_y = (yPos - captured_mouse_y);
+                    int const diff_x = (xPos - this->captured_mouse_x);
+                    int const diff_y = (yPos - this->captured_mouse_y);
 
-                    this->window_rect.x += diff_x;
-                    this->window_rect.y += diff_y;
+                    this->window_rect.x = this->window_rect_saved.x + diff_x;
+                    this->window_rect.y = this->window_rect_saved.y + diff_y;
 
                     this->update_rects();
 
@@ -2146,7 +2227,7 @@ public:
             this->task_bar_rect.cy = body_r.Bottom() - body_r.Top();
 
             if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
-                LOG(LOG_INFO, "TaskBarRect: (%u, %u, %u, %u)",
+                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: TaskBarRect(%u, %u, %u, %u)",
                     this->task_bar_rect.x, this->task_bar_rect.y,
                     this->task_bar_rect.cx, this->task_bar_rect.cy);
             }
@@ -2154,6 +2235,11 @@ public:
         else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS) {
             this->full_window_drag_enabled =
                 (cspupdu.body_b() != 0);
+            if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                LOG(LOG_INFO,
+                    "ClientExecute::process_client_system_parameters_update_pdu: Full Window Drag is %s",
+                    (this->full_window_drag_enabled ? "enabled" : "disabled"));
+            }
         }   // else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS)
     }   // process_client_system_parameters_update_pdu
 
