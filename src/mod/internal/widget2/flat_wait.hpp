@@ -135,6 +135,11 @@ public:
         else if ((event == NOTIFY_SUBMIT) && (widget->group_id == this->form.group_id)) {
             this->send_notify(NOTIFY_TEXT_CHANGED);
         }
+        else if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
+            if (this->notifier) {
+                this->notifier->notify(widget, event);
+            }
+        }
         else {
             WidgetParent::notify(widget, event);
         }

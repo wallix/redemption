@@ -125,6 +125,10 @@ public:
     void draw_event(time_t now, gdi::GraphicApi & gapi) override {
         LocallyIntegrableMod::draw_event(now, gapi);
 
+        if (!this->copy_paste && event.waked_up_by_time) {
+            this->copy_paste.ready(this->front);
+        }
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->refused();
@@ -133,9 +137,6 @@ public:
             this->event.set(1000000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-            if (!this->copy_paste && event.waked_up_by_time) {
-                this->copy_paste.ready(this->front);
-            }
             this->event.reset();
             break;
         }

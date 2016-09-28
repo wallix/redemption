@@ -193,13 +193,25 @@ enum {
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
-        if (widget->group_id == this->confirm.group_id) {
+        if ((widget->group_id == this->confirm.group_id) &&
+            (NOTIFY_COPY != event) &&
+            (NOTIFY_CUT != event) &&
+            (NOTIFY_PASTE != event)) {
             if (NOTIFY_SUBMIT == event) {
                 this->check_confirmation();
             }
         }
         else {
-            WidgetParent::notify(widget, event);
+            if ((NOTIFY_COPY == event) ||
+                (NOTIFY_CUT == event) ||
+                (NOTIFY_PASTE == event)) {
+                if (this->notifier) {
+                    this->notifier->notify(widget, event);
+                }
+            }
+            else {
+                WidgetParent::notify(widget, event);
+            }
         }
     }
     void set_warning_buffer(const char * field, const char * format) {
