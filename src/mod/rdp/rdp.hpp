@@ -244,7 +244,7 @@ protected:
     int encryptionLevel;
     int encryptionMethod;
 
-    const int    key_flags;
+    const int key_flags;
 
     uint32_t     server_public_key_len;
     uint8_t      client_crypt_random[512];
@@ -2106,7 +2106,7 @@ public:
         }
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange end");
-        }        
+        }
     }
 
     void basic_settings_exchange()
@@ -2411,8 +2411,8 @@ public:
             LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
         }
     }
-    
-    
+
+
     void AttachUserConfirm()
     {
         constexpr size_t array_size = AUTOSIZE;
@@ -2427,7 +2427,7 @@ public:
             this->userid = mcs.initiator;
         }
     }
-    
+
     void channel_connection_attach_user(time_t now)
     {
         if (this->verbose & 1){
@@ -2544,7 +2544,7 @@ public:
 
             this->send_client_info_pdu(now);
             this->state = MOD_RDP_GET_LICENSE;
-        }    
+        }
     }
 
     void get_license()
@@ -2837,7 +2837,7 @@ public:
                 hexdump(sec.payload.get_data(), sec.payload.get_capacity());
             }
         }
-    
+
     }
 
     // Capabilities Exchange
@@ -5270,6 +5270,18 @@ public:
                 LOG(LOG_INFO, "process save session info : Logon Errors Info");
 
                 RDP::LogonErrorsInfo_Recv lei(lif.payload);
+
+                if ((RDP::LOGON_MSG_SESSION_CONTINUE != lei.ErrorNotificationType) &&
+                    (RDP::LOGON_WARNING >= lei.ErrorNotificationData) &&
+                    this->remote_program) {
+                    LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
+
+                    std::string errmsg = "(RemoteApp) ";
+
+                    errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(lei.ErrorNotificationData);
+                    this->acl->set_auth_error_message(errmsg.c_str());
+                    throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
+                }
             }
         }
         break;

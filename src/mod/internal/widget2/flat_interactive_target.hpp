@@ -54,6 +54,11 @@ public:
 
     CompositeArray composite_array;
 
+    bool               ask_device;
+    bool               ask_login;
+    bool               ask_password;
+    WidgetFlatButton * extra_button;
+
     // ASK DEVICE YES/NO
     // ASK CRED : LOGIN+PASSWORD/PASSWORD/NO
 
@@ -95,10 +100,15 @@ public:
         , last_interactive((ask_login || ask_password)?&this->password_edit:&this->device_edit)
         , fgcolor(theme.global.fgcolor)
         , bgcolor(theme.global.bgcolor)
+        , ask_device(ask_device)
+        , ask_login(ask_login)
+        , ask_password(ask_password)
+        , extra_button(extra_button)
     {
         this->impl = &composite_array;
 
         ask_password = (ask_login || ask_password);
+        this->ask_password = ask_password;
 
         Widget2 * device_show = &this->device;
         if (ask_device) {
@@ -201,6 +211,92 @@ public:
 
     ~FlatInteractiveTarget() override {
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->rect.x  = left;
+        this->rect.y  = top;
+        this->rect.cx = width;
+        this->rect.cy = height;
+
+
+        Widget2 * device_show = &this->device;
+        if (this->ask_device) {
+            device_show = &this->device_edit;
+        }
+        Widget2 * login_show = &this->login;
+        if (this->ask_login) {
+            login_show = &this->login_edit;
+        }
+        Widget2 * password_show = nullptr;
+        if (this->ask_password) {
+            password_show = &this->password_edit;
+        }
+
+        // Center bloc positionning
+        // Device, Login and Password boxes
+        int margin_w = std::max<int>(this->device_label.rect.cx,
+                                     this->login_label.rect.cx);
+        margin_w = std::max<int>(margin_w,
+                                 this->password_label.rect.cx);
+
+        int cbloc_w = std::max<int>(this->caption_label.rect.cx,
+                                    margin_w + device_show->rect.cx + 20);
+        cbloc_w = std::max<int>(cbloc_w,
+                                margin_w + login_show->rect.cx + 20);
+        cbloc_w = std::max<int>(cbloc_w,
+                                margin_w + this->password_edit.rect.cx + 20);
+
+        if (this->ask_device) {
+            cbloc_w = std::max<int>(cbloc_w,
+                                    margin_w + this->device.rect.cx + 20);
+        }
+
+        int extra_h = 0;
+        if (password_show) {
+            extra_h += std::max(this->password_label.rect.cy,
+                                this->password_edit.rect.cy) + 20;
+        }
+        if (this->ask_device) {
+            extra_h += this->device.rect.cy + 30;
+        }
+        int cbloc_h = this->caption_label.rect.cy + 20 + 30 +
+            this->device_label.rect.cy + 30 +
+            this->login_label.rect.cy + 30 +
+            extra_h;
+
+        int x_cbloc = (width  - cbloc_w) / 2;
+        int y_cbloc = (height - cbloc_h) / 3;
+
+        int y = y_cbloc;
+        this->caption_label.set_xy(left + (width - this->caption_label.rect.cx) / 2, top + y);
+        this->separator.rect.cx = cbloc_w;
+
+        y = this->caption_label.ly() + 20;
+        this->separator.set_xy(left + x_cbloc, y);
+
+        y = this->separator.ly() + 20;
+        this->device_label.set_xy(left + x_cbloc, y);
+        device_show->set_xy(left + x_cbloc + margin_w + 20, y);
+        y = device_show->ly() + 20;
+        if (this->ask_device) {
+            this->device.set_xy(left + x_cbloc + margin_w + 20, y - 10);
+            y = this->device.ly() + 20;
+        }
+        this->login_label.set_xy(left + x_cbloc, y);
+        login_show->set_xy(left + x_cbloc + margin_w + 20, y);
+        y = login_show->ly() + 20;
+        this->password_label.set_xy(left + x_cbloc, y);
+        this->password_edit.set_xy(left + x_cbloc + margin_w + 20, y);
+
+        this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
+        this->login_label.rect.y += (login_show->cy() - this->login_label.cy()) / 2;
+        this->device_label.rect.y += (device_show->cy() - this->login_label.cy()) / 2;
+
+        if (this->extra_button) {
+           this->extra_button->set_button_x(left + 60);
+           this->extra_button->set_button_y(top + height - 60);
+        }
     }
 
     int get_bg_color() const override {

@@ -843,6 +843,26 @@ struct LogonErrorsInfo_Recv {
             return "Unexpected Error Notification Type.";
         }
     }
+
+    static const char * ErrorNotificationDataToShortMessage(
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
+        case LOGON_FAILED_BAD_PASSWORD:
+            return "The logon process failed. "
+                "The logon credentials which were supplied are invalid.";
+        case LOGON_FAILED_UPDATE_PASSWORD:
+            return "The logon process failed. "
+                "The user cannot continue with the logon process until the "
+                "password is changed.";
+        case LOGON_FAILED_OTHER:
+            return "The logon process failed.";
+        case LOGON_WARNING:
+            return "The logon process has displayed a warning.";
+
+        default:
+            return "Unexpected Error Notification Type.";
+        }
+    }
 };  // struct LogonErrorsInfo_Recv
 
 }   // namespace RDP
