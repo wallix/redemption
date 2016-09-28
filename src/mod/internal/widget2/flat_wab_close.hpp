@@ -61,6 +61,8 @@ private:
 
     Translation::language_t lang;
 
+    bool showtimer;
+
 public:
     FlatWabClose(gdi::GraphicApi & drawable,
                  int16_t left, int16_t top, int16_t width, int16_t height, Widget2& parent,
@@ -106,6 +108,7 @@ public:
                 theme.global.separator_color)
     , prev_time(0)
     , lang(lang)
+    , showtimer(showtimer)
     {
         this->impl = &composite_array;
 
@@ -120,7 +123,7 @@ public:
         this->timeleft_label.set_text(label);
 
         // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
-        int back_width = this->back ? this->back->cx() + 10 : 0;
+        int const back_width = this->back ? this->back->cx() + 10 : 0;
         this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
         this->connection_closed_label.rect.x = left + (this->cx() - this->connection_closed_label.cx()) / 2;
 
@@ -210,6 +213,86 @@ public:
     ~FlatWabClose() override {
         delete this->back;
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->rect.x  = left;
+        this->rect.y  = top;
+        this->rect.cx = width;
+        this->rect.cy = height;
+
+        this->username_label.rect.x = left + (width - 600) / 2;
+        this->target_label.rect.x = left + (width - 600) / 2;
+        this->diagnostic.rect.x = left + (width - 600) / 2;
+        this->timeleft_label.rect.x = left + (width - 600) / 2;
+
+        int const back_width = this->back ? this->back->cx() + 10 : 0;
+        this->cancel.set_button_x(left + (this->cx() - (this->cancel.cx() + back_width)) / 2);
+        this->connection_closed_label.rect.x = left + (this->cx() - this->connection_closed_label.cx()) / 2;
+
+        this->separator.rect.x = left + (this->cx() - 600) / 2;
+
+        uint16_t px = this->diagnostic.cx() + 10;
+
+        int y = this->dy() + 10 - top;
+        // this->img.rect.y = y;
+        // y += this->img.cy() + 20;
+
+        this->connection_closed_label.rect.y = top + y;
+        y += this->connection_closed_label.cy();
+
+        this->separator.rect.y = top + y + 3;
+        y += 30;
+
+        if (this->username_label_value.buffer[0]) {
+            px = std::max(this->username_label.cx(), this->diagnostic.cx());
+            px = std::max(px, this->timeleft_label.cx()) + 10;
+            this->username_label_value.rect.x = this->username_label.dx() + px;
+            this->target_label_value.rect.x = this->username_label.dx() + px;
+
+            this->username_label.rect.y = top + y;
+            this->username_label_value.rect.y = top + y;
+            y += this->username_label.cy() + 10;
+            this->target_label.rect.y = top + y;
+            this->target_label_value.rect.y = top + y;
+            y += this->target_label.cy() + 20;
+        }
+        this->diagnostic.rect.y = top + y;
+        if (this->diagnostic.cx() > this->cx() - (px + 10)) {
+            y += this->diagnostic.cy() + 10;
+            this->diagnostic_lines.rect.y = top + y;
+            y += this->diagnostic_lines.cy() + 20;
+        }
+        else {
+            this->diagnostic_lines.rect.y = top + y;
+            y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
+            this->diagnostic_lines.rect.x = this->username_label.dx() + px;
+        }
+
+        if (this->showtimer) {
+            this->timeleft_label.rect.y = top + y;
+            this->timeleft_value.rect.y = top + y;
+            if (this->timeleft_label.cx() + 10 > px) {
+                px = this->timeleft_label.cx() + 10;
+                this->diagnostic_lines.rect.x = this->username_label.dx() + px;
+            }
+            this->timeleft_value.rect.x =
+                this->username_label.dx() + px;
+            y += this->timeleft_label.cy() + 20;
+        }
+
+        if (this->back) {
+            this->back->set_button_x(this->cancel.dx() + this->cancel.cx() + 10);
+            this->back->set_button_y(top + y);
+        }
+
+        this->cancel.set_button_y(top + y);
+        y += this->cancel.cy();
+
+        this->move_xy(0, (height - y) / 2);
+
+        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
+        this->img.rect.y = top + (3*(height - y) / 2 - this->img.cy()) / 2 + y;
     }
 
     int get_bg_color() const override {
