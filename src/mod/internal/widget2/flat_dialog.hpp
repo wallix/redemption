@@ -57,6 +57,8 @@ public:
 
     Font const & font;
 
+    WidgetFlatButton * extra_button;
+
     FlatDialog(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text,
@@ -86,6 +88,7 @@ public:
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     theme.global.separator_color)
         , font(font)
+        , extra_button(extra_button)
     {
         this->impl = &composite_array;
 
@@ -168,6 +171,57 @@ public:
         delete this->challenge;
         delete this->cancel;
         this->clear();
+    }
+
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->rect.x  = left;
+        this->rect.y  = top;
+        this->rect.cx = width;
+        this->rect.cy = height;
+
+        this->title.rect.y = top;
+
+        const int total_width = std::max(this->dialog.cx(), this->title.cx());
+        int total_height = this->title.cy() + this->dialog.cy() + this->ok.cy() + 20;
+        int y = 0;
+        this->title.rect.x = left + (this->cx() - this->title.cx()) / 2;
+        this->separator.rect.x = left + (this->cx() - total_width) / 2;
+        y = this->title.cy();
+        this->separator.rect.y = top + y + 3;
+        this->dialog.rect.x = this->separator.rect.x;
+        this->dialog.rect.y = top + y + 10;
+
+        y = this->dialog.dy() + this->dialog.cy() + 10;
+
+        if (this->challenge) {
+            this->challenge->rect.x = this->separator.rect.x + 10;
+            this->challenge->rect.y = y;
+            total_height += this->challenge->cy() + 10;
+            y += this->challenge->cy() + 10;
+        }
+
+        y += 5;
+
+        if (this->cancel) {
+            this->cancel->set_button_x(this->dialog.dx() + this->dialog.cx() - (this->cancel->cx() + 10));
+            this->ok.set_button_x(this->cancel->dx() - (this->ok.cx() + 10));
+
+            this->ok.set_button_y(y);
+            this->cancel->set_button_y(y);
+        }
+        else {
+            this->ok.set_button_x(this->dialog.dx() + this->dialog.cx() - (this->ok.cx() + 10));
+            this->ok.set_button_y(y);
+        }
+        this->move_xy(0, (height - total_height) / 2);
+
+        this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
+        this->img.rect.y = top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
+
+        if (this->challenge && this->extra_button) {
+            extra_button->set_button_x(left + 60);
+            extra_button->set_button_y(top + height - 60);
+        }
     }
 
     int get_bg_color() const override {
