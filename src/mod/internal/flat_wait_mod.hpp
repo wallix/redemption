@@ -153,11 +153,6 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->wait_widget.move_xy(left - this->wait_widget.rect.x, top - this->wait_widget.rect.y);
-
-        this->wait_widget.rect.x  = left;
-        this->wait_widget.rect.y  = top;
-        this->wait_widget.rect.cx = width + 1;
-        this->wait_widget.rect.cy = height + 1;
+        this->wait_widget.move_size_widget(left, top, width + 1, height + 1);
     }
 };

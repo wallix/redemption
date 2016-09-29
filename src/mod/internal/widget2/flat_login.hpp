@@ -52,8 +52,6 @@ public:
 
     CompositeArray composite_array;
 
-    WidgetFlatButton * extra_button;
-
 private:
     Translator tr;
 
@@ -63,6 +61,8 @@ private:
     // WidgetHScrollBar hbar;
 
     bool labels_added = false;
+
+    WidgetFlatButton * extra_button;
 
 public:
     FlatLogin(gdi::GraphicApi & drawable,
@@ -110,8 +110,8 @@ public:
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
         // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
         //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
-        , extra_button(extra_button)
         , tr(tr)
+        , extra_button(extra_button)
     {
         this->impl = &composite_array;
 

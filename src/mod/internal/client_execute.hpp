@@ -111,6 +111,8 @@ class ClientExecute
 
     bool full_window_drag_enabled = false;
 
+    bool internal_module_window_created = false;
+
     uint32_t verbose;
 
 public:
@@ -1237,7 +1239,7 @@ public:
     void reset() {
         if (!this->channel_) return;
 
-        {
+        if (this->internal_module_window_created) {
             RDP::RAIL::DeletedWindow order;
 
             order.header.FieldsPresentFlags(
@@ -1254,6 +1256,8 @@ public:
             }
 
             this->front_->draw(order);
+
+            this->internal_module_window_created = false;
         }
 
 
@@ -1813,6 +1817,8 @@ public:
 
                 this->front_->draw(order);
             }
+
+            this->internal_module_window_created = true;
 
             {
                 RDP::RAIL::WindowIcon order;
