@@ -24,6 +24,7 @@
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
