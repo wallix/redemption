@@ -29,6 +29,8 @@
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/mod_api.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
@@ -69,6 +71,7 @@ class ClientExecute
     Rect window_rect_saved;
     Rect window_rect_normal;
 
+    Rect title_bar_icon_rect;
     Rect title_bar_rect;
     Rect close_box_rect;
     Rect minimize_box_rect;
@@ -118,11 +121,14 @@ class ClientExecute
 
     bool maximized = false;
 
+    Bitmap wallix_icon_min;
+
     uint32_t verbose;
 
 public:
     ClientExecute(FrontAPI & front, uint32_t verbose)
-    : verbose(verbose) {
+    : wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
+    , verbose(verbose) {
         this->front_ = &front;
     }   // ClientExecute
 
@@ -157,6 +163,9 @@ private:
             this->title_bar_rect.cx -= 2;
             this->title_bar_rect.cy--;
 
+            this->title_bar_icon_rect    = this->title_bar_rect;
+            this->title_bar_icon_rect.cx = 3 + 16 + 2;
+
             this->minimize_box_rect     = this->title_bar_rect;
             this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 3;
             this->minimize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
@@ -170,6 +179,9 @@ private:
             this->close_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
             this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * 3;
+
+            this->title_bar_rect.x  += 3 + 16 + 2;
+            this->title_bar_rect.cx -= 3 + 16 + 2;
 
             this->north.x  = this->window_rect.x + 24;
             this->north.y  = this->window_rect.y;
@@ -241,21 +253,41 @@ public:
         if (!r.has_intersection(this->title_bar_rect)) return;
 
         {
+            RDPOpaqueRect order(this->title_bar_icon_rect, 0xFFFFFF);
+
+            this->front_->draw(order, r);
+
+            this->front_->draw(
+                RDPMemBlt(
+                    0,
+                    Rect(this->title_bar_icon_rect.x + 3,
+                         this->title_bar_icon_rect.y + 4, 16, 16),
+                    0xCC,
+                    0,
+                    0,
+                    0
+                ),
+                r,
+                this->wallix_icon_min
+            );
+        }
+
+        {
             RDPOpaqueRect order(this->title_bar_rect, 0xFFFFFF);
 
             this->front_->draw(order, r);
-        }
 
-        if (this->font_) {
-            gdi::server_draw_text(*this->front_,
-                                  *this->font_,
-                                  this->title_bar_rect.x + 5,
-                                  this->title_bar_rect.y + 3,
-                                  INTERNAL_MODULE_WINDOW_TITLE,
-                                  0x000000,
-                                  0xFFFFFF,
-                                  r
-                                  );
+            if (this->font_) {
+                gdi::server_draw_text(*this->front_,
+                                      *this->font_,
+                                      this->title_bar_rect.x + 1,
+                                      this->title_bar_rect.y + 3,
+                                      INTERNAL_MODULE_WINDOW_TITLE,
+                                      0x000000,
+                                      0xFFFFFF,
+                                      r
+                                      );
+            }
         }
 
         {
@@ -1230,6 +1262,10 @@ public:
             else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
                 this->maximize_restore_window();
             }   // else if (this->title_bar_rect.contains_pt(xPos, yPos))
+            else if (this->title_bar_icon_rect.contains_pt(xPos, yPos)) {
+                LOG(LOG_INFO, "ClientExecute::input_mouse: Close by user (Title Bar Icon)");
+                throw Error(ERR_WIDGET);    // Title Bar Icon Double-clicked
+            }   // else if (this->title_bar_icon_rect.contains_pt(xPos, yPos))
         }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
     }   // input_mouse
 
