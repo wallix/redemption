@@ -24,11 +24,14 @@
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/mod_api.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/bitmap_with_png.hpp"
 #include "utils/stream.hpp"
 #include "utils/virtual_channel_data_sender.hpp"
 
@@ -69,9 +72,11 @@ class ClientExecute
     Rect window_rect_saved;
     Rect window_rect_normal;
 
+    Rect title_bar_icon_rect;
     Rect title_bar_rect;
     Rect close_box_rect;
     Rect minimize_box_rect;
+    Rect maximize_box_rect;
 
     Rect north;
     Rect north_west_north;
@@ -102,6 +107,7 @@ class ClientExecute
 
         MOUSE_BUTTON_PRESSED_TITLEBAR,
         MOUSE_BUTTON_PRESSED_MINIMIZEBOX,
+        MOUSE_BUTTON_PRESSED_MAXIMIZEBOX,
         MOUSE_BUTTON_PRESSED_CLOSEBOX,
     };
 
@@ -116,11 +122,14 @@ class ClientExecute
 
     bool maximized = false;
 
+    Bitmap wallix_icon_min;
+
     uint32_t verbose;
 
 public:
     ClientExecute(FrontAPI & front, uint32_t verbose)
-    : verbose(verbose) {
+    : wallix_icon_min(bitmap_from_file(SHARE_PATH "/wallix-icon-min.png"))
+    , verbose(verbose) {
         this->front_ = &front;
     }   // ClientExecute
 
@@ -155,16 +164,25 @@ private:
             this->title_bar_rect.cx -= 2;
             this->title_bar_rect.cy--;
 
+            this->title_bar_icon_rect    = this->title_bar_rect;
+            this->title_bar_icon_rect.cx = 3 + 16 + 2;
+
             this->minimize_box_rect     = this->title_bar_rect;
-            this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 2;
+            this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 3;
             this->minimize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
+            this->maximize_box_rect     = this->title_bar_rect;
+            this->maximize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 2;
+            this->maximize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
             this->close_box_rect     = this->title_bar_rect;
             this->close_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH;
             this->close_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
 
-            this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * 2;
+            this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * 3;
+
+            this->title_bar_rect.x  += 3 + 16 + 2;
+            this->title_bar_rect.cx -= 3 + 16 + 2;
 
             this->north.x  = this->window_rect.x + 24;
             this->north.y  = this->window_rect.y;
@@ -228,6 +246,81 @@ private:
         }   // update_rects
 
 public:
+
+    void draw_maximize_box(bool mouse_over, const Rect& r) {
+        unsigned int bg_color = (mouse_over ? 0xCBCACA : 0xFFFFFF);
+
+        RDPOpaqueRect order(this->maximize_box_rect, bg_color);
+
+        this->front_->draw(order, r);
+
+        if (this->maximized) {
+            Rect rect = this->maximize_box_rect;
+
+            rect.x  += 14 + 2;
+            rect.y  += 7;
+            rect.cx -= 14 * 2 + 2;
+            rect.cy -= 7 * 2 + 2;
+
+            {
+                RDPOpaqueRect order(rect, 0x000000);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = rect.shrink(1);
+
+            {
+                RDPOpaqueRect order(rect, bg_color);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = this->maximize_box_rect;
+
+            rect.x  += 14;
+            rect.y  += 7 + 2;
+            rect.cx -= 14 * 2 + 2;
+            rect.cy -= 7 * 2 + 2;
+
+            {
+                RDPOpaqueRect order(rect, 0x000000);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = rect.shrink(1);
+
+            {
+                RDPOpaqueRect order(rect, bg_color);
+
+                this->front_->draw(order, r);
+            }
+        }
+        else {
+            Rect rect = this->maximize_box_rect;
+
+            rect.x  += 14;
+            rect.y  += 7;
+            rect.cx -= 14 * 2;
+            rect.cy -= 7 * 2;
+
+            {
+                RDPOpaqueRect order(rect, 0x000000);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = rect.shrink(1);
+
+            {
+                RDPOpaqueRect order(rect, bg_color);
+
+                this->front_->draw(order, r);
+            }
+        }
+    }   // draw_maximize_box
+
     void input_invalidate(const Rect& r) {
         //LOG(LOG_INFO, "ClientExecute::input_invalidate");
 
@@ -236,21 +329,41 @@ public:
         if (!r.has_intersection(this->title_bar_rect)) return;
 
         {
+            RDPOpaqueRect order(this->title_bar_icon_rect, 0xFFFFFF);
+
+            this->front_->draw(order, r);
+
+            this->front_->draw(
+                RDPMemBlt(
+                    0,
+                    Rect(this->title_bar_icon_rect.x + 3,
+                         this->title_bar_icon_rect.y + 4, 16, 16),
+                    0xCC,
+                    0,
+                    0,
+                    0
+                ),
+                r,
+                this->wallix_icon_min
+            );
+        }
+
+        {
             RDPOpaqueRect order(this->title_bar_rect, 0xFFFFFF);
 
             this->front_->draw(order, r);
-        }
 
-        if (this->font_) {
-            gdi::server_draw_text(*this->front_,
-                                  *this->font_,
-                                  this->title_bar_rect.x + 5,
-                                  this->title_bar_rect.y + 3,
-                                  INTERNAL_MODULE_WINDOW_TITLE,
-                                  0x000000,
-                                  0xFFFFFF,
-                                  r
-                                  );
+            if (this->font_) {
+                gdi::server_draw_text(*this->front_,
+                                      *this->font_,
+                                      this->title_bar_rect.x + 1,
+                                      this->title_bar_rect.y + 3,
+                                      INTERNAL_MODULE_WINDOW_TITLE,
+                                      0x000000,
+                                      0xFFFFFF,
+                                      r
+                                      );
+            }
         }
 
         {
@@ -270,6 +383,8 @@ public:
                                       );
             }
         }
+
+        this->draw_maximize_box(false, r);
 
         {
             RDPOpaqueRect order(this->close_box_rect, 0xFFFFFF);
@@ -367,6 +482,13 @@ public:
 
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MINIMIZEBOX;
                 }   // else if (this->minimize_box_rect.contains_pt(xPos, yPos))
+                else if (this->maximize_box_rect.contains_pt(xPos, yPos)) {
+                    this->draw_maximize_box(true, this->maximize_box_rect);
+
+                    this->front_->sync();
+
+                    this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
+                }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
                 else if (this->close_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->close_box_rect, 0x2311E8);
 
@@ -757,6 +879,11 @@ public:
                     this->front_->sync();
                 }
             }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
+            else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
+                this->draw_maximize_box(this->maximize_box_rect.contains_pt(xPos, yPos), this->maximize_box_rect);
+
+                this->front_->sync();
+            }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
             else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
                 if (this->close_box_rect.contains_pt(xPos, yPos)) {
                     RDPOpaqueRect order(this->close_box_rect, 0x2311E8);
@@ -909,7 +1036,18 @@ public:
                                 this->window_rect.y + this->window_rect.cy
                             ));
                 }
-            }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
+            }   // if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
+            else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
+                this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
+
+                this->draw_maximize_box(false, this->maximize_box_rect);
+
+                this->front_->sync();
+
+                if (this->maximize_box_rect.contains_pt(xPos, yPos)) {
+                    this->maximize_restore_window();
+                }
+            }   // else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button)
             else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
@@ -1124,142 +1262,150 @@ public:
                 this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
             }   // if (this->south.contains_pt(xPos, yPos))
             else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
-                if (this->maximized) {
-                    this->window_rect = this->window_rect_normal;
-
-                    this->update_rects();
-
-                    {
-                        RDP::RAIL::NewOrExistingWindow order;
-
-                        order.header.FieldsPresentFlags(
-                                  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
-                            );
-                        order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
-
-                        order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-                        order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-                        order.WindowWidth(this->window_rect.cx);
-                        order.WindowHeight(this->window_rect.cy);
-                        order.NumVisibilityRects(1);
-                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
-
-                        order.ClientOffsetX(this->window_rect.x + 6);
-                        order.ClientOffsetY(this->window_rect.y + 25);
-                        order.WindowOffsetX(this->window_rect.x);
-                        order.WindowOffsetY(this->window_rect.y);
-                        order.VisibleOffsetX(this->window_rect.x);
-                        order.VisibleOffsetY(this->window_rect.y);
-
-                        order.ShowState(5);
-                        order.Style(0x16CF0000);
-                        order.ExtendedStyle(0x110);
-
-                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
-                            StaticOutStream<1024> out_s;
-                            order.emit(out_s);
-                            order.log(LOG_INFO);
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
-                        }
-
-                        this->front_->draw(order);
-                    }
-
-                    {
-                        Rect result_rect = this->window_rect.shrink(1);
-                        result_rect.cx--;
-                        result_rect.cy--;
-
-                        result_rect.y  += 24;
-                        result_rect.cy -= 24;
-
-                        this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-                    }
-
-                    this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
-
-                    this->maximized = false;
-                }   // if (this->maximized)
-                else {
-                    this->window_rect_normal = this->window_rect;
-
-                    this->window_rect.x  = -1;
-                    this->window_rect.y  = -1;
-                    this->window_rect.cx = this->work_area_rect.cx + 1 * 2;
-                    this->window_rect.cy = this->work_area_rect.cy + 1 * 2;
-
-                    this->update_rects();
-
-                    {
-                        RDP::RAIL::NewOrExistingWindow order;
-
-                        order.header.FieldsPresentFlags(
-                                  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
-                                | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
-                            );
-                        order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
-
-                        order.ClientAreaWidth(this->work_area_rect.cx);
-                        order.ClientAreaHeight(this->work_area_rect.cy - 25);
-                        order.WindowWidth(this->work_area_rect.cx + 2);
-                        order.WindowHeight(this->work_area_rect.cy + 2);
-                        order.NumVisibilityRects(1);
-                        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->work_area_rect.cx, this->work_area_rect.cy + 1));
-
-                        order.ClientOffsetX(0);
-                        order.ClientOffsetY(25);
-                        order.WindowOffsetX(-1);
-                        order.WindowOffsetY(-1);
-                        order.VisibleOffsetX(0);
-                        order.VisibleOffsetY(0);
-
-                        order.ShowState(3);
-                        order.Style(0x17CF0000);
-                        order.ExtendedStyle(0x110);
-
-                        if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
-                            StaticOutStream<1024> out_s;
-                            order.emit(out_s);
-                            order.log(LOG_INFO);
-                            LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
-                        }
-
-                        this->front_->draw(order);
-                    }
-
-                    {
-                        Rect result_rect = this->window_rect.shrink(1);
-                        result_rect.cx--;
-                        result_rect.cy--;
-
-                        result_rect.y  += 24;
-                        result_rect.cy -= 24;
-
-                        this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
-                    }
-
-                    this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
-
-                    this->maximized = true;
-                }   // if (!this->maximized)
+                this->maximize_restore_window();
             }   // else if (this->title_bar_rect.contains_pt(xPos, yPos))
+            else if (this->title_bar_icon_rect.contains_pt(xPos, yPos)) {
+                LOG(LOG_INFO, "ClientExecute::input_mouse: Close by user (Title Bar Icon)");
+                throw Error(ERR_WIDGET);    // Title Bar Icon Double-clicked
+            }   // else if (this->title_bar_icon_rect.contains_pt(xPos, yPos))
         }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
     }   // input_mouse
+
+    void maximize_restore_window() {
+        if (this->maximized) {
+            this->maximized = false;
+
+            this->window_rect = this->window_rect_normal;
+
+            this->update_rects();
+
+            {
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                          RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
+                order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
+                order.WindowWidth(this->window_rect.cx);
+                order.WindowHeight(this->window_rect.cy);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+
+                order.ClientOffsetX(this->window_rect.x + 6);
+                order.ClientOffsetY(this->window_rect.y + 25);
+                order.WindowOffsetX(this->window_rect.x);
+                order.WindowOffsetY(this->window_rect.y);
+                order.VisibleOffsetX(this->window_rect.x);
+                order.VisibleOffsetY(this->window_rect.y);
+
+                order.ShowState(5);
+                order.Style(0x16CF0000);
+                order.ExtendedStyle(0x110);
+
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+                }
+
+                this->front_->draw(order);
+            }
+
+            {
+                Rect result_rect = this->window_rect.shrink(1);
+                result_rect.cx--;
+                result_rect.cy--;
+
+                result_rect.y  += 24;
+                result_rect.cy -= 24;
+
+                this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
+            }
+
+            this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+        }   // if (this->maximized)
+        else {
+            this->maximized = true;
+
+            this->window_rect_normal = this->window_rect;
+
+            this->window_rect.x  = -1;
+            this->window_rect.y  = -1;
+            this->window_rect.cx = this->work_area_rect.cx + 1 * 2;
+            this->window_rect.cy = this->work_area_rect.cy + 1 * 2;
+
+            this->update_rects();
+
+            {
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                          RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                order.ClientAreaWidth(this->work_area_rect.cx);
+                order.ClientAreaHeight(this->work_area_rect.cy - 25);
+                order.WindowWidth(this->work_area_rect.cx + 2);
+                order.WindowHeight(this->work_area_rect.cy + 2);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->work_area_rect.cx, this->work_area_rect.cy + 1));
+
+                order.ClientOffsetX(0);
+                order.ClientOffsetY(25);
+                order.WindowOffsetX(-1);
+                order.WindowOffsetY(-1);
+                order.VisibleOffsetX(0);
+                order.VisibleOffsetY(0);
+
+                order.ShowState(3);
+                order.Style(0x17CF0000);
+                order.ExtendedStyle(0x110);
+
+                if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
+                }
+
+                this->front_->draw(order);
+            }
+
+            {
+                Rect result_rect = this->window_rect.shrink(1);
+                result_rect.cx--;
+                result_rect.cy--;
+
+                result_rect.y  += 24;
+                result_rect.cy -= 24;
+
+                this->mod_->move_size_widget(result_rect.x, result_rect.y, result_rect.cx, result_rect.cy);
+            }
+
+            this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
+        }   // if (!this->maximized)
+    }   // maximize_restore_window
 
 public:
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font) {
@@ -1403,6 +1549,7 @@ public:
         this->channel_ = nullptr;
     }   // reset
 
+protected:
     void process_client_activate_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
@@ -2316,6 +2463,7 @@ public:
         }
     }   // process_client_window_move_pdu
 
+public:
     void send_to_mod_rail_channel(size_t length, InStream & chunk, uint32_t flags) {
         if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             LOG(LOG_INFO,

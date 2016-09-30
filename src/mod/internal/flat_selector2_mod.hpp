@@ -78,6 +78,8 @@ class FlatSelector2Mod : public LocallyIntegrableMod, public NotifyApi
         }
     };
 
+    int selector_lines_per_page_saved = 0;
+
 public:
     FlatSelector2Mod(FlatSelector2ModVariables vars, FrontAPI & front, uint16_t width, uint16_t height, Rect const & widget_rect, ClientExecute & client_execute)
         : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
@@ -111,7 +113,8 @@ public:
                                 this->selector.selector_lines.border
                              +  this->selector.selector_lines.y_padding_label);
 
-        this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
+        this->selector_lines_per_page_saved = available_height / line_height;
+        this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
         this->ask_page();
         this->selector.refresh(this->selector.rect);
     }
@@ -375,8 +378,13 @@ public:
                                 this->selector.selector_lines.border
                              +  this->selector.selector_lines.y_padding_label);
 
-        this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
-        this->ask_page();
-        this->selector.refresh(this->selector.rect);
+        int selector_lines_per_page = available_height / line_height;
+        if (this->selector_lines_per_page_saved != selector_lines_per_page) {
+            this->selector_lines_per_page_saved = selector_lines_per_page;
+
+            this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
+            this->ask_page();
+            this->selector.refresh(this->selector.rect);
+        }
     }
 };

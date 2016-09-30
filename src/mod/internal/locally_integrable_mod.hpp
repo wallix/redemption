@@ -81,7 +81,7 @@ struct LocallyIntegrableMod : public InternalMod {
                 if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                     this->dc_state = DCSTATE_FIRST_CLICK_DOWN;
 
-                    this->secondary_event.set(1500000);
+                    this->secondary_event.set(1000000);
 
                     this->secondary_event.object_and_time  = true;
                     this->secondary_event.waked_up_by_time = false;
