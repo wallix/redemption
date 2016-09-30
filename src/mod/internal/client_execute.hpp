@@ -246,6 +246,81 @@ private:
         }   // update_rects
 
 public:
+
+    void draw_maximize_box(bool mouse_over, const Rect& r) {
+        unsigned int bg_color = (mouse_over ? 0xCBCACA : 0xFFFFFF);
+
+        RDPOpaqueRect order(this->maximize_box_rect, bg_color);
+
+        this->front_->draw(order, r);
+
+        if (this->maximized) {
+            Rect rect = this->maximize_box_rect;
+
+            rect.x  += 14 + 2;
+            rect.y  += 7;
+            rect.cx -= 14 * 2 + 2;
+            rect.cy -= 7 * 2 + 2;
+
+            {
+                RDPOpaqueRect order(rect, 0x000000);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = rect.shrink(1);
+
+            {
+                RDPOpaqueRect order(rect, bg_color);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = this->maximize_box_rect;
+
+            rect.x  += 14;
+            rect.y  += 7 + 2;
+            rect.cx -= 14 * 2 + 2;
+            rect.cy -= 7 * 2 + 2;
+
+            {
+                RDPOpaqueRect order(rect, 0x000000);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = rect.shrink(1);
+
+            {
+                RDPOpaqueRect order(rect, bg_color);
+
+                this->front_->draw(order, r);
+            }
+        }
+        else {
+            Rect rect = this->maximize_box_rect;
+
+            rect.x  += 14;
+            rect.y  += 7;
+            rect.cx -= 14 * 2;
+            rect.cy -= 7 * 2;
+
+            {
+                RDPOpaqueRect order(rect, 0x000000);
+
+                this->front_->draw(order, r);
+            }
+
+            rect = rect.shrink(1);
+
+            {
+                RDPOpaqueRect order(rect, bg_color);
+
+                this->front_->draw(order, r);
+            }
+        }
+    }   // draw_maximize_box
+
     void input_invalidate(const Rect& r) {
         //LOG(LOG_INFO, "ClientExecute::input_invalidate");
 
@@ -331,80 +406,6 @@ public:
 
         this->front_->sync();
     }   // input_invalidate
-
-    void draw_maximize_box(bool mouse_over, const Rect& r) {
-        unsigned int bg_color = (mouse_over ? 0xCBCACA : 0xFFFFFF);
-
-        RDPOpaqueRect order(this->maximize_box_rect, bg_color);
-
-        this->front_->draw(order, r);
-
-        if (this->maximized) {
-            Rect rect = this->maximize_box_rect;
-
-            rect.x  += 14 + 2;
-            rect.y  += 7;
-            rect.cx -= 14 * 2 + 2;
-            rect.cy -= 7 * 2 + 2;
-
-            {
-                RDPOpaqueRect order(rect, 0x000000);
-
-                this->front_->draw(order, r);
-            }
-
-            rect = rect.shrink(1);
-
-            {
-                RDPOpaqueRect order(rect, bg_color);
-
-                this->front_->draw(order, r);
-            }
-
-            rect = this->maximize_box_rect;
-
-            rect.x  += 14;
-            rect.y  += 7 + 2;
-            rect.cx -= 14 * 2 + 2;
-            rect.cy -= 7 * 2 + 2;
-
-            {
-                RDPOpaqueRect order(rect, 0x000000);
-
-                this->front_->draw(order, r);
-            }
-
-            rect = rect.shrink(1);
-
-            {
-                RDPOpaqueRect order(rect, bg_color);
-
-                this->front_->draw(order, r);
-            }
-        }
-        else {
-            Rect rect = this->maximize_box_rect;
-
-            rect.x  += 14;
-            rect.y  += 7;
-            rect.cx -= 14 * 2;
-            rect.cy -= 7 * 2;
-
-            {
-                RDPOpaqueRect order(rect, 0x000000);
-
-                this->front_->draw(order, r);
-            }
-
-            rect = rect.shrink(1);
-
-            {
-                RDPOpaqueRect order(rect, bg_color);
-
-                this->front_->draw(order, r);
-            }
-        }
-    }
 
     void input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos) {
         if (!this->channel_) return;
@@ -1316,7 +1317,7 @@ public:
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
+                    LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
                 }
 
                 this->front_->draw(order);
@@ -1385,7 +1386,7 @@ public:
                     StaticOutStream<1024> out_s;
                     order.emit(out_s);
                     order.log(LOG_INFO);
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
+                    LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
                 }
 
                 this->front_->draw(order);
@@ -1404,7 +1405,7 @@ public:
 
             this->mod_->rdp_input_invalidate(Rect(0, 0, this->front_width, this->front_height));
         }   // if (!this->maximized)
-    }
+    }   // maximize_restore_window
 
 public:
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font) {
@@ -1548,6 +1549,7 @@ public:
         this->channel_ = nullptr;
     }   // reset
 
+protected:
     void process_client_activate_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
@@ -2461,6 +2463,7 @@ public:
         }
     }   // process_client_window_move_pdu
 
+public:
     void send_to_mod_rail_channel(size_t length, InStream & chunk, uint32_t flags) {
         if (this->verbose & MODINTERNAL_LOGLEVEL_CLIENTEXECUTE) {
             LOG(LOG_INFO,
