@@ -183,6 +183,63 @@ enum {
         this->clear();
     }
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->rect.x  = left;
+        this->rect.y  = top;
+        this->rect.cx = width;
+        this->rect.cy = height;
+
+        this->comment_label.rect.x = left;
+        this->comment_label.rect.y = top + 10;
+
+        this->warning_msg.rect.x = left + 10;
+        this->warning_msg.rect.y = top;
+
+        this->comment_edit.rect.x = this->comment_label.lx() + 20;
+        this->comment_edit.rect.y = 10;
+
+        int labelmaxwidth = std::max(this->comment_label.cx(),
+                                     std::max(this->ticket_label.cx(),
+                                              this->duration_label.cx()));
+        this->warning_msg.rect.x = left + labelmaxwidth + 20;
+        this->comment_edit.set_edit_x(left + labelmaxwidth + 20);
+        this->ticket_edit.set_edit_x(left + labelmaxwidth + 20);
+        this->duration_edit.set_edit_x(left + labelmaxwidth + 20);
+        this->comment_edit.set_edit_cx(width - labelmaxwidth - 20);
+        this->ticket_edit.set_edit_cx(width - labelmaxwidth - 20);
+        this->duration_edit.set_edit_cx((width - labelmaxwidth - 20) -
+                                        this->duration_format.cx() - 20);
+        this->duration_format.rect.x = labelmaxwidth + 20;
+        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
+            this->notes.rect.x = left + labelmaxwidth + 20;
+        }
+
+        int y = 20;
+        if (this->flags & DURATION_DISPLAY) {
+            this->duration_label.set_xy(this->duration_label.dx(), top + y);
+            this->duration_edit.set_edit_y(top + y);
+            this->duration_format.set_xy(this->duration_edit.lx() + 10, top + y + 2);
+            y += 30;
+        }
+        if (this->flags & TICKET_DISPLAY) {
+            this->ticket_label.set_xy(this->ticket_label.dx(), top + y);
+            this->ticket_edit.set_edit_y(top + y);
+            y += 30;
+        }
+        if (this->flags & COMMENT_DISPLAY) {
+            this->comment_label.set_xy(this->comment_label.dx(), top + y);
+            this->comment_edit.set_edit_y(top + y);
+            y += 30;
+        }
+
+        if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
+            this->notes.set_xy(this->notes.dx(), top + y);
+        }
+
+        this->confirm.set_button_x(left + width - this->confirm.cx());
+        this->confirm.set_button_y(top + y + 10);
+    }
+
     void move_xy(int16_t x, int16_t y) {
         this->rect.x += x;
         this->rect.y += y;
@@ -193,13 +250,25 @@ enum {
     }
 
     void notify(Widget2* widget, NotifyApi::notify_event_t event) override {
-        if (widget->group_id == this->confirm.group_id) {
+        if ((widget->group_id == this->confirm.group_id) &&
+            (NOTIFY_COPY != event) &&
+            (NOTIFY_CUT != event) &&
+            (NOTIFY_PASTE != event)) {
             if (NOTIFY_SUBMIT == event) {
                 this->check_confirmation();
             }
         }
         else {
-            WidgetParent::notify(widget, event);
+            if ((NOTIFY_COPY == event) ||
+                (NOTIFY_CUT == event) ||
+                (NOTIFY_PASTE == event)) {
+                if (this->notifier) {
+                    this->notifier->notify(widget, event);
+                }
+            }
+            else {
+                WidgetParent::notify(widget, event);
+            }
         }
     }
     void set_warning_buffer(const char * field, const char * format) {

@@ -125,6 +125,10 @@ public:
     void draw_event(time_t now, gdi::GraphicApi & gapi) override {
         LocallyIntegrableMod::draw_event(now, gapi);
 
+        if (!this->copy_paste && event.waked_up_by_time) {
+            this->copy_paste.ready(this->front);
+        }
+
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->refused();
@@ -133,9 +137,6 @@ public:
             this->event.set(1000000);
             break;
         case Timeout::TIMEOUT_INACTIVE:
-            if (!this->copy_paste && event.waked_up_by_time) {
-                this->copy_paste.ready(this->front);
-            }
             this->event.reset();
             break;
         }
@@ -152,11 +153,6 @@ public:
     }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->wait_widget.move_xy(left - this->wait_widget.rect.x, top - this->wait_widget.rect.y);
-
-        this->wait_widget.rect.x  = left;
-        this->wait_widget.rect.y  = top;
-        this->wait_widget.rect.cx = width + 1;
-        this->wait_widget.rect.cy = height + 1;
+        this->wait_widget.move_size_widget(left, top, width + 1, height + 1);
     }
 };

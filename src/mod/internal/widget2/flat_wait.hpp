@@ -47,6 +47,10 @@ public:
     bool hasform;
     CompositeArray composite_array;
 
+private:
+    WidgetFlatButton * extra_button;
+
+public:
     FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget2 & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
@@ -67,6 +71,7 @@ public:
                theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, font,
                6, 2)
         , hasform(showform)
+        , extra_button(extra_button)
     {
         this->impl = &composite_array;
         // this->groupbox.add_widget(&this->title);
@@ -120,6 +125,53 @@ public:
         this->clear();
     }
 
+    void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) {
+        this->rect.x  = left;
+        this->rect.y  = top;
+        this->rect.cx = width;
+        this->rect.cy = height;
+
+        this->groupbox.rect.x = left;
+        this->groupbox.rect.y = top;
+        this->groupbox.rect.cx = width;
+        this->groupbox.rect.cy = height;
+
+        this->dialog.rect.x = left;
+        this->dialog.rect.y = top;
+
+        this->form.rect.x  = left;
+        this->form.rect.y  = top;
+        this->form.rect.cx = width - 80;
+
+        const int starty = 20;
+        int y = starty;
+        this->dialog.rect.x = left + 30; // dialog has 10 margin.
+        // this->dialog.rect.x = (this->cx() - total_width) / 2;
+        this->dialog.rect.y = top + y + 10;
+
+        y = this->dialog.dy() + this->dialog.cy() + 20;
+
+        if (this->hasform) {
+            this->form.move_size_widget(left + 40, y, this->form.rect.cx, this->form.rect.cy);
+            y = this->form.ly() + 10;
+        }
+
+        this->exit.set_button_x(left + width - 40 - this->exit.cx());
+        this->goselector.set_button_x(this->exit.dx() - (this->goselector.cx() + 10));
+
+        this->goselector.set_button_y(y);
+        this->exit.set_button_y(y);
+
+        y += this->goselector.cy() + 20;
+        this->groupbox.rect.cy = y - top;
+        this->groupbox.move_xy(0, (height - (y - top)) / 2);
+
+        if (this->extra_button) {
+            this->extra_button->set_button_x(left + 60);
+            this->extra_button->set_button_y(top + height - 60);
+        }
+    }
+
     int get_bg_color() const override {
         return this->bg_color;
     }
@@ -134,6 +186,11 @@ public:
         }
         else if ((event == NOTIFY_SUBMIT) && (widget->group_id == this->form.group_id)) {
             this->send_notify(NOTIFY_TEXT_CHANGED);
+        }
+        else if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
+            if (this->notifier) {
+                this->notifier->notify(widget, event);
+            }
         }
         else {
             WidgetParent::notify(widget, event);

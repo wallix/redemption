@@ -143,11 +143,6 @@ public:
     bool is_up_and_running() override { return true; }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override {
-        this->challenge.move_xy(left - this->challenge.rect.x, top - this->challenge.rect.y);
-
-        this->challenge.rect.x  = left;
-        this->challenge.rect.y  = top;
-        this->challenge.rect.cx = width + 1;
-        this->challenge.rect.cy = height + 1;
+        this->challenge.move_size_widget(left, top, width + 1, height + 1);
     }
 };
