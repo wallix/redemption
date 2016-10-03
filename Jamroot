@@ -228,7 +228,7 @@ lib snappy : : <name>snappy <link>shared ;
 lib dl : : <name>dl <link>shared ;
 lib python2 : : <name>$(PYTHON_VER) <link>shared ;
 
-lib SDL : : <name>SDL <link>shared ;
+#lib SDL : : <name>SDL <link>shared ;
 
 
 lib libpng : : <name>png <link>shared ;
@@ -363,7 +363,7 @@ exe rdpclientcli
         snappy
         krb5
         gssglue
-    :
+    :   
         $(EXE_DEPENDENCIES)
     ;
 

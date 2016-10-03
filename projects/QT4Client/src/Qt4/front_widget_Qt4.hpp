@@ -1383,8 +1383,8 @@ public Q_SLOTS:
             //==================
             //    FILE COPY
             //==================
-                    this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                    this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeID       = Front_Qt::ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeLongName = this->_front->_clipbrdFormatsList.FILEGROUPDESCRIPTORW;
 
                     // retrieve each path
                     const std::string delimiter = "\n";
