@@ -2091,6 +2091,12 @@ public:
         case RdpNego::NEGO_STATE_TLS:
         case RdpNego::NEGO_STATE_RDP:
         default:
+            LOG(LOG_INFO, "nego->state=%s",
+                this->nego.state == RdpNego::NEGO_STATE_INITIAL ? "NEGO_STATE_INITIAL" :
+                this->nego.state == RdpNego::NEGO_STATE_NLA ? "NEGO_STATE_NLA" :
+                this->nego.state == RdpNego::NEGO_STATE_TLS ? "NEGO_STATE_TLS" :
+                this->nego.state == RdpNego::NEGO_STATE_RDP ? "NEGO_STATE_RDP" :
+                "other nego.state (FINAL ?)");
             LOG(LOG_INFO, "this->nego.server_event start");
             this->nego.server_event(
                     this->server_cert_store,
@@ -3487,13 +3493,16 @@ public:
     }
 
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
-        if ((!this->event.waked_up_by_time &&
-             (!this->session_probe_virtual_channel_p ||
-              !this->session_probe_virtual_channel_p->is_event_signaled())) ||
-            ((this->state == MOD_RDP_NEGO) &&
-             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
-              (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
+        LOG(LOG_INFO, "mod_rdp::draw_event()");
+        
+        if ((!this->event.waked_up_by_time 
+            && (!this->session_probe_virtual_channel_p 
+                || !this->session_probe_virtual_channel_p->is_event_signaled())) 
+        || ((this->state == MOD_RDP_NEGO) 
+            && ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) 
+                || (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     this->early_tls_security_exchange();
@@ -3517,6 +3526,8 @@ public:
                 }
             }
             catch(Error const & e){
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
+
                 this->front.must_be_stop_capture();
 
                 if (e.id == ERR_RDP_SERVER_REDIR) {
@@ -3595,9 +3606,13 @@ public:
             }
         }
 
+        LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
+                static_cast<unsigned>(this->open_session_timeout.count()));
         if (this->open_session_timeout.count()) {
+            LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check switch");
             switch(this->open_session_timeout_checker.check(now)) {
             case Timeout::TIMEOUT_REACHED:
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED"); 
                 if (this->error_message) {
                     *this->error_message = "Logon timer expired!";
                 }
@@ -3620,13 +3635,16 @@ public:
                 throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
             break;
             case Timeout::TIMEOUT_NOT_REACHED:
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED"); 
                 this->event.set(1000000);
             break;
             case Timeout::TIMEOUT_INACTIVE:
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE"); 
             break;
             }
         }
 
+        LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p"); 
         try{
             if (this->session_probe_virtual_channel_p) {
                 this->session_probe_virtual_channel_p->process_event();
@@ -3644,6 +3662,7 @@ public:
 
             this->event.signal = BACK_EVENT_NEXT;
         }
+        LOG(LOG_INFO, "mod_rdp::draw_event() done"); 
     }   // draw_event
 
     wait_obj * get_secondary_event() override {

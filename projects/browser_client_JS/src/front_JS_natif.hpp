@@ -817,11 +817,21 @@ extern "C" void connexion(char * ip, char * user, char * password, int port) {
         reinterpret_cast<TransportWebSocket *>(front._trans)->setMod(front._mod);
     }
 
-    while (!front._mod->is_up_and_running()) {
-        sleep(1);
-        front._mod->draw_event(time(nullptr), front);
-    }
+//    while (!front._mod->is_up_and_running()) {
+//        sleep(1);
+//        front._mod->draw_event(time(nullptr), front);
+//    }
 }
+
+extern "C" int up_and_running() {
+    return front._mod->is_up_and_running();
+}
+
+
+extern "C" void client_event() {
+    front._mod->draw_event(time(nullptr), front);
+}
+
 
 extern "C" void disconnection() {
     front.disconnect();
