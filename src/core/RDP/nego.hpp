@@ -147,34 +147,6 @@ struct RdpNego
         }
     }
 
-    void server_event(
-        bool server_cert_store,
-        ServerCertCheck server_cert_check,
-        ServerNotifier & server_notifier,
-        const char * certif_path)
-    {
-        switch (this->state){
-        case NEGO_STATE_INITIAL:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-            this->send_negotiation_request();
-            this->state = NEGO_STATE_NEGOCIATE;
-        break;
-        default:
-        case NEGO_STATE_FINAL:
-        case NEGO_STATE_NEGOCIATE:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
-                    (this->nla) ? "NLA" :
-                    (this->tls) ? "TLS" :
-                                  "RDP");
-            this->recv_connection_confirm(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
-        break;
-        }
-    }
 
 
 // 2.2.1.2 Server X.224 Connection Confirm PDU

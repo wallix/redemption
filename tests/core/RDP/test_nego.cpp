@@ -111,21 +111,21 @@ BOOST_AUTO_TEST_CASE(TestNego)
     NullServerNotifier null_server_notifier;
     RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand, timeobj);
     nego.set_identity(user, domain, pass, host);
-    const bool server_cert_store = true;
-    nego.server_event(
-            server_cert_store,
-            ServerCertCheck::always_succeed,
-            null_server_notifier,
-            "/tmp/certif"
-        );
-    nego.server_event(
-            server_cert_store,
-            ServerCertCheck::always_succeed,
-            null_server_notifier,
-            "/tmp/certif"
-        );
-}
 
+    nego.send_negotiation_request();
+    nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
+
+    const bool server_cert_store = true;
+
+    nego.recv_connection_confirm(
+        server_cert_store,
+        ServerCertCheck::always_succeed,
+        null_server_notifier,
+        "/tmp/certif"
+        );
+        
+    BOOST_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
+}
 
 // BOOST_AUTO_TEST_CASE(TestNego2)
 // {

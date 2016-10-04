@@ -2087,20 +2087,22 @@ public:
 
         switch (this->nego.state){
         case RdpNego::NEGO_STATE_INITIAL:
+                LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+                this->nego.send_negotiation_request();
+                this->nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
+        break;
         case RdpNego::NEGO_STATE_NEGOCIATE:
-        default:
-            LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_%s",
-                this->nego.state == RdpNego::NEGO_STATE_INITIAL ? "INITIAL" :
-                this->nego.state == RdpNego::NEGO_STATE_NEGOCIATE ? "NEGOCIATE" :
-                "FINAL");
-            LOG(LOG_INFO, "this->nego.server_event start");
-            this->nego.server_event(
+            LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_NEGOCIATE");
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s", 
+                    (this->nego.nla) ? "NLA" :
+                    (this->nego.tls) ? "TLS" :
+                                       "RDP");
+            this->nego.recv_connection_confirm(
                     this->server_cert_store,
                     this->server_cert_check,
                     this->server_notifier,
                     this->certif_path.get()
                 );
-            LOG(LOG_INFO, "this->nego.server_event end");
             break;
         case RdpNego::NEGO_STATE_FINAL:
             this->send_connectInitialPDUwithGccConferenceCreateRequest();
