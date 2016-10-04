@@ -468,6 +468,7 @@ void Front_Qt::mouseReleaseEvent(QMouseEvent *e, int screen_index) {
 void Front_Qt::keyPressEvent(QKeyEvent *e) {
     this->_qtRDPKeymap.keyEvent(0     , e);
     if (this->_qtRDPKeymap.scanCode != 0) {
+        //std::cout << "keyPressed " << int(this->_qtRDPKeymap.scanCode) <<  std::endl;
         this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
 
     }

@@ -18,6 +18,7 @@
    Author(s): Clément Moroldo
 */
 
+//#define LOGPRINT
 
 #include "test_client_redemption_cli.hpp"
 
@@ -54,18 +55,66 @@ int main(int argc, char** argv){
     std::string localIP("");
     int nbTry(3);
     int retryDelay(1000);
-
-    const char * name_param(userName.c_str());
-    const char * targetIP_param(ip.c_str());
-    const char * pwd_param(userPwd.c_str());
-    const char * local_IP_param(localIP.c_str());
     //=========================================================
+
+
+
+    uint8_t input_connection_data_complete(0);
+    for (int i = 0; i <  argc; i++) {
+
+        std::string word(argv[i]);
+
+        //================================
+        //     Cmd lines User config
+        //================================
+        if (       word == "--user") {
+            userName = std::string(argv[i+1]);
+            input_connection_data_complete += TestClientCLI::NAME;
+
+        } else if (word == "--pwd") {
+            userPwd = std::string(argv[i+1]);
+            input_connection_data_complete += TestClientCLI::PWD;
+        } else if (word == "--ip") {
+            ip = std::string(argv[i+1]);
+            input_connection_data_complete += TestClientCLI::IP;
+        } else if (word == "--port") {
+            port = std::stoi(std::string(argv[i+1]));
+            input_connection_data_complete += TestClientCLI::PORT;
+        } else if (word == "--local_ip") {
+            localIP = std::string(argv[i+1]);
+        } else if (word == "--keylayout") {
+            info.keylayout = std::stoi(std::string(argv[i+1]));
+        } else if (word == "--bpp") {
+            info.bpp = std::stoi(std::string(argv[i+1]));
+        } else if (word == "--width") {
+            info.width = std::stoi(std::string(argv[i+1]));
+        } else if (word == "--height") {
+            info.height = std::stoi(std::string(argv[i+1]));
+        } else if (word == "--wallpaper") {
+            if (       std::string(argv[i+1]) ==  "off") {
+                info.rdp5_performanceflags -=  PERF_DISABLE_WALLPAPER;
+            }
+        } else if (word == "--fullwindowdrag") {
+            if (       std::string(argv[i+1]) ==  "off") {
+                info.rdp5_performanceflags -=  PERF_DISABLE_FULLWINDOWDRAG;
+            }
+        } else if (word == "--menuanimations") {
+            if (       std::string(argv[i+1]) ==  "off") {
+                info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
+            }//================================================================
+        }
+    }
 
 
 
     //===========================================
     //       Default mod_rdp_param config
     //===========================================
+    const char * name_param(userName.c_str());
+    const char * targetIP_param(ip.c_str());
+    const char * pwd_param(userPwd.c_str());
+    const char * local_IP_param(localIP.c_str());
+
     ModRDPParams mod_rdp_params( name_param
                                , pwd_param
                                , targetIP_param
@@ -154,57 +203,13 @@ int main(int argc, char** argv){
 
 
 
-    uint8_t input_connection_data_complete(0);
     for (int i = 0; i <  argc; i++) {
 
         std::string word(argv[i]);
-
-
-        //================================
-        //     Cmd lines User config
-        //================================
-        if (       word == "--user") {
-            userName = std::string(argv[i+1]);
-            input_connection_data_complete += TestClientCLI::NAME;
-
-        } else if (word == "--pwd") {
-            userPwd = std::string(argv[i+1]);
-            input_connection_data_complete += TestClientCLI::PWD;
-        } else if (word == "--ip") {
-            ip = std::string(argv[i+1]);
-            input_connection_data_complete += TestClientCLI::IP;
-        } else if (word == "--port") {
-            port = std::stoi(std::string(argv[i+1]));
-            input_connection_data_complete += TestClientCLI::PORT;
-        } else if (word == "--local_ip") {
-            localIP = std::string(argv[i+1]);
-        } else if (word == "--keylayout") {
-            info.keylayout = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--bpp") {
-            info.bpp = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--width") {
-            info.width = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--height") {
-            info.height = std::stoi(std::string(argv[i+1]));
-        } else if (word == "--wallpaper") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                info.rdp5_performanceflags -=  PERF_DISABLE_WALLPAPER;
-            }
-        } else if (word == "--fullwindowdrag") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                info.rdp5_performanceflags -=  PERF_DISABLE_FULLWINDOWDRAG;
-            }
-        } else if (word == "--menuanimations") {
-            if (       std::string(argv[i+1]) ==  "off") {
-                info.rdp5_performanceflags -=  PERF_DISABLE_MENUANIMATIONS;
-            }//================================================================
-
-
-
         //================================
         //            TOOLS
         //================================
-        } else  if (word == "--help") {
+        if (word == "--help") {
             print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
         } else if (word == "-h") {
             print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
@@ -239,10 +244,10 @@ int main(int argc, char** argv){
                       | TestClientCLI::SHOW_KEYBOARD_EVENT
                       ;
         }
+    }
         //==============================================================
 
 
-    }
 
     std::cout <<  std::endl;
     std::cout << "Verbose level = 0x" << std::hex << verbose << std::dec << std::endl;
@@ -274,7 +279,6 @@ int main(int argc, char** argv){
         std::cout << "  full_window_drag_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) << std::endl;
         std::cout << "  menu_animations_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) << std::endl;
     }
-
 
 
 
@@ -377,7 +381,6 @@ int main(int argc, char** argv){
 
                 while (!mod->is_up_and_running()) {
                     mod->draw_event(time(nullptr), front);
-                    std::cout << "pre-draw event" <<  std::endl;
                 }
 
             } catch (const Error & e) {
@@ -414,36 +417,48 @@ int main(int argc, char** argv){
                     std::cout << std::endl;
                 }
 
+                int delay(3000);
 
-                ActionsList actionsList(24);
-
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-
-                actionsList.setAction(new MouseButton(&front, 1, 53, 308, true));
-                actionsList.setAction(new MouseButton(&front, 1, 512, 394, true));
-                actionsList.setAction(new ClipboardChange(&front));
-                actionsList.setAction(new KeyPressed(&front, 65, 0));
-                actionsList.setAction(new KeyPressed(&front, 67, 0));
-                actionsList.setAction(new KeyPressed(&front, 65, 0));
-                actionsList.setAction(new KeyPressed(&front, 66, 0));
-
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                actionsList.setAction(new Wait());
-                
-                actionsList.setAction(new MouseButton(&front, 1, 53, 308, true));
-                actionsList.setAction(new MouseButton(&front, 1, 512, 394, true));
+                ActionsList actionsList;
+                MouseButton ac1(&front, 1, 53, 308, true);
+                actionsList.setAction(ac1);
+                MouseButton ac2(&front, 1, 53, 308, false);
+                actionsList.setAction( ac2);
+                MouseButton ac1a(&front, 1, 53, 308, true);
+                actionsList.setAction(ac1a);
+                MouseButton ac2a(&front, 1, 53, 308, false);
+                actionsList.setAction( ac2a);
+                MouseButton ac3(&front, 1, 512, 394, true);
+                actionsList.setAction( ac3);
+                MouseButton ac4(&front, 1, 512, 394, false);
+                actionsList.setAction( ac4);
+                actionsList.wait(delay);
+                uint32_t formatIDs[]                 = { RDPECLIP::CF_TEXT };
+                std::string formatListDataLongName[] = { std::string("\0\0", 2) };
+                ClipboardChange ac5(&front, formatIDs, formatListDataLongName, 1);
+                actionsList.setAction( ac5);
+                actionsList.wait(delay);
+                KeyPressed ac6(&front, 16, 0);
+                actionsList.setAction( ac6);
+                KeyReleased ac7(&front, 16, 0);
+                actionsList.setAction( ac7);
+                KeyPressed ac8(&front, 46, 0);
+                actionsList.setAction( ac8);
+                KeyReleased ac9(&front, 46, 0);
+                actionsList.setAction( ac9);
+                KeyPressed ac10(&front, 16, 0);
+                actionsList.setAction( ac10);
+                KeyReleased ac11(&front, 16, 0);
+                actionsList.setAction( ac11);
+                KeyPressed ac12(&front, 48, 0);
+                actionsList.setAction( ac12);
+                KeyReleased ac13(&front, 48, 0);
+                actionsList.setAction( ac13);
+                actionsList.wait(delay);
+                MouseButton ac14(&front, 1, 512, 394, true);
+                actionsList.setAction( ac14);
+                MouseButton ac15(&front, 1, 512, 394, false);
+                actionsList.setAction( ac15);
 
                 run_mod(mod, front, socket, actionsList);
 
@@ -534,7 +549,6 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Act
             }
 
             if (front.is_running()) {
-                std::cout <<  "emit action" <<  std::endl;
                 al.emit();
             }
 

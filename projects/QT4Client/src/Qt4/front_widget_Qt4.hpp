@@ -1158,7 +1158,7 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = MODRDP_LOGLEVEL_CLIPRDR;
+        mod_rdp_params.verbose = MODRDP_LOGLEVEL_CLIPRDR | 16;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 

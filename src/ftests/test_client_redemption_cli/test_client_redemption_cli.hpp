@@ -23,6 +23,7 @@
 
 //#define LOGPRINT
 
+#include <chrono>
 #include <stdio.h>
 #include <openssl/ssl.h>
 #include <iostream>
@@ -276,7 +277,7 @@ public:
     , mod_palette(BGRPalette::classic_332())
     , _info(info)
     , _callback(nullptr)
-    , _running(true)
+    , _running(false)
     {
         this->_to_client_sender._front = this;
         this->_keymap.init_layout(this->_info.keylayout);
@@ -376,8 +377,6 @@ public:
         if (!mod_channel) {
             return;
         }
-
-        std::cout << "send_to_channel" << std::endl;
 
         if (!strcmp(channel.name, channel_names::cliprdr)) {
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
@@ -743,43 +742,41 @@ public:
 struct ActionConfig
 {
     TestClientCLI * front;
+    long trigger_time;
 
     ActionConfig(TestClientCLI * front)
     : front(front)
+    , trigger_time(0)
     {}
 
     virtual ~ActionConfig() {};
 
     virtual void emit() = 0;
-        //std::this_thread::sleep_for(4);
-
-
 };
 
 
 struct ClipboardChange : ActionConfig
 {
-    ClipboardChange(TestClientCLI * front)
+    uint32_t * formatIDs;
+    std::string * formatListDataLongName;
+    size_t size;
+
+    ClipboardChange( TestClientCLI * front
+                   , uint32_t * formatIDs
+                   , std::string * formatListDataLongName
+                   , size_t size)
     : ActionConfig(front)
+    , formatIDs(formatIDs)
+    , formatListDataLongName(formatListDataLongName)
     {}
 
     virtual void emit() override {
         uint32_t formatIDs[]                  = { RDPECLIP::CF_TEXT };
         std::string formatListDataShortName[] = { std::string("\0\0", 2) };
-        this->front->send_FormatListPDU(formatIDs, formatListDataShortName, 1, true);
+        this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size, true);
     }
 };
 
-struct Wait : ActionConfig
-{
-    Wait()
-    : ActionConfig(nullptr)
-    {}
-
-    virtual void emit() override {
-        std::cout << "wait" <<  std::endl;
-    }
-};
 
 struct MouseButton : public ActionConfig
 {
@@ -803,11 +800,9 @@ struct MouseButton : public ActionConfig
 
     virtual void emit() override {
         this->front->mouseButtons(button, x, y, isPressed);
-        this->front->mouseButtons(button, x, y, false);
-        this->front->mouseButtons(button, x, y, isPressed);
-        this->front->mouseButtons(button, x, y, false);
     }
 };
+
 
 struct MouseMove : public ActionConfig
 {
@@ -828,6 +823,7 @@ struct MouseMove : public ActionConfig
     }
 };
 
+
 struct KeyPressed : public ActionConfig
 {
     uint32_t scanCode;
@@ -844,9 +840,9 @@ struct KeyPressed : public ActionConfig
 
     virtual void emit() override {
         this->front->keyPressed(scanCode, Flag);
-        this->front->keyReleased(scanCode, Flag);
     }
 };
+
 
 struct KeyReleased : public ActionConfig
 {
@@ -867,32 +863,57 @@ struct KeyReleased : public ActionConfig
     }
 };
 
+
 class ActionsList
 {
 public:
-    std::unique_ptr<ActionConfig * []> list;
-    const size_t length;
-    size_t size;
+    std::vector<ActionConfig *> list;
+    long start_time;
+    long wait_time;
     size_t index;
 
-    ActionsList(const size_t N)
-      : length(N)
-      , size(0)
+    ActionsList()
+      : start_time(0)
+      , wait_time(0)
       , index(0)
     {
-        list = std::make_unique<ActionConfig * []>(length);
+        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
+        this->start_time = ms.count();
     }
 
 
-    void setAction(ActionConfig * action) {
-        list[size] = action;
-        size++;
+    void setAction(ActionConfig & action) {
+        action.trigger_time = this->wait_time;
+        this->list.push_back(&action);;
+    }
+
+    void wait(int ms) {
+        this->wait_time += ms;
+    }
+
+    size_t size() {
+        return this->list.size();
     }
 
     void emit() {
-        if (index < size) {
-            list[index]->emit();
-            index++;
+        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
+        //int current_time(timev);
+        long current_time(ms.count());
+        bool next(true);
+        size_t i = index;
+        while (next) {
+            if (i >= this->size() || this->index >= this->size()) {
+                return;
+            }
+            long triggger(this->list[i]->trigger_time + this->start_time);
+            if (triggger <= current_time) {
+                this->list[i]->emit();
+                this->index++;
+
+            } else {
+                next = false;
+            }
+            i++;
         }
     }
 };
