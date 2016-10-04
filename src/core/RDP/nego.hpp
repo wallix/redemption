@@ -53,13 +53,15 @@ struct RdpNego
 //    char* cookie;
     bool restricted_admin_mode;
 
+  // NLA : Network Level Authentication (TLS implicit)
+  // TLS : TLS Encryption without NLA
+  // RDP: Standard Legacy RDP Encryption without TLS nor NLA
+  
     enum
     {
         NEGO_STATE_INITIAL,
-        NEGO_STATE_NLA,  // Network Level Authentication (TLS implicit)
-        NEGO_STATE_TLS,  // TLS Encryption without NLA
-        NEGO_STATE_RDP,  // Standard Legacy RDP Encryption
-        //NEGO_STATE_FAIL, // Negotiation failure */
+        NEGO_STATE_NEGOCIATE,
+        // NEGO_STATE_FAIL, // Negotiation failure */
         NEGO_STATE_FINAL
     } state;
 
@@ -155,38 +157,15 @@ struct RdpNego
         case NEGO_STATE_INITIAL:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->send_negotiation_request();
-            if (this->nla) {
-                this->state = NEGO_STATE_NLA;
-            }
-            else if (this->tls){
-                this->state = NEGO_STATE_TLS;
-            }
-            else {
-                this->state = NEGO_STATE_RDP;
-            }
+            this->state = NEGO_STATE_NEGOCIATE;
         break;
         default:
         case NEGO_STATE_FINAL:
-        case NEGO_STATE_NLA:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
-            this->recv_connection_confirm(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
-        break;
-        case NEGO_STATE_TLS:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
-            this->recv_connection_confirm(
-                    server_cert_store,
-                    server_cert_check,
-                    server_notifier,
-                    certif_path
-                );
-        break;
-        case NEGO_STATE_RDP:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
+        case NEGO_STATE_NEGOCIATE:
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
+                    (this->nla) ? "NLA" :
+                    (this->tls) ? "TLS" :
+                                  "RDP");
             this->recv_connection_confirm(
                     server_cert_store,
                     server_cert_check,
@@ -323,6 +302,7 @@ struct RdpNego
 
         if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
             this->tls = false;
+            this->nla = false;
             this->state = NEGO_STATE_FINAL;
             LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
             return;
@@ -392,9 +372,10 @@ struct RdpNego
             else {
                 LOG(LOG_INFO, "Can't activate NLA");
                 this->nla = false;
+                this->tls = true;
                 LOG(LOG_INFO, "falling back to SSL only");
                 this->send_negotiation_request();
-                this->state = NEGO_STATE_TLS;
+                this->state = NEGO_STATE_NEGOCIATE;
                 this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
             }
         }
@@ -415,12 +396,13 @@ struct RdpNego
             || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER)){
                 LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
                 this->tls = false;
+                this->nla = false;
                 this->trans.disconnect();
                 if (!this->trans.connect()){
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
                 this->send_negotiation_request();
-                this->state = NEGO_STATE_RDP;
+                this->state = NEGO_STATE_NEGOCIATE;
                 this->enabled_protocols = RdpNego::PROTOCOL_RDP;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
@@ -494,13 +476,10 @@ struct RdpNego
             LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
             hexdump_c(cookie_or_token, strlen(cookie_or_token));
         }
-        uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP;
-        if (this->tls) {
-            rdp_neg_requestedProtocols |= X224::PROTOCOL_TLS;
-        }
-        if (this->nla) {
-            rdp_neg_requestedProtocols |= X224::PROTOCOL_HYBRID;
-        }
+        uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP
+                | (this->tls ? X224::PROTOCOL_TLS:0)
+                | (this->nla ? X224::PROTOCOL_HYBRID:0);
+        
         StaticOutStream<65536> stream;
         X224::CR_TPDU_Send(stream, cookie_or_token,
                            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
@@ -624,6 +603,7 @@ struct RdpNego
 //                 && tls_fallback_legacy) {
 //                 LOG(LOG_INFO, "Fallback to legacy security protocol");
 //                 this->tls = false;
+//                 this->nla = false;
 //             }
 //         }
 //

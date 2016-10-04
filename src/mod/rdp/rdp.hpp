@@ -2087,16 +2087,12 @@ public:
 
         switch (this->nego.state){
         case RdpNego::NEGO_STATE_INITIAL:
-        case RdpNego::NEGO_STATE_NLA:
-        case RdpNego::NEGO_STATE_TLS:
-        case RdpNego::NEGO_STATE_RDP:
+        case RdpNego::NEGO_STATE_NEGOCIATE:
         default:
-            LOG(LOG_INFO, "nego->state=%s",
-                this->nego.state == RdpNego::NEGO_STATE_INITIAL ? "NEGO_STATE_INITIAL" :
-                this->nego.state == RdpNego::NEGO_STATE_NLA ? "NEGO_STATE_NLA" :
-                this->nego.state == RdpNego::NEGO_STATE_TLS ? "NEGO_STATE_TLS" :
-                this->nego.state == RdpNego::NEGO_STATE_RDP ? "NEGO_STATE_RDP" :
-                "other nego.state (FINAL ?)");
+            LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_%s",
+                this->nego.state == RdpNego::NEGO_STATE_INITIAL ? "INITIAL" :
+                this->nego.state == RdpNego::NEGO_STATE_NEGOCIATE ? "NEGOCIATE" :
+                "FINAL");
             LOG(LOG_INFO, "this->nego.server_event start");
             this->nego.server_event(
                     this->server_cert_store,
