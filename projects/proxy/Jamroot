@@ -935,7 +935,7 @@ test-canonical mod/internal/flat_login_mod.hpp : <library>bitmap <library>png ;
 
 test-canonical mod/internal/flat_wab_close_mod.hpp : <library>bitmap <library>png ;
 test-canonical mod/internal/widget_test_mod.hpp : <library>png ;
-test-canonical mod/internal/interactive_target_mod.hpp : <library>png <library>crypto ;
+test-canonical mod/internal/interactive_target_mod.hpp : <library>bitmap <library>png <library>crypto ;
 test-canonical mod/internal/bouncer2_mod.hpp : <library>png ;
 test-canonical mod/internal/test_card_mod.hpp : <library>png ;
 test-canonical mod/internal/replay_mod.hpp : <library>png ;
