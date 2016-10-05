@@ -101,6 +101,18 @@ struct ModRDPParamsConfig
     {
         *param = default_value;
     }
+
+    ModRDPParamsConfig( bool * param
+                      , std::string cmd
+                      , std::string descrpt
+                      , std::string name
+                      )
+    : param(param)
+    , default_value(default_value)
+    , cmd(cmd)
+    , descrpt(descrpt)
+    , name(name)
+    {}
 };
 
 
@@ -372,7 +384,7 @@ public:
     //         CLIPBOARD
     //-----------------------------
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * mod_channel = this->_cl.get_by_name(channel.name);
         if (!mod_channel) {
             return;
@@ -465,7 +477,11 @@ public:
 
     void send_buffer_to_clipboard() {}
 
-    void process_server_clipboard_indata(int flags, InStream & chunk) {}
+    void process_server_clipboard_indata(int flags, InStream & chunk) {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        }
+        this->send_to_clipboard_Buffer(chunk);
+    }
 
     void send_FormatListPDU(const uint32_t * formatIDs, const std::string * formatListDataShortName, std::size_t formatIDs_size,  bool isLong) {
         RDPECLIP::FormatListPDU format_list_pdu;
@@ -691,7 +707,11 @@ public:
     void mouseButtons(uint8_t button, uint32_t x, uint32_t y, bool press) {
         if (this->_callback != nullptr) {
             if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
-                std::cout << "mouseButton=" << int(button) << " x=" << int(x) << " y=" << int(y) << std::endl;
+                if (press) {
+                    std::cout << "mouseButtonPressed=" << int(button) << " x=" << int(x) << " y=" << int(y) << std::endl;
+                } else {
+                    std::cout << "mouseButtonReleased=" << int(button) << " x=" << int(x) << " y=" << int(y) << std::endl;
+                }
             }
             int flag(0);
             switch (button) {
@@ -739,46 +759,48 @@ public:
 
 
 
-struct ActionConfig
+struct EventConfig
 {
     TestClientCLI * front;
     long trigger_time;
 
-    ActionConfig(TestClientCLI * front)
+    EventConfig(TestClientCLI * front)
     : front(front)
     , trigger_time(0)
     {}
 
-    virtual ~ActionConfig() {};
+    virtual ~EventConfig() {};
 
     virtual void emit() = 0;
 };
 
 
-struct ClipboardChange : ActionConfig
+struct ClipboardChange : EventConfig
 {
-    uint32_t * formatIDs;
-    std::string * formatListDataLongName;
+    uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
+    std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
     size_t size;
 
     ClipboardChange( TestClientCLI * front
                    , uint32_t * formatIDs
                    , std::string * formatListDataLongName
                    , size_t size)
-    : ActionConfig(front)
-    , formatIDs(formatIDs)
-    , formatListDataLongName(formatListDataLongName)
-    {}
+    : EventConfig(front)
+    , size(size)
+    {
+        for (size_t i = 0; i < this->size; i++) {
+            this->formatIDs[i] = formatIDs[i];
+            this->formatListDataLongName[i] = formatListDataLongName[i];
+        }
+    }
 
     virtual void emit() override {
-        uint32_t formatIDs[]                  = { RDPECLIP::CF_TEXT };
-        std::string formatListDataShortName[] = { std::string("\0\0", 2) };
         this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size, true);
     }
 };
 
 
-struct MouseButton : public ActionConfig
+struct MouseButton : public EventConfig
 {
     uint8_t button;
     uint32_t x;
@@ -791,7 +813,7 @@ struct MouseButton : public ActionConfig
                , uint32_t y
                , bool isPressed
                )
-    : ActionConfig(front)
+    : EventConfig(front)
     , button(button)
     , x(x)
     , y(y)
@@ -804,7 +826,7 @@ struct MouseButton : public ActionConfig
 };
 
 
-struct MouseMove : public ActionConfig
+struct MouseMove : public EventConfig
 {
     uint32_t x;
     uint32_t y;
@@ -813,7 +835,7 @@ struct MouseMove : public ActionConfig
              , uint32_t x
              , uint32_t y
              )
-    : ActionConfig(front)
+    : EventConfig(front)
     , x(x)
     , y(y)
     {}
@@ -824,7 +846,7 @@ struct MouseMove : public ActionConfig
 };
 
 
-struct KeyPressed : public ActionConfig
+struct KeyPressed : public EventConfig
 {
     uint32_t scanCode;
     uint32_t Flag;
@@ -833,7 +855,7 @@ struct KeyPressed : public ActionConfig
                , uint32_t scanCode
                , uint32_t Flag = 0
                )
-    : ActionConfig(front)
+    : EventConfig(front)
     , scanCode(scanCode)
     , Flag(Flag)
     {}
@@ -844,7 +866,7 @@ struct KeyPressed : public ActionConfig
 };
 
 
-struct KeyReleased : public ActionConfig
+struct KeyReleased : public EventConfig
 {
     uint32_t scanCode;
     uint32_t Flag;
@@ -853,7 +875,7 @@ struct KeyReleased : public ActionConfig
                , uint32_t scanCode
                , uint32_t Flag = 0
                )
-    : ActionConfig(front)
+    : EventConfig(front)
     , scanCode(scanCode)
     , Flag(Flag)
     {}
@@ -864,15 +886,15 @@ struct KeyReleased : public ActionConfig
 };
 
 
-class ActionsList
+class EventList
 {
 public:
-    std::vector<ActionConfig *> list;
+    std::vector<EventConfig *> list;
     long start_time;
     long wait_time;
     size_t index;
 
-    ActionsList()
+    EventList()
       : start_time(0)
       , wait_time(0)
       , index(0)
@@ -881,10 +903,19 @@ public:
         this->start_time = ms.count();
     }
 
+    ~EventList()
+    {
+        for (size_t i = 0; i < this->list.size(); i++) {
+            delete(this->list[i]);
+        }
 
-    void setAction(ActionConfig & action) {
-        action.trigger_time = this->wait_time;
-        this->list.push_back(&action);;
+        this->list.clear();
+    }
+
+
+    void setAction(EventConfig * action) {
+        action->trigger_time = this->wait_time;
+        this->list.push_back(action);
     }
 
     void wait(int ms) {
@@ -897,7 +928,6 @@ public:
 
     void emit() {
         std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
-        //int current_time(timev);
         long current_time(ms.count());
         bool next(true);
         size_t i = index;
