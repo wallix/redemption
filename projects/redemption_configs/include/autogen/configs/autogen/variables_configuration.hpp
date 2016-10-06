@@ -296,13 +296,13 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value = "0.0.0.0";
         };
-        // Allow IP Transparent.
+        // Allow Transparent mode.
         // type: bool
-        struct enable_ip_transparent {
+        struct enable_transparent_mode {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
-            static constexpr char const * name() { return "enable_ip_transparent"; }
+            static constexpr char const * name() { return "enable_transparent_mode"; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -2779,7 +2779,7 @@ struct globals
 , cfg::globals::close_timeout
 , cfg::globals::trace_type
 , cfg::globals::listen_address
-, cfg::globals::enable_ip_transparent
+, cfg::globals::enable_transparent_mode
 , cfg::globals::certificate_password
 , cfg::globals::png_path
 , cfg::globals::wrm_path

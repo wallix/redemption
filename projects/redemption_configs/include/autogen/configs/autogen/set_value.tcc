@@ -119,10 +119,10 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_ip_transparent")) {
+        else if (0 == strcmp(key, "enable_transparent_mode")) {
             ::configs::parse_and_log(
                 context, key, 
-                static_cast<cfg::globals::enable_ip_transparent&>(this->variables).value,
+                static_cast<cfg::globals::enable_transparent_mode&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

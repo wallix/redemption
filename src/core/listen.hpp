@@ -49,7 +49,7 @@ struct Listen {
     bool exit_on_timeout;
     int timeout_sec;
 
-    Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60, bool enable_ip_transparent = false)
+    Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60, bool enable_transparent_mode = false)
         : server(server)
         , s_addr(s_addr)
         , port(port)
@@ -108,7 +108,7 @@ struct Listen {
             return;
         }
 
-        if (enable_ip_transparent) {
+        if (enable_transparent_mode) {
             LOG(LOG_INFO, "Enable transparent proxying on listened socket.\n");
             int optval = 1;
 

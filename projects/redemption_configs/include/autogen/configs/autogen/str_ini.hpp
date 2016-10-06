@@ -57,9 +57,9 @@
 "#_advanced\n"
 "#listen_address = 0.0.0.0\n\n"
 
-"# Allow IP Transparent.\n"
+"# Allow Transparent mode.\n"
 "#_iptables\n"
-"#enable_ip_transparent = 0\n\n"
+"#enable_transparent_mode = 0\n\n"
 
 "# Proxy certificate password.\n"
 "#_advanced\n"
