@@ -69,7 +69,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     , _bufferRDPClipboardChannelSizeTotal(0)
     , _bufferRDPCLipboardMetaFilePic_width(0)
     , _bufferRDPCLipboardMetaFilePic_height(0)
-    , _clipbrd_formats_list()
+    , _clipbrdFormatsList()
     , _cItems(0)
     , _lindexToRequest(0)
     , _streamIDToRequest(0)
@@ -159,19 +159,19 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
                                  , PDU_MAX_SIZE+1
                                  };
 
-    this->_clipbrd_formats_list.add_format( Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS
-                                          , this->_clipbrd_formats_list.FILECONTENTS
+    this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
+                                          , this->_clipbrdFormatsList.FILECONTENTS
                                           );
-    this->_clipbrd_formats_list.add_format( Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                          , this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW
+    this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
+                                          , this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW
                                           );
-    this->_clipbrd_formats_list.add_format( RDPECLIP::CF_UNICODETEXT
+    this->_clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
                                           , std::string("\0\0", 2)
                                           );
-    this->_clipbrd_formats_list.add_format( RDPECLIP::CF_TEXT
+    this->_clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
                                           , std::string("\0\0", 2)
                                           );
-    this->_clipbrd_formats_list.add_format( RDPECLIP::CF_METAFILEPICT
+    this->_clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
                                           , std::string("\0\0", 2)
                                           );
 
@@ -445,7 +445,7 @@ void Front_Qt::mousePressEvent(QMouseEvent *e, int screen_index) {
             case 4: flag = MOUSE_FLAG_BUTTON4; break;
             default: break;
         }
-        //std::cout << "mousePressed " << e->x() + this->_info.width *screen_index << " " <<  e->y() << std::endl;
+        //std::cout << "mousePressed " << e->x() << " " <<  e->y() << std::endl;
         this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x() + this->_width *screen_index, e->y(), &(this->_keymap));
     }
 }
@@ -468,13 +468,14 @@ void Front_Qt::mouseReleaseEvent(QMouseEvent *e, int screen_index) {
 void Front_Qt::keyPressEvent(QKeyEvent *e) {
     this->_qtRDPKeymap.keyEvent(0     , e);
     if (this->_qtRDPKeymap.scanCode != 0) {
+        //std::cout << "keyPressed " << int(this->_qtRDPKeymap.scanCode) <<  std::endl;
         this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
 
     }
 }
 
 void Front_Qt::keyReleaseEvent(QKeyEvent *e) {
-    this->_qtRDPKeymap.keyEvent(0x8000, e);
+    this->_qtRDPKeymap.keyEvent(KBD_FLAG_UP, e);
     if (this->_qtRDPKeymap.scanCode != 0) {
         this->send_rdp_scanCode(this->_qtRDPKeymap.scanCode, this->_qtRDPKeymap.flag);
     }
@@ -1798,7 +1799,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         this->_monitorCountNegociated = true;
                     }
                     {
-                        this->send_FormatListPDU(this->_clipbrd_formats_list.IDs, this->_clipbrd_formats_list.names, Clipbrd_formats_list::CLIPBRD_FORMAT_COUNT, true);
+                        this->send_FormatListPDU(this->_clipbrdFormatsList.IDs, this->_clipbrdFormatsList.names, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT, true);
 
                     }
 
@@ -1857,8 +1858,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 }
                                 this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), k*2);
 
-                                for (int j = 0; j < Clipbrd_formats_list::CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
-                                    if (this->_clipbrd_formats_list.IDs[j] == formatID) {
+                                for (int j = 0; j < ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
+                                    if (this->_clipbrdFormatsList.IDs[j] == formatID) {
                                         this->_requestedFormatId = formatID;
                                         isSharedFormat = true;
                                         std::cout <<  " pick!";
@@ -1866,7 +1867,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                     }
                                 }
 
-                                if (this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW && !isSharedFormat) {
+                                if (this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW && !isSharedFormat) {
                                     this->_requestedFormatId = formatID;
                                     isSharedFormat = true;
                                     std::cout <<  " pick!";
@@ -1935,8 +1936,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 "Format Data Response PDU");
                     }
 
-                    if(this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW) {
-                        this->_requestedFormatId = Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                    if(this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
+                        this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     }
 
                     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -1992,7 +1993,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                                           , this->_clipboard_qt->_bufferImage->width()
                                                                           , this->_clipboard_qt->_bufferImage->height()
                                                                           , this->_clipboard_qt->_bufferImage->depth()
-                                                                          , this->_clipbrd_formats_list.ARBITRARY_SCALE
+                                                                          , this->_clipbrdFormatsList.ARBITRARY_SCALE
                                                                           );
 
                                     this->process_client_clipboard_outdata( total_length
@@ -2023,7 +2024,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                 }
                                 break;
 
-                                case Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+                                case ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
                                 {
                                     int data_sent(0);
                                     first_part_data_size = PDU_HEADER_SIZE + 4;
@@ -2177,8 +2178,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         } else {
                             std::cout <<  std::endl;
 
-                            if(this->_requestedFormatName == this->_clipbrd_formats_list.FILEGROUPDESCRIPTORW) {
-                                this->_requestedFormatId = Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS;
+                            if(this->_requestedFormatName == this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
+                                this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS;
                                 this->process_server_clipboard_indata(flags, chunk);
                             }
                         }
@@ -2318,7 +2319,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
             }
         break;
 
-        case Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+        case ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->_bufferRDPClipboardChannelSizeTotal -= 4;
@@ -2368,7 +2369,7 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
             }
         break;
 
-        case Clipbrd_formats_list::CF_QT_CLIENT_FILECONTENTS:
+        case ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 this->_bufferRDPClipboardChannelSizeTotal = this->_items_list[this->_lindexToRequest].size;

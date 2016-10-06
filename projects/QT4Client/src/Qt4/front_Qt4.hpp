@@ -265,7 +265,7 @@ public:
     int                         _bufferRDPCLipboardMetaFilePic_width;
     int                         _bufferRDPCLipboardMetaFilePic_height;
     int                         _bufferRDPClipboardMetaFilePicBPP;
-    struct Clipbrd_formats_list{
+    struct ClipbrdFormatsList{
         enum : uint16_t {
               CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
             , CF_QT_CLIENT_FILECONTENTS         = 48026
@@ -282,7 +282,7 @@ public:
         const double      ARBITRARY_SCALE;  //  module MetaFilePic resolution, value=40 is
                                             //  empirically close to original resolution.
 
-        Clipbrd_formats_list()
+        ClipbrdFormatsList()
           : FILECONTENTS(
               "F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0"
             , 26)
@@ -299,7 +299,7 @@ public:
                 index++;
             }
         }
-    }                           _clipbrd_formats_list;
+    }                           _clipbrdFormatsList;
     int                         _cItems;
     int                         _lindexToRequest;
     int                         _streamIDToRequest;
@@ -512,5 +512,4 @@ public:
 
 
 };
-
 

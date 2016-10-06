@@ -391,6 +391,7 @@ protected:
 
     bool already_upped_and_running = false;
 
+
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
@@ -652,6 +653,10 @@ protected:
     std::string client_execute_arguments;
 
 public:
+
+    GCC::UserData::SCCore sc_core;
+    GCC::UserData::SCSecurity sc_sec1;
+
     mod_rdp( Transport & trans
            , FrontAPI & front
            , const ClientInfo & info
@@ -2136,8 +2141,7 @@ public:
                 case SC_CORE:
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
                     {
-                        GCC::UserData::SCCore sc_core;
-                        sc_core.recv(f.payload);
+                        this->sc_core.recv(f.payload);
                         if (this->verbose & 1) {
                             sc_core.log("Received from server");
                         }
@@ -2149,17 +2153,16 @@ public:
                 case SC_SECURITY:
                     LOG(LOG_INFO, "=================== SC_SECURITY =============");
                     {
-                        GCC::UserData::SCSecurity sc_sec1;
-                        sc_sec1.recv(f.payload);
+                        this->sc_sec1.recv(f.payload);
 
                         if (this->verbose & 1) {
-                            sc_sec1.log("Received from server");
+                            this->sc_sec1.log("Received from server");
                         }
 
-                        this->encryptionLevel = sc_sec1.encryptionLevel;
-                        this->encryptionMethod = sc_sec1.encryptionMethod;
-                        if (sc_sec1.encryptionLevel == 0
-                            &&  sc_sec1.encryptionMethod == 0) { /* no encryption */
+                        this->encryptionLevel = this->sc_sec1.encryptionLevel;
+                        this->encryptionMethod = this->sc_sec1.encryptionMethod;
+                        if (this->sc_sec1.encryptionLevel == 0
+                            &&  this->sc_sec1.encryptionMethod == 0) { /* no encryption */
                             LOG(LOG_INFO, "No encryption");
                         }
                         else {
@@ -2168,7 +2171,7 @@ public:
                             uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
                             uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
-                            memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
+                            memcpy(serverRandom, this->sc_sec1.serverRandom, this->sc_sec1.serverRandomLen);
 //                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
                             // serverCertificate (variable): The variable-length certificate containing the
                             //  server's public key information. The length in bytes is given by the
@@ -2179,25 +2182,25 @@ public:
                             if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
 //                                        LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_VERSION_1");
 
-                                memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                                memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
-                                       sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
+                                memcpy(exponent, this->sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
+                                memcpy(modulus, this->sc_sec1.proprietaryCertificate.RSAPK.modulus,
+                                       this->sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
 
-                                this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
+                                this->server_public_key_len = this->sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
 
                             }
                             else {
                                 #ifndef __EMSCRIPTEN__
 
 //                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
-                                uint32_t certcount = sc_sec1.x509.certCount;
+                                uint32_t certcount = this->sc_sec1.x509.certCount;
                                 if (certcount < 2){
                                     LOG(LOG_ERR, "Server didn't send enough X509 certificates");
                                     throw Error(ERR_SEC);
                                 }
 
-                                uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
-                                X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
+                                uint32_t cert_len = this->sc_sec1.x509.cert[certcount - 1].len;
+                                X509 *cert = this->sc_sec1.x509.cert[certcount - 1].cert;
                                 (void)cert_len;
 
                                 // TODO CGR: Currently, we don't use the CA Certificate, we should
@@ -2298,8 +2301,8 @@ public:
                             if (sc_sec1.encryptionMethod == 1){
                                 ssl.sec_make_40bit(encrypt.sign_key);
                             }
-                            this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
-                            this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);
+                            this->decrypt.generate_key(key_block.key1, this->sc_sec1.encryptionMethod);
+                            this->encrypt.generate_key(key_block.key2, this->sc_sec1.encryptionMethod);
                         }
                     }
                     break;

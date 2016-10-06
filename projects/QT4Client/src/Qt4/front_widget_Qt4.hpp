@@ -1158,7 +1158,7 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = MODRDP_LOGLEVEL_CLIPRDR;
+        mod_rdp_params.verbose = MODRDP_LOGLEVEL_CLIPRDR | 16;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -1383,8 +1383,8 @@ public Q_SLOTS:
             //==================
             //    FILE COPY
             //==================
-                    this->_bufferTypeID       = Front_Qt::Clipbrd_formats_list::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                    this->_bufferTypeLongName = this->_front->_clipbrd_formats_list.FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeID       = Front_Qt::ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                    this->_bufferTypeLongName = this->_front->_clipbrdFormatsList.FILEGROUPDESCRIPTORW;
 
                     // retrieve each path
                     const std::string delimiter = "\n";
