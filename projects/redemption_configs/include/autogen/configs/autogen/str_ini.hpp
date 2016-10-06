@@ -205,6 +205,8 @@
 "#_advanced\n"
 "#ssl_cipher_list = \n\n"
 
+"#show_target_user_in_f12_message = 0\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"

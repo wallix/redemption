@@ -421,6 +421,14 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
+        else if (0 == strcmp(key, "show_target_user_in_f12_message")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::show_target_user_in_f12_message&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

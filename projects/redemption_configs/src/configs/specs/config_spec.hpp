@@ -188,6 +188,8 @@ void config_spec_definition(Writer && W)
             "[Not configured]: Compatible with more RDP clients (less secure)\n"
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure)"
         });
+        W.sep();
+        W.member(V, type_<bool>(), "show_target_user_in_f12_message", set(false));
     });
 
     W.section("mod_rdp", [&]
