@@ -425,7 +425,7 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                     // There is no device in process.
 
                     if ((chunk.in_remain() <
-                            20  // DeviceType(4) + DeviceId(4) +
+                             20 // DeviceType(4) + DeviceId(4) +
                                 //     PreferredDosName(8) +
                                 //     DeviceDataLength(4)
                         ) &&
