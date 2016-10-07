@@ -2108,9 +2108,13 @@ public:
                     this->server_notifier,
                     this->certif_path.get()
                 );
-            break;
+                if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
+                    this->send_connectInitialPDUwithGccConferenceCreateRequest();
+                }
+            break;                
         case RdpNego::NEGO_STATE_FINAL:
-            this->send_connectInitialPDUwithGccConferenceCreateRequest();
+                //TODO: we should never go there, add checking code
+                LOG(LOG_INFO, "RdpNego::NEGO_STATE_FINAL");
             break;
         }
         if (this->verbose & 1){
@@ -2467,6 +2471,7 @@ public:
                         },
                         write_x224_dt_tpdu_fn{}
                     );
+                    LOG(LOG_INFO, "Waiting for Channel Join Confirm");
                     constexpr size_t array_size = AUTOSIZE;
                     uint8_t array[array_size];
                     uint8_t * end = array;

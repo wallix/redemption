@@ -806,6 +806,8 @@ extern "C" void connexion(char * ip, char * user, char * password, int port) {
     mod_rdp_params.enable_bitmap_update            = true;
     mod_rdp_params.enable_new_pointer              = false;
     mod_rdp_params.server_redirection_support      = true;
+    mod_rdp_params.verbose                         = 0xFF;
+    
 
     front._trans = new TransportWebSocket(&front);
 
@@ -829,7 +831,12 @@ extern "C" int up_and_running() {
 
 
 extern "C" void client_event() {
-    front._mod->draw_event(time(nullptr), front);
+    try {
+        front._mod->draw_event(time(nullptr), front);
+    }
+    catch (...){
+        LOG(LOG_INFO, "Exception raised by draw_event: mod should be terminated");
+    };
 }
 
 
