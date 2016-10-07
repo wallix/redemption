@@ -61,6 +61,7 @@
 
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
