@@ -89,6 +89,8 @@
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
 
+#include "core/RDP/SaveSessionInfoPDU.hpp"
+
 #include "core/front_api.hpp"
 #include "core/activity_checker.hpp"
 #include "utils/genrandom.hpp"
@@ -104,6 +106,7 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/timeout.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 #include "utils/sugar/non_null_ptr.hpp"
 
@@ -3501,6 +3504,40 @@ private:
             LOG(LOG_INFO, "send_fontmap done");
         }
     }
+
+    void send_savesessioninfo() override {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_savesessioninfo");
+        }
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+
+        // Payload
+        stream.get_data_stream().out_uint32_le(RDP::INFOTYPE_LOGON);
+
+        RDP::LogonInfoVersion1_Send sender(stream.get_data_stream(),
+                                      byte_ptr_cast(""),
+                                      byte_ptr_cast(ini.get<cfg::globals::auth_user>().c_str()),
+                                      getpid());
+
+        const uint32_t log_condition = (128 | 1);
+        ::send_share_data_ex( this->trans
+                            , PDUTYPE2_SAVE_SESSION_INFO
+                            , false
+                            , this->mppc_enc
+                            , this->share_id
+                            , this->encryptionLevel
+                            , this->encrypt
+                            , this->userid
+                            , stream
+                            , log_condition
+                            , this->verbose
+                            );
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "send_savesessioninfo done");
+        }
+    }   // void send_savesessioninfo()
 
     void send_monitor_layout() {
         if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||

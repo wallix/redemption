@@ -2092,21 +2092,29 @@ public:
 
         switch (this->nego.state){
         case RdpNego::NEGO_STATE_INITIAL:
-        case RdpNego::NEGO_STATE_NLA:
-        case RdpNego::NEGO_STATE_TLS:
-        case RdpNego::NEGO_STATE_RDP:
-        default:
-            LOG(LOG_INFO, "this->nego.server_event start");
-            this->nego.server_event(
+                LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+                this->nego.send_negotiation_request();
+                this->nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
+        break;
+        case RdpNego::NEGO_STATE_NEGOCIATE:
+            LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_NEGOCIATE");
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s", 
+                    (this->nego.nla) ? "NLA" :
+                    (this->nego.tls) ? "TLS" :
+                                       "RDP");
+            this->nego.recv_connection_confirm(
                     this->server_cert_store,
                     this->server_cert_check,
                     this->server_notifier,
                     this->certif_path.get()
                 );
-            LOG(LOG_INFO, "this->nego.server_event end");
-            break;
+                if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
+                    this->send_connectInitialPDUwithGccConferenceCreateRequest();
+                }
+            break;                
         case RdpNego::NEGO_STATE_FINAL:
-            this->send_connectInitialPDUwithGccConferenceCreateRequest();
+                //TODO: we should never go there, add checking code
+                LOG(LOG_INFO, "RdpNego::NEGO_STATE_FINAL");
             break;
         }
         if (this->verbose & 1){
@@ -2463,6 +2471,7 @@ public:
                         },
                         write_x224_dt_tpdu_fn{}
                     );
+                    LOG(LOG_INFO, "Waiting for Channel Join Confirm");
                     constexpr size_t array_size = AUTOSIZE;
                     uint8_t array[array_size];
                     uint8_t * end = array;
@@ -3490,13 +3499,16 @@ public:
     }
 
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
-        if ((!this->event.waked_up_by_time &&
-             (!this->session_probe_virtual_channel_p ||
-              !this->session_probe_virtual_channel_p->is_event_signaled())) ||
-            ((this->state == MOD_RDP_NEGO) &&
-             ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) ||
-              (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
+        LOG(LOG_INFO, "mod_rdp::draw_event()");
+        
+        if ((!this->event.waked_up_by_time 
+            && (!this->session_probe_virtual_channel_p 
+                || !this->session_probe_virtual_channel_p->is_event_signaled())) 
+        || ((this->state == MOD_RDP_NEGO) 
+            && ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) 
+                || (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
                 switch (this->state){
                 case MOD_RDP_NEGO:
                     this->early_tls_security_exchange();
@@ -3520,6 +3532,8 @@ public:
                 }
             }
             catch(Error const & e){
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
+
                 this->front.must_be_stop_capture();
 
                 if (e.id == ERR_RDP_SERVER_REDIR) {
@@ -3598,9 +3612,13 @@ public:
             }
         }
 
+        LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
+                static_cast<unsigned>(this->open_session_timeout.count()));
         if (this->open_session_timeout.count()) {
+            LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check switch");
             switch(this->open_session_timeout_checker.check(now)) {
             case Timeout::TIMEOUT_REACHED:
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED"); 
                 if (this->error_message) {
                     *this->error_message = "Logon timer expired!";
                 }
@@ -3623,13 +3641,16 @@ public:
                 throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
             break;
             case Timeout::TIMEOUT_NOT_REACHED:
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED"); 
                 this->event.set(1000000);
             break;
             case Timeout::TIMEOUT_INACTIVE:
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE"); 
             break;
             }
         }
 
+        LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p"); 
         try{
             if (this->session_probe_virtual_channel_p) {
                 this->session_probe_virtual_channel_p->process_event();
@@ -3647,6 +3668,7 @@ public:
 
             this->event.signal = BACK_EVENT_NEXT;
         }
+        LOG(LOG_INFO, "mod_rdp::draw_event() done"); 
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
@@ -5228,6 +5250,8 @@ public:
 
             process_logon_info(reinterpret_cast<char *>(liv1.Domain),
                 reinterpret_cast<char *>(liv1.UserName));
+
+            this->front.send_savesessioninfo();
         }
         break;
         case RDP::INFOTYPE_LOGON_LONG:
@@ -5237,6 +5261,8 @@ public:
 
             process_logon_info(reinterpret_cast<char *>(liv2.Domain),
                 reinterpret_cast<char *>(liv2.UserName));
+
+            this->front.send_savesessioninfo();
         }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:

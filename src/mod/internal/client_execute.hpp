@@ -777,8 +777,7 @@ public:
                     RDP::RAIL::NewOrExistingWindow order;
 
                     order.header.FieldsPresentFlags(
-                              RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                            | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                              RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                             | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
@@ -1878,8 +1877,7 @@ protected:
                     RDP::RAIL::NewOrExistingWindow order;
 
                     order.header.FieldsPresentFlags(
-                              RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                            | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                              RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                             | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                             | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET

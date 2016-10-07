@@ -119,7 +119,7 @@ exejs client_rdp_JS_natif.js
         <cxxflags>"--shell-file templates/template_client_rdp_js_natif.html"
 #        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
         <cxxflags>"--llvm-opts 3 --llvm-lto 0"
-	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_refreshPressed','_connexion','_recv_value','_disconnection','_CtrlAltDelPressed']\""
+	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_refreshPressed','_connexion','_client_event','_up_and_running','_recv_value','_disconnection','_CtrlAltDelPressed']\""
      ;
 
 exejs test_transport_web_socket.js

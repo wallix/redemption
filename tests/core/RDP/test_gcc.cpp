@@ -225,7 +225,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
                      , cs_net.channelDefArray[1].options);
 
     cs_net.log("Client Received");
-
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)

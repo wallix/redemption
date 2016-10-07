@@ -424,13 +424,12 @@ class FileSystemVirtualChannel : public BaseVirtualChannel
                     !this->length_of_remaining_device_data_to_be_skipped) {
                     // There is no device in process.
 
-                    if (chunk.in_remain() <
-                            20  // DeviceType(4) + DeviceId(4) +
+                    if ((chunk.in_remain() <
+                             20 // DeviceType(4) + DeviceId(4) +
                                 //     PreferredDosName(8) +
                                 //     DeviceDataLength(4)
-                       ) {
-                        REDASSERT(
-                            !this->remaining_device_announce_request_header_stream.get_offset());
+                        ) &&
+                        !this->remaining_device_announce_request_header_stream.get_offset()) {
 
                         this->remaining_device_announce_request_header_stream.out_copy_bytes(
                             chunk.get_current(), chunk.in_remain());
@@ -2145,7 +2144,7 @@ public:
     {
         (void)total_length;
         (void)flags;
-        
+
         rdpdr::DeviceCreateRequest device_create_request;
 
         //auto chunk_p = chunk.get_current();

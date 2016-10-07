@@ -296,13 +296,13 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value = "0.0.0.0";
         };
-        // Allow IP Transparent.
+        // Allow Transparent mode.
         // type: bool
-        struct enable_ip_transparent {
+        struct enable_transparent_mode {
             static constexpr bool is_readable() { return 0; }
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "globals"; }
-            static constexpr char const * name() { return "enable_ip_transparent"; }
+            static constexpr char const * name() { return "enable_transparent_mode"; }
             using type = bool;
             using sesman_and_spec_type = bool;
             using mapped_type = sesman_and_spec_type;
@@ -750,6 +750,17 @@ namespace cfg {
             using sesman_and_spec_type = std::string;
             using mapped_type = sesman_and_spec_type;
             type value{};
+        };
+        // type: bool
+        struct show_target_user_in_f12_message {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "client"; }
+            static constexpr char const * name() { return "show_target_user_in_f12_message"; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{0};
         };
     };
 
@@ -2768,7 +2779,7 @@ struct globals
 , cfg::globals::close_timeout
 , cfg::globals::trace_type
 , cfg::globals::listen_address
-, cfg::globals::enable_ip_transparent
+, cfg::globals::enable_transparent_mode
 , cfg::globals::certificate_password
 , cfg::globals::png_path
 , cfg::globals::wrm_path
@@ -2812,6 +2823,7 @@ struct client
 , cfg::client::fast_path
 , cfg::client::enable_suppress_output
 , cfg::client::ssl_cipher_list
+, cfg::client::show_target_user_in_f12_message
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

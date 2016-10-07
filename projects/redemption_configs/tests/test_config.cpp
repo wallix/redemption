@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
         "encryptionLevel=low\n"
         "trace_type=2\n"
         "listen_address=192.168.1.1\n"
-        "enable_ip_transparent=yes\n"
+        "enable_transparent_mode=yes\n"
         "certificate_password=redemption\n"
         "png_path=/var/tmp/wab/recorded/rdp\n"
         "wrm_path=/var/wab/recorded/rdp\n"
@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -560,7 +560,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "encryptionLevel=medium\n"
                           "trace_type=0\n"
                           "listen_address=0.0.0.0\n"
-                          "enable_ip_transparent=no\n"
+                          "enable_transparent_mode=no\n"
                           "certificate_password=\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
@@ -667,7 +667,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -778,7 +778,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "trace_type=2\n"
                           "listen_address=127.0.0.1\n"
                           "certificate_password=rdpproxy\n"
-                          "enable_ip_transparent=true\n"
+                          "enable_transparent_mode=true\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
                           "shell_working_directory=\n"
@@ -864,7 +864,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("rdpproxy",                       ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -968,7 +968,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
                           "trace_type=2\n"
                           "listen_address=127.0.0.1\n"
                           "certificate_password=rdpproxy RDP\n"
-                          "enable_ip_transparent=true\n"
+                          "enable_transparent_mode=true\n"
                           "png_path=/var/tmp/wab/recorded/rdp\n"
                           "wrm_path=/var/wab/recorded/rdp\n"
                           "close_timeout=300\n"
@@ -1061,7 +1061,7 @@ BOOST_AUTO_TEST_CASE(TestConfig3)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("127.0.0.1",                      ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("rdpproxy RDP",                   ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
@@ -1165,7 +1165,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "trace_type=0\n"
                           "listen_address=0.0.0.0\n"
                           "certificate_password=redemption\n"
-                          "enable_ip_transparent=False\n"
+                          "enable_transparent_mode=False\n"
                           "[client]\n"
                           "bitmap_compression=TRuE\n"
                           "\n"
@@ -1233,7 +1233,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(TraceType::localfile,             ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -1331,7 +1331,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "trace_type=2\n"
                            "listen_address=192.168.1.1\n"
                            "certificate_password=\n"
-                           "enable_ip_transparent=yes\n"
+                           "enable_transparent_mode=yes\n"
                            "glyph_cache=yes\n"
                            "[client]\n"
                            "bitmap_compression=no\n"
@@ -1405,7 +1405,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(TraceType::cryptofile,            ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("192.168.1.1",                    ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -1564,7 +1564,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
@@ -1724,7 +1724,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(TraceType::localfile_hashed,
                                                         ini.get<cfg::globals::trace_type>());
     BOOST_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
-    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_ip_transparent>());
+    BOOST_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     BOOST_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
     BOOST_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());

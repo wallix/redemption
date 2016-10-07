@@ -66,6 +66,7 @@ private:
 
     std::unique_ptr<uint8_t[]> first_client_format_list_pdu;
     size_t                     first_client_format_list_pdu_length = 0;
+    uint32_t                   first_client_format_list_pdu_flags  = 0;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -556,6 +557,8 @@ private:
 
             ::memcpy(this->first_client_format_list_pdu.get(),
                 chunk.get_data(), this->first_client_format_list_pdu_length);
+
+            first_client_format_list_pdu_flags = flags;
         }
 
         if (!this->client_use_long_format_names ||
@@ -1501,40 +1504,25 @@ public:
         }
 
         // Format List PDU.
-/*
-        {
-            RDPECLIP::FormatListPDU format_list_pdu;
-            StaticOutStream<1024> out_stream;
-
-            format_list_pdu.emit_empty(out_stream);
-
-            const uint32_t total_length      = out_stream.get_offset();
-            const uint32_t flags             =
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-            const uint8_t* chunk_data        = out_stream.get_data();
-            const uint32_t chunk_data_length = total_length;
-
-            this->send_message_to_client(
-                total_length,
-                flags,
-                chunk_data,
-                chunk_data_length);
-
-            this->send_message_to_server(
-                total_length,
-                flags,
-                chunk_data,
-                chunk_data_length);
+        if (this->verbose & MODRDP_LOGLEVEL_CLIPRDR) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::empty_client_clipboard: "
+                    "client_format_list_pdu_length=%zu client_format_list_pdu_flags=0x%X",
+                this->first_client_format_list_pdu_length,
+                this->first_client_format_list_pdu_flags);
         }
-*/
+
+        if (this->first_client_format_list_pdu_length) {
             this->send_message_to_server(
                     this->first_client_format_list_pdu_length,
-                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    this->first_client_format_list_pdu_flags,
                     this->first_client_format_list_pdu.get(),
                     this->first_client_format_list_pdu_length
                 );
             first_client_format_list_pdu.reset(nullptr);
             this->first_client_format_list_pdu_length = 0;
+            this->first_client_format_list_pdu_flags  = 0;
+        }
     }
 };  // class ClipboardVirtualChannel
 
