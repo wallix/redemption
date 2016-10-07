@@ -103,6 +103,10 @@ public:
         return false;
     }
 
+    ////////////////////////////////
+    // RemoteApp.
+    virtual void send_savesessioninfo() {}
+
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }
 };

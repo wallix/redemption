@@ -272,7 +272,6 @@ struct LogonInfoVersion1_Recv {
     }   // LogonInfoVersion1_Recv(InStream & stream)
 };  // struct LogonInfoVersion1_Recv
 
-/*
 struct LogonInfoVersion1_Send {
     LogonInfoVersion1_Send(OutStream & stream, const uint8_t * Domain,
         const uint8_t * UserName, uint32_t sessionId)
@@ -295,7 +294,6 @@ struct LogonInfoVersion1_Send {
         stream.out_uint32_le(sessionId);
     }
 };
-*/
 
 // [MS-RDPBCGR] - 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
 // ==========================================================================

@@ -5228,6 +5228,8 @@ public:
 
             process_logon_info(reinterpret_cast<char *>(liv1.Domain),
                 reinterpret_cast<char *>(liv1.UserName));
+
+            this->front.send_savesessioninfo();
         }
         break;
         case RDP::INFOTYPE_LOGON_LONG:
@@ -5237,6 +5239,8 @@ public:
 
             process_logon_info(reinterpret_cast<char *>(liv2.Domain),
                 reinterpret_cast<char *>(liv2.UserName));
+
+            this->front.send_savesessioninfo();
         }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
