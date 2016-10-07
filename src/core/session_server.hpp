@@ -30,7 +30,7 @@ class SessionServer : public Server
 {
     CryptoContext & cctx;
 
-    // Used for enable transparent proxying on accepted socket (ini.get<cfg::globals::enable_ip_transparent>() = true).
+    // Used for enable transparent proxying on accepted socket (ini.get<cfg::globals::enable_transparent_mode>() = true).
     unsigned uid;
     unsigned gid;
     bool debug_config;
@@ -115,7 +115,7 @@ public:
                 }
 
                 char real_target_ip[256];
-                if (ini.get<cfg::globals::enable_ip_transparent>() &&
+                if (ini.get<cfg::globals::enable_transparent_mode>() &&
                     (0 != strcmp(source_ip, "127.0.0.1"))) {
                     int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                     // source and dest are inverted because we get the information we want from reply path rule
@@ -169,7 +169,7 @@ public:
                     ini.set_acl<cfg::globals::host>(source_ip);
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
                     ini.set_acl<cfg::globals::target>(target_ip);
-                    if (ini.get<cfg::globals::enable_ip_transparent>()
+                    if (ini.get<cfg::globals::enable_transparent_mode>()
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }

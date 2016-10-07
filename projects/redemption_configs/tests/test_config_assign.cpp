@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::enable_wab_integration>(true);
     ini.set<cfg::globals::globals::enable_bitmap_update>(true);
     ini.set<cfg::globals::globals::enable_close_box>(true);
-    ini.set<cfg::globals::globals::enable_ip_transparent>(true);
+    ini.set<cfg::globals::globals::enable_transparent_mode>(true);
     ini.set<cfg::globals::globals::enable_osd>(true);
     ini.set<cfg::globals::globals::enable_osd_display_remote_target>(true);
     ini.set<cfg::globals::globals::encryptionLevel>(Level::high);

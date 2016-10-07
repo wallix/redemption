@@ -57,9 +57,9 @@
 "#_advanced\n"
 "#listen_address = 0.0.0.0\n\n"
 
-"# Allow IP Transparent.\n"
+"# Allow Transparent mode.\n"
 "#_iptables\n"
-"#enable_ip_transparent = 0\n\n"
+"#enable_transparent_mode = 0\n\n"
 
 "# Proxy certificate password.\n"
 "#_advanced\n"
@@ -204,6 +204,8 @@
 "# HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure)\n"
 "#_advanced\n"
 "#ssl_cipher_list = \n\n"
+
+"#show_target_user_in_f12_message = 0\n\n"
 
 "[mod_rdp]\n\n"
 

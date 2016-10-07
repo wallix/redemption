@@ -25,9 +25,6 @@ from select     import select
 from time       import time
 from time       import strftime
 from time       import ctime
-from time       import timezone
-from time       import altzone
-from time       import daylight
 from time       import sleep
 from time       import mktime
 from datetime   import datetime
@@ -201,7 +198,6 @@ class Sesman():
         self.send_data({
             u"module": u'transitory',
             u"forcemodule": False,
-            u"timezone": -3600,
             u"message": u'',
             u"rec_path": u'',
             u"is_rec": False,
@@ -237,7 +233,6 @@ class Sesman():
             u'target_application_account': u'',
             u'target_application_password': u'',
             u'rt_display': 0,
-            u'timezone': -3600,
             u'opt_message': u'',
 
             u'ticket': u'',
@@ -1209,9 +1204,6 @@ class Sesman():
             target_login_info = self.engine.get_target_login_info(selected_target)
             proto_info = self.engine.get_target_protocols(selected_target)
             kv[u'proto_dest'] = proto_info.protocol
-            if proto_info.protocol == u'RDP':
-                kv[u'proxy_opt'] = ",".join(proto_info.subprotocols)
-                kv[u'timezone'] = str(altzone if daylight else timezone)
 
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
@@ -1296,9 +1288,12 @@ class Sesman():
                     Logger().info("Account locked on jump server, %s." % _error)
                     continue
 
+                physical_proto_info = self.engine.get_target_protocols(physical_target)
                 application = self.engine.get_application(selected_target)
                 conn_opts = self.engine.get_target_conn_options(physical_target)
-                if proto_info.protocol == u'RDP':
+                if physical_proto_info.protocol == u'RDP':
+                    kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
+
                     connectionpolicy_kv = {}
 
                     #Logger().info(u"%s" % conn_opts)

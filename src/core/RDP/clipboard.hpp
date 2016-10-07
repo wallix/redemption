@@ -667,7 +667,7 @@ struct ServerMonitorReadyPDU : public CliprdrHeader {
 //  names are in ASCII 8 format, then the msgFlags field of the clipHeader
 //  must contain the CB_ASCII_NAMES (0x0004) flag.
 
-enum : int {
+enum : size_t {
     FORMAT_LIST_MAX_SIZE = 32
   , SHORT_NAME_MAX_SIZE  = 32
 };
@@ -724,10 +724,8 @@ struct FormatListPDU : public CliprdrHeader {
         for (std::size_t i = 0; i < formatListData_size; i++) {
             stream.out_uint32_le(formatListData[i]);
             std::string const & currentStr = formatListDatalongName[i];
-            //REDASSERT(currentStr.size() <= 32);
             stream.out_copy_bytes(currentStr.data(), currentStr.size());
-            //stream.out_clear_bytes(42 - currentStr.size()); // formatName(32)
-            //stream.out_clear_bytes(4);
+
         }
     }
 

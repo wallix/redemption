@@ -653,7 +653,13 @@ private:
                 }
                 else if (!this->target_info_is_shown && !f12_released) {
                     // LOG(LOG_INFO, "Show info");
-                    this->mm.osd_message(this->mm.ini.template get<cfg::globals::target_device>(), false);
+                    std::string msg;
+                    if (this->mm.ini.template get<cfg::client::show_target_user_in_f12_message>()) {
+                        msg  = this->mm.ini.template get<cfg::globals::target_user>();
+                        msg += "@";
+                    }
+                    msg += this->mm.ini.template get<cfg::globals::target_device>();
+                    this->mm.osd_message(msg, false);
                     this->target_info_is_shown = true;
                 }
             }

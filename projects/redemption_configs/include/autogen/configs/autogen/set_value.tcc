@@ -119,10 +119,10 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_ip_transparent")) {
+        else if (0 == strcmp(key, "enable_transparent_mode")) {
             ::configs::parse_and_log(
                 context, key, 
-                static_cast<cfg::globals::enable_ip_transparent&>(this->variables).value,
+                static_cast<cfg::globals::enable_transparent_mode&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -418,6 +418,14 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 context, key, 
                 static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "show_target_user_in_f12_message")) {
+            ::configs::parse_and_log(
+                context, key, 
+                static_cast<cfg::client::show_target_user_in_f12_message&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 av
             );
         }

@@ -110,7 +110,7 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(A, type_<types::ip_string>(), "listen_address", set("0.0.0.0"));
-        W.member(IPT, type_<bool>(), "enable_ip_transparent", desc{"Allow IP Transparent."}, set(false));
+        W.member(IPT, type_<bool>(), "enable_transparent_mode", desc{"Allow Transparent mode."}, set(false));
         W.member(A | P, type_<types::fixed_string<254>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
         W.sep();
         W.member(A, type_<types::path>(), "png_path", set(CPP_MACRO(PNG_PATH)));
@@ -188,6 +188,8 @@ void config_spec_definition(Writer && W)
             "[Not configured]: Compatible with more RDP clients (less secure)\n"
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure)"
         });
+        W.sep();
+        W.member(V, type_<bool>(), "show_target_user_in_f12_message", set(false));
     });
 
     W.section("mod_rdp", [&]

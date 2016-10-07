@@ -203,7 +203,7 @@ void redemption_new_session(CryptoContext & cctx, char const * config_filename)
     target_port = localAddress.s4.sin_port;
     strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
-    if (ini.get<cfg::globals::enable_ip_transparent>()) {
+    if (ini.get<cfg::globals::enable_transparent_mode>()) {
         const int source_port = 0;
         char target_ip[256];
         strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
@@ -259,7 +259,7 @@ void redemption_main_loop(Inifile & ini, CryptoContext & cctx, unsigned uid, uns
                      , port
                      , false                              /* exit on timeout       */
                      , 60                                 /* timeout sec           */
-                     , ini.get<cfg::globals::enable_ip_transparent>()
+                     , ini.get<cfg::globals::enable_transparent_mode>()
                      );
     listener.run();
 }

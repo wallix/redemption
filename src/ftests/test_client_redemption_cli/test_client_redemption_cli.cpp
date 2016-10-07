@@ -23,9 +23,9 @@
 #include "test_client_redemption_cli.hpp"
 
 
-// bjam -a rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user admin --pwd admin --ip 10.10.40.22 --port 3389
+// bjam -a rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user admin --pwd admin --ip 10.10.40.22 --port 3389 --show_clpbrd --show_cursor --show_keyboard --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt
 
-void run_mod(mod_api *, TestClientCLI &, SocketTransport *, ActionsList &);
+void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &);
 void print_help(ModRDPParamsConfig *, size_t);
 
 
@@ -58,6 +58,8 @@ int main(int argc, char** argv){
     //=========================================================
 
 
+
+    std::string script_file_path;
 
     uint8_t input_connection_data_complete(0);
     for (int i = 0; i <  argc; i++) {
@@ -151,52 +153,52 @@ int main(int argc, char** argv){
     , ModRDPParamsConfig(&(mod_rdp_params.server_redirection_support), true
         , "-serv_red-", "              "+dscr+"server redirection support"
         , "server_redirection_support")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_krb), false
+    , ModRDPParamsConfig(&(mod_rdp_params.enable_krb)
         , "--krb", "                   "+dscr+"krb"
         , "enable_krb")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_glyph_cache), false
+    , ModRDPParamsConfig(&(mod_rdp_params.enable_glyph_cache)
         , "--glph_cache", "            "+dscr+"glyph cache"
         , "enable_glyph_cache")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_session_probe), false
+    , ModRDPParamsConfig(&(mod_rdp_params.enable_session_probe)
         , "--sess_prb", "              "+dscr+"session probe"
         , "enable_session_probe")
-    , ModRDPParamsConfig(&(mod_rdp_params.enable_session_probe_launch_mask), true
+    , ModRDPParamsConfig(&(mod_rdp_params.enable_session_probe_launch_mask)
         , "--sess_prb_lnch_mask", "    "+dscr+"session probe launch mask"
         , "enable_session_probe_launch_mask")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_clipboard_log_syslog), false
+    , ModRDPParamsConfig(&(mod_rdp_params.disable_clipboard_log_syslog)
         , "--disable_cb_log_sys", "    "+dscr+"clipboard log syslog lock"
         , "disable_clipboard_log_syslog")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_clipboard_log_wrm), false
+    , ModRDPParamsConfig(&(mod_rdp_params.disable_clipboard_log_wrm)
         , "--disable_cb_log_wrm", "    "+dscr+"clipboard log wrm lock"
         , "disable_clipboard_log_wrm")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_file_system_log_syslog), false
+    , ModRDPParamsConfig(&(mod_rdp_params.disable_file_system_log_syslog)
         , "--disable_file_syslog", "   "+dscr+"file system log syslog lock"
         , "disable_file_system_log_syslog")
-    , ModRDPParamsConfig(&(mod_rdp_params.disable_file_system_log_wrm), false
+    , ModRDPParamsConfig(&(mod_rdp_params.disable_file_system_log_wrm)
         , "--disable_file_wrm", "      "+dscr+"file system log wrm lock"
         , "disable_file_system_log_wrm")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_use_clipboard_based_launcher),  false
+    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_use_clipboard_based_launcher)
         , "--sess_prb_cb_based_lnch", ""+dscr+"session probe use clipboard based launcher"
         , "session_probe_use_clipboard_based_launcher")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon), true
+    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
         , "--sess_prb_slttoal", "      "+dscr+"session probe start launch timeout timer only after logon"
         , "session_probe_start_launch_timeout_timer_only_after_logon")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user) , true
+    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
         , "--sess_prob_oktdu", "       "+dscr+"session probe on keepalive timeout disconnect user"
         , "session_probe_on_keepalive_timeout_disconnect_user")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_end_disconnected_session), false
+    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_end_disconnected_session)
         , "--sess_prb_eds", "          "+dscr+"session probe end disconnected session"
         , "session_probe_end_disconnected_session")
-    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_customize_executable_name), false
+    , ModRDPParamsConfig(&(mod_rdp_params.session_probe_customize_executable_name)
         , "--sess_prb_custom_exe", "   "+dscr+"session probe customize executable name"
         , "session_probe_cen")
-    , ModRDPParamsConfig(&(mod_rdp_params.ignore_auth_channel), false
+    , ModRDPParamsConfig(&(mod_rdp_params.ignore_auth_channel)
         , "--ignore_auth_channel", "   "+dscr+"ignore auth channel"
         , "ignore_auth_channel")
-    , ModRDPParamsConfig(&(mod_rdp_params.use_client_provided_alternate_shell), false
+    , ModRDPParamsConfig(&(mod_rdp_params.use_client_provided_alternate_shell)
         , "--use_client_as", "         "+dscr+"use client provided alternate shell"
         , "use_client_provided_alternate_shell")
-    , ModRDPParamsConfig(&(mod_rdp_params.disconnect_on_logon_user_change), false
+    , ModRDPParamsConfig(&(mod_rdp_params.disconnect_on_logon_user_change)
         , "--disconn_oluc", "          "+dscr+"disconnect on logon user change"
         , "disconnect_on_logon_user_change")
     };//========================================================================================
@@ -213,8 +215,12 @@ int main(int argc, char** argv){
             print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
         } else if (word == "-h") {
             print_help(mod_rdp_params_config, nb_mod_rdp_params_config);
+        } else if (word == "--script_help") {
+            // TODO show all script cmd
         } else if (word == "-v") {
             std::cout << "version 1.0" << std::endl;
+        } else if (word ==  "--script") {
+            script_file_path = std::string(argv[i+1]);
         } else if (word == "--version") {
             std::cout << "version 1.0" << std::endl;
         } else if (word == "--show_user_params") {
@@ -417,50 +423,107 @@ int main(int argc, char** argv){
                     std::cout << std::endl;
                 }
 
-                int delay(3000);
 
-                ActionsList actionsList;
-                MouseButton ac1(&front, 1, 53, 308, true);
-                actionsList.setAction(ac1);
-                MouseButton ac2(&front, 1, 53, 308, false);
-                actionsList.setAction( ac2);
-                MouseButton ac1a(&front, 1, 53, 308, true);
-                actionsList.setAction(ac1a);
-                MouseButton ac2a(&front, 1, 53, 308, false);
-                actionsList.setAction( ac2a);
-                MouseButton ac3(&front, 1, 512, 394, true);
-                actionsList.setAction( ac3);
-                MouseButton ac4(&front, 1, 512, 394, false);
-                actionsList.setAction( ac4);
-                actionsList.wait(delay);
-                uint32_t formatIDs[]                 = { RDPECLIP::CF_TEXT };
-                std::string formatListDataLongName[] = { std::string("\0\0", 2) };
-                ClipboardChange ac5(&front, formatIDs, formatListDataLongName, 1);
-                actionsList.setAction( ac5);
-                actionsList.wait(delay);
-                KeyPressed ac6(&front, 16, 0);
-                actionsList.setAction( ac6);
-                KeyReleased ac7(&front, 16, 0);
-                actionsList.setAction( ac7);
-                KeyPressed ac8(&front, 46, 0);
-                actionsList.setAction( ac8);
-                KeyReleased ac9(&front, 46, 0);
-                actionsList.setAction( ac9);
-                KeyPressed ac10(&front, 16, 0);
-                actionsList.setAction( ac10);
-                KeyReleased ac11(&front, 16, 0);
-                actionsList.setAction( ac11);
-                KeyPressed ac12(&front, 48, 0);
-                actionsList.setAction( ac12);
-                KeyReleased ac13(&front, 48, 0);
-                actionsList.setAction( ac13);
-                actionsList.wait(delay);
-                MouseButton ac14(&front, 1, 512, 394, true);
-                actionsList.setAction( ac14);
-                MouseButton ac15(&front, 1, 512, 394, false);
-                actionsList.setAction( ac15);
 
-                run_mod(mod, front, socket, actionsList);
+                //===========================================
+                //             Scripted Events
+                //===========================================
+                EventList eventList;
+                std::ifstream ifichier(script_file_path);
+                if(ifichier) {
+                    std::string ligne;
+                    std::string delimiter = " ";
+
+                    while(std::getline(ifichier, ligne)) {
+                        auto pos(ligne.find(delimiter));
+                        std::string tag  = ligne.substr(0, pos);
+                        std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+                        if (       tag == "wait") {
+                            eventList.wait(std::stoi(info));
+
+                        } else if (tag == "key_press") {
+                            pos = info.find(delimiter);
+                            uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                            uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            eventList.setAction(new KeyPressed(&front, scanCode, flag));
+
+                        } else if (tag == "key_release") {
+                            pos = info.find(delimiter);
+                            uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                            uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            eventList.setAction(new KeyReleased(&front, scanCode, flag));
+
+                        } else if (tag == "mouse_press") {
+                            pos = info.find(delimiter);
+                            uint8_t button(std::stoi(info.substr(0, pos)));
+
+                            info = info.substr(pos + delimiter.length(), info.length());
+                            pos = info.find(delimiter);
+                            uint32_t x(std::stoi(info.substr(0, pos)));
+
+                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                            eventList.setAction(new MouseButton(&front, button, x, y, true));
+
+                        } else if (tag == "mouse_release") {
+                            pos = info.find(delimiter);
+                            uint8_t button(std::stoi(info.substr(0, pos)));
+
+                            info = info.substr(pos + delimiter.length(), info.length());
+                            pos = info.find(delimiter);
+                            uint32_t x(std::stoi(info.substr(0, pos)));
+
+                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                            eventList.setAction(new MouseButton(&front, button, x, y, false));
+
+                        } else if (tag == "clpbrd_change") {
+                            // TODO dynamique data and format injection
+                            uint32_t formatIDs[]                 = { RDPECLIP::CF_TEXT };
+                            std::string formatListDataLongName[] = { std::string("\0\0", 2) };
+                            eventList.setAction(new ClipboardChange(&front, formatIDs, formatListDataLongName, 1));
+
+                        } else if (tag == "click") {
+                            pos = info.find(delimiter);
+                            uint8_t button(std::stoi(info.substr(0, pos)));
+
+                            info = info.substr(pos + delimiter.length(), info.length());
+                            pos = info.find(delimiter);
+                            uint32_t x(std::stoi(info.substr(0, pos)));
+
+                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                            eventList.setAction(new MouseButton(&front, button, x, y, true));
+                            eventList.setAction(new MouseButton(&front, button, x, y, false));
+
+                        } else if (tag == "double_click") {
+                            pos = info.find(delimiter);
+                            uint32_t x(std::stoi(info.substr(0, pos)));
+                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                            eventList.setAction(new MouseButton(&front, 1, x, y, true));
+                            eventList.setAction(new MouseButton(&front, 1, x, y, false));
+                            eventList.setAction(new MouseButton(&front, 1, x, y, true));
+                            eventList.setAction(new MouseButton(&front, 1, x, y, false));
+
+                        } else if (tag ==  "key") {
+                            pos = info.find(delimiter);
+                            uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                            uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+
+                            eventList.setAction(new KeyPressed(&front, scanCode, flag));
+                            eventList.setAction(new KeyReleased(&front, scanCode, flag));
+
+                        }
+                    }
+                } else {
+                    std::cout <<  "Can't find " << script_file_path << std::endl;
+                }
+
+
+
+                run_mod(mod, front, socket, eventList);
 
             }
         }
@@ -477,6 +540,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "Command Line Interface RDP Redemption Client help:" << std::endl;
     std::cout << "  -h or --help              Show help" << std::endl;
     std::cout << "  -v or --version           Show version" <<  std::endl;
+    std::cout << "  --script_help             Show all script event commands" << std::endl;
     std::cout << "  --show_user_params        Show user info parameters" << std::endl;
     std::cout << "  --show_mod_rdp_params     Show mod rdp parameters" << std::endl;
     std::cout << "  --show_draw               Show draw orders info" << std::endl;
@@ -499,6 +563,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --bpp [bpp_value]         Set bit per pixel value" << std::endl;
     std::cout << "  --width [width_value]     Set screen width" << std::endl;
     std::cout << "  --height [height_value]   Set screen height" << std::endl;
+    std::cout << "  --script [file_path]      Add a test PDU file script" << std::endl;
     std::cout << std::endl;
     for (size_t i = 0; i < nb_mod_rdp_params_config; i++) {
         std::cout << "  " << mod_rdp_params_config[i].cmd << " [on/off] " << mod_rdp_params_config[i].descrpt << std::endl;
@@ -509,7 +574,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
 
 
 
-void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, ActionsList & al) {
+void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, EventList & al) {
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
 
