@@ -1158,7 +1158,7 @@ public:
         mod_rdp_params.allow_channels                  = &allow_channels;
         //mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = MODRDP_LOGLEVEL_CLIPRDR | 16;
+        mod_rdp_params.verbose = 0x080000ff;                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
 
         LCGRandom gen(0); // To always get the same client random, in tests
 
@@ -1436,7 +1436,10 @@ public Q_SLOTS:
                                 UTF8nameSize = 520;
                             }
                             uint8_t UTF16nameData[520];
-                            int UTF16nameSize = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str()), UTF16nameData, UTF8nameSize);
+                            int UTF16nameSize = ::UTF8toUTF16_CrLf(
+                                reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
+                              , UTF16nameData
+                              , UTF8nameSize);
                             file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
                             this->_cItems++;
                             this->_items_list.push_back(file);

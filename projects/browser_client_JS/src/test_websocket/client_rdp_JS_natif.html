@@ -59,6 +59,7 @@
 
         _connexion(pip, puser, ppassword, port);
 
+        
         console.log("Socket id = " + socket.id);
     
 
@@ -92,6 +93,12 @@
         socket.on('message', function (data) {
            console.log("Client on \'message\': received from proxy Server : " + data.msg);
            console.log("Client on \'message\': received from proxy Server : index = " + data.index + "data = " + data.data.item);
+           
+<!--            if (_up_and_running() == 0){-->
+<!--                _client_event();-->
+<!--                setTimeout(,500);-->
+<!--            }-->
+           
         });
 
         socket.on('disconnect', function() { 

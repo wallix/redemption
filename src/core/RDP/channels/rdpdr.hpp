@@ -59,7 +59,7 @@ namespace rdpdr {
 //  |                 | identifying XPS printers.                             |
 //  +-----------------+-------------------------------------------------------+
 
-enum class Component : uint16_t {
+enum Component : uint16_t {
     RDPDR_CTYP_CORE = 0x4472,
     RDPDR_CTYP_PRT  = 0x5052
 };
@@ -113,7 +113,7 @@ enum class Component : uint16_t {
 //  |                                | 2.2.2.2.                                |
 //  +--------------------------------+-----------------------------------------+
 
-enum class PacketId : uint16_t {
+enum PacketId : uint16_t {
     PAKID_CORE_SERVER_ANNOUNCE     = 0x496e,
     PAKID_CORE_CLIENTID_CONFIRM    = 0x4343,
     PAKID_CORE_CLIENT_NAME         = 0x434e,
@@ -2006,6 +2006,12 @@ public:
 
     explicit ClientNameRequest(const char * computer_name)
     : computer_name(computer_name) {}
+
+    explicit ClientNameRequest(const char * computer_name, const uint32_t unicodeFlag)
+    : UnicodeFlag(unicodeFlag)
+    , computer_name(computer_name)
+    {}
+
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->UnicodeFlag);

@@ -556,6 +556,8 @@ unit-test test_mppc_50 : tests/core/RDP/test_mppc_50.cpp : $(TEST_DEPENDENCIES) 
 unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mppc_61 : tests/core/RDP/test_mppc_61.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_cs_net : tests/core/RDP/gcc/userdata/test_cs_net.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+
 unit-test test_sec : tests/core/RDP/test_sec.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
 unit-test test_lic : tests/core/RDP/test_lic.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
 unit-test test_share : tests/core/RDP/test_share.cpp : $(TEST_DEPENDENCIES) ;

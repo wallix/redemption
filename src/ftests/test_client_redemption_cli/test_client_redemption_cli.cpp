@@ -60,7 +60,6 @@ int main(int argc, char** argv){
 
 
     std::string script_file_path;
-
     uint8_t input_connection_data_complete(0);
     for (int i = 0; i <  argc; i++) {
 
@@ -616,7 +615,6 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
             if (front.is_running()) {
                 al.emit();
             }
-
 
         } catch (Error & e) {
             LOG(LOG_ERR, "RDP CLIENT :: Exception raised = %d!\n", e.id);

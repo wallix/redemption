@@ -108,7 +108,7 @@ struct ModRDPParamsConfig
                       , std::string name
                       )
     : param(param)
-    , default_value(default_value)
+    , default_value(false)
     , cmd(cmd)
     , descrpt(descrpt)
     , name(name)
@@ -764,6 +764,7 @@ struct EventConfig
     TestClientCLI * front;
     long trigger_time;
 
+
     EventConfig(TestClientCLI * front)
     : front(front)
     , trigger_time(0)
@@ -785,12 +786,22 @@ struct ClipboardChange : EventConfig
                    , uint32_t * formatIDs
                    , std::string * formatListDataLongName
                    , size_t size)
-    : EventConfig(front)
-    , size(size)
+        : EventConfig(front)
+        , size(size)
     {
         for (size_t i = 0; i < this->size; i++) {
             this->formatIDs[i] = formatIDs[i];
             this->formatListDataLongName[i] = formatListDataLongName[i];
+        }
+    }
+
+    ClipboardChange( ClipboardChange & clipboardChange)
+      : EventConfig(clipboardChange.front)
+      , size(clipboardChange.size)
+    {
+        for (size_t i = 0; i < this->size; i++) {
+            this->formatIDs[i] = clipboardChange.formatIDs[i];
+            this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
         }
     }
 
@@ -813,11 +824,19 @@ struct MouseButton : public EventConfig
                , uint32_t y
                , bool isPressed
                )
-    : EventConfig(front)
-    , button(button)
-    , x(x)
-    , y(y)
-    , isPressed(isPressed)
+        : EventConfig(front)
+        , button(button)
+        , x(x)
+        , y(y)
+        , isPressed(isPressed)
+    {}
+
+    MouseButton(MouseButton & mouseButton)
+      : EventConfig(front)
+        , button(mouseButton.button)
+        , x(mouseButton.x)
+        , y(mouseButton.y)
+        , isPressed(mouseButton.isPressed)
     {}
 
     virtual void emit() override {
@@ -835,9 +854,15 @@ struct MouseMove : public EventConfig
              , uint32_t x
              , uint32_t y
              )
-    : EventConfig(front)
-    , x(x)
-    , y(y)
+        : EventConfig(front)
+        , x(x)
+        , y(y)
+    {}
+
+    MouseMove(MouseMove mouseMove)
+        : EventConfig(mouseMove.front)
+        , x(mouseMove.x)
+        , y(mouseMove.y)
     {}
 
     void emit() override {
@@ -911,7 +936,6 @@ public:
 
         this->list.clear();
     }
-
 
     void setAction(EventConfig * action) {
         action->trigger_time = this->wait_time;

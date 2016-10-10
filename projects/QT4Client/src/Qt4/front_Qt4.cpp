@@ -152,31 +152,38 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         }*/
     }
 
-    CHANNELS::ChannelDef channel { channel_names::cliprdr
-                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                 , PDU_MAX_SIZE+1
-                                 };
+    CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
+                                        , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                          GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                          GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                        , PDU_MAX_SIZE+1
+                                        };
+    this->_to_client_sender._channel = channel_cliprdr;
+    this->_cl.push_back(channel_cliprdr);
 
     this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
-                                          , this->_clipbrdFormatsList.FILECONTENTS
-                                          );
+                                        , this->_clipbrdFormatsList.FILECONTENTS
+                                        );
     this->_clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                          , this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW
-                                          );
+                                        , this->_clipbrdFormatsList.FILEGROUPDESCRIPTORW
+                                        );
     this->_clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
-                                          , std::string("\0\0", 2)
-                                          );
+                                        , std::string("\0\0", 2)
+                                        );
     this->_clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
-                                          , std::string("\0\0", 2)
-                                          );
+                                        , std::string("\0\0", 2)
+                                        );
     this->_clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
-                                          , std::string("\0\0", 2)
-                                          );
+                                        , std::string("\0\0", 2)
+                                        );
 
-    this->_to_client_sender._channel = channel;
-    this->_cl.push_back(channel);
+    CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
+                                      , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                      , PDU_MAX_SIZE+1
+                                      };
+    this->_cl.push_back(channel_rdpdr);
 
     if (this->mod_bpp == this->_info.bpp) {
         this->mod_palette = BGRPalette::classic_332();
@@ -186,7 +193,7 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
     this->_keymap.init_layout(this->_info.keylayout);
 
     // Windows and socket contrainer
-    this->_form      = new Form_Qt(this);
+    this->_form = new Form_Qt(this);
     this->_mod_qt = new Mod_Qt(this, this->_form);
     this->_clipboard_qt = new ClipBoard_Qt(this, this->_form);
 
@@ -1723,14 +1730,16 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
         return;
     }
 
+    InStream chunk(data, chunk_size);
+
+    InStream chunk_series = chunk.clone();
+
     if (!strcmp(channel.name, channel_names::cliprdr)) {
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
         std::cout << std::dec;
 
-        InStream chunk(data, chunk_size);
 
-        InStream chunk_series = chunk.clone();
 
         if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
             LOG(LOG_ERR,
@@ -1750,8 +1759,6 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             "ClipboardVirtualChannel::process_client_message: "
                                 "Clipboard Capabilities PDU");
                     }
-                    std::cout << "server >> Clipboard Capabilities PDU" << std::endl;
-
                 break;
 
                 case RDPECLIP::CB_MONITOR_READY:
@@ -1818,6 +1825,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     } else {
                         std::cout <<  std::endl;
                     }
+
                 break;
 
                 case RDPECLIP::CB_FORMAT_LIST:
@@ -2197,6 +2205,98 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
             std::cout << "process sever next part PDU data" <<  std::endl;
             this->process_server_clipboard_indata(flags, chunk_series);
         }
+
+
+    } else if (!strcmp(channel.name, channel_names::rdpdr)) {
+
+        uint16_t component = chunk.in_uint16_le();
+        uint16_t packetId  = chunk.in_uint16_le();
+
+        switch (component) {
+            case rdpdr::Component::RDPDR_CTYP_CORE:
+
+                switch (packetId) {
+                    case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
+                    {
+                        {
+                        std::cout << "server >> PAKID_CORE_SERVER_ANNOUNCE" <<  std::endl;
+
+                        uint16_t versionMajor(chunk.in_uint16_le());
+                        uint16_t versionMinor(chunk.in_uint16_le());
+                        uint32_t clientId(chunk.in_uint32_le());
+
+                        StaticOutStream<32> stream;
+
+                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                        , rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
+                        sharedHeader.emit(stream);
+
+                        rdpdr::ClientAnnounceReply clientAnnounceReply(versionMajor, versionMinor, clientId);
+                        clientAnnounceReply.emit(stream);
+
+                        int total_length(12);
+                        InStream chunk_to_send(stream.get_data(), stream.get_offset());
+                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                            , chunk_to_send
+                                                            , total_length
+                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                              CHANNELS::CHANNEL_FLAG_FIRST |
+                                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                            );
+                        std::cout << "client >> PAKID_CORE_CLIENTID_CONFIRM" <<  std::endl;
+                        }
+
+                        {
+                        StaticOutStream<32> stream;
+
+                        rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
+                                                        , rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
+                        sharedHeader.emit(stream);
+
+                        char data_name[] = {'c', 'l', 'i', 'e', 'n', 't', '\0' };
+
+                        rdpdr::ClientNameRequest clientNameRequest(data_name, 0x00000000);
+                        clientNameRequest.emit(stream);
+
+                        int total_length(16 + 7);
+                        InStream chunk_to_send(stream.get_data(), stream.get_offset());
+                        this->_callback->send_to_mod_channel( channel_names::rdpdr
+                                                            , chunk_to_send
+                                                            , total_length
+                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
+                                                              CHANNELS::CHANNEL_FLAG_FIRST |
+                                                              CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                            );
+
+                        std::cout << "client >> PAKID_CORE_CLIENT_NAME" <<  std::endl;
+                        }
+
+                    }
+                    break;
+
+                    case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
+                        std::cout << "server >> PAKID_CORE_SERVER_CAPABILITY" <<  std::endl;
+                    break;
+
+                    case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
+                        std::cout << "server >> PAKID_CORE_CLIENTID_CONFIRM" <<  std::endl;
+                    break;
+
+                    default:
+                        break;
+                }
+
+            break;
+
+            case rdpdr::Component::RDPDR_CTYP_PRT:
+
+            break;
+
+            default:
+            break;
+        }
+
+
     }
 }
 
@@ -2710,7 +2810,7 @@ int main(int argc, char** argv){
 
     QApplication app(argc, argv);
 
-    int verbose = MODRDP_LOGLEVEL_CLIPRDR;                               //0x04000000 | 0x40000000;
+    int verbose = 0;                                        //MODRDP_LOGLEVEL_CLIPRDR;              //0x04000000 | 0x40000000;
 
     Front_Qt front(argv, argc, verbose);
 
