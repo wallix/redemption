@@ -953,10 +953,7 @@ public:
                     if (parameters.size() == 2) {
                         std::string info(
                             "rule='" + parameters[0] +
-                            "' application_name='" + parameters[1] +
-                            "' application_command_line='" + parameters[2] +
-                            "' destination_address='" + parameters[3] +
-                            "' destination_port='" + parameters[4] + "'");
+                            "' application_name='" + parameters[1]);
                         this->authentifier->log4(
                             (this->verbose & MODRDP_LOGLEVEL_SESPROBE),
                             order.c_str(), info.c_str());
