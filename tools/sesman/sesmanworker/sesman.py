@@ -1486,7 +1486,7 @@ class Sesman():
                         # Looping on keepalived socket
                         while True:
                             r = []
-                            Logger().info(u"Waiting on proxy")
+                            Logger().debug(u"Waiting on proxy")
                             got_signal = False
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
