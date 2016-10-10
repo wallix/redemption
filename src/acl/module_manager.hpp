@@ -185,7 +185,7 @@ public:
             this->ini.set<cfg::context::auth_error_message>(auth_error_message);
         }
         if (this->mod) {
-            this->mod->disconnect();
+            this->mod->disconnect(now);
         }
         this->remove_mod();
         if (this->ini.get<cfg::globals::enable_close_box>()) {
@@ -590,8 +590,8 @@ private:
         bool is_up_and_running() override
         { return this->mm.internal_mod->is_up_and_running(); }
 
-        void disconnect() override
-        { this->mm.internal_mod->disconnect(); }
+        void disconnect(time_t now) override
+        { this->mm.internal_mod->disconnect(now); }
 
         void display_osd_message(std::string const & message) override
         { this->mm.internal_mod->display_osd_message(message); }

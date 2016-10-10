@@ -430,7 +430,7 @@ public:
                 };
             }
             if (mm.mod) {
-                mm.mod->disconnect();
+                mm.mod->disconnect(time(nullptr));
             }
             this->front->disconnect();
         }

@@ -391,7 +391,6 @@ protected:
 
     bool already_upped_and_running = false;
 
-
     class ToServerAsynchronousSender : public VirtualChannelDataSender
     {
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
@@ -652,6 +651,9 @@ protected:
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
 
+    time_t beginning;
+    bool   session_disconnection_logged = false;
+
 public:
 
     GCC::UserData::SCCore sc_core;
@@ -809,6 +811,8 @@ public:
 
             mod_rdp_params.log();
         }
+
+        this->beginning = timeobj.get_time().tv_sec;
 
         if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
             GeneralCaps general_caps;
@@ -2890,7 +2894,7 @@ public:
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
-    void connected(gdi::GraphicApi & drawable)
+    void connected(time_t now, gdi::GraphicApi & drawable)
     {
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -3033,7 +3037,17 @@ public:
                 this->acl->disconnect_target();
                 this->acl->report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-                this->acl->log4(false, "SESSION_DISCONNECTED_BY_TARGET");
+                if (!this->session_disconnection_logged) {
+                    double seconds = ::difftime(now, this->beginning);
+
+                    char extra[1024];
+                    snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                        (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+                        (int(seconds) % 60));
+
+                    this->acl->log4(false, "SESSION_DISCONNECTION", extra);
+                    this->session_disconnection_logged = true;
+                }
             }
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
@@ -3515,7 +3529,7 @@ public:
                     break;
 
                 case MOD_RDP_CONNECTED:
-                    this->connected(drawable);
+                    this->connected(now, drawable);
                     break;
                 }
             }
@@ -6487,7 +6501,7 @@ public:
     }
 
 private:
-    void disconnect() override {
+    void disconnect(time_t now) override {
         if (this->is_up_and_running()) {
             if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::disconnect()");
@@ -6497,7 +6511,17 @@ private:
             this->send_disconnect_ultimatum();
         }
         if (this->acl) {
-            this->acl->log4(false, "SESSION_ENDED_BY_PROXY");
+            if (!this->session_disconnection_logged) {
+                double seconds = ::difftime(now, this->beginning);
+
+                char extra[1024];
+                snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                    (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+                    (int(seconds) % 60));
+
+                this->acl->log4(false, "SESSION_DISCONNECTION", extra);
+                this->session_disconnection_logged = true;
+            }
         }
     }
 
