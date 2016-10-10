@@ -77,7 +77,7 @@ public:
 
     virtual bool is_up_and_running() { return false; }
 
-    virtual void disconnect() {}
+    virtual void disconnect(time_t now) { (void)now; }
 
     virtual void display_osd_message(std::string const &) {}
 

@@ -387,7 +387,7 @@ class Engine(object):
         """
         if real_target_device:
             # Transparent proxy
-            if not target_context:
+            if not target_context or not target_context.host:
                 target_context = TargetContext(host=real_target_device)
         elif target_device:
             # This allow proxy to check if target_device is a device_name

@@ -187,6 +187,8 @@ private:
 
     auth_api * acl;
 
+    time_t beginning;
+
 public:
     //==============================================================================================================
     mod_vnc( Transport & t
@@ -240,6 +242,8 @@ public:
     {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
+
+        ::time(&this->beginning);
 
         memset(&zstrm, 0, sizeof(zstrm));
 // TODO -Wold-style-cast is ignored
@@ -2771,9 +2775,16 @@ private:
     }
 
 public:
-    void disconnect() override {
+    void disconnect(time_t now) override {
         if (this->acl) {
-            this->acl->log4(false, "SESSION_ENDED");
+            double seconds = ::difftime(now, this->beginning);
+
+            char extra[1024];
+            snprintf(extra, sizeof(extra), "duration='%02d:%02d:%02d'",
+                (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
+                (int(seconds) % 60));
+
+            this->acl->log4(false, "SESSION_DISCONNECTION", extra);
         }
     }
 };
