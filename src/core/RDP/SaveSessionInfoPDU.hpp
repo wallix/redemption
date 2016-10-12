@@ -281,11 +281,11 @@ struct LogonInfoVersion1_Send {
 
         memset(utf16_Domain,   0, sizeof(utf16_Domain));
         uint32_t cbDomain   = UTF8toUTF16(Domain, utf16_Domain,
-            sizeof(utf16_Domain)   - sizeof(uint16_t)) + 1;
+            sizeof(utf16_Domain)   - sizeof(uint16_t)) + 2;
 
         memset(utf16_UserName, 0, sizeof(utf16_UserName));
         uint32_t cbUserName = UTF8toUTF16(UserName, utf16_UserName,
-            sizeof(utf16_UserName) - sizeof(uint16_t)) + 1;
+            sizeof(utf16_UserName) - sizeof(uint16_t)) + 2;
 
         stream.out_uint32_le(cbDomain);
         stream.out_copy_bytes(utf16_Domain, sizeof(utf16_Domain));
