@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGrid)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;

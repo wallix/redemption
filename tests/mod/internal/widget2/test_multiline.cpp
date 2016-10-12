@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = BLUE;
     int bg_color = CYAN;

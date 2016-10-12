@@ -44,7 +44,7 @@ public:
     Font const & font;
 
     WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
-                 NotifyApi * notifier = nullptr, Theme const & theme = Theme())
+                 NotifyApi * notifier, Theme const & theme)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , theme(theme)
         , tooltip(nullptr)

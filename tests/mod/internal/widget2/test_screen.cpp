@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen wscreen(drawable.gd, drawable.gd.width(), drawable.gd.height(), font);
+    WidgetScreen wscreen(drawable.gd, drawable.gd.width(), drawable.gd.height(), font, nullptr, Theme{});
 
     wscreen.refresh(wscreen.rect);
     wscreen.tab_flag = Widget2::NORMAL_TAB;
