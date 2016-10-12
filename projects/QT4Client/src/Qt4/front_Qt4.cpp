@@ -1711,7 +1711,7 @@ int Front_Qt::server_resize(int width, int height, int bpp) {
 }
 
 void Front_Qt::update_pointer_position(uint16_t xPos, uint16_t yPos) {
-    std::cout << "update_pointer_position " << int(xPos) << " " << int(yPos) << std::endl;
+    //std::cout << "update_pointer_position " << int(xPos) << " " << int(yPos) << std::endl;
 }
 
 const CHANNELS::ChannelDefArray & Front_Qt::get_channel_list(void) const {
@@ -1759,6 +1759,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                             "ClipboardVirtualChannel::process_client_message: "
                                 "Clipboard Capabilities PDU");
                     }
+                    std::cout << "server >> Clipboard Capabilities PDU" << std::endl;
                 break;
 
                 case RDPECLIP::CB_MONITOR_READY:
@@ -2215,6 +2216,8 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
         switch (component) {
             case rdpdr::Component::RDPDR_CTYP_CORE:
 
+                std::cout <<  "server >> RDPDR_CTYP_CORE" <<  std::endl;
+
                 switch (packetId) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                     {
@@ -2234,8 +2237,11 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         rdpdr::ClientAnnounceReply clientAnnounceReply(versionMajor, versionMinor, clientId);
                         clientAnnounceReply.emit(stream);
 
-                        int total_length(12);
+                        int total_length(10);
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
+
+                        //this->show_out_stream(0, stream, total_length);
+
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
@@ -2252,14 +2258,18 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
                         sharedHeader.emit(stream);
+                        char username[LOGIN_NAME_MAX];
+                        gethostname(username, LOGIN_NAME_MAX);
+                        std::string str_username(username);
 
-                        char data_name[] = {'c', 'l', 'i', 'e', 'n', 't', '\0' };
-
-                        rdpdr::ClientNameRequest clientNameRequest(data_name, 0x00000000);
+                        rdpdr::ClientNameRequest clientNameRequest(username);
                         clientNameRequest.emit(stream);
 
-                        int total_length(16 + 7);
+                        int total_length(16 + (str_username.size()*2) + 2);
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
+
+                        //this->show_out_stream(0, stream, total_length);
+
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
@@ -2289,7 +2299,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
             break;
 
             case rdpdr::Component::RDPDR_CTYP_PRT:
-
+                std::cout <<  "server >> RDPDR_CTYP_PRT" <<  std::endl;
             break;
 
             default:
@@ -2499,6 +2509,8 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                     unlockClipboardDataPDU.emit(out_stream_unlock, 0);
                     InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
 
+
+
                     this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunk_unlock
                                                         , out_stream_unlock.get_offset()
@@ -2515,6 +2527,8 @@ void Front_Qt::process_server_clipboard_indata(int flags, InStream & chunk) {
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
 
                     InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
+
+
 
                     this->_callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunkRequest

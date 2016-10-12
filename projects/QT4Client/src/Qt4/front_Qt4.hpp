@@ -28,6 +28,8 @@
 #include <openssl/ssl.h>
 #include <iostream>
 #include <stdint.h>
+#include <unistd.h>
+#include <limits.h>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
