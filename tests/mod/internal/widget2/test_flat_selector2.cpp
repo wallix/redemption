@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 640, 480, font);
+    WidgetScreen parent(drawable.gd, 640, 480, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatClip2)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetSelectorFlat2 is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.gd.width();
     int16_t h = drawable.gd.height();

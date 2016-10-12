@@ -36,11 +36,17 @@ struct ConfigurationHolder : private noncopyable
 
 
 struct ConfigurationLoader {
+    ConfigurationLoader() = default;
+
     explicit ConfigurationLoader(ConfigurationHolder &) {
     }
 
     ConfigurationLoader(ConfigurationHolder & configuration_holder, const char * filename) {
         this->cparse(configuration_holder, filename);
+    }
+
+    ConfigurationLoader(ConfigurationHolder & configuration_holder, std::string const & filename) {
+        this->cparse(configuration_holder, filename.c_str());
     }
 
     ConfigurationLoader(ConfigurationHolder & configuration_holder, std::istream & Inifile_stream) {
@@ -51,6 +57,10 @@ struct ConfigurationLoader {
         std::ifstream inifile(filename);
 
         this->cparse(configuration_holder, inifile);
+    }
+
+    void cparse(ConfigurationHolder & configuration_holder, std::string const & filename) {
+        this->cparse(configuration_holder, filename.c_str());
     }
 
     void cparse(ConfigurationHolder & configuration_holder, std::istream & ifs) {

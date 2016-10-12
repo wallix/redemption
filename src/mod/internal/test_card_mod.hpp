@@ -39,7 +39,7 @@ class TestCardMod : public InternalMod
 
 public:
     TestCardMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, bool unit_test = true)
-    : InternalMod(front, width, height, font)
+    : InternalMod(front, width, height, font, Theme{})
     , font(font)
     , unit_test(unit_test)
     {}

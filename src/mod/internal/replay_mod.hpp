@@ -79,7 +79,7 @@ public:
              , Font const & font
              , bool wait_for_escape
              , uint32_t debug_capture)
-    : InternalMod(front, width, height, font)
+    : InternalMod(front, width, height, font, Theme{})
     , auth_error_message(auth_error_message)
     , end_of_data(false)
     , wait_for_escape(wait_for_escape)

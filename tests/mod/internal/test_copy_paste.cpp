@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestPaste)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(mod.gd, info.width, info.height, font);
+    WidgetScreen parent(mod.gd, info.width, info.height, font, nullptr, Theme{});
     WidgetEdit edit(mod.gd, 0, 0, 120, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
 
     BOOST_REQUIRE(copy_paste.ready(front));

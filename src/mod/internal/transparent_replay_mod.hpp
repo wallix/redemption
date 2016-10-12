@@ -40,7 +40,7 @@ public:
                         , uint16_t height
                         , std::string * auth_error_message
                         , Font const & font)
-    : InternalMod(front, width, height, font)
+    : InternalMod(front, width, height, font, Theme{})
     , auth_error_message(auth_error_message)
     , fd([&]() {
         const int fd = ::open(replay_path, O_RDWR);

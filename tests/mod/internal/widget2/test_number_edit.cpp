@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;

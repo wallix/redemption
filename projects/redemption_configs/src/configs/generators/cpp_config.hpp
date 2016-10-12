@@ -175,12 +175,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             auto type_spec = pack_get<spec::type_>(infos);
             this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(infos) << "\")) {\n"
             "            ::configs::parse_and_log(\n"
-            "                context, key, \n"
+            "                context, key,\n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
             "                ::configs::spec_type<";
             this->inherit().write_type_spec(type_spec);
             this->out() << ">{},\n"
             "                av\n"
+            "            );\n"
+            "            ::configs::post_set_value(\n"
+            "                this->variables,\n"
+            "                static_cast<cfg::" << varname_with_section << "&>(this->variables)\n"
             "            );\n"
             "        }\n";
         });
