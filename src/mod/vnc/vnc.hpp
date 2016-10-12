@@ -141,6 +141,9 @@ private:
     const bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
     const bool enable_clipboard_down; // true clipboard available, false clipboard unavailable
 
+    bool client_use_long_format_names = false;
+    bool server_use_long_format_names = false;
+
     z_stream zstrm;
 
     enum {
@@ -681,7 +684,16 @@ public:
                     LOG(LOG_INFO, "VNC screen cleaning ok\n");
                 }
 
-                RDPECLIP::GeneralCapabilitySet general_caps;
+                RDPECLIP::GeneralCapabilitySet general_caps(
+                    RDPECLIP::CB_CAPS_VERSION_1,
+                    RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+
+                if (general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES) {
+                    this->server_use_long_format_names = true;
+                }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Server use %s format name", (this->server_use_long_format_names ? "long" : "short"));
+                }
 
                 RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
                         1,
@@ -1906,7 +1918,7 @@ private:
                 }
 
                 Pointer cursor;
-                LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
+                //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
                 cursor.x = x;
                 cursor.y = y;
                 cursor.bpp = 24;
@@ -2258,7 +2270,11 @@ private:
             case RDPECLIP::CB_FORMAT_LIST: {
                 RDPECLIP::FormatListPDU format_list_pdu;
 
-                format_list_pdu.recv(stream, recv_factory);
+                if (!this->client_use_long_format_names || !this->server_use_long_format_names) {
+                    format_list_pdu.recv(stream, recv_factory);
+                }
+                else
+                    format_list_pdu.recv_long(stream, recv_factory);
 
                 //--------------------------- Beginning of clipboard PDU Header ----------------------------
 
@@ -2695,6 +2711,13 @@ private:
 
                     this->clipboard_general_capability_flags = general_caps.generalFlags();
 
+                    if (general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES) {
+                        this->client_use_long_format_names = true;
+                    }
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Client use %s format name", (this->client_use_long_format_names ? "long" : "short"));
+                    }
+
                     if (this->verbose) {
                         general_caps.log(LOG_INFO);
                     }
@@ -2772,6 +2795,11 @@ private:
                 drawable.draw(cmd2, dst_tile, tiled_bmp);
             }
         }
+    }
+
+    bool use_long_format_names() const {
+        return (this->client_use_long_format_names &&
+            this->server_use_long_format_names);
     }
 
 public:
