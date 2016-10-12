@@ -35,6 +35,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <time.h>
 
 #  define LOG_SESSION(normal_log, session_log, session_type, type, session_id,   \
         ip_client, ip_target, user, device, service, account, priority, format,  \
@@ -555,44 +556,41 @@ public:
         const bool session_log =
             this->ini.get<cfg::session_log::enable_session_log>();
         if (!duplicate_with_pid && !session_log) return;
-
-        const bool log_redir =  this->ini.get<cfg::session_log::session_log_redirection>();
-
-        std::string filename = std::string("/var/wab/recorded/rdp/") + this->ini.get<cfg::context::session_id>().c_str()  + "_traces.txt";
+        
+        /* Log to file */
+        const bool log_redir = this->ini.get<cfg::session_log::session_log_redirection>();
 
         if (log_redir) {
+            std::string filename = std::string("/var/wab/recorded/rdp/") + this->ini.get<cfg::context::session_id>().c_str()  + "_traces.txt";
             std::ofstream log_file(filename, std::fstream::out | std::fstream::app);
 
             if (log_redir) {
-                // Si erreur d'ouverture
                 if(log_file.bad()) {
                     LOG(LOG_INFO, "auth::bad SIEM log file creation");
                 }      
                 else {
-
-                    //log_file << std::system("TIME");
-                    //log_file << std::system("DATE");
+                    time_t seconds = time(NULL);
+                    struct tm * timeinfo = localtime(&seconds);
+                    log_file << (1900+timeinfo->tm_year) << "-";
+                    log_file << (timeinfo->tm_mon+1) << "-" << timeinfo->tm_mday << " " << timeinfo->tm_hour << ":" <<timeinfo->tm_min << ":" <<timeinfo->tm_sec << " ";
                     log_file << "[" << (this->session_type.empty() ? "Neutral" : this->session_type.c_str()) << " Session] " << " " ;
                     log_file << "type=" << type << " " ;
                     log_file << "session_id=" << this->ini.get<cfg::context::session_id>().c_str() << " " ;
                     log_file << "client_ip=" << this->ini.get<cfg::globals::host>().c_str() << " " ;
                     log_file << "target_ip=" << (isdigit(*this->ini.get<cfg::context::target_host>().c_str()) ?
-                                                  this->ini.get<cfg::context::target_host>().c_str() :
-                                                  this->ini.get<cfg::context::ip_target>().c_str()) << " " ;
+                                                 this->ini.get<cfg::context::target_host>().c_str() :
+                                                 this->ini.get<cfg::context::ip_target>().c_str()) << " " ;
                     log_file << "user=" << this->ini.get<cfg::globals::auth_user>().c_str() << " " ;
                     log_file << "device=" << this->ini.get<cfg::globals::target_device>().c_str() << " " ;
                     log_file << "service=" << this->ini.get<cfg::context::target_service>().c_str() << " " ;
                     log_file << "account=" << this->ini.get<cfg::globals::target_user>().c_str() << " " ;
                     log_file << (extra ? extra : "") << std::endl << std::endl;
-
-                    // Fermeture du fichier
                     log_file.close();
                 }
             }
         }
 
-
-
+        /* Log to syslog */
         LOG_SESSION( duplicate_with_pid
                    , session_log
 

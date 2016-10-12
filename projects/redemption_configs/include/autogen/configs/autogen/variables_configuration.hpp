@@ -473,7 +473,7 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{1};
         };
-        // Log redirection in a file
+        // Session log redirection in a file
         // type: bool
         struct session_log_redirection {
             static constexpr bool is_readable() { return 0; }
