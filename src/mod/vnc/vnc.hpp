@@ -2797,11 +2797,6 @@ private:
         }
     }
 
-    bool use_long_format_names() const {
-        return (this->client_use_long_format_names &&
-            this->server_use_long_format_names);
-    }
-
 public:
     void disconnect(time_t now) override {
         if (this->acl) {

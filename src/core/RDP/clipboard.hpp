@@ -866,7 +866,7 @@ struct FormatListPDU : public CliprdrHeader {
 
             stream.in_skip_bytes(format_name_length * 2);
         }
-    }   // void recv(InStream & stream, const RecvFactory & recv_factory)
+    }   // void recv_long(InStream & stream, const RecvFactory & recv_factory)
 };  // struct FormatListPDU
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
