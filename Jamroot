@@ -183,7 +183,7 @@ constant TEST_DEPENDENCIES :
     <include>tests
     <cxxflags>-frtti
     <define>SHARE_PATH='\"./tests/fixtures\"'
-    <define>CFG_PATH='\"./etc/rdpproxy\"'
+    <define>CFG_PATH='\"./sys/etc/rdpproxy\"'
 ;
 
 
@@ -363,7 +363,7 @@ exe rdpclientcli
         snappy
         krb5
         gssglue
-    :   
+    :
         $(EXE_DEPENDENCIES)
     ;
 
