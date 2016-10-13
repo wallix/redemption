@@ -39,6 +39,7 @@ constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6
 
 
 constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
+constant LOCAL_CFG_PATH : [ setvar LOCAL_CFG_PATH : ./sys/etc/rdpproxy ] ;
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
@@ -177,13 +178,14 @@ constant EXE_DEPENDENCIES :
     $(COMMON_OBJ_DEPENDENCIES)
     $(GCOV)
 ;
+
 constant TEST_DEPENDENCIES :
     $(GCOV)
     <library>libboost_unit_test
     <include>tests
     <cxxflags>-frtti
-    <define>SHARE_PATH='\"./tests/fixtures\"'
-    <define>CFG_PATH='\"./sys/etc/rdpproxy\"'
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>CFG_PATH='\"$(LOCAL_CFG_PATH)\"'
 ;
 
 
