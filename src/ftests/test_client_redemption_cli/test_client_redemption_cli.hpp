@@ -415,7 +415,9 @@ public:
                     break;
 
                     case RDPECLIP::CB_MONITOR_READY:
-                        std::cout << "server >> Monitor Ready PDU" << std::endl;
+                        if (this->_verbose & SHOW_CLPBRD_PDU_EXCHANGE) {
+                            std::cout << "server >> Monitor Ready PDU" << std::endl;
+                        }
 
                         {
                             RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
@@ -776,147 +778,147 @@ public:
 
 
 
-struct EventConfig
-{
-    TestClientCLI * front;
-    long trigger_time;
 
-
-    EventConfig(TestClientCLI * front)
-    : front(front)
-    , trigger_time(0)
-    {}
-
-    virtual ~EventConfig() {};
-
-    virtual void emit() = 0;
-};
-
-
-struct ClipboardChange : EventConfig
-{
-    uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
-    std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
-    size_t size;
-
-    ClipboardChange( TestClientCLI * front
-                   , uint32_t * formatIDs
-                   , std::string * formatListDataLongName
-                   , size_t size)
-        : EventConfig(front)
-        , size(size)
-    {
-        for (size_t i = 0; i < this->size; i++) {
-            this->formatIDs[i] = formatIDs[i];
-            this->formatListDataLongName[i] = formatListDataLongName[i];
-        }
-    }
-
-    ClipboardChange( ClipboardChange & clipboardChange)
-      : EventConfig(clipboardChange.front)
-      , size(clipboardChange.size)
-    {
-        for (size_t i = 0; i < this->size; i++) {
-            this->formatIDs[i] = clipboardChange.formatIDs[i];
-            this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
-        }
-    }
-
-    virtual void emit() override {
-        this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size, true);
-    }
-};
-
-
-struct MouseButton : public EventConfig
-{
-    uint8_t button;
-    uint32_t x;
-    uint32_t y;
-    const bool isPressed;
-
-    MouseButton( TestClientCLI * front
-               , uint8_t button
-               , uint32_t x
-               , uint32_t y
-               , bool isPressed
-               )
-        : EventConfig(front)
-        , button(button)
-        , x(x)
-        , y(y)
-        , isPressed(isPressed)
-    {}
-
-
-    virtual void emit() override {
-        this->front->mouseButtons(button, x, y, isPressed);
-    }
-};
-
-
-struct MouseMove : public EventConfig
-{
-    uint32_t x;
-    uint32_t y;
-
-    MouseMove( TestClientCLI * front
-             , uint32_t x
-             , uint32_t y
-             )
-        : EventConfig(front)
-        , x(x)
-        , y(y)
-    {}
-
-    void emit() override {
-        this->front->mouseMove(x, y);
-    }
-};
-
-
-struct KeyPressed : public EventConfig
-{
-    uint32_t scanCode;
-    uint32_t Flag;
-
-    KeyPressed( TestClientCLI * front
-               , uint32_t scanCode
-               , uint32_t Flag = 0
-               )
-    : EventConfig(front)
-    , scanCode(scanCode)
-    , Flag(Flag)
-    {}
-
-    virtual void emit() override {
-        this->front->keyPressed(scanCode, Flag);
-    }
-};
-
-
-struct KeyReleased : public EventConfig
-{
-    uint32_t scanCode;
-    uint32_t Flag;
-
-    KeyReleased( TestClientCLI * front
-               , uint32_t scanCode
-               , uint32_t Flag = 0
-               )
-    : EventConfig(front)
-    , scanCode(scanCode)
-    , Flag(Flag)
-    {}
-
-    virtual void emit() override {
-        this->front->keyReleased(scanCode, Flag);
-    }
-};
 
 
 class EventList
 {
+    struct EventConfig
+    {
+        TestClientCLI * front;
+        long trigger_time;
+
+
+        EventConfig(TestClientCLI * front)
+        : front(front)
+        , trigger_time(0)
+        {}
+
+        virtual ~EventConfig() {};
+
+        virtual void emit() = 0;
+    };
+
+    struct MouseButton : public EventConfig
+    {
+        uint8_t button;
+        uint32_t x;
+        uint32_t y;
+        const bool isPressed;
+
+        MouseButton( TestClientCLI * front
+                , uint8_t button
+                , uint32_t x
+                , uint32_t y
+                , bool isPressed
+                )
+            : EventConfig(front)
+            , button(button)
+            , x(x)
+            , y(y)
+            , isPressed(isPressed)
+        {}
+
+
+        virtual void emit() override {
+            this->front->mouseButtons(button, x, y, isPressed);
+        }
+    };
+
+
+    struct MouseMove : public EventConfig
+    {
+        uint32_t x;
+        uint32_t y;
+
+        MouseMove( TestClientCLI * front
+                , uint32_t x
+                , uint32_t y
+                )
+            : EventConfig(front)
+            , x(x)
+            , y(y)
+        {}
+
+        void emit() override {
+            this->front->mouseMove(x, y);
+        }
+    };
+
+
+    struct KeyPressed : public EventConfig
+    {
+        uint32_t scanCode;
+        uint32_t Flag;
+
+        KeyPressed( TestClientCLI * front
+                , uint32_t scanCode
+                , uint32_t Flag = 0
+                )
+        : EventConfig(front)
+        , scanCode(scanCode)
+        , Flag(Flag)
+        {}
+
+        virtual void emit() override {
+            this->front->keyPressed(scanCode, Flag);
+        }
+    };
+
+
+    struct KeyReleased : public EventConfig
+    {
+        uint32_t scanCode;
+        uint32_t Flag;
+
+        KeyReleased( TestClientCLI * front
+                , uint32_t scanCode
+                , uint32_t Flag = 0
+                )
+        : EventConfig(front)
+        , scanCode(scanCode)
+        , Flag(Flag)
+        {}
+
+        virtual void emit() override {
+            this->front->keyReleased(scanCode, Flag);
+        }
+    };
+
+    struct ClipboardChange : EventConfig
+    {
+        uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
+        std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
+        size_t size;
+
+        ClipboardChange( TestClientCLI * front
+                    , uint32_t * formatIDs
+                    , std::string * formatListDataLongName
+                    , size_t size)
+            : EventConfig(front)
+            , size(size)
+        {
+            for (size_t i = 0; i < this->size; i++) {
+                this->formatIDs[i] = formatIDs[i];
+                this->formatListDataLongName[i] = formatListDataLongName[i];
+            }
+        }
+
+        ClipboardChange( ClipboardChange & clipboardChange)
+        : EventConfig(clipboardChange.front)
+        , size(clipboardChange.size)
+        {
+            for (size_t i = 0; i < this->size; i++) {
+                this->formatIDs[i] = clipboardChange.formatIDs[i];
+                this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
+            }
+        }
+
+        virtual void emit() override {
+            this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size, true);
+        }
+    };
+
 public:
     std::vector<EventConfig *> list;
     long start_time;
@@ -941,6 +943,59 @@ public:
     void setAction(EventConfig * action) {
         action->trigger_time = this->wait_time;
         this->list.push_back(action);
+    }
+
+    void setClpbrd_change( TestClientCLI * front
+                         , uint32_t * formatIDs
+                         , std::string * formatListDataLongName
+                         , size_t size) {
+        EventConfig * action = new ClipboardChange(front, formatIDs, formatListDataLongName, size);
+        this->setAction(action);
+    }
+
+    void setKey_press(TestClientCLI * front
+                     , uint32_t scanCode
+                     , uint32_t flag) {
+        EventConfig * action = new KeyPressed(front, scanCode, flag);
+        this->setAction(action);
+    }
+
+    void setKey_release(TestClientCLI * front
+                       , uint32_t scanCode
+                       , uint32_t flag) {
+        EventConfig * action = new KeyReleased(front, scanCode, flag);
+        this->setAction(action);
+    }
+
+    void setMouse_button( TestClientCLI * front
+                        , uint8_t button
+                        , uint32_t x
+                        , uint32_t y
+                        , bool isPressed) {
+        EventConfig * action = new MouseButton(front, button, x, y, isPressed);
+        this->setAction(action);
+    }
+
+    void setKey(TestClientCLI * front
+                , uint32_t scanCode
+                , uint32_t flag) {
+        this->setKey_press(front, scanCode, flag);
+        this->setKey_release(front, scanCode, flag);
+    }
+
+    void setClick( TestClientCLI * front
+                 , uint8_t button
+                 , uint32_t x
+                 , uint32_t y) {
+        this->setMouse_button(front, button, x, y, true);
+        this->setMouse_button(front, button, x, y, false);
+    }
+
+    void setDouble_click( TestClientCLI * front
+                        , uint32_t x
+                        , uint32_t y) {
+        setClick(front, 0x01, x, y);
+        setClick(front, 0x01, x, y);
     }
 
     void wait(int ms) {

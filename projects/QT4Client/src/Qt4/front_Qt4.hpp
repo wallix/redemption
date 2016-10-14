@@ -461,9 +461,9 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void mousePressEvent(QMouseEvent *e, int screen_index) override;
+    void mousePressEvent(QMouseEvent *e, int screen_shift) override;
 
-    void mouseReleaseEvent(QMouseEvent *e, int screen_index) override;
+    void mouseReleaseEvent(QMouseEvent *e, int screen_shift) override;
 
     void keyPressEvent(QKeyEvent *e) override;
 
@@ -471,7 +471,7 @@ public:
 
     void wheelEvent(QWheelEvent *e) override;
 
-    bool eventFilter(QObject *obj, QEvent *e, int screen_index) override;
+    bool eventFilter(QObject *obj, QEvent *e, int screen_shift) override;
 
     void connexionPressed() override;
 

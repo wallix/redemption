@@ -742,6 +742,39 @@ struct SCSecurity {
             LOG(LOG_INFO, "sc_security::RDP5-style encryption");
         }
     }
+
+    static const char * get_encryptionLevel_name(uint32_t encryptionLevel) {
+        switch (encryptionLevel) {
+            case GCC::UserData::SCSecurity::ENCRYPTION_LEVEL_NONE:              return "ENCRYPTION_LEVEL_NONE";
+            case GCC::UserData::SCSecurity::ENCRYPTION_LEVEL_LOW:               return "ENCRYPTION_LEVEL_LOW";
+            case GCC::UserData::SCSecurity::ENCRYPTION_LEVEL_CLIENT_COMPATIBLE: return "ENCRYPTION_LEVEL_CLIENT_COMPATIBLE";
+            case GCC::UserData::SCSecurity::ENCRYPTION_LEVEL_HIGH:              return "ENCRYPTION_LEVEL_HIGH";
+            case GCC::UserData::SCSecurity::ENCRYPTION_LEVEL_FIPS:              return "PAKID_CORE_DEVICE_REPLY";
+        }
+
+        return "<unknown>";
+    }
+
+    enum : uint32_t {
+        ENCRYPTION_METHOD_NONE   = 0x00000000
+      , ENCRYPTION_METHOD_40BIT  = 0x00000001
+      , ENCRYPTION_METHOD_128BIT = 0x00000002
+      , ENCRYPTION_METHOD_56BIT  = 0x00000008
+      , ENCRYPTION_METHOD_FIPS   = 0x00000010
+    };
+
+    static const char * get_encryptionMethod_name(uint32_t encryptionMethod) {
+        switch (encryptionMethod) {
+            case GCC::UserData::SCSecurity::ENCRYPTION_METHOD_NONE:   return "ENCRYPTION_METHOD_NONE";
+            case GCC::UserData::SCSecurity::ENCRYPTION_METHOD_40BIT:  return "ENCRYPTION_METHOD_40BIT";
+            case GCC::UserData::SCSecurity::ENCRYPTION_METHOD_128BIT: return "ENCRYPTION_METHOD_128BIT";
+            case GCC::UserData::SCSecurity::ENCRYPTION_METHOD_56BIT:  return "ENCRYPTION_METHOD_56BIT";
+            case GCC::UserData::SCSecurity::ENCRYPTION_METHOD_FIPS:   return "ENCRYPTION_METHOD_FIPS";
+        }
+
+        return "<unknown>";
+    }
+
 };
 
 }}

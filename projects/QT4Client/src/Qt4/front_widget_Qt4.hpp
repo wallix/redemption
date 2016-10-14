@@ -82,6 +82,7 @@ public:
     QComboBox            _bppComboBox;
     QComboBox            _resolutionComboBox;
     QCheckBox            _perfCheckBox;
+    QCheckBox            _spanCheckBox;
     QComboBox            _languageComboBox;
     QComboBox            _fpsComboBox;
     QComboBox            _monitorCountComboBox;
@@ -90,6 +91,7 @@ public:
     QLabel               _labelBpp;
     QLabel               _labelResolution;
     QLabel               _labelPerf;
+    QLabel               _labelSpan;
     QLabel               _labelLanguage;
     QLabel               _labelFps;
     QLabel               _labelScreen;
@@ -115,6 +117,7 @@ public:
         , _bppComboBox(this)
         , _resolutionComboBox(this)
         , _perfCheckBox(this)
+        , _spanCheckBox(this)
         , _languageComboBox(this)
         , _fpsComboBox(this)
         , _layoutView(nullptr)
@@ -122,6 +125,7 @@ public:
         , _labelBpp("Color depth :", this)
         , _labelResolution("Resolution :", this)
         , _labelPerf("Disable wallaper :", this)
+        , _labelSpan("Span screen :", this)
         , _labelLanguage("Keyboard Language :", this)
         , _labelFps("Refresh per second :", this)
         , _labelScreen("Screen :", this)
@@ -184,6 +188,12 @@ public:
         this->_fpsComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelFps), &(this->_fpsComboBox));
 
+        this->_spanCheckBox.setCheckState(Qt::Unchecked);
+        this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
+        if (this->_front->_span) {
+             this->_spanCheckBox.setCheckState(Qt::Checked);
+        }
+        this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
 
         for (int i = 1; i <= Front_Qt::MAX_MONITOR_COUNT; i++) {
             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
@@ -194,6 +204,7 @@ public:
         }
         this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
+        this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
 
 
         if (this->_front->_info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
@@ -365,7 +376,7 @@ private:
 public Q_SLOTS:
     void savePressed() {}
 
-    void saveReleased() {;
+    void saveReleased() {
         this->_front->_info.bpp = this->_bppComboBox.currentText().toInt();
         this->_front->_imageFormatRGB  = this->_front->bpp_to_QFormat(this->_front->_info.bpp, false);
         this->_front->_imageFormatARGB = this->_front->bpp_to_QFormat(this->_front->_info.bpp, true);
@@ -379,6 +390,11 @@ public Q_SLOTS:
             this->_front->_info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         } else {
             this->_front->_info.rdp5_performanceflags = 0;
+        }
+        if (this->_spanCheckBox.isChecked()) {
+            this->_front->_span = true;
+        } else {
+            this->_front->_span = false;
         }
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
         this->_front->_info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
@@ -463,6 +479,18 @@ public Q_SLOTS:
     }
 
     void deleteReleased() {}
+
+    void spanCheckChange(int state) {
+        if (state == Qt::Unchecked) {
+            this->_monitorCountComboBox.setCurrentIndex(0);
+        }
+    }
+
+    void monitorCountkChange(int index) {
+        if (index != 0) {
+            this->_spanCheckBox.setCheckState(Qt::Checked);
+        }
+    }
 
 };
 
@@ -795,14 +823,11 @@ public:
     QPushButton          _buttonDisconnexion;
     QColor               _penColor;
     QPixmap            * _cache;
-    //QGraphicsScene       _scene;
-    //QGraphicsView        _view;
     QPainter             _cache_painter;
 
     int            _width;
     int            _height;
     bool                 _connexionLasted;
-    const int            _buttonHeight;
     QTimer               _timer;
     uint8_t              _screen_index;
 
@@ -815,11 +840,9 @@ public:
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
         , _cache(front->getMainScreen()->_cache)
-        //, _cache_painter(&(this->_cache))
         , _width(this->_front->_screen_dimensions[screen_index].cx)
         , _height(this->_front->_screen_dimensions[screen_index].cy)
         , _connexionLasted(false)
-        , _buttonHeight(20)
         , _timer(this)
         , _screen_index(screen_index)
     {
@@ -832,12 +855,12 @@ public:
 
         if (this->_front->_span) {
             this->setWindowState(Qt::WindowFullScreen);
-            this->_height -= Front_Qt_API::BUTTON_HEIGHT;
+            this->_height -= 2*Front_Qt_API::BUTTON_HEIGHT;
         } else {
-            this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
+            this->setFixedSize(this->_width, this->_height + Front_Qt_API::BUTTON_HEIGHT);
         }
 
-        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
+        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
@@ -845,7 +868,7 @@ public:
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
         this->_buttonRefresh.setGeometry(rectRefresh);
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
@@ -853,7 +876,7 @@ public:
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
         this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), this->_buttonHeight));
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
         this->_buttonDisconnexion.setGeometry(rectDisconnexion);
         this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
@@ -864,7 +887,11 @@ public:
         QDesktopWidget * desktop = QApplication::desktop();
         int shift(10 * this->_screen_index);
         uint32_t centerW = (desktop->width()/2)  - (this->_width/2);
-        uint32_t centerH = (desktop->height()/2) - ((this->_height+this->_buttonHeight)/2);
+        uint32_t centerH = (desktop->height()/2) - ((this->_height+Front_Qt_API::BUTTON_HEIGHT)/2);
+        if (this->_front->_span) {
+            centerW = this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left;
+            centerH = 0;
+        }
         this->move(centerW + shift, centerH + shift);
 
         this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
@@ -886,7 +913,6 @@ public:
         , _width(this->_front->_screen_dimensions[0].cx)
         , _height(this->_front->_screen_dimensions[0].cy)
         , _connexionLasted(false)
-        , _buttonHeight(Front_Qt_API::BUTTON_HEIGHT)
         , _timer(this)
         , _screen_index(0)
     {
@@ -898,12 +924,12 @@ public:
 
          if (this->_front->_span) {
             this->setWindowState(Qt::WindowFullScreen);
-            this->_height -= Front_Qt_API::BUTTON_HEIGHT;
+            this->_height -= 2*Front_Qt_API::BUTTON_HEIGHT;
         } else {
-            this->setFixedSize(this->_width, this->_height + this->_buttonHeight);
+            this->setFixedSize(this->_width, this->_height + Front_Qt_API::BUTTON_HEIGHT);
         }
 
-        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
+        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
@@ -911,7 +937,7 @@ public:
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, this->_buttonHeight));
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
         this->_buttonRefresh.setGeometry(rectRefresh);
         this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
@@ -919,7 +945,7 @@ public:
         this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
         this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
 
-        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), this->_buttonHeight));
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), Front_Qt_API::BUTTON_HEIGHT));
         this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
         this->_buttonDisconnexion.setGeometry(rectDisconnexion);
         this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
@@ -929,7 +955,7 @@ public:
 
         QDesktopWidget* desktop = QApplication::desktop();
         uint32_t centerW = (desktop->width()/2)  - (this->_width/2);
-        uint32_t centerH = (desktop->height()/2) - ((this->_height+20)/2);
+        uint32_t centerH = (desktop->height()/2) - ((this->_height+Front_Qt_API::BUTTON_HEIGHT)/2);
         if (this->_front->_span) {
             centerW = 0;
             centerH = 0;
@@ -966,7 +992,7 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_width * this->_screen_index, 0, this->_width, this->_height));
+        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left, 0, this->_width, this->_height));
         painter.end();
     }
 
@@ -981,11 +1007,11 @@ public:
 
 private:
     void mousePressEvent(QMouseEvent *e) {
-        this->_front->mousePressEvent(e, this->_screen_index);
+        this->_front->mousePressEvent(e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
     }
 
     void mouseReleaseEvent(QMouseEvent *e) {
-        this->_front->mouseReleaseEvent(e, this->_screen_index);
+        this->_front->mouseReleaseEvent(e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
     }
 
     void keyPressEvent(QKeyEvent *e) {
@@ -1001,7 +1027,7 @@ private:
     }
 
     bool eventFilter(QObject *obj, QEvent *e) {
-        this->_front->eventFilter(obj, e, this->_screen_index);
+        this->_front->eventFilter(obj, e, this->_front->_info.cs_monitor.monitorDefArray[this->_screen_index].left);
         return false;
     }
 
@@ -1078,9 +1104,9 @@ public:
 
     void drop_connexion() {
         this->_front->emptyLocalBuffer();
-
+        TimeSystem timeobj;
         if (this->_callback != nullptr) {
-            static_cast<mod_api*>(this->_callback)->disconnect();
+            static_cast<mod_api*>(this->_callback)->disconnect(timeobj.get_time().tv_sec);
             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->_callback = nullptr;
@@ -1156,7 +1182,7 @@ public:
         mod_rdp_params.server_redirection_support      = true;
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
-        //mod_rdp_params.allow_using_multiple_monitors   = true;
+        mod_rdp_params.allow_using_multiple_monitors   = true;
         //mod_rdp_params.bogus_refresh_rect              = true;
         mod_rdp_params.verbose = 0x080000ff;                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
 

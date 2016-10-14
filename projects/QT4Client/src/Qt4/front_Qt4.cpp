@@ -109,49 +109,6 @@ Front_Qt::Front_Qt(char* argv[], int argc, uint32_t verbose)
         }
     }
 
-    QDesktopWidget* desktop = QApplication::desktop();
-    int screen_count(desktop->screenCount());
-    std::cout << "screen_count = " << screen_count << std::endl;
-    if (this->_monitorCount > screen_count) {
-        this->_monitorCount = screen_count;
-    }
-
-    if (this->_span) {
-
-        this->_info.width  = 0;
-        this->_info.height = 0;
-
-        for (int i = 0; i < this->_monitorCount; i++) {
-            const QRect rect = desktop->screenGeometry(i);
-
-            this->_info.cs_monitor.monitorDefArray[i].left   = this->_info.width;
-            this->_info.width  += rect.width();
-            if (this->_info.height < rect.height()) {
-                this->_info.height = rect.height();
-            }
-            // 0;
-            this->_info.cs_monitor.monitorDefArray[i].top    = rect.top();
-            this->_info.cs_monitor.monitorDefArray[i].right  = this->_info.width + rect.width() - 1;
-            this->_info.cs_monitor.monitorDefArray[i].bottom = rect.height() - 1 - BUTTON_HEIGHT;
-
-            this->_info.cs_monitor.monitorDefArray[i].flags  = 0;
-
-            this->_screen_dimensions[i].x   = 0;
-            this->_screen_dimensions[i].y   = 0;
-            this->_screen_dimensions[i].cx  = rect.width();
-            this->_screen_dimensions[i].cy  = rect.height();
-        }
-        this->_info.cs_monitor.monitorDefArray[0].flags  = GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY;
-        this->_info.height -= BUTTON_HEIGHT;
-
-        /*for (int i = 0; i < this->_monitorCount; i++) {
-            const QRect rect = desktop->screenGeometry(i);
-
-            this->_info.cs_monitor.monitorDefArray[i].top = rect.top() + this->_info.height - this->_info.cs_monitor.monitorDefArray[i].bottom;
-            this->_screen_dimensions[i].y = rect.top()
-        }*/
-    }
-
     CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
                                         , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                           GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
@@ -280,6 +237,11 @@ bool Front_Qt::setClientInfo() {
             if (tag.compare(std::string("monitorCount")) == 0) {
                 this->_info.cs_monitor.monitorCount = std::stoi(info);
                 this->_monitorCount                 = std::stoi(info);
+            } else
+            if (tag.compare(std::string("span")) == 0) {
+                if (std::stoi(info)) {
+                    this->_span = true;
+                }
             }
         }
 
@@ -319,7 +281,7 @@ void Front_Qt::writeClientInfo() {
         ofichier << "rdp5_performanceflags " << this->_info.rdp5_performanceflags   << "\n";
         ofichier << "fps "                   << this->_fps                          << "\n";
         ofichier << "monitorCount "          << this->_info.cs_monitor.monitorCount << "\n";
-
+        ofichier << "span "                  << this->_span                         << "\n";
     }
 }
 
@@ -378,27 +340,55 @@ void Front_Qt::closeFromScreen(int screen_index) {
 
 bool Front_Qt::connect() {
 
-    if (this->_mod_qt->connect()) {
-        if (!this->_span) {
-            this->_screen_dimensions[0].cx = this->_info.width;
-            this->_screen_dimensions[0].cy = this->_info.height;
+    if (!this->_span) {
+        this->_screen_dimensions[0].cx = this->_info.width;
+        this->_screen_dimensions[0].cy = this->_info.height;
+
+    } else {
+
+        QDesktopWidget* desktop = QApplication::desktop();
+        int screen_count(desktop->screenCount());
+        if (this->_monitorCount > screen_count) {
+            this->_monitorCount = screen_count;
         }
+        this->_info.width  = 0;
+        this->_info.height = 0;
+        this->_info.cs_monitor.monitorCount = this->_monitorCount;
+
+        for (int i = 0; i < this->_monitorCount; i++) {
+            const QRect rect = desktop->screenGeometry(i);
+            this->_screen_dimensions[i].x   = this->_info.width;
+            this->_info.cs_monitor.monitorDefArray[i].left   = this->_info.width;
+            this->_info.width  += rect.width();
+
+            if (this->_info.height < rect.height()) {
+                this->_info.height = rect.height();
+            }
+            this->_info.cs_monitor.monitorDefArray[i].top    = rect.top();
+            this->_info.cs_monitor.monitorDefArray[i].right  = this->_info.width + rect.width() - 1;
+            this->_info.cs_monitor.monitorDefArray[i].bottom = rect.height() - 1 - 3*BUTTON_HEIGHT;
+
+            this->_info.cs_monitor.monitorDefArray[i].flags  = 0;
+
+            this->_screen_dimensions[i].y   = 0;
+            this->_screen_dimensions[i].cx  = rect.width();
+            this->_screen_dimensions[i].cy  = rect.height() - BUTTON_HEIGHT;
+        }
+        this->_info.cs_monitor.monitorDefArray[0].flags  = GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY;
+        this->_info.height -= 3*BUTTON_HEIGHT;
+    }
+
+    if (this->_mod_qt->connect()) {
+
+        this->_screen[0] = new Screen_Qt(this);
+        for (int i = 1; i < this->_monitorCount; i++) {
+            this->_screen[i] = new Screen_Qt(this, i);
+            this->_screen[i]->show();
+        }
+
         this->_connected = true;
         this->_form->hide();
 
-
-        this->_screen[0] = new Screen_Qt(this);
-        //this->_screen[0]->show();
-        //this->_cache = new QPixmap(this->_info.width, this->_info.height);
-
-        if (!this->_monitorCountNegociated) {
-            for (int i = 1; i < this->_monitorCount; i++) {
-                this->_screen[i] = new Screen_Qt(this, i);
-                this->_screen[i]->show();
-            }
-            //this->_screen[0]->activateWindow();
-            this->_monitorCountNegociated = true;
-        }
 
         this->_screen[0]->show();
 
@@ -443,7 +433,7 @@ bool Front_Qt::connexionReleased(){
     return res;
 }
 
-void Front_Qt::mousePressEvent(QMouseEvent *e, int screen_index) {
+void Front_Qt::mousePressEvent(QMouseEvent *e, int screen_shift) {
     if (this->_callback != nullptr) {
         int flag(0);
         switch (e->button()) {
@@ -453,11 +443,11 @@ void Front_Qt::mousePressEvent(QMouseEvent *e, int screen_index) {
             default: break;
         }
         //std::cout << "mousePressed " << e->x() << " " <<  e->y() << std::endl;
-        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x() + this->_width *screen_index, e->y(), &(this->_keymap));
+        this->_callback->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x() + screen_shift, e->y(), &(this->_keymap));
     }
 }
 
-void Front_Qt::mouseReleaseEvent(QMouseEvent *e, int screen_index) {
+void Front_Qt::mouseReleaseEvent(QMouseEvent *e, int screen_shift) {
     if (this->_callback != nullptr) {
         int flag(0);
         switch (e->button()) {
@@ -468,7 +458,7 @@ void Front_Qt::mouseReleaseEvent(QMouseEvent *e, int screen_index) {
             default: break;
         }
         //std::cout << "mouseRelease" << std::endl;
-        this->_callback->rdp_input_mouse(flag, e->x() + this->_width *screen_index, e->y(), &(this->_keymap));
+        this->_callback->rdp_input_mouse(flag, e->x() + screen_shift, e->y(), &(this->_keymap));
     }
 }
 
@@ -499,12 +489,12 @@ void Front_Qt::wheelEvent(QWheelEvent *e) {
     }
 }
 
-bool Front_Qt::eventFilter(QObject *, QEvent *e, int screen_index)  {
+bool Front_Qt::eventFilter(QObject *, QEvent *e, int screen_shift)  {
     if (e->type() == QEvent::MouseMove)
     {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
         //std::cout << "MouseMove " <<  mouseEvent->x() << " " <<  mouseEvent->y()<< std::endl;
-        int x = mouseEvent->x() + this->_width *screen_index;
+        int x = mouseEvent->x() + screen_shift;
         int y = mouseEvent->y();
 
         if (x < 0) {
@@ -665,8 +655,7 @@ QImage::Format Front_Qt::bpp_to_QFormat(int bpp, bool alpha) {
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //-----------------------------
 //       DRAW FUNCTIONS
 //-----------------------------
@@ -1793,9 +1782,9 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         std::cout << "cs_monitor count negociated. MonitorCount=" << this->_monitorCount << std::endl;
                         std::cout << "width=" <<  this->_info.width <<  " " << "height=" << this->_info.height <<  std::endl;
 
-                        /*this->_info.width  = (this->_width * this->_monitorCount);
+                        //this->_info.width  = (this->_width * this->_monitorCount);
 
-                        if (!this->_monitorCountNegociated) {
+                        /*if (!this->_monitorCountNegociated) {
                             for (int i = this->_monitorCount - 1; i >= 1; i--) {
                                 this->_screen[i] = new Screen_Qt(this, i);
                                 this->_screen[i]->show();
@@ -2216,7 +2205,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
         switch (component) {
             case rdpdr::Component::RDPDR_CTYP_CORE:
 
-                std::cout <<  "server >> RDPDR_CTYP_CORE" <<  std::endl;
+                //std::cout <<  "server >> RDPDR_CTYP_CORE" <<  std::endl;
 
                 switch (packetId) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
@@ -2237,10 +2226,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         rdpdr::ClientAnnounceReply clientAnnounceReply(versionMajor, versionMinor, clientId);
                         clientAnnounceReply.emit(stream);
 
-                        int total_length(10);
+                        int total_length(stream.get_offset());
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                        //this->show_out_stream(0, stream, total_length);
+                        //this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
 
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
@@ -2249,7 +2238,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                                                               CHANNELS::CHANNEL_FLAG_FIRST |
                                                               CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                             );
-                        std::cout << "client >> PAKID_CORE_CLIENTID_CONFIRM" <<  std::endl;
+                        std::cout << "client >> PAKID_CORE_CLIENTID_CONFIRM" << std::endl;
                         }
 
                         {
@@ -2265,10 +2254,10 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                         rdpdr::ClientNameRequest clientNameRequest(username);
                         clientNameRequest.emit(stream);
 
-                        int total_length(16 + (str_username.size()*2) + 2);
+                        int total_length(stream.get_offset());
                         InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                        //this->show_out_stream(0, stream, total_length);
+                        //this->show_out_stream(CHANNELS::CHANNEL_FLAG_LAST |CHANNELS::CHANNEL_FLAG_FIRST, stream, total_length);
 
                         this->_callback->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
@@ -2285,7 +2274,7 @@ void Front_Qt::send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t co
                     break;
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
-                        std::cout << "server >> PAKID_CORE_SERVER_CAPABILITY" <<  std::endl;
+                        std::cout << "server >> PAKID_CORE_SERVER_CAPABILITY" << std::endl;
                     break;
 
                     case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
@@ -2785,8 +2774,7 @@ void Front_Qt::end_update() {
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //--------------------------------
 //    SOCKET EVENTS FUNCTIONS
 //--------------------------------
@@ -2820,7 +2808,7 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
 
-    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n admin -pwd "$testmdp" -ip 10.10.40.22 -p 3389
+    //bjam -a client_rdp_Qt4 |& sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' && bin/gcc-4.9.2/release/threading-multi/client_rdp_Qt4 -n admin -pwd $mdp -ip 10.10.40.22 -p 3389
 
     QApplication app(argc, argv);
 

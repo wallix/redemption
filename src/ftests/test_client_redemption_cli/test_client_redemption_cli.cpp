@@ -25,6 +25,8 @@
 
 // bjam -a rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --show_clpbrd --show_cursor --show_keyboard --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt
 
+// bjam -a rdpclientcli && bin/gcc-4.9.2/release/rdpclientcli --user 'qa\\proxyuser@local@win2k8:rdp:x' --pwd $mdp --ip 10.10.43.46 --port 3389 --show_clpbrd --show_cursor --show_keyboard --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt
+
 void run_mod(mod_api *, TestClientCLI &, SocketTransport *, EventList &);
 void print_help(ModRDPParamsConfig *, size_t);
 
@@ -150,7 +152,7 @@ int main(int argc, char** argv){
         , "--new_pointer", "           "+dscr+"new pointer"
         , "enable_new_pointer")
     , ModRDPParamsConfig(&(mod_rdp_params.server_redirection_support), true
-        , "-serv_red-", "              "+dscr+"server redirection support"
+        , "--serv_red", "              "+dscr+"server redirection support"
         , "server_redirection_support")
     , ModRDPParamsConfig(&(mod_rdp_params.enable_krb)
         , "--krb", "                   "+dscr+"krb"
@@ -203,7 +205,7 @@ int main(int argc, char** argv){
     };//========================================================================================
 
 
-
+    bool script_on(false);
     for (int i = 0; i <  argc; i++) {
 
         std::string word(argv[i]);
@@ -220,6 +222,7 @@ int main(int argc, char** argv){
             std::cout << "version 1.0" << std::endl;
         } else if (word ==  "--script") {
             script_file_path = std::string(argv[i+1]);
+            script_on = true;
         } else if (word == "--version") {
             std::cout << "version 1.0" << std::endl;
         } else if (word == "--show_user_params") {
@@ -255,8 +258,9 @@ int main(int argc, char** argv){
 
 
     std::cout <<  std::endl;
-    std::cout << "Verbose level = 0x" << std::hex << verbose << std::dec << std::endl;
-
+    std::cout << " ================================" << std::endl;
+    std::cout << " ========== Log Config ==========" << std::dec << std::endl;
+    std::cout << " ================================" << std::endl;
     std::cout << "  SHOW_USER_AND_TARGET_PARAMS = " << bool(verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) <<  std::endl;
     std::cout << "  SHOW_MOD_RDP_PARAMS         = " << bool(verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) <<  std::endl;
     std::cout << "  SHOW_DRAW_ORDERS            = " << bool(verbose & TestClientCLI::SHOW_DRAW_ORDERS_INFO) <<  std::endl;
@@ -269,7 +273,9 @@ int main(int argc, char** argv){
 
     if (verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) {
         std::cout <<  std::endl;
-        std::cout << "User and target parameters:" << std::endl;
+        std::cout << " ================================" << std::endl;
+        std::cout << " == User And Target Parameters ==" << std::dec << std::endl;
+        std::cout << " ================================" << std::endl;
 
         std::cout << "  user_name= \"" << userName << "\"" <<  std::endl;
         std::cout << "  user_password= \"" << userPwd << "\"" << std::endl;
@@ -286,7 +292,7 @@ int main(int argc, char** argv){
     }
 
 
-
+    uint32_t encryptionMethods(GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG | GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG);
     //===========================================
     //       Cmd line mod_rdp_param config
     //===========================================
@@ -303,11 +309,17 @@ int main(int argc, char** argv){
                 }
             }
         }
+
+        if (word ==  "--encrpt_methds") {
+            encryptionMethods = std::stoi(argv[i+1]);
+        }
     }
 
     if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
         std::cout <<  std::endl;
-        std::cout << "Mod RDP Parameters:" <<  std::endl;
+        std::cout << " ================================" << std::endl;
+        std::cout << " ======= ModRDP Parameters ======" << std::dec << std::endl;
+        std::cout << " ================================" << std::endl;
         for (size_t i = 0; i < nb_mod_rdp_params_config; i++ ) {
             std::cout << "  " << mod_rdp_params_config[i].name << "=" << *(mod_rdp_params_config[i].param) << std::endl;
         }
@@ -347,7 +359,7 @@ int main(int argc, char** argv){
                                             , &error_message
                                             );
                 std::cout << std::endl;
-                std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
+                std::cout << "Init connection done." << std::endl;
                 connection_succed = true;
 
             } catch (const std::exception & e) {
@@ -383,23 +395,28 @@ int main(int argc, char** argv){
 
                 front._to_server_sender._callback = mod;
                 front._callback = mod;
+                GCC::UserData::CSSecurity & cs_security = mod->cs_security;
+                cs_security.encryptionMethods = encryptionMethods;
+                std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
+
 
                 while (!mod->is_up_and_running()) {
                     mod->draw_event(time(nullptr), front);
                 }
-
+                std::cout <<  std::endl;
             } catch (const Error & e) {
                 const std::string errorMsg("Error: connexion to [" + ip +  "] is closed.");
                 std::cout << errorMsg << std::endl;
                 connection_succed = false;
             }
 
-
             if (connection_succed) {
 
                 if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) {
+                    std::cout << " ================================" << std::endl;
+                    std::cout << " ======= Server Core Info =======" << std::dec << std::endl;
+                    std::cout << " ================================" << std::endl;
                     GCC::UserData::SCCore sc_core = mod->sc_core;
-                    std::cout << "Core server information:" <<  std::endl;
                     std::cout << "  userDataType = " << int(sc_core.userDataType) << std::endl;
                     std::cout << "  length = " << int(sc_core.length) << std::endl;
                     std::cout << "  version = " << int(sc_core.version) << std::endl;
@@ -409,17 +426,68 @@ int main(int argc, char** argv){
                 }
 
                 if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) {
+                    std::cout << " ================================" << std::endl;
+                    std::cout << " ===== Server Security Info =====" << std::dec << std::endl;
+                    std::cout << " ================================" << std::endl;
                     GCC::UserData::SCSecurity sc_sec1 = mod->sc_sec1;
-                    std::cout << "Core server information:" <<  std::endl;
                     std::cout << "  userDataType = " << int(sc_sec1.userDataType) << std::endl;
                     std::cout << "  length = " << int(sc_sec1.length) << std::endl;
-                    std::cout << "  encryptionMethod = " << int(sc_sec1.encryptionMethod) << std::endl;
-                    std::cout << "  encryptionLevel = " << int(sc_sec1.encryptionLevel) << std::endl;
+                    std::cout << "  encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1.encryptionMethod) << std::endl;
+                    std::cout << "  encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1.encryptionLevel) << std::endl;
                     std::cout << "  serverRandomLen = " << int(sc_sec1.serverRandomLen) << std::endl;
                     std::cout << "  serverCertLen = " << int(sc_sec1.serverCertLen) << std::endl;
                     std::cout << "  dwVersion = " << int(sc_sec1.dwVersion) << std::endl;
                     std::cout << "  temporary = " << sc_sec1.temporary << std::endl;
+                    std::cout << "  serverRandom : ";
+                    for (size_t i = 0; i < SEC_RANDOM_SIZE; i++) {
+                        if ((i % 16) == 0 && i != 0) {
+                            std::cout << std::endl << "                 ";
+                        }
+                        std::string space("");
+                        if (sc_sec1.pri_exp[i] < 0x10) {
+                            space = std::string("0");
+                        }
+                        std::cout <<"0x" << std::hex << int(sc_sec1.serverRandom[i]) << space << std::dec << " ";
+                    }
                     std::cout << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "  pri_exp : ";
+                    for (size_t i = 0; i < 64; i++) {
+                        if ((i % 16) == 0 && i != 0) {
+                            std::cout << std::endl << "            ";
+                        }
+                        std::string space("");
+                        if (sc_sec1.pri_exp[i] < 0x10) {
+                            space = std::string("0");
+                        }
+                        std::cout <<"0x" << std::hex << int(sc_sec1.pri_exp[i]) << space <<  std::dec << " ";
+                    }
+                    std::cout << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "  pub_sig : ";
+                    for (size_t i = 0; i < 64; i++) {
+                        if ((i % 16) == 0 && i != 0) {
+                            std::cout << std::endl << "            ";
+                        }
+                        std::string space("");
+                        if (sc_sec1.pri_exp[i] < 0x10) {
+                            space = std::string("0");
+                        }
+                        std::cout <<"0x" << std::hex << int(sc_sec1.pub_sig[i]) << space << std::dec << " ";
+                    }
+
+                    std::cout << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "  proprietaryCertificate : " << std::endl;
+                    std::cout << "      dwSigAlgId = " << int(sc_sec1.proprietaryCertificate.dwSigAlgId) << std::endl;
+                    std::cout << "      dwKeyAlgId = " << int(sc_sec1.proprietaryCertificate.dwKeyAlgId) << std::endl;
+                    std::cout << "      wPublicKeyBlobType = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobType) << std::endl;
+                    std::cout << "      wPublicKeyBlobLen = " << int(sc_sec1.proprietaryCertificate.wPublicKeyBlobLen) << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "      RSAPK : " << std::endl;
+                     std::cout << "         magic = " << int(sc_sec1.proprietaryCertificate.RSAPK.magic) << std::endl;
+                    std::cout << std::endl;
+
                 }
 
 
@@ -428,96 +496,90 @@ int main(int argc, char** argv){
                 //             Scripted Events
                 //===========================================
                 EventList eventList;
-                std::ifstream ifichier(script_file_path);
-                if(ifichier) {
-                    std::string ligne;
-                    std::string delimiter = " ";
+                if (script_on) {
+                    std::ifstream ifichier(script_file_path);
+                    if(ifichier) {
+                        std::string ligne;
+                        std::string delimiter = " ";
 
-                    while(std::getline(ifichier, ligne)) {
-                        auto pos(ligne.find(delimiter));
-                        std::string tag  = ligne.substr(0, pos);
-                        std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+                        while(std::getline(ifichier, ligne)) {
+                            auto pos(ligne.find(delimiter));
+                            std::string tag  = ligne.substr(0, pos);
+                            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-                        if (       tag == "wait") {
-                            eventList.wait(std::stoi(info));
+                            if (       tag == "wait") {
+                                eventList.wait(std::stoi(info));
 
-                        } else if (tag == "key_press") {
-                            pos = info.find(delimiter);
-                            uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                            uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-                            eventList.setAction(new KeyPressed(&front, scanCode, flag));
+                            } else if (tag == "key_press") {
+                                pos = info.find(delimiter);
+                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        } else if (tag == "key_release") {
-                            pos = info.find(delimiter);
-                            uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                            uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-                            eventList.setAction(new KeyReleased(&front, scanCode, flag));
+                                eventList.setKey_press(&front, scanCode, flag);
 
-                        } else if (tag == "mouse_press") {
-                            pos = info.find(delimiter);
-                            uint8_t button(std::stoi(info.substr(0, pos)));
+                            } else if (tag == "key_release") {
+                                pos = info.find(delimiter);
+                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                            info = info.substr(pos + delimiter.length(), info.length());
-                            pos = info.find(delimiter);
-                            uint32_t x(std::stoi(info.substr(0, pos)));
+                                eventList.setKey_release(&front, scanCode, flag);
 
-                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "mouse_press") {
+                                pos = info.find(delimiter);
+                                uint8_t button(std::stoi(info.substr(0, pos)));
+                                info = info.substr(pos + delimiter.length(), info.length());
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                            eventList.setAction(new MouseButton(&front, button, x, y, true));
+                                eventList.setMouse_button(&front, button, x, y, true);
 
-                        } else if (tag == "mouse_release") {
-                            pos = info.find(delimiter);
-                            uint8_t button(std::stoi(info.substr(0, pos)));
+                            } else if (tag == "mouse_release") {
+                                pos = info.find(delimiter);
+                                uint8_t button(std::stoi(info.substr(0, pos)));
+                                info = info.substr(pos + delimiter.length(), info.length());
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                            info = info.substr(pos + delimiter.length(), info.length());
-                            pos = info.find(delimiter);
-                            uint32_t x(std::stoi(info.substr(0, pos)));
+                                eventList.setMouse_button(&front, button, x, y, false);
 
-                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                            } else if (tag == "clpbrd_change") {
+                                // TODO dynamique data and format injection
+                                uint32_t formatIDs[]                 = { RDPECLIP::CF_TEXT };
+                                std::string formatListDataLongName[] = { std::string("\0\0", 2) };
 
-                            eventList.setAction(new MouseButton(&front, button, x, y, false));
+                                eventList.setClpbrd_change(&front, formatIDs, formatListDataLongName, 1);
 
-                        } else if (tag == "clpbrd_change") {
-                            // TODO dynamique data and format injection
-                            uint32_t formatIDs[]                 = { RDPECLIP::CF_TEXT };
-                            std::string formatListDataLongName[] = { std::string("\0\0", 2) };
-                            eventList.setAction(new ClipboardChange(&front, formatIDs, formatListDataLongName, 1));
+                            } else if (tag == "click") {
+                                pos = info.find(delimiter);
+                                uint8_t button(std::stoi(info.substr(0, pos)));
+                                info = info.substr(pos + delimiter.length(), info.length());
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        } else if (tag == "click") {
-                            pos = info.find(delimiter);
-                            uint8_t button(std::stoi(info.substr(0, pos)));
+                                eventList.setClick(&front, button, x, y);
 
-                            info = info.substr(pos + delimiter.length(), info.length());
-                            pos = info.find(delimiter);
-                            uint32_t x(std::stoi(info.substr(0, pos)));
+                            } else if (tag == "double_click") {
+                                pos = info.find(delimiter);
+                                uint32_t x(std::stoi(info.substr(0, pos)));
+                                uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                                eventList.setDouble_click(&front, x, y);
 
-                            eventList.setAction(new MouseButton(&front, button, x, y, true));
-                            eventList.setAction(new MouseButton(&front, button, x, y, false));
+                            } else if (tag ==  "key") {
+                                pos = info.find(delimiter);
+                                uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                                uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        } else if (tag == "double_click") {
-                            pos = info.find(delimiter);
-                            uint32_t x(std::stoi(info.substr(0, pos)));
-                            uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                                eventList.setKey(&front, scanCode, flag);
 
-                            eventList.setAction(new MouseButton(&front, 1, x, y, true));
-                            eventList.setAction(new MouseButton(&front, 1, x, y, false));
-                            eventList.setAction(new MouseButton(&front, 1, x, y, true));
-                            eventList.setAction(new MouseButton(&front, 1, x, y, false));
-
-                        } else if (tag ==  "key") {
-                            pos = info.find(delimiter);
-                            uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                            uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                            eventList.setAction(new KeyPressed(&front, scanCode, flag));
-                            eventList.setAction(new KeyReleased(&front, scanCode, flag));
-
+                            }
                         }
+                    } else {
+                        std::cout <<  "Can't find " << script_file_path << std::endl;
                     }
-                } else {
-                    std::cout <<  "Can't find " << script_file_path << std::endl;
                 }
 
 
@@ -563,6 +625,7 @@ void print_help(ModRDPParamsConfig * mod_rdp_params_config, size_t nb_mod_rdp_pa
     std::cout << "  --width [width_value]     Set screen width" << std::endl;
     std::cout << "  --height [height_value]   Set screen height" << std::endl;
     std::cout << "  --script [file_path]      Add a test PDU file script" << std::endl;
+    std::cout << "  --encrpt_methds           Set encryption methods as any addition of 1, 2, 8 and 16" <<  std::endl;
     std::cout << std::endl;
     for (size_t i = 0; i < nb_mod_rdp_params_config; i++) {
         std::cout << "  " << mod_rdp_params_config[i].cmd << " [on/off] " << mod_rdp_params_config[i].descrpt << std::endl;
@@ -613,6 +676,7 @@ void run_mod(mod_api * mod, TestClientCLI & front, SocketTransport * st_mod, Eve
             }
 
             if (front.is_running()) {
+                //std::cout << "emit sent" <<  std::endl;
                 al.emit();
             }
 
