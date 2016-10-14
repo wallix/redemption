@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "../mod/mod_api.hpp"
+#include "mod/mod_api.hpp"
 #include "widget2/screen.hpp"
 #include "configs/config.hpp"
 #include "core/front_api.hpp"
@@ -39,7 +39,7 @@ public:
     WidgetScreen screen;
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
-                Theme const & theme = Theme())
+                Theme const & theme)
         : front_width(front_width)
         , front_height(front_height)
         , front(front)

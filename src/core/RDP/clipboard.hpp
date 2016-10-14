@@ -805,7 +805,7 @@ struct FormatListPDU : public CliprdrHeader {
             36; /* formatId(4) + formatName(32) */
 
         // Parse PDU to find if clipboard data is available in a TEXT format.
-        for (uint32_t i = 0; i < (dataLen_ / short_format_name_structure_size); i++) {
+        for (uint32_t i = 0; i < (this->dataLen_ / short_format_name_structure_size); i++) {
             if (!stream.in_check_rem(short_format_name_structure_size)) {
                 LOG( LOG_INFO
                    , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
@@ -826,6 +826,47 @@ struct FormatListPDU : public CliprdrHeader {
             stream.in_skip_bytes(32);   // formatName(32)
         }
     }   // void recv(InStream & stream, const RecvFactory & recv_factory)
+
+    void recv_long(InStream & stream, const RecvFactory & recv_factory) {
+        CliprdrHeader::recv(stream, recv_factory);
+
+        const size_t max_length_of_format_name = 256;
+
+        for (uint32_t remaining_data_length = stream.in_remain();
+             remaining_data_length; ) {
+            const uint32_t formatId                     =
+                stream.in_uint32_le();
+            //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
+            const size_t   format_name_length           =
+                ::UTF16StrLen(stream.get_current()) + 1;
+            const size_t   adjusted_format_name_length =
+                std::min(format_name_length - 1,
+                    max_length_of_format_name);
+
+            constexpr size_t size_of_utf8_string =
+                max_length_of_format_name *
+                maximum_length_of_utf8_character_in_bytes;
+            uint8_t utf8_string[size_of_utf8_string + 1];
+            ::memset(utf8_string, 0, sizeof(utf8_string));
+            ::UTF16toUTF8(
+                stream.get_current(), adjusted_format_name_length,
+                utf8_string, size_of_utf8_string);
+
+            remaining_data_length -=
+                      4                      /* formatId(4) */
+                    + format_name_length * 2 /* wszFormatName(variable) */
+                ;
+
+            if (formatId == CF_TEXT) {
+                this->contians_data_in_text_format = true;
+            }
+            else if (formatId == CF_UNICODETEXT) {
+                this->contians_data_in_unicodetext_format = true;
+            }
+
+            stream.in_skip_bytes(format_name_length * 2);
+        }
+    }   // void recv_long(InStream & stream, const RecvFactory & recv_factory)
 };  // struct FormatListPDU
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)

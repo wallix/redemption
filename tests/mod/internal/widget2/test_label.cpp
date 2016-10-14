@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
 
     WidgetComposite wcomposite(drawable.gd, Rect(0,0,800,600), parent, notifier);
@@ -428,7 +428,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelMax)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
     NotifyApi * notifier = nullptr;
     int fg_color = RED;
     int bg_color = YELLOW;

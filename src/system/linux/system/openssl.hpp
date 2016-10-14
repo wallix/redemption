@@ -1202,7 +1202,7 @@ struct TLSContext
 
                 default:
                 {
-                    LOG(LOG_INFO, "Failure in SSL library, error=%ld", error);
+                    LOG(LOG_INFO, "Failure in SSL library, error=%ld, %s [%u]", error, strerror(errno), errno);
                     uint32_t errcount = 0;
                     errcount++;
                     LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));

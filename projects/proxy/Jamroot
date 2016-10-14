@@ -22,6 +22,7 @@ constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 constant SYSTEMDIR : ../../src/system/linux ;
 
+
 #echo "toolset" [ feature.get-values toolset ] ;
 
 # Returns environment value if it exists or default otherwise.
@@ -47,6 +48,8 @@ constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6
 
 
 constant FIXTURES_PATH : [ setvar FIXTURES_PATH : $(TESTDIR)/fixtures ] ;
+constant LOCAL_CFG_PATH : [ setvar LOCAL_CFG_PATH : $(TESTDIR)/../sys/etc/rdpproxy ] ;
+
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
@@ -67,7 +70,6 @@ constant PNG_DEBUG : <variant>debug:<library>png ;
 rule defines ( properties * )
 {
     local defs ;
-    defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
@@ -226,14 +228,19 @@ obj bitmap : $(SRCDIR)/utils/bitmap_data_allocator.cpp ;
 obj program_options : $(MODULEDIR)/program_options/src/program_options.cpp ;
 
 
-constant COMMON_OBJ_DEPENDENCIES : <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+constant COMMON_OBJ_DEPENDENCIES : 
+    <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"'
+    <define>CFG_PATH='\"$(ETC_PREFIX)\"'
+;
+
 constant LIB_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) <cxxflags>-fPIC <cxxflags>-fvisibility=hidden ;
 constant EXE_DEPENDENCIES : $(COMMON_OBJ_DEPENDENCIES) $(GCOV) ;
 constant TEST_DEPENDENCIES :
     <include>$(TESTDIR)
     <cxxflags>-frtti
-    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <library>libboost_unit_test
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>CFG_PATH='\"$(LOCAL_CFG_PATH)\"'
     $(GCOV)
 ;
 

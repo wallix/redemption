@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBox)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int         fg_color = RED;
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, 800, 600, font);
+    WidgetScreen parent(drawable.gd, 800, 600, font, nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int         fg_color = RED;

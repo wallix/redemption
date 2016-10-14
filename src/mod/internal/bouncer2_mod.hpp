@@ -36,7 +36,7 @@ class Bouncer2Mod : public InternalMod
 
 public:
     Bouncer2Mod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font)
-    : InternalMod(front, width, height, font)
+    : InternalMod(front, width, height, font, Theme{})
     , speedx(10)
     , speedy(10)
     , dancing_rect(0,0,100,100)

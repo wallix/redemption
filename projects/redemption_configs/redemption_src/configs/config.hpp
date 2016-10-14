@@ -89,6 +89,7 @@ namespace configs {
 #include "configs/autogen/enums_func_ini.hpp"
 #include "configs/autogen/variables_configuration.hpp"
 
+class Inifile;
 
 namespace configs
 {
@@ -105,7 +106,14 @@ namespace configs
         }
         return err;
     }
+
+    template<class CfgType>
+    void post_set_value(VariablesConfiguration &, CfgType const &)
+    {}
 }
+
+#include "configs/variant/post_set_value.hpp"
+
 
 class Inifile
 {
@@ -164,6 +172,7 @@ private:
             configs::spec_type<typename T::mapped_type>{},
             std::forward<Args>(args)...
         );
+        configs::post_set_value(this->variables, static_cast<T&>(this->variables));
         this->insert_index<T>(std::integral_constant<bool, T::is_writable()>());
         this->unask<T>(std::integral_constant<bool, T::is_readable()>());
     }
