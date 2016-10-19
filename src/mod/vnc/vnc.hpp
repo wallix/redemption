@@ -2273,8 +2273,9 @@ private:
                 if (!this->client_use_long_format_names || !this->server_use_long_format_names) {
                     format_list_pdu.recv(stream, recv_factory);
                 }
-                else
+                else {
                     format_list_pdu.recv_long(stream, recv_factory);
+                }
 
                 //--------------------------- Beginning of clipboard PDU Header ----------------------------
 
@@ -2306,17 +2307,17 @@ private:
                 const uint64_t MINIMUM_TIMEVAL = 250000LL;
 
                 if (this->enable_clipboard_up &&
-//                    ((format_list_pdu.contians_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::Latin1)) ||
-//                     (format_list_pdu.contians_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8)))) {
-                    (format_list_pdu.contians_data_in_text_format || format_list_pdu.contians_data_in_unicodetext_format)) {
+//                    ((format_list_pdu.contains_data_in_text_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::Latin1)) ||
+//                     (format_list_pdu.contains_data_in_unicodetext_format && (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8)))) {
+                    (format_list_pdu.contains_data_in_text_format || format_list_pdu.contains_data_in_unicodetext_format)) {
                     if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                         this->clipboard_requested_format_id =
-                            (format_list_pdu.contians_data_in_unicodetext_format ?
+                            (format_list_pdu.contains_data_in_unicodetext_format ?
                              RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);
                     }
                     else {
                         this->clipboard_requested_format_id =
-                            (format_list_pdu.contians_data_in_text_format ?
+                            (format_list_pdu.contains_data_in_text_format ?
                              RDPECLIP::CF_TEXT : RDPECLIP::CF_UNICODETEXT);
                     }
 
