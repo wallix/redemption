@@ -2102,7 +2102,7 @@ public:
         break;
         case RdpNego::NEGO_STATE_NEGOCIATE:
             LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_NEGOCIATE");
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s", 
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
                     (this->nego.nla) ? "NLA" :
                     (this->nego.tls) ? "TLS" :
                                        "RDP");
@@ -2115,7 +2115,7 @@ public:
                 if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
                     this->send_connectInitialPDUwithGccConferenceCreateRequest();
                 }
-            break;                
+            break;
         case RdpNego::NEGO_STATE_FINAL:
                 //TODO: we should never go there, add checking code
                 LOG(LOG_INFO, "RdpNego::NEGO_STATE_FINAL");
@@ -3514,12 +3514,12 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi & drawable) override {
         LOG(LOG_INFO, "mod_rdp::draw_event()");
-        
-        if ((!this->event.waked_up_by_time 
-            && (!this->session_probe_virtual_channel_p 
-                || !this->session_probe_virtual_channel_p->is_event_signaled())) 
-        || ((this->state == MOD_RDP_NEGO) 
-            && ((this->nego.state == RdpNego::NEGO_STATE_INITIAL) 
+
+        if ((!this->event.waked_up_by_time
+            && (!this->session_probe_virtual_channel_p
+                || !this->session_probe_virtual_channel_p->is_event_signaled()))
+        || ((this->state == MOD_RDP_NEGO)
+            && ((this->nego.state == RdpNego::NEGO_STATE_INITIAL)
                 || (this->nego.state == RdpNego::NEGO_STATE_FINAL)))) {
             try{
                 LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
@@ -3562,14 +3562,11 @@ public:
                 if (this->acl &&
                     (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
                 {
-                    char message[128];
-                    snprintf(message, sizeof(message), "Code=%d", e.id);
-
                     char const* reason =
                         ((UP_AND_RUNNING == this->connection_finalization_state) ?
                          "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
-                    this->acl->report(reason, message);
+                    this->acl->report(reason, e.errmsg());
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
@@ -3632,7 +3629,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check switch");
             switch(this->open_session_timeout_checker.check(now)) {
             case Timeout::TIMEOUT_REACHED:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED"); 
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED");
                 if (this->error_message) {
                     *this->error_message = "Logon timer expired!";
                 }
@@ -3655,16 +3652,16 @@ public:
                 throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
             break;
             case Timeout::TIMEOUT_NOT_REACHED:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED"); 
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED");
                 this->event.set(1000000);
             break;
             case Timeout::TIMEOUT_INACTIVE:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE"); 
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE");
             break;
             }
         }
 
-        LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p"); 
+        LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p");
         try{
             if (this->session_probe_virtual_channel_p) {
                 this->session_probe_virtual_channel_p->process_event();
@@ -3682,7 +3679,7 @@ public:
 
             this->event.signal = BACK_EVENT_NEXT;
         }
-        LOG(LOG_INFO, "mod_rdp::draw_event() done"); 
+        LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
     wait_obj * get_secondary_event() override {
@@ -6722,4 +6719,3 @@ private:
     }
 
 };
-
