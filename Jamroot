@@ -557,8 +557,18 @@ unit-test test_mppc_40 : tests/core/RDP/test_mppc_40.cpp : $(TEST_DEPENDENCIES) 
 unit-test test_mppc_50 : tests/core/RDP/test_mppc_50.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_mppc_61 : tests/core/RDP/test_mppc_61.cpp : $(TEST_DEPENDENCIES) ;
+
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
 unit-test test_cs_net : tests/core/RDP/gcc/userdata/test_cs_net.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_cs_multitransport : tests/core/RDP/gcc/userdata/test_cs_multitransport.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_cs_cluster : tests/core/RDP/gcc/userdata/test_cs_cluster.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_cs_core : tests/core/RDP/gcc/userdata/test_cs_core.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_cs_mcs_msgchannel : tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_cs_security : tests/core/RDP/gcc/userdata/test_cs_security.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_cs_monitor : tests/core/RDP/gcc/userdata/test_cs_monitor.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_sc_core : tests/core/RDP/gcc/userdata/test_sc_core.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_sc_sec1 : tests/core/RDP/gcc/userdata/test_sc_sec1.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
+unit-test test_sc_net : tests/core/RDP/gcc/userdata/test_sc_net.cpp : $(TEST_DEPENDENCIES) <library>dl <library>z <library>crypto ;
 
 unit-test test_sec : tests/core/RDP/test_sec.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
 unit-test test_lic : tests/core/RDP/test_lic.cpp : $(TEST_DEPENDENCIES) <library>crypto ;
@@ -893,3 +903,5 @@ exe proxy_sc1
     :
         $(EXE_DEPENDENCIES)
     ;
+
+

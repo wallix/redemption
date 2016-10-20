@@ -31,6 +31,9 @@
 #include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "system/openssl.hpp"
+
+#include <inttypes.h>
 
 namespace GCC { namespace UserData {
 

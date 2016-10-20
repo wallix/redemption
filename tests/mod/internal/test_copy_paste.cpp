@@ -60,8 +60,9 @@ struct CopyPasteFront : FakeFront
 
         InStream stream(data, length);
         RDPECLIP::RecvFactory recv_factory(stream);
+        uint16_t msgType = recv_factory.msgType;
 
-        switch (recv_factory.msgType) {
+        switch (msgType) {
             case RDPECLIP::CB_MONITOR_READY:
                 this->send_to_server(RDPECLIP::FormatListPDU());
             break;
@@ -71,7 +72,7 @@ struct CopyPasteFront : FakeFront
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
             {
-                RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
+                RDPECLIP::FormatDataRequestPDU().recv(stream, msgType);
                 constexpr std::size_t buf_sz = 65535;
                 uint8_t buf[buf_sz];
                 size_t unicode_data_length = ::UTF8toUTF16(byte_ptr_cast(this->str.c_str()),
