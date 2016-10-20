@@ -5,7 +5,7 @@ import ctypes
 import ctypes.util
 
 def usage():
-  print("%s: Usage role library.so [hex-hmac_key hex-key] -- lib-args" % sys.argv[0])
+  print("%s: Usage {redrec|redver|reddec} library.so [hex-hmac_key hex-key] -- lib-args" % sys.argv[0])
 
 
 if len(sys.argv) < 4 or not (sys.argv[3] == '--' or (sys.argv[3] != '--' and len(sys.argv) > 5 and sys.argv[5] == '--')):

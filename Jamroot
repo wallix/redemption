@@ -172,7 +172,7 @@ constant COMMON_OBJ_DEPENDENCIES :
 constant LIB_DEPENDENCIES :
     $(COMMON_OBJ_DEPENDENCIES)
     <cxxflags>-fPIC
-    <cxxflags>-fvisibility=hidden
+    <variant>release:<cxxflags>-fvisibility=hidden
 ;
 constant EXE_DEPENDENCIES :
     $(COMMON_OBJ_DEPENDENCIES)
