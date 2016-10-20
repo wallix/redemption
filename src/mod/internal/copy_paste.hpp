@@ -178,7 +178,7 @@ public:
 
         switch (recv_factory.msgType) {
             case RDPECLIP::CB_FORMAT_LIST:
-                RDPECLIP::FormatListPDU().recv(stream, recv_factory);
+                RDPECLIP::FormatListPDU().recv(stream, RDPECLIP::CB_FORMAT_LIST);
                 this->send_to_front_channel(RDPECLIP::FormatListResponsePDU(true));
                 this->has_clipboard_ = false;
                 this->clipboard_str_.clear();
@@ -194,7 +194,7 @@ public:
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
-                format_data_response_pdu.recv(stream, recv_factory);
+                format_data_response_pdu.recv(stream, RDPECLIP::CB_FORMAT_DATA_RESPONSE);
                 if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
 
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {

@@ -2250,9 +2250,10 @@ private:
         InStream stream(chunk.get_data(), chunk.get_capacity());
 
         RDPECLIP::RecvFactory recv_factory(stream);
+        uint16_t msgType = recv_factory.msgType;
 
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
-            recv_factory.msgType = RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE;
+            msgType = RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE;
 
             // msgType is non msgType, is a part of data.
             stream.rewind();
@@ -2260,10 +2261,10 @@ private:
 
         if (this->verbose) {
             LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%s(%d)",
-                RDPECLIP::get_msgType_name(recv_factory.msgType), recv_factory.msgType);
+                RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
-        switch (recv_factory.msgType) {
+        switch (msgType) {
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
             //  - Only if clipboard content formats list include "UNICODETEXT: send a request for it in that format
@@ -2271,10 +2272,10 @@ private:
                 RDPECLIP::FormatListPDU format_list_pdu;
 
                 if (!this->client_use_long_format_names || !this->server_use_long_format_names) {
-                    format_list_pdu.recv(stream, recv_factory);
+                    format_list_pdu.recv(stream, msgType);
                 }
                 else {
-                    format_list_pdu.recv_long(stream, recv_factory);
+                    format_list_pdu.recv_long(stream, msgType);
                 }
 
                 //--------------------------- Beginning of clipboard PDU Header ----------------------------
@@ -2421,7 +2422,7 @@ private:
                 RDPECLIP::FormatDataRequestPDU format_data_request_pdu;
 
                 // 04 00 00 00 04 00 00 00 0d 00 00 00 00 00 00 00
-                format_data_request_pdu.recv(stream, recv_factory);
+                format_data_request_pdu.recv(stream, RDPECLIP::CB_FORMAT_DATA_REQUEST);
 
                 if (this->verbose) {
                     LOG( LOG_INFO
@@ -2588,7 +2589,7 @@ private:
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
 
-                format_data_response_pdu.recv(stream, recv_factory);
+                format_data_response_pdu.recv(stream, msgType);
 
                 if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
@@ -2701,7 +2702,7 @@ private:
             {
                 RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
 
-                clipboard_caps_pdu.recv(stream, recv_factory);
+                clipboard_caps_pdu.recv(stream, RDPECLIP::CB_CLIP_CAPS);
 
                 RDPECLIP::CapabilitySetRecvFactory caps_recv_factory(stream);
 
