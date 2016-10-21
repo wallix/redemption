@@ -912,8 +912,8 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
         }
         if (!ignore_stat_info) {
             std::cerr << "File \"" << filename << "\" is invalid! (metafile changed)\n" << std::endl;
-            return false;
         }
+        return false;
     }
     return true;
 }
@@ -988,6 +988,7 @@ static inline int check_encrypted_or_checksumed(
 
     struct MetaLine2CtxForRewriteStat
     {
+        std::string wrm_filename;
         std::string filename;
         time_t start_time;
         time_t stop_time;
@@ -1019,6 +1020,7 @@ static inline int check_encrypted_or_checksumed(
 
         if (update_stat_info) {
             meta_line_ctx_list.push_back({
+                full_part_filename,
                 meta_line_wrm.filename,
                 meta_line_wrm.start_time,
                 meta_line_wrm.stop_time
@@ -1043,7 +1045,9 @@ static inline int check_encrypted_or_checksumed(
     };
 
     if (!wrm_stat_is_ok) {
-        std::cout << "update mwrm file" << std::endl;
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update mwrm file");
+        }
 
         has_mismatch_stat_hash = true;
 
@@ -1069,26 +1073,24 @@ static inline int check_encrypted_or_checksumed(
             ifile_read mwrm_file;
             mwrm_file.open(full_mwrm_filename.c_str());
             LineReader line_reader(mwrm_file);
-            auto next_line = [&line_reader]{
-                if (!line_reader.next_line()) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, 0);
-                }
-            };
-            auto write_s = [&mwrm_file_cp](array_view_char av){
-                if (mwrm_file_cp.write(av.data(), av.size()) != ssize_t(av.size())) {
-                    throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
-                }
-            };
 
             // v2, w h, nochecksum, blank, blank
             for (int i = 0; i < 5; ++i) {
-                next_line();
-                write_s(line_reader.get_buf());
+                if (!line_reader.next_line()) {
+                    throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+                }
+                auto av = line_reader.get_buf();
+                if (mwrm_file_cp.write(av.data(), av.size()) != ssize_t(av.size())) {
+                    throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
+                }
             }
         }
 
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
-            if (detail::write_meta_file(mwrm_file_cp, ctx.filename.c_str(), ctx.start_time, ctx.stop_time)) {
+            struct stat sb;
+            if (lstat(ctx.wrm_filename.c_str(), &sb) < 0
+             || detail::write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
+            ) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
         }
@@ -1098,11 +1100,16 @@ static inline int check_encrypted_or_checksumed(
             return 1;
         }
 
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update mwrm file, done");
+        }
         auto_remove.filename = nullptr;
     }
 
     if (has_mismatch_stat_hash) {
-        std::cout << "update hash file" << std::endl;
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update hash file");
+        }
 
         auto const full_hash_path_tmp = (full_hash_path + ".tmp");
         transbuf::ofile_buf_out hash_file_cp;
@@ -1122,6 +1129,9 @@ static inline int check_encrypted_or_checksumed(
         }
 
         auto_remove.filename = nullptr;
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update hash file, done");
+        }
     }
 
     std::cout << "No error detected during the data verification.\n" << std::endl;
