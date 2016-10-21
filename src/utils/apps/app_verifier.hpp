@@ -743,12 +743,19 @@ inline void load_hash(
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
 
-    char buffer[8192];
-    memset(buffer, 0, sizeof(buffer));
-
-    ssize_t len = in_hash_fb.read(buffer, sizeof(buffer));
-    if (len < 0){
-        throw Error(ERR_TRANSPORT_READ_FAILED);
+    char buffer[8192]{};
+    ssize_t len;
+    {
+        ssize_t remaining = sizeof(buffer);
+        char * p = buffer;
+        while ((len = in_hash_fb.read(p, remaining))) {
+            if (len < 0){
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+            p += len;
+            remaining -= len;
+        }
+        len = p - buffer;
     }
 
     char * eof = &buffer[len];
@@ -841,7 +848,7 @@ inline void load_hash(
         hash_line.dev = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
         hash_line.ino = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
         hash_line.mtime = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-        hash_line.ctime = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.ctime = get_ll(cur, eof, infile_is_checksumed ? ' ' : '\n', ERR_TRANSPORT_READ_FAILED);
 
         if (infile_is_checksumed){
             // HASH1 + space
@@ -1036,6 +1043,8 @@ static inline int check_encrypted_or_checksumed(
     };
 
     if (!wrm_stat_is_ok) {
+        std::cout << "update mwrm file" << std::endl;
+
         has_mismatch_stat_hash = true;
 
         auto full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
@@ -1093,6 +1102,8 @@ static inline int check_encrypted_or_checksumed(
     }
 
     if (has_mismatch_stat_hash) {
+        std::cout << "update hash file" << std::endl;
+
         auto const full_hash_path_tmp = (full_hash_path + ".tmp");
         transbuf::ofile_buf_out hash_file_cp;
 
