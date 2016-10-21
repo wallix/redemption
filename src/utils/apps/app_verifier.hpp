@@ -37,6 +37,7 @@
 
 #include "program_options/program_options.hpp"
 #include "utils/chex_to_int.hpp"
+#include "utils/sugar/local_fd.hpp"
 
 enum { QUICK_CHECK_LENGTH = 4096 };
 
@@ -62,7 +63,7 @@ struct ifile_read_API
     // if some error occurs the return is -1 and the error code
     // is in errno, like for system calls.
     // returning 0 means EOF
-    virtual int read(char * buf, size_t len) = 0;
+    virtual ssize_t read(char * buf, size_t len) = 0;
     // close beside calling the system call must also ensure it sets fd to 1
     // this is to avoid performing close twice when called explicitely
     // as it is also performed by destructor (in most cases there will be
@@ -80,7 +81,7 @@ struct ifile_read : ifile_read_API
         return this->fd;
     }
 
-    int read(char * buf, size_t len) override
+    ssize_t read(char * buf, size_t len) override
     {
         return ::read(this->fd, buf, len);
     }
@@ -193,7 +194,7 @@ public:
                     errno = EINVAL;
                 }
                 this->close();
-                return - 1;
+                return -1;
             }
             if (avail < 4 and avail+ret >= 4){
                 const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
@@ -279,7 +280,7 @@ public:
         return 0;
     }
 
-    int read(char * data, size_t len) override
+    ssize_t read(char * data, size_t len) override
     {
         if (this->encrypted){
             if (this->state & CF_EOF) {
@@ -619,19 +620,14 @@ public:
         auto cur = this->line_reader.get_buf().begin();
         auto eol = this->line_reader.get_buf().end();
 
-        // Line format "fffff
+        // Line format "filename
         // [st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime]
-        // sssss eeeee hhhhh HHHHH"
-        //            ^  ^  ^  ^
-        //            |  |  |  |
-        //            |hash1|  |
-        //            |     |  |
-        //        space3    |hash2
-        //                  |
-        //                space4
-        // filename(1 or >) + space(1) + [stat_info(ll|ull * 8) + space(1)*8]
-        // + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+        // start_sec stop_sen [has1 has2]"
+        //
+        // filename(1 or >) + space(1)
+        // + [stat_info(ll|ull * 8) + space(1)*8]
+        // + start_sec(1 or >) + space(1) + stop_sec(1 or >)
+        // + [space(1) + hash1(64) + space(1) + hash2(64)] >= 135
 
         using reverse_iterator = std::reverse_iterator<char*>;
         reverse_iterator first(cur);
@@ -701,18 +697,16 @@ static inline int file_start_hmac_sha256(const char * filename,
                      uint8_t (& hash)[SHA256_DIGEST_LENGTH])
 {
     // TODO: use ifile_read
-    struct fdwrap
-    {
-        int fd;
-        fdwrap(int fd) : fd(fd) {}
-        ~fdwrap(){ if (fd >=0) {::close(fd);} }
-    } file(::open(filename, O_RDONLY));
-    if (file.fd < 0) { return file.fd; }
+    local_fd file(filename, O_RDONLY);
+    int fd = file.get();
+    if (fd < 0) {
+        return fd;
+    }
 
     SslHMAC_Sha256 hmac(crypto_key, key_len);
 
     uint8_t buf[4096] = {};
-    ssize_t ret = ::read(file.fd, buf, sizeof(buf));
+    ssize_t ret = ::read(fd, buf, sizeof(buf));
     for (size_t  number_of_bytes_read = 0 ; ret ; number_of_bytes_read += ret){
         // number_of_bytes_read < check_size
         if (ret < 0){
@@ -728,7 +722,7 @@ static inline int file_start_hmac_sha256(const char * filename,
         }
         if (ret == 0){ break; }
         hmac.update(buf, ret);
-        ret = ::read(file.fd, buf, sizeof(buf));
+        ret = ::read(fd, buf, sizeof(buf));
     }
     hmac.final(&hash[0]);
     return 0;
@@ -746,12 +740,18 @@ struct HashLoad
         : hash_line(hash_line)
     {
         ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
-        in_hash_fb.open(full_hash_path.c_str());
+
+        if (in_hash_fb.open(full_hash_path.c_str()) < 0) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
 
         char buffer[8192];
         memset(buffer, 0, sizeof(buffer));
 
         ssize_t len = in_hash_fb.read(buffer, sizeof(buffer));
+        if (len < 0){
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
 
         char * eof =  &buffer[len];
         char * cur = &buffer[0];
@@ -916,7 +916,7 @@ static inline int check_encrypted_or_checksumed(
     int encryption = 2;
     ifile_read_encrypted ibuf(cctx, encryption);
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
     // now force encryption for sub files
