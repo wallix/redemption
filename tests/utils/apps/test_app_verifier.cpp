@@ -449,6 +449,114 @@ BOOST_AUTO_TEST_CASE(TestVerifierClearData)
     BOOST_CHECK_EQUAL(0, res);
 }
 
+#include <fstream>
+#include <sstream>
+
+BOOST_AUTO_TEST_CASE(TestVerifierUpdateData)
+{
+    Inifile ini;
+    ini.set<cfg::debug::config>(false);
+    UdevRandom rnd;
+    CryptoContext cctx(rnd, ini);
+    cctx.set_get_hmac_key_cb(hmac_fn);
+    cctx.set_get_trace_key_cb(trace_fn);
+
+#define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
+    ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
+#define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
+    ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"
+#define TMP_VERIFIER "/tmp/app_verifier_test"
+
+    char const * tmp_recorded_mwrm = TMP_VERIFIER "/recorded/" MWRM_FILENAME;
+    char const * tmp_recorded_wrm = TMP_VERIFIER "/recorded/" WRM_FILENAME;
+    char const * tmp_hash_mwrm = TMP_VERIFIER "/hash/" MWRM_FILENAME;
+
+    mkdir(TMP_VERIFIER, 0777);
+    mkdir(TMP_VERIFIER "/hash", 0777);
+    mkdir(TMP_VERIFIER "/recorded", 0777);
+    std::ofstream(tmp_hash_mwrm, std::ios::trunc)
+      << std::ifstream(FIXTURES_PATH "/verifier/hash/" MWRM_FILENAME).rdbuf();
+    std::ofstream(tmp_recorded_mwrm, std::ios::trunc)
+      << std::ifstream(FIXTURES_PATH "/verifier/recorded/" MWRM_FILENAME).rdbuf();
+    std::ofstream(tmp_recorded_wrm, std::ios::trunc | std::ios::binary)
+      << std::ifstream(FIXTURES_PATH "/verifier/recorded/" WRM_FILENAME).rdbuf();
+
+    auto str_stat = [](char const * filename){
+        std::string s;
+        struct stat64 stat;
+        ::stat64(filename, &stat);
+        s += std::to_string(stat.st_size);
+        s += ' ';
+        s += std::to_string(stat.st_mode);
+        s += ' ';
+        s += std::to_string(stat.st_uid);
+        s += ' ';
+        s += std::to_string(stat.st_gid);
+        s += ' ';
+        s += std::to_string(stat.st_dev);
+        s += ' ';
+        s += std::to_string(stat.st_ino);
+        s += ' ';
+        s += std::to_string(stat.st_mtime);
+        s += ' ';
+        s += std::to_string(stat.st_ctime);
+        return s;
+    };
+
+    std::string mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
+    std::string mwrm_recorded_contents = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
+        WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
+
+    auto get_file_contents = [](char const * filename){
+      std::ostringstream out;
+      out << std::ifstream(filename).rdbuf();
+      return out.str();
+    };
+
+    BOOST_CHECK_NE(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
+    BOOST_CHECK_NE(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+
+    char const * argv[] {
+        "verifier.py",
+        "-i",
+            MWRM_FILENAME,
+        "--hash-path",
+            TMP_VERIFIER "/hash/",
+        "--mwrm-path",
+            TMP_VERIFIER "/recorded/",
+        "--verbose",
+            "10",
+        "--update-stat-info"
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    int res = -1;
+    BOOST_CHECK_NO_THROW(
+        res = app_verifier(ini,
+            argc, argv
+          , "ReDemPtion VERifier " VERSION ".\n"
+            "Copyright (C) Wallix 2010-2016.\n"
+            "Christophe Grosjean, Raphael Zhou."
+          , cctx)
+    );
+    BOOST_CHECK_EQUAL(0, res);
+
+    mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
+    mwrm_recorded_contents = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
+        WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
+
+    BOOST_CHECK_EQUAL(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
+    BOOST_CHECK_EQUAL(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+
+    remove(tmp_hash_mwrm);
+    remove(tmp_recorded_mwrm);
+    remove(tmp_recorded_wrm);
+
+#undef TMP_VERIFIER
+#undef WRM_FILENAME
+#undef MWRM_FILENAME
+}
+
 BOOST_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
     Inifile ini;

@@ -92,12 +92,7 @@ extern "C" {
                         "Copyright (C) Wallix 2010-2016.\n"
                         "Christophe Grosjean, Raphael Zhou."
                       , cctx);
-                    if (res == 0){
-                        printf("verify ok");
-                    }
-                    else {
-                        printf("verify failed\n");
-                    }
+                    puts(res == 0 ? "verify ok" : "verify failed");
                 } catch (const Error & e) {
                     printf("verify failed: with id=%d\n", e.id);
                 }
@@ -111,12 +106,7 @@ extern "C" {
                     "Copyright (C) Wallix 2010-2015.\n"
                     "Christophe Grosjean, Raphael Zhou."
                   , cctx);
-                if (res == 0){
-                    printf("decrypt ok");
-                }
-                else {
-                    printf("decrypt failed\n");
-                }
+                puts(res == 0 ? "decrypt ok" : "decrypt failed");
             } catch (const Error & e) {
                 printf("decrypt failed: with id=%d\n", e.id);
             }
