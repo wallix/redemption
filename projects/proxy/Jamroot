@@ -602,6 +602,7 @@ test-canonical core/RDP/gcc/userdata/cs_core.hpp : <library>dl <library>z <libra
 test-canonical core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp : <library>dl <library>z <library>crypto ;
 test-canonical core/RDP/gcc/userdata/cs_security.hpp : <library>dl <library>z <library>crypto ;
 test-canonical core/RDP/gcc/userdata/cs_monitor.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_monitor_ex.hpp : <library>dl <library>z <library>crypto ;
 test-canonical core/RDP/gcc/userdata/sc_core.hpp : <library>dl <library>z <library>crypto ;
 test-canonical core/RDP/gcc/userdata/sc_sec1.hpp : <library>dl <library>z <library>crypto ;
 test-canonical core/RDP/gcc/userdata/sc_net.hpp : <library>dl <library>z <library>crypto ;

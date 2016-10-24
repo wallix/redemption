@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
         				   // TS_UD_CS_MONITOR::monitorDefArray
 		"\x00\x00\x00\x00" // | left
 		"\x00\x00\x00\x00" // | top
-		"\x00\x00\x00\x00" // | right
-		"\x00\x00\x00\x00" // | bottom
+		"\x64\x00\x00\x00" // | right
+		"\xC4\xFF\xFF\xFF" // | bottom
         "\x00\x00\x00\x00" // | flags = TS_MONITOR_PRIMARY
     ;
 
@@ -61,15 +61,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
     BOOST_CHECK_EQUAL(CS_MONITOR, cs_monitor.userDataType);
     BOOST_CHECK_EQUAL(1, cs_monitor.monitorCount);
     
-    BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].left);
+    BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].left);  //(left, top) = (0,0)
     BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].top);
-    BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].right);
-    BOOST_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].bottom);
+    BOOST_CHECK_EQUAL(100, cs_monitor.monitorDefArray[0].right); //(right, bottom) = (100,-60)
+    BOOST_CHECK_EQUAL(-60, cs_monitor.monitorDefArray[0].bottom);
 	BOOST_CHECK_EQUAL(0, (cs_monitor.monitorDefArray[0].flags & TS_MONITOR_PRIMARY) );
 
     cs_monitor.log("Client Received");
 
 }
-
-
-
