@@ -174,11 +174,11 @@ public:
             return ;
         }
 
-        RDPECLIP::RecvFactory recv_factory(stream);
+        RDPECLIP::RecvPredictor rp(stream);
 
-        switch (recv_factory.msgType) {
+        switch (rp.msgType) {
             case RDPECLIP::CB_FORMAT_LIST:
-                RDPECLIP::FormatListPDU().recv(stream, RDPECLIP::CB_FORMAT_LIST);
+                RDPECLIP::FormatListPDU().recv(stream);
                 this->send_to_front_channel(RDPECLIP::FormatListResponsePDU(true));
                 this->has_clipboard_ = false;
                 this->clipboard_str_.clear();
@@ -186,7 +186,7 @@ public:
             //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
             //    break;
             //case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-            //    RDPECLIP::FormatDataRequestPDU().recv(stream, recv_factory);
+            //    RDPECLIP::FormatDataRequestPDU().recv(stream);
             //    this->send_to_front_channel_and_set_buf_size(
             //        this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
             //        RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
@@ -194,7 +194,7 @@ public:
             //    break;
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
-                format_data_response_pdu.recv(stream, RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+                format_data_response_pdu.recv(stream);
                 if (format_data_response_pdu.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
 
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
