@@ -134,7 +134,7 @@ public:
         char basename[1024];
         char extension[128];
         strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
-        strcpy(basename, "redemption"); // default value actual one should come from movie_path
+        strcpy(basename, ini.get<cfg::globals::movie_path>().c_str());
         strcpy(extension, "");          // extension is currently ignored
 
         if (!canonical_path(
@@ -156,7 +156,6 @@ public:
                 if (recursive_create_directory(record_tmp_path, S_IRWXU | S_IRWXG, groupid) != 0) {
                     LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_tmp_path);
                 }
-
                 this->psc.reset(new Static(
                     now, enable_rt, authentifier, this->gd->impl(),
                     record_tmp_path, basename, groupid, ini
@@ -167,11 +166,9 @@ public:
                 if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
                     LOG(LOG_ERR, "Failed to create directory: \"%s\"", record_path);
                 }
-
                 if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
                     LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
                 }
-
                 this->pnc.reset(new Native(
                     now, capture_bpp, ini.get<cfg::globals::trace_type>(),
                     cctx, record_path, hash_path, basename,
@@ -183,14 +180,11 @@ public:
         if (enable_kbd) {
             this->pkc.reset(new Kbd(now, authentifier, ini));
         }
-
         ApisRegister apis_register = this->get_apis_register();
-
         if (this->gd ) { this->gd->attach_apis (apis_register, ini); }
         if (this->pnc) { this->pnc->attach_apis(apis_register, ini); }
         if (this->psc) { this->psc->attach_apis(apis_register, ini); }
         if (this->pkc) { this->pkc->attach_apis(apis_register, ini); }
-
         if (this->gd ) { this->gd->start(); }
     }
 

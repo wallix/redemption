@@ -29,6 +29,7 @@
 #include "transport/in_meta_sequence_transport.hpp"
 #include "internal_mod.hpp"
 
+
 class ReplayMod : public InternalMod
 {
     std::string & auth_error_message;
@@ -48,8 +49,16 @@ class ReplayMod : public InternalMod
             , reader(&this->in_trans, /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, debug_capture)
             {
             }
+
+            void play() {
+                this->reader.play(false);
+            }
         };
         std::unique_ptr<Impl> impl;
+
+        void play() {
+            this->impl->play();
+        }
 
         void construct(char const * prefix, char const * extension, uint32_t debug_capture)
         {
@@ -96,11 +105,13 @@ public:
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
+
         const bool res = canonical_path( path_movie
                                        , path, sizeof(path)
                                        , basename, sizeof(basename)
                                        , extension, sizeof(extension)
                                        );
+
         if (!res) {
             LOG(LOG_ERR, "Buffer Overflowed: Path too long");
             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
@@ -132,6 +143,10 @@ public:
         }
 
         this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+    }
+
+    void play() {
+        this->reader.play();
     }
 
     ~ReplayMod() override {

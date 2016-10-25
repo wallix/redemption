@@ -296,7 +296,6 @@ public:
                 return false;
             }
         }
-
         if (!this->remaining_order_count){
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->sync();
@@ -1155,7 +1154,7 @@ private:
     template<class CbUpdateProgress>
     void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop) {
         while (!requested_to_stop && this->next_order()) {
-            if (this->verbose > 8) {
+            if (true) {                                     //this->verbose > 8) {
                 LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
                    , unsigned(this->record_now.tv_sec), unsigned(this->total_orders_count));
             }

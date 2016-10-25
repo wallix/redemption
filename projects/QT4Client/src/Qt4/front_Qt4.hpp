@@ -30,6 +30,13 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <limits.h>
+#include <dirent.h>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <boost/algorithm/string.hpp>
 
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
@@ -54,13 +61,6 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
-#include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <boost/algorithm/string.hpp>
-
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
@@ -68,23 +68,33 @@
 #include "core/front_api.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/internal/replay_mod.hpp"
 #include "utils/bitmap.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "keymap2.hpp"
 #include "core/client_info.hpp"
+#include "keymaps/Qt4_ScanCode_KeyMap.hpp"
+#include "capture/capture.hpp"
+
+#include <QtGui/QImage>
+#include <QtGui/QRgb>
+#include <QtGui/QBitmap>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-#include "keymaps/Qt4_ScanCode_KeyMap.hpp"
-#include <QtGui/QImage>
 #pragma GCC diagnostic pop
+
 #endif
 
 
-#define USER_CONF_PATH "userConfig.config"
-#define TEMP_PATH_TEST "/home/cmoroldo/Bureau/redemption/projects/QT4Client/clipboard_temp/"
+#define USER_CONF_PATH "config/userConfig.config"
+#define CB_FILE_TEMP_PATH "clipboard_temp"
+#define REPLAY_PATH "replay"
+#define KEY_SETTING_PATH "config/keySetting.config"
+#define LOGINS_PATH "config/logins.config"
+
 
 class Form_Qt;
 class Screen_Qt;
@@ -149,7 +159,9 @@ public:
     std::string       _localIP;
     int               _nbTry;
     int               _retryDelay;
-    mod_rdp         * _callback;
+    mod_api         * _callback;
+    ReplayMod       * _replay_mod;
+    Mod_Qt          * _mod_qt;
     QImage::Format    _imageFormatRGB;
     QImage::Format    _imageFormatARGB;
     ClipboardServerChannelDataSender _to_server_sender;
@@ -157,10 +169,15 @@ public:
     Qt_ScanCode_KeyMap   _qtRDPKeymap;
     int                  _fps;
     int                  _monitorCount;
+    const std::string    MAIN_DIR;
     const std::string    CB_TEMP_DIR;
+    const std::string    USER_CONF_DIR;
+    const std::string    REPLAY_DIR;
     QPixmap            * _cache;
+    QPixmap            * _cache_replay;
     bool                 _span;
     Rect                 _screen_dimensions[MAX_MONITOR_COUNT];
+    bool                 _record;
 
 
     Front_Qt_API( bool param1
@@ -171,12 +188,19 @@ public:
     , _info()
     , _port(0)
     , _callback(nullptr)
+    , _replay_mod(nullptr)
+    , _mod_qt(nullptr)
     , _qtRDPKeymap()
     , _fps(30)
     , _monitorCount(1)
-    , CB_TEMP_DIR(TEMP_PATH_TEST)
+    , MAIN_DIR(MAIN_PATH)
+    , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
+    , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
+    , REPLAY_DIR(MAIN_DIR + std::string(REPLAY_PATH))
     , _cache(nullptr)
+    , _cache_replay(nullptr)
     , _span(false)
+    , _record(false)
     {
         this->_to_client_sender._front = this;
     }
@@ -211,6 +235,7 @@ public:
     virtual bool can_be_resume_capture() override { return true; }
     virtual bool must_be_stop_capture() override { return true; }
     virtual void emptyLocalBuffer() = 0;
+    virtual void replay(std::string & movie_path) = 0;
 };
 
 
@@ -243,14 +268,18 @@ public:
     BGRPalette            mod_palette;
     Form_Qt            * _form;
     Screen_Qt          * _screen[MAX_MONITOR_COUNT] {};
+    QPixmap            * _cache;
+    gdi::GraphicApi    * _graph_capture;
 
     // Connexion socket members
-    Mod_Qt             * _mod_qt;
     ClipBoard_Qt       * _clipboard_qt;
     int                  _timer;
     bool                 _connected;
     bool                 _monitorCountNegociated;
     ClipboardVirtualChannel  _clipboard_channel;
+    Capture            * _capture;
+    Font                 _font;
+    std::string          _error;
 
     // Keyboard Controllers members
     Keymap2              _keymap;
@@ -316,7 +345,6 @@ public:
 
 
 
-
     bool setClientInfo() override;
 
     void writeClientInfo() override;
@@ -359,10 +387,11 @@ public:
 
     virtual void emptyLocalBuffer();
 
+    void setScreenDimension();
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //---------------------------------------
     //   GRAPHIC FUNCTIONS (factorization)
     //---------------------------------------
@@ -377,8 +406,7 @@ public:
 
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
     //       DRAW FUNCTIONS
     //-----------------------------
@@ -443,8 +471,7 @@ public:
 
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONSTRUCTOR
     //------------------------
@@ -455,8 +482,7 @@ public:
 
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONTROLLERS
     //------------------------
@@ -503,10 +529,11 @@ public:
 
     void dropScreen() override;
 
+    void replay(std::string & movie_path) override;
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //--------------------------------
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------

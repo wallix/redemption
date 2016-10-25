@@ -54,12 +54,195 @@
 #include <QtCore/QMimeData>
 #include <QtCore/QUrl>
 #include <QtGui/QCompleter>
+#include <QtGui/QFileDialog>
 
 
-#define KEY_SETTING_PATH "keySetting.config"
-#define LOGINS_PATH "logins.config"
 
 
+class Mod_Qt : public QObject
+{
+
+Q_OBJECT
+
+public:
+    Front_Qt                  * _front;
+    QSocketNotifier           * _sckRead;
+    mod_rdp                   * _callback;
+    SocketTransport           * _sck;
+    int                         _client_sck;
+    TimeSystem                  _timeSystem;
+    struct ModRDPParamsData
+    {
+        bool enable_tls                      = false;
+        bool enable_nla                      = false;
+    } _modRDPParamsData;
+
+    //  Replay
+    InMetaSequenceTransport   * _in_trans;
+    FileToGraphic             * _reader;                    // TODO QT version with screen repaint inside while
+
+
+    Mod_Qt(Front_Qt * front, QWidget * parent)
+        : QObject(parent)
+        , _front(front)
+        , _sckRead(nullptr)
+        , _callback(nullptr)
+        , _sck(nullptr)
+        , _client_sck(0)
+    {
+        //this->_clipboard = QApplication::clipboard();
+        //this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
+    }
+
+    ~Mod_Qt() {
+        this->drop_connexion();
+    }
+
+    void drop_connexion() {
+        this->_front->emptyLocalBuffer();
+        TimeSystem timeobj;
+        if (this->_callback != nullptr) {
+            static_cast<mod_api*>(this->_callback)->disconnect(timeobj.get_time().tv_sec);
+            delete (this->_callback);
+            this->_callback = nullptr;
+            this->_front->_callback = nullptr;
+        }
+        if (this->_sckRead != nullptr) {
+            delete (this->_sckRead);
+            this->_sckRead = nullptr;
+        }
+        if (this->_sck != nullptr) {
+            delete (this->_sck);
+            this->_sck = nullptr;
+            std::cout << "Disconnected from [" << this->_front->_targetIP << "]." << std::endl;
+        }
+    }
+
+    bool connect() {
+        const char * name(this->_front->_userName.c_str());
+        const char * targetIP(this->_front->_targetIP.c_str());
+        const std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
+
+        this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay);
+
+        if (this->_client_sck > 0) {
+            try {
+                std::string error_message;
+                this->_sck = new SocketTransport( name
+                                                , this->_client_sck
+                                                , targetIP
+                                                , this->_front->_port
+                                                , this->_front->verbose
+                                                , &error_message
+                                                );
+                std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
+                return true;
+
+            } catch (const std::exception & e) {
+                std::string windowErrorMsg(errorMsg+" Socket error.");
+                std::cout << windowErrorMsg << std::endl;
+                this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
+                return false;
+            }
+        } else {
+            std::string windowErrorMsg(errorMsg+" ip_connect error.");
+            std::cout << windowErrorMsg << std::endl;
+            this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
+            return false;
+        }
+    }
+
+    void replay(std::string & movie_path) {
+        LCGRandom gen(0);
+        Inifile ini;
+        CryptoContext cctx(gen, ini);
+        this->_in_trans(cctx, movie_path, ".mwrm", 0, 0);
+        this->_reader(&(this->_in_trans), /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, 0);
+    }
+
+    bool listen() {
+        const char * name(this->_front->_userName.c_str());
+        const char * pwd(this->_front->_pwd.c_str());
+        const char * targetIP(this->_front->_targetIP.c_str());
+        const char * localIP(this->_front->_localIP.c_str());
+
+        Inifile ini;
+        //ini.set<cfg::debug::rdp>(MODRDP_LOGLEVEL_CLIPRDR);
+
+        ModRDPParams mod_rdp_params( name
+                                   , pwd
+                                   , targetIP
+                                   , localIP
+                                   , 2
+                                   , 0
+                                   );
+        mod_rdp_params.device_id                       = "device_id";
+        mod_rdp_params.enable_tls                      = this->_modRDPParamsData.enable_tls;
+        mod_rdp_params.enable_nla                      = this->_modRDPParamsData.enable_nla;
+        mod_rdp_params.enable_fastpath                 = false;
+        mod_rdp_params.enable_mem3blt                  = true;
+        mod_rdp_params.enable_bitmap_update            = true;
+        mod_rdp_params.enable_new_pointer              = true;
+        mod_rdp_params.server_redirection_support      = true;
+        std::string allow_channels = "*";
+        mod_rdp_params.allow_channels                  = &allow_channels;
+        //mod_rdp_params.allow_using_multiple_monitors   = true;
+        //mod_rdp_params.bogus_refresh_rect              = true;
+        mod_rdp_params.verbose = 0x080000ff;                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
+
+        LCGRandom gen(0); // To always get the same client random, in tests
+
+        try {
+            this->_callback = new mod_rdp( *(this->_sck)
+                                         , *(this->_front)
+                                         , this->_front->_info
+                                         , ini.get_ref<cfg::mod_rdp::redir_info>()
+                                         , gen
+                                         , this->_timeSystem
+                                         , mod_rdp_params
+                                         );
+
+            this->_front->_to_server_sender._callback = this->_callback;
+            this->_front->_callback = this->_callback;
+            this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
+            this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
+            std::cout << "Early negociations start.." <<  std::endl;
+
+        } catch (const Error & e) {
+            const std::string errorMsg("Error: RDP Initialization failed.");
+            std::cout << errorMsg << std::endl;
+            std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+            this->_front->dropScreen();
+            this->_front->disconnect(labelErrorMsg);
+            return false;
+        }
+
+        if (this->_callback != nullptr) {
+            while (!this->_callback->is_up_and_running()) {
+                try {
+                    this->_callback->draw_event(time(nullptr), *(this->_front));
+                } catch (const Error & e) {
+                    const std::string errorMsg("Error: Failed during RDP early negociations.");
+                    std::cout << errorMsg << std::endl;
+                    std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+                    this->_front->dropScreen();
+                    this->_front->disconnect(labelErrorMsg);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+public Q_SLOTS:
+    void call_Draw() {
+        if (this->_front->_callback)
+        this->_front->call_Draw();
+    }
+
+
+};
 
 class DialogOptions_Qt : public QDialog
 {
@@ -72,6 +255,7 @@ public:
     const int            _height;
     QWidget              _emptyPanel;
     QWidget            * _viewTab;
+    QWidget            * _connectionTab;
     QWidget            * _keyboardTab;
     QGridLayout        * _layout;
     QPushButton          _buttonSave;
@@ -83,10 +267,14 @@ public:
     QComboBox            _resolutionComboBox;
     QCheckBox            _perfCheckBox;
     QCheckBox            _spanCheckBox;
+    QCheckBox            _recordingCB;
+    QCheckBox            _tlsBox;
+    QCheckBox            _nlaBox;
     QComboBox            _languageComboBox;
     QComboBox            _fpsComboBox;
     QComboBox            _monitorCountComboBox;
     QFormLayout        * _layoutView;
+    QFormLayout        * _layoutConnection;
     QFormLayout        * _layoutKeyboard;
     QLabel               _labelBpp;
     QLabel               _labelResolution;
@@ -95,6 +283,9 @@ public:
     QLabel               _labelLanguage;
     QLabel               _labelFps;
     QLabel               _labelScreen;
+    QLabel               _labelRecording;
+    QLabel               _labelTls;
+    QLabel               _labelNla;
     QTableWidget       * _tableKeySetting;
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
@@ -107,6 +298,7 @@ public:
         , _height(350)
         , _emptyPanel(this)
         , _viewTab(nullptr)
+        , _connectionTab(nullptr)
         , _keyboardTab(nullptr)
         , _layout(nullptr)
         , _buttonSave("Save", this)
@@ -118,17 +310,22 @@ public:
         , _resolutionComboBox(this)
         , _perfCheckBox(this)
         , _spanCheckBox(this)
+        , _recordingCB(this)
         , _languageComboBox(this)
         , _fpsComboBox(this)
         , _layoutView(nullptr)
+        , _layoutConnection(nullptr)
         , _layoutKeyboard(nullptr)
         , _labelBpp("Color depth :", this)
         , _labelResolution("Resolution :", this)
         , _labelPerf("Disable wallaper :", this)
-        , _labelSpan("Span screen :", this)
+        , _labelSpan("Span screen(s) :", this)
         , _labelLanguage("Keyboard Language :", this)
         , _labelFps("Refresh per second :", this)
         , _labelScreen("Screen :", this)
+        , _labelRecording("Record movie :", this)
+        , _labelTls("TLS :", this)
+        , _labelNla("NLA :", this)
         , _tableKeySetting(nullptr)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
@@ -143,6 +340,7 @@ public:
 
         // Tab options
         this->_viewTab = new QWidget(this);
+        this->_connectionTab = new QWidget(this);
         this->_keyboardTab = new QWidget(this);
         this->_tabs = new QTabWidget(this);
 
@@ -219,6 +417,30 @@ public:
 
 
 
+        // Connection config
+        const QString strConnection("Connection");
+        this->_layoutConnection = new QFormLayout(this->_connectionTab);
+
+        if (this->_front->_record) {
+            this->_recordingCB.setCheckState(Qt::Checked);
+        }
+        this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
+
+        if (this->_front->_mod_qt->_modRDPParamsData.enable_tls) {
+            this->_tlsBox.setCheckState(Qt::Checked);
+        }
+        this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
+
+        if (this->_front->_mod_qt->_modRDPParamsData.enable_nla) {
+            this->_nlaBox.setCheckState(Qt::Checked);
+        }
+        this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
+
+        this->_connectionTab->setLayout(this->_layoutConnection);
+        this->_tabs->addTab(this->_connectionTab, strConnection);
+
+
+
         // Keyboard tab
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
@@ -243,7 +465,7 @@ public:
         this->_tableKeySetting->setColumnWidth(2 ,84);
         this->_tableKeySetting->setColumnWidth(3 ,74);
 
-        std::ifstream ifichier(KEY_SETTING_PATH, std::ios::in);
+        std::ifstream ifichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
         if(ifichier) {
 
             std::string ligne;
@@ -396,6 +618,21 @@ public Q_SLOTS:
         } else {
             this->_front->_span = false;
         }
+        if (this->_recordingCB.isChecked()) {
+            this->_front->_record = true;
+        } else {
+            this->_front->_record = false;
+        }
+        if (this->_tlsBox.isChecked()) {
+            this->_front->_mod_qt->_modRDPParamsData.enable_tls = true;
+        } else {
+            this->_front->_mod_qt->_modRDPParamsData.enable_tls = false;
+        }
+        if (this->_nlaBox.isChecked()) {
+            this->_front->_mod_qt->_modRDPParamsData.enable_nla = true;
+        } else {
+            this->_front->_mod_qt->_modRDPParamsData.enable_nla = false;
+        }
         this->_front->_info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
         this->_front->_info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
         this->_front->_monitorCount = this->_front->_info.cs_monitor.monitorCount;
@@ -405,10 +642,10 @@ public Q_SLOTS:
         this->_front->writeClientInfo();
 
 
-        remove(KEY_SETTING_PATH);
+        remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
         this->_front->_qtRDPKeymap.clearCustomKeyCod();
 
-        std::ofstream ofichier(KEY_SETTING_PATH, std::ios::out | std::ios::trunc);
+        std::ofstream ofichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
         if(ofichier) {
 
             ofichier << "Key Setting" << std::endl << std::endl;
@@ -524,6 +761,7 @@ public:
     QCheckBox            _pwdCheckBox;
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
+    QPushButton          _buttonReplay;
     QCompleter         * _completer;
     struct {
         std::string title;
@@ -556,6 +794,7 @@ public:
         , _pwdCheckBox(QString("Save password."), this)
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
+        , _buttonReplay("Replay", this)
         , _pwdCheckBoxChecked(false)
         , _lastTargetIndex(0)
     {
@@ -582,6 +821,14 @@ public:
         this->_formLayout.addRow(&(this->_pwdCheckBox));
         this->_formLayout.addRow(&(this->_errorLabel));
         this->setLayout(&(this->_formLayout));
+
+        QRect rectReplay(QPoint(10, 226), QSize(110, 24));
+        this->_buttonReplay.setToolTip(this->_buttonReplay.text());
+        this->_buttonReplay.setGeometry(rectReplay);
+        this->_buttonReplay.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonReplay)   , SIGNAL (pressed()),  this, SLOT (replayPressed()));
+        this->_buttonReplay.setFocusPolicy(Qt::StrongFocus);
+        this->_buttonReplay.setAutoDefault(true);
 
         QRect rectConnexion(QPoint(280, 256), QSize(110, 24));
         this->_buttonConnexion.setToolTip(this->_buttonConnexion.text());
@@ -610,7 +857,7 @@ public:
 
     void setAccountData() {
         this->_accountNB = 0;
-        std::ifstream ifichier(LOGINS_PATH, std::ios::in);
+        std::ifstream ifichier(this->_front->MAIN_DIR + std::string(LOGINS_PATH), std::ios::in);
         if (ifichier) {
             int accountNB(0);
             std::string ligne;
@@ -740,6 +987,15 @@ private Q_SLOTS:
         this->_buttonConnexion.setFocus();
     }
 
+    void replayPressed() {
+        QString filePath("");
+        filePath = QFileDialog::getOpenFileName(this, tr("Open a Movie"),
+                                                this->_front->REPLAY_DIR.c_str(),
+                                                tr("Movie Files(*.mwrm)"));
+        std::string str_movie_path(filePath.toStdString());
+        this->_front->replay(str_movie_path);
+    }
+
     void connexionPressed() {
         this->_front->connexionPressed();
     }
@@ -774,7 +1030,7 @@ private Q_SLOTS:
                 }
             }
 
-            std::ofstream ofichier(LOGINS_PATH, std::ios::out | std::ios::trunc);
+            std::ofstream ofichier(this->_front->MAIN_DIR + std::string(LOGINS_PATH), std::ios::out | std::ios::trunc);
             if(ofichier) {
 
                 if (this->_pwdCheckBoxChecked) {
@@ -832,14 +1088,14 @@ public:
     uint8_t              _screen_index;
 
 
-    Screen_Qt (Front_Qt_API * front, int screen_index)
+    Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
-        , _cache(front->getMainScreen()->_cache)
+        , _cache(cache)
         , _width(this->_front->_screen_dimensions[screen_index].cx)
         , _height(this->_front->_screen_dimensions[screen_index].cy)
         , _connexionLasted(false)
@@ -849,13 +1105,13 @@ public:
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
-        std::string screen_index_str = std::to_string(int(this->_screen_index));
-        std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "]. " + screen_index_str;
-        this->setWindowTitle(QString(title.c_str()));
+        //std::string screen_index_str = std::to_string(int(this->_screen_index));
+        //std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "]. " + screen_index_str;
+        //this->setWindowTitle(QString(title.c_str()));
 
         if (this->_front->_span) {
             this->setWindowState(Qt::WindowFullScreen);
-            this->_height -= 2*Front_Qt_API::BUTTON_HEIGHT;
+            //this->_height -= 2*Front_Qt_API::BUTTON_HEIGHT;
         } else {
             this->setFixedSize(this->_width, this->_height + Front_Qt_API::BUTTON_HEIGHT);
         }
@@ -900,15 +1156,80 @@ public:
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, bool x)
+        : QWidget()
+        , _front(front)
+        , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
+        , _buttonRefresh("Play", this)
+        , _buttonDisconnexion("Disconnection", this)
+        , _penColor(Qt::black)
+        , _cache(cache)
+        , _cache_painter(this->_cache)
+        , _width(this->_front->_screen_dimensions[0].cx)
+        , _height(this->_front->_screen_dimensions[0].cy)
+        , _connexionLasted(false)
+        , _timer(this)
+        , _screen_index(0)
+    {
+        this->setAttribute(Qt::WA_DeleteOnClose);
+        //std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
+        //this->setWindowTitle(QString(title.c_str()));
 
-    Screen_Qt (Front_Qt_API * front)
+        this->paintCache().fillRect(0, 0, this->_width, this->_height, {0, 0, 0});
+
+        if (this->_front->_span) {
+            this->setWindowState(Qt::WindowFullScreen);
+        } else {
+            this->setFixedSize(this->_width, this->_height + Front_Qt_API::BUTTON_HEIGHT);
+        }
+
+        QRect rectCtrlAltDel(QPoint(0, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
+        this->_buttonCtrlAltDel.setToolTip(this->_buttonCtrlAltDel.text());
+        this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
+        this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
+        //this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
+        //this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
+        this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
+
+        QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, Front_Qt_API::BUTTON_HEIGHT));
+        this->_buttonRefresh.setToolTip(this->_buttonRefresh.text());
+        this->_buttonRefresh.setGeometry(rectRefresh);
+        this->_buttonRefresh.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (pressed()),  this, SLOT (playPressed()));
+        //this->QObject::connect(&(this->_buttonRefresh)     , SIGNAL (released()), this, SLOT (RefreshReleased()));
+        this->_buttonRefresh.setFocusPolicy(Qt::NoFocus);
+
+        QRect rectDisconnexion(QPoint(((this->_width/3)*2), this->_height+1),QSize(this->_width-((this->_width/3)*2), Front_Qt_API::BUTTON_HEIGHT));
+        this->_buttonDisconnexion.setToolTip(this->_buttonDisconnexion.text());
+        this->_buttonDisconnexion.setGeometry(rectDisconnexion);
+        this->_buttonDisconnexion.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (pressed()),  this, SLOT (disconnexionPressed()));
+        this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
+        this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
+
+        uint32_t centerW = 0;
+        uint32_t centerH = 0;
+        if (!this->_front->_span) {
+            QDesktopWidget* desktop = QApplication::desktop();
+            centerW = (desktop->width()/2)  - (this->_width/2);
+            centerH = (desktop->height()/2) - ((this->_height+Front_Qt_API::BUTTON_HEIGHT)/2);
+        }
+        this->move(centerW, centerH);
+
+        //this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        //this->_timer.start(1000/this->_front->_fps);
+
+        this->setFocusPolicy(Qt::StrongFocus);
+    }
+
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
-        , _cache(new QPixmap(this->_front->_info.width, this->_front->_info.height))
+        , _cache(cache)
         , _cache_painter(this->_cache)
         , _width(this->_front->_screen_dimensions[0].cx)
         , _height(this->_front->_screen_dimensions[0].cy)
@@ -922,9 +1243,8 @@ public:
         std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
         this->setWindowTitle(QString(title.c_str()));
 
-         if (this->_front->_span) {
+        if (this->_front->_span) {
             this->setWindowState(Qt::WindowFullScreen);
-            this->_height -= 2*Front_Qt_API::BUTTON_HEIGHT;
         } else {
             this->setFixedSize(this->_width, this->_height + Front_Qt_API::BUTTON_HEIGHT);
         }
@@ -953,12 +1273,12 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
-        QDesktopWidget* desktop = QApplication::desktop();
-        uint32_t centerW = (desktop->width()/2)  - (this->_width/2);
-        uint32_t centerH = (desktop->height()/2) - ((this->_height+Front_Qt_API::BUTTON_HEIGHT)/2);
-        if (this->_front->_span) {
-            centerW = 0;
-            centerH = 0;
+        uint32_t centerW = 0;
+        uint32_t centerH = 0;
+        if (!this->_front->_span) {
+            QDesktopWidget* desktop = QApplication::desktop();
+            centerW = (desktop->width()/2)  - (this->_width/2);
+            centerH = (desktop->height()/2) - ((this->_height+Front_Qt_API::BUTTON_HEIGHT)/2);
         }
         this->move(centerW, centerH);
 
@@ -974,7 +1294,7 @@ public:
         }
     }
 
-    void errorConnexion() {
+    void disConnection() {
         this->_connexionLasted = true;
     }
 
@@ -1033,6 +1353,9 @@ private:
 
 
 private Q_SLOTS:
+    void playPressed() {
+        this->_front->_replay_mod->play();
+    }
     void slotRepaint() {
         this->repaint();
     }
@@ -1072,158 +1395,7 @@ private Q_SLOTS:
 
 
 
-class Mod_Qt : public QObject
-{
 
-Q_OBJECT
-
-public:
-    Front_Qt                  * _front;
-    QSocketNotifier           * _sckRead;
-    mod_rdp                   * _callback;
-    SocketTransport           * _sck;
-    int                         _client_sck;
-    TimeSystem                  _timeSystem;
-
-
-    Mod_Qt(Front_Qt * front, QWidget * parent)
-        : QObject(parent)
-        , _front(front)
-        , _sckRead(nullptr)
-        , _callback(nullptr)
-        , _sck(nullptr)
-        , _client_sck(0)
-    {
-        //this->_clipboard = QApplication::clipboard();
-        //this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
-    }
-
-    ~Mod_Qt() {
-        this->drop_connexion();
-    }
-
-    void drop_connexion() {
-        this->_front->emptyLocalBuffer();
-        TimeSystem timeobj;
-        if (this->_callback != nullptr) {
-            static_cast<mod_api*>(this->_callback)->disconnect(timeobj.get_time().tv_sec);
-            delete (this->_callback);
-            this->_callback = nullptr;
-            this->_front->_callback = nullptr;
-        }
-        if (this->_sckRead != nullptr) {
-            delete (this->_sckRead);
-            this->_sckRead = nullptr;
-        }
-        if (this->_sck != nullptr) {
-            delete (this->_sck);
-            this->_sck = nullptr;
-            std::cout << "Disconnected from [" << this->_front->_targetIP << "]." << std::endl;
-        }
-    }
-
-    bool connect() {
-        const char * name(this->_front->_userName.c_str());
-        const char * targetIP(this->_front->_targetIP.c_str());
-        const std::string errorMsg("Cannot connect to [" + this->_front->_targetIP +  "].");
-
-        this->_client_sck = ip_connect(targetIP, this->_front->_port, this->_front->_nbTry, this->_front->_retryDelay);
-
-        if (this->_client_sck > 0) {
-            try {
-                std::string error_message;
-                this->_sck = new SocketTransport( name
-                                                , this->_client_sck
-                                                , targetIP
-                                                , this->_front->_port
-                                                , this->_front->verbose
-                                                , &error_message
-                                                );
-                std::cout << "Connected to [" << targetIP <<  "]." << std::endl;
-                return true;
-
-            } catch (const std::exception & e) {
-                std::string windowErrorMsg(errorMsg+" Socket error.");
-                std::cout << windowErrorMsg << std::endl;
-                this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
-                return false;
-            }
-        } else {
-            std::string windowErrorMsg(errorMsg+" ip_connect error.");
-            std::cout << windowErrorMsg << std::endl;
-            this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
-            return false;
-        }
-    }
-
-    void listen() {
-        const char * name(this->_front->_userName.c_str());
-        const char * pwd(this->_front->_pwd.c_str());
-        const char * targetIP(this->_front->_targetIP.c_str());
-        const char * localIP(this->_front->_localIP.c_str());
-
-        Inifile ini;
-        //ini.set<cfg::debug::rdp>(MODRDP_LOGLEVEL_CLIPRDR);
-
-        ModRDPParams mod_rdp_params( name
-                                   , pwd
-                                   , targetIP
-                                   , localIP
-                                   , 2
-                                   , 0
-                                   );
-        mod_rdp_params.device_id                       = "device_id";
-        mod_rdp_params.enable_tls                      = false;
-        mod_rdp_params.enable_nla                      = false;
-        mod_rdp_params.enable_fastpath                 = false;
-        mod_rdp_params.enable_mem3blt                  = true;
-        mod_rdp_params.enable_bitmap_update            = true;
-        mod_rdp_params.enable_new_pointer              = true;
-        mod_rdp_params.server_redirection_support      = true;
-        std::string allow_channels = "*";
-        mod_rdp_params.allow_channels                  = &allow_channels;
-        mod_rdp_params.allow_using_multiple_monitors   = true;
-        //mod_rdp_params.bogus_refresh_rect              = true;
-        mod_rdp_params.verbose = 0x080000ff;                      //MODRDP_LOGLEVEL_CLIPRDR | 16;
-
-        LCGRandom gen(0); // To always get the same client random, in tests
-
-        try {
-            this->_callback = new mod_rdp( *(this->_sck)
-                                         , *(this->_front)
-                                         , this->_front->_info
-                                         , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                         , gen
-                                         , this->_timeSystem
-                                         , mod_rdp_params
-                                         );
-
-            this->_front->_to_server_sender._callback = this->_callback;
-            this->_front->_callback = this->_callback;
-            this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
-            this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
-
-            while (!this->_callback->is_up_and_running()) {
-                this->_callback->draw_event(time(nullptr), *(this->_front));
-            }
-
-        } catch (const Error & e) {
-            const std::string errorMsg("Error: connexion to [" + this->_front->_targetIP +  "] is closed.");
-            std::cout << errorMsg << std::endl;
-            std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-            this->_front->dropScreen();
-            this->_front->disconnect(labelErrorMsg);
-        }
-    }
-
-public Q_SLOTS:
-    void call_Draw() {
-        if (this->_front->_callback)
-        this->_front->call_Draw();
-    }
-
-
-};
 
 
 
@@ -1275,12 +1447,13 @@ public:
         , _bufferTypeLongName("")
         , _cItems(0)
     {
+        this->clean_CB_temp_dir();
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
     void write_clipboard_temp_file(std::string fileName, uint8_t * data, size_t data_len) {
-        std::string filePath(this->_front->CB_TEMP_DIR + fileName);
+        std::string filePath(this->_front->CB_TEMP_DIR + std::string("/") + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
         std::ofstream oFile(filePath, std::ios::out | std::ios::binary);
@@ -1331,7 +1504,7 @@ public:
 
         for (size_t i = 0; i < items_list.size(); i++) {
 
-            std::string path(this->_front->CB_TEMP_DIR + items_list[i].name);
+            std::string path(this->_front->CB_TEMP_DIR + std::string("/") + items_list[i].name);
             std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
@@ -1350,14 +1523,24 @@ public:
         this->_clipboard->setImage(image, QClipboard::Clipboard);
     }
 
+    void clean_CB_temp_dir() {
+        DIR *theFolder = opendir(this->_front->CB_TEMP_DIR.c_str());
+        struct dirent *next_file;
+
+        while ( (next_file = readdir(theFolder)) != NULL )
+        {
+            std::string filepath(this->_front->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
+            remove(filepath.c_str());
+        }
+        closedir(theFolder);
+    }
+
     void emptyBuffer() {
         this->_bufferTypeID = 0;
         this->_cliboard_data_length = 0;
-        for (size_t i = 0; i < _temp_files_list.size(); i++) {
-            if (remove(this->_temp_files_list[i].c_str()) != 0) {
-                std::cout <<  "error " << _temp_files_list[i] <<  std::endl;
-            }
-        }
+
+        this->clean_CB_temp_dir();
+
         this->_temp_files_list.clear();
         for (size_t i = 0; i < _items_list.size(); i++) {
             delete(this->_items_list[i]);

@@ -28,7 +28,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 
-inline void fill_region(gdi::GraphicApi & drawable, const Region & region, int bg_color) {
+inline void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, int bg_color) {
     for (const Rect & rect : region.rects) {
         drawable.draw(RDPOpaqueRect(rect, bg_color), rect);
     }
@@ -333,7 +333,7 @@ public:
         }
     }
     virtual void draw_inner_free(const Rect & clip, int bg_color) {
-        Region region;
+        SubRegion region;
         region.rects.push_back(clip.intersect(this->rect));
 
         CompositeContainer::iterator iter_w_current = this->impl->get_first();
@@ -353,7 +353,7 @@ public:
     }
 
     //virtual void hide_child(const Rect & clip, int bg_color) {
-    //    Region region;
+    //    SubRegion region;
     //
     //    CompositeContainer::iterator iter_w_current = this->impl->get_first();
     //    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {

@@ -19,8 +19,8 @@ constant SRCDIR : ../../src ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 constant INCLUDEDIR : ../../include ;
-path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
 
+path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
 
 
 # Returns environment value if it exists or default otherwise.
@@ -58,6 +58,7 @@ constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
 constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
+constant MAIN_PATH : [ setvar MAIN_PATH : /home/cmoroldo/Bureau/redemption/projects/QT4Client/ ] ;
 
 constant PNG_DEBUG : <variant>debug:<library>png ;
 
@@ -78,6 +79,7 @@ rule defines ( properties * )
     defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
     defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
     defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
+    defs += <define>MAIN_PATH='\"$(MAIN_PATH)\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;
@@ -195,6 +197,7 @@ exe client_rdp_Qt4 :
     d3des
     z
     dl
+    snappy
     :
     <define>QT_NO_KEYWORDS
     <include>/usr/include/qt4                   #4

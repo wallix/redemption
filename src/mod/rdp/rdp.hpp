@@ -2147,6 +2147,7 @@ public:
 
             MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
             GCC::Create_Response_Recv gcc_cr(mcs.payload);
+
             while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
 
