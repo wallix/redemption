@@ -92,6 +92,7 @@ public:
     {
         this->impl = &composite_array;
 
+        this->add_widget(&this->img);
         this->add_widget(&this->title);
         this->add_widget(&this->dialog);
         this->add_widget(&this->separator);
@@ -153,7 +154,9 @@ public:
 
         this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
         this->img.rect.y = top + (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
-        this->add_widget(&this->img);
+        if (this->img.rect.y + this->img.cy() > height) {
+            this->img.rect.y = 0;
+        }
 
         if (!has_challenge)
             this->set_widget_focus(&this->ok, focus_reason_tabkey);

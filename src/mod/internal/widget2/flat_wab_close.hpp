@@ -112,6 +112,8 @@ public:
     {
         this->impl = &composite_array;
 
+        this->add_widget(&this->img);
+
         char label[255];
         snprintf(label, sizeof(label), "%s:", TR("username", lang));
         this->username_label.set_text(label);
@@ -205,7 +207,9 @@ public:
 
         this->img.rect.x = left + (this->cx() - this->img.cx()) / 2;
         this->img.rect.y = top + (3*(height - y) / 2 - this->img.cy()) / 2 + y;
-        this->add_widget(&this->img);
+        if (this->img.rect.y + this->img.cy() > height) {
+            this->img.rect.y = 0;
+        }
 
         this->set_widget_focus(&this->cancel, focus_reason_tabkey);
     }

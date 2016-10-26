@@ -67,10 +67,10 @@ public:
     {
         this->impl = &composite_array;
 
+        this->add_widget(&this->img);
         this->add_widget(&this->message_label);
         this->add_widget(&this->password_label);
         this->add_widget(&this->password_edit);
-        this->add_widget(&this->img);
 
         // Center bloc positionning
         // Login and Password boxes
@@ -96,6 +96,9 @@ public:
             ?(height - (bbloc_h + 10))
             :(height/2 + cbloc_h/2 + bottom_height/2);
         this->img.set_xy((width - this->img.rect.cx) / 2, y_bbloc);
+        if (this->img.rect.y + this->img.cy() > height) {
+            this->img.rect.y = 0;
+        }
     }
 
     ~FlatVNCAuthentification() override {
