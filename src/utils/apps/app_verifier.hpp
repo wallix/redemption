@@ -31,12 +31,15 @@
 
 #include "utils/apps/cryptofile.hpp"
 #include "transport/transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
 
 #include "system/ssl_calls.hpp"
 #include "configs/config.hpp"
 
 #include "program_options/program_options.hpp"
 #include "utils/chex_to_int.hpp"
+#include "utils/sugar/local_fd.hpp"
+#include "utils/sugar/array_view.hpp"
 
 enum { QUICK_CHECK_LENGTH = 4096 };
 
@@ -62,7 +65,7 @@ struct ifile_read_API
     // if some error occurs the return is -1 and the error code
     // is in errno, like for system calls.
     // returning 0 means EOF
-    virtual int read(char * buf, size_t len) = 0;
+    virtual ssize_t read(char * buf, size_t len) = 0;
     // close beside calling the system call must also ensure it sets fd to 1
     // this is to avoid performing close twice when called explicitely
     // as it is also performed by destructor (in most cases there will be
@@ -80,7 +83,7 @@ struct ifile_read : ifile_read_API
         return this->fd;
     }
 
-    int read(char * buf, size_t len) override
+    ssize_t read(char * buf, size_t len) override
     {
         return ::read(this->fd, buf, len);
     }
@@ -193,7 +196,7 @@ public:
                     errno = EINVAL;
                 }
                 this->close();
-                return - 1;
+                return -1;
             }
             if (avail < 4 and avail+ret >= 4){
                 const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
@@ -279,7 +282,7 @@ public:
         return 0;
     }
 
-    int read(char * data, size_t len) override
+    ssize_t read(char * data, size_t len) override
     {
         if (this->encrypted){
             if (this->state & CF_EOF) {
@@ -619,19 +622,14 @@ public:
         auto cur = this->line_reader.get_buf().begin();
         auto eol = this->line_reader.get_buf().end();
 
-        // Line format "fffff
+        // Line format "filename
         // [st_size st_mode st_uid st_gid st_dev st_ino st_mtime st_ctime]
-        // sssss eeeee hhhhh HHHHH"
-        //            ^  ^  ^  ^
-        //            |  |  |  |
-        //            |hash1|  |
-        //            |     |  |
-        //        space3    |hash2
-        //                  |
-        //                space4
-        // filename(1 or >) + space(1) + [stat_info(ll|ull * 8) + space(1)*8]
-        // + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
-        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+        // start_sec stop_sen [has1 has2]"
+        //
+        // filename(1 or >) + space(1)
+        // + [stat_info(ll|ull * 8) + space(1)*8]
+        // + start_sec(1 or >) + space(1) + stop_sec(1 or >)
+        // + [space(1) + hash1(64) + space(1) + hash2(64)] >= 135
 
         using reverse_iterator = std::reverse_iterator<char*>;
         reverse_iterator first(cur);
@@ -701,18 +699,16 @@ static inline int file_start_hmac_sha256(const char * filename,
                      uint8_t (& hash)[SHA256_DIGEST_LENGTH])
 {
     // TODO: use ifile_read
-    struct fdwrap
-    {
-        int fd;
-        fdwrap(int fd) : fd(fd) {}
-        ~fdwrap(){ if (fd >=0) {::close(fd);} }
-    } file(::open(filename, O_RDONLY));
-    if (file.fd < 0) { return file.fd; }
+    local_fd file(filename, O_RDONLY);
+    int fd = file.get();
+    if (fd < 0) {
+        return fd;
+    }
 
     SslHMAC_Sha256 hmac(crypto_key, key_len);
 
     uint8_t buf[4096] = {};
-    ssize_t ret = ::read(file.fd, buf, sizeof(buf));
+    ssize_t ret = ::read(fd, buf, sizeof(buf));
     for (size_t  number_of_bytes_read = 0 ; ret ; number_of_bytes_read += ret){
         // number_of_bytes_read < check_size
         if (ret < 0){
@@ -728,150 +724,173 @@ static inline int file_start_hmac_sha256(const char * filename,
         }
         if (ret == 0){ break; }
         hmac.update(buf, ret);
-        ret = ::read(file.fd, buf, sizeof(buf));
+        ret = ::read(fd, buf, sizeof(buf));
     }
     hmac.final(&hash[0]);
     return 0;
 }
 
 
-struct HashLoad
-{
-    MetaLine2 & hash_line;
+inline void load_hash(
+    MetaLine2 & hash_line,
+    const std::string & full_hash_path, const std::string & input_filename,
+    unsigned int infile_version, bool infile_is_checksumed,
+    CryptoContext * cctx, bool infile_is_encrypted, int verbose
+) {
+    ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
 
-    HashLoad(const std::string & full_hash_path, const std::string & input_filename,
-             unsigned int infile_version, bool infile_is_checksumed,
-             MetaLine2 & hash_line,
-            CryptoContext * cctx, bool infile_is_encrypted, int verbose)
-        : hash_line(hash_line)
+    if (in_hash_fb.open(full_hash_path.c_str()) < 0) {
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
+
+    char buffer[8192]{};
+    ssize_t len;
     {
-        ifile_read_encrypted in_hash_fb(cctx, infile_is_encrypted);
-        in_hash_fb.open(full_hash_path.c_str());
-
-        char buffer[8192];
-        memset(buffer, 0, sizeof(buffer));
-
-        ssize_t len = in_hash_fb.read(buffer, sizeof(buffer));
-
-        char * eof =  &buffer[len];
-        char * cur = &buffer[0];
-
-        if (infile_version == 1) {
-            if (verbose) {
-                LOG(LOG_INFO, "Hash data v1");
-            }
-            // Filename HASH_64_BYTES
-            //         ^
-            //         |
-            //     separator
-
-            int len = input_filename.length()+1;
-            if (eof-cur < len){
+        ssize_t remaining = sizeof(buffer);
+        char * p = buffer;
+        while ((len = in_hash_fb.read(p, remaining))) {
+            if (len < 0){
                 throw Error(ERR_TRANSPORT_READ_FAILED);
             }
-
-            if (0 != memcmp(cur, input_filename.c_str(), input_filename.length()))
-            {
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-            cur += input_filename.length();
-            if (cur[0] != ' '){
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
-            cur++;
-            in_copy_bytes(this->hash_line.hash1, MD_HASH_LENGTH, cur, eof,
-                                ERR_TRANSPORT_READ_FAILED);
-            in_copy_bytes(this->hash_line.hash2, MD_HASH_LENGTH, cur, eof,
-                                ERR_TRANSPORT_READ_FAILED);
+            p += len;
+            remaining -= len;
         }
-        else {
-            if (verbose) {
-                LOG(LOG_INFO, "Hash data v2 or higher");
-            }
+        len = p - buffer;
+    }
 
-            // v2
-            if (cur == eof || cur[0] != 'v'){
-                Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
+    char * eof = &buffer[len];
+    char * cur = &buffer[0];
 
-            // skip 3 lines
-            for (auto i = 0 ; i < 3 ; i++)
+    if (infile_version == 1) {
+        if (verbose) {
+            LOG(LOG_INFO, "Hash data v1");
+        }
+        // Filename HASH_64_BYTES
+        //         ^
+        //         |
+        //     separator
+
+        int len = input_filename.length()+1;
+        if (eof-cur < len){
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        if (0 != memcmp(cur, input_filename.c_str(), input_filename.length()))
+        {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        cur += input_filename.length();
+        if (cur[0] != ' '){
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+        cur++;
+        in_copy_bytes(hash_line.hash1, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
+        in_copy_bytes(hash_line.hash2, MD_HASH_LENGTH, cur, eof, ERR_TRANSPORT_READ_FAILED);
+    }
+    else {
+        if (verbose) {
+            LOG(LOG_INFO, "Hash data v2 or higher");
+        }
+
+        // v2
+        if (cur == eof || cur[0] != 'v'){
+            Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+
+        // skip 3 lines
+        for (auto i = 0 ; i < 3 ; i++)
+        {
+            char * pos = std::find(cur, eof, '\n');
+            if (pos == eof) {
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+            cur = pos + 1;
+        }
+
+        // Line format "fffff
+        // st_size st_mode st_uid st_gid st_dev st_ino st_mtime
+        // st_ctime hhhhh HHHHH"
+        //         ^  ^  ^  ^
+        //         |  |  |  |
+        //         |hash1|  |
+        //         |     |  |
+        //       space   |hash2
+        //                  |
+        //                space
+        //
+        // filename(1 or >) + space(1)
+        // + stat_info(ll|ull * 8) + space(1)
+        // + hash1(64) + space(1) + hash2(64) >= 135
+
+        // filename(1 or >) followed by space
+        {
+            char * pos = std::find(cur, eof, ' ');
+            if (pos == eof){
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+            if (size_t(pos-cur) != input_filename.length()
+            || (0 != strncmp(cur, input_filename.c_str(), pos-cur)))
             {
-                char * pos = std::find(cur, eof, '\n');
-                if (pos == eof) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED);
-                }
-                cur = pos + 1;
+                std::cerr << "File name mismatch: \""
+                            << input_filename
+                            << "\"" << std::endl
+                            << std::endl;
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
+            memcpy(hash_line.filename, cur, pos - cur);
+            hash_line.filename[pos-cur]=0;
+            cur = pos + 1;
+        }
+        hash_line.size = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.mode = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.uid = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.gid = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.dev = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.ino = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.mtime = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+        hash_line.ctime = get_ll(cur, eof, infile_is_checksumed ? ' ' : '\n', ERR_TRANSPORT_READ_FAILED);
 
-            // Line format "fffff
-            // st_size st_mode st_uid st_gid st_dev st_ino st_mtime
-            // st_ctime hhhhh HHHHH"
-            //         ^  ^  ^  ^
-            //         |  |  |  |
-            //         |hash1|  |
-            //         |     |  |
-            //       space   |hash2
-            //                  |
-            //                space
-            //
-            // filename(1 or >) + space(1)
-            // + stat_info(ll|ull * 8) + space(1)
-            // + hash1(64) + space(1) + hash2(64) >= 135
-
-            // filename(1 or >) followed by space
-            {
-                char * pos = std::find(cur, eof, ' ');
-                if (pos == eof){
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-                if (size_t(pos-cur) != input_filename.length()
-                || (0 != strncmp(cur, input_filename.c_str(), pos-cur)))
-                {
-                    std::cerr << "File name mismatch: \""
-                              << input_filename
-                              << "\"" << std::endl
-                              << std::endl;
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-                memcpy(hash_line.filename, cur, pos - cur);
-                hash_line.filename[pos-cur]=0;
-                cur = pos + 1;
-            }
-            hash_line.size = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            hash_line.mode = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            hash_line.uid = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            hash_line.gid = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            hash_line.dev = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            hash_line.ino = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            hash_line.mtime = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-            hash_line.ctime = get_ll(cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-
-            if (infile_is_checksumed){
-                // HASH1 + space
-                in_hex256(hash_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
-                // HASH1 + CR
-                in_hex256(hash_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
-            }
+        if (infile_is_checksumed){
+            // HASH1 + space
+            in_hex256(hash_line.hash1, MD_HASH_LENGTH, cur, eof, ' ', ERR_TRANSPORT_READ_FAILED);
+            // HASH1 + CR
+            in_hex256(hash_line.hash2, MD_HASH_LENGTH, cur, eof, '\n', ERR_TRANSPORT_READ_FAILED);
         }
     }
-};
+}
 
+static inline bool meta_line_stat_equal_stat(MetaLine2 const & metadata, struct stat64 const & sb)
+{
+    return metadata.dev == sb.st_dev
+        && metadata.ino == sb.st_ino
+        && metadata.mode == sb.st_mode
+        && metadata.uid == sb.st_uid
+        && metadata.gid == sb.st_gid
+        && metadata.mtime == sb.st_mtime
+        && metadata.ctime == sb.st_ctime
+        && metadata.size == sb.st_size;
+}
+
+struct out_is_mismatch
+{
+    bool & is_mismatch;
+};
 
 static inline int check_file(const std::string & filename, const MetaLine2 & metadata,
                       bool quick, bool has_checksum, bool ignore_stat_info,
-                      uint8_t * hmac_key, size_t hmac_key_len)
+                      uint8_t * hmac_key, size_t hmac_key_len, bool update_stat_info, out_is_mismatch has_mismatch_stat)
 {
+    has_mismatch_stat.is_mismatch = false;
     struct stat64 sb;
     memset(&sb, 0, sizeof(sb));
     if (lstat64(filename.c_str(), &sb) < 0){
-        std::cerr << "File \"" << filename << "\" is invalid! (can't stat file)" << std::endl << std::endl;
+        std::cerr << "File \"" << filename << "\" is invalid! (can't stat file)\n" << std::endl;
         return false;
     }
 
     if (has_checksum){
         if (sb.st_size != metadata.size){
-            std::cerr << "File \"" << filename << "\" is invalid! (size mismatch)" << std::endl << std::endl;
+            std::cerr << "File \"" << filename << "\" is invalid! (size mismatch)\n" << std::endl;
             return false;
         }
 
@@ -879,24 +898,22 @@ static inline int check_file(const std::string & filename, const MetaLine2 & met
         if (file_start_hmac_sha256(filename.c_str(),
                              hmac_key, hmac_key_len,
                              quick?QUICK_CHECK_LENGTH:0, hash) < 0){
-            std::cerr << "Error reading file \"" << filename << "\"" << std::endl << std::endl;
+            std::cerr << "Error reading file \"" << filename << "\"\n" << std::endl;
             return false;
         }
         if (0 != memcmp(hash, quick?metadata.hash1:metadata.hash2, SHA256_DIGEST_LENGTH)){
-            std::cerr << "Error checking file \"" << filename << "\" (invalid checksum)" << std::endl << std::endl;
+            std::cerr << "Error checking file \"" << filename << "\" (invalid checksum)\n" << std::endl;
             return false;
         }
     }
-    else {
-        if (!ignore_stat_info){
-            if ((metadata.dev != sb.st_dev)||(metadata.ino != sb.st_ino)
-            ||  (metadata.mode != sb.st_mode)||(metadata.uid != sb.st_uid)
-            ||  (metadata.gid != sb.st_gid)||(metadata.mtime != sb.st_mtime)
-            ||  (metadata.ctime != sb.st_ctime)||(metadata.size != sb.st_size)){
-                std::cerr << "File \"" << filename << "\" is invalid! (metafile changed)" << std::endl << std::endl;
-                return false;
-            }
+    else if ((!ignore_stat_info || update_stat_info) && !meta_line_stat_equal_stat(metadata, sb)) {
+        if (update_stat_info) {
+            has_mismatch_stat.is_mismatch = true;
         }
+        if (!ignore_stat_info) {
+            std::cerr << "File \"" << filename << "\" is invalid! (metafile changed)\n" << std::endl;
+        }
+        return false;
     }
     return true;
 }
@@ -907,6 +924,7 @@ static inline int check_encrypted_or_checksumed(
                                        std::string const & hash_path,
                                        bool quick_check,
                                        bool ignore_stat_info,
+                                       bool update_stat_info,
                                        uint32_t verbose,
                                        CryptoContext * cctx) {
 
@@ -916,7 +934,7 @@ static inline int check_encrypted_or_checksumed(
     int encryption = 2;
     ifile_read_encrypted ibuf(cctx, encryption);
     if (ibuf.open(full_mwrm_filename.c_str()) < 0){
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
     // now force encryption for sub files
@@ -927,51 +945,196 @@ static inline int check_encrypted_or_checksumed(
 
     // if we have version 1 header, ignore stat info
     ignore_stat_info |= (reader.header.version == 1);
+    // if we have version >1 header and not checksum, update stat info
+    update_stat_info &= (reader.header.version > 1) & !reader.header.has_checksum & !ibuf.encrypted;
+    ignore_stat_info |= update_stat_info;
 
     /*****************
     * Load file hash *
     *****************/
     MetaLine2 hash_line = {{}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {}, {}};
-    {
-        std::string const full_hash_path = hash_path + input_filename;
 
-        // if reading hash fails
-        try {
-            HashLoad meta(full_hash_path, input_filename, reader.header.version, reader.header.has_checksum, hash_line, cctx, infile_is_encrypted, verbose);
-        }
-        catch (...) {
-            std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"" << std::endl << std::endl;
-            // this is an error because checksum comes from hash file
-            // and extended stat info also comes from hash file
-            // if we can't read hash files we are in troubles
-            if (reader.header.has_checksum || !ignore_stat_info){
-                return 1;
-            }
+    std::string const full_hash_path = hash_path + input_filename;
+
+    // if reading hash fails
+    try {
+        load_hash(hash_line, full_hash_path, input_filename, reader.header.version, reader.header.has_checksum, cctx, infile_is_encrypted, verbose);
+    }
+    catch (...) {
+        std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"\n" << std::endl;
+        // this is an error because checksum comes from hash file
+        // and extended stat info also comes from hash file
+        // if we can't read hash files we are in troubles
+        if (reader.header.has_checksum || !ignore_stat_info){
+            return 1;
         }
     }
+
+    bool has_mismatch_stat_hash = false;
+
 
     /******************
     * Check mwrm file *
     ******************/
-    if (!check_file(full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum, ignore_stat_info, cctx->get_hmac_key(), 32)){
-        return 1;
+    if (!check_file(
+        full_mwrm_filename, hash_line, quick_check, reader.header.has_checksum,
+        ignore_stat_info, cctx->get_hmac_key(), 32,
+        update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
+    )){
+        if (!has_mismatch_stat_hash) {
+            return 1;
+        }
     }
 
+    struct MetaLine2CtxForRewriteStat
+    {
+        std::string wrm_filename;
+        std::string filename;
+        time_t start_time;
+        time_t stop_time;
+    };
+    std::vector<MetaLine2CtxForRewriteStat> meta_line_ctx_list;
+    bool wrm_stat_is_ok = true;
+
     MetaLine2 meta_line_wrm;
+
     while (reader.read_meta_file(meta_line_wrm)) {
         size_t tmp_wrm_filename_len = 0;
         const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
 
-        if (!check_file(full_part_filename, meta_line_wrm,
-                        quick_check, reader.header.has_checksum, ignore_stat_info,
-                        cctx->get_hmac_key(), 32)){
-            return 1;
+        bool has_mismatch_stat_mwrm = false;
+        if (!check_file(
+            full_part_filename, meta_line_wrm, quick_check, reader.header.has_checksum,
+            ignore_stat_info, cctx->get_hmac_key(), 32,
+            update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
+        ){
+            if (has_mismatch_stat_mwrm) {
+                wrm_stat_is_ok = false;
+            }
+            else {
+                return 1;
+            }
+        }
+
+        if (update_stat_info) {
+            meta_line_ctx_list.push_back({
+                full_part_filename,
+                meta_line_wrm.filename,
+                meta_line_wrm.start_time,
+                meta_line_wrm.stop_time
+            });
         }
     }
 
-    std::cout << "No error detected during the data verification." << std::endl << std::endl;
+    ibuf.close();
+
+
+    /*******************
+    * Rewite stat info *
+    ********************/
+    struct local_auto_remove
+    {
+        char const * filename;
+        ~local_auto_remove() {
+            if (this->filename) {
+                remove(this->filename);
+            }
+        }
+    };
+
+    if (!wrm_stat_is_ok) {
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update mwrm file");
+        }
+
+        has_mismatch_stat_hash = true;
+
+        auto full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
+
+        // out_meta_sequence_filename_buf_impl ctor
+        transbuf::ofile_buf_out mwrm_file_cp;
+        if (mwrm_file_cp.open(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+            LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp.c_str());
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
+        local_auto_remove auto_remove{full_mwrm_filename_tmp.c_str()};
+        if (chmod(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP) == -1) {
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%u]"
+                , full_mwrm_filename_tmp.c_str()
+                , "u+r, g+r"
+                , strerror(errno), errno);
+            return 1;
+        }
+
+        // copy mwrm headers
+        {
+            ifile_read mwrm_file;
+            mwrm_file.open(full_mwrm_filename.c_str());
+            LineReader line_reader(mwrm_file);
+
+            // v2, w h, nochecksum, blank, blank
+            for (int i = 0; i < 5; ++i) {
+                if (!line_reader.next_line()) {
+                    throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+                }
+                auto av = line_reader.get_buf();
+                if (mwrm_file_cp.write(av.data(), av.size()) != ssize_t(av.size())) {
+                    throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
+                }
+            }
+        }
+
+        for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
+            struct stat sb;
+            if (lstat(ctx.wrm_filename.c_str(), &sb) < 0
+             || detail::write_meta_file_impl<true>(mwrm_file_cp, ctx.filename.c_str(), sb, ctx.start_time, ctx.stop_time)
+            ) {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
+            }
+        }
+
+        if (rename(full_mwrm_filename_tmp.c_str(), full_mwrm_filename.c_str())) {
+            std::cerr << strerror(errno) << std::endl;
+            return 1;
+        }
+
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update mwrm file, done");
+        }
+        auto_remove.filename = nullptr;
+    }
+
+    if (has_mismatch_stat_hash) {
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update hash file");
+        }
+
+        auto const full_hash_path_tmp = (full_hash_path + ".tmp");
+        transbuf::ofile_buf_out hash_file_cp;
+
+        local_auto_remove auto_remove{full_hash_path_tmp.c_str()};
+
+        if (detail::write_meta_hash(
+            full_hash_path_tmp.c_str(), full_mwrm_filename.c_str(),
+            hash_file_cp, nullptr, verbose
+        )) {
+            return 1;
+        }
+
+        if (rename(full_hash_path_tmp.c_str(), full_hash_path.c_str())) {
+            std::cerr << strerror(errno) << std::endl;
+            return 1;
+        }
+
+        auto_remove.filename = nullptr;
+        if (verbose) {
+            LOG(LOG_INFO, "%s", "Update hash file, done");
+        }
+    }
+
+    std::cout << "No error detected during the data verification.\n" << std::endl;
     return 0;
 }
 
@@ -981,10 +1144,11 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
 
     std::string hash_path      = ini.get<cfg::video::hash_path>().c_str()  ;
     std::string mwrm_path      = ini.get<cfg::video::record_path>().c_str();
-    std::string input_filename                                ;
-    bool        quick_check    = false                        ;
+    std::string input_filename;
+    bool        quick_check    = false;
     bool      ignore_stat_info = false;
-    uint32_t    verbose        = 0                            ;
+    bool      update_stat_info = false;
+    uint32_t    verbose        = 0;
 
     program_options::options_description desc({
         {'h', "help",    "produce help message"},
@@ -994,6 +1158,7 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
         {'m', "mwrm-path",  &mwrm_path,         "mwrm file path"       },
         {'i', "input-file", &input_filename,    "input mwrm file name" },
         {'S', "ignore-stat-info", "ignore stat info data mismatch" },
+        {'U', "update-stat-info", "update stat info data mismatch (only if not checksum and no encrypted)" },
         {"verbose",         &verbose,           "more logs"            },
     })
     ;
@@ -1018,6 +1183,10 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
 
     if (options.count("ignore-stat-info") > 0) {
         ignore_stat_info = true;
+    }
+
+    if (options.count("update-stat-info") > 0) {
+        update_stat_info = true;
     }
 
     if (hash_path.c_str()[0] == 0) {
@@ -1067,5 +1236,5 @@ static inline int app_verifier(Inifile & ini, int argc, char const * const * arg
 
     return check_encrypted_or_checksumed(
                 input_filename, mwrm_path, hash_path,
-                quick_check, ignore_stat_info, verbose, &cctx);
+                quick_check, ignore_stat_info, update_stat_info, verbose, &cctx);
 }

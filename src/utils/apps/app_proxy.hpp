@@ -232,7 +232,7 @@ int app_proxy(
 
         {'i', "inetd", "launch redemption with inetd like launcher"},
 
-        {"config-file", &config_filename, "used an another ini file"},
+        {"config-file", &config_filename, "use an another ini file"},
 
         //{"test", "check Inifile syntax"}
     });

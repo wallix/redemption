@@ -29,8 +29,8 @@
 #pragma once
 
 #include "core/RDP/gcc/data_block_type.hpp"
-#include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/stream.hpp"
+#include "utils/rect.hpp"
 #include "core/error.hpp"
 
 namespace GCC { namespace UserData {

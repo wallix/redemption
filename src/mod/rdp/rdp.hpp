@@ -3564,14 +3564,11 @@ public:
                 if (this->acl &&
                     (e.id != ERR_MCS_APPID_IS_MCS_DPUM))
                 {
-                    char message[128];
-                    snprintf(message, sizeof(message), "Code=%d", e.id);
-
                     char const* reason =
                         ((UP_AND_RUNNING == this->connection_finalization_state) ?
                          "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
-                    this->acl->report(reason, message);
+                    this->acl->report(reason, e.errmsg());
 
                     this->end_session_reason.clear();
                     this->end_session_message.clear();
@@ -6724,4 +6721,3 @@ private:
     }
 
 };
-

@@ -109,12 +109,19 @@ public:
         return this->end - this->p.p;
     }
 
+
     bool check_end(void) const {
         return this->p.p == this->end;
     }
 
     size_t get_capacity() const {
         return this->end - this->begin;
+    }
+
+    // go back by the given amount (like rewind but relative)
+    void unget(size_t n) {
+        REDASSERT(this->begin + n < this->p.p);
+        this->p.unget(n);
     }
 
     /// set current position to start buffer (\a p = \a begin)
@@ -345,6 +352,16 @@ public:
     void in_utf16(uint16_t utf16[], size_t length)
     {
         return this->p.in_utf16(utf16, length);
+    }
+
+    // extract a zero terminated UTF16 string from stream
+    // of at most length UTF16 chars
+    // return UTF16 string length (number of chars, not bytes) 
+    // if number returned in same as input length, it means no
+    // zero char has been found
+    size_t in_utf16_sz(uint16_t utf16[], size_t length)
+    {
+        return this->p.in_utf16_sz(utf16, length);
     }
 
     // sz utf16 bytes are translated to ascci, 00 terminated

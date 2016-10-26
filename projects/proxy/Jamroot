@@ -593,8 +593,19 @@ test-canonical core/RDP/mppc_40.hpp ;
 test-canonical core/RDP/mppc_50.hpp ;
 test-canonical core/RDP/mppc_60.hpp ;
 test-canonical core/RDP/mppc_61.hpp ;
+
 test-canonical core/RDP/gcc.hpp : <library>dl <library>z <library>crypto ;
 test-canonical core/RDP/gcc/userdata/cs_net.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_multitransport.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_cluster.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_core.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_security.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_monitor.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/cs_monitor_ex.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/sc_core.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/sc_sec1.hpp : <library>dl <library>z <library>crypto ;
+test-canonical core/RDP/gcc/userdata/sc_net.hpp : <library>dl <library>z <library>crypto ;
 
 test-canonical core/RDP/sec.hpp : <library>crypto ;
 test-canonical core/RDP/lic.hpp : <library>crypto ;
