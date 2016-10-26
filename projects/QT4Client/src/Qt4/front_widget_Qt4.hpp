@@ -55,7 +55,7 @@
 #include <QtCore/QUrl>
 #include <QtGui/QCompleter>
 #include <QtGui/QFileDialog>
-
+#include <QtCore/QThread>
 
 
 
@@ -152,13 +152,17 @@ public:
         }
     }
 
-    void replay(std::string & movie_path) {
+    /*void replay(std::string & movie_path) {
         LCGRandom gen(0);
         Inifile ini;
         CryptoContext cctx(gen, ini);
-        this->_in_trans(cctx, movie_path, ".mwrm", 0, 0);
-        this->_reader(&(this->_in_trans), /*begin_capture*/{0, 0}, /*end_capture*/{0, 0}, true, 0);
-    }
+        this->_in_trans = new InMetaSequenceTransport(&cctx, movie_path.c_str(), ".mwrm", 0, 0);
+        this->_sckRead = new QSocketNotifier(*(this->_in_trans), QSocketNotifier::Read, this);
+        this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
+        this->_reader = new FileToGraphic(&(this->_in_trans), {0, 0}, {0, 0}, true, 0);
+        this->_reader->add_consumer(this->_front, nullptr, nullptr, nullptr, nullptr);
+
+    } */
 
     bool listen() {
         const char * name(this->_front->_userName.c_str());
@@ -1085,7 +1089,29 @@ public:
     int            _height;
     bool                 _connexionLasted;
     QTimer               _timer;
+    QTimer               _timer_replay;
     uint8_t              _screen_index;
+
+    class ReplayThread : public QThread
+    {
+        Q_OBJECT
+
+    Front_Qt_API * _front;
+
+    public:
+
+        ReplayThread(Front_Qt_API * front, Screen_Qt * screen)
+          : QThread(screen)
+          , _front(front)
+        {}
+
+    protected:
+
+        void run() {
+            this->_front->_replay_mod->play();
+        }
+    };
+    ReplayThread * _replayThread;
 
 
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache)
@@ -1101,6 +1127,7 @@ public:
         , _connexionLasted(false)
         , _timer(this)
         , _screen_index(screen_index)
+        , _replayThread(nullptr)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1156,7 +1183,7 @@ public:
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache, bool x)
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string & movie_path)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
@@ -1169,11 +1196,12 @@ public:
         , _height(this->_front->_screen_dimensions[0].cy)
         , _connexionLasted(false)
         , _timer(this)
+        , _timer_replay(this)
         , _screen_index(0)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
-        //std::string title = "Remote Desktop Player connected to [" + this->_front->_targetIP +  "].";
-        //this->setWindowTitle(QString(title.c_str()));
+        std::string title = "Remote Desktop Player " + movie_path;
+        this->setWindowTitle(QString(title.c_str()));
 
         this->paintCache().fillRect(0, 0, this->_width, this->_height, {0, 0, 0});
 
@@ -1216,8 +1244,8 @@ public:
         }
         this->move(centerW, centerH);
 
-        //this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        //this->_timer.start(1000/this->_front->_fps);
+        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        this->_timer.start(1000/this->_front->_fps);
 
         this->setFocusPolicy(Qt::StrongFocus);
     }
@@ -1354,8 +1382,19 @@ private:
 
 private Q_SLOTS:
     void playPressed() {
-        this->_front->_replay_mod->play();
+        this->_replayThread = new ReplayThread(this->_front, this);
+        this->_replayThread->start();
+        //this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
+        //this->_timer_replay.start(5);
     }
+
+    void playReplay() {
+        /*this->_front->_replay_mod->play_qt();
+        if (this->_front->_replay_mod->get_break_privplay_qt()) {
+            this->_timer_replay.stop();
+        }*/
+    }
+
     void slotRepaint() {
         this->repaint();
     }

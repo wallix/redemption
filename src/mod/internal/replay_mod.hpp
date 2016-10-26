@@ -50,15 +50,10 @@ class ReplayMod : public InternalMod
             {
             }
 
-            void play() {
-                this->reader.play(false);
-            }
         };
         std::unique_ptr<Impl> impl;
 
-        void play() {
-            this->impl->play();
-        }
+
 
         void construct(char const * prefix, char const * extension, uint32_t debug_capture)
         {
@@ -146,7 +141,15 @@ public:
     }
 
     void play() {
-        this->reader.play();
+        this->reader->play(false);
+    }
+
+    void play_qt() {
+        this->reader->play_qt(false);
+    }
+
+    bool get_break_privplay_qt() {
+        return this->reader->break_privplay_qt;
     }
 
     ~ReplayMod() override {

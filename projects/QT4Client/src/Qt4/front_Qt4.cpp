@@ -326,9 +326,13 @@ Front_Qt::~Front_Qt() {
 //------------------------
 
 void Front_Qt::disconnexionReleased(){
+    delete(this->_capture);
+    this->_capture = nullptr;
     this->dropScreen();
     this->disconnect("");
     this->_cache = nullptr;
+    delete(this->_capture);
+    this->_capture = nullptr;
 }
 
 void Front_Qt::dropScreen() {
@@ -353,6 +357,9 @@ void Front_Qt::closeFromScreen(int screen_index) {
             }
         }
     }
+
+    delete(this->_capture);
+    this->_capture = nullptr;
 
     if (this->_form != nullptr && this->_connected) {
         this->_form->close();
@@ -482,26 +489,25 @@ void Front_Qt::replay(std::string & movie_path) {
 
     this->setScreenDimension();
     this->_cache_replay = new QPixmap(this->_info.width, this->_info.height);
-    this->_screen[0] = new Screen_Qt(this, this->_cache_replay, false);
+    this->_screen[0] = new Screen_Qt(this, this->_cache_replay, movie_path);
     for (int i = 1; i < this->_monitorCount; i++) {
         this->_screen[i] = new Screen_Qt(this, i, this->_cache_replay);
         this->_screen[i]->show();
     }
-    //this->_connected = true;
+    this->_connected = true;
     this->_form->hide();
     this->_screen[0]->show();
 
     this->_replay_mod = new ReplayMod( *(this)
-                                      , (this->REPLAY_DIR + "/").c_str()
-                                      , movie_path.c_str()
-                                      , 800
-                                      , 600
-                                      , this->_error
-                                      , this->_font
-                                      , true
-                                      , 0
-                                      );
-
+                                     , (this->REPLAY_DIR + "/").c_str()
+                                     , movie_path.c_str()
+                                     , 800
+                                     , 600
+                                     , this->_error
+                                     , this->_font
+                                     , true
+                                     , 0
+                                     );
 
 }
 
