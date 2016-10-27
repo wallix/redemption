@@ -1,0 +1,2 @@
+Q: when you try to type accented chararacters you get character sequences like '2e' instead of 'é'. Is it a bug ?
+A: It not a bug. The problem comes from rdesktop. You should either launch it with -k parameter to secify remote keymap either set the LOCAL to match the desired keymap. The default keymap is english us and does not support accents.

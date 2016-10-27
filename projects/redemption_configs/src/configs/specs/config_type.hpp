@@ -57,6 +57,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("none")
       .value("syslog", "keyboard log in syslog")
       .value("wrm", "keyboard log in recorded sessions")
+      .value("meta", "keyboard log in recorded meta")
     ;
 
     e.enumeration_flags("ClipboardLogFlags")
@@ -141,6 +142,17 @@ inline void config_type_definition(type_enumerations & e)
       .value("disable", "More compatible with MSTSC.")
       .value("enable", "The old behavior of cursor rendering.")
       .value("smart", "Depend on platform RDP client.")
+    ;
+
+    e.enumeration_set("OcrVersion")
+      .value("v1", 1)
+      .value("v2", 2)
+    ;
+
+    e.enumeration_list("OcrLocale")
+      .value("latin")
+      .value("cyrillic")
+      .enable_icase_parser()
     ;
 }
 

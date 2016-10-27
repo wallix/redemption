@@ -459,6 +459,28 @@ namespace cfg {
             using mapped_type = sesman_and_spec_type;
             type value{1};
         };
+        // type: std::string
+        struct codec_id {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "globals"; }
+            static constexpr char const * name() { return "codec_id"; }
+            using type = std::string;
+            using sesman_and_spec_type = std::string;
+            using mapped_type = sesman_and_spec_type;
+            type value = "flv";
+        };
+        // type: Level
+        struct video_quality {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "globals"; }
+            static constexpr char const * name() { return "video_quality"; }
+            using type = Level;
+            using sesman_and_spec_type = Level;
+            using mapped_type = sesman_and_spec_type;
+            type value{static_cast<type>(2)};
+        };
     };
 
     struct session_log {
@@ -1453,6 +1475,67 @@ namespace cfg {
         };
     };
 
+    struct ocr {
+        // type: OcrVersion
+        struct version {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "ocr"; }
+            static constexpr char const * name() { return "version"; }
+            using type = OcrVersion;
+            using sesman_and_spec_type = OcrVersion;
+            using mapped_type = sesman_and_spec_type;
+            type value{static_cast<type>(2)};
+        };
+        // type: OcrLocale
+        struct locale {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "ocr"; }
+            static constexpr char const * name() { return "locale"; }
+            using type = OcrLocale;
+            using sesman_and_spec_type = OcrLocale;
+            using mapped_type = sesman_and_spec_type;
+            type value{static_cast<type>(0)};
+        };
+        // type: std::chrono::duration<unsigned int, std::ratio<1, 100>>
+        struct interval {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "ocr"; }
+            static constexpr char const * name() { return "interval"; }
+            using type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
+            using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
+            using mapped_type = sesman_and_spec_type;
+            type value{100};
+        };
+        // type: bool
+        struct on_title_bar_only {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "ocr"; }
+            static constexpr char const * name() { return "on_title_bar_only"; }
+            using type = bool;
+            using sesman_and_spec_type = bool;
+            using mapped_type = sesman_and_spec_type;
+            type value{1};
+        };
+        // Expressed in percentage,
+//   0   - all of characters need be recognized
+//   100 - accept all results
+        // type: unsigned int
+        struct max_unrecog_char_rate {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "ocr"; }
+            static constexpr char const * name() { return "max_unrecog_char_rate"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = ::configs::spec_types::range<unsigned int, 0, 100>;
+            using mapped_type = sesman_and_spec_type;
+            type value{40};
+        };
+    };
+
     struct video {
         // type: unsigned int
         struct capture_groupid {
@@ -1658,6 +1741,196 @@ namespace cfg {
             using sesman_and_spec_type = WrmCompressionAlgorithm;
             using mapped_type = sesman_and_spec_type;
             type value{static_cast<type>(1)};
+        };
+        // type: std::chrono::seconds
+        struct flv_break_interval {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "flv_break_interval"; }
+            using type = std::chrono::seconds;
+            using mapped_type = type;
+            type value{0};
+        };
+        // Bitrate for low quality.
+        // type: unsigned int
+        struct l_bitrate {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "l_bitrate"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{10000};
+        };
+        // Framerate for low quality.
+        // type: unsigned int
+        struct l_framerate {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "l_framerate"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{5};
+        };
+        // Height for low quality.
+        // type: unsigned int
+        struct l_height {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "l_height"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{480};
+        };
+        // Width for low quality.
+        // type: unsigned int
+        struct l_width {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "l_width"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{640};
+        };
+        // Qscale (parameter given to ffmpeg) for low quality.
+        // type: unsigned int
+        struct l_qscale {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "l_qscale"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{28};
+        };
+        // Bitrate for medium quality.
+        // type: unsigned int
+        struct m_bitrate {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "m_bitrate"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{20000};
+        };
+        // Framerate for medium quality.
+        // type: unsigned int
+        struct m_framerate {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "m_framerate"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{5};
+        };
+        // Height for medium quality.
+        // type: unsigned int
+        struct m_height {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "m_height"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{768};
+        };
+        // Width for medium quality.
+        // type: unsigned int
+        struct m_width {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "m_width"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{1024};
+        };
+        // Qscale (parameter given to ffmpeg) for medium quality.
+        // type: unsigned int
+        struct m_qscale {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "m_qscale"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{14};
+        };
+        // Bitrate for high quality.
+        // type: unsigned int
+        struct h_bitrate {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "h_bitrate"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{30000};
+        };
+        // Framerate for high quality.
+        // type: unsigned int
+        struct h_framerate {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "h_framerate"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{5};
+        };
+        // Height for high quality.
+        // type: unsigned int
+        struct h_height {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "h_height"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{2048};
+        };
+        // Width for high quality.
+        // type: unsigned int
+        struct h_width {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "h_width"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{2048};
+        };
+        // Qscale (parameter given to ffmpeg) for high quality.
+        // type: unsigned int
+        struct h_qscale {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "video"; }
+            static constexpr char const * name() { return "h_qscale"; }
+            using type = unsigned int;
+            using sesman_and_spec_type = unsigned int;
+            using mapped_type = sesman_and_spec_type;
+            type value{7};
         };
     };
 
@@ -1950,6 +2223,17 @@ namespace cfg {
             static constexpr bool is_writable() { return 0; }
             static constexpr char const * section() { return "debug"; }
             static constexpr char const * name() { return "mod_internal"; }
+            using type = uint32_t;
+            using sesman_and_spec_type = uint32_t;
+            using mapped_type = sesman_and_spec_type;
+            type value{};
+        };
+        // type: uint32_t
+        struct ocr {
+            static constexpr bool is_readable() { return 0; }
+            static constexpr bool is_writable() { return 0; }
+            static constexpr char const * section() { return "debug"; }
+            static constexpr char const * name() { return "ocr"; }
             using type = uint32_t;
             using sesman_and_spec_type = uint32_t;
             using mapped_type = sesman_and_spec_type;
@@ -2793,6 +3077,8 @@ struct globals
 , cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::bogus_refresh_rect
+, cfg::globals::codec_id
+, cfg::globals::video_quality
 { static constexpr bool is_section = true; };
 
 struct session_log
@@ -2887,6 +3173,14 @@ struct mod_replay
 : cfg::mod_replay::on_end_of_data
 { static constexpr bool is_section = true; };
 
+struct ocr
+: cfg::ocr::version
+, cfg::ocr::locale
+, cfg::ocr::interval
+, cfg::ocr::on_title_bar_only
+, cfg::ocr::max_unrecog_char_rate
+{ static constexpr bool is_section = true; };
+
 struct video
 : cfg::video::capture_groupid
 , cfg::video::capture_flags
@@ -2906,6 +3200,22 @@ struct video
 , cfg::video::rt_display
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
+, cfg::video::flv_break_interval
+, cfg::video::l_bitrate
+, cfg::video::l_framerate
+, cfg::video::l_height
+, cfg::video::l_width
+, cfg::video::l_qscale
+, cfg::video::m_bitrate
+, cfg::video::m_framerate
+, cfg::video::m_height
+, cfg::video::m_width
+, cfg::video::m_qscale
+, cfg::video::h_bitrate
+, cfg::video::h_framerate
+, cfg::video::h_height
+, cfg::video::h_width
+, cfg::video::h_qscale
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -2938,6 +3248,7 @@ struct debug
 , cfg::debug::performance
 , cfg::debug::pass_dialog_box
 , cfg::debug::mod_internal
+, cfg::debug::ocr
 , cfg::debug::config
 { static constexpr bool is_section = true; };
 
@@ -3019,6 +3330,7 @@ struct VariablesConfiguration
 , cfg_section::mod_rdp
 , cfg_section::mod_vnc
 , cfg_section::mod_replay
+, cfg_section::ocr
 , cfg_section::video
 , cfg_section::crypto
 , cfg_section::debug

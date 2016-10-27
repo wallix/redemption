@@ -331,6 +331,30 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
                 static_cast<cfg::globals::bogus_refresh_rect&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "codec_id")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::codec_id&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::globals::codec_id&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "video_quality")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::video_quality&>(this->variables).value,
+                ::configs::spec_type<Level>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::globals::video_quality&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1271,6 +1295,73 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
+    else if (0 == strcmp(context, "ocr")) {
+        if (0) {}
+        else if (0 == strcmp(key, "version")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::ocr::version&>(this->variables).value,
+                ::configs::spec_type<OcrVersion>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::ocr::version&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "locale")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::ocr::locale&>(this->variables).value,
+                ::configs::spec_type<OcrLocale>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::ocr::locale&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "interval")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::ocr::interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::duration<unsigned int, std::ratio<1, 100>>>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::ocr::interval&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "on_title_bar_only")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::ocr::on_title_bar_only&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::ocr::on_title_bar_only&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "max_unrecog_char_rate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::ocr::max_unrecog_char_rate&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<unsigned int, 0, 100>>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::ocr::max_unrecog_char_rate&>(this->variables)
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
     else if (0 == strcmp(context, "video")) {
         if (0) {}
         else if (0 == strcmp(key, "capture_groupid")) {
@@ -1463,6 +1554,186 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::post_set_value(
                 this->variables,
                 static_cast<cfg::video::wrm_compression_algorithm&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "l_bitrate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::l_bitrate&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::l_bitrate&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "l_framerate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::l_framerate&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::l_framerate&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "l_height")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::l_height&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::l_height&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "l_width")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::l_width&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::l_width&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "l_qscale")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::l_qscale&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::l_qscale&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "m_bitrate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::m_bitrate&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::m_bitrate&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "m_framerate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::m_framerate&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::m_framerate&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "m_height")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::m_height&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::m_height&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "m_width")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::m_width&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::m_width&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "m_qscale")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::m_qscale&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::m_qscale&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "h_bitrate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::h_bitrate&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::h_bitrate&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "h_framerate")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::h_framerate&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::h_framerate&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "h_height")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::h_height&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::h_height&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "h_width")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::h_width&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::h_width&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "h_qscale")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::h_qscale&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::h_qscale&>(this->variables)
             );
         }
 
@@ -1789,6 +2060,18 @@ inline void Inifile::ConfigurationHolder::set_value(const char * context, const 
             ::configs::post_set_value(
                 this->variables,
                 static_cast<cfg::debug::mod_internal&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "ocr")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::debug::ocr&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::debug::ocr&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "config")) {

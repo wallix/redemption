@@ -105,6 +105,9 @@ namespace spec_types
     template<class T> class list;
     using ip = std::string;
 
+    template<class T, T min, T max>
+    struct range {};
+
     struct directory_path
     {
         directory_path()
@@ -222,6 +225,13 @@ array_view_const_char assign_zbuf_from_cfg(
     }
     return array_view_const_char(buf.get(), p-buf.get());
 }
+
+template<class T, T min, T max>
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<T> & zbuf,
+    cfg_s_type<spec_types::range<T, min, max>>,
+    T const & rng
+) { return assign_zbuf_from_cfg(zbuf, cfg_s_type<T>{}, rng); }
 
 template<class TInt>
 typename std::enable_if<std::is_integral<TInt>::value, array_view_const_char>::type
@@ -345,6 +355,23 @@ inline parse_error parse(
     array_view_const_char value
 ) {
     x = std::string(value.data(), value.size());
+    return no_parse_error;
+}
+
+template<class T, T min, T max>
+parse_error parse(
+    T & x,
+    spec_type<spec_types::range<T, min, max>>,
+    array_view_const_char value
+) {
+    T y;
+    if (auto err = parse(y, spec_type<T>{}, value)) {
+        return err;
+    }
+    if (y < min || max < y) {
+        return parse_error{"invalid range"};
+    }
+    x = y;
     return no_parse_error;
 }
 
@@ -631,6 +658,16 @@ namespace detail
 
         static void impl(T & x, std::string const & str)
         { impl(x, str.data(), str.size()); }
+    };
+
+    template<class T, T min, T max>
+    struct set_value_impl<T, spec_types::range<T, min, max>>
+    {
+        static void impl(T & x, T new_value)
+        {
+            assert(x < min || max < x);
+            x = new_value;
+        }
     };
 }
 

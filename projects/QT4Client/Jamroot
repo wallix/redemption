@@ -19,6 +19,8 @@ constant SRCDIR : ../../src ;
 constant TESTDIR : ../../tests ;
 constant MODULEDIR : ../../modules ;
 constant INCLUDEDIR : ../../include ;
+constant INCLUDEPPOCR : ../../modules/ppocr/src ;
+constant INCLUDEFFMPEG : ../../ffmpeg ;
 
 path-constant REDCONFIGSDIR : ../../projects/redemption_configs ;
 
@@ -103,6 +105,9 @@ project redemption
     <include>$(REDCONFIGSDIR)/include/autogen
     <include>$(REDCONFIGSDIR)/redemption_src
     <include>$(REDCONFIGSDIR)/include/variant
+    <include>$(INCLUDEPPOCR)
+    <include>$(INCLUDEFFMPEG)
+
 
     <conditional>@defines
 
@@ -150,6 +155,111 @@ install install-etc
     : <location>$(INSTALLDIR)/etc/rdpproxy
     ;
 
+## ffmpg {
+lib acodec : : <name>avcodec <file>../../ffmpeg/precompiled/$(ARCH)/libavcodec/libavcodec.a <link>static ;
+#lib acodec : : <name>avcodec <link>shared ;
+lib aformat : : <name>avformat <file>../../ffmpeg/precompiled/$(ARCH)/libavformat/libavformat.a <link>static ;
+#lib aformat : : <name>avformat <link>shared ;
+lib swscale : : <name>swscale <file>../../ffmpeg/precompiled/$(ARCH)/libswscale/libswscale.a <link>static ;
+#lib swscale_so : : <name>swscale <file>../../ffmpeg/precompiled/$(ARCH)/libswscale/libswscale.so <link>shared ;
+#lib swscale : : <name>swscale <link>shared ;
+lib x264 : : <name>x264 <file>../../ffmpeg/precompiled/$(ARCH)/libx264.a <link>static ;
+#lib swresample : : <name>swresample <file>../../ffmpeg/precompiled/$(ARCH)/libswresample/libswresample.a <link>static ;
+lib avutil : : <file>../../ffmpeg/precompiled/$(ARCH)/libavutil/libavutil.a <link>static ;
+#lib avutil : : <name>avutil <link>shared ;
+lib bz2 : : <name>bz2 <link>shared ;
+
+alias ffmpeg : pthread acodec aformat swscale avutil bz2 x264 png z dl ;
+# lib x264 : : <name>x264 <link>shared ;
+
+lib pthread : : <name>pthread <link>shared ;
+
+
+## }
+
+obj ocr : $(SRCDIR)/capture/ocr/locale/latin_to_cyrillic.cpp : ;
+
+## ppocr {
+alias ppocr_dictionary_src      : $(INCLUDEPPOCR)/ppocr/spell/dictionary.cpp ;
+alias ppocr_glyphs_loader_src   : $(INCLUDEPPOCR)/ppocr/loader2/glyphs_loader.cpp ;
+alias ppocr_image_compare_src   : $(INCLUDEPPOCR)/ppocr/utils/image_compare.cpp ;
+alias ppocr_loader2_image_io_src : $(INCLUDEPPOCR)/ppocr/loader2/image_io.cpp ;
+
+alias ppocr_strategies_src :
+    $(INCLUDEPPOCR)/ppocr/strategies/agravity.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/alternation.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/compass.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/dcompass.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/density.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/direction.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/dvdirection2.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/dvdirection.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/dvgravity2.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/dvgravity.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/dzdensity.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/gravity2.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/gravity.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/hbar.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/hdirection2.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/hdirection.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/hgravity2.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/hgravity.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/zone.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/proportionality.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/proportionality_zone.cpp
+    $(INCLUDEPPOCR)/ppocr/strategies/utils/basic_proportionality.cpp
+;
+
+alias ppocr_image_src :
+    $(INCLUDEPPOCR)/ppocr/image/coordinate.cpp
+    $(INCLUDEPPOCR)/ppocr/image/image.cpp
+;
+
+alias ppocr_image_from_file_src :
+    ppocr_image_src
+    $(INCLUDEPPOCR)/ppocr/image/image_from_file.cpp
+;
+
+alias ppocr_box_character_src :
+    $(INCLUDEPPOCR)/ppocr/box_char/box.cpp
+    $(INCLUDEPPOCR)/ppocr/box_char/make_box_character.cpp
+;
+
+alias ppocr_glyphs_src :
+    ppocr_loader2_image_io_src
+    ppocr_image_src
+    ppocr_box_character_src
+    ppocr_image_from_file_src
+;
+
+alias ppocr_datas_and_glyphs_src :
+    ppocr_image_compare_src
+    ppocr_dictionary_src
+    ppocr_strategies_src
+    ppocr_glyphs_loader_src
+    ppocr_glyphs_src
+;
+
+## } ppocr
+
+alias ppocr :
+    $(INCLUDEPPOCR)/ppocr/ocr2/glyphs.cpp
+    $(INCLUDEPPOCR)/ppocr/ocr2/word_lines.cpp
+    $(INCLUDEPPOCR)/ppocr/ocr2/replacement.cpp
+    $(INCLUDEPPOCR)/ppocr/ocr2/data_indexes_by_words.cpp
+    $(INCLUDEPPOCR)/ppocr/ocr2/filter_by_lines.cpp
+    $(INCLUDEPPOCR)/ppocr/ocr2/filter_by_font.cpp
+    $(INCLUDEPPOCR)/ppocr/ocr2/disambiguous_with_dict.cpp
+
+    ppocr_datas_and_glyphs_src
+    $(SRCDIR)/capture/rdp_ppocr/get_ocr_constants.cpp
+;
+
+lib ppocr_test : ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default : <link>static ;
+
+lib ppocr_static : ppocr/<linkflags>-Wl,-Bsymbolic,<cxxflags>-fvisibility=hidden : <link>static ;
+
+
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
 lib openssl : : <name>ssl <link>shared ;
 lib krb5 : : <name>krb5 <link>shared ;
@@ -195,6 +305,9 @@ exe client_rdp_Qt4 :
     gssglue
     png
     d3des
+    ppocr
+    ocr
+    ffmpeg
     z
     dl
     snappy

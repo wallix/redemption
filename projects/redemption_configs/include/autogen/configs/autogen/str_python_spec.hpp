@@ -100,6 +100,12 @@
 "#_advanced\n"
 "bogus_refresh_rect = boolean(default=True)\n\n"
 
+"#_advanced\n"
+"codec_id = string(default='flv')\n\n"
+
+"#_advanced\n"
+"video_quality = option('low', 'medium', 'high', default='high')\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"
@@ -464,6 +470,27 @@
 "#_hidden\n"
 "on_end_of_data = boolean(default=False)\n\n"
 
+"[ocr]\n\n"
+
+"#   1: v1\n"
+"#   2: v2\n"
+"version = option(1, 2, default=2)\n\n"
+
+"locale = option('latin', 'cyrillic', default='latin')\n\n"
+
+"# (is in 1/100 second)\n"
+"#_advanced\n"
+"interval = integer(min=0, default=100)\n\n"
+
+"#_advanced\n"
+"on_title_bar_only = boolean(default=True)\n\n"
+
+"# Expressed in percentage,\n"
+"#   0   - all of characters need be recognized\n"
+"#   100 - accept all results\n"
+"#_advanced\n"
+"max_unrecog_char_rate = integer(min=0, max=100, default=40)\n\n"
+
 "[video]\n\n"
 
 "#_advanced\n"
@@ -514,8 +541,9 @@
 "#   0: none\n"
 "#   1: disable keyboard log in syslog\n"
 "#   2: disable keyboard log in recorded sessions\n"
+"#   4: disable keyboard log in recorded meta\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
-"disable_keyboard_log = integer(min=0, max=3, default=1)\n\n"
+"disable_keyboard_log = integer(min=0, max=7, default=1)\n\n"
 
 "# Disable clipboard log:\n"
 "#   0: none\n"
@@ -546,6 +574,66 @@
 "#   2: snappy\n"
 "#_advanced\n"
 "wrm_compression_algorithm = option(0, 1, 2, default=1)\n\n"
+
+"# Bitrate for low quality.\n"
+"#_advanced\n"
+"l_bitrate = integer(min=0, default=10000)\n\n"
+
+"# Framerate for low quality.\n"
+"#_advanced\n"
+"l_framerate = integer(min=0, default=5)\n\n"
+
+"# Height for low quality.\n"
+"#_advanced\n"
+"l_height = integer(min=0, default=480)\n\n"
+
+"# Width for low quality.\n"
+"#_advanced\n"
+"l_width = integer(min=0, default=640)\n\n"
+
+"# Qscale (parameter given to ffmpeg) for low quality.\n"
+"#_advanced\n"
+"l_qscale = integer(min=0, default=28)\n\n"
+
+"# Bitrate for medium quality.\n"
+"#_advanced\n"
+"m_bitrate = integer(min=0, default=20000)\n\n"
+
+"# Framerate for medium quality.\n"
+"#_advanced\n"
+"m_framerate = integer(min=0, default=5)\n\n"
+
+"# Height for medium quality.\n"
+"#_advanced\n"
+"m_height = integer(min=0, default=768)\n\n"
+
+"# Width for medium quality.\n"
+"#_advanced\n"
+"m_width = integer(min=0, default=1024)\n\n"
+
+"# Qscale (parameter given to ffmpeg) for medium quality.\n"
+"#_advanced\n"
+"m_qscale = integer(min=0, default=14)\n\n"
+
+"# Bitrate for high quality.\n"
+"#_advanced\n"
+"h_bitrate = integer(min=0, default=30000)\n\n"
+
+"# Framerate for high quality.\n"
+"#_advanced\n"
+"h_framerate = integer(min=0, default=5)\n\n"
+
+"# Height for high quality.\n"
+"#_advanced\n"
+"h_height = integer(min=0, default=2048)\n\n"
+
+"# Width for high quality.\n"
+"#_advanced\n"
+"h_width = integer(min=0, default=2048)\n\n"
+
+"# Qscale (parameter given to ffmpeg) for high quality.\n"
+"#_advanced\n"
+"h_qscale = integer(min=0, default=7)\n\n"
 
 "[crypto]\n\n"
 
@@ -628,6 +716,9 @@
 
 "#_advanced\n"
 "mod_internal = integer(min=0, default=0)\n\n"
+
+"#_advanced\n"
+"ocr = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
 "config = boolean(default=True)\n\n"

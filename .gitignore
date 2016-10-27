@@ -11,6 +11,8 @@
 /tools/sesman/sesmanworker/password.py
 /tools/sesman/sesmanworker/*.pyc
 /tools/redcryptofile/redcryptofile.so
+/tools/ocr/fonts/
+/tools/ocr/learning
 /projects/QT4Client/bin
 /projects/QT5Client/bin
 /projects/browser_client/bin

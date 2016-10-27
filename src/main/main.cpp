@@ -27,6 +27,7 @@
 #include "utils/apps/app_proxy.hpp"
 
 #include "program_options/program_options.hpp"
+#include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
 #include "utils/apps/cryptofile.hpp"
 
@@ -57,19 +58,29 @@ int main(int argc, char** argv)
           {opt_print_ini, "rdpproxy.ini by default"}
       }
       , [argv](po::variables_map const & options, bool * quit) {
-            if (options.count(opt_print_spec)) {
-                *quit = true;
-                std::cout <<
-                  #include "configs/autogen/str_python_spec.hpp"
-                ;
-            }
-            if (options.count(opt_print_ini)) {
-                *quit = true;
-                std::cout <<
-                  #include "configs/autogen/str_ini.hpp"
-                ;
-            }
-            return 0;
+        if (options.count(opt_print_spec)) {
+            *quit = true;
+            std::cout <<
+                #include "configs/autogen/str_python_spec.hpp"
+            ;
         }
+        if (options.count(opt_print_ini)) {
+            *quit = true;
+            std::cout <<
+                #include "configs/autogen/str_ini.hpp"
+            ;
+        }
+        return 0;
+      }
+      , [](Inifile & ini) {
+        if (bool(ini.get<cfg::video::capture_flags>() & CaptureFlags::ocr)
+        && ini.get<cfg::ocr::version>() == OcrVersion::v2) {
+            // load global constant...
+            rdp_ppocr::get_ocr_constants(
+                CFG_PATH,
+                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())
+            );
+        }
+      }
     );
 }
