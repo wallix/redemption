@@ -1,0 +1,9 @@
+
+Headers only classes
+--------------------
+Redemption uses and abuse of headers only C++ classes (classes where all methods are in header file). There is several reasons to use them. Such headers only classes help the compiler to generate better (faster, more optimized) code as they bypass linker. They also are implicitly inline. Another reason to use them is that they help gathering all code relevant to one class in one place (only one file to edit). Another good side effect is that when using headers only classes you *must* think about dependency between classes (and eventually solve them). These advantages are thought to be superior to the drawbacks of headers only classes : slower compilation time, and classes interfaces less obvious (as they can be hidden in a large body of code).
+
+Be cautious with memory allocation
+----------------------------------
+
+mallocs or news should be kept rare in code, as every one of them is dangerous. When there is a malloc the matching delete shoudl be easy to find (malloc in constructor/free in destructor, malloc at beginning of function, end at end of function). When using malloc in a function consider hiding it in an object instead, that allow for RAII coding style, if you do not do it, every bloc where an allocation is done must be protected by a try {...} catch(...) {}; block to ensure desallocation is done properly even if an exception is raised. Such cases are very easy to miss. On the other hand, only use true domain objects with some meaning. Avoid meaningless smart pointers only used to wrap memory allocations. The problem here is that they may hide possible refactorings.

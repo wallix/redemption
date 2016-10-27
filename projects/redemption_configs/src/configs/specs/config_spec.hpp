@@ -44,16 +44,10 @@ CONFIG_DEFINE_TYPE(Font)
 
 namespace cfg_specs {
 
-template<class T, T num, T denom>
-using type_duration = cfg_attributes::type_<std::chrono::duration<T, std::ratio<num, denom>>>;
-
-
 template<class Writer>
 void config_spec_definition(Writer && W)
 {
     using namespace cfg_attributes;
-    using std::chrono::duration;
-    using std::ratio;
 
 #ifdef IN_IDE_PARSER
     // for coloration...
@@ -131,6 +125,10 @@ void config_spec_definition(Writer && W)
         W.member(V, type_<bool>(), "allow_using_multiple_monitors", set(false));
         W.sep();
         W.member(A, type_<bool>(), "bogus_refresh_rect", desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
+        W.sep();
+
+        W.member(A, type_<std::string>(), "codec_id", set("flv"));
+        W.member(A, type_<Level>(), "video_quality", set(Level::high));
     });
 
     W.section("session_log", [&]
@@ -328,14 +326,27 @@ void config_spec_definition(Writer && W)
         W.member(H, type_<bool>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
     });
 
+    W.section("ocr", [&]
+    {
+        W.member(V, type_<OcrVersion>(), "version", set(OcrVersion::v2));
+        W.member(V, type_<OcrLocale>(), "locale", set(OcrLocale::latin));
+        W.member(A, type_<std::chrono::duration<unsigned, std::centi>>(), "interval", set(100));
+        W.member(A, type_<bool>(), "on_title_bar_only", set(true));
+        W.member(A, type_<types::range<unsigned, 0, 100>>{}, "max_unrecog_char_rate", desc{
+            "Expressed in percentage,\n"
+          "  0   - all of characters need be recognized\n"
+          "  100 - accept all results"
+        }, set(40));
+    });
+
     W.section("video", [&]
     {
         W.member(A, type_<unsigned>(), "capture_groupid", set(33));
         W.sep();
         W.member(A, type_<CaptureFlags>{}, "capture_flags", set(CaptureFlags::png | CaptureFlags::wrm));
         W.sep();
-        W.member(A, type_<duration<unsigned, ratio<1, 10>>>(), "png_interval", desc{"Frame interval."}, set(10));
-        W.member(A, type_<duration<unsigned, ratio<1, 100>>>(), "frame_interval", desc{"Frame interval."}, set(40));
+        W.member(A, type_<std::chrono::duration<unsigned, std::deci>>(), "png_interval", desc{"Frame interval."}, set(10));
+        W.member(A, type_<std::chrono::duration<unsigned, std::centi>>(), "frame_interval", desc{"Frame interval."}, set(40));
         W.member(A, type_<std::chrono::seconds>(), "break_interval", desc{"Time between 2 wrm movies."}, set(600));
         W.member(A, type_<unsigned>(), "png_limit", desc{"Number of png captures to keep."}, set(5));
         W.sep();
@@ -359,6 +370,26 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(A, type_<ColorDepthSelectionStrategy>{}, "wrm_color_depth_selection_strategy", set(ColorDepthSelectionStrategy::depth16));
         W.member(A, type_<WrmCompressionAlgorithm>{}, "wrm_compression_algorithm", set(WrmCompressionAlgorithm::gzip));
+        W.sep();
+        W.member(type_<std::chrono::seconds>(), "flv_break_interval", set(0));
+        W.sep();
+        W.member(A, type_<unsigned>(), "l_bitrate", desc{"Bitrate for low quality."}, set(10000));
+        W.member(A, type_<unsigned>(), "l_framerate", desc{"Framerate for low quality."}, set(5));
+        W.member(A, type_<unsigned>(), "l_height", desc{"Height for low quality."}, set(480));
+        W.member(A, type_<unsigned>(), "l_width", desc{"Width for low quality."}, set(640));
+        W.member(A, type_<unsigned>(), "l_qscale", desc{"Qscale (parameter given to ffmpeg) for low quality."}, set(28));
+        W.sep();
+        W.member(A, type_<unsigned>(), "m_bitrate", desc{"Bitrate for medium quality."}, set(20000));
+        W.member(A, type_<unsigned>(), "m_framerate", desc{"Framerate for medium quality."}, set(5));
+        W.member(A, type_<unsigned>(), "m_height", desc{"Height for medium quality."}, set(768));
+        W.member(A, type_<unsigned>(), "m_width", desc{"Width for medium quality."}, set(1024));
+        W.member(A, type_<unsigned>(), "m_qscale", desc{"Qscale (parameter given to ffmpeg) for medium quality."}, set(14));
+        W.sep();
+        W.member(A, type_<unsigned>(), "h_bitrate", desc{"Bitrate for high quality."}, set(30000));
+        W.member(A, type_<unsigned>(), "h_framerate", desc{"Framerate for high quality."}, set(5));
+        W.member(A, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
+        W.member(A, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
+        W.member(A, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
     });
 
     W.section("crypto", [&]
@@ -401,6 +432,7 @@ void config_spec_definition(Writer && W)
         W.member(A, type_<types::u32>(), "performance");
         W.member(A, type_<types::u32>(), "pass_dialog_box");
         W.member(A, type_<types::u32>(), "mod_internal");
+        W.member(A, type_<types::u32>(), "ocr");
         W.sep();
         W.member(A, type_<unsigned>(), spec::type_<bool>(), "config", set(2));
     });
