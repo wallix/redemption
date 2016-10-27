@@ -354,7 +354,7 @@ public:
 
     void interpret_order()
     {
-        //std::cout <<  "interpret_order" <<  std::endl;
+        //std::cout <<  "interpret_order type=" << int(this->chunk_type) <<  std::endl;
         this->total_orders_count++;
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
@@ -682,6 +682,7 @@ public:
                 }
                 else {
                    if (this->real_time) {
+                       std::cout << "real_time" <<  std::endl;
                         for (gdi::GraphicApi * gd : this->graphic_consumers){
                             gd->sync();
                         }
@@ -692,6 +693,7 @@ public:
                         uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
 
                         if (elapsed < movie_elapsed) {
+                            std::cout << "elapsed < movie_elapsed" <<  std::endl;
                             struct timespec wtime     = {
                                   static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)

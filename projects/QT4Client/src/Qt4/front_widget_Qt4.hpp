@@ -77,10 +77,6 @@ public:
         bool enable_nla                      = false;
     } _modRDPParamsData;
 
-    //  Replay
-    InMetaSequenceTransport   * _in_trans;
-    FileToGraphic             * _reader;                    // TODO QT version with screen repaint inside while
-
 
     Mod_Qt(Front_Qt * front, QWidget * parent)
         : QObject(parent)
@@ -90,8 +86,7 @@ public:
         , _sck(nullptr)
         , _client_sck(0)
     {
-        //this->_clipboard = QApplication::clipboard();
-        //this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
+
     }
 
     ~Mod_Qt() {
@@ -1070,6 +1065,27 @@ private Q_SLOTS:
 };
 
 
+class ReplayThread : public QThread
+{
+    Q_OBJECT
+
+Front_Qt_API * _front;
+
+public:
+
+    ReplayThread(Front_Qt_API * front, QObject * screen)
+        : QThread(screen)
+        , _front(front)
+    {}
+
+protected:
+
+    void run() {
+        this->_front->_replay_mod->play();
+        this->exec();
+    }
+};
+
 
 class Screen_Qt : public QWidget
 {
@@ -1092,27 +1108,9 @@ public:
     QTimer               _timer_replay;
     uint8_t              _screen_index;
 
-    class ReplayThread : public QThread
-    {
-        Q_OBJECT
 
-    Front_Qt_API * _front;
-
-    public:
-
-        ReplayThread(Front_Qt_API * front, Screen_Qt * screen)
-          : QThread(screen)
-          , _front(front)
-        {}
-
-    protected:
-
-        void run() {
-            this->_front->_replay_mod->play();
-        }
-    };
     ReplayThread * _replayThread;
-
+    bool           _running;
 
     Screen_Qt (Front_Qt_API * front, int screen_index, QPixmap * cache)
         : QWidget()
@@ -1128,6 +1126,7 @@ public:
         , _timer(this)
         , _screen_index(screen_index)
         , _replayThread(nullptr)
+        , _running(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1198,6 +1197,7 @@ public:
         , _timer(this)
         , _timer_replay(this)
         , _screen_index(0)
+        , _running(false)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Remote Desktop Player " + movie_path;
@@ -1244,8 +1244,8 @@ public:
         }
         this->move(centerW, centerH);
 
-        this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
-        this->_timer.start(1000/this->_front->_fps);
+        //this->QObject::connect(&(this->_timer), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        //this->_timer.start(1000/this->_front->_fps);
 
         this->setFocusPolicy(Qt::StrongFocus);
     }
@@ -1264,6 +1264,7 @@ public:
         , _connexionLasted(false)
         , _timer(this)
         , _screen_index(0)
+        , _running(false)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
@@ -1382,17 +1383,28 @@ private:
 
 private Q_SLOTS:
     void playPressed() {
-        this->_replayThread = new ReplayThread(this->_front, this);
-        this->_replayThread->start();
-        //this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
-        //this->_timer_replay.start(5);
+        if (this->_running) {
+            std::cout << "thread stop" <<  std::endl;
+            this->_replayThread->exit();
+            this->_running = false;
+        } else {
+            std::cout << "thread start" <<  std::endl;
+            this->_running = true;
+            this->_replayThread = new ReplayThread(this->_front, this);
+            this->_replayThread->start();
+        }
+
+
+        /*this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (slotRepaint()));
+        this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
+        this->_timer_replay.start(15);*/
     }
 
     void playReplay() {
-        /*this->_front->_replay_mod->play_qt();
+        this->_front->_replay_mod->play_qt();
         if (this->_front->_replay_mod->get_break_privplay_qt()) {
             this->_timer_replay.stop();
-        }*/
+        }
     }
 
     void slotRepaint() {

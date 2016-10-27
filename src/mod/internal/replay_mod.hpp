@@ -53,8 +53,6 @@ class ReplayMod : public InternalMod
         };
         std::unique_ptr<Impl> impl;
 
-
-
         void construct(char const * prefix, char const * extension, uint32_t debug_capture)
         {
             LCGRandom rnd(0);

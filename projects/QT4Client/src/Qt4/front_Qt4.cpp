@@ -316,6 +316,7 @@ Screen_Qt * Front_Qt::getMainScreen() {
 Front_Qt::~Front_Qt() {
     this->empty_buffer();
     delete(this->_capture);
+    delete(this->_graph_capture);
 }
 
 
@@ -326,13 +327,13 @@ Front_Qt::~Front_Qt() {
 //------------------------
 
 void Front_Qt::disconnexionReleased(){
-    delete(this->_capture);
-    this->_capture = nullptr;
     this->dropScreen();
     this->disconnect("");
     this->_cache = nullptr;
     delete(this->_capture);
+    delete(this->_graph_capture);
     this->_capture = nullptr;
+    this->_graph_capture = nullptr;
 }
 
 void Front_Qt::dropScreen() {
@@ -359,7 +360,9 @@ void Front_Qt::closeFromScreen(int screen_index) {
     }
 
     delete(this->_capture);
+    delete(this->_graph_capture);
     this->_capture = nullptr;
+    this->_graph_capture = nullptr;
 
     if (this->_form != nullptr && this->_connected) {
         this->_form->close();
@@ -411,6 +414,52 @@ bool Front_Qt::connect() {
     this->setScreenDimension();
 
     if (this->_mod_qt->connect()) {
+
+          if (this->_record) {
+            Inifile ini;
+            ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+            ini.set<cfg::video::png_limit>(0);
+            ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::none);
+            ini.set<cfg::session_log::enable_session_log>(0);
+            ini.set<cfg::session_log::keyboard_input_masking_level>(KeyboardInputMaskingLevel::unmasked);
+            ini.set<cfg::context::pattern_kill>("");
+            ini.set<cfg::context::pattern_notify>("");
+            ini.set<cfg::debug::capture>(0xfffffff);
+            ini.set<cfg::video::capture_groupid>(1);
+            ini.set<cfg::video::record_tmp_path>(this->REPLAY_DIR);
+            ini.set<cfg::video::record_path>(this->REPLAY_DIR);
+            ini.set<cfg::video::hash_path>(this->REPLAY_DIR);
+            time_t now;
+            time(&now);
+            std::string data(ctime(&now));
+            std::string data_cut(data.c_str(), data.size()-1);
+            std::string name("-Replay");
+            std::string movie_name(data_cut+name);
+            ini.set<cfg::globals::movie_path>(movie_name.c_str());
+            ini.set<cfg::globals::trace_type>(TraceType::localfile);
+            ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+            ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(6));
+            LCGRandom gen(0);
+            CryptoContext cctx(gen, ini);
+            bool enable_rt(true);
+            auth_api * authentifier(nullptr);
+            struct timeval time;
+            gettimeofday(&time, nullptr);
+            this->_capture = new Capture( time
+                                        , this->_info.width
+                                        , this->_info.height
+                                        , this->_info.bpp
+                                        , this->_info.bpp
+                                        , enable_rt
+                                        , false
+                                        , authentifier
+                                        , ini
+                                        , gen
+                                        , cctx
+                                        , true
+                                        );
+            this->_graph_capture = this->_capture->get_graphic_api();
+        }
 
         this->_cache = new QPixmap(this->_info.width, this->_info.height);
         this->_screen[0] = new Screen_Qt(this, this->_cache);
@@ -481,6 +530,7 @@ void Front_Qt::replay(std::string & movie_path) {
     }
     const std::string delimiter = "/";
     size_t pos(movie_path.find(delimiter));
+    this->_record = false;
 
     while(movie_path.length() > pos) {
         movie_path = movie_path.substr(pos + delimiter.length(), movie_path.length());
