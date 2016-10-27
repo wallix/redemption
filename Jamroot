@@ -32,8 +32,6 @@ rule setvar ( env : default * )
     }
 }
 
-constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
-# constant ARCH : [ SHELL "lscpu | perl -ane 'my %h = map { $F[0], $F[1] } <>; print $h{q{Architecture:}}'" ] ;
 constant PYTHON_VER : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print $x; last;}};'" ] ;
 constant PYTHON_INCLUDE : [ SHELL "perl -e 'for my $x (q{python2.7}, q{python2.6}) { if (-e q{/usr/include/}.$x.q{/Python.h}){ print q{/usr/include/}.$x; last;}};'" ] ;
 
@@ -53,8 +51,6 @@ constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
 
-constant PNG_DEBUG : <variant>debug:<library>png ;
-
 rule defines ( properties * )
 {
     local defs ;
@@ -70,10 +66,10 @@ rule defines ( properties * )
     defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
     defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
     defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
-    if [ os.environ VERBOSE ]
-    {
-        defs += <define>VERBOSE ;
-    }
+#     if [ os.environ VERBOSE ]
+#     {
+#         defs += <define>VERBOSE ;
+#     }
     return $(defs) ;
 }
 variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
@@ -98,6 +94,7 @@ project redemption
     <include>include
 
     <include>modules/includes
+    <include>modules/ppocr/src
 
     ## configs @{
     <include>projects/redemption_configs/redemption_src
@@ -120,24 +117,34 @@ project redemption
 
     <define>__STDC_FORMAT_MACROS
 
-    <define>PUBLIC
-
    : default-build release
-
 ;
 
-explicit install instexe install-bin install-etc install-etc-themes install-share install-lib check_coverage exe ;
+explicit
+    install
+    instexe install-bin
+    install-etc install-etc-themes
+    install-share
+    install-share install-lib
+    install-etc-ppocr install-etc-ppocr-latin install-etc-ppocr-latin-cyrillic
+    exe libs
+;
 
 alias instexe : install-bin ;
-alias install : install-bin install-etc install-etc-themes install-share install-lib ;
+alias install :
+    install-bin install-lib
+    install-etc install-etc-themes install-etc-ppocr
+    install-share
+;
 alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient ;
 alias libs    : libredrec ;
 
+alias install-etc-ppocr : install-etc-ppocr-latin install-etc-ppocr-latin-cyrillic ;
 
 install install-bin
     : exe
     : <install-type>EXE <install-dependencies>on
-    : <location>$(INSTALLDIR)/usr/local/bin
+    : <location>$(INSTALLDIR)$(BIN_PREFIX)
     ;
 
 install install-share
@@ -156,6 +163,18 @@ install install-etc-themes
     : [ glob sys/etc/rdpproxy/themes/HOWTO ]
     :
     : <location>$(INSTALLDIR)/etc/rdpproxy/themes
+    ;
+
+install install-etc-ppocr-latin
+    : [ glob sys/etc/rdpproxy/ppocr.latin/* ]
+    :
+    : <location>$(INSTALLDIR)$(ETC_PREFIX)/ppocr.latin
+    ;
+
+install install-etc-ppocr-latin-cyrillic
+    : [ glob sys/etc/rdpproxy/ppocr.latin-cyrillic/* ]
+    :
+    : <location>$(INSTALLDIR)$(ETC_PREFIX)/ppocr.latin-cyrillic
     ;
 
 install install-lib
@@ -229,22 +248,110 @@ lib snappy : : <name>snappy <link>shared ;
 # lib lzma : : <name>lzma <link>shared ;
 lib dl : : <name>dl <link>shared ;
 lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+lib bz2 : : <name>bz2 <link>shared ;
 
-#lib SDL : : <name>SDL <link>shared ;
+lib rt : : <name>rt <link>shared ;
 
+## ffmpg {
+lib avcodec : : <name>avcodec <link>shared ;
+lib avformat : : <name>avformat <link>shared ;
+lib swscale : : <name>swscale <link>shared ;
+lib avutil : : <name>avutil <link>shared ;
+# lib x264 : : <name>x264 <link>shared ;
+
+lib pthread : : <name>pthread <link>shared ;
+
+alias ffmpeg : pthread avcodec avformat swscale avutil bz2 png z dl ;
+# alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
+## }
 
 lib libpng : : <name>png <link>shared ;
 alias png : libpng z ;
 
-
-# lib libasan : libboost_unit_test openssl krb5 gssglue crypto snappy png dl python2 : <name>asan ;
-# lib libubsan : libboost_unit_test openssl krb5 gssglue crypto snappy png dl python2 : <name>ubsan ;
 
 obj mainloop : src/core/mainloop.cpp ;
 obj d3des : src/utils/d3des.cpp ;
 obj bitmap : src/utils/bitmap_data_allocator.cpp ;
 obj program_options : modules/program_options/src/program_options.cpp ;
 
+
+obj ocr : src/capture/ocr/locale/latin_to_cyrillic.cpp : ;
+
+## ppocr {
+alias ppocr_dictionary_src      : modules/ppocr/src/ppocr/spell/dictionary.cpp ;
+alias ppocr_glyphs_loader_src   : modules/ppocr/src/ppocr/loader2/glyphs_loader.cpp ;
+alias ppocr_image_compare_src   : modules/ppocr/src/ppocr/utils/image_compare.cpp ;
+alias ppocr_loader2_image_io_src : modules/ppocr/src/ppocr/loader2/image_io.cpp ;
+
+alias ppocr_strategies_src :
+    modules/ppocr/src/ppocr/strategies/agravity.cpp
+    modules/ppocr/src/ppocr/strategies/alternation.cpp
+    modules/ppocr/src/ppocr/strategies/compass.cpp
+    modules/ppocr/src/ppocr/strategies/dcompass.cpp
+    modules/ppocr/src/ppocr/strategies/density.cpp
+    modules/ppocr/src/ppocr/strategies/direction.cpp
+    modules/ppocr/src/ppocr/strategies/dvdirection2.cpp
+    modules/ppocr/src/ppocr/strategies/dvdirection.cpp
+    modules/ppocr/src/ppocr/strategies/dvgravity2.cpp
+    modules/ppocr/src/ppocr/strategies/dvgravity.cpp
+    modules/ppocr/src/ppocr/strategies/dzdensity.cpp
+    modules/ppocr/src/ppocr/strategies/gravity2.cpp
+    modules/ppocr/src/ppocr/strategies/gravity.cpp
+    modules/ppocr/src/ppocr/strategies/hbar.cpp
+    modules/ppocr/src/ppocr/strategies/hdirection2.cpp
+    modules/ppocr/src/ppocr/strategies/hdirection.cpp
+    modules/ppocr/src/ppocr/strategies/hgravity2.cpp
+    modules/ppocr/src/ppocr/strategies/hgravity.cpp
+    modules/ppocr/src/ppocr/strategies/zone.cpp
+    modules/ppocr/src/ppocr/strategies/proportionality.cpp
+    modules/ppocr/src/ppocr/strategies/proportionality_zone.cpp
+    modules/ppocr/src/ppocr/strategies/utils/basic_proportionality.cpp
+;
+
+alias ppocr_image_src :
+    modules/ppocr/src/ppocr/image/coordinate.cpp
+    modules/ppocr/src/ppocr/image/image.cpp
+;
+
+alias ppocr_image_from_file_src :
+    ppocr_image_src
+    modules/ppocr/src/ppocr/image/image_from_file.cpp
+;
+
+alias ppocr_box_character_src :
+    modules/ppocr/src/ppocr/box_char/box.cpp
+    modules/ppocr/src/ppocr/box_char/make_box_character.cpp
+;
+
+alias ppocr_glyphs_src :
+    ppocr_loader2_image_io_src
+    ppocr_image_src
+    ppocr_box_character_src
+    ppocr_image_from_file_src
+;
+
+alias ppocr_datas_and_glyphs_src :
+    ppocr_image_compare_src
+    ppocr_dictionary_src
+    ppocr_strategies_src
+    ppocr_glyphs_loader_src
+    ppocr_glyphs_src
+;
+
+## } ppocr
+
+alias ppocr :
+    modules/ppocr/src/ppocr/ocr2/glyphs.cpp
+    modules/ppocr/src/ppocr/ocr2/word_lines.cpp
+    modules/ppocr/src/ppocr/ocr2/replacement.cpp
+    modules/ppocr/src/ppocr/ocr2/data_indexes_by_words.cpp
+    modules/ppocr/src/ppocr/ocr2/filter_by_lines.cpp
+    modules/ppocr/src/ppocr/ocr2/filter_by_font.cpp
+    modules/ppocr/src/ppocr/ocr2/disambiguous_with_dict.cpp
+
+    ppocr_datas_and_glyphs_src
+    src/capture/rdp_ppocr/get_ocr_constants.cpp
+;
 
 #
 # Redemption
@@ -255,6 +362,11 @@ exe rdpproxy
         src/main/main.cpp
         bitmap
         program_options
+
+        ocr
+        ppocr
+
+        ffmpeg
 
         mainloop
 
@@ -271,16 +383,26 @@ exe rdpproxy
 
         krb5
         gssglue
+
+        rt
     :
 #         <link>static
         $(EXE_DEPENDENCIES)
     ;
+
+lib ppocr_static : ppocr/<linkflags>-Wl,-Bsymbolic,<cxxflags>-fvisibility=hidden : <link>static ;
 
 lib libredrec
     :
         src/main/do_recorder.cpp
         bitmap
         program_options
+
+        ocr
+        ppocr_static
+        #ppocr
+
+        ffmpeg
 
         openssl
         crypto
@@ -298,6 +420,14 @@ exe rdptproxy
         src/main/transparent.cpp
         bitmap
         program_options
+
+        ## @{
+        ocr
+        ppocr_static
+        #ppocr
+
+        ffmpeg
+        ## @}
 
         openssl
         crypto
@@ -378,6 +508,97 @@ exe redrec
         $(EXE_DEPENDENCIES)
     ;
 
+exe display_learning
+    :
+         src/capture/ocr/display_learning.cc
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
+exe extract_text
+    :
+         src/capture/ocr/extract_text.cc
+         ocr
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
+exe ppocr_extract_text
+    :
+         src/capture/ocr/ppocr_extract_text.cpp
+         bitmap
+         ppocr
+         ocr
+    :
+#         <link>static
+        $(EXE_DEPENDENCIES)
+    ;
+
+
+## ppocr {
+
+exe ppocr_write_glyphs :
+    modules/ppocr/src/ppocr/write_glyphs.cpp
+    ppocr_glyphs_loader_src
+    ppocr_glyphs_src
+:
+    $(EXE_DEPENDENCIES)
+;
+
+exe ppocr_normalize_glyphs :
+    modules/ppocr/src/ppocr/normalize_glyphs.cpp
+    ppocr_glyphs_loader_src
+    ppocr_glyphs_src
+    ppocr_image_compare_src
+:
+    $(EXE_DEPENDENCIES)
+;
+
+exe ppocr_write_datas :
+    modules/ppocr/src/ppocr/write_datas.cpp
+    ppocr_strategies_src
+    ppocr_glyphs_src
+:
+    $(EXE_DEPENDENCIES)
+;
+
+alias ppocr_learning :
+    ppocr_write_glyphs
+    ppocr_normalize_glyphs
+    ppocr_write_datas
+;
+
+
+actions make_ppocr_resources {
+    ./ppocr/learning "$(>)"
+    # latin
+    cp ./ppocr/resources/glyphs/normalized-glyphs-latin.txt ./sys/etc/rdpproxy/ppocr.latin/glyphs.txt
+    cp ./ppocr/resources/datas/latin.txt                    ./sys/etc/rdpproxy/ppocr.latin/datas.txt
+    cp ./ppocr/resources/dict_fr.trie                       ./sys/etc/rdpproxy/ppocr.latin/dict.trie.txt
+    cp ./ppocr/resources/words_lines-latin.txt              ./sys/etc/rdpproxy/ppocr.latin/words_lines.txt
+
+    # latin-cyrillic
+    cp ./ppocr/resources/glyphs/normalized-glyphs-latin-cyrillic.txt ./sys/etc/rdpproxy/ppocr.latin-cyrillic/glyphs.txt
+    cp ./ppocr/resources/datas/latin-cyrillic.txt        ./sys/etc/rdpproxy/ppocr.latin-cyrillic/datas.txt
+    cp ./ppocr/resources/words_lines-latin-cyrillic.txt  ./sys/etc/rdpproxy/ppocr.latin-cyrillic/words_lines.txt
+    cp ./ppocr/resources/dict_fr.trie                    ./sys/etc/rdpproxy/ppocr.latin-cyrillic/dict.trie.txt
+}
+
+explicit ppocr_resources ;
+
+make ppocr_resources :
+    ppocr_write_glyphs
+    ppocr_normalize_glyphs
+    ppocr_write_datas
+:
+    @make_ppocr_resources
+;
+
+
+## } ppocr
+
 
 #
 # Functional tests (run by hand)
@@ -441,11 +662,25 @@ unit-test test_module_manager : tests/acl/test_module_manager.cpp : $(TEST_DEPEN
 ## @}
 
 
+## Ocr
+## {
+lib ppocr_test : ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default : <link>static ;
+
+unit-test test_ocr : tests/test_ocr.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>ocr ;
+unit-test test_ppocr : tests/test_ppocr.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>ocr <library>ppocr_test ;
+
+unit-test test_bogus_ocr : tests/test_bogus_ocr.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>ocr ;
+unit-test test_bogus_ppocr : tests/test_bogus_ppocr.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>ocr <library>ppocr_test ;
+
+unit-test test_latin_to_cyrillic : tests/test_latin_to_cyrillic.cpp : $(TEST_DEPENDENCIES) <library>ocr ;
+## }
+
 ## Capture tests
 ## @{
 #CaptureDevice.hpp
 #capture.hpp
-unit-test test_capture : tests/capture/test_capture.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto <library>dl <library>png <library>z <library>snappy ;
+unit-test test_capture : tests/capture/test_capture.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>crypto <library>dl <library>png <library>z <library>snappy <library>ocr <library>ppocr_test <library>ffmpeg ;
+
 #chunked_image_transport.hpp
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>z <library>snappy <library>crypto ;
 #ChunkToFile.hpp
@@ -660,7 +895,7 @@ unit-test test_server : tests/core/test_server.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_session : tests/core/test_session.cpp : $(TEST_DEPENDENCIES) : <library>png ;
 unit-test test_session_server : tests/core/test_session_server.cpp : $(TEST_DEPENDENCIES) : <library>png ;
 unit-test test_wait_obj : tests/core/test_wait_obj.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_front : tests/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto ;
+unit-test test_front : tests/front/test_front.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>openssl <library>snappy <library>d3des <library>krb5 <library>gssglue <library>png <library>d3des <library>dl <library>crypto <library>ocr <library>ppocr_test <library>ffmpeg ;
 
 unit-test test_bitmap : tests/utils/test_bitmap.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
 unit-test test_bitmap_with_png : tests/utils/test_bitmap_with_png.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>crypto ;
@@ -731,9 +966,9 @@ unit-test test_rdp : tests/mod/rdp/test_rdp.cpp : $(TEST_DEPENDENCIES) <library>
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>z <library>dl <library>openssl ;
 unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>openssl <library>dl <library>krb5 <library>gssglue ;
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>krb5 <library>gssglue <library>png <library>crypto <library>d3des <library>dl ;
-unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
-unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
-unit-test test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl ;
+unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl <library>ocr <library>ppocr_test <library>ffmpeg ;
+unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl <library>ocr <library>ppocr_test <library>ffmpeg ;
+unit-test test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk.cpp : $(TEST_DEPENDENCIES) <library>bitmap <library>png <library>openssl <library>snappy <library>d3des <library>crypto <library>dl <library>ocr <library>ppocr_test <library>ffmpeg ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp : $(TEST_DEPENDENCIES) ;
@@ -906,3 +1141,8 @@ exe proxy_sc1
     ;
 
 
+unit-test test_video_capture : tests/test_video_capture.cpp : $(TEST_DEPENDENCIES) <library>ffmpeg ;
+
+unit-test test_pattern_checker : tests/test_pattern_checker.cpp : $(TEST_DEPENDENCIES) ;
+
+unit-test test_session_meta : tests/test_session_meta.cpp : $(TEST_DEPENDENCIES) ;

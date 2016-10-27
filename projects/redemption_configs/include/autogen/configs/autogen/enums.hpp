@@ -90,12 +90,14 @@ enum class KeyboardLogFlags {
     syslog = 1,
     // keyboard log in recorded sessions
     wrm = 2,
+    // keyboard log in recorded meta
+    meta = 4,
 };
 
 inline bool is_valid_enum_value(KeyboardLogFlags e)
 {
     auto const i = static_cast<unsigned long>(e);
-    return i == (i & static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return i == (i & static_cast<unsigned long>((1 << (4 - 1)) - 1));
 }
 
 inline KeyboardLogFlags operator | (KeyboardLogFlags x, KeyboardLogFlags y)
@@ -103,7 +105,7 @@ inline KeyboardLogFlags operator | (KeyboardLogFlags x, KeyboardLogFlags y)
 inline KeyboardLogFlags operator & (KeyboardLogFlags x, KeyboardLogFlags y)
 { return static_cast<KeyboardLogFlags>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline KeyboardLogFlags operator ~ (KeyboardLogFlags x)
-{ return static_cast<KeyboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (3 - 1)) - 1)); }
+{ return static_cast<KeyboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (4 - 1)) - 1)); }
 inline KeyboardLogFlags operator + (KeyboardLogFlags & x, KeyboardLogFlags y) { return x | y; }
 inline KeyboardLogFlags operator - (KeyboardLogFlags & x, KeyboardLogFlags y) { return x & ~y; }
 inline KeyboardLogFlags & operator |= (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x | y; }
@@ -389,6 +391,20 @@ operator << (std::basic_ostream<Ch, Tr> & os, BogusLinuxCursor e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class OcrLocale {
+    latin = 0,
+    cyrillic = 1,
+};
+
+inline bool is_valid_enum_value(OcrLocale e)
+{ return static_cast<unsigned long>(e) < 2; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, OcrLocale e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth {
     // 8-bit
@@ -415,6 +431,26 @@ inline bool is_valid_enum_value(ColorDepth e)
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, ColorDepth e)
+{ return os << static_cast<unsigned long>(e); }
+
+
+enum class OcrVersion {
+    v1 = 1,
+    v2 = 2,
+};
+
+inline bool is_valid_enum_value(OcrVersion e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return false
+     || i == 1
+     || i == 2
+    ;
+}
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, OcrVersion e)
 { return os << static_cast<unsigned long>(e); }
 
 
