@@ -33,6 +33,8 @@ constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : /var/lib/redemption/cache ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : /var/rdpproxy/drive_redirection ] ;
 
+constant COVERAGE_PREFIX : [ setvar COVERAGE_PREFIX : "" ] ;
+
 rule defines ( properties * )
 {
     local defs ;

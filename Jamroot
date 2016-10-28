@@ -624,7 +624,6 @@ actions cover
         #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
         gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
         if [ $? = "0" ]; then
-
             mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
             if [ $? = "0" ]; then
 
