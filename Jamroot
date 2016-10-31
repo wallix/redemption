@@ -220,6 +220,8 @@ lib libredrec
 
         snappy
     :
+        <link>shared
+        <linkflags>-Wl,-Bsymbolic
         $(LIB_DEPENDENCIES)
     ;
 
