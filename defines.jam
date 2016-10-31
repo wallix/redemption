@@ -55,3 +55,6 @@ rule defines ( properties * )
     }
     return $(defs) ;
 }
+
+constant FFMPEG_INC_PATH : [ setvar FFMPEG_INC_PATH : $(_FFMPEG_INC_PATH) ] ;
+constant FFMPEG_LIB_PATH : [ setvar FFMPEG_LIB_PATH : $(_FFMPEG_LIB_PATH) ] ;

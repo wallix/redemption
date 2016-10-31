@@ -24,7 +24,7 @@ SYSTEMTESTDIR ?= $(REDEMPTION_TESTS_PATH)/system/$(SYSTEM_TYPE) ;
 
 ## ffmpeg {
 # empty for default system header
-FFMPEG_INC_PATH ?= "" ;
+_FFMPEG_INC_PATH ?= "" ;
 # empty for default system library
-FFMPEG_LIB_PATH ?= "" ;
+_FFMPEG_LIB_PATH ?= "" ;
 ## }
