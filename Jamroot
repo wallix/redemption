@@ -1174,18 +1174,10 @@ test-canonical front/front.hpp
       <library>png
     ;
 
-test-run test_keymap2
-    : test_keymap2.cpp
-    : keyboard/keymap2.hpp
-;
+test-canonical keyboard/keymap2.hpp ;
+test-canonical keyboard/keymapSym.hpp ;
 
-test-run test_keymapSym
-    : test_keymapSym.cpp
-    : keymapSym.hpp
-;
-
-
-test-canonical gdi/graphic_cmd_converter.hpp ;
+test-canonical gdi/graphic_cmd_color_converter.hpp ;
 
 
 #explicit test_show_data.o bitmap_data_allocator.o test_data_draw ; #
