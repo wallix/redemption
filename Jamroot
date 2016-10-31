@@ -615,17 +615,19 @@ actions cover
         # echo "COVERFILE = $(COVERFILE)"
         # echo "source = $(>)"
         # echo "target = $(<)"
-        mkdir -p $(COVERAGE_PREFIX)coverage/$(COVERFILE)
-        if [ ! -e $(>:S=.gcno) ]; then
-            echo "coverage file $(>:S=.gcno) does not exist"
+        COVER_PATH="$(COVERAGE_PREFIX)coverage/$(COVERFILE)"
+        COVER_GCNO=$(>:P)"/tests/$(COVERFILE:P)/$(<:B).gcno"
+        mkdir -p "$COVER_PATH"
+        if [ ! -e $COVER_GCNO ]; then
+            echo "coverage file "$COVER_GCNO" does not exist"
             exit 1
         fi
 
-        #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage"
-        gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $(>:S=.gcno) $(>:S=) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/report.coverage
-        if [ $? = "0" ]; then
-            mv *.gcov $(COVERAGE_PREFIX)coverage/$(COVERFILE)
-            if [ $? = "0" ]; then
+        #echo "gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o "$COVER_GCNO" $(>:S=) > "$COVER_PATH"/report.coverage"
+        gcov --unconditional-branches --all-blocks --branch-count --branch-probabilities --function-summaries --demangled-names -o $COVER_GCNO $(>:S=) > "$COVER_PATH"/report.coverage
+        if [ $? -eq 0 ]; then
+            mv *.gcov "$COVER_PATH"
+            if [ $? -eq 0 ]; then
 
                 if [ ! -e "$(REDEMPTION_SRC_PATH)/$(COVERFILE)" ]; then
                     echo "source file $(REDEMPTION_SRC_PATH)/$(COVERFILE) missing"
@@ -633,14 +635,18 @@ actions cover
                 fi
 
                 # If no gcov file available for coverage target create an empty one
-                if [ ! -e "$(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov" ]; then
-                    touch $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov
+                if [ ! -e "$COVER_PATH/$(COVERFILE:B)$(COVERFILE:S).gcov" ]; then
+                    touch "$COVER_PATH/$(COVERFILE:B)$(COVERFILE:S).gcov"
                 fi
 
-                etags -o $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(REDEMPTION_SRC_PATH)/$(COVERFILE)
-                if [ $? = "0" ]; then
-                    python tools/coverage.py $(COVERFILE) $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).TAGS $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).gcov $(REDEMPTION_SRC_PATH) > $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).report
-                    cat $(COVERAGE_PREFIX)coverage/$(COVERFILE)/$(COVERFILE:B)$(COVERFILE:S).report
+                etags -o "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).TAGS $(REDEMPTION_SRC_PATH)/$(COVERFILE)
+                if [ $? -eq 0 ]; then
+                    python tools/coverage.py $(COVERFILE) "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).TAGS "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).gcov $(REDEMPTION_SRC_PATH) > "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).report
+                    if [ $? -ne 0 ]; then
+                        echo "python tools/coverage.py failed"
+                        exit 1
+                    fi
+                    cat "$COVER_PATH"/$(COVERFILE:B)$(COVERFILE:S).report
                     touch $(<)
                 else
                     echo "etags failed"
@@ -682,7 +688,8 @@ rule test-run ( target : sources + : tested ? : requirements * )
     if ($(tested)) {
         make $(target:S=.coverage) : $(target) : id
             : <variant>coverage:<action>@cover
-              <covfile>$(tested) $(requirements)
+              <covfile>$(tested)
+              $(requirements)
             ;
     }
 }
