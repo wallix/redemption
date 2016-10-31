@@ -17,14 +17,17 @@ To compile ReDemPtion you need the following packages:
 - libsnappy-dev
 - libpng12-dev
 - python2.7-dev or python2.6-dev
-<!-- BEGIN optional if NO_FFMPEG ? (note: ok with 53 and 54 version)-->
+<!-- BEGIN optional if NO_FFMPEG ? (note: ok with 53 (?) and 54 version)-->
+- libavcodec-dev (or set `FFMPEG_INC_PATH` to redemption-config.jam)
+- libavformat-dev (or set `FFMPEG_INC_PATH` to redemption-config.jam)
+- libavutil-dev (or set `FFMPEG_INC_PATH` to redemption-config.jam)
+- libswscale-dev (or set `FFMPEG_INC_PATH` to redemption-config.jam)
+- libavcodec-ffmpeg56 (or set `FFMPEG_LIB_PATH` to redemption-config.jam)
+- libavformat-ffmpeg56 (or set `FFMPEG_LIB_PATH` to redemption-config.jam)
+- libavutil-ffmpeg54 (or set `FFMPEG_LIB_PATH` to redemption-config.jam)
+- libswscale-ffmpeg3 (or set `FFMPEG_LIB_PATH` to redemption-config.jam)
 - libbz2-dev
-- libavcodec-dev
-- libavformat-dev
-- libswscale-dev
-- libavutil-dev
 <!-- END optional -->
-- libbz2-dev
 - g++ >= 4.9 or clang++ >= 3.5 or other C++11 compiler
 
 Optionally:

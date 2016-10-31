@@ -1,0 +1,43 @@
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+lib openssl : : <name>ssl <link>shared ;
+
+lib krb5 : : <name>krb5 <link>shared ;
+lib gssglue : : <name>gssglue <link>shared ;
+
+lib crypto : : <name>crypto <link>shared ;
+lib z : : <name>z <link>shared ;
+lib snappy : : <name>snappy <link>shared ;
+# lib lzma : : <name>lzma <link>shared ;
+lib dl : : <name>dl <link>shared ;
+lib python2 : : <name>$(PYTHON_VER) <link>shared ;
+lib bz2 : : <name>bz2 <link>shared ;
+
+## ffmpg {
+if $(FFMPEG_LIB_PATH) = "" {
+    lib avcodec  : : <link>shared <name>avcodec ;
+    lib avformat : : <link>shared <name>avformat ;
+    lib avutil   : : <link>shared <name>avutil ;
+    lib swscale  : : <link>shared <name>swscale ;
+    # lib x264 : : <link>shared <name>x264 ;
+}
+else {
+    # echo ffmpeg library path: $(FFMPEG_LIB_PATH) ;
+    lib avcodec  : : <link>static <name>avcodec  <file>$(FFMPEG_LIB_PATH)/libavcodec.a ;
+    lib avformat : : <link>static <name>avformat <file>$(FFMPEG_LIB_PATH)/libavformat.a ;
+    lib avutil   : : <link>static <name>avutil   <file>$(FFMPEG_LIB_PATH)/libavutil.a ;
+    lib swscale  : : <link>static <name>swscale  <file>$(FFMPEG_LIB_PATH)/libswscale.a ;
+    # lib x264 : : <link>static <name>avutil <file>$(FFMPEG_LIB_PATH)/libx264.a ;
+}
+
+
+lib pthread : : <name>pthread <link>shared ;
+
+alias ffmpeg : pthread avcodec avformat swscale avutil bz2 png z dl ;
+# alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
+## }
+
+lib libpng : : <name>png <link>shared ;
+alias png : libpng z ;
+
+lib gssapi_krb5 : : <name>gssapi_krb5 <link>shared ;
+lib rt : : <name>rt <link>shared ;

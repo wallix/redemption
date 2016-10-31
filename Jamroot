@@ -1,30 +1,7 @@
-REDEMPTION_ROOT_PATH ?= . ;
-REDEMPTION_SRC_PATH ?= $(REDEMPTION_ROOT_PATH)/src ;
-REDEMPTION_TESTS_PATH ?= $(REDEMPTION_ROOT_PATH)/tests ;
-REDEMPTION_CONFIG_PATH ?= $(REDEMPTION_ROOT_PATH)/projects/redemption_configs ;
-INCLUDES_PATH ?= $(REDEMPTION_ROOT_PATH)/include ;
-
-MODULES_SRC_PATH ?= $(REDEMPTION_ROOT_PATH)/modules ;
-PPOCR_MODULE_PATH ?= $(MODULES_SRC_PATH)/ppocr ;
-PROGRAM_OPTIONS_MODULE_PATH ?= $(MODULES_SRC_PATH)/program_options ;
-
-PPOCR_SRC_PATH ?= $(PPOCR_MODULE_PATH)/src ;
-PROGRAM_OPTIONS_SRC_PATH ?= $(PROGRAM_OPTIONS_MODULE_PATH)/src ;
-
-PPOCR_INCLUDES_PATH ?= $(PPOCR_SRC_PATH) ;
-MLN_INCLUDES_PATH ?= $(PPOCR_MODULE_PATH)/includes ;
-PROGRAM_OPTIONS_INCLUDES_PATH ?= $(MODULES_SRC_PATH)/includes ;
-
-REDEMPTION_SYS_PATH ?= $(REDEMPTION_ROOT_PATH)/sys ;
-FIXTURES_PATH ?= $(REDEMPTION_ROOT_PATH)/tests/fixtures ;
-TOOLS_PATH ?= $(REDEMPTION_ROOT_PATH)/tools ;
-SYSTEM_TYPE ?= linux ;
-
-SYSTEMTESTDIR ?= $(REDEMPTION_TESTS_PATH)/system/$(SYSTEM_TYPE) ;
-
-
+include redemption-config.jam ;
 include cxxflags.jam ;
 include defines.jam ;
+include includes.jam ;
 
 
 variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
@@ -40,21 +17,7 @@ constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
 project redemption
     : requirements
 
-    <include>$(REDEMPTION_SRC_PATH)
-    <include>$(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE)
-    # TODO move to system
-    <include>$(REDEMPTION_SRC_PATH)/headers
-    <include>$(INCLUDES_PATH)
-
-    <include>$(MLN_INCLUDES_PATH)
-    <include>$(PPOCR_INCLUDES_PATH)
-    <include>$(PROGRAM_OPTIONS_INCLUDES_PATH)
-
-    ## configs @{
-    <include>$(REDEMPTION_CONFIG_PATH)/redemption_src
-    <include>$(REDEMPTION_CONFIG_PATH)/include/autogen
-    <include>$(REDEMPTION_CONFIG_PATH)/include/variant
-    ## @}
+    <conditional>@includes
 
     <conditional>@defines
 
@@ -73,6 +36,9 @@ project redemption
 
    : default-build release
 ;
+
+include ocr.jam ;
+include libs.jam ;
 
 explicit
     install
@@ -191,120 +157,11 @@ make redcryptofile.so
         @gen_redcryptofile
     ;
 
-lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
-lib openssl : : <name>ssl <link>shared ;
-
-lib krb5 : : <name>krb5 <link>shared ;
-lib gssglue : : <name>gssglue <link>shared ;
-
-lib crypto : : <name>crypto <link>shared ;
-lib z : : <name>z <link>shared ;
-lib snappy : : <name>snappy <link>shared ;
-# lib lzma : : <name>lzma <link>shared ;
-lib dl : : <name>dl <link>shared ;
-lib python2 : : <name>$(PYTHON_VER) <link>shared ;
-lib bz2 : : <name>bz2 <link>shared ;
-
-## ffmpg {
-lib avcodec : : <name>avcodec <link>shared ;
-lib avformat : : <name>avformat <link>shared ;
-lib swscale : : <name>swscale <link>shared ;
-lib avutil : : <name>avutil <link>shared ;
-# lib x264 : : <name>x264 <link>shared ;
-
-lib pthread : : <name>pthread <link>shared ;
-
-alias ffmpeg : pthread avcodec avformat swscale avutil bz2 png z dl ;
-# alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
-## }
-
-lib libpng : : <name>png <link>shared ;
-alias png : libpng z ;
-
 
 obj mainloop : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj d3des : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj bitmap : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
-
-
-obj ocr : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp : ;
-
-## ppocr {
-alias ppocr_dictionary_src      : $(PPOCR_SRC_PATH)/ppocr/spell/dictionary.cpp ;
-alias ppocr_glyphs_loader_src   : $(PPOCR_SRC_PATH)/ppocr/loader2/glyphs_loader.cpp ;
-alias ppocr_image_compare_src   : $(PPOCR_SRC_PATH)/ppocr/utils/image_compare.cpp ;
-alias ppocr_loader2_image_io_src : $(PPOCR_SRC_PATH)/ppocr/loader2/image_io.cpp ;
-
-alias ppocr_strategies_src :
-    $(PPOCR_SRC_PATH)/ppocr/strategies/agravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/alternation.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/compass.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dcompass.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/density.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/direction.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/dzdensity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hbar.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hgravity2.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/hgravity.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/zone.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/proportionality.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/proportionality_zone.cpp
-    $(PPOCR_SRC_PATH)/ppocr/strategies/utils/basic_proportionality.cpp
-;
-
-alias ppocr_image_src :
-    $(PPOCR_SRC_PATH)/ppocr/image/coordinate.cpp
-    $(PPOCR_SRC_PATH)/ppocr/image/image.cpp
-;
-
-alias ppocr_image_from_file_src :
-    ppocr_image_src
-    $(PPOCR_SRC_PATH)/ppocr/image/image_from_file.cpp
-;
-
-alias ppocr_box_character_src :
-    $(PPOCR_SRC_PATH)/ppocr/box_char/box.cpp
-    $(PPOCR_SRC_PATH)/ppocr/box_char/make_box_character.cpp
-;
-
-alias ppocr_glyphs_src :
-    ppocr_loader2_image_io_src
-    ppocr_image_src
-    ppocr_box_character_src
-    ppocr_image_from_file_src
-;
-
-alias ppocr_datas_and_glyphs_src :
-    ppocr_image_compare_src
-    ppocr_dictionary_src
-    ppocr_strategies_src
-    ppocr_glyphs_loader_src
-    ppocr_glyphs_src
-;
-
-## } ppocr
-
-alias ppocr :
-    $(PPOCR_SRC_PATH)/ppocr/ocr2/glyphs.cpp
-    $(PPOCR_SRC_PATH)/ppocr/ocr2/word_lines.cpp
-    $(PPOCR_SRC_PATH)/ppocr/ocr2/replacement.cpp
-    $(PPOCR_SRC_PATH)/ppocr/ocr2/data_indexes_by_words.cpp
-    $(PPOCR_SRC_PATH)/ppocr/ocr2/filter_by_lines.cpp
-    $(PPOCR_SRC_PATH)/ppocr/ocr2/filter_by_font.cpp
-    $(PPOCR_SRC_PATH)/ppocr/ocr2/disambiguous_with_dict.cpp
-
-    ppocr_datas_and_glyphs_src
-    $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp
-;
 
 #
 # Redemption
@@ -342,8 +199,6 @@ exe rdpproxy
 #         <link>static
         $(EXE_DEPENDENCIES)
     ;
-
-lib ppocr_static : ppocr/<linkflags>-Wl,-Bsymbolic,<cxxflags>-fvisibility=hidden : <link>static ;
 
 lib libredrec
     :
@@ -731,8 +586,6 @@ test-canonical acl/module_manager.hpp : <library>crypto <library>png ;
 test-canonical acl/mm_api.hpp ;
 ## @}
 
-
-lib ppocr_test : ppocr/<cxxflags>-frtti,<linkflags>-fvisibility=default : <link>static ;
 
 ## Ocr
 ## {
@@ -1402,10 +1255,6 @@ make test_trace.py.unittest
     :
         <variant>coverage:<action>@pass
     ;
-
-lib gssapi_krb5 : : <name>gssapi_krb5 <link>shared ;
-lib rt : : <name>rt <link>shared ;
-
 
 explicit install-sashimi local-install-sashimi sashimi ;
 
