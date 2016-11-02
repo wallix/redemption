@@ -134,17 +134,16 @@ install:
         { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
     fi
 
-    (cd ${BOOST_DIR}/tools/build && ./bootstrap.sh)
-    BJAM=${BOOST_DIR}/tools/build/bjam
+    (cd ${BOOST_DIR}/tools/build && ./bootstrap.sh && ./b2 install --prefix=${DEPS_DIR}/b2)
+    export PATH=${DEPS_DIR}/b2/bin:${PATH}
 
 
 script:
-  #- sudo cp tools/bjam-patch/clang-linux.jam /usr/share/boost-build/tools/clang-linux.jam
   - |
     if [[ "${CXXFLAGS}" = "" ]] ; then
-        $BJAM linkflags=-c --toolset=$TOOLSET -q exe
+        bjam linkflags=-c --toolset=$TOOLSET -q exe
     else
-        $BJAM linkflags=-c --toolset=$TOOLSET cxxflags="$CXXFLAGS" -q exe
+        bjam linkflags=-c --toolset=$TOOLSET cxxflags="$CXXFLAGS" -q exe
     fi
 
 
