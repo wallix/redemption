@@ -96,14 +96,55 @@ install:
       export TOOLSET=clang
     fi
 
+  ############################################################################
+  # Install Clang, libc++ and libc++abi
+  ############################################################################
+  - |
+    if [[ "${LLVM_VERSION}" != "" ]]; then
+      LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
+      if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
+        LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
+        LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
+        LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
+        CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
+        mkdir -p ${LLVM_DIR} ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
+        travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
+        travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
+        travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
+        travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
+        (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++)
+        (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
+        (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
+      fi
+      export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
+      export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
+      export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
+      export PATH="${LLVM_DIR}/clang/bin:${PATH}"
+    fi
+
+  ############################################################################
+  # Install Boost Build
+  ############################################################################
+  - |
+    BOOST_VERSION=1.59.0
+    BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
+    if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
+        BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_1_59_0.tar.gz"
+        mkdir -p ${BOOST_DIR}
+        { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
+    fi
+
+    (cd ${BOOST_DIR}/tools/build && ./bootstrap.sh)
+    BJAM=${BOOST_DIR}/tools/build/bjam
+
 
 script:
   #- sudo cp tools/bjam-patch/clang-linux.jam /usr/share/boost-build/tools/clang-linux.jam
   - |
-    if [[ "$CXXFLAGS" = "" ]] ; then
-        bjam linkflags=-c --toolset=$TOOLSET -q exe
+    if [[ "${CXXFLAGS}" = "" ]] ; then
+        $BJAM linkflags=-c --toolset=$TOOLSET -q exe
     else
-        bjam linkflags=-c --toolset=$TOOLSET cxxflags="$CXXFLAGS" -q exe
+        $BJAM linkflags=-c --toolset=$TOOLSET cxxflags="$CXXFLAGS" -q exe
     fi
 
 
