@@ -20,7 +20,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 
-#define LOGPRINT
+//#define LOGPRINT
 
 #include <string>
 #include <unistd.h>

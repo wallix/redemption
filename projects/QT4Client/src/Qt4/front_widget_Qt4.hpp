@@ -147,18 +147,6 @@ public:
         }
     }
 
-    /*void replay(std::string & movie_path) {
-        LCGRandom gen(0);
-        Inifile ini;
-        CryptoContext cctx(gen, ini);
-        this->_in_trans = new InMetaSequenceTransport(&cctx, movie_path.c_str(), ".mwrm", 0, 0);
-        this->_sckRead = new QSocketNotifier(*(this->_in_trans), QSocketNotifier::Read, this);
-        this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_Draw()));
-        this->_reader = new FileToGraphic(&(this->_in_trans), {0, 0}, {0, 0}, true, 0);
-        this->_reader->add_consumer(this->_front, nullptr, nullptr, nullptr, nullptr);
-
-    } */
-
     bool listen() {
         const char * name(this->_front->_userName.c_str());
         const char * pwd(this->_front->_pwd.c_str());
@@ -217,12 +205,10 @@ public:
 
         std::cout << "Early negociations start.." <<  std::endl;
         if (this->_callback != nullptr) {
-            int i(0);
             while (!this->_callback->is_up_and_running()) {
                 try {
-                    std::cout << "Early negociations step " << i <<  std::endl;
                     this->_callback->draw_event(time(nullptr), *(this->_front));
-                    i++;
+
                 } catch (const Error & e) {
                     const std::string errorMsg("Error: Failed during RDP early negociations.");
                     std::cout << errorMsg << std::endl;

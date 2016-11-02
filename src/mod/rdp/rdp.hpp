@@ -2150,7 +2150,6 @@ public:
 
             while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
-
                 switch (f.tag) {
                 case SC_CORE:
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
@@ -2175,6 +2174,7 @@ public:
 
                         this->encryptionLevel = this->sc_sec1.encryptionLevel;
                         this->encryptionMethod = this->sc_sec1.encryptionMethod;
+
                         if (this->sc_sec1.encryptionLevel == 0
                             &&  this->sc_sec1.encryptionMethod == 0) { /* no encryption */
                             LOG(LOG_INFO, "No encryption");

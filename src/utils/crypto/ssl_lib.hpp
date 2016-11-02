@@ -41,9 +41,8 @@ class ssllib
     public:
     static void rsa_encrypt(uint8_t * out, uint32_t in_len, uint8_t * in, uint32_t modulus_size, uint8_t * modulus, uint32_t exponent_size, uint8_t * exponent)
     {
-        std::cout << "rsa_encrypt" <<  std::endl;
         // TODO check out buffer size
-        size_t out_len = 64;
+        size_t out_len = 256;
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
 
         reverseit(modulus, modulus_size);
